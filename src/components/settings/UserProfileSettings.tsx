@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -323,9 +324,7 @@ export const UserProfileSettings = () => {
 
         if (invitationsError) {
           console.error('Invitations error:', invitationsError);
-          // Don't throw error for invitations, just log and continue
-          setInvitedUsers([]);
-          return;
+          throw invitationsError;
         }
 
         // Get invited_by user names separately
@@ -369,8 +368,7 @@ export const UserProfileSettings = () => {
 
         if (membershipError) {
           console.error('Membership error:', membershipError);
-          setInvitedUsers([]);
-          return;
+          throw membershipError;
         }
 
         if (!membershipData || membershipData.length === 0) {
@@ -386,8 +384,7 @@ export const UserProfileSettings = () => {
 
         if (workspaceDataError) {
           console.error('Workspace data error:', workspaceDataError);
-          setInvitedUsers([]);
-          return;
+          throw workspaceDataError;
         }
 
         const orgIds = [...new Set(workspaceData?.map(w => w.organization_id) || [])];
@@ -412,8 +409,7 @@ export const UserProfileSettings = () => {
 
         if (invitationsError) {
           console.error('Invitations error:', invitationsError);
-          setInvitedUsers([]);
-          return;
+          throw invitationsError;
         }
 
         // Get invited_by user names separately
@@ -451,8 +447,11 @@ export const UserProfileSettings = () => {
       }
     } catch (error) {
       console.error('Error fetching invited users:', error);
-      // Don't show error toast for invitations, just log and set empty array
-      setInvitedUsers([]);
+      toast({
+        title: "Error",
+        description: "Kon uitgenodigde gebruikers niet ophalen",
+        variant: "destructive",
+      });
     }
   };
 
