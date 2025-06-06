@@ -7,7 +7,12 @@ import {
   FolderOpen, 
   Settings, 
   ChevronLeft,
-  Scale
+  Scale,
+  FileText,
+  FolderX,
+  CreditCard,
+  Phone,
+  Mail
 } from 'lucide-react';
 import type { ViewType } from '@/pages/Index';
 
@@ -23,6 +28,11 @@ export const Sidebar = ({ currentView, onViewChange, collapsed, onToggleCollapse
     { id: 'overview' as ViewType, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'actions' as ViewType, label: 'AI Acties', icon: Activity },
     { id: 'documents' as ViewType, label: 'Documenten', icon: FolderOpen },
+    { id: 'active-dossiers' as ViewType, label: 'Actieve Dossiers', icon: FileText },
+    { id: 'closed-dossiers' as ViewType, label: 'Gesloten Dossiers', icon: FolderX },
+    { id: 'invoices' as ViewType, label: 'Facturen', icon: CreditCard },
+    { id: 'phone-calls' as ViewType, label: 'Telefoongesprekken', icon: Phone },
+    { id: 'emails' as ViewType, label: 'E-mails', icon: Mail },
     { id: 'settings' as ViewType, label: 'Instellingen', icon: Settings },
   ];
 

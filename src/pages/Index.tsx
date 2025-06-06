@@ -6,7 +6,7 @@ import { ActionOverview } from '@/components/dashboard/ActionOverview';
 import { DocumentManager } from '@/components/dashboard/DocumentManager';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 
-export type ViewType = 'overview' | 'actions' | 'documents' | 'settings';
+export type ViewType = 'overview' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'phone-calls' | 'emails' | 'settings';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>('overview');
@@ -25,6 +25,41 @@ const Index = () => {
         return <ActionOverview />;
       case 'documents':
         return <DocumentManager />;
+      case 'active-dossiers':
+        return (
+          <div className="bg-card rounded-lg p-6">
+            <h2 className="text-2xl font-semibold mb-4">Actieve Dossiers</h2>
+            <p className="text-muted-foreground">Overzicht van actieve dossiers wordt binnenkort beschikbaar.</p>
+          </div>
+        );
+      case 'closed-dossiers':
+        return (
+          <div className="bg-card rounded-lg p-6">
+            <h2 className="text-2xl font-semibold mb-4">Gesloten Dossiers</h2>
+            <p className="text-muted-foreground">Overzicht van gesloten dossiers wordt binnenkort beschikbaar.</p>
+          </div>
+        );
+      case 'invoices':
+        return (
+          <div className="bg-card rounded-lg p-6">
+            <h2 className="text-2xl font-semibold mb-4">Facturen</h2>
+            <p className="text-muted-foreground">Factuurbeheer wordt binnenkort beschikbaar.</p>
+          </div>
+        );
+      case 'phone-calls':
+        return (
+          <div className="bg-card rounded-lg p-6">
+            <h2 className="text-2xl font-semibold mb-4">Telefoongesprekken</h2>
+            <p className="text-muted-foreground">Overzicht van telefoongesprekken wordt binnenkort beschikbaar.</p>
+          </div>
+        );
+      case 'emails':
+        return (
+          <div className="bg-card rounded-lg p-6">
+            <h2 className="text-2xl font-semibold mb-4">E-mails</h2>
+            <p className="text-muted-foreground">E-mailbeheer wordt binnenkort beschikbaar.</p>
+          </div>
+        );
       case 'settings':
         return (
           <div className="bg-card rounded-lg p-6">
