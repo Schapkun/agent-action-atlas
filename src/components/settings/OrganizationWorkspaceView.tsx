@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -370,9 +371,12 @@ export const OrganizationWorkspaceView = () => {
 
       if (membershipError) throw membershipError;
 
-      // Always include current user, even if not in membership data
+      // Get all user IDs from membership data
       let allUserIds = membershipData?.map(m => m.user_id) || [];
-      if (user?.id && !allUserIds.includes(user.id)) {
+      
+      // Always include current user if they are the account owner, even if not in membership data
+      const isAccountOwner = user?.email === 'info@schapkun.com';
+      if (isAccountOwner && user?.id && !allUserIds.includes(user.id)) {
         allUserIds.push(user.id);
       }
 
@@ -396,7 +400,7 @@ export const OrganizationWorkspaceView = () => {
         
         // If this is the current user and they don't have explicit membership, 
         // but they can see this workspace, they might have access through organization ownership
-        if (profile.id === user?.id && !membership && user?.email === 'info@schapkun.com') {
+        if (profile.id === user?.id && !membership && isAccountOwner) {
           role = 'eigenaar (organisatie)';
         }
 
