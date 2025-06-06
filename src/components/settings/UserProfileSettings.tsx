@@ -306,46 +306,28 @@ export const UserProfileSettings = () => {
       if (isAccountOwner) {
         console.log('User is account owner, fetching all invitations');
         
-        // Account owner sees all invitations - fetch without any joins to auth.users
+        // Account owner sees all invitations - simple query without any joins
         const { data: invitationsData, error: invitationsError } = await supabase
           .from('user_invitations')
-          .select(`
-            id,
-            email,
-            role,
-            created_at,
-            expires_at,
-            organization_id,
-            workspace_id,
-            invited_by
-          `)
+          .select('id, email, role, created_at, expires_at, organization_id, workspace_id, invited_by')
           .is('accepted_at', null)
           .order('created_at', { ascending: false });
 
         if (invitationsError) {
-          console.error('Invitations error details:', {
-            message: invitationsError.message,
-            code: invitationsError.code,
-            details: invitationsError.details,
-            hint: invitationsError.hint
-          });
-          
-          // Show a more specific error message
-          toast({
-            title: "Fout bij ophalen uitnodigingen",
-            description: `Database fout: ${invitationsError.message} (Code: ${invitationsError.code})`,
-            variant: "destructive",
-          });
-          
-          // Set empty array instead of throwing error
+          console.error('Invitations error:', invitationsError);
           setInvitedUsers([]);
           return;
         }
 
         console.log('Found invitations:', invitationsData?.length || 0);
 
+        if (!invitationsData || invitationsData.length === 0) {
+          setInvitedUsers([]);
+          return;
+        }
+
         // Get organization names separately
-        const orgIds = [...new Set(invitationsData?.map(inv => inv.organization_id).filter(Boolean) || [])];
+        const orgIds = [...new Set(invitationsData.map(inv => inv.organization_id).filter(Boolean))];
         let organizationsData: any[] = [];
         
         if (orgIds.length > 0) {
@@ -354,13 +336,13 @@ export const UserProfileSettings = () => {
             .select('id, name')
             .in('id', orgIds);
 
-          if (!orgsError) {
-            organizationsData = orgsData || [];
+          if (!orgsError && orgsData) {
+            organizationsData = orgsData;
           }
         }
 
         // Get workspace names separately
-        const workspaceIds = [...new Set(invitationsData?.map(inv => inv.workspace_id).filter(Boolean) || [])];
+        const workspaceIds = [...new Set(invitationsData.map(inv => inv.workspace_id).filter(Boolean))];
         let workspacesData: any[] = [];
         
         if (workspaceIds.length > 0) {
@@ -369,13 +351,13 @@ export const UserProfileSettings = () => {
             .select('id, name')
             .in('id', workspaceIds);
 
-          if (!wsError) {
-            workspacesData = wsData || [];
+          if (!wsError && wsData) {
+            workspacesData = wsData;
           }
         }
 
-        // Get invited_by user names separately
-        const invitedByIds = [...new Set(invitationsData?.map(inv => inv.invited_by).filter(Boolean) || [])];
+        // Get invited_by user names from user_profiles (not auth.users)
+        const invitedByIds = [...new Set(invitationsData.map(inv => inv.invited_by).filter(Boolean))];
         let invitedByProfiles: any[] = [];
         
         if (invitedByIds.length > 0) {
@@ -384,12 +366,12 @@ export const UserProfileSettings = () => {
             .select('id, full_name')
             .in('id', invitedByIds);
 
-          if (!profilesError) {
-            invitedByProfiles = profilesData || [];
+          if (!profilesError && profilesData) {
+            invitedByProfiles = profilesData;
           }
         }
 
-        const processedInvitations = invitationsData?.map(invitation => {
+        const processedInvitations = invitationsData.map(invitation => {
           const organization = organizationsData.find(o => o.id === invitation.organization_id);
           const workspace = workspacesData.find(w => w.id === invitation.workspace_id);
           const inviterProfile = invitedByProfiles.find(p => p.id === invitation.invited_by);
@@ -406,7 +388,7 @@ export const UserProfileSettings = () => {
             workspace_name: workspace?.name,
             invited_by_name: inviterProfile?.full_name || 'Onbekend'
           };
-        }) || [];
+        });
 
         setInvitedUsers(processedInvitations);
       } else {
@@ -445,16 +427,7 @@ export const UserProfileSettings = () => {
 
         const { data: invitationsData, error: invitationsError } = await supabase
           .from('user_invitations')
-          .select(`
-            id,
-            email,
-            role,
-            created_at,
-            expires_at,
-            organization_id,
-            workspace_id,
-            invited_by
-          `)
+          .select('id, email, role, created_at, expires_at, organization_id, workspace_id, invited_by')
           .in('organization_id', orgIds)
           .is('accepted_at', null)
           .order('created_at', { ascending: false });
@@ -465,13 +438,13 @@ export const UserProfileSettings = () => {
           return;
         }
 
-        // Get organization and workspace names
+        // Get organization names
         const { data: orgsData } = await supabase
           .from('organizations')
           .select('id, name')
           .in('id', orgIds);
 
-        // Get invited_by user names separately
+        // Get invited_by user names from user_profiles
         const invitedByIds = [...new Set(invitationsData?.map(inv => inv.invited_by).filter(Boolean) || [])];
         let invitedByProfiles: any[] = [];
         
@@ -481,8 +454,8 @@ export const UserProfileSettings = () => {
             .select('id, full_name')
             .in('id', invitedByIds);
 
-          if (!profilesError) {
-            invitedByProfiles = profilesData || [];
+          if (!profilesError && profilesData) {
+            invitedByProfiles = profilesData;
           }
         }
 
@@ -509,8 +482,6 @@ export const UserProfileSettings = () => {
       }
     } catch (error) {
       console.error('Unexpected error fetching invited users:', error);
-      
-      // Always set empty array on error and show a generic message
       setInvitedUsers([]);
       
       toast({
@@ -590,7 +561,7 @@ export const UserProfileSettings = () => {
 
       setNewInvite({ email: '', role: 'member', organization_id: '' });
       setIsInviteDialogOpen(false);
-      fetchUserProfiles();
+      fetchInvitedUsers();
     } catch (error) {
       console.error('Error inviting user:', error);
       toast({
