@@ -12,6 +12,7 @@ import { PhoneCallManager } from '@/components/dashboard/PhoneCallManager';
 import { EmailManager } from '@/components/dashboard/EmailManager';
 import { ContactManager } from '@/components/dashboard/ContactManager';
 import { PendingTasks } from '@/components/dashboard/PendingTasks';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
 
@@ -59,23 +60,25 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex w-full">
-      <Sidebar 
-        currentView={currentView} 
-        onViewChange={setCurrentView}
-        collapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header 
-          currentView={currentView}
-          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background flex w-full">
+        <Sidebar 
+          currentView={currentView} 
+          onViewChange={setCurrentView}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
-        <main className="flex-1 overflow-auto p-6">
-          {renderContent()}
-        </main>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Header 
+            currentView={currentView}
+            onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+          />
+          <main className="flex-1 overflow-auto p-6">
+            {renderContent()}
+          </main>
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 };
 
