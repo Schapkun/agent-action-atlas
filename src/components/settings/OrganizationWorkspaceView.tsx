@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +33,7 @@ interface UserProfile {
   full_name: string;
   email: string;
   role: string;
+  isCurrentUser?: boolean;
 }
 
 interface GroupedData {
