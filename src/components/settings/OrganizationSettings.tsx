@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -296,10 +295,10 @@ export const OrganizationSettings = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="h-32 bg-gray-200 rounded"></div>
+          <div className="h-6 bg-gray-200 rounded w-1/4 mb-3"></div>
+          <div className="h-24 bg-gray-200 rounded"></div>
         </div>
       </div>
     );
@@ -307,18 +306,18 @@ export const OrganizationSettings = () => {
 
   if (error) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold">Organisaties</h2>
-          <Button onClick={fetchOrganizations} variant="outline">
+          <Button onClick={fetchOrganizations} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
             Opnieuw proberen
           </Button>
         </div>
         <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-red-600 mb-4">{error}</p>
-            <Button onClick={fetchOrganizations}>
+          <CardContent className="p-4 text-center">
+            <p className="text-red-600 mb-3 text-sm">{error}</p>
+            <Button onClick={fetchOrganizations} size="sm">
               Opnieuw laden
             </Button>
           </CardContent>
@@ -328,35 +327,36 @@ export const OrganizationSettings = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Organisaties</h2>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button size="sm">
               <Plus className="h-4 w-4 mr-2" />
               Nieuwe Organisatie
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Nieuwe Organisatie Aanmaken</DialogTitle>
+              <DialogTitle className="text-lg">Nieuwe Organisatie Aanmaken</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <Label htmlFor="org-name">Organisatie Naam</Label>
+                <Label htmlFor="org-name" className="text-sm">Organisatie Naam</Label>
                 <Input
                   id="org-name"
                   value={newOrgName}
                   onChange={(e) => setNewOrgName(e.target.value)}
                   placeholder="Voer organisatie naam in"
+                  className="mt-1"
                 />
               </div>
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              <div className="flex justify-end space-x-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setIsCreateDialogOpen(false)}>
                   Annuleren
                 </Button>
-                <Button onClick={createOrganization}>
+                <Button size="sm" onClick={createOrganization}>
                   Aanmaken
                 </Button>
               </div>
@@ -365,40 +365,41 @@ export const OrganizationSettings = () => {
         </Dialog>
       </div>
 
-      <div className="grid gap-4">
+      <div className="space-y-3">
         {organizations.length === 0 ? (
           <Card>
-            <CardContent className="p-6 text-center text-muted-foreground">
+            <CardContent className="p-4 text-center text-sm text-muted-foreground">
               Je bent nog geen lid van een organisatie. Maak een nieuwe organisatie aan om te beginnen.
             </CardContent>
           </Card>
         ) : (
           organizations.map((org) => (
             <Card key={org.id}>
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <div className="flex justify-between items-center">
                   <div>
-                    <CardTitle>{org.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">
+                    <CardTitle className="text-base">{org.name}</CardTitle>
+                    <p className="text-xs text-muted-foreground">
                       Rol: {org.user_role} • Aangemaakt: {new Date(org.created_at).toLocaleDateString('nl-NL')}
                     </p>
                   </div>
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-1">
                     {(org.user_role === 'owner' || user?.email === 'info@schapkun.com') && (
                       <>
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
                           onClick={() => setEditingOrg(org)}
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3 w-3" />
                         </Button>
                         <Button
-                          variant="destructive"
+                          variant="ghost"
                           size="sm"
                           onClick={() => deleteOrganization(org.id, org.name)}
+                          className="text-destructive hover:text-destructive"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                       </>
                     )}
@@ -412,24 +413,25 @@ export const OrganizationSettings = () => {
 
       {editingOrg && (
         <Dialog open={!!editingOrg} onOpenChange={() => setEditingOrg(null)}>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Organisatie Bewerken</DialogTitle>
+              <DialogTitle className="text-lg">Organisatie Bewerken</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <Label htmlFor="edit-org-name">Organisatie Naam</Label>
+                <Label htmlFor="edit-org-name" className="text-sm">Organisatie Naam</Label>
                 <Input
                   id="edit-org-name"
                   value={editingOrg.name}
                   onChange={(e) => setEditingOrg({ ...editingOrg, name: e.target.value })}
+                  className="mt-1"
                 />
               </div>
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setEditingOrg(null)}>
+              <div className="flex justify-end space-x-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setEditingOrg(null)}>
                   Annuleren
                 </Button>
-                <Button onClick={updateOrganization}>
+                <Button size="sm" onClick={updateOrganization}>
                   Opslaan
                 </Button>
               </div>
