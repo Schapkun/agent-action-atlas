@@ -316,8 +316,7 @@ export const UserProfileSettings = () => {
             workspace_id,
             invited_by,
             organizations (name),
-            workspaces (name),
-            profiles!user_invitations_invited_by_fkey (full_name)
+            workspaces (name)
           `)
           .is('accepted_at', null)
           .order('created_at', { ascending: false });
@@ -327,18 +326,36 @@ export const UserProfileSettings = () => {
           throw invitationsError;
         }
 
-        const processedInvitations = invitationsData?.map(invitation => ({
-          id: invitation.id,
-          email: invitation.email,
-          role: invitation.role,
-          created_at: invitation.created_at,
-          expires_at: invitation.expires_at,
-          organization_id: invitation.organization_id,
-          organization_name: invitation.organizations?.name || 'Onbekend',
-          workspace_id: invitation.workspace_id,
-          workspace_name: invitation.workspaces?.name,
-          invited_by_name: invitation.profiles?.full_name || 'Onbekend'
-        })) || [];
+        // Get invited_by user names separately
+        const invitedByIds = [...new Set(invitationsData?.map(inv => inv.invited_by).filter(Boolean) || [])];
+        let invitedByProfiles: any[] = [];
+        
+        if (invitedByIds.length > 0) {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('user_profiles')
+            .select('id, full_name')
+            .in('id', invitedByIds);
+
+          if (!profilesError) {
+            invitedByProfiles = profilesData || [];
+          }
+        }
+
+        const processedInvitations = invitationsData?.map(invitation => {
+          const inviterProfile = invitedByProfiles.find(p => p.id === invitation.invited_by);
+          return {
+            id: invitation.id,
+            email: invitation.email,
+            role: invitation.role,
+            created_at: invitation.created_at,
+            expires_at: invitation.expires_at,
+            organization_id: invitation.organization_id,
+            organization_name: invitation.organizations?.name || 'Onbekend',
+            workspace_id: invitation.workspace_id,
+            workspace_name: invitation.workspaces?.name,
+            invited_by_name: inviterProfile?.full_name || 'Onbekend'
+          };
+        }) || [];
 
         setInvitedUsers(processedInvitations);
       } else {
@@ -380,8 +397,7 @@ export const UserProfileSettings = () => {
             workspace_id,
             invited_by,
             organizations (name),
-            workspaces (name),
-            profiles!user_invitations_invited_by_fkey (full_name)
+            workspaces (name)
           `)
           .in('organization_id', orgIds)
           .is('accepted_at', null)
@@ -392,18 +408,36 @@ export const UserProfileSettings = () => {
           throw invitationsError;
         }
 
-        const processedInvitations = invitationsData?.map(invitation => ({
-          id: invitation.id,
-          email: invitation.email,
-          role: invitation.role,
-          created_at: invitation.created_at,
-          expires_at: invitation.expires_at,
-          organization_id: invitation.organization_id,
-          organization_name: invitation.organizations?.name || 'Onbekend',
-          workspace_id: invitation.workspace_id,
-          workspace_name: invitation.workspaces?.name,
-          invited_by_name: invitation.profiles?.full_name || 'Onbekend'
-        })) || [];
+        // Get invited_by user names separately
+        const invitedByIds = [...new Set(invitationsData?.map(inv => inv.invited_by).filter(Boolean) || [])];
+        let invitedByProfiles: any[] = [];
+        
+        if (invitedByIds.length > 0) {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('user_profiles')
+            .select('id, full_name')
+            .in('id', invitedByIds);
+
+          if (!profilesError) {
+            invitedByProfiles = profilesData || [];
+          }
+        }
+
+        const processedInvitations = invitationsData?.map(invitation => {
+          const inviterProfile = invitedByProfiles.find(p => p.id === invitation.invited_by);
+          return {
+            id: invitation.id,
+            email: invitation.email,
+            role: invitation.role,
+            created_at: invitation.created_at,
+            expires_at: invitation.expires_at,
+            organization_id: invitation.organization_id,
+            organization_name: invitation.organizations?.name || 'Onbekend',
+            workspace_id: invitation.workspace_id,
+            workspace_name: invitation.workspaces?.name,
+            invited_by_name: inviterProfile?.full_name || 'Onbekend'
+          };
+        }) || [];
 
         setInvitedUsers(processedInvitations);
       }
