@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Trash2, Plus, Edit, UserPlus } from 'lucide-react';
+import { Trash2, Plus, Edit, UserPlus, Building2, Users } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -19,6 +19,11 @@ interface UserProfile {
   role?: string;
   organization_id?: string;
   organization_name?: string;
+  workspaces?: {
+    id: string;
+    name: string;
+    role: string;
+  }[];
 }
 
 interface Organization {
@@ -52,85 +57,158 @@ export const UserProfileSettings = () => {
     try {
       console.log('Fetching user profiles');
 
-      // Get organization memberships that the current user can see
-      const { data: membershipData, error: membershipError } = await supabase
-        .from('organization_members')
-        .select('role, organization_id, user_id')
-        .eq('user_id', user.id); // Only show profiles from orgs the user is in
+      const isAccountOwner = user.email === 'info@schapkun.com';
 
-      if (membershipError) {
-        console.error('Membership error:', membershipError);
-        throw membershipError;
+      if (isAccountOwner) {
+        // Account owner sees ALL users and their memberships
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('user_profiles')
+          .select('id, full_name, email, avatar_url, created_at')
+          .order('created_at', { ascending: false });
+
+        if (profilesError) {
+          console.error('Profiles error:', profilesError);
+          throw profilesError;
+        }
+
+        // Get all workspace memberships for all users
+        const { data: workspaceMemberships, error: workspaceError } = await supabase
+          .from('workspace_members')
+          .select(`
+            user_id,
+            role,
+            workspace_id,
+            workspaces!inner(
+              id,
+              name,
+              organization_id,
+              organizations!inner(
+                id,
+                name
+              )
+            )
+          `);
+
+        if (workspaceError) {
+          console.error('Workspace memberships error:', workspaceError);
+          throw workspaceError;
+        }
+
+        // Process the profiles and add workspace/organization info
+        const profilesWithMemberships = profilesData?.map(profile => {
+          const userWorkspaces = workspaceMemberships
+            ?.filter(wm => wm.user_id === profile.id)
+            ?.map(wm => ({
+              id: wm.workspace_id,
+              name: wm.workspaces.name,
+              role: wm.role,
+              organization_name: wm.workspaces.organizations.name
+            })) || [];
+
+          // Get unique organizations for this user
+          const userOrganizations = [...new Set(userWorkspaces.map(w => w.organization_name))];
+
+          return {
+            id: profile.id,
+            full_name: profile.full_name || 'Geen naam',
+            email: profile.email || '',
+            avatar_url: profile.avatar_url,
+            created_at: profile.created_at || '',
+            workspaces: userWorkspaces,
+            organizations: userOrganizations
+          };
+        }) || [];
+
+        setUserProfiles(profilesWithMemberships);
+      } else {
+        // Regular users see only users from their organizations
+        const { data: membershipData, error: membershipError } = await supabase
+          .from('workspace_members')
+          .select('role, workspace_id, user_id')
+          .eq('user_id', user.id);
+
+        if (membershipError) {
+          console.error('Membership error:', membershipError);
+          throw membershipError;
+        }
+
+        if (!membershipData || membershipData.length === 0) {
+          setUserProfiles([]);
+          setLoading(false);
+          return;
+        }
+
+        // Get workspaces and organizations
+        const workspaceIds = membershipData.map(m => m.workspace_id);
+        const { data: workspaceData, error: workspaceDataError } = await supabase
+          .from('workspaces')
+          .select('id, name, organization_id')
+          .in('id', workspaceIds);
+
+        if (workspaceDataError) throw workspaceDataError;
+
+        const orgIds = [...new Set(workspaceData?.map(w => w.organization_id) || [])];
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .select('id, name')
+          .in('id', orgIds);
+
+        if (orgError) throw orgError;
+
+        // Get all workspace members from user's organizations
+        const { data: allWorkspaceMembers, error: allMembersError } = await supabase
+          .from('workspace_members')
+          .select('user_id, role, workspace_id')
+          .in('workspace_id', workspaceIds);
+
+        if (allMembersError) throw allMembersError;
+
+        // Get unique user IDs
+        const userIds = [...new Set(allWorkspaceMembers?.map(m => m.user_id) || [])];
+        
+        if (userIds.length === 0) {
+          setUserProfiles([]);
+          setLoading(false);
+          return;
+        }
+
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('user_profiles')
+          .select('id, full_name, email, avatar_url, created_at')
+          .in('id', userIds);
+
+        if (profilesError) throw profilesError;
+
+        // Process profiles with membership info
+        const profilesWithMemberships = profilesData?.map(profile => {
+          const userWorkspaces = allWorkspaceMembers
+            ?.filter(wm => wm.user_id === profile.id)
+            ?.map(wm => {
+              const workspace = workspaceData?.find(w => w.id === wm.workspace_id);
+              const organization = orgData?.find(o => o.id === workspace?.organization_id);
+              return {
+                id: wm.workspace_id,
+                name: workspace?.name || 'Onbekend',
+                role: wm.role,
+                organization_name: organization?.name || 'Onbekend'
+              };
+            }) || [];
+
+          const userOrganizations = [...new Set(userWorkspaces.map(w => w.organization_name))];
+
+          return {
+            id: profile.id,
+            full_name: profile.full_name || 'Geen naam',
+            email: profile.email || '',
+            avatar_url: profile.avatar_url,
+            created_at: profile.created_at || '',
+            workspaces: userWorkspaces,
+            organizations: userOrganizations
+          };
+        }) || [];
+
+        setUserProfiles(profilesWithMemberships);
       }
-
-      console.log('Membership data:', membershipData);
-
-      if (!membershipData || membershipData.length === 0) {
-        console.log('No memberships found');
-        setUserProfiles([]);
-        setLoading(false);
-        return;
-      }
-
-      // Get organization names
-      const orgIds = membershipData.map(m => m.organization_id);
-      const { data: orgData, error: orgError } = await supabase
-        .from('organizations')
-        .select('id, name')
-        .in('id', orgIds);
-
-      if (orgError) {
-        console.error('Organizations error:', orgError);
-        throw orgError;
-      }
-
-      // Get all members from these organizations
-      const { data: allMembersData, error: allMembersError } = await supabase
-        .from('organization_members')
-        .select('role, organization_id, user_id')
-        .in('organization_id', orgIds);
-
-      if (allMembersError) {
-        console.error('All members error:', allMembersError);
-        throw allMembersError;
-      }
-
-      // Get user profiles for all members
-      const userIds = [...new Set(allMembersData?.map(m => m.user_id) || [])];
-      
-      if (userIds.length === 0) {
-        setUserProfiles([]);
-        setLoading(false);
-        return;
-      }
-
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('user_profiles')
-        .select('id, full_name, email, avatar_url, created_at')
-        .in('id', userIds);
-
-      if (profilesError) {
-        console.error('Profiles error:', profilesError);
-        throw profilesError;
-      }
-
-      // Combine data
-      const profiles = profilesData?.map(profile => {
-        const membership = allMembersData?.find(m => m.user_id === profile.id);
-        const organization = orgData?.find(o => o.id === membership?.organization_id);
-        return {
-          id: profile.id,
-          full_name: profile.full_name || '',
-          email: profile.email || '',
-          avatar_url: profile.avatar_url,
-          created_at: profile.created_at || '',
-          role: membership?.role,
-          organization_id: membership?.organization_id,
-          organization_name: organization?.name
-        };
-      }) || [];
-
-      setUserProfiles(profiles);
     } catch (error) {
       console.error('Error fetching user profiles:', error);
       toast({
@@ -349,14 +427,54 @@ export const UserProfileSettings = () => {
           </Card>
         ) : (
           userProfiles.map((profile) => (
-            <Card key={profile.id}>
+            <Card key={profile.id} className="border-l-4 border-l-primary/20">
               <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>{profile.full_name || 'Geen naam'}</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      {profile.email} • Rol: {profile.role} • Organisatie: {profile.organization_name}
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CardTitle className="text-base">{profile.full_name}</CardTitle>
+                      {profile.id === user?.id && (
+                        <span className="text-xs text-muted-foreground">(jij)</span>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {profile.email}
                     </p>
+                    
+                    {profile.organizations && profile.organizations.length > 0 && (
+                      <div className="mb-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Building2 className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-xs font-medium text-muted-foreground">Organisaties:</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {profile.organizations.map((orgName, index) => (
+                            <span key={index} className="text-xs bg-muted px-2 py-1 rounded">
+                              {orgName}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {profile.workspaces && profile.workspaces.length > 0 && (
+                      <div className="mb-2">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Users className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-xs font-medium text-muted-foreground">Werkruimtes:</span>
+                        </div>
+                        <div className="space-y-1">
+                          {profile.workspaces.map((workspace) => (
+                            <div key={workspace.id} className="text-xs bg-muted/50 px-2 py-1 rounded">
+                              <span className="font-medium">{workspace.name}</span>
+                              <span className="text-muted-foreground"> • {workspace.role}</span>
+                              <span className="text-muted-foreground"> • {workspace.organization_name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <p className="text-xs text-muted-foreground">
                       Aangemaakt: {new Date(profile.created_at).toLocaleDateString('nl-NL')}
                     </p>
