@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -74,10 +75,10 @@ export const OrganizationWorkspaceView = () => {
       const isAccountOwner = user.email === 'info@schapkun.com';
       
       if (isAccountOwner) {
-        // Fetch all organizations and workspaces for account owner
+        // Fetch all organizations and workspaces for account owner - order by created_at ascending for newest at bottom
         const [orgResponse, workspaceResponse] = await Promise.all([
-          supabase.from('organizations').select('id, name, slug, created_at').order('created_at', { ascending: false }),
-          supabase.from('workspaces').select('id, name, slug, organization_id, created_at').order('created_at', { ascending: false })
+          supabase.from('organizations').select('id, name, slug, created_at').order('created_at', { ascending: true }),
+          supabase.from('workspaces').select('id, name, slug, organization_id, created_at').order('created_at', { ascending: true })
         ]);
 
         if (orgResponse.error) throw orgResponse.error;
@@ -109,7 +110,8 @@ export const OrganizationWorkspaceView = () => {
           const { data: workspaceData, error: workspaceError } = await supabase
             .from('workspaces')
             .select('id, name, slug, organization_id, created_at')
-            .in('id', workspaceIds);
+            .in('id', workspaceIds)
+            .order('created_at', { ascending: true });
 
           if (workspaceError) throw workspaceError;
 
@@ -127,7 +129,8 @@ export const OrganizationWorkspaceView = () => {
             const { data: orgData, error: orgError } = await supabase
               .from('organizations')
               .select('id, name, slug, created_at')
-              .in('id', orgIds);
+              .in('id', orgIds)
+              .order('created_at', { ascending: true });
 
             if (orgError) throw orgError;
 
