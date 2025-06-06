@@ -31,8 +31,8 @@ const generateDagvaarding = (doc: jsPDF, content: any) => {
   doc.text('RECHTBANK AMSTERDAM', 105, 50, { align: 'center' });
   
   doc.setFontSize(11);
-  doc.text('Zaaknummer: C/13/123456/HA ZA 24-001', 20, 80);
-  doc.text('Datum: 10 juni 2025', 20, 90);
+  doc.text('Zaaknummer: C/13/123456/HA ZA 25-001', 20, 80);
+  doc.text('Datum: 6 juni 2025', 20, 90);
   
   doc.text('EISER:', 20, 110);
   doc.text('ABC Holding B.V.', 20, 120);
@@ -60,8 +60,8 @@ const generateVonnis = (doc: jsPDF, content: any) => {
   doc.text('RECHTBANK AMSTERDAM', 105, 50, { align: 'center' });
   
   doc.setFontSize(11);
-  doc.text('Zaaknummer: C/13/123456/HA ZA 24-002', 20, 80);
-  doc.text('Datum: 12 juni 2025', 20, 90);
+  doc.text('Zaaknummer: C/13/123456/HA ZA 25-002', 20, 80);
+  doc.text('Datum: 6 juni 2025', 20, 90);
   
   doc.text('IN DE ZAAK VAN:', 20, 110);
   doc.text('Jan Janssen, eisende partij', 20, 120);
@@ -82,7 +82,7 @@ const generateIngebrekestelling = (doc: jsPDF, content: any) => {
   doc.text('INGEBREKESTELLING', 20, 30);
   
   doc.setFontSize(11);
-  doc.text('Datum: 14 juni 2025', 20, 60);
+  doc.text('Datum: 6 juni 2025', 20, 60);
   doc.text('Aan: XYZ Corp', 20, 80);
   doc.text('Betreft: Achterstallige betalingen', 20, 100);
   
@@ -106,7 +106,7 @@ const generateContract = (doc: jsPDF, content: any) => {
   doc.text('ARBEIDSCONTRACT', 20, 30);
   
   doc.setFontSize(11);
-  doc.text('Datum: 15 juni 2025', 20, 60);
+  doc.text('Datum: 6 juni 2025', 20, 60);
   doc.text('Tussen:', 20, 80);
   doc.text('XYZ Corp, werkgever', 20, 90);
   doc.text('en', 20, 110);
@@ -129,9 +129,9 @@ const generateFactuur = (doc: jsPDF, content: any) => {
   doc.text('FACTUUR', 20, 30);
   
   doc.setFontSize(11);
-  doc.text('Factuurnummer: 2024-001', 20, 60);
-  doc.text('Datum: 15 juni 2025', 20, 70);
-  doc.text('Vervaldatum: 29 juni 2025', 20, 80);
+  doc.text('Factuurnummer: 2025-001', 20, 60);
+  doc.text('Datum: 6 juni 2025', 20, 70);
+  doc.text('Vervaldatum: 20 juni 2025', 20, 80);
   
   doc.text('FACTUURADRES:', 20, 100);
   doc.text('ABC Holding B.V.', 20, 110);

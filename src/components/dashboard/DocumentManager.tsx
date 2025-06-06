@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -38,8 +39,8 @@ export const DocumentManager = () => {
           name: 'Dagvaarding ABC vs DEF.pdf',
           type: 'PDF',
           size: '2.4 MB',
-          createdAt: new Date('2025-06-10'),
-          modifiedAt: new Date('2025-06-15'),
+          createdAt: new Date('2025-06-06'),
+          modifiedAt: new Date('2025-06-06'),
           status: 'final',
           folderId: '1',
           client: 'ABC Holding B.V.',
@@ -50,8 +51,8 @@ export const DocumentManager = () => {
           name: 'Vonnis eerste aanleg.pdf',
           type: 'PDF',
           size: '1.8 MB',
-          createdAt: new Date('2025-06-12'),
-          modifiedAt: new Date('2025-06-12'),
+          createdAt: new Date('2025-06-06'),
+          modifiedAt: new Date('2025-06-06'),
           status: 'final',
           folderId: '1',
           client: 'Jan Janssen',
@@ -69,8 +70,8 @@ export const DocumentManager = () => {
           name: 'Ingebrekestelling.docx',
           type: 'DOCX',
           size: '156 KB',
-          createdAt: new Date('2025-06-14'),
-          modifiedAt: new Date('2025-06-14'),
+          createdAt: new Date('2025-06-06'),
+          modifiedAt: new Date('2025-06-06'),
           status: 'sent',
           folderId: '2',
           client: 'XYZ Corp',
@@ -88,8 +89,8 @@ export const DocumentManager = () => {
           name: 'Arbeidscontract Medewerker X.docx',
           type: 'DOCX',
           size: '245 KB',
-          createdAt: new Date('2025-06-15'),
-          modifiedAt: new Date('2025-06-15'),
+          createdAt: new Date('2025-06-06'),
+          modifiedAt: new Date('2025-06-06'),
           status: 'draft',
           folderId: '3',
           client: 'XYZ Corp',
@@ -104,11 +105,11 @@ export const DocumentManager = () => {
       documents: [
         {
           id: 'd5',
-          name: 'Gesprek cliënt 15-06-2025.txt',
+          name: 'Gesprek cliënt 06-06-2025.txt',
           type: 'TXT',
           size: '12 KB',
-          createdAt: new Date('2025-06-15'),
-          modifiedAt: new Date('2025-06-15'),
+          createdAt: new Date('2025-06-06'),
+          modifiedAt: new Date('2025-06-06'),
           status: 'final',
           folderId: '4',
           client: 'Maria Peters',
@@ -132,8 +133,8 @@ export const DocumentManager = () => {
           name: 'Factuur 2025-001.pdf',
           type: 'PDF',
           size: '89 KB',
-          createdAt: new Date('2025-06-15'),
-          modifiedAt: new Date('2025-06-15'),
+          createdAt: new Date('2025-06-06'),
+          modifiedAt: new Date('2025-06-06'),
           status: 'sent',
           folderId: '6',
           client: 'ABC Holding B.V.',
@@ -265,6 +266,7 @@ export const DocumentManager = () => {
         description: `${document.name} is succesvol gedownload.`,
       });
     } catch (error) {
+      console.error('Download error:', error);
       toast({
         title: "Download fout",
         description: "Er is een fout opgetreden bij het downloaden van het document.",
@@ -275,12 +277,18 @@ export const DocumentManager = () => {
 
   const handleApproveDocument = (documentId: string) => {
     console.log('Approving document:', documentId);
-    // In a real app, this would update the document status to 'final' or 'sent'
+    toast({
+      title: "Document goedgekeurd",
+      description: "Het document is goedgekeurd en verzonden.",
+    });
   };
 
   const handleEditDocument = (documentId: string) => {
     console.log('Editing document:', documentId);
-    // In a real app, this would open the document in an editor
+    toast({
+      title: "Document bewerken",
+      description: "Het document wordt geopend voor bewerking.",
+    });
   };
 
   const selectedFolderData = documentStructure.find(f => f.id === selectedFolder);

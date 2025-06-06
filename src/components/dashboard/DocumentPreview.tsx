@@ -64,7 +64,7 @@ export const DocumentPreview = ({
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">ARBEIDSCONTRACT</h3>
             <div className="text-sm space-y-2">
-              <p><strong>Datum:</strong> 15 juni 2025</p>
+              <p><strong>Datum:</strong> 6 juni 2025</p>
               <p><strong>Tussen:</strong></p>
               <p>XYZ Corp, werkgever</p>
               <p>en</p>
@@ -93,7 +93,7 @@ export const DocumentPreview = ({
             <h3 className="text-lg font-semibold">Antwoord op incasso vraag</h3>
             <div className="text-sm space-y-2">
               <p><strong>Aan:</strong> maria.peters@email.com</p>
-              <p><strong>Datum:</strong> 10 juni 2025</p>
+              <p><strong>Datum:</strong> 6 juni 2025</p>
               <p><strong>Betreft:</strong> Uw vraag over incassoprocedure</p>
               
               <div className="mt-4">
