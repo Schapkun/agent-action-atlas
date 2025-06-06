@@ -74,18 +74,18 @@ export const UserProfileSettings = () => {
           throw profilesError;
         }
 
-        // Get all workspace memberships for all users with explicit column references
+        // Get all workspace memberships for all users with proper column hints
         const { data: workspaceMemberships, error: workspaceError } = await supabase
           .from('workspace_members')
           .select(`
             user_id,
             role,
             workspace_id,
-            workspaces:workspace_id (
+            workspaces!workspace_members_workspace_id_fkey (
               id,
               name,
               organization_id,
-              organizations:organization_id (
+              organizations!workspaces_organization_id_fkey (
                 id,
                 name
               )
