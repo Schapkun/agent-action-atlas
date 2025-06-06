@@ -401,24 +401,38 @@ export const OrganizationWorkspaceView = () => {
 
       console.log('Profiles data from database:', profilesData);
 
-      const usersWithRoles = profilesData?.map(profile => {
-        const membership = membershipData?.find(m => m.user_id === profile.id);
-        let role = membership?.role || 'geen toegang';
+      // Create a list of users with roles, including those not found in profiles
+      const usersWithRoles = allUserIds.map(userId => {
+        const profile = profilesData?.find(p => p.id === userId);
+        const membership = membershipData?.find(m => m.user_id === userId);
         
-        // If this is the current user and they don't have explicit membership, 
-        // but they can see this workspace, they might have access through organization ownership
-        if (profile.id === user?.id && !membership && isAccountOwner) {
+        let role = membership?.role || 'geen toegang';
+        let fullName = 'Geen naam';
+        let email = '';
+        
+        if (profile) {
+          fullName = profile.full_name || 'Geen naam';
+          email = profile.email || '';
+        } else if (userId === user?.id && isAccountOwner) {
+          // If this is the current user (account owner) but no profile found
+          fullName = user.email?.split('@')[0] || 'Account Eigenaar';
+          email = user.email || '';
+          role = 'eigenaar (organisatie)';
+        }
+
+        // Override role for account owner
+        if (userId === user?.id && isAccountOwner && !membership) {
           role = 'eigenaar (organisatie)';
         }
 
         return {
-          id: profile.id,
-          full_name: profile.full_name || 'Geen naam',
-          email: profile.email || '',
+          id: userId,
+          full_name: fullName,
+          email: email,
           role: role,
-          isCurrentUser: profile.id === user?.id
+          isCurrentUser: userId === user?.id
         };
-      }) || [];
+      }).filter(userProfile => userProfile.full_name !== 'Geen naam' || userProfile.isCurrentUser);
 
       console.log('Users with roles:', usersWithRoles);
 
