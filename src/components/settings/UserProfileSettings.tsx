@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,12 +20,14 @@ interface UserProfile {
   role?: string;
   organization_id?: string;
   organization_name?: string;
-  organizations?: string[];
-  workspaces?: {
+  organizations?: {
     id: string;
     name: string;
-    role: string;
-    organization_name: string;
+    workspaces: {
+      id: string;
+      name: string;
+      role: string;
+    }[];
   }[];
 }
 
@@ -75,7 +76,7 @@ export const UserProfileSettings = () => {
           throw profilesError;
         }
 
-        // Get all workspace memberships for all users with proper column hints
+        // Get all workspace memberships for all users
         const { data: workspaceMemberships, error: workspaceError } = await supabase
           .from('workspace_members')
           .select(`
@@ -98,7 +99,7 @@ export const UserProfileSettings = () => {
           throw workspaceError;
         }
 
-        // Process the profiles and add workspace/organization info
+        // Process the profiles and group workspaces by organization
         const profilesWithMemberships = profilesData?.map(profile => {
           const userWorkspaces = workspaceMemberships
             ?.filter(wm => wm.user_id === profile.id)
@@ -106,11 +107,32 @@ export const UserProfileSettings = () => {
               id: wm.workspace_id,
               name: wm.workspaces?.name || 'Onbekend',
               role: wm.role,
+              organization_id: wm.workspaces?.organization_id,
               organization_name: wm.workspaces?.organizations?.name || 'Onbekend'
             })) || [];
 
-          // Get unique organizations for this user
-          const userOrganizations = [...new Set(userWorkspaces.map(w => w.organization_name))];
+          // Group workspaces by organization
+          const organizationsMap = new Map();
+          userWorkspaces.forEach(workspace => {
+            const orgId = workspace.organization_id;
+            const orgName = workspace.organization_name;
+            
+            if (!organizationsMap.has(orgId)) {
+              organizationsMap.set(orgId, {
+                id: orgId,
+                name: orgName,
+                workspaces: []
+              });
+            }
+            
+            organizationsMap.get(orgId).workspaces.push({
+              id: workspace.id,
+              name: workspace.name,
+              role: workspace.role
+            });
+          });
+
+          const organizations = Array.from(organizationsMap.values());
 
           return {
             id: profile.id,
@@ -118,8 +140,7 @@ export const UserProfileSettings = () => {
             email: profile.email || '',
             avatar_url: profile.avatar_url,
             created_at: profile.created_at || '',
-            workspaces: userWorkspaces,
-            organizations: userOrganizations
+            organizations: organizations
           };
         }) || [];
 
@@ -183,7 +204,7 @@ export const UserProfileSettings = () => {
 
         if (profilesError) throw profilesError;
 
-        // Process profiles with membership info
+        // Process profiles with membership info grouped by organization
         const profilesWithMemberships = profilesData?.map(profile => {
           const userWorkspaces = allWorkspaceMembers
             ?.filter(wm => wm.user_id === profile.id)
@@ -194,11 +215,33 @@ export const UserProfileSettings = () => {
                 id: wm.workspace_id,
                 name: workspace?.name || 'Onbekend',
                 role: wm.role,
+                organization_id: workspace?.organization_id,
                 organization_name: organization?.name || 'Onbekend'
               };
             }) || [];
 
-          const userOrganizations = [...new Set(userWorkspaces.map(w => w.organization_name))];
+          // Group workspaces by organization
+          const organizationsMap = new Map();
+          userWorkspaces.forEach(workspace => {
+            const orgId = workspace.organization_id;
+            const orgName = workspace.organization_name;
+            
+            if (!organizationsMap.has(orgId)) {
+              organizationsMap.set(orgId, {
+                id: orgId,
+                name: orgName,
+                workspaces: []
+              });
+            }
+            
+            organizationsMap.get(orgId).workspaces.push({
+              id: workspace.id,
+              name: workspace.name,
+              role: workspace.role
+            });
+          });
+
+          const organizations = Array.from(organizationsMap.values());
 
           return {
             id: profile.id,
@@ -206,8 +249,7 @@ export const UserProfileSettings = () => {
             email: profile.email || '',
             avatar_url: profile.avatar_url,
             created_at: profile.created_at || '',
-            workspaces: userWorkspaces,
-            organizations: userOrganizations
+            organizations: organizations
           };
         }) || [];
 
@@ -441,67 +483,45 @@ export const UserProfileSettings = () => {
                         <span className="text-xs text-muted-foreground">(jij)</span>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground mb-3">
+                    <p className="text-sm text-muted-foreground mb-4">
                       {profile.email}
                     </p>
                     
                     {profile.organizations && profile.organizations.length > 0 && (
-                      <div className="mb-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Building2 className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-medium">Organisaties:</span>
-                        </div>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Naam</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {profile.organizations.map((orgName, index) => (
-                              <TableRow key={index}>
-                                <TableCell className="font-medium">{orgName}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
+                      <div className="space-y-6">
+                        {profile.organizations.map((organization, orgIndex) => (
+                          <div key={orgIndex} className="border rounded-lg p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Building2 className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium text-base">{organization.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                ({organization.workspaces.length} werkruimte{organization.workspaces.length !== 1 ? 's' : ''})
+                              </span>
+                            </div>
+                            
+                            {organization.workspaces.length > 0 && (
+                              <div className="space-y-2">
+                                {organization.workspaces.map((workspace) => (
+                                  <div key={workspace.id} className="flex items-center justify-between py-2 px-3 bg-muted/30 rounded">
+                                    <div className="flex items-center gap-2">
+                                      <Users className="h-3 w-3 text-muted-foreground" />
+                                      <span className="text-sm font-medium">{workspace.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs bg-muted px-2 py-1 rounded">
+                                        Rol: {workspace.role}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )}
 
-                    {profile.workspaces && profile.workspaces.length > 0 && (
-                      <div className="mb-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-medium">Werkruimtes:</span>
-                        </div>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Naam</TableHead>
-                              <TableHead>Rol</TableHead>
-                              <TableHead>Organisatie</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {profile.workspaces.map((workspace) => (
-                              <TableRow key={workspace.id}>
-                                <TableCell className="font-medium">{workspace.name}</TableCell>
-                                <TableCell>
-                                  <span className="text-xs bg-muted px-2 py-1 rounded">
-                                    {workspace.role}
-                                  </span>
-                                </TableCell>
-                                <TableCell className="text-muted-foreground">
-                                  {workspace.organization_name}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    )}
-
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground mt-4">
                       Aangemaakt: {new Date(profile.created_at).toLocaleDateString('nl-NL')}
                     </p>
                   </div>
