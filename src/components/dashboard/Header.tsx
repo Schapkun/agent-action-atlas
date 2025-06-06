@@ -1,20 +1,8 @@
 
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Menu, Bell, LogOut, ChevronDown, Building, Users } from 'lucide-react';
+import { Menu, Bell, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useOrganization } from '@/contexts/OrganizationContext';
 import { useToast } from '@/hooks/use-toast';
 import type { ViewType } from '@/pages/Index';
 
@@ -25,14 +13,6 @@ interface HeaderProps {
 
 export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
   const { user, signOut } = useAuth();
-  const { 
-    organizations, 
-    currentOrganization, 
-    workspaces, 
-    currentWorkspace, 
-    setCurrentOrganization, 
-    setCurrentWorkspace 
-  } = useOrganization();
   const { toast } = useToast();
 
   const handleLogout = async () => {
@@ -112,92 +92,20 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
           </Button>
           
           {user && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center space-x-2 h-auto p-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.user_metadata?.avatar_url} />
-                    <AvatarFallback>
-                      {getInitials(user.user_metadata?.full_name || user.email || 'U')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col items-start">
-                    <span className="text-sm font-medium text-foreground">
-                      {user.user_metadata?.full_name || user.email}
-                    </span>
-                    <div className="text-xs text-muted-foreground">
-                      {currentOrganization?.name}
-                      {currentWorkspace && ` • ${currentWorkspace.name}`}
-                    </div>
-                  </div>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
-                <DropdownMenuLabel>Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                
-                {/* Organization Selection */}
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Building className="h-4 w-4 mr-2" />
-                    <span>Organisatie</span>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuLabel>Selecteer Organisatie</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {organizations.map((org) => (
-                      <DropdownMenuItem
-                        key={org.id}
-                        onClick={() => setCurrentOrganization(org)}
-                        className={currentOrganization?.id === org.id ? "bg-accent" : ""}
-                      >
-                        <Building className="h-4 w-4 mr-2" />
-                        {org.name}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-
-                {/* Workspace Selection */}
-                {workspaces.length > 0 && (
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <Users className="h-4 w-4 mr-2" />
-                      <span>Werkruimte</span>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuLabel>Selecteer Werkruimte</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => setCurrentWorkspace(null)}
-                        className={!currentWorkspace ? "bg-accent" : ""}
-                      >
-                        <Building className="h-4 w-4 mr-2" />
-                        Alle werkruimtes
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      {workspaces.map((workspace) => (
-                        <DropdownMenuItem
-                          key={workspace.id}
-                          onClick={() => setCurrentWorkspace(workspace)}
-                          className={currentWorkspace?.id === workspace.id ? "bg-accent" : ""}
-                        >
-                          <Users className="h-4 w-4 mr-2" />
-                          {workspace.name}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                )}
-
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Uitloggen
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex items-center space-x-3">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user.user_metadata?.avatar_url} />
+                <AvatarFallback>
+                  {getInitials(user.user_metadata?.full_name || user.email || 'U')}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm font-medium text-foreground hidden md:block">
+                {user.user_metadata?.full_name || user.email}
+              </span>
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
           )}
         </div>
       </div>
