@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { OrganizationSettings } from './OrganizationSettings';
 import { UserManagement } from './UserManagement';
-import { Building, Users, Settings, Plus, AlertCircle } from 'lucide-react';
+import { ProfileManagement } from './ProfileManagement';
+import { Building, Users, Settings, Plus, User, AlertCircle } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -200,7 +201,7 @@ export const OrganizationManager = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="settings" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             Instellingen
@@ -208,6 +209,10 @@ export const OrganizationManager = () => {
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Gebruikersbeheer
+          </TabsTrigger>
+          <TabsTrigger value="profiles" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Gebruikersprofielen
           </TabsTrigger>
         </TabsList>
         
@@ -355,6 +360,10 @@ export const OrganizationManager = () => {
         
         <TabsContent value="users" className="space-y-6">
           <UserManagement />
+        </TabsContent>
+
+        <TabsContent value="profiles" className="space-y-6">
+          <ProfileManagement />
         </TabsContent>
       </Tabs>
     </div>

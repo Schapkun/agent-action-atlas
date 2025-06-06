@@ -12,7 +12,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Menu, Bell, LogOut, ChevronDown, Building, Users } from 'lucide-react';
+import { Menu, Bell, LogOut, ChevronDown, Building, Users, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useToast } from '@/hooks/use-toast';
@@ -21,9 +21,10 @@ import type { ViewType } from '@/pages/Index';
 interface HeaderProps {
   currentView: ViewType;
   onToggleSidebar: () => void;
+  onAccountView?: () => void;
 }
 
-export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
+export const Header = ({ currentView, onToggleSidebar, onAccountView }: HeaderProps) => {
   const { user, signOut } = useAuth();
   const { 
     organizations, 
@@ -75,6 +76,8 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
         return 'Contacten';
       case 'settings':
         return 'Instellingen';
+      case 'my-account':
+        return 'Mijn Account';
       default:
         return 'Dashboard';
     }
@@ -135,6 +138,14 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64">
                 <DropdownMenuLabel>Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                
+                {/* My Account Option */}
+                <DropdownMenuItem onClick={onAccountView}>
+                  <User className="h-4 w-4 mr-2" />
+                  Mijn Account
+                </DropdownMenuItem>
+                
                 <DropdownMenuSeparator />
                 
                 {/* Organization Selection */}

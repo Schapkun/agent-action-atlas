@@ -4,10 +4,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Building, Edit, Save, X } from 'lucide-react';
+import { Building, Edit, Save, X, Trash } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export const OrganizationSettings = () => {
   const { 
@@ -66,6 +77,39 @@ export const OrganizationSettings = () => {
     }
   };
 
+  const deleteOrganization = async (orgId: string) => {
+    setLoading(true);
+    try {
+      // First delete all related data
+      await supabase.from('organization_members').delete().eq('organization_id', orgId);
+      await supabase.from('workspaces').delete().eq('organization_id', orgId);
+      
+      // Then delete the organization
+      const { error } = await supabase
+        .from('organizations')
+        .delete()
+        .eq('id', orgId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Organisatie verwijderd",
+        description: "De organisatie is succesvol verwijderd.",
+      });
+
+      refreshOrganizations();
+    } catch (error: any) {
+      console.error('Error deleting organization:', error);
+      toast({
+        title: "Error",
+        description: "Kon organisatie niet verwijderen: " + error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="grid gap-3">
       {organizations.map((org) => (
@@ -107,13 +151,43 @@ export const OrganizationSettings = () => {
             )}
           </div>
           {editingOrg !== org.id && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => startEditOrg(org)}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => startEditOrg(org)}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Organisatie verwijderen</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Weet je zeker dat je de organisatie "{org.name}" wilt verwijderen? 
+                      Dit verwijdert ook alle bijbehorende werkruimtes en kan niet ongedaan worden gemaakt.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => deleteOrganization(org.id)}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Verwijderen
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           )}
         </div>
       ))}

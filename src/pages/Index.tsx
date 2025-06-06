@@ -13,9 +13,10 @@ import { EmailManager } from '@/components/dashboard/EmailManager';
 import { ContactManager } from '@/components/dashboard/ContactManager';
 import { PendingTasks } from '@/components/dashboard/PendingTasks';
 import { OrganizationManager } from '@/components/dashboard/OrganizationManager';
+import { MyAccount } from '@/components/dashboard/MyAccount';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
-export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
+export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'phone-calls' | 'emails' | 'contacts' | 'settings' | 'my-account';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>('overview');
@@ -50,6 +51,8 @@ const Index = () => {
         return <ContactManager />;
       case 'settings':
         return <OrganizationManager />;
+      case 'my-account':
+        return <MyAccount />;
       default:
         return null;
     }
@@ -68,6 +71,7 @@ const Index = () => {
           <Header 
             currentView={currentView}
             onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+            onAccountView={() => setCurrentView('my-account')}
           />
           <main className="flex-1 overflow-auto p-6">
             {renderContent()}
