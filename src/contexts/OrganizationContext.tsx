@@ -54,11 +54,8 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const refreshOrganizations = async () => {
     if (!user) {
-      console.log('No user found, skipping organization refresh');
       return;
     }
-
-    console.log('Refreshing organizations for user:', user.id);
 
     try {
       const { data, error } = await supabase
@@ -68,8 +65,6 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           organization_members!inner(user_id)
         `)
         .eq('organization_members.user_id', user.id);
-
-      console.log('Organizations query result:', { data, error });
 
       if (error) throw error;
 
@@ -81,12 +76,10 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         updated_at: item.updated_at
       }));
 
-      console.log('Mapped organizations:', orgs);
       setOrganizations(orgs);
 
       // Set first organization as current if none selected
       if (orgs.length > 0 && !currentOrganization) {
-        console.log('Setting current organization to:', orgs[0]);
         setCurrentOrganization(orgs[0]);
       }
     } catch (error: any) {
@@ -101,11 +94,8 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const refreshWorkspaces = async () => {
     if (!user || !currentOrganization) {
-      console.log('No user or current organization, skipping workspace refresh');
       return;
     }
-
-    console.log('Refreshing workspaces for organization:', currentOrganization.id);
 
     try {
       const { data, error } = await supabase
@@ -113,15 +103,12 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         .select('*')
         .eq('organization_id', currentOrganization.id);
 
-      console.log('Workspaces query result:', { data, error });
-
       if (error) throw error;
 
       setWorkspaces(data || []);
 
       // Set first workspace as current if none selected
       if (data && data.length > 0 && !currentWorkspace) {
-        console.log('Setting current workspace to:', data[0]);
         setCurrentWorkspace(data[0]);
       }
     } catch (error: any) {
@@ -135,7 +122,6 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   useEffect(() => {
-    console.log('OrganizationContext useEffect triggered, user:', user?.id);
     if (user) {
       refreshOrganizations();
     } else {
@@ -148,7 +134,6 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [user]);
 
   useEffect(() => {
-    console.log('Current organization changed:', currentOrganization?.id);
     if (currentOrganization) {
       refreshWorkspaces();
     } else {
