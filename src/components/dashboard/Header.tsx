@@ -125,11 +125,10 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
                     <span className="text-sm font-medium text-foreground">
                       {user.user_metadata?.full_name || user.email}
                     </span>
-                    {currentOrganization && (
-                      <span className="text-xs text-muted-foreground">
-                        {currentOrganization.name}
-                      </span>
-                    )}
+                    <div className="text-xs text-muted-foreground">
+                      {currentOrganization?.name}
+                      {currentWorkspace && ` • ${currentWorkspace.name}`}
+                    </div>
                   </div>
                   <ChevronDown className="h-4 w-4" />
                 </Button>
@@ -169,6 +168,14 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent>
                       <DropdownMenuLabel>Selecteer Werkruimte</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => setCurrentWorkspace(null)}
+                        className={!currentWorkspace ? "bg-accent" : ""}
+                      >
+                        <Building className="h-4 w-4 mr-2" />
+                        Alle werkruimtes
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       {workspaces.map((workspace) => (
                         <DropdownMenuItem

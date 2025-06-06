@@ -28,7 +28,7 @@ interface OrganizationContextType {
   currentWorkspace: Workspace | null;
   loading: boolean;
   setCurrentOrganization: (org: Organization) => void;
-  setCurrentWorkspace: (workspace: Workspace) => void;
+  setCurrentWorkspace: (workspace: Workspace | null) => void;
   refreshOrganizations: () => Promise<void>;
   refreshWorkspaces: () => Promise<void>;
 }
@@ -136,12 +136,9 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (error) throw error;
 
       setWorkspaces(data || []);
-
-      // Set first workspace as current if none selected
-      if (data && data.length > 0 && !currentWorkspace) {
-        console.log('Setting current workspace to:', data[0]);
-        setCurrentWorkspace(data[0]);
-      }
+      
+      // Don't automatically set workspace - let user choose
+      // This allows showing all data when no workspace is selected
     } catch (error: any) {
       console.error('Error fetching workspaces:', error);
       toast({
@@ -150,6 +147,12 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         variant: "destructive",
       });
     }
+  };
+
+  // Handle workspace selection with null option for "all workspaces"
+  const handleSetCurrentWorkspace = (workspace: Workspace | null) => {
+    console.log('Setting current workspace to:', workspace?.name || 'All workspaces');
+    setCurrentWorkspace(workspace);
   };
 
   useEffect(() => {
@@ -168,6 +171,8 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   useEffect(() => {
     console.log('OrganizationContext useEffect: currentOrganization changed:', currentOrganization?.id);
     if (currentOrganization) {
+      // Reset workspace selection when organization changes
+      setCurrentWorkspace(null);
       refreshWorkspaces();
     } else {
       setWorkspaces([]);
@@ -182,7 +187,7 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     currentWorkspace,
     loading,
     setCurrentOrganization,
-    setCurrentWorkspace,
+    setCurrentWorkspace: handleSetCurrentWorkspace,
     refreshOrganizations,
     refreshWorkspaces,
   };
