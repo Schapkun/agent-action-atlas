@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
@@ -53,27 +54,19 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const createDefaultOrganization = async () => {
     if (!user) {
-      console.log('createDefaultOrganization: No user found');
+      console.log('No user found, cannot create organization');
       return null;
     }
 
     try {
       console.log('Creating default organization for user:', user.id);
       
-      // Get user name from profile or email
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('full_name, email')
-        .eq('id', user.id)
-        .single();
-
-      console.log('Profile query result:', { profile, profileError });
-
-      const userName = profile?.full_name || profile?.email?.split('@')[0] || user.email?.split('@')[0] || 'Gebruiker';
+      // Use user email for organization name
+      const userName = user.email?.split('@')[0] || 'Gebruiker';
       const orgName = `${userName}'s Organisatie`;
       const orgSlug = orgName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
-      console.log('Creating org with name:', orgName, 'slug:', orgSlug);
+      console.log('Organization details:', { orgName, orgSlug });
 
       // Create organization
       const { data: org, error: orgError } = await supabase
@@ -85,9 +78,12 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         .select()
         .single();
 
-      console.log('Organization creation result:', { org, orgError });
+      if (orgError) {
+        console.error('Organization creation error:', orgError);
+        throw orgError;
+      }
 
-      if (orgError) throw orgError;
+      console.log('Organization created successfully:', org);
 
       // Add user as organization owner
       const { error: memberError } = await supabase
@@ -98,9 +94,12 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           role: 'owner'
         });
 
-      console.log('Organization member creation result:', { memberError });
+      if (memberError) {
+        console.error('Organization member creation error:', memberError);
+        throw memberError;
+      }
 
-      if (memberError) throw memberError;
+      console.log('User added as organization owner');
 
       // Create default workspace
       const { data: workspace, error: workspaceError } = await supabase
@@ -113,9 +112,12 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         .select()
         .single();
 
-      console.log('Workspace creation result:', { workspace, workspaceError });
+      if (workspaceError) {
+        console.error('Workspace creation error:', workspaceError);
+        throw workspaceError;
+      }
 
-      if (workspaceError) throw workspaceError;
+      console.log('Default workspace created:', workspace);
 
       // Add user as workspace admin
       const { error: workspaceMemberError } = await supabase
@@ -126,15 +128,16 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           role: 'admin'
         });
 
-      console.log('Workspace member creation result:', { workspaceMemberError });
+      if (workspaceMemberError) {
+        console.error('Workspace member creation error:', workspaceMemberError);
+        throw workspaceMemberError;
+      }
 
-      if (workspaceMemberError) throw workspaceMemberError;
+      console.log('User added as workspace admin');
 
-      console.log('Default organization created successfully:', org);
-      
       toast({
-        title: "Welkom!",
-        description: `Je eerste organisatie "${orgName}" is aangemaakt.`,
+        title: "Organisatie aangemaakt!",
+        description: `Je organisatie "${orgName}" is succesvol aangemaakt.`,
       });
 
       return org;
@@ -142,7 +145,7 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       console.error('Error creating default organization:', error);
       toast({
         title: "Error",
-        description: "Kon standaard organisatie niet aanmaken: " + error.message,
+        description: "Kon organisatie niet aanmaken. Probeer het opnieuw.",
         variant: "destructive",
       });
       return null;
@@ -151,17 +154,18 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const refreshOrganizations = async () => {
     if (!user) {
-      console.log('refreshOrganizations: No user found');
+      console.log('No user found, skipping organization refresh');
       setOrganizations([]);
       setCurrentOrganization(null);
       setLoading(false);
       return;
     }
 
-    console.log('refreshOrganizations: Starting for user:', user.id);
+    console.log('Fetching organizations for user:', user.id);
+    setLoading(true);
 
     try {
-      // Query organizations through organization_members to get only user's orgs
+      // Get organizations where user is a member
       const { data: memberData, error: memberError } = await supabase
         .from('organization_members')
         .select(`
@@ -170,12 +174,11 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         `)
         .eq('user_id', user.id);
 
-      console.log('Organization members query result:', { memberData, memberError });
-
       if (memberError) {
         console.error('Error fetching organization members:', memberError);
-        // If no organizations found, create a default one
-        console.log('No organizations found, creating default...');
+        
+        // If we get an error, try to create a default organization
+        console.log('Attempting to create default organization...');
         const defaultOrg = await createDefaultOrganization();
         if (defaultOrg) {
           setOrganizations([defaultOrg]);
@@ -185,11 +188,12 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return;
       }
 
+      console.log('Organization members data:', memberData);
+
       // Extract organizations from the join result
       const orgs = memberData?.map(member => member.organizations).filter(Boolean) || [];
       console.log('Found organizations:', orgs);
       
-      // If no organizations found, create a default one
       if (orgs.length === 0) {
         console.log('No organizations found, creating default...');
         const defaultOrg = await createDefaultOrganization();
@@ -197,32 +201,17 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           setOrganizations([defaultOrg]);
           setCurrentOrganization(defaultOrg);
         }
-        setLoading(false);
-        return;
-      }
-
-      setOrganizations(orgs);
-
-      // Set first organization as current if none selected
-      if (orgs.length > 0 && !currentOrganization) {
-        console.log('Setting current organization to:', orgs[0]);
-        setCurrentOrganization(orgs[0]);
+      } else {
+        setOrganizations(orgs);
+        if (!currentOrganization && orgs.length > 0) {
+          setCurrentOrganization(orgs[0]);
+        }
       }
     } catch (error: any) {
-      console.error('Error in refreshOrganizations:', error);
-      // Try to create default organization on error too
-      console.log('Error occurred, trying to create default organization...');
-      const defaultOrg = await createDefaultOrganization();
-      if (defaultOrg) {
-        setOrganizations([defaultOrg]);
-        setCurrentOrganization(defaultOrg);
-      } else {
-        setOrganizations([]);
-        setCurrentOrganization(null);
-      }
+      console.error('Unexpected error in refreshOrganizations:', error);
       toast({
         title: "Error",
-        description: "Kon organisaties niet laden: " + error.message,
+        description: "Er ging iets mis bij het laden van organisaties.",
         variant: "destructive",
       });
     }
@@ -232,20 +221,15 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const refreshWorkspaces = async () => {
     if (!user || !currentOrganization) {
-      console.log('refreshWorkspaces: Missing user or current organization');
       setWorkspaces([]);
       return;
     }
-
-    console.log('refreshWorkspaces: Starting for organization:', currentOrganization.id);
 
     try {
       const { data, error } = await supabase
         .from('workspaces')
         .select('*')
         .eq('organization_id', currentOrganization.id);
-
-      console.log('Workspaces query result:', { data, error });
 
       if (error) {
         console.error('Error fetching workspaces:', error);
@@ -257,21 +241,15 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } catch (error: any) {
       console.error('Error fetching workspaces:', error);
       setWorkspaces([]);
-      toast({
-        title: "Error",
-        description: "Kon werkruimtes niet laden: " + error.message,
-        variant: "destructive",
-      });
     }
   };
 
   const handleSetCurrentWorkspace = (workspace: Workspace | null) => {
-    console.log('Setting current workspace to:', workspace?.name || 'All workspaces');
     setCurrentWorkspace(workspace);
   };
 
   useEffect(() => {
-    console.log('OrganizationContext useEffect: user changed:', user?.id);
+    console.log('User changed, refreshing organizations');
     if (user) {
       refreshOrganizations();
     } else {
@@ -284,7 +262,6 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [user]);
 
   useEffect(() => {
-    console.log('OrganizationContext useEffect: currentOrganization changed:', currentOrganization?.id);
     if (currentOrganization) {
       setCurrentWorkspace(null);
       refreshWorkspaces();
