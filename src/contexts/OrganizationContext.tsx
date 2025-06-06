@@ -63,7 +63,7 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     console.log('refreshOrganizations: Starting for user:', user.id);
 
     try {
-      // Direct query to organizations table using RLS
+      // Use the RLS policies to get organizations
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .select('*');
