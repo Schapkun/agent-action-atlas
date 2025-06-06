@@ -45,54 +45,100 @@ export const OrganizationSettings = () => {
     
     try {
       console.log('Fetching organizations for user:', user.id);
+      console.log('User email:', user.email);
       
-      // Get organizations through membership
-      const { data: membershipData, error: membershipError } = await supabase
-        .from('organization_members')
-        .select('role, organization_id')
-        .eq('user_id', user.id);
+      // Check if user is the account owner (Michael Schapkun)
+      const isAccountOwner = user.email === 'info@schapkun.com';
+      console.log('Is account owner:', isAccountOwner);
+      
+      if (isAccountOwner) {
+        // If account owner, show ALL organizations
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .select('id, name, slug, created_at')
+          .order('created_at', { ascending: false });
 
-      if (membershipError) {
-        console.error('Membership fetch error:', membershipError);
-        throw membershipError;
+        if (orgError) {
+          console.error('Organizations fetch error:', orgError);
+          throw orgError;
+        }
+
+        console.log('All organization data (account owner):', orgData);
+
+        // For account owner, get membership info but don't filter by it
+        const { data: membershipData, error: membershipError } = await supabase
+          .from('organization_members')
+          .select('role, organization_id')
+          .eq('user_id', user.id);
+
+        if (membershipError) {
+          console.log('Membership fetch error (non-critical for account owner):', membershipError);
+        }
+
+        console.log('Membership data for account owner:', membershipData);
+
+        // Combine data with role information where available
+        const orgsWithRoles = orgData?.map(org => {
+          const membership = membershipData?.find(m => m.organization_id === org.id);
+          return {
+            id: org.id,
+            name: org.name,
+            slug: org.slug,
+            created_at: org.created_at,
+            user_role: membership?.role || 'owner' // Default to owner for account owner
+          };
+        }) || [];
+
+        setOrganizations(orgsWithRoles);
+      } else {
+        // For regular users, use the existing logic
+        const { data: membershipData, error: membershipError } = await supabase
+          .from('organization_members')
+          .select('role, organization_id')
+          .eq('user_id', user.id);
+
+        if (membershipError) {
+          console.error('Membership fetch error:', membershipError);
+          throw membershipError;
+        }
+
+        console.log('Membership data:', membershipData);
+
+        if (!membershipData || membershipData.length === 0) {
+          console.log('No memberships found');
+          setOrganizations([]);
+          setLoading(false);
+          return;
+        }
+
+        // Get organization details
+        const orgIds = membershipData.map(m => m.organization_id);
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .select('id, name, slug, created_at')
+          .in('id', orgIds);
+
+        if (orgError) {
+          console.error('Organizations fetch error:', orgError);
+          throw orgError;
+        }
+
+        console.log('Organization data:', orgData);
+
+        // Combine membership and organization data
+        const orgsWithRoles = orgData?.map(org => {
+          const membership = membershipData.find(m => m.organization_id === org.id);
+          return {
+            id: org.id,
+            name: org.name,
+            slug: org.slug,
+            created_at: org.created_at,
+            user_role: membership?.role
+          };
+        }) || [];
+
+        setOrganizations(orgsWithRoles);
       }
-
-      console.log('Membership data:', membershipData);
-
-      if (!membershipData || membershipData.length === 0) {
-        console.log('No memberships found');
-        setOrganizations([]);
-        setLoading(false);
-        return;
-      }
-
-      // Get organization details
-      const orgIds = membershipData.map(m => m.organization_id);
-      const { data: orgData, error: orgError } = await supabase
-        .from('organizations')
-        .select('id, name, slug, created_at')
-        .in('id', orgIds);
-
-      if (orgError) {
-        console.error('Organizations fetch error:', orgError);
-        throw orgError;
-      }
-
-      console.log('Organization data:', orgData);
-
-      // Combine membership and organization data
-      const orgsWithRoles = orgData?.map(org => {
-        const membership = membershipData.find(m => m.organization_id === org.id);
-        return {
-          id: org.id,
-          name: org.name,
-          slug: org.slug,
-          created_at: org.created_at,
-          user_role: membership?.role
-        };
-      }) || [];
-
-      setOrganizations(orgsWithRoles);
     } catch (error) {
       console.error('Error fetching organizations:', error);
       setError('Kon organisaties niet ophalen. Controleer je internetverbinding en probeer opnieuw.');
@@ -337,7 +383,7 @@ export const OrganizationSettings = () => {
                     </p>
                   </div>
                   <div className="flex space-x-2">
-                    {org.user_role === 'owner' && (
+                    {(org.user_role === 'owner' || user?.email === 'info@schapkun.com') && (
                       <>
                         <Button
                           variant="outline"
