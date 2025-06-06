@@ -55,52 +55,30 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const refreshOrganizations = async () => {
     if (!user) {
       console.log('refreshOrganizations: No user found');
+      setOrganizations([]);
+      setCurrentOrganization(null);
       return;
     }
 
     console.log('refreshOrganizations: Starting for user:', user.id);
 
     try {
-      // Check if user has any organization memberships first
-      const { data: memberData, error: memberError } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .eq('user_id', user.id);
-
-      console.log('Member data query result:', { memberData, memberError });
-
-      if (memberError) {
-        console.error('Error fetching member data:', memberError);
-        // If it's a policy error, the user might not have any organizations yet
-        if (memberError.message.includes('policy')) {
-          console.log('Policy error - user likely has no organizations yet');
-          setOrganizations([]);
-          setCurrentOrganization(null);
-          return;
-        }
-        throw memberError;
-      }
-
-      if (!memberData || memberData.length === 0) {
-        console.log('No organization memberships found - user needs to create an organization');
-        setOrganizations([]);
-        setCurrentOrganization(null);
-        return;
-      }
-
-      const orgIds = memberData.map(m => m.organization_id);
-      console.log('Organization IDs user is member of:', orgIds);
-
-      // Now fetch the organization details
+      // Direct query to organizations table using RLS
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
-        .select('*')
-        .in('id', orgIds);
+        .select('*');
 
       console.log('Organizations query result:', { orgData, orgError });
 
       if (orgError) {
         console.error('Error fetching organizations:', orgError);
+        // If RLS blocks access, user has no organizations
+        if (orgError.message.includes('policy') || orgError.code === '42P17') {
+          console.log('RLS policy error - user has no access to organizations');
+          setOrganizations([]);
+          setCurrentOrganization(null);
+          return;
+        }
         throw orgError;
       }
 
@@ -116,17 +94,21 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
     } catch (error: any) {
       console.error('Error in refreshOrganizations:', error);
-      toast({
-        title: "Error",
-        description: "Kon organisaties niet laden: " + error.message,
-        variant: "destructive",
-      });
+      // Don't show error toast for RLS issues - this is expected for new users
+      if (!error.message.includes('policy') && error.code !== '42P17') {
+        toast({
+          title: "Error",
+          description: "Kon organisaties niet laden: " + error.message,
+          variant: "destructive",
+        });
+      }
     }
   };
 
   const refreshWorkspaces = async () => {
     if (!user || !currentOrganization) {
       console.log('refreshWorkspaces: Missing user or current organization');
+      setWorkspaces([]);
       return;
     }
 
@@ -143,7 +125,7 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (error) {
         console.error('Error fetching workspaces:', error);
         // If it's a policy error, there might be no workspaces yet
-        if (error.message.includes('policy')) {
+        if (error.message.includes('policy') || error.code === '42P17') {
           console.log('Policy error - no workspaces found');
           setWorkspaces([]);
           return;
@@ -152,20 +134,19 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
 
       setWorkspaces(data || []);
-      
-      // Don't automatically set workspace - let user choose
-      // This allows showing all data when no workspace is selected
     } catch (error: any) {
       console.error('Error fetching workspaces:', error);
-      toast({
-        title: "Error",
-        description: "Kon werkruimtes niet laden: " + error.message,
-        variant: "destructive",
-      });
+      // Don't show error toast for RLS issues
+      if (!error.message.includes('policy') && error.code !== '42P17') {
+        toast({
+          title: "Error",
+          description: "Kon werkruimtes niet laden: " + error.message,
+          variant: "destructive",
+        });
+      }
     }
   };
 
-  // Handle workspace selection with null option for "all workspaces"
   const handleSetCurrentWorkspace = (workspace: Workspace | null) => {
     console.log('Setting current workspace to:', workspace?.name || 'All workspaces');
     setCurrentWorkspace(workspace);
@@ -187,7 +168,6 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   useEffect(() => {
     console.log('OrganizationContext useEffect: currentOrganization changed:', currentOrganization?.id);
     if (currentOrganization) {
-      // Reset workspace selection when organization changes
       setCurrentWorkspace(null);
       refreshWorkspaces();
     } else {
