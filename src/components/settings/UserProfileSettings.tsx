@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -435,7 +436,7 @@ export const UserProfileSettings = () => {
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <CardTitle className="text-lg">{profile.full_name}</CardTitle>
+                      <CardTitle className="text-xl">{profile.full_name}</CardTitle>
                       {profile.id === user?.id && (
                         <span className="text-xs text-muted-foreground">(jij)</span>
                       )}
@@ -445,36 +446,58 @@ export const UserProfileSettings = () => {
                     </p>
                     
                     {profile.organizations && profile.organizations.length > 0 && (
-                      <div className="mb-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Building2 className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs font-medium text-muted-foreground">Organisaties:</span>
+                      <div className="mb-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">Organisaties:</span>
                         </div>
-                        <div className="flex flex-wrap gap-1">
-                          {profile.organizations.map((orgName, index) => (
-                            <span key={index} className="text-xs bg-muted px-2 py-1 rounded">
-                              {orgName}
-                            </span>
-                          ))}
-                        </div>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Naam</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {profile.organizations.map((orgName, index) => (
+                              <TableRow key={index}>
+                                <TableCell className="font-medium">{orgName}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
                       </div>
                     )}
 
                     {profile.workspaces && profile.workspaces.length > 0 && (
-                      <div className="mb-2">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Users className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs font-medium text-muted-foreground">Werkruimtes:</span>
+                      <div className="mb-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">Werkruimtes:</span>
                         </div>
-                        <div className="space-y-1">
-                          {profile.workspaces.map((workspace) => (
-                            <div key={workspace.id} className="text-xs bg-muted/50 px-2 py-1 rounded">
-                              <span className="font-medium">{workspace.name}</span>
-                              <span className="text-muted-foreground"> • {workspace.role}</span>
-                              <span className="text-muted-foreground"> • {workspace.organization_name}</span>
-                            </div>
-                          ))}
-                        </div>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Naam</TableHead>
+                              <TableHead>Rol</TableHead>
+                              <TableHead>Organisatie</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {profile.workspaces.map((workspace) => (
+                              <TableRow key={workspace.id}>
+                                <TableCell className="font-medium">{workspace.name}</TableCell>
+                                <TableCell>
+                                  <span className="text-xs bg-muted px-2 py-1 rounded">
+                                    {workspace.role}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-muted-foreground">
+                                  {workspace.organization_name}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
                       </div>
                     )}
 
