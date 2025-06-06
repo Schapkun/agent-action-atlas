@@ -60,13 +60,13 @@ export const MyAccount = () => {
     if (!user) return;
 
     try {
-      // Get organization memberships
+      // Get organization memberships with organization names
       const { data: orgMemberships, error: orgError } = await supabase
         .from('organization_members')
         .select(`
           organization_id,
           role,
-          organizations!inner(name)
+          organizations!organization_members_organization_id_fkey(name)
         `)
         .eq('user_id', user.id);
 
@@ -75,13 +75,13 @@ export const MyAccount = () => {
         return;
       }
 
-      // Get workspace memberships
+      // Get workspace memberships with workspace details
       const { data: workspaceMemberships, error: workspaceError } = await supabase
         .from('workspace_members')
         .select(`
           workspace_id,
           role,
-          workspaces!inner(id, name, organization_id)
+          workspaces!workspace_members_workspace_id_fkey(id, name, organization_id)
         `)
         .eq('user_id', user.id);
 
@@ -93,16 +93,16 @@ export const MyAccount = () => {
       // Combine data
       const combinedMemberships = orgMemberships?.map(org => {
         const orgWorkspaces = workspaceMemberships?.filter(
-          ws => ws.workspaces.organization_id === org.organization_id
+          ws => ws.workspaces?.organization_id === org.organization_id
         ).map(ws => ({
-          id: ws.workspaces.id,
-          name: ws.workspaces.name,
+          id: ws.workspaces?.id || '',
+          name: ws.workspaces?.name || '',
           role: ws.role
         })) || [];
 
         return {
           organization_id: org.organization_id,
-          organization_name: org.organizations.name,
+          organization_name: org.organizations?.name || '',
           role: org.role,
           workspaces: orgWorkspaces
         };
