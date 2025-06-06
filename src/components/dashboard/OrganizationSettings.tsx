@@ -247,7 +247,7 @@ export const OrganizationSettings = () => {
               ))}
             </div>
           </CardContent>
-        </CardContent>
+        </Card>
       )}
     </div>
   );
