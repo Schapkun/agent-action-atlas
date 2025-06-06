@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -299,11 +298,13 @@ export const UserProfileSettings = () => {
     if (!user?.id) return;
 
     try {
-      console.log('Fetching invited users');
+      console.log('Fetching invited users for user:', user.email);
 
       const isAccountOwner = user.email === 'info@schapkun.com';
 
       if (isAccountOwner) {
+        console.log('User is account owner, fetching all invitations');
+        
         // Account owner sees all invitations
         const { data: invitationsData, error: invitationsError } = await supabase
           .from('user_invitations')
@@ -323,9 +324,26 @@ export const UserProfileSettings = () => {
           .order('created_at', { ascending: false });
 
         if (invitationsError) {
-          console.error('Invitations error:', invitationsError);
-          throw invitationsError;
+          console.error('Invitations error details:', {
+            message: invitationsError.message,
+            code: invitationsError.code,
+            details: invitationsError.details,
+            hint: invitationsError.hint
+          });
+          
+          // Show a more specific error message
+          toast({
+            title: "Fout bij ophalen uitnodigingen",
+            description: `Database fout: ${invitationsError.message} (Code: ${invitationsError.code})`,
+            variant: "destructive",
+          });
+          
+          // Set empty array instead of throwing error
+          setInvitedUsers([]);
+          return;
         }
+
+        console.log('Found invitations:', invitationsData?.length || 0);
 
         // Get invited_by user names separately
         const invitedByIds = [...new Set(invitationsData?.map(inv => inv.invited_by).filter(Boolean) || [])];
@@ -360,6 +378,8 @@ export const UserProfileSettings = () => {
 
         setInvitedUsers(processedInvitations);
       } else {
+        console.log('Regular user, fetching organization-based invitations');
+        
         // Regular users see invitations from their organizations
         const { data: membershipData, error: membershipError } = await supabase
           .from('workspace_members')
@@ -368,7 +388,8 @@ export const UserProfileSettings = () => {
 
         if (membershipError) {
           console.error('Membership error:', membershipError);
-          throw membershipError;
+          setInvitedUsers([]);
+          return;
         }
 
         if (!membershipData || membershipData.length === 0) {
@@ -384,7 +405,8 @@ export const UserProfileSettings = () => {
 
         if (workspaceDataError) {
           console.error('Workspace data error:', workspaceDataError);
-          throw workspaceDataError;
+          setInvitedUsers([]);
+          return;
         }
 
         const orgIds = [...new Set(workspaceData?.map(w => w.organization_id) || [])];
@@ -409,7 +431,8 @@ export const UserProfileSettings = () => {
 
         if (invitationsError) {
           console.error('Invitations error:', invitationsError);
-          throw invitationsError;
+          setInvitedUsers([]);
+          return;
         }
 
         // Get invited_by user names separately
@@ -446,10 +469,14 @@ export const UserProfileSettings = () => {
         setInvitedUsers(processedInvitations);
       }
     } catch (error) {
-      console.error('Error fetching invited users:', error);
+      console.error('Unexpected error fetching invited users:', error);
+      
+      // Always set empty array on error and show a generic message
+      setInvitedUsers([]);
+      
       toast({
-        title: "Error",
-        description: "Kon uitgenodigde gebruikers niet ophalen",
+        title: "Waarschuwing",
+        description: "Uitgenodigde gebruikers konden niet worden geladen. Andere functies werken nog wel.",
         variant: "destructive",
       });
     }
