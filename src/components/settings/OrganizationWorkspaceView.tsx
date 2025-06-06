@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,8 +53,8 @@ export const OrganizationWorkspaceView = () => {
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
   const [newOrgName, setNewOrgName] = useState('');
   const [newWorkspace, setNewWorkspace] = useState({ name: '', organization_id: '' });
-  const [selectedOrgUsers, setSelectedOrgUsers] = useState<UserProfile[]>([]);
-  const [selectedOrgName, setSelectedOrgName] = useState('');
+  const [selectedWorkspaceUsers, setSelectedWorkspaceUsers] = useState<UserProfile[]>([]);
+  const [selectedWorkspaceName, setSelectedWorkspaceName] = useState('');
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -97,31 +96,13 @@ export const OrganizationWorkspaceView = () => {
         setOrganizations(orgsWithRoles);
         setWorkspaces(workspacesWithRoles);
       } else {
-        // Fetch organizations and workspaces for regular users
-        const [orgMembership, workspaceMembership] = await Promise.all([
-          supabase.from('organization_members').select('role, organization_id').eq('user_id', user.id),
-          supabase.from('workspace_members').select('role, workspace_id').eq('user_id', user.id)
-        ]);
+        // For regular users, fetch based on workspace membership first
+        const workspaceMembership = await supabase
+          .from('workspace_members')
+          .select('role, workspace_id')
+          .eq('user_id', user.id);
 
-        if (orgMembership.error) throw orgMembership.error;
         if (workspaceMembership.error) throw workspaceMembership.error;
-
-        if (orgMembership.data && orgMembership.data.length > 0) {
-          const orgIds = orgMembership.data.map(m => m.organization_id);
-          const { data: orgData, error: orgError } = await supabase
-            .from('organizations')
-            .select('id, name, slug, created_at')
-            .in('id', orgIds);
-
-          if (orgError) throw orgError;
-
-          const orgsWithRoles = orgData?.map(org => {
-            const membership = orgMembership.data.find(m => m.organization_id === org.id);
-            return { ...org, user_role: membership?.role };
-          }) || [];
-
-          setOrganizations(orgsWithRoles);
-        }
 
         if (workspaceMembership.data && workspaceMembership.data.length > 0) {
           const workspaceIds = workspaceMembership.data.map(m => m.workspace_id);
@@ -138,6 +119,25 @@ export const OrganizationWorkspaceView = () => {
           }) || [];
 
           setWorkspaces(workspacesWithRoles);
+
+          // Get unique organization IDs from workspaces
+          const orgIds = [...new Set(workspacesWithRoles.map(w => w.organization_id))];
+          
+          if (orgIds.length > 0) {
+            const { data: orgData, error: orgError } = await supabase
+              .from('organizations')
+              .select('id, name, slug, created_at')
+              .in('id', orgIds);
+
+            if (orgError) throw orgError;
+
+            const orgsWithRoles = orgData?.map(org => ({
+              ...org,
+              user_role: 'member' // Default role through workspace membership
+            })) || [];
+
+            setOrganizations(orgsWithRoles);
+          }
         }
       }
     } catch (error) {
@@ -166,17 +166,31 @@ export const OrganizationWorkspaceView = () => {
 
       if (orgError) throw orgError;
 
-      await supabase
-        .from('organization_members')
+      // Create default workspace for new organization
+      const { data: workspaceData, error: workspaceError } = await supabase
+        .from('workspaces')
         .insert({
-          organization_id: orgData.id,
+          name: 'Hoofd Werkruimte',
+          slug: 'main',
+          organization_id: orgData.id
+        })
+        .select()
+        .single();
+
+      if (workspaceError) throw workspaceError;
+
+      // Add user as workspace admin (this gives access to the organization)
+      await supabase
+        .from('workspace_members')
+        .insert({
+          workspace_id: workspaceData.id,
           user_id: user.id,
-          role: 'owner'
+          role: 'admin'
         });
 
       toast({
         title: "Succes",
-        description: "Organisatie succesvol aangemaakt",
+        description: "Organisatie en standaard werkruimte succesvol aangemaakt",
       });
 
       setNewOrgName('');
@@ -299,7 +313,7 @@ export const OrganizationWorkspaceView = () => {
   };
 
   const deleteOrganization = async (orgId: string, orgName: string) => {
-    if (!confirm(`Weet je zeker dat je organisatie "${orgName}" wilt verwijderen?`)) return;
+    if (!confirm(`Weet je zeker dat je organisatie "${orgName}" wilt verwijderen? Dit verwijdert ook alle bijbehorende werkruimtes.`)) return;
 
     try {
       const { error } = await supabase.from('organizations').delete().eq('id', orgId);
@@ -307,7 +321,7 @@ export const OrganizationWorkspaceView = () => {
 
       toast({
         title: "Succes",
-        description: "Organisatie succesvol verwijderd",
+        description: "Organisatie en alle werkruimtes succesvol verwijderd",
       });
 
       fetchData();
@@ -344,18 +358,18 @@ export const OrganizationWorkspaceView = () => {
     }
   };
 
-  const viewOrganizationUsers = async (orgId: string, orgName: string) => {
+  const viewWorkspaceUsers = async (workspaceId: string, workspaceName: string) => {
     try {
       const { data: membershipData, error: membershipError } = await supabase
-        .from('organization_members')
+        .from('workspace_members')
         .select('user_id, role')
-        .eq('organization_id', orgId);
+        .eq('workspace_id', workspaceId);
 
       if (membershipError) throw membershipError;
 
       if (!membershipData || membershipData.length === 0) {
-        setSelectedOrgUsers([]);
-        setSelectedOrgName(orgName);
+        setSelectedWorkspaceUsers([]);
+        setSelectedWorkspaceName(workspaceName);
         setIsUsersDialogOpen(true);
         return;
       }
@@ -378,11 +392,11 @@ export const OrganizationWorkspaceView = () => {
         };
       }) || [];
 
-      setSelectedOrgUsers(usersWithRoles);
-      setSelectedOrgName(orgName);
+      setSelectedWorkspaceUsers(usersWithRoles);
+      setSelectedWorkspaceName(workspaceName);
       setIsUsersDialogOpen(true);
     } catch (error) {
-      console.error('Error fetching organization users:', error);
+      console.error('Error fetching workspace users:', error);
       toast({
         title: "Error",
         description: "Kon gebruikers niet ophalen",
@@ -533,20 +547,9 @@ export const OrganizationWorkspaceView = () => {
                     <span className="text-xs text-muted-foreground">
                       ({group.workspaces.length} werkruimte{group.workspaces.length !== 1 ? 's' : ''})
                     </span>
-                    <span className="text-xs text-muted-foreground">
-                      • Rol: {group.organization.user_role}
-                    </span>
                   </div>
                   <div className="flex space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => viewOrganizationUsers(group.organization.id, group.organization.name)}
-                      title="Bekijk gebruikers"
-                    >
-                      <Users className="h-3 w-3" />
-                    </Button>
-                    {(group.organization.user_role === 'owner' || user?.email === 'info@schapkun.com') && (
+                    {(user?.email === 'info@schapkun.com') && (
                       <>
                         <Button
                           variant="ghost"
@@ -583,6 +586,14 @@ export const OrganizationWorkspaceView = () => {
                           </p>
                         </div>
                         <div className="flex space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => viewWorkspaceUsers(workspace.id, workspace.name)}
+                            title="Bekijk gebruikers"
+                          >
+                            <Users className="h-3 w-3" />
+                          </Button>
                           {(workspace.user_role === 'admin' || workspace.user_role === 'owner' || user?.email === 'info@schapkun.com') && (
                             <>
                               <Button
@@ -675,16 +686,16 @@ export const OrganizationWorkspaceView = () => {
         </Dialog>
       )}
 
-      {/* Organization Users Dialog */}
+      {/* Workspace Users Dialog */}
       <Dialog open={isUsersDialogOpen} onOpenChange={setIsUsersDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-lg">Gebruikers in {selectedOrgName}</DialogTitle>
+            <DialogTitle className="text-lg">Gebruikers in {selectedWorkspaceName}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {selectedOrgUsers.length === 0 ? (
+            {selectedWorkspaceUsers.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
-                Geen gebruikers gevonden in deze organisatie.
+                Geen gebruikers gevonden in deze werkruimte.
               </p>
             ) : (
               <Table>
@@ -696,7 +707,7 @@ export const OrganizationWorkspaceView = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {selectedOrgUsers.map((userProfile) => (
+                  {selectedWorkspaceUsers.map((userProfile) => (
                     <TableRow key={userProfile.id}>
                       <TableCell className="text-sm">{userProfile.full_name}</TableCell>
                       <TableCell className="text-sm">{userProfile.email}</TableCell>
