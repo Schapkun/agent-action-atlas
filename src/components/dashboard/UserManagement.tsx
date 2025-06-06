@@ -212,7 +212,9 @@ export const UserManagement = () => {
     setLoading(true);
     try {
       console.log('Sending invitation to:', inviteEmail);
-      const { error } = await supabase
+      
+      // Create invitation in database
+      const { data: invitation, error } = await supabase
         .from('user_invitations')
         .insert([{
           email: inviteEmail,
@@ -220,19 +222,54 @@ export const UserManagement = () => {
           workspace_id: currentWorkspace?.id || null,
           role: inviteRole,
           invited_by: user.id
-        }]);
+        }])
+        .select()
+        .single();
 
-      console.log('Invitation creation result:', { error });
+      console.log('Invitation creation result:', { invitation, error });
 
       if (error) {
-        console.error('Error sending invitation:', error);
+        console.error('Error creating invitation:', error);
         throw error;
       }
 
-      toast({
-        title: "Uitnodiging verzonden",
-        description: `Uitnodiging is verzonden naar ${inviteEmail}.`,
-      });
+      // Send email via our edge function
+      try {
+        console.log('Sending invitation email...');
+        const emailResponse = await supabase.functions.invoke('send-invitation-email', {
+          body: {
+            email: inviteEmail,
+            organizationName: currentOrganization.name,
+            inviterName: user.user_metadata?.full_name || user.email || 'Een collega',
+            role: inviteRole,
+            invitationLink: `${window.location.origin}/invitation/${invitation.token}`
+          }
+        });
+
+        console.log('Email response:', emailResponse);
+
+        if (emailResponse.error) {
+          console.error('Error sending email:', emailResponse.error);
+          // Still show success toast since invitation was created
+          toast({
+            title: "Uitnodiging aangemaakt",
+            description: `Uitnodiging is aangemaakt voor ${inviteEmail}, maar de email kon niet worden verzonden.`,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Uitnodiging verzonden",
+            description: `Uitnodiging is verzonden naar ${inviteEmail}.`,
+          });
+        }
+      } catch (emailError) {
+        console.error('Error sending invitation email:', emailError);
+        toast({
+          title: "Uitnodiging aangemaakt",
+          description: `Uitnodiging is aangemaakt voor ${inviteEmail}, maar de email kon niet worden verzonden.`,
+          variant: "destructive",
+        });
+      }
 
       setInviteEmail('');
       setInviteRole('member');

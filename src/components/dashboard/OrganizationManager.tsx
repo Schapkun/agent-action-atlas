@@ -201,7 +201,7 @@ export const OrganizationManager = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="settings" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             Instellingen
@@ -210,22 +210,12 @@ export const OrganizationManager = () => {
             <Users className="h-4 w-4" />
             Gebruikersbeheer
           </TabsTrigger>
-          <TabsTrigger value="create" className="flex items-center gap-2">
-            <Building className="h-4 w-4" />
-            Nieuw Aanmaken
-          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="settings" className="space-y-6">
           <OrganizationSettings />
-        </TabsContent>
-        
-        <TabsContent value="users" className="space-y-6">
-          <UserManagement />
-        </TabsContent>
-        
-        <TabsContent value="create" className="space-y-6">
-          {/* Organizations Section */}
+          
+          {/* Organizations Section with create button */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -299,7 +289,7 @@ export const OrganizationManager = () => {
             </CardContent>
           </Card>
 
-          {/* Workspaces Section */}
+          {/* Workspaces Section with create button */}
           {currentOrganization && (
             <Card>
               <CardHeader>
@@ -379,6 +369,10 @@ export const OrganizationManager = () => {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+        
+        <TabsContent value="users" className="space-y-6">
+          <UserManagement />
         </TabsContent>
       </Tabs>
     </div>
