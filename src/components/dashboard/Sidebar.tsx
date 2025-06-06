@@ -1,4 +1,3 @@
-
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { 
@@ -12,7 +11,8 @@ import {
   FolderX,
   CreditCard,
   Phone,
-  Mail
+  Mail,
+  Users
 } from 'lucide-react';
 import type { ViewType } from '@/pages/Index';
 
@@ -33,6 +33,7 @@ export const Sidebar = ({ currentView, onViewChange, collapsed, onToggleCollapse
     { id: 'invoices' as ViewType, label: 'Facturen', icon: CreditCard },
     { id: 'phone-calls' as ViewType, label: 'Telefoongesprekken', icon: Phone },
     { id: 'emails' as ViewType, label: 'E-mails', icon: Mail },
+    { id: 'contacts' as ViewType, label: 'Contacten', icon: Users },
     { id: 'settings' as ViewType, label: 'Instellingen', icon: Settings },
   ];
 

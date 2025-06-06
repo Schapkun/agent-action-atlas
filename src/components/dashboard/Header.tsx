@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Menu, Bell, User } from 'lucide-react';
 import type { ViewType } from '@/pages/Index';
@@ -27,6 +26,8 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
         return 'Telefoongesprekken';
       case 'emails':
         return 'E-mails';
+      case 'contacts':
+        return 'Contacten';
       case 'settings':
         return 'Instellingen';
       default:
