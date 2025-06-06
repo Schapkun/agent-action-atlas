@@ -14,8 +14,8 @@ import {
   Folder,
   UserPlus,
   Mail,
-  Calendar,
-  AlertCircle
+  AlertCircle,
+  Trash
 } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -396,7 +396,7 @@ export const OrganizationManager = () => {
                           onClick={() => deleteWorkspace(workspace.id, workspace.name)}
                           disabled={loading}
                         >
-                          Verwijderen
+                          <Trash className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
