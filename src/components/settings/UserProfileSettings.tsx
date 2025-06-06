@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,11 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Trash2, Edit, Mail, Shield, User } from 'lucide-react';
+import { Trash2, Plus, Edit, UserPlus } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -17,7 +17,7 @@ interface UserProfile {
   email: string;
   avatar_url?: string;
   created_at: string;
-  organization_role?: string;
+  role?: string;
   organization_id?: string;
   organization_name?: string;
 }
@@ -27,111 +27,55 @@ interface Organization {
   name: string;
 }
 
-interface Workspace {
-  id: string;
-  name: string;
-  organization_id: string;
-}
-
-const menuItems = [
-  { id: 'overview', label: 'Dashboard Overzicht' },
-  { id: 'pending-tasks', label: 'Openstaande Taken' },
-  { id: 'actions', label: 'AI Acties' },
-  { id: 'documents', label: 'Documenten' },
-  { id: 'active-dossiers', label: 'Actieve Dossiers' },
-  { id: 'closed-dossiers', label: 'Gesloten Dossiers' },
-  { id: 'invoices', label: 'Facturen' },
-  { id: 'phone-calls', label: 'Telefoongesprekken' },
-  { id: 'emails', label: 'E-mails' },
-  { id: 'contacts', label: 'Contacten' },
-  { id: 'settings', label: 'Instellingen' }
-];
-
 export const UserProfileSettings = () => {
   const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
-  const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentUserRole, setCurrentUserRole] = useState<string>('');
-  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
-  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [roleEditDialogOpen, setRoleEditDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [newInvite, setNewInvite] = useState({
-    email: '',
-    role: 'member' as 'owner' | 'admin' | 'member',
-    organization_ids: [] as string[],
-    workspace_ids: [] as string[],
-    menu_access: [] as string[]
-  });
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
+  const [newInvite, setNewInvite] = useState({ email: '', role: 'member', organization_id: '' });
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     fetchUserProfiles();
-    fetchCurrentUserProfile();
     fetchOrganizations();
-    fetchWorkspaces();
-    fetchCurrentUserRole();
   }, []);
 
-  const fetchCurrentUserRole = async () => {
+  const fetchUserProfiles = async () => {
     try {
+      // Fetch all organization members with their profile info
       const { data, error } = await supabase
         .from('organization_members')
-        .select('role')
-        .eq('user_id', user?.id)
-        .limit(1)
-        .single();
-
-      if (error) throw error;
-      setCurrentUserRole(data?.role || 'member');
-    } catch (error) {
-      console.error('Error fetching current user role:', error);
-    }
-  };
-
-  const fetchCurrentUserProfile = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', user?.id)
-        .single();
-
-      if (error) throw error;
-      setCurrentUserProfile(data);
-    } catch (error) {
-      console.error('Error fetching current user profile:', error);
-    }
-  };
-
-  const fetchUserProfiles = async () => {
-    // Only fetch all profiles if user is admin or owner
-    if (currentUserRole === 'member') {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
         .select(`
-          *,
-          organization_members(role, organization_id, organizations(name))
+          role,
+          organization_id,
+          organizations (
+            name
+          ),
+          user_profiles (
+            id,
+            full_name,
+            email,
+            avatar_url,
+            created_at
+          )
         `);
 
       if (error) throw error;
 
-      const profilesWithOrgInfo = data?.map(profile => ({
-        ...profile,
-        organization_role: profile.organization_members?.[0]?.role,
-        organization_id: profile.organization_members?.[0]?.organization_id,
-        organization_name: profile.organization_members?.[0]?.organizations?.name
-      })) || [];
+      const profiles = data?.map(item => ({
+        id: item.user_profiles?.id || '',
+        full_name: item.user_profiles?.full_name || '',
+        email: item.user_profiles?.email || '',
+        avatar_url: item.user_profiles?.avatar_url,
+        created_at: item.user_profiles?.created_at || '',
+        role: item.role,
+        organization_id: item.organization_id,
+        organization_name: item.organizations?.name
+      })).filter(profile => profile.id) || [];
 
-      setUserProfiles(profilesWithOrgInfo);
+      setUserProfiles(profiles);
     } catch (error) {
       console.error('Error fetching user profiles:', error);
       toast({
@@ -147,42 +91,37 @@ export const UserProfileSettings = () => {
   const fetchOrganizations = async () => {
     try {
       const { data, error } = await supabase
-        .from('organizations')
-        .select('id, name')
-        .order('name');
+        .from('organization_members')
+        .select(`
+          organizations (
+            id,
+            name
+          )
+        `)
+        .eq('user_id', user?.id)
+        .in('role', ['admin', 'owner']);
 
       if (error) throw error;
-      setOrganizations(data || []);
+      
+      const orgs = data?.map(item => item.organizations).filter(Boolean) || [];
+      setOrganizations(orgs as Organization[]);
     } catch (error) {
       console.error('Error fetching organizations:', error);
     }
   };
 
-  const fetchWorkspaces = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('workspaces')
-        .select('id, name, organization_id')
-        .order('name');
-
-      if (error) throw error;
-      setWorkspaces(data || []);
-    } catch (error) {
-      console.error('Error fetching workspaces:', error);
-    }
-  };
-
-  const updateCurrentUserProfile = async () => {
-    if (!currentUserProfile) return;
+  const inviteUser = async () => {
+    if (!newInvite.email.trim() || !newInvite.organization_id) return;
 
     try {
       const { error } = await supabase
-        .from('user_profiles')
-        .update({
-          full_name: currentUserProfile.full_name,
-          email: currentUserProfile.email
-        })
-        .eq('id', user?.id);
+        .from('user_invitations')
+        .insert({
+          email: newInvite.email,
+          role: newInvite.role as 'owner' | 'admin' | 'member',
+          organization_id: newInvite.organization_id,
+          invited_by: user?.id
+        });
 
       if (error) throw error;
 
@@ -190,61 +129,67 @@ export const UserProfileSettings = () => {
         .from('history_logs')
         .insert({
           user_id: user?.id,
-          action: 'Profiel bijgewerkt',
-          details: { full_name: currentUserProfile.full_name, email: currentUserProfile.email }
+          organization_id: newInvite.organization_id,
+          action: 'Gebruiker uitgenodigd',
+          details: { invited_email: newInvite.email, role: newInvite.role }
         });
 
       toast({
         title: "Succes",
-        description: "Profiel succesvol bijgewerkt",
+        description: "Uitnodiging succesvol verzonden",
       });
+
+      setNewInvite({ email: '', role: 'member', organization_id: '' });
+      setIsInviteDialogOpen(false);
+      fetchUserProfiles();
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Error inviting user:', error);
       toast({
         title: "Error",
-        description: "Kon profiel niet bijwerken",
+        description: "Kon uitnodiging niet verzenden",
         variant: "destructive",
       });
     }
   };
 
-  const deleteUser = async (userId: string, userName: string) => {
-    if (!confirm(`Weet je zeker dat je gebruiker "${userName}" wilt verwijderen?`)) return;
+  const updateUserProfile = async () => {
+    if (!editingProfile) return;
 
     try {
       const { error } = await supabase
         .from('user_profiles')
-        .delete()
-        .eq('id', userId);
+        .update({
+          full_name: editingProfile.full_name,
+          email: editingProfile.email
+        })
+        .eq('id', editingProfile.id);
 
       if (error) throw error;
 
+      await supabase
+        .from('history_logs')
+        .insert({
+          user_id: user?.id,
+          organization_id: editingProfile.organization_id,
+          action: 'Gebruikersprofiel bijgewerkt',
+          details: { profile_id: editingProfile.id, profile_name: editingProfile.full_name }
+        });
+
       toast({
         title: "Succes",
-        description: "Gebruiker succesvol verwijderd",
+        description: "Gebruikersprofiel succesvol bijgewerkt",
       });
 
+      setEditingProfile(null);
       fetchUserProfiles();
     } catch (error) {
-      console.error('Error deleting user:', error);
+      console.error('Error updating user profile:', error);
       toast({
         title: "Error",
-        description: "Kon gebruiker niet verwijderen",
+        description: "Kon gebruikersprofiel niet bijwerken",
         variant: "destructive",
       });
     }
-  };
-
-  const canEditUser = (userRole: string) => {
-    if (currentUserRole === 'owner') return true;
-    if (currentUserRole === 'admin' && userRole !== 'owner') return true;
-    return false;
-  };
-
-  const canDeleteUser = (userRole: string) => {
-    if (currentUserRole === 'owner') return true;
-    if (currentUserRole === 'admin' && userRole !== 'owner') return true;
-    return false;
   };
 
   if (loading) {
@@ -253,122 +198,20 @@ export const UserProfileSettings = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold">Gebruikersprofielen</h2>
-
-      {/* Current User Profile */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Mijn Profiel
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {currentUserProfile && (
-            <>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="current-name">Volledige Naam</Label>
-                  <Input
-                    id="current-name"
-                    value={currentUserProfile.full_name || ''}
-                    onChange={(e) => setCurrentUserProfile({
-                      ...currentUserProfile,
-                      full_name: e.target.value
-                    })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="current-email">E-mailadres</Label>
-                  <Input
-                    id="current-email"
-                    value={currentUserProfile.email || ''}
-                    onChange={(e) => setCurrentUserProfile({
-                      ...currentUserProfile,
-                      email: e.target.value
-                    })}
-                  />
-                </div>
-              </div>
-              <Button onClick={updateCurrentUserProfile}>
-                Profiel Bijwerken
-              </Button>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Other User Profiles (only for admin/owner) */}
-      {(currentUserRole === 'admin' || currentUserRole === 'owner') && (
-        <>
-          <div className="flex justify-between items-center">
-            <h3 className="text-xl font-semibold">Alle Gebruikers</h3>
-            <Button onClick={() => setInviteDialogOpen(true)}>
-              <Mail className="h-4 w-4 mr-2" />
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-semibold">Gebruikersprofielen</h2>
+        <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <UserPlus className="h-4 w-4 mr-2" />
               Gebruiker Uitnodigen
             </Button>
-          </div>
-
-          <div className="grid gap-4">
-            {userProfiles.map((profile) => (
-              <Card key={profile.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <CardTitle>{profile.full_name}</CardTitle>
-                      <p className="text-sm text-muted-foreground">
-                        {profile.email} • Rol: {profile.organization_role} • 
-                        Organisatie: {profile.organization_name}
-                      </p>
-                    </div>
-                    <div className="flex space-x-2">
-                      {canEditUser(profile.organization_role || '') && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedUser(profile);
-                              setRoleEditDialogOpen(true);
-                            }}
-                          >
-                            <Shield className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditingUser(profile)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                      {canDeleteUser(profile.organization_role || '') && (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => deleteUser(profile.id, profile.full_name)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        </>
-      )}
-
-      {/* Invite User Dialog */}
-      <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Gebruiker Uitnodigen</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nieuwe Gebruiker Uitnodigen</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
               <div>
                 <Label htmlFor="invite-email">E-mailadres</Label>
                 <Input
@@ -376,129 +219,121 @@ export const UserProfileSettings = () => {
                   type="email"
                   value={newInvite.email}
                   onChange={(e) => setNewInvite({ ...newInvite, email: e.target.value })}
-                  placeholder="gebruiker@example.com"
+                  placeholder="Voer e-mailadres in"
                 />
               </div>
               <div>
                 <Label htmlFor="invite-role">Rol</Label>
                 <Select
                   value={newInvite.role}
-                  onValueChange={(value: 'owner' | 'admin' | 'member') => 
-                    setNewInvite({ ...newInvite, role: value })
-                  }
+                  onValueChange={(value) => setNewInvite({ ...newInvite, role: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecteer rol" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="member">Lid</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    {currentUserRole === 'owner' && (
-                      <SelectItem value="owner">Eigenaar</SelectItem>
-                    )}
+                    <SelectItem value="admin">Beheerder</SelectItem>
+                    <SelectItem value="owner">Eigenaar</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-
-            <div>
-              <Label>Organisaties</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {organizations.map((org) => (
-                  <div key={org.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={newInvite.organization_ids.includes(org.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setNewInvite({
-                            ...newInvite,
-                            organization_ids: [...newInvite.organization_ids, org.id]
-                          });
-                        } else {
-                          setNewInvite({
-                            ...newInvite,
-                            organization_ids: newInvite.organization_ids.filter(id => id !== org.id)
-                          });
-                        }
-                      }}
-                    />
-                    <Label className="text-sm">{org.name}</Label>
-                  </div>
-                ))}
+              <div>
+                <Label htmlFor="invite-org">Organisatie</Label>
+                <Select
+                  value={newInvite.organization_id}
+                  onValueChange={(value) => setNewInvite({ ...newInvite, organization_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecteer organisatie" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {organizations.map((org) => (
+                      <SelectItem key={org.id} value={org.id}>
+                        {org.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsInviteDialogOpen(false)}>
+                  Annuleren
+                </Button>
+                <Button onClick={inviteUser}>
+                  Uitnodigen
+                </Button>
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
+      </div>
 
-            <div>
-              <Label>Werkruimtes</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {workspaces.map((workspace) => (
-                  <div key={workspace.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={newInvite.workspace_ids.includes(workspace.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setNewInvite({
-                            ...newInvite,
-                            workspace_ids: [...newInvite.workspace_ids, workspace.id]
-                          });
-                        } else {
-                          setNewInvite({
-                            ...newInvite,
-                            workspace_ids: newInvite.workspace_ids.filter(id => id !== workspace.id)
-                          });
-                        }
-                      }}
-                    />
-                    <Label className="text-sm">{workspace.name}</Label>
-                  </div>
-                ))}
+      <div className="grid gap-4">
+        {userProfiles.map((profile) => (
+          <Card key={profile.id}>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>{profile.full_name || 'Geen naam'}</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {profile.email} • Rol: {profile.role} • Organisatie: {profile.organization_name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Aangemaakt: {new Date(profile.created_at).toLocaleDateString('nl-NL')}
+                  </p>
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingProfile(profile)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+        ))}
+      </div>
+
+      {editingProfile && (
+        <Dialog open={!!editingProfile} onOpenChange={() => setEditingProfile(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Gebruikersprofiel Bewerken</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-name">Volledige Naam</Label>
+                <Input
+                  id="edit-name"
+                  value={editingProfile.full_name}
+                  onChange={(e) => setEditingProfile({ ...editingProfile, full_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-email">E-mailadres</Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={editingProfile.email}
+                  onChange={(e) => setEditingProfile({ ...editingProfile, email: e.target.value })}
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setEditingProfile(null)}>
+                  Annuleren
+                </Button>
+                <Button onClick={updateUserProfile}>
+                  Opslaan
+                </Button>
               </div>
             </div>
-
-            <div>
-              <Label>Menu Toegang</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {menuItems.map((item) => (
-                  <div key={item.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={newInvite.menu_access.includes(item.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setNewInvite({
-                            ...newInvite,
-                            menu_access: [...newInvite.menu_access, item.id]
-                          });
-                        } else {
-                          setNewInvite({
-                            ...newInvite,
-                            menu_access: newInvite.menu_access.filter(id => id !== item.id)
-                          });
-                        }
-                      }}
-                    />
-                    <Label className="text-sm">{item.label}</Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
-                Annuleren
-              </Button>
-              <Button onClick={() => {
-                toast({
-                  title: "Info",
-                  description: "Uitnodigingsfunctionaliteit wordt binnenkort toegevoegd",
-                });
-                setInviteDialogOpen(false);
-              }}>
-                Uitnodigen
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

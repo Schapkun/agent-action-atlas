@@ -34,18 +34,26 @@ export const OrganizationSettings = () => {
   const fetchOrganizations = async () => {
     try {
       const { data, error } = await supabase
-        .from('organizations')
+        .from('organization_members')
         .select(`
-          *,
-          organization_members!inner(role)
+          role,
+          organizations (
+            id,
+            name,
+            slug,
+            created_at
+          )
         `)
-        .eq('organization_members.user_id', user?.id);
+        .eq('user_id', user?.id);
 
       if (error) throw error;
 
-      const orgsWithRoles = data?.map(org => ({
-        ...org,
-        user_role: org.organization_members?.[0]?.role
+      const orgsWithRoles = data?.map(item => ({
+        id: item.organizations?.id || '',
+        name: item.organizations?.name || '',
+        slug: item.organizations?.slug || '',
+        created_at: item.organizations?.created_at || '',
+        user_role: item.role
       })) || [];
 
       setOrganizations(orgsWithRoles);

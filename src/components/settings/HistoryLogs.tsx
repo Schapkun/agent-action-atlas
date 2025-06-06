@@ -16,14 +16,14 @@ interface HistoryLog {
   user_id: string;
   organization_id?: string;
   workspace_id?: string;
-  user_profiles?: {
+  user_profile?: {
     full_name: string;
     email: string;
   };
-  organizations?: {
+  organization?: {
     name: string;
   };
-  workspaces?: {
+  workspace?: {
     name: string;
   };
 }
@@ -69,10 +69,23 @@ export const HistoryLogs = () => {
       let query = supabase
         .from('history_logs')
         .select(`
-          *,
-          user_profiles(full_name, email),
-          organizations(name),
-          workspaces(name)
+          id,
+          action,
+          details,
+          created_at,
+          user_id,
+          organization_id,
+          workspace_id,
+          user_profiles!inner (
+            full_name,
+            email
+          ),
+          organizations (
+            name
+          ),
+          workspaces (
+            name
+          )
         `)
         .order('created_at', { ascending: false });
 
@@ -84,7 +97,21 @@ export const HistoryLogs = () => {
       const { data, error } = await query;
 
       if (error) throw error;
-      setHistoryLogs(data || []);
+      
+      const formattedLogs = data?.map(log => ({
+        id: log.id,
+        action: log.action,
+        details: log.details,
+        created_at: log.created_at,
+        user_id: log.user_id,
+        organization_id: log.organization_id,
+        workspace_id: log.workspace_id,
+        user_profile: log.user_profiles,
+        organization: log.organizations,
+        workspace: log.workspaces
+      })) || [];
+
+      setHistoryLogs(formattedLogs);
     } catch (error) {
       console.error('Error fetching history logs:', error);
       toast({
@@ -99,8 +126,8 @@ export const HistoryLogs = () => {
 
   const filteredLogs = historyLogs.filter(log => {
     const matchesSearch = log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.user_profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.user_profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      log.user_profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.user_profile?.email?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesFilter = filterAction === 'all' || log.action.toLowerCase().includes(filterAction);
     
@@ -164,7 +191,7 @@ export const HistoryLogs = () => {
                       <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                         <div className="flex items-center space-x-1">
                           <User className="h-4 w-4" />
-                          <span>{log.user_profiles?.full_name || 'Onbekende gebruiker'}</span>
+                          <span>{log.user_profile?.full_name || 'Onbekende gebruiker'}</span>
                         </div>
                         <div className="flex items-center space-x-1">
                           <Calendar className="h-4 w-4" />
@@ -180,14 +207,14 @@ export const HistoryLogs = () => {
                   <div className="bg-muted p-3 rounded-md">
                     <pre className="text-sm">{JSON.stringify(log.details, null, 2)}</pre>
                   </div>
-                  {log.organizations && (
+                  {log.organization && (
                     <p className="text-sm text-muted-foreground mt-2">
-                      Organisatie: {log.organizations.name}
+                      Organisatie: {log.organization.name}
                     </p>
                   )}
-                  {log.workspaces && (
+                  {log.workspace && (
                     <p className="text-sm text-muted-foreground">
-                      Werkruimte: {log.workspaces.name}
+                      Werkruimte: {log.workspace.name}
                     </p>
                   )}
                 </CardContent>

@@ -1,127 +1,127 @@
 
 import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Building2, Settings, Mail } from 'lucide-react';
+import { User, Building2, Settings, Save } from 'lucide-react';
 
 interface UserProfile {
   id: string;
   full_name: string;
   email: string;
   avatar_url?: string;
-  created_at: string;
 }
 
-interface UserAccess {
-  organizations: Array<{
-    id: string;
-    name: string;
-    role: string;
-  }>;
-  workspaces: Array<{
-    id: string;
-    name: string;
-    role: string;
-    organization_name: string;
-  }>;
+interface Organization {
+  id: string;
+  name: string;
+  role: string;
+}
+
+interface Workspace {
+  id: string;
+  name: string;
+  organization_name: string;
 }
 
 export const MyAccount = () => {
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [userAccess, setUserAccess] = useState<UserAccess>({ organizations: [], workspaces: [] });
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchUserProfile();
-    fetchUserAccess();
+    fetchUserData();
   }, []);
 
-  const fetchUserProfile = async () => {
+  const fetchUserData = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch user profile
+      const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('id', user?.id)
         .single();
 
-      if (error) throw error;
-      setUserProfile(data);
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      toast({
-        title: "Error",
-        description: "Kon profiel niet ophalen",
-        variant: "destructive",
-      });
-    }
-  };
+      if (profileError) throw profileError;
+      setProfile(profileData);
 
-  const fetchUserAccess = async () => {
-    try {
       // Fetch organizations
       const { data: orgData, error: orgError } = await supabase
         .from('organization_members')
         .select(`
           role,
-          organizations(id, name)
+          organizations (
+            id,
+            name
+          )
         `)
         .eq('user_id', user?.id);
 
       if (orgError) throw orgError;
+      
+      const orgs = orgData?.map(item => ({
+        id: item.organizations?.id || '',
+        name: item.organizations?.name || '',
+        role: item.role
+      })) || [];
+      setOrganizations(orgs);
 
       // Fetch workspaces
       const { data: workspaceData, error: workspaceError } = await supabase
         .from('workspace_members')
         .select(`
-          role,
-          workspaces(id, name, organizations(name))
+          workspaces (
+            id,
+            name,
+            organizations (
+              name
+            )
+          )
         `)
         .eq('user_id', user?.id);
 
       if (workspaceError) throw workspaceError;
-
-      const organizations = orgData?.map(item => ({
-        id: item.organizations.id,
-        name: item.organizations.name,
-        role: item.role
-      })) || [];
-
+      
       const workspaces = workspaceData?.map(item => ({
-        id: item.workspaces.id,
-        name: item.workspaces.name,
-        role: item.role,
-        organization_name: item.workspaces.organizations.name
+        id: item.workspaces?.id || '',
+        name: item.workspaces?.name || '',
+        organization_name: item.workspaces?.organizations?.name || ''
       })) || [];
+      setWorkspaces(workspaces);
 
-      setUserAccess({ organizations, workspaces });
     } catch (error) {
-      console.error('Error fetching user access:', error);
+      console.error('Error fetching user data:', error);
+      toast({
+        title: "Error",
+        description: "Kon gebruikersgegevens niet ophalen",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const updateProfile = async () => {
-    if (!userProfile) return;
+    if (!profile) return;
 
     setSaving(true);
     try {
       const { error } = await supabase
         .from('user_profiles')
         .update({
-          full_name: userProfile.full_name,
-          email: userProfile.email
+          full_name: profile.full_name,
+          email: profile.email
         })
-        .eq('id', user?.id);
+        .eq('id', profile.id);
 
       if (error) throw error;
 
@@ -129,8 +129,8 @@ export const MyAccount = () => {
         .from('history_logs')
         .insert({
           user_id: user?.id,
-          action: 'Profiel bijgewerkt via Mijn Account',
-          details: { full_name: userProfile.full_name, email: userProfile.email }
+          action: 'Profiel bijgewerkt',
+          details: { full_name: profile.full_name, email: profile.email }
         });
 
       toast({
@@ -149,46 +149,36 @@ export const MyAccount = () => {
     }
   };
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'owner':
-        return 'bg-red-100 text-red-700';
-      case 'admin':
-        return 'bg-blue-100 text-blue-700';
-      case 'member':
-        return 'bg-green-100 text-green-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  };
-
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'owner':
-        return 'Eigenaar';
-      case 'admin':
-        return 'Admin';
-      case 'member':
-        return 'Lid';
-      default:
-        return role;
-    }
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   if (loading) {
     return <div>Account gegevens laden...</div>;
   }
 
+  if (!profile) {
+    return <div>Kon profiel niet laden</div>;
+  }
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <User className="h-8 w-8" />
-          Mijn Account
-        </h1>
-        <p className="text-muted-foreground">
-          Beheer je persoonlijke gegevens en bekijk je toegangsrechten
-        </p>
+    <div className="space-y-6 p-6">
+      <div className="flex items-center space-x-4">
+        <Avatar className="h-20 w-20">
+          <AvatarImage src={profile.avatar_url} />
+          <AvatarFallback className="text-lg">
+            {getInitials(profile.full_name || profile.email || 'U')}
+          </AvatarFallback>
+        </Avatar>
+        <div>
+          <h1 className="text-2xl font-bold">Mijn Account</h1>
+          <p className="text-muted-foreground">Beheer je persoonlijke gegevens en voorkeuren</p>
+        </div>
       </div>
 
       {/* Profile Information */}
@@ -196,78 +186,57 @@ export const MyAccount = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            Persoonlijke Gegevens
+            Persoonlijke Informatie
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {userProfile && (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="full-name">Volledige Naam</Label>
-                  <Input
-                    id="full-name"
-                    value={userProfile.full_name || ''}
-                    onChange={(e) => setUserProfile({
-                      ...userProfile,
-                      full_name: e.target.value
-                    })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">E-mailadres</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={userProfile.email || ''}
-                    onChange={(e) => setUserProfile({
-                      ...userProfile,
-                      email: e.target.value
-                    })}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label>Account aangemaakt</Label>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(userProfile.created_at).toLocaleDateString('nl-NL', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
-              </div>
-              <Button onClick={updateProfile} disabled={saving}>
-                {saving ? 'Opslaan...' : 'Profiel Bijwerken'}
-              </Button>
-            </>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="full-name">Volledige Naam</Label>
+              <Input
+                id="full-name"
+                value={profile.full_name || ''}
+                onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+                placeholder="Voer je volledige naam in"
+              />
+            </div>
+            <div>
+              <Label htmlFor="email">E-mailadres</Label>
+              <Input
+                id="email"
+                type="email"
+                value={profile.email || ''}
+                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                placeholder="Voer je e-mailadres in"
+              />
+            </div>
+          </div>
+          <Button onClick={updateProfile} disabled={saving}>
+            <Save className="h-4 w-4 mr-2" />
+            {saving ? 'Opslaan...' : 'Profiel Opslaan'}
+          </Button>
         </CardContent>
       </Card>
 
-      {/* Organization Access */}
+      {/* Organizations */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5" />
-            Organisatie Toegang
+            Mijn Organisaties
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {userAccess.organizations.length === 0 ? (
-            <p className="text-muted-foreground">Je hebt geen toegang tot organisaties</p>
+          {organizations.length === 0 ? (
+            <p className="text-muted-foreground">Je bent nog geen lid van een organisatie</p>
           ) : (
-            <div className="space-y-3">
-              {userAccess.organizations.map((org) => (
-                <div key={org.id} className="flex items-center justify-between p-3 border rounded-lg">
+            <div className="space-y-2">
+              {organizations.map((org) => (
+                <div key={org.id} className="flex justify-between items-center p-3 bg-muted rounded-lg">
                   <div>
-                    <h4 className="font-medium">{org.name}</h4>
+                    <p className="font-medium">{org.name}</p>
+                    <p className="text-sm text-muted-foreground">Rol: {org.role}</p>
                   </div>
-                  <Badge className={getRoleBadgeColor(org.role)}>
-                    {getRoleLabel(org.role)}
-                  </Badge>
                 </div>
               ))}
             </div>
@@ -275,30 +244,25 @@ export const MyAccount = () => {
         </CardContent>
       </Card>
 
-      {/* Workspace Access */}
+      {/* Workspaces */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            Werkruimte Toegang
+            Mijn Werkruimtes
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {userAccess.workspaces.length === 0 ? (
-            <p className="text-muted-foreground">Je hebt geen toegang tot werkruimtes</p>
+          {workspaces.length === 0 ? (
+            <p className="text-muted-foreground">Je hebt nog geen toegang tot werkruimtes</p>
           ) : (
-            <div className="space-y-3">
-              {userAccess.workspaces.map((workspace) => (
-                <div key={workspace.id} className="flex items-center justify-between p-3 border rounded-lg">
+            <div className="space-y-2">
+              {workspaces.map((workspace) => (
+                <div key={workspace.id} className="flex justify-between items-center p-3 bg-muted rounded-lg">
                   <div>
-                    <h4 className="font-medium">{workspace.name}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Organisatie: {workspace.organization_name}
-                    </p>
+                    <p className="font-medium">{workspace.name}</p>
+                    <p className="text-sm text-muted-foreground">Organisatie: {workspace.organization_name}</p>
                   </div>
-                  <Badge className={getRoleBadgeColor(workspace.role)}>
-                    {getRoleLabel(workspace.role)}
-                  </Badge>
                 </div>
               ))}
             </div>

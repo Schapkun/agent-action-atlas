@@ -46,20 +46,32 @@ export const WorkspaceSettings = () => {
   const fetchWorkspaces = async () => {
     try {
       const { data, error } = await supabase
-        .from('workspaces')
+        .from('workspace_members')
         .select(`
-          *,
-          organizations(name),
-          workspace_members!inner(role)
+          role,
+          workspaces (
+            id,
+            name,
+            slug,
+            organization_id,
+            created_at,
+            organizations (
+              name
+            )
+          )
         `)
-        .eq('workspace_members.user_id', user?.id);
+        .eq('user_id', user?.id);
 
       if (error) throw error;
 
-      const workspacesWithRoles = data?.map(workspace => ({
-        ...workspace,
-        organization: workspace.organizations,
-        user_role: workspace.workspace_members?.[0]?.role
+      const workspacesWithRoles = data?.map(item => ({
+        id: item.workspaces?.id || '',
+        name: item.workspaces?.name || '',
+        slug: item.workspaces?.slug || '',
+        organization_id: item.workspaces?.organization_id || '',
+        created_at: item.workspaces?.created_at || '',
+        organization: item.workspaces?.organizations,
+        user_role: item.role
       })) || [];
 
       setWorkspaces(workspacesWithRoles);
@@ -78,12 +90,19 @@ export const WorkspaceSettings = () => {
   const fetchOrganizations = async () => {
     try {
       const { data, error } = await supabase
-        .from('organizations')
-        .select('id, name')
-        .order('name');
+        .from('organization_members')
+        .select(`
+          organizations (
+            id,
+            name
+          )
+        `)
+        .eq('user_id', user?.id);
 
       if (error) throw error;
-      setOrganizations(data || []);
+      
+      const orgs = data?.map(item => item.organizations).filter(Boolean) || [];
+      setOrganizations(orgs as Organization[]);
     } catch (error) {
       console.error('Error fetching organizations:', error);
     }
