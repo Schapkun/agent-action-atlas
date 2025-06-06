@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
+import { OrganizationSelector } from './OrganizationSelector';
 import type { ViewType } from '@/pages/Index';
 
 interface HeaderProps {
@@ -86,6 +87,11 @@ export const Header = ({ currentView, onToggleSidebar, onAccountView }: HeaderPr
         </div>
 
         <div className="flex items-center space-x-4">
+          {/* Organization Selector - only show if user has organizations */}
+          <div className="hidden md:block">
+            <OrganizationSelector />
+          </div>
+
           {/* Notifications */}
           <Button variant="ghost" size="sm" className="relative">
             <Bell className="h-5 w-5" />
@@ -133,6 +139,11 @@ export const Header = ({ currentView, onToggleSidebar, onAccountView }: HeaderPr
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+      </div>
+
+      {/* Mobile Organization Selector */}
+      <div className="md:hidden mt-4">
+        <OrganizationSelector />
       </div>
     </header>
   );

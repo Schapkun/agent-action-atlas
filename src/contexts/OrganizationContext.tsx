@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
@@ -166,34 +167,50 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setLoading(true);
 
     try {
-      // Simple direct query to avoid RLS issues
+      // First get organizations that the user is a member of
       const { data: memberData, error: memberError } = await supabase
         .from('organization_members')
-        .select(`
-          organization_id,
-          organizations!organization_members_organization_id_fkey(*)
-        `)
+        .select('organization_id')
         .eq('user_id', user.id);
 
       if (memberError) {
-        console.error('Error fetching organization members:', memberError);
+        console.error('Error fetching organization memberships:', memberError);
         setOrganizations([]);
         setCurrentOrganization(null);
         setLoading(false);
         return;
       }
 
-      console.log('Organization members data:', memberData);
+      if (!memberData || memberData.length === 0) {
+        console.log('No organization memberships found');
+        setOrganizations([]);
+        setCurrentOrganization(null);
+        setLoading(false);
+        return;
+      }
 
-      // Extract organizations from the join result
-      const orgs = memberData?.map(member => member.organizations).filter(Boolean) || [];
-      console.log('Found organizations:', orgs);
+      // Then get the organization details
+      const orgIds = memberData.map(m => m.organization_id);
+      const { data: orgsData, error: orgsError } = await supabase
+        .from('organizations')
+        .select('*')
+        .in('id', orgIds);
+
+      if (orgsError) {
+        console.error('Error fetching organizations:', orgsError);
+        setOrganizations([]);
+        setCurrentOrganization(null);
+        setLoading(false);
+        return;
+      }
+
+      console.log('Found organizations:', orgsData);
       
-      setOrganizations(orgs);
+      setOrganizations(orgsData || []);
       
-      if (orgs.length > 0 && !currentOrganization) {
-        setCurrentOrganization(orgs[0]);
-      } else if (orgs.length === 0) {
+      if (orgsData && orgsData.length > 0 && !currentOrganization) {
+        setCurrentOrganization(orgsData[0]);
+      } else if (!orgsData || orgsData.length === 0) {
         setCurrentOrganization(null);
       }
     } catch (error: any) {
