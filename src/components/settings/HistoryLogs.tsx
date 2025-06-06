@@ -16,16 +16,10 @@ interface HistoryLog {
   user_id: string;
   organization_id?: string;
   workspace_id?: string;
-  user_profile?: {
-    full_name: string;
-    email: string;
-  };
-  organization?: {
-    name: string;
-  };
-  workspace?: {
-    name: string;
-  };
+  user_name?: string;
+  user_email?: string;
+  organization_name?: string;
+  workspace_name?: string;
 }
 
 export const HistoryLogs = () => {
@@ -75,17 +69,7 @@ export const HistoryLogs = () => {
           created_at,
           user_id,
           organization_id,
-          workspace_id,
-          user_profiles!inner (
-            full_name,
-            email
-          ),
-          organizations (
-            name
-          ),
-          workspaces (
-            name
-          )
+          workspace_id
         `)
         .order('created_at', { ascending: false });
 
@@ -94,22 +78,66 @@ export const HistoryLogs = () => {
         query = query.eq('user_id', user?.id);
       }
 
-      const { data, error } = await query;
+      const { data: logsData, error: logsError } = await query;
 
-      if (error) throw error;
-      
-      const formattedLogs = data?.map(log => ({
-        id: log.id,
-        action: log.action,
-        details: log.details,
-        created_at: log.created_at,
-        user_id: log.user_id,
-        organization_id: log.organization_id,
-        workspace_id: log.workspace_id,
-        user_profile: log.user_profiles,
-        organization: log.organizations,
-        workspace: log.workspaces
-      })) || [];
+      if (logsError) throw logsError;
+
+      if (!logsData || logsData.length === 0) {
+        setHistoryLogs([]);
+        return;
+      }
+
+      // Get user profiles for the logs
+      const userIds = [...new Set(logsData.map(log => log.user_id))];
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('user_profiles')
+        .select('id, full_name, email')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Get organizations for the logs
+      const orgIds = [...new Set(logsData.map(log => log.organization_id).filter(Boolean))];
+      let orgsData: any[] = [];
+      if (orgIds.length > 0) {
+        const { data, error } = await supabase
+          .from('organizations')
+          .select('id, name')
+          .in('id', orgIds);
+        if (!error) orgsData = data || [];
+      }
+
+      // Get workspaces for the logs
+      const workspaceIds = [...new Set(logsData.map(log => log.workspace_id).filter(Boolean))];
+      let workspacesData: any[] = [];
+      if (workspaceIds.length > 0) {
+        const { data, error } = await supabase
+          .from('workspaces')
+          .select('id, name')
+          .in('id', workspaceIds);
+        if (!error) workspacesData = data || [];
+      }
+
+      // Combine the data
+      const formattedLogs = logsData.map(log => {
+        const profile = profilesData?.find(p => p.id === log.user_id);
+        const organization = orgsData.find(o => o.id === log.organization_id);
+        const workspace = workspacesData.find(w => w.id === log.workspace_id);
+
+        return {
+          id: log.id,
+          action: log.action,
+          details: log.details,
+          created_at: log.created_at,
+          user_id: log.user_id,
+          organization_id: log.organization_id,
+          workspace_id: log.workspace_id,
+          user_name: profile?.full_name || 'Onbekende gebruiker',
+          user_email: profile?.email || '',
+          organization_name: organization?.name,
+          workspace_name: workspace?.name
+        };
+      });
 
       setHistoryLogs(formattedLogs);
     } catch (error) {
@@ -126,8 +154,8 @@ export const HistoryLogs = () => {
 
   const filteredLogs = historyLogs.filter(log => {
     const matchesSearch = log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.user_profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.user_profile?.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      log.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.user_email?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesFilter = filterAction === 'all' || log.action.toLowerCase().includes(filterAction);
     
@@ -191,7 +219,7 @@ export const HistoryLogs = () => {
                       <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                         <div className="flex items-center space-x-1">
                           <User className="h-4 w-4" />
-                          <span>{log.user_profile?.full_name || 'Onbekende gebruiker'}</span>
+                          <span>{log.user_name}</span>
                         </div>
                         <div className="flex items-center space-x-1">
                           <Calendar className="h-4 w-4" />
@@ -207,14 +235,14 @@ export const HistoryLogs = () => {
                   <div className="bg-muted p-3 rounded-md">
                     <pre className="text-sm">{JSON.stringify(log.details, null, 2)}</pre>
                   </div>
-                  {log.organization && (
+                  {log.organization_name && (
                     <p className="text-sm text-muted-foreground mt-2">
-                      Organisatie: {log.organization.name}
+                      Organisatie: {log.organization_name}
                     </p>
                   )}
-                  {log.workspace && (
+                  {log.workspace_name && (
                     <p className="text-sm text-muted-foreground">
-                      Werkruimte: {log.workspace.name}
+                      Werkruimte: {log.workspace_name}
                     </p>
                   )}
                 </CardContent>

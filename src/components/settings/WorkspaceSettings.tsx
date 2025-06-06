@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,13 +48,13 @@ export const WorkspaceSettings = () => {
         .from('workspace_members')
         .select(`
           role,
-          workspaces (
+          workspaces!fk_workspace_members_workspace (
             id,
             name,
             slug,
             organization_id,
             created_at,
-            organizations (
+            organizations!fk_workspaces_organization (
               name
             )
           )
@@ -92,7 +91,7 @@ export const WorkspaceSettings = () => {
       const { data, error } = await supabase
         .from('organization_members')
         .select(`
-          organizations (
+          organizations!fk_organization_members_organization (
             id,
             name
           )

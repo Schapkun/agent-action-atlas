@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,36 +43,49 @@ export const UserProfileSettings = () => {
 
   const fetchUserProfiles = async () => {
     try {
-      // Fetch all organization members with their profile info
-      const { data, error } = await supabase
+      // Get organization members with organization info
+      const { data: membersData, error: membersError } = await supabase
         .from('organization_members')
         .select(`
           role,
           organization_id,
-          organizations (
+          user_id,
+          organizations!fk_organization_members_organization (
             name
-          ),
-          user_profiles (
-            id,
-            full_name,
-            email,
-            avatar_url,
-            created_at
           )
         `);
 
-      if (error) throw error;
+      if (membersError) throw membersError;
 
-      const profiles = data?.map(item => ({
-        id: item.user_profiles?.id || '',
-        full_name: item.user_profiles?.full_name || '',
-        email: item.user_profiles?.email || '',
-        avatar_url: item.user_profiles?.avatar_url,
-        created_at: item.user_profiles?.created_at || '',
-        role: item.role,
-        organization_id: item.organization_id,
-        organization_name: item.organizations?.name
-      })).filter(profile => profile.id) || [];
+      // Get user profiles for the members
+      const userIds = membersData?.map(m => m.user_id) || [];
+      
+      if (userIds.length === 0) {
+        setUserProfiles([]);
+        return;
+      }
+
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('user_profiles')
+        .select('id, full_name, email, avatar_url, created_at')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Combine the data
+      const profiles = profilesData?.map(profile => {
+        const memberData = membersData?.find(m => m.user_id === profile.id);
+        return {
+          id: profile.id,
+          full_name: profile.full_name || '',
+          email: profile.email || '',
+          avatar_url: profile.avatar_url,
+          created_at: profile.created_at || '',
+          role: memberData?.role,
+          organization_id: memberData?.organization_id,
+          organization_name: memberData?.organizations?.name
+        };
+      }) || [];
 
       setUserProfiles(profiles);
     } catch (error) {
@@ -93,7 +105,7 @@ export const UserProfileSettings = () => {
       const { data, error } = await supabase
         .from('organization_members')
         .select(`
-          organizations (
+          organizations!fk_organization_members_organization (
             id,
             name
           )
