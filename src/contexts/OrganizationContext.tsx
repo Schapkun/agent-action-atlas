@@ -54,39 +54,64 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const refreshOrganizations = async () => {
     if (!user) {
+      console.log('refreshOrganizations: No user found');
       return;
     }
 
+    console.log('refreshOrganizations: Starting for user:', user.id);
+
     try {
-      const { data, error } = await supabase
+      // First try to get all organizations where user is a member
+      const { data: memberData, error: memberError } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', user.id);
+
+      console.log('Member data query result:', { memberData, memberError });
+
+      if (memberError) {
+        console.error('Error fetching member data:', memberError);
+        throw memberError;
+      }
+
+      if (!memberData || memberData.length === 0) {
+        console.log('No organization memberships found');
+        setOrganizations([]);
+        setCurrentOrganization(null);
+        return;
+      }
+
+      const orgIds = memberData.map(m => m.organization_id);
+      console.log('Organization IDs user is member of:', orgIds);
+
+      // Now fetch the organization details
+      const { data: orgData, error: orgError } = await supabase
         .from('organizations')
-        .select(`
-          *,
-          organization_members!inner(user_id)
-        `)
-        .eq('organization_members.user_id', user.id);
+        .select('*')
+        .in('id', orgIds);
 
-      if (error) throw error;
+      console.log('Organizations query result:', { orgData, orgError });
 
-      const orgs = data.map(item => ({
-        id: item.id,
-        name: item.name,
-        slug: item.slug,
-        created_at: item.created_at,
-        updated_at: item.updated_at
-      }));
+      if (orgError) {
+        console.error('Error fetching organizations:', orgError);
+        throw orgError;
+      }
 
+      const orgs = orgData || [];
+      console.log('Final organizations:', orgs);
+      
       setOrganizations(orgs);
 
       // Set first organization as current if none selected
       if (orgs.length > 0 && !currentOrganization) {
+        console.log('Setting current organization to:', orgs[0]);
         setCurrentOrganization(orgs[0]);
       }
     } catch (error: any) {
-      console.error('Error fetching organizations:', error);
+      console.error('Error in refreshOrganizations:', error);
       toast({
         title: "Error",
-        description: "Kon organisaties niet laden.",
+        description: "Kon organisaties niet laden: " + error.message,
         variant: "destructive",
       });
     }
@@ -94,8 +119,11 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const refreshWorkspaces = async () => {
     if (!user || !currentOrganization) {
+      console.log('refreshWorkspaces: Missing user or current organization');
       return;
     }
+
+    console.log('refreshWorkspaces: Starting for organization:', currentOrganization.id);
 
     try {
       const { data, error } = await supabase
@@ -103,25 +131,29 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         .select('*')
         .eq('organization_id', currentOrganization.id);
 
+      console.log('Workspaces query result:', { data, error });
+
       if (error) throw error;
 
       setWorkspaces(data || []);
 
       // Set first workspace as current if none selected
       if (data && data.length > 0 && !currentWorkspace) {
+        console.log('Setting current workspace to:', data[0]);
         setCurrentWorkspace(data[0]);
       }
     } catch (error: any) {
       console.error('Error fetching workspaces:', error);
       toast({
         title: "Error",
-        description: "Kon werkruimtes niet laden.",
+        description: "Kon werkruimtes niet laden: " + error.message,
         variant: "destructive",
       });
     }
   };
 
   useEffect(() => {
+    console.log('OrganizationContext useEffect: user changed:', user?.id);
     if (user) {
       refreshOrganizations();
     } else {
@@ -134,6 +166,7 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [user]);
 
   useEffect(() => {
+    console.log('OrganizationContext useEffect: currentOrganization changed:', currentOrganization?.id);
     if (currentOrganization) {
       refreshWorkspaces();
     } else {
