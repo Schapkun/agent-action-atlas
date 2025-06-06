@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,10 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Trash2, Plus, Edit, UserPlus, Building2, Users } from 'lucide-react';
+import { Trash2, Plus, Edit, UserPlus, Building2, Users, ChevronDown, ChevronRight, Mail, Clock } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -32,6 +32,19 @@ interface UserProfile {
   }[];
 }
 
+interface InvitedUser {
+  id: string;
+  email: string;
+  role: string;
+  created_at: string;
+  expires_at: string;
+  organization_id: string;
+  organization_name: string;
+  workspace_id?: string;
+  workspace_name?: string;
+  invited_by_name?: string;
+}
+
 interface Organization {
   id: string;
   name: string;
@@ -39,20 +52,33 @@ interface Organization {
 
 export const UserProfileSettings = () => {
   const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
+  const [invitedUsers, setInvitedUsers] = useState<InvitedUser[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
   const [newInvite, setNewInvite] = useState({ email: '', role: 'member', organization_id: '' });
+  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
       fetchUserProfiles();
+      fetchInvitedUsers();
       fetchOrganizations();
     }
   }, [user]);
+
+  const toggleUserExpanded = (userId: string) => {
+    const newExpanded = new Set(expandedUsers);
+    if (newExpanded.has(userId)) {
+      newExpanded.delete(userId);
+    } else {
+      newExpanded.add(userId);
+    }
+    setExpandedUsers(newExpanded);
+  };
 
   const fetchUserProfiles = async () => {
     if (!user?.id) {
@@ -268,6 +294,129 @@ export const UserProfileSettings = () => {
     }
   };
 
+  const fetchInvitedUsers = async () => {
+    if (!user?.id) return;
+
+    try {
+      console.log('Fetching invited users');
+
+      const isAccountOwner = user.email === 'info@schapkun.com';
+
+      if (isAccountOwner) {
+        // Account owner sees all invitations
+        const { data: invitationsData, error: invitationsError } = await supabase
+          .from('user_invitations')
+          .select(`
+            id,
+            email,
+            role,
+            created_at,
+            expires_at,
+            organization_id,
+            workspace_id,
+            invited_by,
+            organizations (name),
+            workspaces (name),
+            profiles!user_invitations_invited_by_fkey (full_name)
+          `)
+          .is('accepted_at', null)
+          .order('created_at', { ascending: false });
+
+        if (invitationsError) {
+          console.error('Invitations error:', invitationsError);
+          throw invitationsError;
+        }
+
+        const processedInvitations = invitationsData?.map(invitation => ({
+          id: invitation.id,
+          email: invitation.email,
+          role: invitation.role,
+          created_at: invitation.created_at,
+          expires_at: invitation.expires_at,
+          organization_id: invitation.organization_id,
+          organization_name: invitation.organizations?.name || 'Onbekend',
+          workspace_id: invitation.workspace_id,
+          workspace_name: invitation.workspaces?.name,
+          invited_by_name: invitation.profiles?.full_name || 'Onbekend'
+        })) || [];
+
+        setInvitedUsers(processedInvitations);
+      } else {
+        // Regular users see invitations from their organizations
+        const { data: membershipData, error: membershipError } = await supabase
+          .from('workspace_members')
+          .select('workspace_id')
+          .eq('user_id', user.id);
+
+        if (membershipError) {
+          console.error('Membership error:', membershipError);
+          throw membershipError;
+        }
+
+        if (!membershipData || membershipData.length === 0) {
+          setInvitedUsers([]);
+          return;
+        }
+
+        const workspaceIds = membershipData.map(m => m.workspace_id);
+        const { data: workspaceData, error: workspaceDataError } = await supabase
+          .from('workspaces')
+          .select('id, name, organization_id')
+          .in('id', workspaceIds);
+
+        if (workspaceDataError) throw workspaceDataError;
+
+        const orgIds = [...new Set(workspaceData?.map(w => w.organization_id) || [])];
+
+        const { data: invitationsData, error: invitationsError } = await supabase
+          .from('user_invitations')
+          .select(`
+            id,
+            email,
+            role,
+            created_at,
+            expires_at,
+            organization_id,
+            workspace_id,
+            invited_by,
+            organizations (name),
+            workspaces (name),
+            profiles!user_invitations_invited_by_fkey (full_name)
+          `)
+          .in('organization_id', orgIds)
+          .is('accepted_at', null)
+          .order('created_at', { ascending: false });
+
+        if (invitationsError) {
+          console.error('Invitations error:', invitationsError);
+          throw invitationsError;
+        }
+
+        const processedInvitations = invitationsData?.map(invitation => ({
+          id: invitation.id,
+          email: invitation.email,
+          role: invitation.role,
+          created_at: invitation.created_at,
+          expires_at: invitation.expires_at,
+          organization_id: invitation.organization_id,
+          organization_name: invitation.organizations?.name || 'Onbekend',
+          workspace_id: invitation.workspace_id,
+          workspace_name: invitation.workspaces?.name,
+          invited_by_name: invitation.profiles?.full_name || 'Onbekend'
+        })) || [];
+
+        setInvitedUsers(processedInvitations);
+      }
+    } catch (error) {
+      console.error('Error fetching invited users:', error);
+      toast({
+        title: "Error",
+        description: "Kon uitgenodigde gebruikers niet ophalen",
+        variant: "destructive",
+      });
+    }
+  };
+
   const fetchOrganizations = async () => {
     if (!user?.id) return;
 
@@ -392,6 +541,23 @@ export const UserProfileSettings = () => {
     return <div>Gebruikersprofielen laden...</div>;
   }
 
+  // Combine and sort users (profiles + invitations)
+  const allUsers = [
+    ...userProfiles.map(profile => ({ ...profile, type: 'user' as const })),
+    ...invitedUsers.map(invite => ({ 
+      ...invite, 
+      type: 'invited' as const,
+      full_name: invite.email,
+      id: `invited-${invite.id}`
+    }))
+  ].sort((a, b) => {
+    // Sort by type first (users before invited), then by name/email
+    if (a.type !== b.type) {
+      return a.type === 'user' ? -1 : 1;
+    }
+    return (a.full_name || a.email).localeCompare(b.full_name || b.email);
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -466,86 +632,147 @@ export const UserProfileSettings = () => {
       </div>
 
       <div className="grid gap-4">
-        {userProfiles.length === 0 ? (
+        {allUsers.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center text-muted-foreground">
               Geen gebruikersprofielen gevonden.
             </CardContent>
           </Card>
         ) : (
-          userProfiles.map((profile) => (
-            <Card key={profile.id} className="border-l-4 border-l-primary/20">
+          allUsers.map((profile) => (
+            <Card key={profile.id} className={`border-l-4 ${profile.type === 'invited' ? 'border-l-yellow-400' : 'border-l-primary/20'}`}>
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <CardTitle className="text-xl">{profile.full_name}</CardTitle>
-                      {profile.id === user?.id && (
-                        <span className="text-xs text-muted-foreground">(jij)</span>
-                      )}
+                      <CardTitle className="text-xl flex items-center gap-2">
+                        {profile.type === 'invited' ? (
+                          <>
+                            <Mail className="h-4 w-4 text-yellow-600" />
+                            {profile.email}
+                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Uitgenodigd</span>
+                          </>
+                        ) : (
+                          <>
+                            {profile.full_name}
+                            {profile.id === user?.id && (
+                              <span className="text-xs text-muted-foreground">(jij)</span>
+                            )}
+                          </>
+                        )}
+                      </CardTitle>
                     </div>
+                    
                     <p className="text-sm text-muted-foreground mb-4">
-                      {profile.email}
+                      {profile.type === 'invited' ? (
+                        <span className="flex items-center gap-2">
+                          <Clock className="h-3 w-3" />
+                          Uitgenodigd op {new Date(profile.created_at).toLocaleDateString('nl-NL')}
+                          {profile.expires_at && (
+                            <span className="text-xs">
+                              • Verloopt op {new Date(profile.expires_at).toLocaleDateString('nl-NL')}
+                            </span>
+                          )}
+                        </span>
+                      ) : (
+                        profile.email
+                      )}
                     </p>
                     
-                    {profile.organizations && profile.organizations.length > 0 && (
-                      <div className="space-y-4">
-                        {profile.organizations.map((organization, orgIndex) => (
-                          <div key={orgIndex} className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <Building2 className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-semibold text-base">{organization.name}</span>
-                              <span className="text-xs text-muted-foreground">
-                                ({organization.workspaces.length} werkruimte{organization.workspaces.length !== 1 ? 's' : ''})
-                              </span>
-                            </div>
-                            
-                            {organization.workspaces.length > 0 && (
-                              <div className="ml-6">
-                                <Table>
-                                  <TableHeader>
-                                    <TableRow>
-                                      <TableHead className="text-xs">Werkruimte</TableHead>
-                                      <TableHead className="text-xs">Rol</TableHead>
-                                    </TableRow>
-                                  </TableHeader>
-                                  <TableBody>
-                                    {organization.workspaces.map((workspace) => (
-                                      <TableRow key={workspace.id}>
-                                        <TableCell className="py-2">
-                                          <div className="flex items-center gap-2">
-                                            <Users className="h-3 w-3 text-muted-foreground" />
-                                            <span className="text-sm">{workspace.name}</span>
-                                          </div>
-                                        </TableCell>
-                                        <TableCell className="py-2">
-                                          <span className="text-xs bg-muted px-2 py-1 rounded">
-                                            {workspace.role}
-                                          </span>
-                                        </TableCell>
-                                      </TableRow>
-                                    ))}
-                                  </TableBody>
-                                </Table>
+                    {profile.type === 'user' && profile.organizations && profile.organizations.length > 0 && (
+                      <Collapsible 
+                        open={expandedUsers.has(profile.id)} 
+                        onOpenChange={() => toggleUserExpanded(profile.id)}
+                      >
+                        <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium hover:underline">
+                          {expandedUsers.has(profile.id) ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                          {profile.organizations.length} organisatie{profile.organizations.length !== 1 ? 's' : ''}
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="space-y-4 mt-4">
+                          {profile.organizations.map((organization, orgIndex) => (
+                            <div key={orgIndex} className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Building2 className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-semibold text-base">{organization.name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  ({organization.workspaces.length} werkruimte{organization.workspaces.length !== 1 ? 's' : ''})
+                                </span>
                               </div>
-                            )}
-                          </div>
-                        ))}
+                              
+                              {organization.workspaces.length > 0 && (
+                                <div className="ml-6">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead className="text-xs">Werkruimte</TableHead>
+                                        <TableHead className="text-xs">Rol</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {organization.workspaces.map((workspace) => (
+                                        <TableRow key={workspace.id}>
+                                          <TableCell className="py-2">
+                                            <div className="flex items-center gap-2">
+                                              <Users className="h-3 w-3 text-muted-foreground" />
+                                              <span className="text-sm">{workspace.name}</span>
+                                            </div>
+                                          </TableCell>
+                                          <TableCell className="py-2">
+                                            <span className="text-xs bg-muted px-2 py-1 rounded">
+                                              {workspace.role}
+                                            </span>
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    )}
+
+                    {profile.type === 'invited' && (
+                      <div className="mt-2 space-y-1">
+                        <p className="text-sm">
+                          <span className="font-medium">Organisatie:</span> {profile.organization_name}
+                        </p>
+                        {profile.workspace_name && (
+                          <p className="text-sm">
+                            <span className="font-medium">Werkruimte:</span> {profile.workspace_name}
+                          </p>
+                        )}
+                        <p className="text-sm">
+                          <span className="font-medium">Rol:</span> {profile.role}
+                        </p>
+                        {profile.invited_by_name && (
+                          <p className="text-sm">
+                            <span className="font-medium">Uitgenodigd door:</span> {profile.invited_by_name}
+                          </p>
+                        )}
                       </div>
                     )}
 
                     <p className="text-xs text-muted-foreground mt-4">
-                      Aangemaakt: {new Date(profile.created_at).toLocaleDateString('nl-NL')}
+                      {profile.type === 'invited' ? 'Uitgenodigd' : 'Aangemaakt'}: {new Date(profile.created_at).toLocaleDateString('nl-NL')}
                     </p>
                   </div>
                   <div className="flex space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingProfile(profile)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                    {profile.type === 'user' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingProfile(profile)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardHeader>
