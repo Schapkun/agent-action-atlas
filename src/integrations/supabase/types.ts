@@ -240,12 +240,28 @@ export type Database = {
     }
     Functions: {
       get_user_organization_ids: {
-        Args: { user_uuid: string }
+        Args: { user_id: string }
         Returns: string[]
       }
+      get_user_organization_role: {
+        Args: { org_id: string; user_id: string }
+        Returns: string
+      }
       get_user_workspace_ids: {
-        Args: { user_uuid: string }
+        Args: { user_id: string }
         Returns: string[]
+      }
+      get_user_workspace_role: {
+        Args: { workspace_id: string; user_id: string }
+        Returns: string
+      }
+      is_organization_member: {
+        Args: { org_id: string; user_id: string }
+        Returns: boolean
+      }
+      is_workspace_member: {
+        Args: { workspace_id: string; user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
