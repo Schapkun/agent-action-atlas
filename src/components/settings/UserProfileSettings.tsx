@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -305,7 +306,7 @@ export const UserProfileSettings = () => {
       if (isAccountOwner) {
         console.log('User is account owner, fetching all invitations');
         
-        // Account owner sees all invitations
+        // Account owner sees all invitations - fetch without any joins to auth.users
         const { data: invitationsData, error: invitationsError } = await supabase
           .from('user_invitations')
           .select(`
@@ -316,9 +317,7 @@ export const UserProfileSettings = () => {
             expires_at,
             organization_id,
             workspace_id,
-            invited_by,
-            organizations (name),
-            workspaces (name)
+            invited_by
           `)
           .is('accepted_at', null)
           .order('created_at', { ascending: false });
@@ -345,6 +344,36 @@ export const UserProfileSettings = () => {
 
         console.log('Found invitations:', invitationsData?.length || 0);
 
+        // Get organization names separately
+        const orgIds = [...new Set(invitationsData?.map(inv => inv.organization_id).filter(Boolean) || [])];
+        let organizationsData: any[] = [];
+        
+        if (orgIds.length > 0) {
+          const { data: orgsData, error: orgsError } = await supabase
+            .from('organizations')
+            .select('id, name')
+            .in('id', orgIds);
+
+          if (!orgsError) {
+            organizationsData = orgsData || [];
+          }
+        }
+
+        // Get workspace names separately
+        const workspaceIds = [...new Set(invitationsData?.map(inv => inv.workspace_id).filter(Boolean) || [])];
+        let workspacesData: any[] = [];
+        
+        if (workspaceIds.length > 0) {
+          const { data: wsData, error: wsError } = await supabase
+            .from('workspaces')
+            .select('id, name')
+            .in('id', workspaceIds);
+
+          if (!wsError) {
+            workspacesData = wsData || [];
+          }
+        }
+
         // Get invited_by user names separately
         const invitedByIds = [...new Set(invitationsData?.map(inv => inv.invited_by).filter(Boolean) || [])];
         let invitedByProfiles: any[] = [];
@@ -361,7 +390,10 @@ export const UserProfileSettings = () => {
         }
 
         const processedInvitations = invitationsData?.map(invitation => {
+          const organization = organizationsData.find(o => o.id === invitation.organization_id);
+          const workspace = workspacesData.find(w => w.id === invitation.workspace_id);
           const inviterProfile = invitedByProfiles.find(p => p.id === invitation.invited_by);
+          
           return {
             id: invitation.id,
             email: invitation.email,
@@ -369,9 +401,9 @@ export const UserProfileSettings = () => {
             created_at: invitation.created_at,
             expires_at: invitation.expires_at,
             organization_id: invitation.organization_id,
-            organization_name: invitation.organizations?.name || 'Onbekend',
+            organization_name: organization?.name || 'Onbekend',
             workspace_id: invitation.workspace_id,
-            workspace_name: invitation.workspaces?.name,
+            workspace_name: workspace?.name,
             invited_by_name: inviterProfile?.full_name || 'Onbekend'
           };
         }) || [];
@@ -421,9 +453,7 @@ export const UserProfileSettings = () => {
             expires_at,
             organization_id,
             workspace_id,
-            invited_by,
-            organizations (name),
-            workspaces (name)
+            invited_by
           `)
           .in('organization_id', orgIds)
           .is('accepted_at', null)
@@ -434,6 +464,12 @@ export const UserProfileSettings = () => {
           setInvitedUsers([]);
           return;
         }
+
+        // Get organization and workspace names
+        const { data: orgsData } = await supabase
+          .from('organizations')
+          .select('id, name')
+          .in('id', orgIds);
 
         // Get invited_by user names separately
         const invitedByIds = [...new Set(invitationsData?.map(inv => inv.invited_by).filter(Boolean) || [])];
@@ -451,7 +487,10 @@ export const UserProfileSettings = () => {
         }
 
         const processedInvitations = invitationsData?.map(invitation => {
+          const organization = orgsData?.find(o => o.id === invitation.organization_id);
+          const workspace = workspaceData?.find(w => w.id === invitation.workspace_id);
           const inviterProfile = invitedByProfiles.find(p => p.id === invitation.invited_by);
+          
           return {
             id: invitation.id,
             email: invitation.email,
@@ -459,9 +498,9 @@ export const UserProfileSettings = () => {
             created_at: invitation.created_at,
             expires_at: invitation.expires_at,
             organization_id: invitation.organization_id,
-            organization_name: invitation.organizations?.name || 'Onbekend',
+            organization_name: organization?.name || 'Onbekend',
             workspace_id: invitation.workspace_id,
-            workspace_name: invitation.workspaces?.name,
+            workspace_name: workspace?.name,
             invited_by_name: inviterProfile?.full_name || 'Onbekend'
           };
         }) || [];
