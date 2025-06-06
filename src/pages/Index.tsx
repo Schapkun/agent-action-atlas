@@ -14,15 +14,23 @@ import { ContactManager } from '@/components/dashboard/ContactManager';
 import { PendingTasks } from '@/components/dashboard/PendingTasks';
 import { OrganizationManager } from '@/components/dashboard/OrganizationManager';
 import { MyAccount } from '@/components/dashboard/MyAccount';
+import { FirstOrganizationSetup } from '@/components/dashboard/FirstOrganizationSetup';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'phone-calls' | 'emails' | 'contacts' | 'settings' | 'my-account';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { currentOrganization, loading } = useOrganization();
 
   const renderContent = () => {
+    // Show setup screen if no organization exists
+    if (!loading && !currentOrganization) {
+      return <FirstOrganizationSetup />;
+    }
+
     switch (currentView) {
       case 'overview':
         return (
@@ -61,18 +69,24 @@ const Index = () => {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background flex w-full">
-        <Sidebar 
-          currentView={currentView} 
-          onViewChange={setCurrentView}
-          collapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Header 
-            currentView={currentView}
-            onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
-            onAccountView={() => setCurrentView('my-account')}
+        {/* Only show sidebar if user has an organization */}
+        {currentOrganization && (
+          <Sidebar 
+            currentView={currentView} 
+            onViewChange={setCurrentView}
+            collapsed={sidebarCollapsed}
+            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
           />
+        )}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Only show header if user has an organization */}
+          {currentOrganization && (
+            <Header 
+              currentView={currentView}
+              onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+              onAccountView={() => setCurrentView('my-account')}
+            />
+          )}
           <main className="flex-1 overflow-auto p-6">
             {renderContent()}
           </main>
