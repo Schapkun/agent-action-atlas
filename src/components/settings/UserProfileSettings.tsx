@@ -10,7 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Trash2, Plus, Edit, UserPlus, Building2, Users, ChevronDown, ChevronRight, Mail, Clock } from 'lucide-react';
+import { Trash2, Plus, Edit, UserPlus, Building2, Users, ChevronDown, ChevronRight, Mail, Clock, X } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -593,6 +593,39 @@ export const UserProfileSettings = () => {
     }
   };
 
+  const deleteInvitation = async (invitationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_invitations')
+        .delete()
+        .eq('id', invitationId);
+
+      if (error) throw error;
+
+      await supabase
+        .from('history_logs')
+        .insert({
+          user_id: user?.id,
+          action: 'Uitnodiging geannuleerd',
+          details: { invitation_id: invitationId }
+        });
+
+      toast({
+        title: "Succes",
+        description: "Uitnodiging succesvol geannuleerd",
+      });
+
+      fetchInvitedUsers();
+    } catch (error) {
+      console.error('Error deleting invitation:', error);
+      toast({
+        title: "Error",
+        description: "Kon uitnodiging niet annuleren",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return <div>Gebruikersprofielen laden...</div>;
   }
@@ -827,6 +860,16 @@ export const UserProfileSettings = () => {
                         onClick={() => setEditingProfile(profile)}
                       >
                         <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {profile.type === 'invited' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deleteInvitation(profile.id.replace('invited-', ''))}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <X className="h-4 w-4" />
                       </Button>
                     )}
                   </div>
