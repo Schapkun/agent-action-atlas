@@ -213,16 +213,14 @@ export const OrganizationManager = () => {
         </TabsList>
         
         <TabsContent value="settings" className="space-y-6">
-          <OrganizationSettings />
-          
-          {/* Organizations Section with create button */}
+          {/* Organization Settings with create button */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Building className="h-5 w-5" />
-                    Organisaties
+                    Organisatie Instellingen
                   </CardTitle>
                   <CardDescription>
                     Beheer uw organisaties en hun instellingen
@@ -270,26 +268,11 @@ export const OrganizationManager = () => {
                 </div>
               )}
 
-              <div className="grid gap-3">
-                {organizations.map((org) => (
-                  <div key={org.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Building className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <div className="font-medium">{org.name}</div>
-                        <div className="text-sm text-muted-foreground">/{org.slug}</div>
-                      </div>
-                      {currentOrganization?.id === org.id && (
-                        <Badge variant="secondary">Actief</Badge>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <OrganizationSettings />
             </CardContent>
           </Card>
 
-          {/* Workspaces Section with create button */}
+          {/* Workspace Settings with create button */}
           {currentOrganization && (
             <Card>
               <CardHeader>
@@ -297,10 +280,10 @@ export const OrganizationManager = () => {
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <Users className="h-5 w-5" />
-                      Werkruimtes in {currentOrganization.name}
+                      Werkruimte Instellingen
                     </CardTitle>
                     <CardDescription>
-                      Beheer werkruimtes binnen deze organisatie
+                      Beheer werkruimtes binnen {currentOrganization.name}
                     </CardDescription>
                   </div>
                   <Button 
