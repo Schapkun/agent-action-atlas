@@ -208,16 +208,13 @@ export const DocumentManager = () => {
   };
 
   const handleViewDocument = (document: DocumentType) => {
-    if (document.status === 'draft') {
-      setPreviewDocument(document);
-      setIsPreviewOpen(true);
-    } else {
-      toast({
-        title: "Document openen",
-        description: `${document.name} wordt geopend...`,
-      });
-      console.log('Viewing document:', document);
-    }
+    console.log('Opening document preview for:', document.name);
+    setPreviewDocument(document);
+    setIsPreviewOpen(true);
+    toast({
+      title: "Document preview",
+      description: `${document.name} wordt geopend...`,
+    });
   };
 
   const handleDownloadDocument = (document: DocumentType) => {
@@ -411,7 +408,7 @@ export const DocumentManager = () => {
                         variant="ghost" 
                         size="sm"
                         onClick={() => handleViewDocument(document)}
-                        title={document.status === 'draft' ? 'Bekijken en goedkeuren' : 'Bekijken'}
+                        title="Bekijken"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>

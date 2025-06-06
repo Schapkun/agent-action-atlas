@@ -11,8 +11,9 @@ import { InvoiceManager } from '@/components/dashboard/InvoiceManager';
 import { PhoneCallManager } from '@/components/dashboard/PhoneCallManager';
 import { EmailManager } from '@/components/dashboard/EmailManager';
 import { ContactManager } from '@/components/dashboard/ContactManager';
+import { PendingTasks } from '@/components/dashboard/PendingTasks';
 
-export type ViewType = 'overview' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
+export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>('overview');
@@ -27,6 +28,8 @@ const Index = () => {
             <ActionOverview limit={10} showFilters={false} />
           </div>
         );
+      case 'pending-tasks':
+        return <PendingTasks />;
       case 'actions':
         return <ActionOverview />;
       case 'documents':
