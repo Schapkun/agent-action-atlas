@@ -380,6 +380,11 @@ export const OrganizationWorkspaceView = () => {
         allUserIds.push(user.id);
       }
 
+      // If no users found at all, still try to show account owner
+      if (allUserIds.length === 0 && isAccountOwner && user?.id) {
+        allUserIds = [user.id];
+      }
+
       if (allUserIds.length === 0) {
         setSelectedWorkspaceUsers([]);
         setSelectedWorkspaceName(workspaceName);
