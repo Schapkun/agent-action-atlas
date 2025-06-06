@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, Mail, UserPlus, Edit, Trash, Send } from 'lucide-react';
+import { Users, Mail, UserPlus, Edit, Trash, Send, AlertCircle } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -45,6 +45,7 @@ export const UserManagement = () => {
     if (!currentOrganization) return;
 
     try {
+      console.log('Fetching organization members for:', currentOrganization.id);
       const { data, error } = await supabase
         .from('organization_members')
         .select(`
@@ -54,33 +55,55 @@ export const UserManagement = () => {
         `)
         .eq('organization_id', currentOrganization.id);
 
-      if (error) throw error;
+      console.log('Organization members query result:', { data, error });
+
+      if (error) {
+        console.error('Error fetching organization members:', error);
+        if (error.message.includes('policy')) {
+          console.log('Policy error - user might not have permission to view members');
+          setOrgMembers([]);
+          return;
+        }
+        throw error;
+      }
 
       // Now fetch profile data separately for each member
       const membersWithProfiles = await Promise.all(
         (data || []).map(async (member) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('email, full_name')
-            .eq('id', member.user_id)
-            .single();
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('email, full_name')
+              .eq('id', member.user_id)
+              .single();
 
-          return {
-            id: member.id,
-            user_id: member.user_id,
-            role: member.role,
-            email: profile?.email,
-            full_name: profile?.full_name
-          };
+            return {
+              id: member.id,
+              user_id: member.user_id,
+              role: member.role,
+              email: profile?.email,
+              full_name: profile?.full_name
+            };
+          } catch (profileError) {
+            console.error('Error fetching profile for user:', member.user_id, profileError);
+            return {
+              id: member.id,
+              user_id: member.user_id,
+              role: member.role,
+              email: 'Unknown',
+              full_name: 'Unknown User'
+            };
+          }
         })
       );
 
+      console.log('Final organization members with profiles:', membersWithProfiles);
       setOrgMembers(membersWithProfiles);
     } catch (error: any) {
       console.error('Error fetching organization members:', error);
       toast({
         title: "Error",
-        description: "Kon organisatieleden niet laden.",
+        description: "Kon organisatieleden niet laden: " + error.message,
         variant: "destructive",
       });
     }
@@ -90,6 +113,7 @@ export const UserManagement = () => {
     if (!currentWorkspace) return;
 
     try {
+      console.log('Fetching workspace members for:', currentWorkspace.id);
       const { data, error } = await supabase
         .from('workspace_members')
         .select(`
@@ -99,33 +123,55 @@ export const UserManagement = () => {
         `)
         .eq('workspace_id', currentWorkspace.id);
 
-      if (error) throw error;
+      console.log('Workspace members query result:', { data, error });
+
+      if (error) {
+        console.error('Error fetching workspace members:', error);
+        if (error.message.includes('policy')) {
+          console.log('Policy error - user might not have permission to view workspace members');
+          setWorkspaceMembers([]);
+          return;
+        }
+        throw error;
+      }
 
       // Now fetch profile data separately for each member
       const membersWithProfiles = await Promise.all(
         (data || []).map(async (member) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('email, full_name')
-            .eq('id', member.user_id)
-            .single();
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('email, full_name')
+              .eq('id', member.user_id)
+              .single();
 
-          return {
-            id: member.id,
-            user_id: member.user_id,
-            role: member.role,
-            email: profile?.email,
-            full_name: profile?.full_name
-          };
+            return {
+              id: member.id,
+              user_id: member.user_id,
+              role: member.role,
+              email: profile?.email,
+              full_name: profile?.full_name
+            };
+          } catch (profileError) {
+            console.error('Error fetching profile for user:', member.user_id, profileError);
+            return {
+              id: member.id,
+              user_id: member.user_id,
+              role: member.role,
+              email: 'Unknown',
+              full_name: 'Unknown User'
+            };
+          }
         })
       );
 
+      console.log('Final workspace members with profiles:', membersWithProfiles);
       setWorkspaceMembers(membersWithProfiles);
     } catch (error: any) {
       console.error('Error fetching workspace members:', error);
       toast({
         title: "Error",
-        description: "Kon werkruimte leden niet laden.",
+        description: "Kon werkruimte leden niet laden: " + error.message,
         variant: "destructive",
       });
     }
@@ -135,13 +181,25 @@ export const UserManagement = () => {
     if (!currentOrganization) return;
 
     try {
+      console.log('Fetching invitations for organization:', currentOrganization.id);
       const { data, error } = await supabase
         .from('user_invitations')
         .select('*')
         .eq('organization_id', currentOrganization.id)
         .is('accepted_at', null);
 
-      if (error) throw error;
+      console.log('Invitations query result:', { data, error });
+
+      if (error) {
+        console.error('Error fetching invitations:', error);
+        if (error.message.includes('policy')) {
+          console.log('Policy error - user might not have permission to view invitations');
+          setInvitations([]);
+          return;
+        }
+        throw error;
+      }
+      
       setInvitations(data || []);
     } catch (error: any) {
       console.error('Error fetching invitations:', error);
@@ -153,6 +211,7 @@ export const UserManagement = () => {
 
     setLoading(true);
     try {
+      console.log('Sending invitation to:', inviteEmail);
       const { error } = await supabase
         .from('user_invitations')
         .insert([{
@@ -163,7 +222,12 @@ export const UserManagement = () => {
           invited_by: user.id
         }]);
 
-      if (error) throw error;
+      console.log('Invitation creation result:', { error });
+
+      if (error) {
+        console.error('Error sending invitation:', error);
+        throw error;
+      }
 
       toast({
         title: "Uitnodiging verzonden",
@@ -178,7 +242,7 @@ export const UserManagement = () => {
       console.error('Error sending invitation:', error);
       toast({
         title: "Error",
-        description: "Kon uitnodiging niet verzenden.",
+        description: "Kon uitnodiging niet verzenden: " + error.message,
         variant: "destructive",
       });
     } finally {
@@ -247,13 +311,30 @@ export const UserManagement = () => {
   };
 
   useEffect(() => {
-    fetchOrgMembers();
-    fetchInvitations();
+    if (currentOrganization) {
+      fetchOrgMembers();
+      fetchInvitations();
+    }
   }, [currentOrganization]);
 
   useEffect(() => {
-    fetchWorkspaceMembers();
+    if (currentWorkspace) {
+      fetchWorkspaceMembers();
+    }
   }, [currentWorkspace]);
+
+  if (!currentOrganization) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="text-center p-6">
+            <AlertCircle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+            <p className="text-muted-foreground">Selecteer eerst een organisatie om gebruikers te beheren</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -313,7 +394,7 @@ export const UserManagement = () => {
                     size="sm"
                   >
                     <Send className="h-4 w-4 mr-2" />
-                    Uitnodiging Verzenden
+                    {loading ? 'Bezig...' : 'Uitnodiging Verzenden'}
                   </Button>
                   <Button 
                     variant="outline" 
@@ -328,41 +409,49 @@ export const UserManagement = () => {
           )}
 
           <div className="grid gap-3">
-            {orgMembers.map((member) => (
-              <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div>
-                    <div className="font-medium">{member.full_name || member.email}</div>
-                    <div className="text-sm text-muted-foreground">{member.email}</div>
-                  </div>
-                  <Badge variant="secondary">{member.role}</Badge>
-                </div>
-                <div className="flex gap-2">
-                  <Select 
-                    value={member.role} 
-                    onValueChange={(role) => updateMemberRole(member.id, role)}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="member">Lid</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="owner">Eigenaar</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {member.user_id !== user?.id && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeMember(member.id)}
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
+            {orgMembers.length === 0 ? (
+              <div className="text-center p-6 text-muted-foreground">
+                <Users className="h-8 w-8 mx-auto mb-2" />
+                <p>Nog geen leden in deze organisatie</p>
+                <p className="text-sm">Nodig gebruikers uit met de knop hierboven</p>
               </div>
-            ))}
+            ) : (
+              orgMembers.map((member) => (
+                <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <div className="font-medium">{member.full_name || member.email}</div>
+                      <div className="text-sm text-muted-foreground">{member.email}</div>
+                    </div>
+                    <Badge variant="secondary">{member.role}</Badge>
+                  </div>
+                  <div className="flex gap-2">
+                    <Select 
+                      value={member.role} 
+                      onValueChange={(role) => updateMemberRole(member.id, role)}
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="member">Lid</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="owner">Eigenaar</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {member.user_id !== user?.id && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeMember(member.id)}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
@@ -381,40 +470,47 @@ export const UserManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="grid gap-3">
-              {workspaceMembers.map((member) => (
-                <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <div className="font-medium">{member.full_name || member.email}</div>
-                      <div className="text-sm text-muted-foreground">{member.email}</div>
-                    </div>
-                    <Badge variant="secondary">{member.role}</Badge>
-                  </div>
-                  <div className="flex gap-2">
-                    <Select 
-                      value={member.role} 
-                      onValueChange={(role) => updateMemberRole(member.id, role, true)}
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="member">Lid</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {member.user_id !== user?.id && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeMember(member.id, true)}
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
+              {workspaceMembers.length === 0 ? (
+                <div className="text-center p-6 text-muted-foreground">
+                  <Users className="h-8 w-8 mx-auto mb-2" />
+                  <p>Nog geen leden in deze werkruimte</p>
                 </div>
-              ))}
+              ) : (
+                workspaceMembers.map((member) => (
+                  <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <div className="font-medium">{member.full_name || member.email}</div>
+                        <div className="text-sm text-muted-foreground">{member.email}</div>
+                      </div>
+                      <Badge variant="secondary">{member.role}</Badge>
+                    </div>
+                    <div className="flex gap-2">
+                      <Select 
+                        value={member.role} 
+                        onValueChange={(role) => updateMemberRole(member.id, role, true)}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="member">Lid</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {member.user_id !== user?.id && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeMember(member.id, true)}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

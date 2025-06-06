@@ -61,7 +61,7 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     console.log('refreshOrganizations: Starting for user:', user.id);
 
     try {
-      // First try to get all organizations where user is a member
+      // Check if user has any organization memberships first
       const { data: memberData, error: memberError } = await supabase
         .from('organization_members')
         .select('organization_id')
@@ -71,11 +71,18 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       if (memberError) {
         console.error('Error fetching member data:', memberError);
+        // If it's a policy error, the user might not have any organizations yet
+        if (memberError.message.includes('policy')) {
+          console.log('Policy error - user likely has no organizations yet');
+          setOrganizations([]);
+          setCurrentOrganization(null);
+          return;
+        }
         throw memberError;
       }
 
       if (!memberData || memberData.length === 0) {
-        console.log('No organization memberships found');
+        console.log('No organization memberships found - user needs to create an organization');
         setOrganizations([]);
         setCurrentOrganization(null);
         return;
@@ -133,7 +140,16 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       console.log('Workspaces query result:', { data, error });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching workspaces:', error);
+        // If it's a policy error, there might be no workspaces yet
+        if (error.message.includes('policy')) {
+          console.log('Policy error - no workspaces found');
+          setWorkspaces([]);
+          return;
+        }
+        throw error;
+      }
 
       setWorkspaces(data || []);
       
