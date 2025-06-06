@@ -1,4 +1,3 @@
-
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,12 +23,16 @@ interface SidebarProps {
   onViewChange: (view: ViewType) => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
+  pendingTasksCount?: number;
 }
 
-export const Sidebar = ({ currentView, onViewChange, collapsed, onToggleCollapse }: SidebarProps) => {
-  // Count of pending tasks (concepten)
-  const pendingTasksCount = 3;
-
+export const Sidebar = ({ 
+  currentView, 
+  onViewChange, 
+  collapsed, 
+  onToggleCollapse,
+  pendingTasksCount = 3 
+}: SidebarProps) => {
   const menuItems = [
     { id: 'overview' as ViewType, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'pending-tasks' as ViewType, label: 'Openstaande Taken', icon: Clock, badge: pendingTasksCount },

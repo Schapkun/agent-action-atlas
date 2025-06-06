@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,10 +21,11 @@ export const PendingTasks = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [previewDocument, setPreviewDocument] = useState<DocumentType | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [approvedTasks, setApprovedTasks] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   // Mock data for pending tasks (concept documents and emails)
-  const pendingTasks: DocumentType[] = [
+  const allPendingTasks: DocumentType[] = [
     {
       id: 'd4',
       name: 'Arbeidscontract Medewerker X.docx',
@@ -63,6 +63,9 @@ export const PendingTasks = () => {
       dossier: 'DOS-2025-005'
     }
   ];
+
+  // Filter out approved tasks
+  const pendingTasks = allPendingTasks.filter(task => !approvedTasks.has(task.id));
 
   const getTaskIcon = (type: string) => {
     switch (type.toLowerCase()) {
@@ -143,10 +146,13 @@ export const PendingTasks = () => {
 
   const handleApproveDocument = (documentId: string) => {
     console.log('Approving task:', documentId);
+    setApprovedTasks(prev => new Set([...prev, documentId]));
     toast({
       title: "Taak goedgekeurd",
       description: "De taak is goedgekeurd en verzonden.",
     });
+    setIsPreviewOpen(false);
+    setPreviewDocument(null);
   };
 
   const handleEditDocument = (documentId: string) => {
@@ -155,6 +161,8 @@ export const PendingTasks = () => {
       title: "Taak bewerken",
       description: "De taak wordt geopend voor bewerking.",
     });
+    setIsPreviewOpen(false);
+    setPreviewDocument(null);
   };
 
   const filteredTasks = pendingTasks.filter(task =>
