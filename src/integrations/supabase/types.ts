@@ -239,14 +239,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_user_organization_ids: {
-        Args: { user_uuid: string }
-        Returns: string[]
-      }
-      get_user_workspace_ids: {
-        Args: { user_uuid: string }
-        Returns: string[]
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

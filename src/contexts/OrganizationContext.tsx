@@ -63,7 +63,7 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     console.log('refreshOrganizations: Starting for user:', user.id);
 
     try {
-      // Use the RLS policies to get organizations
+      // Direct query using the new RLS policies
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .select('*');
@@ -72,14 +72,10 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       if (orgError) {
         console.error('Error fetching organizations:', orgError);
-        // If RLS blocks access, user has no organizations
-        if (orgError.message.includes('policy') || orgError.code === '42P17') {
-          console.log('RLS policy error - user has no access to organizations');
-          setOrganizations([]);
-          setCurrentOrganization(null);
-          return;
-        }
-        throw orgError;
+        // If it's an RLS/access error, user has no organizations
+        setOrganizations([]);
+        setCurrentOrganization(null);
+        return;
       }
 
       const orgs = orgData || [];
@@ -94,14 +90,13 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
     } catch (error: any) {
       console.error('Error in refreshOrganizations:', error);
-      // Don't show error toast for RLS issues - this is expected for new users
-      if (!error.message.includes('policy') && error.code !== '42P17') {
-        toast({
-          title: "Error",
-          description: "Kon organisaties niet laden: " + error.message,
-          variant: "destructive",
-        });
-      }
+      setOrganizations([]);
+      setCurrentOrganization(null);
+      toast({
+        title: "Error",
+        description: "Kon organisaties niet laden: " + error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -124,26 +119,19 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       if (error) {
         console.error('Error fetching workspaces:', error);
-        // If it's a policy error, there might be no workspaces yet
-        if (error.message.includes('policy') || error.code === '42P17') {
-          console.log('Policy error - no workspaces found');
-          setWorkspaces([]);
-          return;
-        }
-        throw error;
+        setWorkspaces([]);
+        return;
       }
 
       setWorkspaces(data || []);
     } catch (error: any) {
       console.error('Error fetching workspaces:', error);
-      // Don't show error toast for RLS issues
-      if (!error.message.includes('policy') && error.code !== '42P17') {
-        toast({
-          title: "Error",
-          description: "Kon werkruimtes niet laden: " + error.message,
-          variant: "destructive",
-        });
-      }
+      setWorkspaces([]);
+      toast({
+        title: "Error",
+        description: "Kon werkruimtes niet laden: " + error.message,
+        variant: "destructive",
+      });
     }
   };
 
