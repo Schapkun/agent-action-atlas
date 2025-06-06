@@ -380,12 +380,12 @@ export const OrganizationWorkspaceView = () => {
         allUserIds.push(user.id);
       }
 
-      // If no users found at all, still try to show account owner
-      if (allUserIds.length === 0 && isAccountOwner && user?.id) {
-        allUserIds = [user.id];
-      }
+      console.log('All user IDs to fetch:', allUserIds);
+      console.log('Current user ID:', user?.id);
+      console.log('Is account owner:', isAccountOwner);
 
       if (allUserIds.length === 0) {
+        console.log('No users found, setting empty list');
         setSelectedWorkspaceUsers([]);
         setSelectedWorkspaceName(workspaceName);
         setIsUsersDialogOpen(true);
@@ -398,6 +398,8 @@ export const OrganizationWorkspaceView = () => {
         .in('id', allUserIds);
 
       if (profilesError) throw profilesError;
+
+      console.log('Profiles data from database:', profilesData);
 
       const usersWithRoles = profilesData?.map(profile => {
         const membership = membershipData?.find(m => m.user_id === profile.id);
@@ -417,6 +419,8 @@ export const OrganizationWorkspaceView = () => {
           isCurrentUser: profile.id === user?.id
         };
       }) || [];
+
+      console.log('Users with roles:', usersWithRoles);
 
       // Sort so current user appears first
       usersWithRoles.sort((a, b) => {
