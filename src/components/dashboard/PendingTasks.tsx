@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,24 @@ export const PendingTasks = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [approvedTasks, setApprovedTasks] = useState<Set<string>>(new Set());
   const { toast } = useToast();
+
+  // Load approved tasks from localStorage on component mount
+  useEffect(() => {
+    const savedApprovedTasks = localStorage.getItem('approvedTasks');
+    if (savedApprovedTasks) {
+      try {
+        const taskIds = JSON.parse(savedApprovedTasks);
+        setApprovedTasks(new Set(taskIds));
+      } catch (error) {
+        console.error('Error loading approved tasks from localStorage:', error);
+      }
+    }
+  }, []);
+
+  // Save approved tasks to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('approvedTasks', JSON.stringify([...approvedTasks]));
+  }, [approvedTasks]);
 
   // Mock data for pending tasks (concept documents and emails)
   const allPendingTasks: DocumentType[] = [
@@ -98,10 +117,6 @@ export const PendingTasks = () => {
     console.log('Opening task preview for:', document.name);
     setPreviewDocument(document);
     setIsPreviewOpen(true);
-    toast({
-      title: "Taak bekijken",
-      description: `${document.name} wordt geopend voor beoordeling...`,
-    });
   };
 
   const handleDownloadDocument = (document: DocumentType) => {
@@ -131,14 +146,14 @@ export const PendingTasks = () => {
       downloadPDF(pdfDoc, filename);
       
       toast({
-        title: "Document gedownload",
-        description: `${document.name} is succesvol gedownload.`,
+        title: "Gedownload",
+        description: `${document.name} is gedownload.`,
       });
     } catch (error) {
       console.error('Download error:', error);
       toast({
         title: "Download fout",
-        description: "Er is een fout opgetreden bij het downloaden van het document.",
+        description: "Er is een fout opgetreden bij het downloaden.",
         variant: "destructive",
       });
     }
@@ -146,10 +161,12 @@ export const PendingTasks = () => {
 
   const handleApproveDocument = (documentId: string) => {
     console.log('Approving task:', documentId);
+    const documentName = allPendingTasks.find(t => t.id === documentId)?.name || 'Document';
+    
     setApprovedTasks(prev => new Set([...prev, documentId]));
     toast({
-      title: "Taak goedgekeurd",
-      description: "De taak is goedgekeurd en verzonden.",
+      title: "Goedgekeurd",
+      description: `${documentName} is goedgekeurd en verzonden.`,
     });
     setIsPreviewOpen(false);
     setPreviewDocument(null);
@@ -157,9 +174,11 @@ export const PendingTasks = () => {
 
   const handleEditDocument = (documentId: string) => {
     console.log('Editing task:', documentId);
+    const documentName = allPendingTasks.find(t => t.id === documentId)?.name || 'Document';
+    
     toast({
-      title: "Taak bewerken",
-      description: "De taak wordt geopend voor bewerking.",
+      title: "Bewerken",
+      description: `${documentName} wordt geopend voor bewerking.`,
     });
     setIsPreviewOpen(false);
     setPreviewDocument(null);
