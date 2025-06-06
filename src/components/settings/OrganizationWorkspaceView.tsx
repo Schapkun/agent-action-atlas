@@ -370,30 +370,51 @@ export const OrganizationWorkspaceView = () => {
 
       if (membershipError) throw membershipError;
 
-      if (!membershipData || membershipData.length === 0) {
+      // Always include current user, even if not in membership data
+      let allUserIds = membershipData?.map(m => m.user_id) || [];
+      if (user?.id && !allUserIds.includes(user.id)) {
+        allUserIds.push(user.id);
+      }
+
+      if (allUserIds.length === 0) {
         setSelectedWorkspaceUsers([]);
         setSelectedWorkspaceName(workspaceName);
         setIsUsersDialogOpen(true);
         return;
       }
 
-      const userIds = membershipData.map(m => m.user_id);
       const { data: profilesData, error: profilesError } = await supabase
         .from('user_profiles')
         .select('id, full_name, email')
-        .in('id', userIds);
+        .in('id', allUserIds);
 
       if (profilesError) throw profilesError;
 
       const usersWithRoles = profilesData?.map(profile => {
-        const membership = membershipData.find(m => m.user_id === profile.id);
+        const membership = membershipData?.find(m => m.user_id === profile.id);
+        let role = membership?.role || 'geen toegang';
+        
+        // If this is the current user and they don't have explicit membership, 
+        // but they can see this workspace, they might have access through organization ownership
+        if (profile.id === user?.id && !membership && user?.email === 'info@schapkun.com') {
+          role = 'eigenaar (organisatie)';
+        }
+
         return {
           id: profile.id,
           full_name: profile.full_name || 'Geen naam',
           email: profile.email || '',
-          role: membership?.role || 'onbekend'
+          role: role,
+          isCurrentUser: profile.id === user?.id
         };
       }) || [];
+
+      // Sort so current user appears first
+      usersWithRoles.sort((a, b) => {
+        if (a.isCurrentUser) return -1;
+        if (b.isCurrentUser) return 1;
+        return 0;
+      });
 
       setSelectedWorkspaceUsers(usersWithRoles);
       setSelectedWorkspaceName(workspaceName);
@@ -711,8 +732,11 @@ export const OrganizationWorkspaceView = () => {
                 </TableHeader>
                 <TableBody>
                   {selectedWorkspaceUsers.map((userProfile) => (
-                    <TableRow key={userProfile.id}>
-                      <TableCell className="text-sm">{userProfile.full_name}</TableCell>
+                    <TableRow key={userProfile.id} className={userProfile.isCurrentUser ? "bg-muted/50" : ""}>
+                      <TableCell className="text-sm">
+                        {userProfile.full_name}
+                        {userProfile.isCurrentUser && <span className="text-xs text-muted-foreground ml-2">(jij)</span>}
+                      </TableCell>
                       <TableCell className="text-sm">{userProfile.email}</TableCell>
                       <TableCell className="text-sm">{userProfile.role}</TableCell>
                     </TableRow>
