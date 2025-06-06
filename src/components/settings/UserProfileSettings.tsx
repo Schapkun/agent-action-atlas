@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -306,7 +305,7 @@ export const UserProfileSettings = () => {
       if (isAccountOwner) {
         console.log('User is account owner, fetching all invitations');
         
-        // Account owner sees all invitations - simple query without any joins
+        // Account owner sees all invitations
         const { data: invitationsData, error: invitationsError } = await supabase
           .from('user_invitations')
           .select('id, email, role, created_at, expires_at, organization_id, workspace_id, invited_by')
@@ -394,41 +393,10 @@ export const UserProfileSettings = () => {
       } else {
         console.log('Regular user, fetching organization-based invitations');
         
-        // Regular users see invitations from their organizations
-        const { data: membershipData, error: membershipError } = await supabase
-          .from('workspace_members')
-          .select('workspace_id')
-          .eq('user_id', user.id);
-
-        if (membershipError) {
-          console.error('Membership error:', membershipError);
-          setInvitedUsers([]);
-          return;
-        }
-
-        if (!membershipData || membershipData.length === 0) {
-          setInvitedUsers([]);
-          return;
-        }
-
-        const workspaceIds = membershipData.map(m => m.workspace_id);
-        const { data: workspaceData, error: workspaceDataError } = await supabase
-          .from('workspaces')
-          .select('id, name, organization_id')
-          .in('id', workspaceIds);
-
-        if (workspaceDataError) {
-          console.error('Workspace data error:', workspaceDataError);
-          setInvitedUsers([]);
-          return;
-        }
-
-        const orgIds = [...new Set(workspaceData?.map(w => w.organization_id) || [])];
-
+        // Regular users see invitations from their organizations - this should now work with the RLS policy
         const { data: invitationsData, error: invitationsError } = await supabase
           .from('user_invitations')
           .select('id, email, role, created_at, expires_at, organization_id, workspace_id, invited_by')
-          .in('organization_id', orgIds)
           .is('accepted_at', null)
           .order('created_at', { ascending: false });
 
@@ -438,14 +406,27 @@ export const UserProfileSettings = () => {
           return;
         }
 
+        if (!invitationsData || invitationsData.length === 0) {
+          setInvitedUsers([]);
+          return;
+        }
+
         // Get organization names
+        const orgIds = [...new Set(invitationsData.map(inv => inv.organization_id).filter(Boolean))];
         const { data: orgsData } = await supabase
           .from('organizations')
           .select('id, name')
           .in('id', orgIds);
 
+        // Get workspace names
+        const workspaceIds = [...new Set(invitationsData.map(inv => inv.workspace_id).filter(Boolean))];
+        const { data: workspacesData } = await supabase
+          .from('workspaces')
+          .select('id, name')
+          .in('id', workspaceIds);
+
         // Get invited_by user names from user_profiles
-        const invitedByIds = [...new Set(invitationsData?.map(inv => inv.invited_by).filter(Boolean) || [])];
+        const invitedByIds = [...new Set(invitationsData.map(inv => inv.invited_by).filter(Boolean))];
         let invitedByProfiles: any[] = [];
         
         if (invitedByIds.length > 0) {
@@ -459,9 +440,9 @@ export const UserProfileSettings = () => {
           }
         }
 
-        const processedInvitations = invitationsData?.map(invitation => {
+        const processedInvitations = invitationsData.map(invitation => {
           const organization = orgsData?.find(o => o.id === invitation.organization_id);
-          const workspace = workspaceData?.find(w => w.id === invitation.workspace_id);
+          const workspace = workspacesData?.find(w => w.id === invitation.workspace_id);
           const inviterProfile = invitedByProfiles.find(p => p.id === invitation.invited_by);
           
           return {
@@ -476,7 +457,7 @@ export const UserProfileSettings = () => {
             workspace_name: workspace?.name,
             invited_by_name: inviterProfile?.full_name || 'Onbekend'
           };
-        }) || [];
+        });
 
         setInvitedUsers(processedInvitations);
       }
