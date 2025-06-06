@@ -52,6 +52,83 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const createDefaultOrganization = async () => {
+    if (!user) return null;
+
+    try {
+      console.log('Creating default organization for user:', user.id);
+      
+      // Get user name from profile or email
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', user.id)
+        .single();
+
+      const userName = profile?.full_name || profile?.email?.split('@')[0] || 'Gebruiker';
+      const orgName = `${userName}'s Organisatie`;
+      const orgSlug = orgName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+      // Create organization
+      const { data: org, error: orgError } = await supabase
+        .from('organizations')
+        .insert({
+          name: orgName,
+          slug: orgSlug
+        })
+        .select()
+        .single();
+
+      if (orgError) throw orgError;
+
+      // Add user as organization owner
+      const { error: memberError } = await supabase
+        .from('organization_members')
+        .insert({
+          organization_id: org.id,
+          user_id: user.id,
+          role: 'owner'
+        });
+
+      if (memberError) throw memberError;
+
+      // Create default workspace
+      const { data: workspace, error: workspaceError } = await supabase
+        .from('workspaces')
+        .insert({
+          organization_id: org.id,
+          name: 'Hoofd Werkruimte',
+          slug: 'main'
+        })
+        .select()
+        .single();
+
+      if (workspaceError) throw workspaceError;
+
+      // Add user as workspace admin
+      const { error: workspaceMemberError } = await supabase
+        .from('workspace_members')
+        .insert({
+          workspace_id: workspace.id,
+          user_id: user.id,
+          role: 'admin'
+        });
+
+      if (workspaceMemberError) throw workspaceMemberError;
+
+      console.log('Default organization created successfully:', org);
+      return org;
+    } catch (error: any) {
+      console.error('Error creating default organization:', error);
+      toast({
+        title: "Error",
+        description: "Kon standaard organisatie niet aanmaken: " + error.message,
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
   const refreshOrganizations = async () => {
     if (!user) {
       console.log('refreshOrganizations: No user found');
@@ -63,24 +140,39 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     console.log('refreshOrganizations: Starting for user:', user.id);
 
     try {
-      // Direct query using the new RLS policies
-      const { data: orgData, error: orgError } = await supabase
-        .from('organizations')
-        .select('*');
+      // Query organizations through organization_members to get only user's orgs
+      const { data: memberData, error: memberError } = await supabase
+        .from('organization_members')
+        .select(`
+          organization_id,
+          organizations!organization_members_organization_id_fkey(*)
+        `)
+        .eq('user_id', user.id);
 
-      console.log('Organizations query result:', { orgData, orgError });
+      console.log('Organization members query result:', { memberData, memberError });
 
-      if (orgError) {
-        console.error('Error fetching organizations:', orgError);
-        // If it's an RLS/access error, user has no organizations
+      if (memberError) {
+        console.error('Error fetching organization members:', memberError);
         setOrganizations([]);
         setCurrentOrganization(null);
         return;
       }
 
-      const orgs = orgData || [];
-      console.log('Final organizations:', orgs);
+      // Extract organizations from the join result
+      const orgs = memberData?.map(member => member.organizations).filter(Boolean) || [];
+      console.log('Found organizations:', orgs);
       
+      // If no organizations found, create a default one
+      if (orgs.length === 0) {
+        console.log('No organizations found, creating default...');
+        const defaultOrg = await createDefaultOrganization();
+        if (defaultOrg) {
+          setOrganizations([defaultOrg]);
+          setCurrentOrganization(defaultOrg);
+        }
+        return;
+      }
+
       setOrganizations(orgs);
 
       // Set first organization as current if none selected

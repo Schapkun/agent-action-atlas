@@ -40,7 +40,8 @@ export const OrganizationManager = () => {
     setCurrentOrganization,
     setCurrentWorkspace,
     refreshOrganizations,
-    refreshWorkspaces
+    refreshWorkspaces,
+    loading
   } = useOrganization();
   const { toast } = useToast();
 
@@ -48,12 +49,12 @@ export const OrganizationManager = () => {
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('member');
-  const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   const createOrganization = async () => {
     if (!newOrgName.trim() || !user) return;
 
-    setLoading(true);
+    setCreating(true);
     try {
       // Create the organization
       const { data: org, error: orgError } = await supabase
@@ -117,14 +118,14 @@ export const OrganizationManager = () => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setCreating(false);
     }
   };
 
   const createWorkspace = async () => {
     if (!newWorkspaceName.trim() || !currentOrganization) return;
 
-    setLoading(true);
+    setCreating(true);
     try {
       const { data: workspace, error: workspaceError } = await supabase
         .from('workspaces')
@@ -164,14 +165,14 @@ export const OrganizationManager = () => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setCreating(false);
     }
   };
 
   const deleteWorkspace = async (workspaceId: string, workspaceName: string) => {
     if (!currentOrganization) return;
 
-    setLoading(true);
+    setCreating(true);
     try {
       // First delete all workspace members
       await supabase
@@ -206,14 +207,14 @@ export const OrganizationManager = () => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setCreating(false);
     }
   };
 
   const sendInvitation = async () => {
     if (!inviteEmail.trim() || !currentOrganization) return;
 
-    setLoading(true);
+    setCreating(true);
     try {
       const { error } = await supabase
         .from('user_invitations')
@@ -241,9 +242,22 @@ export const OrganizationManager = () => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setCreating(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="text-center p-6">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+            <p className="text-muted-foreground">Laden...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!currentOrganization) {
     return (
@@ -251,7 +265,7 @@ export const OrganizationManager = () => {
         <Card>
           <CardContent className="text-center p-6">
             <AlertCircle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-            <p className="text-muted-foreground mb-4">Selecteer eerst een organisatie of maak een nieuwe aan</p>
+            <p className="text-muted-foreground mb-4">Maak een nieuwe organisatie aan om te beginnen</p>
             
             <div className="max-w-md mx-auto space-y-4">
               <div className="space-y-2">
@@ -262,11 +276,11 @@ export const OrganizationManager = () => {
                     value={newOrgName}
                     onChange={(e) => setNewOrgName(e.target.value)}
                     placeholder="Organisatienaam"
-                    disabled={loading}
+                    disabled={creating}
                   />
                   <Button 
                     onClick={createOrganization}
-                    disabled={loading || !newOrgName.trim()}
+                    disabled={creating || !newOrgName.trim()}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -335,11 +349,11 @@ export const OrganizationManager = () => {
                     value={newOrgName}
                     onChange={(e) => setNewOrgName(e.target.value)}
                     placeholder="Organisatienaam"
-                    disabled={loading}
+                    disabled={creating}
                   />
                   <Button 
                     onClick={createOrganization}
-                    disabled={loading || !newOrgName.trim()}
+                    disabled={creating || !newOrgName.trim()}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Aanmaken
@@ -393,7 +407,7 @@ export const OrganizationManager = () => {
                           variant="destructive"
                           size="sm"
                           onClick={() => deleteWorkspace(workspace.id, workspace.name)}
-                          disabled={loading}
+                          disabled={creating}
                         >
                           <Trash className="h-4 w-4" />
                         </Button>
@@ -411,11 +425,11 @@ export const OrganizationManager = () => {
                     value={newWorkspaceName}
                     onChange={(e) => setNewWorkspaceName(e.target.value)}
                     placeholder="Werkruimtenaam"
-                    disabled={loading}
+                    disabled={creating}
                   />
                   <Button 
                     onClick={createWorkspace}
-                    disabled={loading || !newWorkspaceName.trim()}
+                    disabled={creating || !newWorkspaceName.trim()}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Aanmaken
@@ -447,7 +461,7 @@ export const OrganizationManager = () => {
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
                     placeholder="naam@bedrijf.nl"
-                    disabled={loading}
+                    disabled={creating}
                   />
                 </div>
 
@@ -467,7 +481,7 @@ export const OrganizationManager = () => {
 
                 <Button 
                   onClick={sendInvitation}
-                  disabled={loading || !inviteEmail.trim()}
+                  disabled={creating || !inviteEmail.trim()}
                   className="w-full"
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
