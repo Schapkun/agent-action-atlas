@@ -1,9 +1,9 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Search, 
   FolderOpen, 
@@ -20,6 +20,7 @@ export const DocumentManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['1']));
   const [selectedFolder, setSelectedFolder] = useState<string | null>('1');
+  const { toast } = useToast();
 
   // Mock data
   const documentStructure: DocumentFolder[] = [
@@ -178,6 +179,47 @@ export const DocumentManager = () => {
     }
   };
 
+  const handleUploadDocument = () => {
+    // Create a hidden file input
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.doc,.docx,.txt';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        toast({
+          title: "Document uploaden",
+          description: `${file.name} wordt geüpload naar ${selectedFolderData?.name || 'de geselecteerde map'}...`,
+        });
+        
+        // Simulate upload process
+        setTimeout(() => {
+          toast({
+            title: "Upload voltooid",
+            description: `${file.name} is succesvol geüpload.`,
+          });
+        }, 2000);
+      }
+    };
+    input.click();
+  };
+
+  const handleViewDocument = (document: DocumentType) => {
+    toast({
+      title: "Document openen",
+      description: `${document.name} wordt geopend...`,
+    });
+    console.log('Viewing document:', document);
+  };
+
+  const handleDownloadDocument = (document: DocumentType) => {
+    toast({
+      title: "Document downloaden",
+      description: `${document.name} wordt gedownload...`,
+    });
+    console.log('Downloading document:', document);
+  };
+
   const selectedFolderData = documentStructure.find(f => f.id === selectedFolder);
   const documentsToShow = selectedFolderData?.documents || [];
 
@@ -235,7 +277,7 @@ export const DocumentManager = () => {
             <CardTitle className="text-lg">
               {selectedFolderData?.name || 'Documenten'}
             </CardTitle>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleUploadDocument}>
               <FolderOpen className="h-4 w-4 mr-2" />
               Upload Document
             </Button>
@@ -293,10 +335,18 @@ export const DocumentManager = () => {
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleViewDocument(document)}
+                    >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleDownloadDocument(document)}
+                    >
                       <Download className="h-4 w-4" />
                     </Button>
                   </div>
