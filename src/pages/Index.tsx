@@ -14,7 +14,6 @@ import { ContactManager } from '@/components/dashboard/ContactManager';
 import { PendingTasks } from '@/components/dashboard/PendingTasks';
 import { OrganizationManager } from '@/components/dashboard/OrganizationManager';
 import { MyAccount } from '@/components/dashboard/MyAccount';
-import { FirstOrganizationSetup } from '@/components/dashboard/FirstOrganizationSetup';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useOrganization } from '@/contexts/OrganizationContext';
 
@@ -23,14 +22,9 @@ export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { currentOrganization, loading } = useOrganization();
+  const { loading } = useOrganization();
 
   const renderContent = () => {
-    // Show setup screen if no organization exists
-    if (!loading && !currentOrganization) {
-      return <FirstOrganizationSetup />;
-    }
-
     switch (currentView) {
       case 'overview':
         return (
@@ -66,27 +60,34 @@ const Index = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Laden...</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background flex w-full">
-        {/* Only show sidebar if user has an organization */}
-        {currentOrganization && (
-          <Sidebar 
-            currentView={currentView} 
-            onViewChange={setCurrentView}
-            collapsed={sidebarCollapsed}
-            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-          />
-        )}
+        <Sidebar 
+          currentView={currentView} 
+          onViewChange={setCurrentView}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Only show header if user has an organization */}
-          {currentOrganization && (
-            <Header 
-              currentView={currentView}
-              onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
-              onAccountView={() => setCurrentView('my-account')}
-            />
-          )}
+          <Header 
+            currentView={currentView}
+            onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+            onAccountView={() => setCurrentView('my-account')}
+          />
           <main className="flex-1 overflow-auto p-6">
             {renderContent()}
           </main>
