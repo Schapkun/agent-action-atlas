@@ -15,13 +15,14 @@ import {
   ChevronDown,
   Paperclip
 } from 'lucide-react';
+import type { EmailFolder, EmailItem } from '@/types/dashboard';
 
 export const EmailManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['1']));
   const [selectedFolder, setSelectedFolder] = useState<string | null>('1');
 
-  const folderStructure = [
+  const folderStructure: EmailFolder[] = [
     {
       id: '1',
       name: 'Inkomende E-mails',
@@ -153,6 +154,15 @@ export const EmailManager = () => {
     item.dossier?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const getEmailDirection = (item: EmailItem) => {
+    if (item.from) {
+      return `Van: ${item.from}`;
+    } else if (item.to) {
+      return `Naar: ${item.to}`;
+    }
+    return 'Onbekend';
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
       {/* Folder Structure */}
@@ -244,7 +254,7 @@ export const EmailManager = () => {
                     
                     <div className="flex items-center text-xs text-muted-foreground space-x-4">
                       <span className="font-medium">
-                        {item.from ? `Van: ${item.from}` : `Naar: ${item.to}`}
+                        {getEmailDirection(item)}
                       </span>
                       <span>•</span>
                       <span>{item.date.toLocaleDateString('nl-NL')}</span>

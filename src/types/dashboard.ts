@@ -57,3 +57,23 @@ export interface DashboardStats {
   activeClients: number;
   activeDossiers: number;
 }
+
+export interface EmailItem {
+  id: string;
+  name: string;
+  subject: string;
+  date: Date;
+  status: 'unread' | 'read' | 'sent' | 'draft';
+  hasAttachments: boolean;
+  dossier: string;
+  priority: 'high' | 'medium' | 'low';
+  from?: string;
+  to?: string;
+}
+
+export interface EmailFolder {
+  id: string;
+  name: string;
+  icon: string;
+  items: EmailItem[];
+}
