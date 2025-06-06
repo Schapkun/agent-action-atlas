@@ -1,20 +1,35 @@
 
-import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { OrganizationSettings } from './OrganizationSettings';
-import { UserManagement } from './UserManagement';
-import { ProfileManagement } from './ProfileManagement';
-import { Building, Users, Settings, Plus, User, AlertCircle, Trash } from 'lucide-react';
+import { 
+  Building, 
+  Users, 
+  Plus, 
+  Settings, 
+  Folder,
+  UserPlus,
+  Mail,
+  Calendar,
+  AlertCircle
+} from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { OrganizationSettings } from './OrganizationSettings';
+import { ProfileManagement } from './ProfileManagement';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export const OrganizationManager = () => {
   const { user } = useAuth();
@@ -22,81 +37,79 @@ export const OrganizationManager = () => {
     organizations, 
     currentOrganization, 
     workspaces, 
-    refreshOrganizations, 
-    refreshWorkspaces 
+    currentWorkspace,
+    setCurrentOrganization,
+    setCurrentWorkspace,
+    refreshOrganizations,
+    refreshWorkspaces
   } = useOrganization();
   const { toast } = useToast();
-  
-  const [showCreateOrg, setShowCreateOrg] = useState(false);
-  const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
+
   const [newOrgName, setNewOrgName] = useState('');
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('member');
   const [loading, setLoading] = useState(false);
-  const [currentUserRole, setCurrentUserRole] = useState<string>('member');
-
-  const fetchUserRole = async () => {
-    if (!user || !currentOrganization) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('organization_members')
-        .select('role')
-        .eq('organization_id', currentOrganization.id)
-        .eq('user_id', user.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching user role:', error);
-        return;
-      }
-
-      setCurrentUserRole(data.role);
-    } catch (error) {
-      console.error('Error fetching user role:', error);
-    }
-  };
 
   const createOrganization = async () => {
     if (!newOrgName.trim() || !user) return;
 
     setLoading(true);
     try {
-      console.log('Creating organization with name:', newOrgName);
-      const slug = newOrgName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      
+      // Create the organization
       const { data: org, error: orgError } = await supabase
         .from('organizations')
-        .insert([{ name: newOrgName, slug }])
+        .insert({
+          name: newOrgName,
+          slug: newOrgName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+        })
         .select()
         .single();
 
-      console.log('Organization creation result:', { org, orgError });
+      if (orgError) throw orgError;
 
-      if (orgError) {
-        console.error('Error creating organization:', orgError);
-        throw orgError;
-      }
-
-      console.log('Created organization, now adding membership');
+      // Add the user as organization owner
       const { error: memberError } = await supabase
         .from('organization_members')
-        .insert([{ organization_id: org.id, user_id: user.id, role: 'owner' }]);
+        .insert({
+          organization_id: org.id,
+          user_id: user.id,
+          role: 'owner'
+        });
 
-      console.log('Membership creation result:', { memberError });
+      if (memberError) throw memberError;
 
-      if (memberError) {
-        console.error('Error creating organization membership:', memberError);
-        throw memberError;
-      }
+      // Create default workspace
+      const { data: workspace, error: workspaceError } = await supabase
+        .from('workspaces')
+        .insert({
+          organization_id: org.id,
+          name: 'Hoofd Werkruimte',
+          slug: 'main'
+        })
+        .select()
+        .single();
+
+      if (workspaceError) throw workspaceError;
+
+      // Add user as workspace admin
+      const { error: workspaceMemberError } = await supabase
+        .from('workspace_members')
+        .insert({
+          workspace_id: workspace.id,
+          user_id: user.id,
+          role: 'admin'
+        });
+
+      if (workspaceMemberError) throw workspaceMemberError;
 
       toast({
         title: "Organisatie aangemaakt",
-        description: `${newOrgName} is succesvol aangemaakt.`,
+        description: `De organisatie "${newOrgName}" is succesvol aangemaakt met een standaard werkruimte.`,
       });
 
       setNewOrgName('');
-      setShowCreateOrg(false);
-      await refreshOrganizations();
+      refreshOrganizations();
     } catch (error: any) {
       console.error('Error creating organization:', error);
       toast({
@@ -110,50 +123,40 @@ export const OrganizationManager = () => {
   };
 
   const createWorkspace = async () => {
-    if (!newWorkspaceName.trim() || !currentOrganization || !user) return;
+    if (!newWorkspaceName.trim() || !currentOrganization) return;
 
     setLoading(true);
     try {
-      console.log('Creating workspace with name:', newWorkspaceName);
-      const slug = newWorkspaceName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      
       const { data: workspace, error: workspaceError } = await supabase
         .from('workspaces')
-        .insert([{ 
-          organization_id: currentOrganization.id, 
-          name: newWorkspaceName, 
-          slug 
-        }])
+        .insert({
+          organization_id: currentOrganization.id,
+          name: newWorkspaceName,
+          slug: newWorkspaceName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+        })
         .select()
         .single();
 
-      console.log('Workspace creation result:', { workspace, workspaceError });
+      if (workspaceError) throw workspaceError;
 
-      if (workspaceError) {
-        console.error('Error creating workspace:', workspaceError);
-        throw workspaceError;
-      }
-
-      console.log('Created workspace, now adding membership');
+      // Add current user as workspace admin
       const { error: memberError } = await supabase
         .from('workspace_members')
-        .insert([{ workspace_id: workspace.id, user_id: user.id, role: 'admin' }]);
+        .insert({
+          workspace_id: workspace.id,
+          user_id: user!.id,
+          role: 'admin'
+        });
 
-      console.log('Workspace membership creation result:', { memberError });
-
-      if (memberError) {
-        console.error('Error creating workspace membership:', memberError);
-        throw memberError;
-      }
+      if (memberError) throw memberError;
 
       toast({
         title: "Werkruimte aangemaakt",
-        description: `${newWorkspaceName} is succesvol aangemaakt.`,
+        description: `De werkruimte "${newWorkspaceName}" is succesvol aangemaakt.`,
       });
 
       setNewWorkspaceName('');
-      setShowCreateWorkspace(false);
-      await refreshWorkspaces();
+      refreshWorkspaces();
     } catch (error: any) {
       console.error('Error creating workspace:', error);
       toast({
@@ -166,65 +169,18 @@ export const OrganizationManager = () => {
     }
   };
 
-  const deleteOrganization = async (orgId: string, orgName: string) => {
-    if (!user) return;
-
-    // Check if user is owner
-    if (currentUserRole !== 'owner') {
-      toast({
-        title: "Geen toegang",
-        description: "Alleen eigenaren kunnen organisaties verwijderen.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!confirm(`Weet je zeker dat je de organisatie "${orgName}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('organizations')
-        .delete()
-        .eq('id', orgId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Organisatie verwijderd",
-        description: `${orgName} is succesvol verwijderd.`,
-      });
-
-      await refreshOrganizations();
-    } catch (error: any) {
-      console.error('Error deleting organization:', error);
-      toast({
-        title: "Error",
-        description: "Kon organisatie niet verwijderen: " + error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
   const deleteWorkspace = async (workspaceId: string, workspaceName: string) => {
-    if (!user) return;
+    if (!currentOrganization) return;
 
-    // Check if user has permission (admin or owner)
-    if (currentUserRole === 'member') {
-      toast({
-        title: "Geen toegang",
-        description: "Je hebt geen rechten om werkruimtes te verwijderen.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!confirm(`Weet je zeker dat je de werkruimte "${workspaceName}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) {
-      return;
-    }
-
+    setLoading(true);
     try {
+      // First delete all workspace members
+      await supabase
+        .from('workspace_members')
+        .delete()
+        .eq('workspace_id', workspaceId);
+
+      // Then delete the workspace
       const { error } = await supabase
         .from('workspaces')
         .delete()
@@ -234,10 +190,15 @@ export const OrganizationManager = () => {
 
       toast({
         title: "Werkruimte verwijderd",
-        description: `${workspaceName} is succesvol verwijderd.`,
+        description: `De werkruimte "${workspaceName}" is succesvol verwijderd.`,
       });
 
-      await refreshWorkspaces();
+      // If current workspace was deleted, reset it
+      if (currentWorkspace?.id === workspaceId) {
+        setCurrentWorkspace(null);
+      }
+
+      refreshWorkspaces();
     } catch (error: any) {
       console.error('Error deleting workspace:', error);
       toast({
@@ -245,66 +206,74 @@ export const OrganizationManager = () => {
         description: "Kon werkruimte niet verwijderen: " + error.message,
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (currentOrganization && user) {
-      fetchUserRole();
-    }
-  }, [currentOrganization, user]);
+  const sendInvitation = async () => {
+    if (!inviteEmail.trim() || !currentOrganization) return;
 
-  // Show message if no organizations exist
-  if (organizations.length === 0) {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_invitations')
+        .insert({
+          email: inviteEmail,
+          organization_id: currentOrganization.id,
+          role: inviteRole,
+          invited_by: user!.id
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Uitnodiging verstuurd",
+        description: `Een uitnodiging is verstuurd naar ${inviteEmail}.`,
+      });
+
+      setInviteEmail('');
+      setInviteRole('member');
+    } catch (error: any) {
+      console.error('Error sending invitation:', error);
+      toast({
+        title: "Error",
+        description: "Kon uitnodiging niet versturen: " + error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!currentOrganization) {
     return (
       <div className="space-y-6">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building className="h-5 w-5" />
-              Welkom bij Organisatie Beheer
-            </CardTitle>
-            <CardDescription>
-              Je hebt nog geen organisaties. Begin door je eerste organisatie aan te maken.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {!showCreateOrg ? (
-              <Button onClick={() => setShowCreateOrg(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Eerste Organisatie Aanmaken
-              </Button>
-            ) : (
-              <div className="border rounded-lg p-4 bg-muted/50">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="orgName">Organisatie Naam</Label>
-                    <Input
-                      id="orgName"
-                      value={newOrgName}
-                      onChange={(e) => setNewOrgName(e.target.value)}
-                      placeholder="Mijn Advocatenkantoor"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      onClick={createOrganization} 
-                      disabled={loading || !newOrgName.trim()}
-                      size="sm"
-                    >
-                      {loading ? 'Bezig...' : 'Aanmaken'}
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setShowCreateOrg(false)} 
-                      size="sm"
-                    >
-                      Annuleren
-                    </Button>
-                  </div>
+          <CardContent className="text-center p-6">
+            <AlertCircle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+            <p className="text-muted-foreground mb-4">Selecteer eerst een organisatie of maak een nieuwe aan</p>
+            
+            <div className="max-w-md mx-auto space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-org">Nieuwe organisatie</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="new-org"
+                    value={newOrgName}
+                    onChange={(e) => setNewOrgName(e.target.value)}
+                    placeholder="Organisatienaam"
+                    disabled={loading}
+                  />
+                  <Button 
+                    onClick={createOrganization}
+                    disabled={loading || !newOrgName.trim()}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -313,212 +282,206 @@ export const OrganizationManager = () => {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="settings" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Instellingen
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building className="h-5 w-5" />
+            Organisatiebeheer
+          </CardTitle>
+          <CardDescription>
+            Beheer je organisaties, werkruimtes en teamleden
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
+      <Tabs defaultValue="organizations" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="organizations" className="flex items-center gap-2">
+            <Building className="h-4 w-4" />
+            Organisaties
           </TabsTrigger>
-          <TabsTrigger value="users" className="flex items-center gap-2">
+          <TabsTrigger value="workspaces" className="flex items-center gap-2">
+            <Folder className="h-4 w-4" />
+            Werkruimtes
+          </TabsTrigger>
+          <TabsTrigger value="invites" className="flex items-center gap-2">
+            <UserPlus className="h-4 w-4" />
+            Uitnodigen
+          </TabsTrigger>
+          <TabsTrigger value="profiles" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Gebruikersbeheer
+            Gebruikersprofielen
           </TabsTrigger>
-          {(currentUserRole === 'admin' || currentUserRole === 'owner') && (
-            <TabsTrigger value="profiles" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Gebruikersprofielen
-            </TabsTrigger>
-          )}
         </TabsList>
-        
-        <TabsContent value="settings" className="space-y-6">
-          {/* Organization Settings with create button */}
+
+        <TabsContent value="organizations" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Building className="h-5 w-5" />
-                    Organisatie Instellingen
-                  </CardTitle>
-                  <CardDescription>
-                    Beheer uw organisaties en hun instellingen
-                  </CardDescription>
-                </div>
-                <Button 
-                  onClick={() => setShowCreateOrg(!showCreateOrg)}
-                  size="sm"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nieuwe Organisatie
-                </Button>
-              </div>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Organisatie-instellingen
+              </CardTitle>
+              <CardDescription>
+                Beheer je organisaties en hun instellingen
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {showCreateOrg && (
-                <div className="border rounded-lg p-4 bg-muted/50">
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="orgName">Organisatie Naam</Label>
-                      <Input
-                        id="orgName"
-                        value={newOrgName}
-                        onChange={(e) => setNewOrgName(e.target.value)}
-                        placeholder="Mijn Advocatenkantoor"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        onClick={createOrganization} 
-                        disabled={loading || !newOrgName.trim()}
-                        size="sm"
-                      >
-                        {loading ? 'Bezig...' : 'Aanmaken'}
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setShowCreateOrg(false)} 
-                        size="sm"
-                      >
-                        Annuleren
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="grid gap-3">
-                {organizations.map((org) => (
-                  <div key={org.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Building className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <div className="font-medium">{org.name}</div>
-                        <div className="text-sm text-muted-foreground">/{org.slug}</div>
-                      </div>
-                      {currentOrganization?.id === org.id && (
-                        <Badge variant="default">Actief</Badge>
-                      )}
-                    </div>
-                    {currentUserRole === 'owner' && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => deleteOrganization(org.id, org.name)}
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-
               <OrganizationSettings />
+              
+              <div className="pt-4 border-t">
+                <Label htmlFor="new-org">Nieuwe organisatie aanmaken</Label>
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    id="new-org"
+                    value={newOrgName}
+                    onChange={(e) => setNewOrgName(e.target.value)}
+                    placeholder="Organisatienaam"
+                    disabled={loading}
+                  />
+                  <Button 
+                    onClick={createOrganization}
+                    disabled={loading || !newOrgName.trim()}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Aanmaken
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
+        </TabsContent>
 
-          {/* Workspace Settings with create button */}
-          {currentOrganization && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="h-5 w-5" />
-                      Werkruimte Instellingen
-                    </CardTitle>
-                    <CardDescription>
-                      Beheer werkruimtes binnen {currentOrganization.name}
-                    </CardDescription>
+        <TabsContent value="workspaces" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Folder className="h-5 w-5" />
+                Werkruimtes in {currentOrganization?.name}
+              </CardTitle>
+              <CardDescription>
+                Beheer werkruimtes binnen je organisatie
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-3">
+                {workspaces.length === 0 ? (
+                  <div className="text-center p-6 text-muted-foreground">
+                    <Folder className="h-8 w-8 mx-auto mb-2" />
+                    <p>Nog geen werkruimtes gevonden</p>
                   </div>
-                  {(currentUserRole === 'admin' || currentUserRole === 'owner') && (
-                    <Button 
-                      onClick={() => setShowCreateWorkspace(!showCreateWorkspace)}
-                      size="sm"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Nieuwe Werkruimte
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {showCreateWorkspace && (
-                  <div className="border rounded-lg p-4 bg-muted/50">
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="workspaceName">Werkruimte Naam</Label>
-                        <Input
-                          id="workspaceName"
-                          value={newWorkspaceName}
-                          onChange={(e) => setNewWorkspaceName(e.target.value)}
-                          placeholder="Marketing Team"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          onClick={createWorkspace} 
-                          disabled={loading || !newWorkspaceName.trim()}
-                          size="sm"
-                        >
-                          {loading ? 'Bezig...' : 'Aanmaken'}
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setShowCreateWorkspace(false)} 
-                          size="sm"
-                        >
-                          Annuleren
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid gap-3">
-                  {workspaces.length === 0 ? (
-                    <div className="text-center p-6 text-muted-foreground">
-                      <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-                      <p>Nog geen werkruimtes aangemaakt</p>
-                      <p className="text-sm">Maak je eerste werkruimte aan met de knop hierboven</p>
-                    </div>
-                  ) : (
-                    workspaces.map((workspace) => (
-                      <div key={workspace.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <Users className="h-5 w-5 text-muted-foreground" />
-                          <div>
-                            <div className="font-medium">{workspace.name}</div>
-                            <div className="text-sm text-muted-foreground">/{workspace.slug}</div>
-                          </div>
+                ) : (
+                  workspaces.map((workspace) => (
+                    <div key={workspace.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Folder className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <div className="font-medium">{workspace.name}</div>
+                          <div className="text-sm text-muted-foreground">/{workspace.slug}</div>
                         </div>
-                        {(currentUserRole === 'admin' || currentUserRole === 'owner') && (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => deleteWorkspace(workspace.id, workspace.name)}
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
+                        {currentWorkspace?.id === workspace.id && (
+                          <Badge variant="secondary">Actief</Badge>
                         )}
                       </div>
-                    ))
-                  )}
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentWorkspace(workspace)}
+                        >
+                          Selecteren
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => deleteWorkspace(workspace.id, workspace.name)}
+                          disabled={loading}
+                        >
+                          Verwijderen
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="pt-4 border-t">
+                <Label htmlFor="new-workspace">Nieuwe werkruimte aanmaken</Label>
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    id="new-workspace"
+                    value={newWorkspaceName}
+                    onChange={(e) => setNewWorkspaceName(e.target.value)}
+                    placeholder="Werkruimtenaam"
+                    disabled={loading}
+                  />
+                  <Button 
+                    onClick={createWorkspace}
+                    disabled={loading || !newWorkspaceName.trim()}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Aanmaken
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="users" className="space-y-6">
-          <UserManagement />
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        {(currentUserRole === 'admin' || currentUserRole === 'owner') && (
-          <TabsContent value="profiles" className="space-y-6">
-            <ProfileManagement />
-          </TabsContent>
-        )}
+        <TabsContent value="invites" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="h-5 w-5" />
+                Teamleden uitnodigen
+              </CardTitle>
+              <CardDescription>
+                Nodig nieuwe teamleden uit voor {currentOrganization?.name}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="invite-email">Email adres</Label>
+                  <Input
+                    id="invite-email"
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="naam@bedrijf.nl"
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="invite-role">Rol</Label>
+                  <Select value={inviteRole} onValueChange={setInviteRole}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="member">Lid</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="owner">Eigenaar</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Button 
+                  onClick={sendInvitation}
+                  disabled={loading || !inviteEmail.trim()}
+                  className="w-full"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Uitnodiging versturen
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="profiles" className="space-y-4">
+          <ProfileManagement />
+        </TabsContent>
       </Tabs>
     </div>
   );
