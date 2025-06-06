@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,10 +20,12 @@ interface UserProfile {
   role?: string;
   organization_id?: string;
   organization_name?: string;
+  organizations?: string[];
   workspaces?: {
     id: string;
     name: string;
     role: string;
+    organization_name: string;
   }[];
 }
 
@@ -71,18 +74,18 @@ export const UserProfileSettings = () => {
           throw profilesError;
         }
 
-        // Get all workspace memberships for all users
+        // Get all workspace memberships for all users with explicit column references
         const { data: workspaceMemberships, error: workspaceError } = await supabase
           .from('workspace_members')
           .select(`
             user_id,
             role,
             workspace_id,
-            workspaces!inner(
+            workspaces:workspace_id (
               id,
               name,
               organization_id,
-              organizations!inner(
+              organizations:organization_id (
                 id,
                 name
               )
@@ -100,9 +103,9 @@ export const UserProfileSettings = () => {
             ?.filter(wm => wm.user_id === profile.id)
             ?.map(wm => ({
               id: wm.workspace_id,
-              name: wm.workspaces.name,
+              name: wm.workspaces?.name || 'Onbekend',
               role: wm.role,
-              organization_name: wm.workspaces.organizations.name
+              organization_name: wm.workspaces?.organizations?.name || 'Onbekend'
             })) || [];
 
           // Get unique organizations for this user
@@ -432,7 +435,7 @@ export const UserProfileSettings = () => {
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <CardTitle className="text-base">{profile.full_name}</CardTitle>
+                      <CardTitle className="text-lg">{profile.full_name}</CardTitle>
                       {profile.id === user?.id && (
                         <span className="text-xs text-muted-foreground">(jij)</span>
                       )}
