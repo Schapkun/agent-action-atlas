@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,25 +50,32 @@ export const UserManagement = () => {
         .select(`
           id,
           user_id,
-          role,
-          profiles:user_id (
-            email,
-            full_name
-          )
+          role
         `)
         .eq('organization_id', currentOrganization.id);
 
       if (error) throw error;
 
-      const formattedMembers = data?.map(member => ({
-        id: member.id,
-        user_id: member.user_id,
-        role: member.role,
-        email: member.profiles?.email,
-        full_name: member.profiles?.full_name
-      })) || [];
+      // Now fetch profile data separately for each member
+      const membersWithProfiles = await Promise.all(
+        (data || []).map(async (member) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('email, full_name')
+            .eq('id', member.user_id)
+            .single();
 
-      setOrgMembers(formattedMembers);
+          return {
+            id: member.id,
+            user_id: member.user_id,
+            role: member.role,
+            email: profile?.email,
+            full_name: profile?.full_name
+          };
+        })
+      );
+
+      setOrgMembers(membersWithProfiles);
     } catch (error: any) {
       console.error('Error fetching organization members:', error);
       toast({
@@ -89,25 +95,32 @@ export const UserManagement = () => {
         .select(`
           id,
           user_id,
-          role,
-          profiles:user_id (
-            email,
-            full_name
-          )
+          role
         `)
         .eq('workspace_id', currentWorkspace.id);
 
       if (error) throw error;
 
-      const formattedMembers = data?.map(member => ({
-        id: member.id,
-        user_id: member.user_id,
-        role: member.role,
-        email: member.profiles?.email,
-        full_name: member.profiles?.full_name
-      })) || [];
+      // Now fetch profile data separately for each member
+      const membersWithProfiles = await Promise.all(
+        (data || []).map(async (member) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('email, full_name')
+            .eq('id', member.user_id)
+            .single();
 
-      setWorkspaceMembers(formattedMembers);
+          return {
+            id: member.id,
+            user_id: member.user_id,
+            role: member.role,
+            email: profile?.email,
+            full_name: profile?.full_name
+          };
+        })
+      );
+
+      setWorkspaceMembers(membersWithProfiles);
     } catch (error: any) {
       console.error('Error fetching workspace members:', error);
       toast({
