@@ -1,56 +1,48 @@
 
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { OrganizationSettings } from './OrganizationSettings';
-import { WorkspaceSettings } from './WorkspaceSettings';
+import { Card, CardContent } from '@/components/ui/card';
+import { OrganizationWorkspaceView } from './OrganizationWorkspaceView';
 import { UserProfileSettings } from './UserProfileSettings';
 import { HistoryLogs } from './HistoryLogs';
-import { Building2, Users, Settings, History } from 'lucide-react';
 
 export const SettingsLayout = () => {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Instellingen</h1>
-        <p className="text-muted-foreground">
-          Beheer je organisaties, werkruimtes en gebruikersprofielen
-        </p>
+    <div className="container mx-auto px-4 py-6 max-w-6xl">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Instellingen</h1>
+        <p className="text-muted-foreground">Beheer je organisaties, werkruimtes en gebruikersprofielen</p>
       </div>
 
       <Tabs defaultValue="organizations" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="organizations" className="flex items-center gap-2">
-            <Building2 className="h-4 w-4" />
-            Organisaties
-          </TabsTrigger>
-          <TabsTrigger value="workspaces" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Werkruimtes
-          </TabsTrigger>
-          <TabsTrigger value="users" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Gebruikers
-          </TabsTrigger>
-          <TabsTrigger value="history" className="flex items-center gap-2">
-            <History className="h-4 w-4" />
-            Geschiedenis
-          </TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="organizations">Organisaties & Werkruimtes</TabsTrigger>
+          <TabsTrigger value="users">Gebruikers</TabsTrigger>
+          <TabsTrigger value="history">Geschiedenis</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="organizations" className="space-y-6">
-          <OrganizationSettings />
+        <TabsContent value="organizations">
+          <Card>
+            <CardContent className="p-6">
+              <OrganizationWorkspaceView />
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="workspaces" className="space-y-6">
-          <WorkspaceSettings />
+        <TabsContent value="users">
+          <Card>
+            <CardContent className="p-6">
+              <UserProfileSettings />
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="users" className="space-y-6">
-          <UserProfileSettings />
-        </TabsContent>
-
-        <TabsContent value="history" className="space-y-6">
-          <HistoryLogs />
+        <TabsContent value="history">
+          <Card>
+            <CardContent className="p-6">
+              <HistoryLogs />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
