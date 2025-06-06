@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -308,7 +309,7 @@ export const OrganizationSettings = () => {
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-semibold">Organisaties</h2>
+          <h2 className="text-lg font-semibold">Organisaties</h2>
           <Button onClick={fetchOrganizations} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" />
             Opnieuw proberen
@@ -329,7 +330,7 @@ export const OrganizationSettings = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Organisaties</h2>
+        <h2 className="text-lg font-semibold">Organisaties</h2>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
