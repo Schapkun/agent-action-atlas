@@ -25,76 +25,56 @@ interface HistoryLog {
 export const HistoryLogs = () => {
   const [historyLogs, setHistoryLogs] = useState<HistoryLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentUserRole, setCurrentUserRole] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAction, setFilterAction] = useState('all');
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchCurrentUserRole();
-  }, []);
-
-  useEffect(() => {
-    if (currentUserRole) {
+    if (user) {
       fetchHistoryLogs();
     }
-  }, [currentUserRole]);
-
-  const fetchCurrentUserRole = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('organization_members')
-        .select('role')
-        .eq('user_id', user?.id)
-        .limit(1)
-        .single();
-
-      if (error) throw error;
-      setCurrentUserRole(data?.role || 'member');
-    } catch (error) {
-      console.error('Error fetching current user role:', error);
-      setCurrentUserRole('member');
-    }
-  };
+  }, [user]);
 
   const fetchHistoryLogs = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      let query = supabase
+      console.log('Fetching history logs for user:', user.id);
+
+      // Get history logs for the current user only
+      const { data: logsData, error: logsError } = await supabase
         .from('history_logs')
-        .select(`
-          id,
-          action,
-          details,
-          created_at,
-          user_id,
-          organization_id,
-          workspace_id
-        `)
+        .select('id, action, details, created_at, user_id, organization_id, workspace_id')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      // If user is member, only show their own logs
-      if (currentUserRole === 'member') {
-        query = query.eq('user_id', user?.id);
+      if (logsError) {
+        console.error('History logs error:', logsError);
+        throw logsError;
       }
 
-      const { data: logsData, error: logsError } = await query;
-
-      if (logsError) throw logsError;
+      console.log('History logs data:', logsData);
 
       if (!logsData || logsData.length === 0) {
         setHistoryLogs([]);
+        setLoading(false);
         return;
       }
 
-      // Get user profiles for the logs
-      const userIds = [...new Set(logsData.map(log => log.user_id))];
-      const { data: profilesData, error: profilesError } = await supabase
+      // Get user profile for the current user
+      const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
         .select('id, full_name, email')
-        .in('id', userIds);
+        .eq('id', user.id)
+        .single();
 
-      if (profilesError) throw profilesError;
+      if (profileError) {
+        console.error('Profile error:', profileError);
+      }
 
       // Get organizations for the logs
       const orgIds = [...new Set(logsData.map(log => log.organization_id).filter(Boolean))];
@@ -118,9 +98,8 @@ export const HistoryLogs = () => {
         if (!error) workspacesData = data || [];
       }
 
-      // Combine the data
+      // Format the logs
       const formattedLogs = logsData.map(log => {
-        const profile = profilesData?.find(p => p.id === log.user_id);
         const organization = orgsData.find(o => o.id === log.organization_id);
         const workspace = workspacesData.find(w => w.id === log.workspace_id);
 
@@ -132,8 +111,8 @@ export const HistoryLogs = () => {
           user_id: log.user_id,
           organization_id: log.organization_id,
           workspace_id: log.workspace_id,
-          user_name: profile?.full_name || 'Onbekende gebruiker',
-          user_email: profile?.email || '',
+          user_name: profileData?.full_name || 'Onbekende gebruiker',
+          user_email: profileData?.email || '',
           organization_name: organization?.name,
           workspace_name: workspace?.name
         };

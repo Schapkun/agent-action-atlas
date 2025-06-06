@@ -16,9 +16,7 @@ interface Workspace {
   slug: string;
   organization_id: string;
   created_at: string;
-  organization?: {
-    name: string;
-  };
+  organization_name?: string;
   user_role?: string;
 }
 
@@ -38,40 +36,86 @@ export const WorkspaceSettings = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchWorkspaces();
-    fetchOrganizations();
-  }, []);
+    if (user) {
+      fetchWorkspaces();
+      fetchOrganizations();
+    }
+  }, [user]);
 
   const fetchWorkspaces = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      const { data, error } = await supabase
+      console.log('Fetching workspaces for user:', user.id);
+      
+      // Get workspace memberships
+      const { data: membershipData, error: membershipError } = await supabase
         .from('workspace_members')
-        .select(`
-          role,
-          workspaces!fk_workspace_members_workspace (
-            id,
-            name,
-            slug,
-            organization_id,
-            created_at,
-            organizations!fk_workspaces_organization (
-              name
-            )
-          )
-        `)
-        .eq('user_id', user?.id);
+        .select('role, workspace_id')
+        .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (membershipError) {
+        console.error('Workspace membership error:', membershipError);
+        throw membershipError;
+      }
 
-      const workspacesWithRoles = data?.map(item => ({
-        id: item.workspaces?.id || '',
-        name: item.workspaces?.name || '',
-        slug: item.workspaces?.slug || '',
-        organization_id: item.workspaces?.organization_id || '',
-        created_at: item.workspaces?.created_at || '',
-        organization: item.workspaces?.organizations,
-        user_role: item.role
-      })) || [];
+      console.log('Workspace membership data:', membershipData);
+
+      if (!membershipData || membershipData.length === 0) {
+        console.log('No workspace memberships found');
+        setWorkspaces([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get workspace details
+      const workspaceIds = membershipData.map(m => m.workspace_id);
+      const { data: workspaceData, error: workspaceError } = await supabase
+        .from('workspaces')
+        .select('id, name, slug, organization_id, created_at')
+        .in('id', workspaceIds);
+
+      if (workspaceError) {
+        console.error('Workspaces fetch error:', workspaceError);
+        throw workspaceError;
+      }
+
+      console.log('Workspace data:', workspaceData);
+
+      // Get organization names
+      const orgIds = [...new Set(workspaceData?.map(w => w.organization_id) || [])];
+      let orgNames: { [key: string]: string } = {};
+      
+      if (orgIds.length > 0) {
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .select('id, name')
+          .in('id', orgIds);
+
+        if (!orgError && orgData) {
+          orgNames = orgData.reduce((acc, org) => {
+            acc[org.id] = org.name;
+            return acc;
+          }, {} as { [key: string]: string });
+        }
+      }
+
+      // Combine data
+      const workspacesWithRoles = workspaceData?.map(workspace => {
+        const membership = membershipData.find(m => m.workspace_id === workspace.id);
+        return {
+          id: workspace.id,
+          name: workspace.name,
+          slug: workspace.slug,
+          organization_id: workspace.organization_id,
+          created_at: workspace.created_at,
+          organization_name: orgNames[workspace.organization_id] || 'Onbekend',
+          user_role: membership?.role
+        };
+      }) || [];
 
       setWorkspaces(workspacesWithRoles);
     } catch (error) {
@@ -87,21 +131,37 @@ export const WorkspaceSettings = () => {
   };
 
   const fetchOrganizations = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('organization_members')
-        .select(`
-          organizations!fk_organization_members_organization (
-            id,
-            name
-          )
-        `)
-        .eq('user_id', user?.id);
+    if (!user?.id) return;
 
-      if (error) throw error;
-      
-      const orgs = data?.map(item => item.organizations).filter(Boolean) || [];
-      setOrganizations(orgs as Organization[]);
+    try {
+      // Get organizations through membership
+      const { data: membershipData, error: membershipError } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', user.id);
+
+      if (membershipError) {
+        console.error('Organization membership error:', membershipError);
+        return;
+      }
+
+      if (!membershipData || membershipData.length === 0) {
+        setOrganizations([]);
+        return;
+      }
+
+      const orgIds = membershipData.map(m => m.organization_id);
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('id, name')
+        .in('id', orgIds);
+
+      if (orgError) {
+        console.error('Organizations fetch error:', orgError);
+        return;
+      }
+
+      setOrganizations(orgData || []);
     } catch (error) {
       console.error('Error fetching organizations:', error);
     }
@@ -290,41 +350,49 @@ export const WorkspaceSettings = () => {
       </div>
 
       <div className="grid gap-4">
-        {workspaces.map((workspace) => (
-          <Card key={workspace.id}>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>{workspace.name}</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Organisatie: {workspace.organization?.name} • Rol: {workspace.user_role} • 
-                    Aangemaakt: {new Date(workspace.created_at).toLocaleDateString('nl-NL')}
-                  </p>
-                </div>
-                <div className="flex space-x-2">
-                  {(workspace.user_role === 'admin' || workspace.user_role === 'owner') && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditingWorkspace(workspace)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => deleteWorkspace(workspace.id, workspace.name)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </CardHeader>
+        {workspaces.length === 0 ? (
+          <Card>
+            <CardContent className="p-6 text-center text-muted-foreground">
+              Je hebt nog geen toegang tot werkruimtes. Maak een nieuwe werkruimte aan om te beginnen.
+            </CardContent>
           </Card>
-        ))}
+        ) : (
+          workspaces.map((workspace) => (
+            <Card key={workspace.id}>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>{workspace.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Organisatie: {workspace.organization_name} • Rol: {workspace.user_role} • 
+                      Aangemaakt: {new Date(workspace.created_at).toLocaleDateString('nl-NL')}
+                    </p>
+                  </div>
+                  <div className="flex space-x-2">
+                    {(workspace.user_role === 'admin' || workspace.user_role === 'owner') && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingWorkspace(workspace)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => deleteWorkspace(workspace.id, workspace.name)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+          ))
+        )}
       </div>
 
       {editingWorkspace && (

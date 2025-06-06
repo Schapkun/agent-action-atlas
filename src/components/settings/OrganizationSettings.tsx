@@ -36,6 +36,7 @@ export const OrganizationSettings = () => {
 
   const fetchOrganizations = async () => {
     if (!user?.id) {
+      console.log('No user ID available');
       setLoading(false);
       return;
     }
@@ -46,33 +47,51 @@ export const OrganizationSettings = () => {
     try {
       console.log('Fetching organizations for user:', user.id);
       
-      const { data, error } = await supabase
+      // Get organizations through membership
+      const { data: membershipData, error: membershipError } = await supabase
         .from('organization_members')
-        .select(`
-          role,
-          organizations!fk_organization_members_organization (
-            id,
-            name,
-            slug,
-            created_at
-          )
-        `)
+        .select('role, organization_id')
         .eq('user_id', user.id);
 
-      if (error) {
-        console.error('Organizations fetch error:', error);
-        throw error;
+      if (membershipError) {
+        console.error('Membership fetch error:', membershipError);
+        throw membershipError;
       }
 
-      console.log('Organizations data:', data);
+      console.log('Membership data:', membershipData);
 
-      const orgsWithRoles = data?.map(item => ({
-        id: item.organizations?.id || '',
-        name: item.organizations?.name || '',
-        slug: item.organizations?.slug || '',
-        created_at: item.organizations?.created_at || '',
-        user_role: item.role
-      })) || [];
+      if (!membershipData || membershipData.length === 0) {
+        console.log('No memberships found');
+        setOrganizations([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get organization details
+      const orgIds = membershipData.map(m => m.organization_id);
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('id, name, slug, created_at')
+        .in('id', orgIds);
+
+      if (orgError) {
+        console.error('Organizations fetch error:', orgError);
+        throw orgError;
+      }
+
+      console.log('Organization data:', orgData);
+
+      // Combine membership and organization data
+      const orgsWithRoles = orgData?.map(org => {
+        const membership = membershipData.find(m => m.organization_id === org.id);
+        return {
+          id: org.id,
+          name: org.name,
+          slug: org.slug,
+          created_at: org.created_at,
+          user_role: membership?.role
+        };
+      }) || [];
 
       setOrganizations(orgsWithRoles);
     } catch (error) {

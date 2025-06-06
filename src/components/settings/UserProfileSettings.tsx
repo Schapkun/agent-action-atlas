@@ -37,31 +37,70 @@ export const UserProfileSettings = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchUserProfiles();
-    fetchOrganizations();
-  }, []);
+    if (user) {
+      fetchUserProfiles();
+      fetchOrganizations();
+    }
+  }, [user]);
 
   const fetchUserProfiles = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Get organization members with organization info
-      const { data: membersData, error: membersError } = await supabase
+      console.log('Fetching user profiles');
+
+      // Get organization memberships that the current user can see
+      const { data: membershipData, error: membershipError } = await supabase
         .from('organization_members')
-        .select(`
-          role,
-          organization_id,
-          user_id,
-          organizations!fk_organization_members_organization (
-            name
-          )
-        `);
+        .select('role, organization_id, user_id')
+        .eq('user_id', user.id); // Only show profiles from orgs the user is in
 
-      if (membersError) throw membersError;
+      if (membershipError) {
+        console.error('Membership error:', membershipError);
+        throw membershipError;
+      }
 
-      // Get user profiles for the members
-      const userIds = membersData?.map(m => m.user_id) || [];
+      console.log('Membership data:', membershipData);
+
+      if (!membershipData || membershipData.length === 0) {
+        console.log('No memberships found');
+        setUserProfiles([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get organization names
+      const orgIds = membershipData.map(m => m.organization_id);
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('id, name')
+        .in('id', orgIds);
+
+      if (orgError) {
+        console.error('Organizations error:', orgError);
+        throw orgError;
+      }
+
+      // Get all members from these organizations
+      const { data: allMembersData, error: allMembersError } = await supabase
+        .from('organization_members')
+        .select('role, organization_id, user_id')
+        .in('organization_id', orgIds);
+
+      if (allMembersError) {
+        console.error('All members error:', allMembersError);
+        throw allMembersError;
+      }
+
+      // Get user profiles for all members
+      const userIds = [...new Set(allMembersData?.map(m => m.user_id) || [])];
       
       if (userIds.length === 0) {
         setUserProfiles([]);
+        setLoading(false);
         return;
       }
 
@@ -70,20 +109,24 @@ export const UserProfileSettings = () => {
         .select('id, full_name, email, avatar_url, created_at')
         .in('id', userIds);
 
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error('Profiles error:', profilesError);
+        throw profilesError;
+      }
 
-      // Combine the data
+      // Combine data
       const profiles = profilesData?.map(profile => {
-        const memberData = membersData?.find(m => m.user_id === profile.id);
+        const membership = allMembersData?.find(m => m.user_id === profile.id);
+        const organization = orgData?.find(o => o.id === membership?.organization_id);
         return {
           id: profile.id,
           full_name: profile.full_name || '',
           email: profile.email || '',
           avatar_url: profile.avatar_url,
           created_at: profile.created_at || '',
-          role: memberData?.role,
-          organization_id: memberData?.organization_id,
-          organization_name: memberData?.organizations?.name
+          role: membership?.role,
+          organization_id: membership?.organization_id,
+          organization_name: organization?.name
         };
       }) || [];
 
@@ -101,22 +144,38 @@ export const UserProfileSettings = () => {
   };
 
   const fetchOrganizations = async () => {
+    if (!user?.id) return;
+
     try {
-      const { data, error } = await supabase
+      // Get organizations where user has admin or owner role
+      const { data: membershipData, error: membershipError } = await supabase
         .from('organization_members')
-        .select(`
-          organizations!fk_organization_members_organization (
-            id,
-            name
-          )
-        `)
-        .eq('user_id', user?.id)
+        .select('organization_id, role')
+        .eq('user_id', user.id)
         .in('role', ['admin', 'owner']);
 
-      if (error) throw error;
-      
-      const orgs = data?.map(item => item.organizations).filter(Boolean) || [];
-      setOrganizations(orgs as Organization[]);
+      if (membershipError) {
+        console.error('Organization membership error:', membershipError);
+        return;
+      }
+
+      if (!membershipData || membershipData.length === 0) {
+        setOrganizations([]);
+        return;
+      }
+
+      const orgIds = membershipData.map(m => m.organization_id);
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('id, name')
+        .in('id', orgIds);
+
+      if (orgError) {
+        console.error('Organizations fetch error:', orgError);
+        return;
+      }
+
+      setOrganizations(orgData || []);
     } catch (error) {
       console.error('Error fetching organizations:', error);
     }
@@ -282,32 +341,40 @@ export const UserProfileSettings = () => {
       </div>
 
       <div className="grid gap-4">
-        {userProfiles.map((profile) => (
-          <Card key={profile.id}>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>{profile.full_name || 'Geen naam'}</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    {profile.email} • Rol: {profile.role} • Organisatie: {profile.organization_name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Aangemaakt: {new Date(profile.created_at).toLocaleDateString('nl-NL')}
-                  </p>
-                </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEditingProfile(profile)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
+        {userProfiles.length === 0 ? (
+          <Card>
+            <CardContent className="p-6 text-center text-muted-foreground">
+              Geen gebruikersprofielen gevonden.
+            </CardContent>
           </Card>
-        ))}
+        ) : (
+          userProfiles.map((profile) => (
+            <Card key={profile.id}>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>{profile.full_name || 'Geen naam'}</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {profile.email} • Rol: {profile.role} • Organisatie: {profile.organization_name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Aangemaakt: {new Date(profile.created_at).toLocaleDateString('nl-NL')}
+                    </p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingProfile(profile)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+          ))
+        )}
       </div>
 
       {editingProfile && (
