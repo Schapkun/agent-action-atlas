@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -372,19 +371,12 @@ export const OrganizationWorkspaceView = () => {
       if (membershipError) throw membershipError;
 
       // Get all user IDs from membership data
-      let allUserIds = membershipData?.map(m => m.user_id) || [];
+      const userIds = membershipData?.map(m => m.user_id) || [];
       
-      // Always include current user if they are the account owner, even if not in membership data
-      const isAccountOwner = user?.email === 'info@schapkun.com';
-      if (isAccountOwner && user?.id && !allUserIds.includes(user.id)) {
-        allUserIds.push(user.id);
-      }
-
-      console.log('All user IDs to fetch:', allUserIds);
+      console.log('User IDs from membership:', userIds);
       console.log('Current user ID:', user?.id);
-      console.log('Is account owner:', isAccountOwner);
 
-      if (allUserIds.length === 0) {
+      if (userIds.length === 0) {
         console.log('No users found, setting empty list');
         setSelectedWorkspaceUsers([]);
         setSelectedWorkspaceName(workspaceName);
@@ -395,44 +387,30 @@ export const OrganizationWorkspaceView = () => {
       const { data: profilesData, error: profilesError } = await supabase
         .from('user_profiles')
         .select('id, full_name, email')
-        .in('id', allUserIds);
+        .in('id', userIds);
 
       if (profilesError) throw profilesError;
 
       console.log('Profiles data from database:', profilesData);
 
-      // Create a list of users with roles, including those not found in profiles
-      const usersWithRoles = allUserIds.map(userId => {
-        const profile = profilesData?.find(p => p.id === userId);
-        const membership = membershipData?.find(m => m.user_id === userId);
-        
+      // Create users with roles based on both membership and profile data
+      const usersWithRoles = profilesData?.map(profile => {
+        const membership = membershipData?.find(m => m.user_id === profile.id);
         let role = membership?.role || 'geen toegang';
-        let fullName = 'Geen naam';
-        let email = '';
         
-        if (profile) {
-          fullName = profile.full_name || 'Geen naam';
-          email = profile.email || '';
-        } else if (userId === user?.id && isAccountOwner) {
-          // If this is the current user (account owner) but no profile found
-          fullName = user.email?.split('@')[0] || 'Account Eigenaar';
-          email = user.email || '';
-          role = 'eigenaar (organisatie)';
-        }
-
-        // Override role for account owner
-        if (userId === user?.id && isAccountOwner && !membership) {
+        // Special handling for account owner
+        if (profile.id === user?.id && user?.email === 'info@schapkun.com') {
           role = 'eigenaar (organisatie)';
         }
 
         return {
-          id: userId,
-          full_name: fullName,
-          email: email,
+          id: profile.id,
+          full_name: profile.full_name || 'Geen naam',
+          email: profile.email || '',
           role: role,
-          isCurrentUser: userId === user?.id
+          isCurrentUser: profile.id === user?.id
         };
-      }).filter(userProfile => userProfile.full_name !== 'Geen naam' || userProfile.isCurrentUser);
+      }) || [];
 
       console.log('Users with roles:', usersWithRoles);
 

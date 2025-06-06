@@ -75,16 +75,6 @@ export const WorkspaceSettings = () => {
 
         console.log('All workspace data (account owner):', workspaceData);
 
-        // Get membership info where available
-        const { data: membershipData, error: membershipError } = await supabase
-          .from('workspace_members')
-          .select('role, workspace_id')
-          .eq('user_id', user.id);
-
-        if (membershipError) {
-          console.log('Workspace membership fetch error (non-critical for account owner):', membershipError);
-        }
-
         // Get organization names
         const orgIds = [...new Set(workspaceData?.map(w => w.organization_id) || [])];
         let orgNames: { [key: string]: string } = {};
@@ -103,9 +93,8 @@ export const WorkspaceSettings = () => {
           }
         }
 
-        // Combine data with role information where available
+        // Combine data with owner role for account owner
         const workspacesWithRoles = workspaceData?.map(workspace => {
-          const membership = membershipData?.find(m => m.workspace_id === workspace.id);
           return {
             id: workspace.id,
             name: workspace.name,
@@ -113,7 +102,7 @@ export const WorkspaceSettings = () => {
             organization_id: workspace.organization_id,
             created_at: workspace.created_at,
             organization_name: orgNames[workspace.organization_id] || 'Onbekend',
-            user_role: membership?.role || 'owner' // Default to owner for account owner
+            user_role: 'owner' // Account owner has owner role on everything
           };
         }) || [];
 
