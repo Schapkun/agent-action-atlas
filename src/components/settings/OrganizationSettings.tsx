@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -107,8 +106,12 @@ export const OrganizationSettings = () => {
     if (!newOrgName.trim() || !user?.id) return;
 
     try {
+      console.log('Creating organization with name:', newOrgName);
+      console.log('User ID:', user.id);
+      
       const slug = newOrgName.toLowerCase().replace(/\s+/g, '-');
       
+      // Create organization
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .insert({
@@ -118,8 +121,14 @@ export const OrganizationSettings = () => {
         .select()
         .single();
 
-      if (orgError) throw orgError;
+      if (orgError) {
+        console.error('Organization creation error:', orgError);
+        throw orgError;
+      }
 
+      console.log('Organization created:', orgData);
+
+      // Add user as organization owner
       const { error: memberError } = await supabase
         .from('organization_members')
         .insert({
@@ -128,7 +137,12 @@ export const OrganizationSettings = () => {
           role: 'owner'
         });
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error('Membership creation error:', memberError);
+        throw memberError;
+      }
+
+      console.log('Membership created successfully');
 
       // Try to log but don't fail if it doesn't work
       try {
@@ -156,7 +170,7 @@ export const OrganizationSettings = () => {
       console.error('Error creating organization:', error);
       toast({
         title: "Error",
-        description: "Kon organisatie niet aanmaken",
+        description: "Kon organisatie niet aanmaken: " + (error as any)?.message,
         variant: "destructive",
       });
     }
