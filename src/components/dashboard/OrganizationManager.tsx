@@ -1,14 +1,16 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { OrganizationSettings } from './OrganizationSettings';
 import { UserManagement } from './UserManagement';
 import { ProfileManagement } from './ProfileManagement';
-import { Building, Users, Settings, Plus, User, AlertCircle } from 'lucide-react';
+import { Building, Users, Settings, Plus, User, AlertCircle, Trash } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -30,6 +32,29 @@ export const OrganizationManager = () => {
   const [newOrgName, setNewOrgName] = useState('');
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string>('member');
+
+  const fetchUserRole = async () => {
+    if (!user || !currentOrganization) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('organization_members')
+        .select('role')
+        .eq('organization_id', currentOrganization.id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user role:', error);
+        return;
+      }
+
+      setCurrentUserRole(data.role);
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+    }
+  };
 
   const createOrganization = async () => {
     if (!newOrgName.trim() || !user) return;
@@ -141,6 +166,94 @@ export const OrganizationManager = () => {
     }
   };
 
+  const deleteOrganization = async (orgId: string, orgName: string) => {
+    if (!user) return;
+
+    // Check if user is owner
+    if (currentUserRole !== 'owner') {
+      toast({
+        title: "Geen toegang",
+        description: "Alleen eigenaren kunnen organisaties verwijderen.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!confirm(`Weet je zeker dat je de organisatie "${orgName}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('organizations')
+        .delete()
+        .eq('id', orgId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Organisatie verwijderd",
+        description: `${orgName} is succesvol verwijderd.`,
+      });
+
+      await refreshOrganizations();
+    } catch (error: any) {
+      console.error('Error deleting organization:', error);
+      toast({
+        title: "Error",
+        description: "Kon organisatie niet verwijderen: " + error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteWorkspace = async (workspaceId: string, workspaceName: string) => {
+    if (!user) return;
+
+    // Check if user has permission (admin or owner)
+    if (currentUserRole === 'member') {
+      toast({
+        title: "Geen toegang",
+        description: "Je hebt geen rechten om werkruimtes te verwijderen.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!confirm(`Weet je zeker dat je de werkruimte "${workspaceName}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('workspaces')
+        .delete()
+        .eq('id', workspaceId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Werkruimte verwijderd",
+        description: `${workspaceName} is succesvol verwijderd.`,
+      });
+
+      await refreshWorkspaces();
+    } catch (error: any) {
+      console.error('Error deleting workspace:', error);
+      toast({
+        title: "Error",
+        description: "Kon werkruimte niet verwijderen: " + error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (currentOrganization && user) {
+      fetchUserRole();
+    }
+  }, [currentOrganization, user]);
+
   // Show message if no organizations exist
   if (organizations.length === 0) {
     return (
@@ -210,10 +323,12 @@ export const OrganizationManager = () => {
             <Users className="h-4 w-4" />
             Gebruikersbeheer
           </TabsTrigger>
-          <TabsTrigger value="profiles" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            Gebruikersprofielen
-          </TabsTrigger>
+          {(currentUserRole === 'admin' || currentUserRole === 'owner') && (
+            <TabsTrigger value="profiles" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Gebruikersprofielen
+            </TabsTrigger>
+          )}
         </TabsList>
         
         <TabsContent value="settings" className="space-y-6">
@@ -272,6 +387,32 @@ export const OrganizationManager = () => {
                 </div>
               )}
 
+              <div className="grid gap-3">
+                {organizations.map((org) => (
+                  <div key={org.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Building className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <div className="font-medium">{org.name}</div>
+                        <div className="text-sm text-muted-foreground">/{org.slug}</div>
+                      </div>
+                      {currentOrganization?.id === org.id && (
+                        <Badge variant="default">Actief</Badge>
+                      )}
+                    </div>
+                    {currentUserRole === 'owner' && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => deleteOrganization(org.id, org.name)}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
               <OrganizationSettings />
             </CardContent>
           </Card>
@@ -290,13 +431,15 @@ export const OrganizationManager = () => {
                       Beheer werkruimtes binnen {currentOrganization.name}
                     </CardDescription>
                   </div>
-                  <Button 
-                    onClick={() => setShowCreateWorkspace(!showCreateWorkspace)}
-                    size="sm"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nieuwe Werkruimte
-                  </Button>
+                  {(currentUserRole === 'admin' || currentUserRole === 'owner') && (
+                    <Button 
+                      onClick={() => setShowCreateWorkspace(!showCreateWorkspace)}
+                      size="sm"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Nieuwe Werkruimte
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -349,6 +492,15 @@ export const OrganizationManager = () => {
                             <div className="text-sm text-muted-foreground">/{workspace.slug}</div>
                           </div>
                         </div>
+                        {(currentUserRole === 'admin' || currentUserRole === 'owner') && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => deleteWorkspace(workspace.id, workspace.name)}
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     ))
                   )}
@@ -362,9 +514,11 @@ export const OrganizationManager = () => {
           <UserManagement />
         </TabsContent>
 
-        <TabsContent value="profiles" className="space-y-6">
-          <ProfileManagement />
-        </TabsContent>
+        {(currentUserRole === 'admin' || currentUserRole === 'owner') && (
+          <TabsContent value="profiles" className="space-y-6">
+            <ProfileManagement />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
