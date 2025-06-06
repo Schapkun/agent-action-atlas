@@ -28,10 +28,9 @@ interface OrganizationContextType {
   currentWorkspace: Workspace | null;
   loading: boolean;
   setCurrentOrganization: (org: Organization) => void;
-  setCurrentWorkspace: (workspace: Workspace | null) => void;
+  setCurrentWorkspace: (workspace: Workspace) => void;
   refreshOrganizations: () => Promise<void>;
   refreshWorkspaces: () => Promise<void>;
-  createFirstOrganization: (name: string) => Promise<boolean>;
 }
 
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
@@ -53,180 +52,78 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const createFirstOrganization = async (name: string): Promise<boolean> => {
-    if (!user || !name.trim()) {
-      console.log('Cannot create organization: no user or name');
-      return false;
-    }
-
-    console.log('Creating first organization:', name);
-    
-    try {
-      const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      
-      // Create organization
-      const { data: org, error: orgError } = await supabase
-        .from('organizations')
-        .insert({
-          name: name.trim(),
-          slug: slug
-        })
-        .select()
-        .single();
-
-      if (orgError) {
-        console.error('Organization creation error:', orgError);
-        throw orgError;
-      }
-
-      console.log('Organization created:', org);
-
-      // Add user as organization owner
-      const { error: memberError } = await supabase
-        .from('organization_members')
-        .insert({
-          organization_id: org.id,
-          user_id: user.id,
-          role: 'owner'
-        });
-
-      if (memberError) {
-        console.error('Organization member creation error:', memberError);
-        throw memberError;
-      }
-
-      console.log('User added as organization owner');
-
-      // Create default workspace
-      const { data: workspace, error: workspaceError } = await supabase
-        .from('workspaces')
-        .insert({
-          organization_id: org.id,
-          name: 'Hoofd Werkruimte',
-          slug: 'main'
-        })
-        .select()
-        .single();
-
-      if (workspaceError) {
-        console.error('Workspace creation error:', workspaceError);
-        throw workspaceError;
-      }
-
-      console.log('Default workspace created:', workspace);
-
-      // Add user as workspace admin
-      const { error: workspaceMemberError } = await supabase
-        .from('workspace_members')
-        .insert({
-          workspace_id: workspace.id,
-          user_id: user.id,
-          role: 'admin'
-        });
-
-      if (workspaceMemberError) {
-        console.error('Workspace member creation error:', workspaceMemberError);
-        throw workspaceMemberError;
-      }
-
-      console.log('User added as workspace admin');
-
-      // Update state
-      setOrganizations([org]);
-      setCurrentOrganization(org);
-      setWorkspaces([workspace]);
-      setCurrentWorkspace(workspace);
-
-      toast({
-        title: "Organisatie aangemaakt!",
-        description: `Je organisatie "${name}" is succesvol aangemaakt.`,
-      });
-
-      return true;
-    } catch (error: any) {
-      console.error('Error creating organization:', error);
-      toast({
-        title: "Error",
-        description: "Kon organisatie niet aanmaken. Probeer het opnieuw.",
-        variant: "destructive",
-      });
-      return false;
-    }
-  };
-
   const refreshOrganizations = async () => {
     if (!user) {
-      console.log('No user found, skipping organization refresh');
-      setOrganizations([]);
-      setCurrentOrganization(null);
-      setLoading(false);
+      console.log('refreshOrganizations: No user found');
       return;
     }
 
-    console.log('Fetching organizations for user:', user.id);
-    setLoading(true);
+    console.log('refreshOrganizations: Starting for user:', user.id);
 
     try {
-      // First get organizations that the user is a member of
+      // First try to get all organizations where user is a member
       const { data: memberData, error: memberError } = await supabase
         .from('organization_members')
         .select('organization_id')
         .eq('user_id', user.id);
 
+      console.log('Member data query result:', { memberData, memberError });
+
       if (memberError) {
-        console.error('Error fetching organization memberships:', memberError);
-        setOrganizations([]);
-        setCurrentOrganization(null);
-        setLoading(false);
-        return;
+        console.error('Error fetching member data:', memberError);
+        throw memberError;
       }
 
       if (!memberData || memberData.length === 0) {
         console.log('No organization memberships found');
         setOrganizations([]);
         setCurrentOrganization(null);
-        setLoading(false);
         return;
       }
 
-      // Then get the organization details
       const orgIds = memberData.map(m => m.organization_id);
-      const { data: orgsData, error: orgsError } = await supabase
+      console.log('Organization IDs user is member of:', orgIds);
+
+      // Now fetch the organization details
+      const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .select('*')
         .in('id', orgIds);
 
-      if (orgsError) {
-        console.error('Error fetching organizations:', orgsError);
-        setOrganizations([]);
-        setCurrentOrganization(null);
-        setLoading(false);
-        return;
+      console.log('Organizations query result:', { orgData, orgError });
+
+      if (orgError) {
+        console.error('Error fetching organizations:', orgError);
+        throw orgError;
       }
 
-      console.log('Found organizations:', orgsData);
+      const orgs = orgData || [];
+      console.log('Final organizations:', orgs);
       
-      setOrganizations(orgsData || []);
-      
-      if (orgsData && orgsData.length > 0 && !currentOrganization) {
-        setCurrentOrganization(orgsData[0]);
-      } else if (!orgsData || orgsData.length === 0) {
-        setCurrentOrganization(null);
+      setOrganizations(orgs);
+
+      // Set first organization as current if none selected
+      if (orgs.length > 0 && !currentOrganization) {
+        console.log('Setting current organization to:', orgs[0]);
+        setCurrentOrganization(orgs[0]);
       }
     } catch (error: any) {
-      console.error('Unexpected error in refreshOrganizations:', error);
-      setOrganizations([]);
-      setCurrentOrganization(null);
+      console.error('Error in refreshOrganizations:', error);
+      toast({
+        title: "Error",
+        description: "Kon organisaties niet laden: " + error.message,
+        variant: "destructive",
+      });
     }
-    
-    setLoading(false);
   };
 
   const refreshWorkspaces = async () => {
     if (!user || !currentOrganization) {
-      setWorkspaces([]);
+      console.log('refreshWorkspaces: Missing user or current organization');
       return;
     }
+
+    console.log('refreshWorkspaces: Starting for organization:', currentOrganization.id);
 
     try {
       const { data, error } = await supabase
@@ -234,25 +131,29 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         .select('*')
         .eq('organization_id', currentOrganization.id);
 
-      if (error) {
-        console.error('Error fetching workspaces:', error);
-        setWorkspaces([]);
-        return;
-      }
+      console.log('Workspaces query result:', { data, error });
+
+      if (error) throw error;
 
       setWorkspaces(data || []);
+
+      // Set first workspace as current if none selected
+      if (data && data.length > 0 && !currentWorkspace) {
+        console.log('Setting current workspace to:', data[0]);
+        setCurrentWorkspace(data[0]);
+      }
     } catch (error: any) {
       console.error('Error fetching workspaces:', error);
-      setWorkspaces([]);
+      toast({
+        title: "Error",
+        description: "Kon werkruimtes niet laden: " + error.message,
+        variant: "destructive",
+      });
     }
   };
 
-  const handleSetCurrentWorkspace = (workspace: Workspace | null) => {
-    setCurrentWorkspace(workspace);
-  };
-
   useEffect(() => {
-    console.log('User changed, refreshing organizations');
+    console.log('OrganizationContext useEffect: user changed:', user?.id);
     if (user) {
       refreshOrganizations();
     } else {
@@ -260,13 +161,13 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setCurrentOrganization(null);
       setWorkspaces([]);
       setCurrentWorkspace(null);
-      setLoading(false);
     }
+    setLoading(false);
   }, [user]);
 
   useEffect(() => {
+    console.log('OrganizationContext useEffect: currentOrganization changed:', currentOrganization?.id);
     if (currentOrganization) {
-      setCurrentWorkspace(null);
       refreshWorkspaces();
     } else {
       setWorkspaces([]);
@@ -281,10 +182,9 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     currentWorkspace,
     loading,
     setCurrentOrganization,
-    setCurrentWorkspace: handleSetCurrentWorkspace,
+    setCurrentWorkspace,
     refreshOrganizations,
     refreshWorkspaces,
-    createFirstOrganization,
   };
 
   return (

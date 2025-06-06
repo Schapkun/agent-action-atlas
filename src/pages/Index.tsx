@@ -13,16 +13,13 @@ import { EmailManager } from '@/components/dashboard/EmailManager';
 import { ContactManager } from '@/components/dashboard/ContactManager';
 import { PendingTasks } from '@/components/dashboard/PendingTasks';
 import { OrganizationManager } from '@/components/dashboard/OrganizationManager';
-import { MyAccount } from '@/components/dashboard/MyAccount';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { useOrganization } from '@/contexts/OrganizationContext';
 
-export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'phone-calls' | 'emails' | 'contacts' | 'settings' | 'my-account';
+export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { loading } = useOrganization();
 
   const renderContent = () => {
     switch (currentView) {
@@ -53,25 +50,10 @@ const Index = () => {
         return <ContactManager />;
       case 'settings':
         return <OrganizationManager />;
-      case 'my-account':
-        return <MyAccount />;
       default:
         return null;
     }
   };
-
-  if (loading) {
-    return (
-      <ProtectedRoute>
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-2 text-muted-foreground">Laden...</p>
-          </div>
-        </div>
-      </ProtectedRoute>
-    );
-  }
 
   return (
     <ProtectedRoute>
@@ -86,7 +68,6 @@ const Index = () => {
           <Header 
             currentView={currentView}
             onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
-            onAccountView={() => setCurrentView('my-account')}
           />
           <main className="flex-1 overflow-auto p-6">
             {renderContent()}

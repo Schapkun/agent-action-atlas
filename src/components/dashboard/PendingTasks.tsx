@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -39,13 +40,7 @@ export const PendingTasks = () => {
 
   // Save approved tasks to localStorage whenever it changes
   useEffect(() => {
-    const taskIds = [...approvedTasks];
-    localStorage.setItem('approvedTasks', JSON.stringify(taskIds));
-    
-    // Trigger a custom event to notify other components
-    window.dispatchEvent(new CustomEvent('approvedTasksChanged', { 
-      detail: { approvedTasks: taskIds } 
-    }));
+    localStorage.setItem('approvedTasks', JSON.stringify([...approvedTasks]));
   }, [approvedTasks]);
 
   // Mock data for pending tasks (concept documents and emails)

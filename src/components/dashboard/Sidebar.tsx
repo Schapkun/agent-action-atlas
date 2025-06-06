@@ -2,7 +2,6 @@
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Activity, 
@@ -25,61 +24,16 @@ interface SidebarProps {
   onViewChange: (view: ViewType) => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
+  pendingTasksCount?: number;
 }
 
 export const Sidebar = ({ 
   currentView, 
   onViewChange, 
   collapsed, 
-  onToggleCollapse
+  onToggleCollapse,
+  pendingTasksCount = 3 
 }: SidebarProps) => {
-  const [pendingTasksCount, setPendingTasksCount] = useState(3);
-
-  // Calculate actual pending tasks count by checking localStorage
-  useEffect(() => {
-    const calculatePendingTasks = () => {
-      const savedApprovedTasks = localStorage.getItem('approvedTasks');
-      let approvedTaskIds: string[] = [];
-      
-      if (savedApprovedTasks) {
-        try {
-          approvedTaskIds = JSON.parse(savedApprovedTasks);
-        } catch (error) {
-          console.error('Error parsing approved tasks:', error);
-        }
-      }
-
-      // Mock total tasks (should match the tasks in PendingTasks component)
-      const totalTasks = 3; // d4, e1, d7
-      const actualPendingCount = totalTasks - approvedTaskIds.length;
-      setPendingTasksCount(Math.max(0, actualPendingCount));
-    };
-
-    // Calculate on mount
-    calculatePendingTasks();
-
-    // Listen for storage changes to update count when tasks are approved
-    const handleStorageChange = () => {
-      calculatePendingTasks();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Also listen for manual localStorage updates (same tab)
-    const originalSetItem = localStorage.setItem;
-    localStorage.setItem = function(key, value) {
-      originalSetItem.apply(this, [key, value]);
-      if (key === 'approvedTasks') {
-        calculatePendingTasks();
-      }
-    };
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      localStorage.setItem = originalSetItem;
-    };
-  }, []);
-
   const menuItems = [
     { id: 'overview' as ViewType, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'pending-tasks' as ViewType, label: 'Openstaande Taken', icon: Clock, badge: pendingTasksCount },
