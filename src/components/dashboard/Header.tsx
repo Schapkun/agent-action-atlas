@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Menu, Bell, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { OrganizationSelector } from './OrganizationSelector';
 import type { ViewType } from '@/pages/Index';
 
 interface HeaderProps {
@@ -87,6 +88,8 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
         </div>
 
         <div className="flex items-center space-x-4">
+          <OrganizationSelector />
+          
           <Button variant="ghost" size="sm">
             <Bell className="h-4 w-4" />
           </Button>

@@ -12,6 +12,7 @@ import { PhoneCallManager } from '@/components/dashboard/PhoneCallManager';
 import { EmailManager } from '@/components/dashboard/EmailManager';
 import { ContactManager } from '@/components/dashboard/ContactManager';
 import { PendingTasks } from '@/components/dashboard/PendingTasks';
+import { OrganizationManager } from '@/components/dashboard/OrganizationManager';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
@@ -48,12 +49,7 @@ const Index = () => {
       case 'contacts':
         return <ContactManager />;
       case 'settings':
-        return (
-          <div className="bg-card rounded-lg p-6">
-            <h2 className="text-2xl font-semibold mb-4">Instellingen</h2>
-            <p className="text-muted-foreground">Instellingen worden binnenkort beschikbaar.</p>
-          </div>
-        );
+        return <OrganizationManager />;
       default:
         return null;
     }
