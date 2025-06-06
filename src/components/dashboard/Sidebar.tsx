@@ -1,14 +1,15 @@
+
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
   LayoutDashboard, 
   Activity, 
-  FolderOpen, 
+  FileText, 
   Settings, 
   ChevronLeft,
   Scale,
-  FileText,
+  FolderOpen,
   FolderX,
   CreditCard,
   Phone,
@@ -37,8 +38,8 @@ export const Sidebar = ({
     { id: 'overview' as ViewType, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'pending-tasks' as ViewType, label: 'Openstaande Taken', icon: Clock, badge: pendingTasksCount },
     { id: 'actions' as ViewType, label: 'AI Acties', icon: Activity },
-    { id: 'documents' as ViewType, label: 'Documenten', icon: FolderOpen },
-    { id: 'active-dossiers' as ViewType, label: 'Actieve Dossiers', icon: FileText },
+    { id: 'documents' as ViewType, label: 'Documenten', icon: FileText },
+    { id: 'active-dossiers' as ViewType, label: 'Actieve Dossiers', icon: FolderOpen },
     { id: 'closed-dossiers' as ViewType, label: 'Gesloten Dossiers', icon: FolderX },
     { id: 'invoices' as ViewType, label: 'Facturen', icon: CreditCard },
     { id: 'phone-calls' as ViewType, label: 'Telefoongesprekken', icon: Phone },
