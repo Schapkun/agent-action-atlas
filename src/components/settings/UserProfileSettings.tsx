@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -488,32 +489,44 @@ export const UserProfileSettings = () => {
                     </p>
                     
                     {profile.organizations && profile.organizations.length > 0 && (
-                      <div className="space-y-6">
+                      <div className="space-y-4">
                         {profile.organizations.map((organization, orgIndex) => (
-                          <div key={orgIndex} className="border rounded-lg p-4">
-                            <div className="flex items-center gap-2 mb-3">
+                          <div key={orgIndex} className="space-y-2">
+                            <div className="flex items-center gap-2">
                               <Building2 className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-medium text-base">{organization.name}</span>
+                              <span className="font-semibold text-base">{organization.name}</span>
                               <span className="text-xs text-muted-foreground">
                                 ({organization.workspaces.length} werkruimte{organization.workspaces.length !== 1 ? 's' : ''})
                               </span>
                             </div>
                             
                             {organization.workspaces.length > 0 && (
-                              <div className="space-y-2">
-                                {organization.workspaces.map((workspace) => (
-                                  <div key={workspace.id} className="flex items-center justify-between py-2 px-3 bg-muted/30 rounded">
-                                    <div className="flex items-center gap-2">
-                                      <Users className="h-3 w-3 text-muted-foreground" />
-                                      <span className="text-sm font-medium">{workspace.name}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-xs bg-muted px-2 py-1 rounded">
-                                        Rol: {workspace.role}
-                                      </span>
-                                    </div>
-                                  </div>
-                                ))}
+                              <div className="ml-6">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead className="text-xs">Werkruimte</TableHead>
+                                      <TableHead className="text-xs">Rol</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {organization.workspaces.map((workspace) => (
+                                      <TableRow key={workspace.id}>
+                                        <TableCell className="py-2">
+                                          <div className="flex items-center gap-2">
+                                            <Users className="h-3 w-3 text-muted-foreground" />
+                                            <span className="text-sm">{workspace.name}</span>
+                                          </div>
+                                        </TableCell>
+                                        <TableCell className="py-2">
+                                          <span className="text-xs bg-muted px-2 py-1 rounded">
+                                            {workspace.role}
+                                          </span>
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
                               </div>
                             )}
                           </div>
