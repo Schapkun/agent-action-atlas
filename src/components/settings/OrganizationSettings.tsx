@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Trash2, Plus, Edit } from 'lucide-react';
+import { Trash2, Plus, Edit, RefreshCw } from 'lucide-react';
 
 interface Organization {
   id: string;
@@ -23,15 +24,28 @@ export const OrganizationSettings = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
   const [newOrgName, setNewOrgName] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchOrganizations();
-  }, []);
+    if (user) {
+      fetchOrganizations();
+    }
+  }, [user]);
 
   const fetchOrganizations = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    
     try {
+      console.log('Fetching organizations for user:', user.id);
+      
       const { data, error } = await supabase
         .from('organization_members')
         .select(`
@@ -43,9 +57,14 @@ export const OrganizationSettings = () => {
             created_at
           )
         `)
-        .eq('user_id', user?.id);
+        .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Organizations fetch error:', error);
+        throw error;
+      }
+
+      console.log('Organizations data:', data);
 
       const orgsWithRoles = data?.map(item => ({
         id: item.organizations?.id || '',
@@ -58,18 +77,15 @@ export const OrganizationSettings = () => {
       setOrganizations(orgsWithRoles);
     } catch (error) {
       console.error('Error fetching organizations:', error);
-      toast({
-        title: "Error",
-        description: "Kon organisaties niet ophalen",
-        variant: "destructive",
-      });
+      setError('Kon organisaties niet ophalen. Controleer je internetverbinding en probeer opnieuw.');
+      setOrganizations([]);
     } finally {
       setLoading(false);
     }
   };
 
   const createOrganization = async () => {
-    if (!newOrgName.trim()) return;
+    if (!newOrgName.trim() || !user?.id) return;
 
     try {
       const slug = newOrgName.toLowerCase().replace(/\s+/g, '-');
@@ -85,22 +101,29 @@ export const OrganizationSettings = () => {
 
       if (orgError) throw orgError;
 
-      await supabase
+      const { error: memberError } = await supabase
         .from('organization_members')
         .insert({
           organization_id: orgData.id,
-          user_id: user?.id,
+          user_id: user.id,
           role: 'owner'
         });
 
-      await supabase
-        .from('history_logs')
-        .insert({
-          user_id: user?.id,
-          organization_id: orgData.id,
-          action: 'Organisatie aangemaakt',
-          details: { organization_name: newOrgName }
-        });
+      if (memberError) throw memberError;
+
+      // Try to log but don't fail if it doesn't work
+      try {
+        await supabase
+          .from('history_logs')
+          .insert({
+            user_id: user.id,
+            organization_id: orgData.id,
+            action: 'Organisatie aangemaakt',
+            details: { organization_name: newOrgName }
+          });
+      } catch (logError) {
+        console.error('Failed to log organization creation:', logError);
+      }
 
       toast({
         title: "Succes",
@@ -121,7 +144,7 @@ export const OrganizationSettings = () => {
   };
 
   const updateOrganization = async () => {
-    if (!editingOrg || !editingOrg.name.trim()) return;
+    if (!editingOrg || !editingOrg.name.trim() || !user?.id) return;
 
     try {
       const { error } = await supabase
@@ -134,14 +157,18 @@ export const OrganizationSettings = () => {
 
       if (error) throw error;
 
-      await supabase
-        .from('history_logs')
-        .insert({
-          user_id: user?.id,
-          organization_id: editingOrg.id,
-          action: 'Organisatie bijgewerkt',
-          details: { organization_name: editingOrg.name }
-        });
+      try {
+        await supabase
+          .from('history_logs')
+          .insert({
+            user_id: user.id,
+            organization_id: editingOrg.id,
+            action: 'Organisatie bijgewerkt',
+            details: { organization_name: editingOrg.name }
+          });
+      } catch (logError) {
+        console.error('Failed to log organization update:', logError);
+      }
 
       toast({
         title: "Succes",
@@ -188,7 +215,36 @@ export const OrganizationSettings = () => {
   };
 
   if (loading) {
-    return <div>Organisaties laden...</div>;
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-32 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-semibold">Organisaties</h2>
+          <Button onClick={fetchOrganizations} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Opnieuw proberen
+          </Button>
+        </div>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={fetchOrganizations}>
+              Opnieuw laden
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -230,40 +286,48 @@ export const OrganizationSettings = () => {
       </div>
 
       <div className="grid gap-4">
-        {organizations.map((org) => (
-          <Card key={org.id}>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>{org.name}</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Rol: {org.user_role} • Aangemaakt: {new Date(org.created_at).toLocaleDateString('nl-NL')}
-                  </p>
-                </div>
-                <div className="flex space-x-2">
-                  {org.user_role === 'owner' && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditingOrg(org)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => deleteOrganization(org.id, org.name)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </CardHeader>
+        {organizations.length === 0 ? (
+          <Card>
+            <CardContent className="p-6 text-center text-muted-foreground">
+              Je bent nog geen lid van een organisatie. Maak een nieuwe organisatie aan om te beginnen.
+            </CardContent>
           </Card>
-        ))}
+        ) : (
+          organizations.map((org) => (
+            <Card key={org.id}>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>{org.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Rol: {org.user_role} • Aangemaakt: {new Date(org.created_at).toLocaleDateString('nl-NL')}
+                    </p>
+                  </div>
+                  <div className="flex space-x-2">
+                    {org.user_role === 'owner' && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingOrg(org)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => deleteOrganization(org.id, org.name)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+          ))
+        )}
       </div>
 
       {editingOrg && (

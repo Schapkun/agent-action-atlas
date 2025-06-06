@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,70 +39,118 @@ export const MyAccount = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchUserData();
-  }, []);
+    if (user) {
+      fetchUserData();
+    }
+  }, [user]);
 
   const fetchUserData = async () => {
+    if (!user?.id) {
+      console.log('No user ID available');
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Fetch user profile
-      const { data: profileData, error: profileError } = await supabase
+      console.log('Fetching user data for user:', user.id);
+      
+      // Fetch or create user profile
+      let { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('id', user?.id)
-        .single();
+        .eq('id', user.id)
+        .maybeSingle();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+        throw profileError;
+      }
+
+      // If no profile exists, create one
+      if (!profileData) {
+        console.log('No profile found, creating one');
+        const { data: newProfile, error: createError } = await supabase
+          .from('user_profiles')
+          .insert({
+            id: user.id,
+            email: user.email || '',
+            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || ''
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Profile creation error:', createError);
+          throw createError;
+        }
+        profileData = newProfile;
+      }
+
       setProfile(profileData);
 
-      // Fetch organizations
-      const { data: orgData, error: orgError } = await supabase
-        .from('organization_members')
-        .select(`
-          role,
-          organizations!fk_organization_members_organization (
-            id,
-            name
-          )
-        `)
-        .eq('user_id', user?.id);
-
-      if (orgError) throw orgError;
-      
-      const orgs = orgData?.map(item => ({
-        id: item.organizations?.id || '',
-        name: item.organizations?.name || '',
-        role: item.role
-      })) || [];
-      setOrganizations(orgs);
-
-      // Fetch workspaces
-      const { data: workspaceData, error: workspaceError } = await supabase
-        .from('workspace_members')
-        .select(`
-          workspaces!fk_workspace_members_workspace (
-            id,
-            name,
-            organizations!fk_workspaces_organization (
+      // Fetch organizations with better error handling
+      try {
+        const { data: orgData, error: orgError } = await supabase
+          .from('organization_members')
+          .select(`
+            role,
+            organizations!fk_organization_members_organization (
+              id,
               name
             )
-          )
-        `)
-        .eq('user_id', user?.id);
+          `)
+          .eq('user_id', user.id);
 
-      if (workspaceError) throw workspaceError;
-      
-      const workspaces = workspaceData?.map(item => ({
-        id: item.workspaces?.id || '',
-        name: item.workspaces?.name || '',
-        organization_name: item.workspaces?.organizations?.name || ''
-      })) || [];
-      setWorkspaces(workspaces);
+        if (orgError) {
+          console.error('Organizations fetch error:', orgError);
+        } else {
+          const orgs = orgData?.map(item => ({
+            id: item.organizations?.id || '',
+            name: item.organizations?.name || '',
+            role: item.role
+          })) || [];
+          setOrganizations(orgs);
+        }
+      } catch (orgErr) {
+        console.error('Organizations error:', orgErr);
+        setOrganizations([]);
+      }
+
+      // Fetch workspaces with better error handling
+      try {
+        const { data: workspaceData, error: workspaceError } = await supabase
+          .from('workspace_members')
+          .select(`
+            workspaces!fk_workspace_members_workspace (
+              id,
+              name,
+              organizations!fk_workspaces_organization (
+                name
+              )
+            )
+          `)
+          .eq('user_id', user.id);
+
+        if (workspaceError) {
+          console.error('Workspaces fetch error:', workspaceError);
+        } else {
+          const workspaces = workspaceData?.map(item => ({
+            id: item.workspaces?.id || '',
+            name: item.workspaces?.name || '',
+            organization_name: item.workspaces?.organizations?.name || ''
+          })) || [];
+          setWorkspaces(workspaces);
+        }
+      } catch (wsErr) {
+        console.error('Workspaces error:', wsErr);
+        setWorkspaces([]);
+      }
 
     } catch (error) {
       console.error('Error fetching user data:', error);
       toast({
         title: "Error",
-        description: "Kon gebruikersgegevens niet ophalen",
+        description: "Kon gebruikersgegevens niet ophalen. Probeer de pagina te vernieuwen.",
         variant: "destructive",
       });
     } finally {
@@ -110,7 +159,7 @@ export const MyAccount = () => {
   };
 
   const updateProfile = async () => {
-    if (!profile) return;
+    if (!profile || !user?.id) return;
 
     setSaving(true);
     try {
@@ -124,13 +173,18 @@ export const MyAccount = () => {
 
       if (error) throw error;
 
-      await supabase
-        .from('history_logs')
-        .insert({
-          user_id: user?.id,
-          action: 'Profiel bijgewerkt',
-          details: { full_name: profile.full_name, email: profile.email }
-        });
+      // Log the update
+      try {
+        await supabase
+          .from('history_logs')
+          .insert({
+            user_id: user.id,
+            action: 'Profiel bijgewerkt',
+            details: { full_name: profile.full_name, email: profile.email }
+          });
+      } catch (logError) {
+        console.error('Failed to log update:', logError);
+      }
 
       toast({
         title: "Succes",
@@ -158,11 +212,27 @@ export const MyAccount = () => {
   };
 
   if (loading) {
-    return <div>Account gegevens laden...</div>;
+    return (
+      <div className="space-y-6 p-6">
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+        </div>
+      </div>
+    );
   }
 
   if (!profile) {
-    return <div>Kon profiel niet laden</div>;
+    return (
+      <div className="space-y-6 p-6">
+        <div className="text-center">
+          <p className="text-muted-foreground">Kon profiel niet laden. Probeer de pagina te vernieuwen.</p>
+          <Button onClick={fetchUserData} className="mt-4">
+            Opnieuw proberen
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
