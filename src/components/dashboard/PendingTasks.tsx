@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentPreview } from './DocumentPreview';
 import { generatePDF, downloadPDF } from '@/utils/pdfGenerator';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { 
   Search, 
   FileText, 
@@ -23,46 +25,19 @@ export const PendingTasks = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [approvedTasks, setApprovedTasks] = useState<Set<string>>(new Set());
   const { toast } = useToast();
+  const { selectedOrganization, selectedWorkspace } = useOrganization();
 
-  // Mock data for pending tasks (concept documents and emails)
-  const allPendingTasks: DocumentType[] = [
-    {
-      id: 'd4',
-      name: 'Arbeidscontract Medewerker X.docx',
-      type: 'Contract',
-      size: '245 KB',
-      createdAt: new Date('2025-06-06'),
-      modifiedAt: new Date('2025-06-06'),
-      status: 'draft',
-      folderId: '3',
-      client: 'XYZ Corp',
-      dossier: 'DOS-2025-003'
-    },
-    {
-      id: 'e1',
-      name: 'Antwoord op incasso vraag',
-      type: 'E-mail',
-      size: '15 KB',
-      createdAt: new Date('2025-06-06'),
-      modifiedAt: new Date('2025-06-06'),
-      status: 'draft',
-      folderId: 'email',
-      client: 'Maria Peters',
-      dossier: 'DOS-2025-004'
-    },
-    {
-      id: 'd7',
-      name: 'Concept dagvaarding nieuwe zaak.pdf',
-      type: 'Dagvaarding',
-      size: '189 KB',
-      createdAt: new Date('2025-06-06'),
-      modifiedAt: new Date('2025-06-06'),
-      status: 'draft',
-      folderId: '1',
-      client: 'Nieuwe Klant B.V.',
-      dossier: 'DOS-2025-005'
+  // Empty array - no mock data
+  const allPendingTasks: DocumentType[] = [];
+
+  const getContextInfo = () => {
+    if (selectedWorkspace) {
+      return `Werkruimte: ${selectedWorkspace.name}`;
+    } else if (selectedOrganization) {
+      return `Organisatie: ${selectedOrganization.name}`;
     }
-  ];
+    return 'Geen selectie';
+  };
 
   // Filter out approved tasks
   const pendingTasks = allPendingTasks.filter(task => !approvedTasks.has(task.id));
@@ -191,90 +166,41 @@ export const PendingTasks = () => {
               {pendingTasks.length} taken
             </Badge>
           </div>
-          
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Zoek openstaande taken..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+
+          {!selectedOrganization && !selectedWorkspace && (
+            <div className="text-sm text-muted-foreground">
+              Selecteer een organisatie of werkruimte om taken te bekijken
+            </div>
+          )}
+
+          {(selectedOrganization || selectedWorkspace) && (
+            <>
+              <div className="text-sm text-muted-foreground">
+                Data voor: {getContextInfo()}
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Zoek openstaande taken..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </>
+          )}
         </CardHeader>
 
         <CardContent>
-          {filteredTasks.length > 0 ? (
-            <div className="space-y-3">
-              {filteredTasks.map((task) => (
-                <div key={task.id} className="flex items-center space-x-4 p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
-                  <div className="flex-shrink-0">
-                    {getTaskIcon(task.type)}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <h4 className="text-sm font-medium text-foreground truncate">
-                        {task.name}
-                      </h4>
-                      <div className="flex items-center space-x-2">
-                        <Badge className={getPriorityColor(task.createdAt)}>
-                          {getPriorityLabel(task.createdAt)}
-                        </Badge>
-                        <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
-                          Concept
-                        </Badge>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center text-xs text-muted-foreground space-x-4">
-                      <span>{task.type}</span>
-                      <span>•</span>
-                      <span>{task.size}</span>
-                      <span>•</span>
-                      <span>{task.modifiedAt.toLocaleDateString('nl-NL')}</span>
-                      {task.client && (
-                        <>
-                          <span>•</span>
-                          <span className="font-medium">{task.client}</span>
-                        </>
-                      )}
-                      {task.dossier && (
-                        <>
-                          <span>•</span>
-                          <span>{task.dossier}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleViewDocument(task)}
-                      title="Bekijken en goedkeuren"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleDownloadDocument(task)}
-                      title="Downloaden"
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+          {!selectedOrganization && !selectedWorkspace ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Selecteer een organisatie of werkruimte om openstaande taken te bekijken</p>
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-              {searchTerm 
-                ? 'Geen taken gevonden die voldoen aan de zoekcriteria.'
-                : 'Geen openstaande taken gevonden. Goed werk!'
-              }
+              <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Geen openstaande taken gevonden voor de geselecteerde context</p>
             </div>
           )}
         </CardContent>
