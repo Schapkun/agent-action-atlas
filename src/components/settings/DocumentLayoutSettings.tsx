@@ -160,9 +160,6 @@ export const DocumentLayoutSettings = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold mb-2">Document Layout Instellingen</h2>
-        <p className="text-muted-foreground">
-          Beheer en pas de lay-out van verschillende document templates aan
-        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
