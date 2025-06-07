@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -144,6 +145,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
       }
 
       setProfile(profileData);
+      setOriginalProfile(profileData ? { ...profileData } : null);
 
       // Check if the currently logged in user is the account owner
       // NOT the user being viewed
@@ -227,9 +229,12 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
           
           // Set global role based on first organization role
           if (orgsWithWorkspaces.length > 0) {
-            setGlobalRole(orgsWithWorkspaces[0].role as UserRole);
+            const firstRole = orgsWithWorkspaces[0].role as UserRole;
+            setGlobalRole(firstRole);
+            setOriginalGlobalRole(firstRole);
           } else {
             setGlobalRole('member');
+            setOriginalGlobalRole('member');
           }
         }
       } catch (orgErr) {
@@ -368,6 +373,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
       }
 
       setGlobalRole(newRole);
+      setOriginalGlobalRole(newRole);
       toast({
         title: "Succes",
         description: `Rol bijgewerkt naar ${translateRole(newRole)} voor alle organisaties en werkruimtes`,
