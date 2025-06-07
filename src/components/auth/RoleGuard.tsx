@@ -15,7 +15,10 @@ export const RoleGuard = ({
   userRole = 'lid',
   fallbackMessage = "Je hebt geen toegang tot deze functionaliteit. Alleen gebruikers met Admin of Eigenaar rol kunnen dit bekijken."
 }: RoleGuardProps) => {
+  console.log('RoleGuard check:', { userRole, requiredRoles });
+  
   const hasAccess = requiredRoles.includes(userRole);
+  console.log('RoleGuard hasAccess:', hasAccess);
 
   if (!hasAccess) {
     return (
