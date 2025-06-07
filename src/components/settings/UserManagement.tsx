@@ -11,8 +11,11 @@ interface UserProfile {
   created_at: string;
   organizations?: string[];
   workspaces?: string[];
-  isPending?: boolean; // Add flag for pending invitations
-  invitationId?: string; // Store invitation ID for pending users
+  isPending?: boolean;
+  invitationId?: string;
+  role?: string;
+  avatar_url?: string | null;
+  updated_at?: string;
 }
 
 interface UserManagementProps {
@@ -72,7 +75,7 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
         const { data: usersData, error: usersError } = await supabase
           .from('profiles')
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: true }); // Sort by creation date (oldest first)
 
         if (usersError) {
           console.error('Users fetch error:', usersError);
@@ -81,20 +84,31 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
 
         console.log('All users data (account owner):', usersData);
         
-        // For each user, get their organization memberships
+        // For each user, get their organization memberships and roles
         const usersWithOrgs = await Promise.all(
           (usersData || []).map(async (userProfile) => {
             const { data: orgMemberships } = await supabase
               .from('organization_members')
-              .select('organization_id, organizations(name)')
+              .select('organization_id, role, organizations(name)')
               .eq('user_id', userProfile.id);
 
             const organizations = orgMemberships?.map(m => (m as any).organizations?.name).filter(Boolean) || [];
+            // Get the highest role (owner > admin > member)
+            const roles = orgMemberships?.map(m => m.role) || [];
+            let highestRole = 'member';
+            if (roles.includes('owner')) highestRole = 'owner';
+            else if (roles.includes('admin')) highestRole = 'admin';
+
+            // Special case for the account owner
+            if (userProfile.email === 'info@schapkun.com') {
+              highestRole = 'eigenaar';
+            }
 
             return {
               ...userProfile,
               organizations,
-              isPending: false
+              isPending: false,
+              role: highestRole
             };
           })
         );
@@ -106,6 +120,7 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
             id,
             email,
             created_at,
+            role,
             organization_id,
             workspace_id,
             organizations(name),
@@ -113,7 +128,7 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
           `)
           .is('accepted_at', null)
           .gt('expires_at', new Date().toISOString())
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: true }); // Sort by creation date (oldest first)
 
         if (invitationsError) {
           console.error('Invitations fetch error:', invitationsError);
@@ -128,20 +143,22 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
           organizations: [(invitation as any).organizations?.name].filter(Boolean),
           workspaces: [(invitation as any).workspaces?.name].filter(Boolean),
           isPending: true,
-          invitationId: invitation.id
+          invitationId: invitation.id,
+          role: invitation.role,
+          avatar_url: null,
+          updated_at: invitation.created_at
         }));
 
         console.log('Pending invitations:', pendingUsers);
         console.log('Users with organizations:', usersWithOrgs);
         
-        // Combine existing users and pending invitations
-        const allUsers = [...usersWithOrgs, ...pendingUsers];
+        // Combine existing users and pending invitations, then sort by creation date
+        const allUsers = [...usersWithOrgs, ...pendingUsers]
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
         onUsersUpdate(allUsers);
       } else {
         // For regular users, always include themselves first
         console.log('Fetching users for regular user...');
-        console.log('Regular user ID:', user.id);
-        console.log('Regular user email:', user.email);
         
         // First, get current user's profile
         const { data: currentUserProfile, error: currentUserError } = await supabase
@@ -173,14 +190,25 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
             }
             
             console.log('Created new profile:', newProfile);
-            onUsersUpdate([{...newProfile, isPending: false}]);
+            onUsersUpdate([{...newProfile, isPending: false, role: 'member'}]);
             return;
           } else {
             throw currentUserError;
           }
         }
 
-        let allUsers = [{...currentUserProfile, isPending: false}]; // Always include current user
+        // Get current user's role
+        const { data: currentUserMemberships } = await supabase
+          .from('organization_members')
+          .select('role')
+          .eq('user_id', user.id);
+
+        const currentUserRoles = currentUserMemberships?.map(m => m.role) || [];
+        let currentUserRole = 'member';
+        if (currentUserRoles.includes('owner')) currentUserRole = 'owner';
+        else if (currentUserRoles.includes('admin')) currentUserRole = 'admin';
+
+        let allUsers = [{...currentUserProfile, isPending: false, role: currentUserRole}];
         console.log('Starting with current user:', currentUserProfile);
         
         // Then get their organization memberships
@@ -193,8 +221,6 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
 
         if (membershipError) {
           console.error('Membership fetch error:', membershipError);
-          // Don't throw error here, just continue with current user only
-          console.log('Continuing with current user only due to membership error');
         } else if (membershipData && membershipData.length > 0) {
           // If user has organizations, get other users in those organizations
           const orgIds = membershipData.map(m => m.organization_id);
@@ -203,22 +229,18 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
           // Get all users in these organizations (excluding current user)
           const { data: orgUsersData, error: orgUsersError } = await supabase
             .from('organization_members')
-            .select('user_id, profiles(id, email, full_name, created_at)')
+            .select('user_id, role, profiles(id, email, full_name, created_at, avatar_url, updated_at)')
             .in('organization_id', orgIds)
             .neq('user_id', user.id); // Exclude current user to avoid duplicates
 
           console.log('Organization users data:', { orgUsersData, orgUsersError });
 
-          if (orgUsersError) {
-            console.error('Organization users fetch error:', orgUsersError);
-            // Don't throw error here, just continue with current user only
-            console.log('Continuing with current user only due to org users error');
-          } else {
-            // Add organization users
-            orgUsersData?.forEach(item => {
+          if (!orgUsersError && orgUsersData) {
+            // Add organization users with their roles
+            orgUsersData.forEach(item => {
               const userProfile = (item as any).profiles;
               if (userProfile) {
-                allUsers.push({...userProfile, isPending: false});
+                allUsers.push({...userProfile, isPending: false, role: item.role});
               }
             });
           }
@@ -230,6 +252,7 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
               id,
               email,
               created_at,
+              role,
               organization_id,
               workspace_id,
               organizations(name),
@@ -238,7 +261,7 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
             .in('organization_id', orgIds)
             .is('accepted_at', null)
             .gt('expires_at', new Date().toISOString())
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: true });
 
           if (!invitationsError && pendingInvitations) {
             // Convert pending invitations to user profile format
@@ -250,22 +273,24 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
               organizations: [(invitation as any).organizations?.name].filter(Boolean),
               workspaces: [(invitation as any).workspaces?.name].filter(Boolean),
               isPending: true,
-              invitationId: invitation.id
+              invitationId: invitation.id,
+              role: invitation.role,
+              avatar_url: null,
+              updated_at: invitation.created_at
             }));
 
             allUsers = [...allUsers, ...pendingUsers];
           }
-        } else {
-          console.log('No organization memberships found, showing only current user');
         }
 
-        // Remove duplicates based on user ID/email
-        const uniqueUsers = allUsers.filter((user, index, arr) => 
-          arr.findIndex(u => u.id === user.id || u.email === user.email) === index
-        );
+        // Remove duplicates based on user ID/email and sort by creation date
+        const uniqueUsers = allUsers
+          .filter((user, index, arr) => 
+            arr.findIndex(u => u.id === user.id || u.email === user.email) === index
+          )
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
         console.log('Final user list for regular user:', uniqueUsers);
-        console.log('Number of users:', uniqueUsers.length);
         onUsersUpdate(uniqueUsers);
       }
     } catch (error) {

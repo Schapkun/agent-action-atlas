@@ -10,6 +10,11 @@ interface UserProfile {
   created_at: string;
   organizations?: string[];
   workspaces?: string[];
+  isPending?: boolean;
+  invitationId?: string;
+  role?: string;
+  avatar_url?: string | null;
+  updated_at?: string;
 }
 
 interface UserListProps {

@@ -18,6 +18,11 @@ interface UserProfile {
   created_at: string;
   organizations?: string[];
   workspaces?: string[];
+  isPending?: boolean;
+  invitationId?: string;
+  role?: string;
+  avatar_url?: string | null;
+  updated_at?: string;
 }
 
 export const UserProfileSettings = () => {
@@ -55,10 +60,11 @@ export const UserProfileSettings = () => {
     const matchesSearch = userProfile.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       userProfile.email?.toLowerCase().includes(searchTerm.toLowerCase());
     
+    const userRoleForFilter = userProfile.role || 'member';
     const matchesFilter = filterRole === 'all' || 
-      (filterRole === 'eigenaar' && user?.email === 'info@schapkun.com' && userProfile.email === 'info@schapkun.com') ||
-      (filterRole === 'admin' && userProfile.email !== 'info@schapkun.com') ||
-      (filterRole === 'gebruiker' && userProfile.email !== 'info@schapkun.com');
+      (filterRole === 'eigenaar' && (userRoleForFilter === 'eigenaar' || userRoleForFilter === 'owner')) ||
+      (filterRole === 'admin' && userRoleForFilter === 'admin') ||
+      (filterRole === 'gebruiker' && userRoleForFilter === 'member');
     
     return matchesSearch && matchesFilter;
   });
