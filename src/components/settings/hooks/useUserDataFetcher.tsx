@@ -52,7 +52,8 @@ export const useUserDataFetcher = () => {
             workspaces: allWorkspaces.map(workspace => workspace.name),
             isPending: false,
             role: 'eigenaar',
-            member_since: userProfile.created_at
+            member_since: userProfile.created_at,
+            user_role: 'owner' as const
           };
         }
 
@@ -102,7 +103,8 @@ export const useUserDataFetcher = () => {
           workspaces,
           isPending: false,
           role: highestRole,
-          member_since: new Date(earliestMembership).toISOString()
+          member_since: new Date(earliestMembership).toISOString(),
+          user_role: userProfile.user_role
         };
       })
     );
@@ -182,7 +184,13 @@ export const useUserDataFetcher = () => {
         }
         
         console.log('Created new profile:', newProfile);
-        return [{...newProfile, isPending: false, role: 'member', member_since: newProfile.created_at}];
+        return [{
+          ...newProfile, 
+          isPending: false, 
+          role: 'member', 
+          member_since: newProfile.created_at,
+          user_role: newProfile.user_role
+        }];
       } else {
         throw currentUserError;
       }
@@ -209,7 +217,8 @@ export const useUserDataFetcher = () => {
       role: currentUserRole,
       member_since: currentUserMemberSince,
       organizations: [],
-      workspaces: []
+      workspaces: [],
+      user_role: currentUserProfile.user_role
     }];
     
     // Then get their organization memberships
@@ -276,7 +285,8 @@ export const useUserDataFetcher = () => {
               role: item.role,
               member_since: item.created_at,
               organizations,
-              workspaces
+              workspaces,
+              user_role: userProfile.user_role
             });
           }
         }

@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -226,7 +225,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
         .from('profiles')
         .update({
           full_name: profile.full_name,
-          user_role: profile.user_role
+          user_role: profile.user_role as 'owner' | 'admin' | 'member'
         })
         .eq('id', targetUserId);
 

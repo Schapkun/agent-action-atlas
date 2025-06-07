@@ -112,10 +112,10 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
               organization={org}
               canCreate={canCreate}
               onUpdateOrganization={updateOrganization}
-              onDeleteOrganization={deleteOrganization}
+              onDeleteOrganization={(orgId, name) => deleteOrganization(orgId, name)}
               onCreateWorkspace={createWorkspace}
               onUpdateWorkspace={updateWorkspace}
-              onDeleteWorkspace={deleteWorkspace}
+              onDeleteWorkspace={(workspaceId, name) => deleteWorkspace(workspaceId, name)}
             />
           ))}
         </div>
