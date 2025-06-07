@@ -24,17 +24,30 @@ interface HistoryLogCardProps {
 const formatLogDetails = (details: any, action: string) => {
   if (!details) return null;
 
-  // Handle different types of actions
+  console.log('Formatting log details:', { details, action });
+
+  // Handle invitation actions
   if (action.toLowerCase().includes('uitnodiging')) {
-    if (details.invitation_ids && Array.isArray(details.invitation_ids)) {
-      return `${details.invitation_ids.length} uitnodiging(en) verstuurd`;
-    }
+    // Check for email in details
     if (details.email) {
-      return `Uitnodiging verstuurd naar: ${details.email}`;
+      return `Uitnodiging verzonden naar: ${details.email}`;
+    }
+    // Check for invitation_ids array
+    if (details.invitation_ids && Array.isArray(details.invitation_ids)) {
+      return `${details.invitation_ids.length} uitnodiging(en) verzonden`;
+    }
+    // Check for invited_email
+    if (details.invited_email) {
+      return `Uitnodiging verzonden naar: ${details.invited_email}`;
+    }
+    // Check for user_email in invitation context
+    if (details.user_email) {
+      return `Uitnodiging verzonden naar: ${details.user_email}`;
     }
     return 'Uitnodiging verwerkt';
   }
 
+  // Handle user actions
   if (action.toLowerCase().includes('gebruiker')) {
     if (details.user_email) {
       return `Gebruiker: ${details.user_email}`;
@@ -42,20 +55,36 @@ const formatLogDetails = (details: any, action: string) => {
     if (details.user_name) {
       return `Gebruiker: ${details.user_name}`;
     }
+    if (details.email) {
+      return `Gebruiker: ${details.email}`;
+    }
+    // Handle role changes
+    if (details.role) {
+      return `Rol gewijzigd naar: ${details.role === 'member' ? 'gebruiker' : details.role}`;
+    }
   }
 
+  // Handle organization actions
   if (action.toLowerCase().includes('organisatie')) {
     if (details.organization_name) {
       return `Organisatie: ${details.organization_name}`;
     }
+    if (details.name) {
+      return `Organisatie: ${details.name}`;
+    }
   }
 
+  // Handle workspace actions
   if (action.toLowerCase().includes('werkruimte')) {
     if (details.workspace_name) {
       return `Werkruimte: ${details.workspace_name}`;
     }
+    if (details.name) {
+      return `Werkruimte: ${details.name}`;
+    }
   }
 
+  // Handle document actions
   if (action.toLowerCase().includes('document')) {
     if (details.document_name) {
       return `Document: ${details.document_name}`;
@@ -63,8 +92,12 @@ const formatLogDetails = (details: any, action: string) => {
     if (details.file_name) {
       return `Bestand: ${details.file_name}`;
     }
+    if (details.name) {
+      return `Document: ${details.name}`;
+    }
   }
 
+  // Handle login/logout
   if (action.toLowerCase().includes('login') || action.toLowerCase().includes('ingelogd')) {
     return 'Gebruiker heeft ingelogd';
   }
@@ -73,19 +106,44 @@ const formatLogDetails = (details: any, action: string) => {
     return 'Gebruiker heeft uitgelogd';
   }
 
-  // If we have an object with meaningful keys, try to extract useful info
-  if (typeof details === 'object') {
+  // Handle profile updates
+  if (action.toLowerCase().includes('profiel')) {
+    if (details.email) {
+      return `Profiel bijgewerkt voor: ${details.email}`;
+    }
+    return 'Profiel bijgewerkt';
+  }
+
+  // Generic handling for objects with meaningful data
+  if (typeof details === 'object' && details !== null) {
     const keys = Object.keys(details);
     
-    // Look for common meaningful fields
+    // Look for email addresses first (most important for invitations)
+    if (details.email) return `E-mail: ${details.email}`;
+    if (details.invited_email) return `Uitgenodigd: ${details.invited_email}`;
+    if (details.user_email) return `Gebruiker: ${details.user_email}`;
+    
+    // Look for other meaningful fields
     if (details.name) return `Naam: ${details.name}`;
     if (details.title) return `Titel: ${details.title}`;
-    if (details.email) return `E-mail: ${details.email}`;
-    if (details.role) return `Rol: ${details.role}`;
+    if (details.role) {
+      const roleName = details.role === 'member' ? 'gebruiker' : details.role;
+      return `Rol: ${roleName}`;
+    }
     
     // If it's just IDs or technical data, show a generic message
-    if (keys.every(key => key.includes('_id') || key.includes('id'))) {
+    if (keys.length > 0 && keys.every(key => key.includes('_id') || key.includes('id'))) {
       return 'Systeem actie uitgevoerd';
+    }
+
+    // If we have any meaningful content, try to show something useful
+    if (keys.length > 0) {
+      // Look for any field that might contain useful information
+      for (const key of keys) {
+        if (details[key] && typeof details[key] === 'string' && !key.includes('id')) {
+          return `${key}: ${details[key]}`;
+        }
+      }
     }
   }
 

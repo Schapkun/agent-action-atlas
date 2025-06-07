@@ -12,7 +12,7 @@ interface RoleGuardProps {
 export const RoleGuard = ({ 
   children, 
   requiredRoles, 
-  userRole = 'lid',
+  userRole = 'gebruiker',
   fallbackMessage = "Toegang geweigerd, neem contact op met uw beheerder."
 }: RoleGuardProps) => {
   console.log('RoleGuard - Received props:', { userRole, requiredRoles });
