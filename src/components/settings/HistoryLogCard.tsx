@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity, Calendar, User } from 'lucide-react';
+import { Activity, Calendar, User, Mail } from 'lucide-react';
 
 interface HistoryLog {
   id: string;
@@ -26,11 +26,11 @@ const formatLogDetails = (details: any, action: string) => {
 
   console.log('Formatting log details:', { details, action });
 
-  // Handle invitation actions
+  // Handle invitation actions - show the invited email
   if (action.toLowerCase().includes('uitnodiging')) {
     // Check for email in details
     if (details.email) {
-      return `Uitnodiging verzonden naar: ${details.email}`;
+      return `Uitgenodigd: ${details.email}`;
     }
     // Check for invitation_ids array
     if (details.invitation_ids && Array.isArray(details.invitation_ids)) {
@@ -38,29 +38,29 @@ const formatLogDetails = (details: any, action: string) => {
     }
     // Check for invited_email
     if (details.invited_email) {
-      return `Uitnodiging verzonden naar: ${details.invited_email}`;
+      return `Uitgenodigd: ${details.invited_email}`;
     }
     // Check for user_email in invitation context
     if (details.user_email) {
-      return `Uitnodiging verzonden naar: ${details.user_email}`;
+      return `Uitgenodigd: ${details.user_email}`;
     }
     return 'Uitnodiging verwerkt';
   }
 
-  // Handle user actions
+  // Handle user actions - show affected user
   if (action.toLowerCase().includes('gebruiker')) {
     if (details.user_email) {
-      return `Gebruiker: ${details.user_email}`;
+      return `Betreft gebruiker: ${details.user_email}`;
     }
     if (details.user_name) {
-      return `Gebruiker: ${details.user_name}`;
+      return `Betreft gebruiker: ${details.user_name}`;
     }
     if (details.email) {
-      return `Gebruiker: ${details.email}`;
+      return `Betreft gebruiker: ${details.email}`;
     }
     // Handle role changes
     if (details.role) {
-      return `Rol gewijzigd naar: ${details.role === 'member' ? 'gebruiker' : details.role}`;
+      return `Rol gewijzigd naar: gebruiker`;
     }
   }
 
@@ -121,14 +121,13 @@ const formatLogDetails = (details: any, action: string) => {
     // Look for email addresses first (most important for invitations)
     if (details.email) return `E-mail: ${details.email}`;
     if (details.invited_email) return `Uitgenodigd: ${details.invited_email}`;
-    if (details.user_email) return `Gebruiker: ${details.user_email}`;
+    if (details.user_email) return `Betreft: ${details.user_email}`;
     
     // Look for other meaningful fields
     if (details.name) return `Naam: ${details.name}`;
     if (details.title) return `Titel: ${details.title}`;
     if (details.role) {
-      const roleName = details.role === 'member' ? 'gebruiker' : details.role;
-      return `Rol: ${roleName}`;
+      return `Rol: gebruiker`;
     }
     
     // If it's just IDs or technical data, show a generic message
@@ -164,7 +163,7 @@ export const HistoryLogCard = ({ log }: HistoryLogCardProps) => {
               <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                 <div className="flex items-center space-x-1">
                   <User className="h-4 w-4" />
-                  <span>{log.user_name}</span>
+                  <span>Door: {log.user_name || log.user_email}</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Calendar className="h-4 w-4" />
@@ -178,7 +177,10 @@ export const HistoryLogCard = ({ log }: HistoryLogCardProps) => {
       {formattedDetails && (
         <CardContent>
           <div className="bg-muted p-3 rounded-md">
-            <p className="text-sm">{formattedDetails}</p>
+            <div className="flex items-start space-x-2">
+              <Mail className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+              <p className="text-sm">{formattedDetails}</p>
+            </div>
           </div>
           {log.organization_name && (
             <p className="text-sm text-muted-foreground mt-2">
