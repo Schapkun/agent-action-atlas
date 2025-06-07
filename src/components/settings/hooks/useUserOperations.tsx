@@ -66,24 +66,122 @@ export const useUserOperations = (userId: string | undefined, onUsersUpdate: () 
     if (!confirm(`Weet je zeker dat je gebruiker "${userEmail}" wilt verwijderen?`)) return;
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userIdToDelete);
+      console.log('Starting deletion process for user:', userEmail, 'with ID:', userIdToDelete);
 
-      if (error) throw error;
+      // Check if this is a pending invitation (invitation ID instead of user ID)
+      const isPendingInvitation = userIdToDelete.length === 36 && userIdToDelete.includes('-');
+      
+      if (isPendingInvitation) {
+        console.log('Deleting pending invitation:', userIdToDelete);
+        
+        // Delete from user_invitations table
+        const { error: invitationError } = await supabase
+          .from('user_invitations')
+          .delete()
+          .eq('id', userIdToDelete);
+
+        if (invitationError) {
+          console.error('Error deleting invitation:', invitationError);
+          throw invitationError;
+        }
+
+        // Log the invitation cancellation
+        await supabase
+          .from('history_logs')
+          .insert({
+            user_id: userId,
+            action: 'Uitnodiging geannuleerd',
+            details: { 
+              invitation_id: userIdToDelete,
+              email: userEmail,
+              reason: 'Handmatig verwijderd door admin'
+            }
+          });
+
+        console.log('Successfully deleted invitation');
+      } else {
+        console.log('Deleting actual user:', userIdToDelete);
+        
+        // Delete from related tables first (to avoid foreign key constraints)
+        
+        // Delete organization memberships
+        const { error: orgMemberError } = await supabase
+          .from('organization_members')
+          .delete()
+          .eq('user_id', userIdToDelete);
+
+        if (orgMemberError) {
+          console.error('Error deleting organization memberships:', orgMemberError);
+        }
+
+        // Delete workspace memberships
+        const { error: workspaceMemberError } = await supabase
+          .from('workspace_members')
+          .delete()
+          .eq('user_id', userIdToDelete);
+
+        if (workspaceMemberError) {
+          console.error('Error deleting workspace memberships:', workspaceMemberError);
+        }
+
+        // Delete user permissions
+        const { error: permissionsError } = await supabase
+          .from('user_permissions')
+          .delete()
+          .eq('user_id', userIdToDelete);
+
+        if (permissionsError) {
+          console.error('Error deleting user permissions:', permissionsError);
+        }
+
+        // Delete from user_profiles table
+        const { error: userProfileError } = await supabase
+          .from('user_profiles')
+          .delete()
+          .eq('id', userIdToDelete);
+
+        if (userProfileError) {
+          console.error('Error deleting user profile:', userProfileError);
+        }
+
+        // Delete from profiles table
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', userIdToDelete);
+
+        if (profileError) {
+          console.error('Error deleting profile:', profileError);
+          throw profileError;
+        }
+
+        // Log the user deletion
+        await supabase
+          .from('history_logs')
+          .insert({
+            user_id: userId,
+            action: 'Gebruiker verwijderd',
+            details: { 
+              user_id: userIdToDelete,
+              user_email: userEmail,
+              deleted_at: new Date().toISOString()
+            }
+          });
+
+        console.log('Successfully deleted user');
+      }
 
       toast({
         title: "Succes",
-        description: "Gebruiker succesvol verwijderd",
+        description: isPendingInvitation ? "Uitnodiging succesvol geannuleerd" : "Gebruiker succesvol verwijderd",
       });
 
       onUsersUpdate();
     } catch (error) {
-      console.error('Error deleting user:', error);
+      console.error('Error deleting user/invitation:', error);
       toast({
         title: "Error",
-        description: "Kon gebruiker niet verwijderen",
+        description: "Kon gebruiker/uitnodiging niet verwijderen",
         variant: "destructive",
       });
     }
