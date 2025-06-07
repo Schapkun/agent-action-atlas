@@ -85,6 +85,26 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
     }
   }, [searchTerm, organizations]);
 
+  // Check if user can create organizations and workspaces
+  const canCreateContent = () => {
+    console.log('OrganizationWorkspaceView - canCreateContent check:', { 
+      userRole, 
+      userEmail: user?.email,
+      isAccountOwner: user?.email === 'info@schapkun.com'
+    });
+    
+    // Account owner can always create content
+    if (user?.email === 'info@schapkun.com') {
+      console.log('Account owner detected, can create content');
+      return true;
+    }
+    
+    // For all other users, they need admin or eigenaar role
+    const canCreate = userRole === 'admin' || userRole === 'eigenaar';
+    console.log('Role-based check result:', { userRole, canCreate });
+    return canCreate;
+  };
+
   const fetchOrganizations = async () => {
     try {
       const { data: orgsData, error: orgsError } = await supabase
@@ -318,6 +338,13 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
     return <div>Laden...</div>;
   }
 
+  const canCreate = canCreateContent();
+  console.log('OrganizationWorkspaceView - Final render decision:', { 
+    canCreate, 
+    userRole, 
+    userEmail: user?.email 
+  });
+
   return (
     <div>
       {/* Search and Create Button Row */}
@@ -331,7 +358,7 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
             className="pl-9"
           />
         </div>
-        {(user?.email === 'info@schapkun.com') && (
+        {canCreate && (
           <Button onClick={() => setShowCreateOrgForm(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Nieuwe Organisatie
@@ -397,7 +424,7 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
                     )}
                   </div>
                 </div>
-                {(user?.email === 'info@schapkun.com') && (
+                {canCreate && (
                   <div className="flex space-x-1 mr-4">
                     <Button
                       variant="ghost"
@@ -459,41 +486,43 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
                           )}
                         </div>
                       </div>
-                      <div className="flex space-x-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteWorkspace(workspace.id, workspace.name)}
-                          className="text-destructive hover:text-destructive h-8 w-8 p-0"
-                          title="Verwijder werkruimte"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        {editingWorkspace === workspace.id ? (
+                      {canCreate && (
+                        <div className="flex space-x-1">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => updateWorkspace(workspace.id)}
-                            className="h-8 w-8 p-0"
-                            title="Opslaan"
+                            onClick={() => deleteWorkspace(workspace.id, workspace.name)}
+                            className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                            title="Verwijder werkruimte"
                           >
-                            <Save className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setEditingWorkspace(workspace.id);
-                              setEditWorkspaceData({ name: workspace.name });
-                            }}
-                            className="h-8 w-8 p-0"
-                            title="Bewerken"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
+                          {editingWorkspace === workspace.id ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => updateWorkspace(workspace.id)}
+                              className="h-8 w-8 p-0"
+                              title="Opslaan"
+                            >
+                              <Save className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingWorkspace(workspace.id);
+                                setEditWorkspaceData({ name: workspace.name });
+                              }}
+                              className="h-8 w-8 p-0"
+                              title="Bewerken"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -522,7 +551,7 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
               )}
 
               {/* Add Workspace Button */}
-              {showCreateWorkspaceForm !== org.id && (
+              {showCreateWorkspaceForm !== org.id && canCreate && (
                 <div className="p-2">
                   <Button
                     variant="outline"
