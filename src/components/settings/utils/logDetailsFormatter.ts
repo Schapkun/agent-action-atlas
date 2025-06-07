@@ -18,7 +18,7 @@ export const formatLogDetails = (details: any, action: string) => {
 
   // Handle invitation cancellation actions - ALWAYS show email address like user invitations
   if (action.toLowerCase().includes('uitnodiging geannuleerd')) {
-    // Check all possible email fields in the details
+    // First check if we have enriched email data from the invitation enrichment process
     if (details.invited_email) {
       return `E-mailadres: ${details.invited_email}`;
     }

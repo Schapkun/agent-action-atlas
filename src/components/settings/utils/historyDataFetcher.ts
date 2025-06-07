@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { enrichInvitationData } from './invitationEnrichment';
 import { HistoryLog } from '../types/HistoryLog';
@@ -49,8 +50,28 @@ export const fetchHistoryLogsData = async (
     return [];
   }
 
+  // Log invitation cancellation entries before enrichment
+  const invitationCancellations = logsData.filter(log => 
+    log.action.toLowerCase().includes('uitnodiging geannuleerd')
+  );
+  console.log('Found invitation cancellations before enrichment:', invitationCancellations.map(log => ({
+    id: log.id,
+    action: log.action,
+    details: log.details
+  })));
+
   // Enrich invitation cancellation data with email addresses
   const enrichedLogs = await enrichInvitationData(logsData);
+
+  // Log invitation cancellation entries after enrichment
+  const enrichedCancellations = enrichedLogs.filter(log => 
+    log.action.toLowerCase().includes('uitnodiging geannuleerd')
+  );
+  console.log('Found invitation cancellations after enrichment:', enrichedCancellations.map(log => ({
+    id: log.id,
+    action: log.action,
+    details: log.details
+  })));
 
   // Get unique user IDs from the logs to fetch their profiles
   const userIds = [...new Set(enrichedLogs.map(log => log.user_id).filter(Boolean))];

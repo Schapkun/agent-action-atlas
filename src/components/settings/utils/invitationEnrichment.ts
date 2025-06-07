@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { HistoryLog } from '../types/HistoryLog';
 
@@ -8,7 +9,10 @@ export const enrichInvitationData = async (logs: any[]): Promise<HistoryLog[]> =
     (log.details?.invitation_id || log.details?.invitation_ids)
   );
 
-  if (invitationCancellations.length === 0) return logs;
+  if (invitationCancellations.length === 0) {
+    console.log('No invitation cancellations found that need enrichment');
+    return logs;
+  }
 
   // Extract all invitation IDs
   const invitationIds: string[] = [];
@@ -52,6 +56,9 @@ export const enrichInvitationData = async (logs: any[]): Promise<HistoryLog[]> =
         emailAddress = invitation.email;
         orgId = orgId || invitation.organization_id;
         workspaceId = workspaceId || invitation.workspace_id;
+        console.log(`Enriched log ${log.id} with email: ${emailAddress}`);
+      } else {
+        console.log(`No invitation found for ID: ${log.details.invitation_id}`);
       }
     } else if (log.details?.invitation_ids && Array.isArray(log.details.invitation_ids)) {
       // For multiple invitations, get the first email (or could be combined)
@@ -62,6 +69,9 @@ export const enrichInvitationData = async (logs: any[]): Promise<HistoryLog[]> =
         emailAddress = firstInvitation.email;
         orgId = orgId || firstInvitation.organization_id;
         workspaceId = workspaceId || firstInvitation.workspace_id;
+        console.log(`Enriched log ${log.id} with email from multiple invitations: ${emailAddress}`);
+      } else {
+        console.log(`No invitations found for IDs: ${log.details.invitation_ids}`);
       }
     }
 
