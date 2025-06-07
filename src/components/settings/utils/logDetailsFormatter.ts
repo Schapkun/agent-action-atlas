@@ -1,4 +1,3 @@
-
 export const formatLogDetails = (details: any, action: string) => {
   if (!details) return null;
 
@@ -52,7 +51,8 @@ export const formatLogDetails = (details: any, action: string) => {
       }
     }
     
-    return 'E-mailadres: Niet beschikbaar';
+    // If no email found, show a more helpful message
+    return 'Uitnodiging geannuleerd';
   }
 
   // Handle other invitation actions (general)
