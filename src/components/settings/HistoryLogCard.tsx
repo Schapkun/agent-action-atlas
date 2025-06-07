@@ -26,29 +26,62 @@ const formatLogDetails = (details: any, action: string) => {
 
   console.log('Formatting log details:', { details, action });
 
-  // Handle invitation actions - show the invited email
-  if (action.toLowerCase().includes('uitnodiging')) {
-    // Check for email in details
-    if (details.email) {
-      return `Uitgenodigd: ${details.email}`;
-    }
-    // Check for invitation_ids array
-    if (details.invitation_ids && Array.isArray(details.invitation_ids)) {
-      return `${details.invitation_ids.length} uitnodiging(en) verzonden`;
-    }
-    // Check for invited_email
+  // Handle user invitation actions
+  if (action.toLowerCase().includes('gebruiker uitgenodigd')) {
     if (details.invited_email) {
-      return `Uitgenodigd: ${details.invited_email}`;
+      return `E-mailadres: ${details.invited_email}`;
     }
-    // Check for user_email in invitation context
+    if (details.email) {
+      return `E-mailadres: ${details.email}`;
+    }
     if (details.user_email) {
-      return `Uitgenodigd: ${details.user_email}`;
+      return `E-mailadres: ${details.user_email}`;
+    }
+    return 'Uitnodiging verzonden';
+  }
+
+  // Handle invitation cancellation actions
+  if (action.toLowerCase().includes('uitnodiging geannuleerd')) {
+    // For single invitation cancellations, try to find the email
+    if (details.invitation_id) {
+      // We might need to extract email from other details if available
+      if (details.email) {
+        return `E-mailadres: ${details.email}`;
+      }
+      if (details.invited_email) {
+        return `E-mailadres: ${details.invited_email}`;
+      }
+      if (details.user_email) {
+        return `E-mailadres: ${details.user_email}`;
+      }
+      return 'Uitnodiging geannuleerd';
+    }
+    // For multiple invitation cancellations
+    if (details.invitation_ids && Array.isArray(details.invitation_ids)) {
+      return `${details.invitation_ids.length} uitnodiging(en) geannuleerd`;
+    }
+    return 'Uitnodiging geannuleerd';
+  }
+
+  // Handle other invitation actions (general)
+  if (action.toLowerCase().includes('uitnodiging')) {
+    if (details.email) {
+      return `E-mailadres: ${details.email}`;
+    }
+    if (details.invited_email) {
+      return `E-mailadres: ${details.invited_email}`;
+    }
+    if (details.user_email) {
+      return `E-mailadres: ${details.user_email}`;
+    }
+    if (details.invitation_ids && Array.isArray(details.invitation_ids)) {
+      return `${details.invitation_ids.length} uitnodiging(en) verwerkt`;
     }
     return 'Uitnodiging verwerkt';
   }
 
-  // Handle user actions - show affected user
-  if (action.toLowerCase().includes('gebruiker')) {
+  // Handle user role changes
+  if (action.toLowerCase().includes('gebruiker uitgenodigd') === false && action.toLowerCase().includes('gebruiker')) {
     if (details.user_email) {
       return `Betreft gebruiker: ${details.user_email}`;
     }
@@ -58,9 +91,9 @@ const formatLogDetails = (details: any, action: string) => {
     if (details.email) {
       return `Betreft gebruiker: ${details.email}`;
     }
-    // Handle role changes
+    // Handle role changes specifically
     if (details.role) {
-      return `Rol gewijzigd naar: gebruiker`;
+      return `Nieuwe rol: gebruiker`;
     }
   }
 
@@ -111,6 +144,9 @@ const formatLogDetails = (details: any, action: string) => {
     if (details.email) {
       return `Profiel bijgewerkt voor: ${details.email}`;
     }
+    if (details.target_user_id) {
+      return 'Profiel bijgewerkt';
+    }
     return 'Profiel bijgewerkt';
   }
 
@@ -120,8 +156,8 @@ const formatLogDetails = (details: any, action: string) => {
     
     // Look for email addresses first (most important for invitations)
     if (details.email) return `E-mail: ${details.email}`;
-    if (details.invited_email) return `Uitgenodigd: ${details.invited_email}`;
-    if (details.user_email) return `Betreft: ${details.user_email}`;
+    if (details.invited_email) return `E-mailadres: ${details.invited_email}`;
+    if (details.user_email) return `E-mailadres: ${details.user_email}`;
     
     // Look for other meaningful fields
     if (details.name) return `Naam: ${details.name}`;
