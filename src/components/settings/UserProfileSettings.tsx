@@ -47,6 +47,20 @@ interface InvitedUser {
   invited_by_name?: string;
 }
 
+interface GroupedInvitation {
+  email: string;
+  role: string;
+  created_at: string;
+  expires_at: string;
+  invited_by_name?: string;
+  organizations: {
+    id: string;
+    name: string;
+    workspace_name?: string;
+  }[];
+  invitation_ids: string[];
+}
+
 interface Organization {
   id: string;
   name: string;
@@ -61,6 +75,7 @@ interface Workspace {
 export const UserProfileSettings = () => {
   const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
   const [invitedUsers, setInvitedUsers] = useState<InvitedUser[]>([]);
+  const [groupedInvitations, setGroupedInvitations] = useState<GroupedInvitation[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,6 +100,40 @@ export const UserProfileSettings = () => {
       fetchWorkspaces();
     }
   }, [user]);
+
+  useEffect(() => {
+    // Group invitations by email address
+    const grouped = invitedUsers.reduce((acc, invitation) => {
+      const existingGroup = acc.find(group => group.email === invitation.email);
+      
+      if (existingGroup) {
+        existingGroup.organizations.push({
+          id: invitation.organization_id,
+          name: invitation.organization_name,
+          workspace_name: invitation.workspace_name
+        });
+        existingGroup.invitation_ids.push(invitation.id);
+      } else {
+        acc.push({
+          email: invitation.email,
+          role: invitation.role,
+          created_at: invitation.created_at,
+          expires_at: invitation.expires_at,
+          invited_by_name: invitation.invited_by_name,
+          organizations: [{
+            id: invitation.organization_id,
+            name: invitation.organization_name,
+            workspace_name: invitation.workspace_name
+          }],
+          invitation_ids: [invitation.id]
+        });
+      }
+      
+      return acc;
+    }, [] as GroupedInvitation[]);
+    
+    setGroupedInvitations(grouped);
+  }, [invitedUsers]);
 
   const toggleUserExpanded = (userId: string) => {
     const newExpanded = new Set(expandedUsers);
@@ -738,12 +787,13 @@ export const UserProfileSettings = () => {
     }
   };
 
-  const deleteInvitation = async (invitationId: string) => {
+  const deleteInvitation = async (invitationIds: string[]) => {
     try {
+      // Delete all invitations for this email address
       const { error } = await supabase
         .from('user_invitations')
         .delete()
-        .eq('id', invitationId);
+        .in('id', invitationIds);
 
       if (error) throw error;
 
@@ -752,7 +802,7 @@ export const UserProfileSettings = () => {
         .insert({
           user_id: user?.id,
           action: 'Uitnodiging geannuleerd',
-          details: { invitation_id: invitationId }
+          details: { invitation_ids: invitationIds }
         });
 
       toast({
@@ -807,14 +857,15 @@ export const UserProfileSettings = () => {
     return <div>Gebruikersprofielen laden...</div>;
   }
 
-  // Combine and sort users (profiles + invitations)
+  // Combine and sort users (profiles + grouped invitations)
   const allUsers = [
     ...userProfiles.map(profile => ({ ...profile, type: 'user' as const })),
-    ...invitedUsers.map(invite => ({ 
+    ...groupedInvitations.map(invite => ({ 
       ...invite, 
       type: 'invited' as const,
       full_name: invite.email,
-      id: `invited-${invite.id}`
+      id: `invited-${invite.email}`,
+      organization_ids: invite.organizations.map(org => org.id)
     }))
   ].sort((a, b) => {
     // Sort by type first (users before invited), then by name/email
@@ -1052,13 +1103,8 @@ export const UserProfileSettings = () => {
                     {profile.type === 'invited' && (
                       <div className="mt-2 space-y-1">
                         <p className="text-sm">
-                          <span className="font-medium">Organisatie:</span> {profile.organization_name}
+                          <span className="font-medium">Organisaties:</span> {profile.organizations.map(org => org.name).join(', ')}
                         </p>
-                        {profile.workspace_name && (
-                          <p className="text-sm">
-                            <span className="font-medium">Werkruimte:</span> {profile.workspace_name}
-                          </p>
-                        )}
                         <p className="text-sm">
                           <span className="font-medium">Rol:</span> {profile.role}
                         </p>
@@ -1088,7 +1134,7 @@ export const UserProfileSettings = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => deleteInvitation(profile.id.replace('invited-', ''))}
+                        onClick={() => deleteInvitation(profile.invitation_ids)}
                         className="text-destructive hover:text-destructive"
                       >
                         <X className="h-4 w-4" />
