@@ -1,69 +1,45 @@
 
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { Header } from '@/components/dashboard/Header';
-import { ActionOverview } from '@/components/dashboard/ActionOverview';
-import { DocumentManager } from '@/components/dashboard/DocumentManager';
-import { DashboardStats } from '@/components/dashboard/DashboardStats';
-import { ActiveDossiers } from '@/components/dashboard/ActiveDossiers';
-import { ClosedDossiers } from '@/components/dashboard/ClosedDossiers';
-import { InvoiceManager } from '@/components/dashboard/InvoiceManager';
-import { PhoneCallManager } from '@/components/dashboard/PhoneCallManager';
-import { EmailManager } from '@/components/dashboard/EmailManager';
-import { ContactManager } from '@/components/dashboard/ContactManager';
-import { PendingTasks } from '@/components/dashboard/PendingTasks';
-import { SettingsLayout } from '@/components/settings/SettingsLayout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
-export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
+interface IndexProps {
+  children: React.ReactNode;
+}
 
-const Index = () => {
-  const [currentView, setCurrentView] = useState<ViewType>('overview');
+const Index = ({ children }: IndexProps) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const location = useLocation();
 
   // Calculate pending tasks count - currently 0 since we removed all mock data
   const pendingTasksCount = 0;
 
-  const renderContent = () => {
-    switch (currentView) {
-      case 'overview':
-        return (
-          <div className="space-y-6">
-            <DashboardStats />
-            <ActionOverview limit={10} showFilters={false} />
-          </div>
-        );
-      case 'pending-tasks':
-        return <PendingTasks />;
-      case 'actions':
-        return <ActionOverview />;
-      case 'documents':
-        return <DocumentManager />;
-      case 'active-dossiers':
-        return <ActiveDossiers />;
-      case 'closed-dossiers':
-        return <ClosedDossiers />;
-      case 'invoices':
-        return <InvoiceManager />;
-      case 'phone-calls':
-        return <PhoneCallManager />;
-      case 'emails':
-        return <EmailManager />;
-      case 'contacts':
-        return <ContactManager />;
-      case 'settings':
-        return <SettingsLayout />;
-      default:
-        return null;
-    }
+  // Determine current view from URL
+  const getCurrentView = () => {
+    const path = location.pathname;
+    if (path === '/') return 'overview';
+    if (path === '/pending-tasks') return 'pending-tasks';
+    if (path === '/actions') return 'actions';
+    if (path === '/documents') return 'documents';
+    if (path === '/active-dossiers') return 'active-dossiers';
+    if (path === '/closed-dossiers') return 'closed-dossiers';
+    if (path === '/invoices') return 'invoices';
+    if (path === '/phone-calls') return 'phone-calls';
+    if (path === '/emails') return 'emails';
+    if (path === '/contacts') return 'contacts';
+    if (path === '/settings') return 'settings';
+    return 'overview';
   };
+
+  const currentView = getCurrentView();
 
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background flex w-full">
         <Sidebar 
           currentView={currentView} 
-          onViewChange={setCurrentView}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
           pendingTasksCount={pendingTasksCount}
@@ -74,7 +50,7 @@ const Index = () => {
             onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
           />
           <main className="flex-1 overflow-auto p-6">
-            {renderContent()}
+            {children}
           </main>
         </div>
       </div>

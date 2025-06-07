@@ -5,7 +5,7 @@ import { Menu, Bell, LogOut, Building2, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useToast } from '@/hooks/use-toast';
-import type { ViewType } from '@/pages/Index';
+import type { ViewType } from '@/components/dashboard/Sidebar';
 
 interface HeaderProps {
   currentView: ViewType;

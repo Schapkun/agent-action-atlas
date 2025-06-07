@@ -2,6 +2,7 @@
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Activity, 
@@ -17,11 +18,11 @@ import {
   Users,
   Clock
 } from 'lucide-react';
-import type { ViewType } from '@/pages/Index';
+
+export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
 
 interface SidebarProps {
   currentView: ViewType;
-  onViewChange: (view: ViewType) => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
   pendingTasksCount?: number;
@@ -29,23 +30,24 @@ interface SidebarProps {
 
 export const Sidebar = ({ 
   currentView, 
-  onViewChange, 
   collapsed, 
   onToggleCollapse,
   pendingTasksCount = 0 
 }: SidebarProps) => {
+  const navigate = useNavigate();
+
   const menuItems = [
-    { id: 'overview' as ViewType, label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'pending-tasks' as ViewType, label: 'Openstaande Taken', icon: Clock, badge: pendingTasksCount },
-    { id: 'actions' as ViewType, label: 'AI Acties', icon: Activity },
-    { id: 'documents' as ViewType, label: 'Documenten', icon: FolderOpen },
-    { id: 'active-dossiers' as ViewType, label: 'Actieve Dossiers', icon: FileText },
-    { id: 'closed-dossiers' as ViewType, label: 'Gesloten Dossiers', icon: FolderX },
-    { id: 'invoices' as ViewType, label: 'Facturen', icon: CreditCard },
-    { id: 'phone-calls' as ViewType, label: 'Telefoongesprekken', icon: Phone },
-    { id: 'emails' as ViewType, label: 'E-mails', icon: Mail },
-    { id: 'contacts' as ViewType, label: 'Contacten', icon: Users },
-    { id: 'settings' as ViewType, label: 'Instellingen', icon: Settings },
+    { id: 'overview' as ViewType, label: 'Dashboard', icon: LayoutDashboard, path: '/' },
+    { id: 'pending-tasks' as ViewType, label: 'Openstaande Taken', icon: Clock, badge: pendingTasksCount, path: '/pending-tasks' },
+    { id: 'actions' as ViewType, label: 'AI Acties', icon: Activity, path: '/actions' },
+    { id: 'documents' as ViewType, label: 'Documenten', icon: FolderOpen, path: '/documents' },
+    { id: 'active-dossiers' as ViewType, label: 'Actieve Dossiers', icon: FileText, path: '/active-dossiers' },
+    { id: 'closed-dossiers' as ViewType, label: 'Gesloten Dossiers', icon: FolderX, path: '/closed-dossiers' },
+    { id: 'invoices' as ViewType, label: 'Facturen', icon: CreditCard, path: '/invoices' },
+    { id: 'phone-calls' as ViewType, label: 'Telefoongesprekken', icon: Phone, path: '/phone-calls' },
+    { id: 'emails' as ViewType, label: 'E-mails', icon: Mail, path: '/emails' },
+    { id: 'contacts' as ViewType, label: 'Contacten', icon: Users, path: '/contacts' },
+    { id: 'settings' as ViewType, label: 'Instellingen', icon: Settings, path: '/settings' },
   ];
 
   return (
@@ -87,7 +89,7 @@ export const Sidebar = ({
                   "w-full justify-start relative",
                   collapsed && "px-3"
                 )}
-                onClick={() => onViewChange(item.id)}
+                onClick={() => navigate(item.path)}
               >
                 <item.icon className="h-4 w-4" />
                 {!collapsed && (
