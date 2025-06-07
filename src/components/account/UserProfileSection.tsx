@@ -30,7 +30,7 @@ export const UserProfileSection = ({
   showSaveButton
 }: UserProfileSectionProps) => {
   return (
-    <div className="bg-muted/30 rounded-lg p-6 space-y-6">
+    <div className="bg-muted rounded-lg p-6 space-y-6">
       <div className="flex items-center gap-2">
         <User className="h-5 w-5" />
         <h3 className="text-lg font-medium">Persoonlijke Informatie</h3>
