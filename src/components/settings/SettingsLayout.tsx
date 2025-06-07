@@ -19,6 +19,19 @@ export const SettingsLayout = () => {
       if (!user?.id) return;
 
       try {
+        // Check if user is the account owner (first user in the system)
+        const { data: allUsers } = await supabase
+          .from('user_profiles')
+          .select('id, created_at')
+          .order('created_at', { ascending: true })
+          .limit(1);
+
+        if (allUsers && allUsers.length > 0 && allUsers[0].id === user.id) {
+          console.log('User is account owner');
+          setUserRole('eigenaar');
+          return;
+        }
+
         // Get user's role from their organization membership
         const { data: memberships } = await supabase
           .from('organization_members')
@@ -27,13 +40,15 @@ export const SettingsLayout = () => {
           .limit(1);
 
         if (memberships && memberships.length > 0) {
+          console.log('User role from organization:', memberships[0].role);
           setUserRole(memberships[0].role);
         } else {
-          setUserRole('lid'); // Default role if no membership found
+          console.log('No organization membership found, defaulting to lid');
+          setUserRole('lid');
         }
       } catch (error) {
         console.error('Error fetching user role:', error);
-        setUserRole('lid'); // Default to lid on error
+        setUserRole('lid');
       }
     };
 
