@@ -88,7 +88,7 @@ export const SettingsLayout = () => {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="organizations">Org & Werkruimtes</TabsTrigger>
           <TabsTrigger value="users">Gebruikers</TabsTrigger>
-          <TabsTrigger value="documents">Documenten</TabsTrigger>
+          <TabsTrigger value="documents">Document Layouts</TabsTrigger>
           <TabsTrigger value="history">Geschiedenis</TabsTrigger>
         </TabsList>
 
