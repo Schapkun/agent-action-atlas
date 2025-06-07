@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -471,19 +470,19 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center space-x-4">
-        <Avatar className="h-20 w-20">
+    <div className="space-y-4">
+      <div className="flex items-center space-x-3">
+        <Avatar className="h-12 w-12">
           <AvatarImage src={profile.avatar_url} />
-          <AvatarFallback className="text-lg">
+          <AvatarFallback className="text-sm">
             {getInitials(profile.full_name || profile.email || 'U')}
           </AvatarFallback>
         </Avatar>
         <div>
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-lg font-semibold">
             {isViewingOwnProfile ? 'Mijn Account' : `Account van ${profile.full_name || profile.email}`}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {isViewingOwnProfile 
               ? 'Beheer je persoonlijke gegevens en voorkeuren'
               : 'Bekijk en beheer gebruikersgegevens'
@@ -494,33 +493,34 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
 
       {/* Profile Information */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <User className="h-4 w-4" />
             Persoonlijke Informatie
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="full-name">Volledige Naam</Label>
+              <Label htmlFor="full-name" className="text-sm">Volledige Naam</Label>
               <Input
                 id="full-name"
                 value={profile.full_name || ''}
                 onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
                 placeholder="Voer volledige naam in"
                 disabled={!isViewingOwnProfile}
+                className="text-sm"
               />
             </div>
             <div>
-              <Label htmlFor="email">E-mailadres</Label>
+              <Label htmlFor="email" className="text-sm">E-mailadres</Label>
               <Input
                 id="email"
                 type="email"
                 value={profile.email || ''}
                 placeholder="Voer e-mailadres in"
                 disabled={true}
-                className="bg-muted/50 cursor-not-allowed"
+                className="bg-muted/50 cursor-not-allowed text-sm"
               />
             </div>
           </div>
@@ -528,12 +528,12 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
           {/* Global Role Management - show for account owner when there are organizations */}
           {user?.email === 'info@schapkun.com' && organizations.length > 0 && (
             <div>
-              <Label htmlFor="global-role">Globale Rol (voor alle organisaties en werkruimtes)</Label>
+              <Label htmlFor="global-role" className="text-sm">Globale Rol (voor alle organisaties en werkruimtes)</Label>
               <Select
                 value={globalRole}
                 onValueChange={(newRole) => updateGlobalRole(newRole as UserRole)}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -546,41 +546,43 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
           )}
 
           {isViewingOwnProfile && (
-            <Button onClick={updateProfile} disabled={saving}>
-              <Save className="h-4 w-4 mr-2" />
-              {saving ? 'Opslaan...' : 'Profiel Opslaan'}
-            </Button>
+            <div className="flex justify-end">
+              <Button onClick={updateProfile} disabled={saving} size="sm">
+                <Save className="h-4 w-4 mr-2" />
+                {saving ? 'Opslaan...' : 'Profiel Opslaan'}
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
 
       {/* Organizations & Workspaces */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Building2 className="h-4 w-4" />
             {isViewingOwnProfile ? 'Mijn Organisaties & Werkruimtes' : 'Organisaties & Werkruimtes'}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {organizations.length === 0 ? (
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               {isViewingOwnProfile 
                 ? 'Je bent nog geen lid van een organisatie'
                 : 'Deze gebruiker is nog geen lid van een organisatie'
               }
             </p>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {organizations.map((org) => (
-                <div key={org.id} className="p-4 bg-muted/30 rounded-lg border-l-4 border-l-primary/20">
+                <div key={org.id} className="p-3 bg-muted/30 rounded-lg border-l-4 border-l-primary/20">
                   {/* Organization Header */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <Building2 className="h-5 w-5 text-muted-foreground" />
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <h3 className="font-semibold">{org.name}</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="font-medium text-sm">{org.name}</h3>
+                        <p className="text-xs text-muted-foreground">
                           Werkruimtes ({org.workspaces.length})
                         </p>
                       </div>
@@ -589,30 +591,30 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                       variant="ghost"
                       size="sm"
                       onClick={() => removeFromOrganization(org.id, org.name)}
-                      className="text-destructive hover:text-destructive"
+                      className="text-destructive hover:text-destructive h-8 w-8 p-0"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
 
                   {/* Workspaces under this organization */}
                   {org.workspaces.length > 0 && (
-                    <div className="ml-6 space-y-2">
+                    <div className="ml-5 space-y-2">
                       {org.workspaces.map((workspace) => (
-                        <div key={workspace.id} className="flex items-center justify-between p-3 bg-muted/15 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <Briefcase className="h-4 w-4 text-muted-foreground" />
+                        <div key={workspace.id} className="flex items-center justify-between p-2 bg-muted/15 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Briefcase className="h-3 w-3 text-muted-foreground" />
                             <div>
-                              <p className="font-medium">{workspace.name}</p>
+                              <p className="font-medium text-sm">{workspace.name}</p>
                             </div>
                           </div>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => removeFromWorkspace(workspace.id, workspace.name)}
-                            className="text-destructive hover:text-destructive"
+                            className="text-destructive hover:text-destructive h-7 w-7 p-0"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
                       ))}
