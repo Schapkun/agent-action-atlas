@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,10 +53,11 @@ export const UserProfileSettings = () => {
       console.log('Is account owner:', isAccountOwner);
       
       if (isAccountOwner) {
-        // If account owner, show ALL users regardless of organization membership
+        // If account owner, show ALL users in the entire system
+        console.log('Fetching ALL users for account owner...');
         const { data: usersData, error: usersError } = await supabase
           .from('user_profiles')
-          .select('id, email, full_name, created_at')
+          .select('*')
           .order('created_at', { ascending: false });
 
         if (usersError) {
@@ -84,9 +84,11 @@ export const UserProfileSettings = () => {
           })
         );
 
+        console.log('Users with organizations:', usersWithOrgs);
         setUsers(usersWithOrgs);
       } else {
         // For regular users, show only users in their organizations
+        console.log('Fetching users for regular user...');
         const { data: membershipData, error: membershipError } = await supabase
           .from('organization_members')
           .select('organization_id')
