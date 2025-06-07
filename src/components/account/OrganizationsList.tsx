@@ -87,7 +87,7 @@ export const OrganizationsList = ({
                           variant="ghost"
                           size="sm"
                           onClick={() => onRemoveFromWorkspace(workspace.id, workspace.name)}
-                          className="text-destructive hover:text-destructive w-8 h-8 p-0"
+                          className="text-destructive hover:text-destructive h-8 w-8 p-0"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

@@ -24,7 +24,7 @@ export const UserRoleManagement = ({
 }: UserRoleManagementProps) => {
   return (
     <div className="flex gap-4 items-end">
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <Label htmlFor="global-role" className="text-sm font-medium">Globale Rol</Label>
         <Select
           value={globalRole}
