@@ -1,9 +1,9 @@
 
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Menu, Bell, LogOut } from 'lucide-react';
+import { Menu, Bell, LogOut, Building2, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { useToast } from '@/hooks/use-toast';
 import type { ViewType } from '@/pages/Index';
 
@@ -13,7 +13,16 @@ interface HeaderProps {
 }
 
 export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
-  const { user, signOut } = useAuth();
+  const { signOut } = useAuth();
+  const { 
+    organizations, 
+    workspaces, 
+    selectedOrganization, 
+    selectedWorkspace, 
+    setSelectedOrganization, 
+    setSelectedWorkspace,
+    isLoadingOrganizations 
+  } = useOrganization();
   const { toast } = useToast();
 
   const handleLogout = async () => {
@@ -61,14 +70,49 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
     }
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+  const handleSelectionChange = (value: string) => {
+    if (value.startsWith('org:')) {
+      const orgId = value.substring(4);
+      const organization = organizations.find(org => org.id === orgId);
+      if (organization) {
+        setSelectedOrganization(organization);
+        setSelectedWorkspace(null);
+      }
+    } else if (value.startsWith('workspace:')) {
+      const workspaceId = value.substring(10);
+      const workspace = workspaces.find(w => w.id === workspaceId);
+      if (workspace) {
+        const organization = organizations.find(org => org.id === workspace.organization_id);
+        setSelectedOrganization(organization || null);
+        setSelectedWorkspace(workspace);
+      }
+    }
   };
+
+  const getCurrentSelectionValue = () => {
+    if (selectedWorkspace) {
+      return `workspace:${selectedWorkspace.id}`;
+    } else if (selectedOrganization) {
+      return `org:${selectedOrganization.id}`;
+    }
+    return '';
+  };
+
+  const getCurrentSelectionLabel = () => {
+    if (selectedWorkspace) {
+      const org = organizations.find(o => o.id === selectedWorkspace.organization_id);
+      return `${org?.name} > ${selectedWorkspace.name}`;
+    } else if (selectedOrganization) {
+      return selectedOrganization.name;
+    }
+    return 'Selecteer organisatie/werkruimte';
+  };
+
+  // Group workspaces by organization for better display
+  const groupedOptions = organizations.map(org => ({
+    organization: org,
+    workspaces: workspaces.filter(w => w.organization_id === org.id)
+  }));
 
   return (
     <header className="bg-card border-b border-border px-6 py-4">
@@ -89,14 +133,36 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
 
         <div className="flex items-center space-x-4">
           {/* Organisatie/Werkruimte Selector */}
-          <Select>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Selecteer organisatie" />
+          <Select
+            value={getCurrentSelectionValue()}
+            onValueChange={handleSelectionChange}
+            disabled={isLoadingOrganizations}
+          >
+            <SelectTrigger className="w-64">
+              <SelectValue>
+                {isLoadingOrganizations ? 'Laden...' : getCurrentSelectionLabel()}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="org1">Michael's Organisatie 123</SelectItem>
-              <SelectItem value="workspace1">Werkruimte 1</SelectItem>
-              <SelectItem value="workspace2">Werkruimte 2</SelectItem>
+              {groupedOptions.map((group) => (
+                <div key={group.organization.id}>
+                  <SelectItem value={`org:${group.organization.id}`}>
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4" />
+                      <span className="font-medium">{group.organization.name}</span>
+                      <span className="text-xs text-muted-foreground">(hele organisatie)</span>
+                    </div>
+                  </SelectItem>
+                  {group.workspaces.map((workspace) => (
+                    <SelectItem key={workspace.id} value={`workspace:${workspace.id}`}>
+                      <div className="flex items-center gap-2 ml-4">
+                        <Users className="h-3 w-3" />
+                        <span>{workspace.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </div>
+              ))}
             </SelectContent>
           </Select>
 
@@ -104,22 +170,9 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
             <Bell className="h-4 w-4" />
           </Button>
           
-          {user && (
-            <div className="flex items-center space-x-3">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user.user_metadata?.avatar_url} />
-                <AvatarFallback>
-                  {getInitials(user.user_metadata?.full_name || user.email || 'U')}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-sm font-medium text-foreground hidden md:block">
-                {user.user_metadata?.full_name || user.email}
-              </span>
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+          <Button variant="ghost" size="sm" onClick={handleLogout}>
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </header>
