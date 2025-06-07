@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -84,7 +85,7 @@ export const SettingsLayout = () => {
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl">
-      <div className="mb-6">
+      <div className="mb-4">
         <h1 className="text-2xl font-bold">Instellingen</h1>
         <p className="text-muted-foreground">Beheer je organisaties, werkruimtes en gebruikersprofielen</p>
       </div>

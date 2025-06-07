@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -274,7 +275,7 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
   }
 
   return (
-    <div className="bg-muted/40 rounded-lg p-6">
+    <div>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Building2 className="h-5 w-5" />
