@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Plus } from 'lucide-react';
+import { Edit, Trash2, Plus, Settings } from 'lucide-react';
 import { WorkspacesList } from './WorkspacesList';
 import { CreateWorkspaceForm } from './CreateWorkspaceForm';
-import { EditOrgWorkspaceDialog } from './EditOrgWorkspaceDialog';
+import { ManageOrgWorkspaceDialog } from './ManageOrgWorkspaceDialog';
 import type { Organization } from '../types/organization';
 
 interface OrganizationCardProps {
@@ -29,10 +29,7 @@ export const OrganizationCard = ({
   onRefresh
 }: OrganizationCardProps) => {
   const [showCreateWorkspaceForm, setShowCreateWorkspaceForm] = useState(false);
-  const [editingItem, setEditingItem] = useState<{
-    type: 'organization' | 'workspace';
-    item: { id: string; name: string; organization_id?: string };
-  } | null>(null);
+  const [showManageDialog, setShowManageDialog] = useState(false);
 
   const handleCreateWorkspace = async (name: string) => {
     await onCreateWorkspace(organization.id, name);
@@ -44,29 +41,11 @@ export const OrganizationCard = ({
     await onRefresh();
   };
 
-  const handleEditOrganization = () => {
-    console.log('OrganizationCard - handleEditOrganization clicked for:', organization.name);
-    setEditingItem({
-      type: 'organization',
-      item: { id: organization.id, name: organization.name }
-    });
-    console.log('OrganizationCard - editingItem set to organization:', { id: organization.id, name: organization.name });
-  };
-
   const handleEditWorkspace = (workspace: {id: string; name: string; organization_id: string}) => {
     console.log('OrganizationCard - handleEditWorkspace clicked for:', workspace.name);
-    setEditingItem({
-      type: 'workspace',
-      item: {
-        id: workspace.id,
-        name: workspace.name,
-        organization_id: workspace.organization_id
-      }
-    });
-    console.log('OrganizationCard - editingItem set to workspace:', workspace);
+    // Open the manage dialog instead of individual edit
+    setShowManageDialog(true);
   };
-
-  console.log('OrganizationCard - Current editingItem state:', editingItem);
 
   return (
     <div className="bg-background rounded-lg border border-border/50">
@@ -93,11 +72,11 @@ export const OrganizationCard = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleEditOrganization}
+              onClick={() => setShowManageDialog(true)}
               className="h-8 w-8 p-0"
-              title="Bewerken"
+              title="Alles Beheren"
             >
-              <Edit className="h-4 w-4" />
+              <Settings className="h-4 w-4" />
             </Button>
           </div>
         )}
@@ -137,15 +116,11 @@ export const OrganizationCard = ({
         </div>
       )}
 
-      {/* Single Edit Dialog for both Organization and Workspace */}
-      <EditOrgWorkspaceDialog
-        isOpen={!!editingItem}
-        onClose={() => {
-          console.log('OrganizationCard - Closing EditOrgWorkspaceDialog');
-          setEditingItem(null);
-        }}
-        type={editingItem?.type || 'organization'}
-        item={editingItem?.item || null}
+      {/* All-in-One Management Dialog */}
+      <ManageOrgWorkspaceDialog
+        isOpen={showManageDialog}
+        onClose={() => setShowManageDialog(false)}
+        organization={organization}
         onUpdate={handleRefreshData}
       />
     </div>

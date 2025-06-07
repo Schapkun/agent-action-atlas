@@ -1,0 +1,571 @@
+
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { Edit, Trash2, Plus, Users } from 'lucide-react';
+
+interface User {
+  id: string;
+  email: string;
+  full_name: string;
+  hasAccess?: boolean;
+}
+
+interface Workspace {
+  id: string;
+  name: string;
+  organization_id: string;
+  users?: User[];
+}
+
+interface Organization {
+  id: string;
+  name: string;
+  workspaces: Workspace[];
+  users?: User[];
+}
+
+interface ManageOrgWorkspaceDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  organization: Organization | null;
+  onUpdate: () => void;
+}
+
+export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> = ({
+  isOpen,
+  onClose,
+  organization,
+  onUpdate
+}) => {
+  const [orgName, setOrgName] = useState('');
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [orgUsers, setOrgUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [editingWorkspace, setEditingWorkspace] = useState<string | null>(null);
+  const [newWorkspaceName, setNewWorkspaceName] = useState('');
+  const [showAddWorkspace, setShowAddWorkspace] = useState(false);
+  const { user: currentUser } = useAuth();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (organization) {
+      setOrgName(organization.name);
+      setWorkspaces(organization.workspaces || []);
+      fetchUsersAndAccess();
+    }
+  }, [organization]);
+
+  const fetchUsersAndAccess = async () => {
+    if (!organization) return;
+
+    try {
+      setLoading(true);
+      
+      // Get all users
+      const { data: users, error: usersError } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .order('email');
+
+      if (usersError) throw usersError;
+
+      // Get organization members
+      const { data: orgMembers, error: orgMembersError } = await supabase
+        .from('organization_members')
+        .select('user_id')
+        .eq('organization_id', organization.id);
+
+      if (orgMembersError) throw orgMembersError;
+
+      const orgMemberIds = orgMembers?.map(m => m.user_id) || [];
+      
+      // Set organization users with access info
+      const usersWithOrgAccess = users?.map(user => ({
+        ...user,
+        hasAccess: orgMemberIds.includes(user.id)
+      })) || [];
+
+      setAllUsers(users || []);
+      setOrgUsers(usersWithOrgAccess);
+
+      // Get workspace members for each workspace
+      const workspacesWithUsers = await Promise.all(
+        workspaces.map(async (workspace) => {
+          const { data: wsMembers } = await supabase
+            .from('workspace_members')
+            .select('user_id')
+            .eq('workspace_id', workspace.id);
+
+          const wsMemberIds = wsMembers?.map(m => m.user_id) || [];
+          const workspaceUsers = users?.map(user => ({
+            ...user,
+            hasAccess: wsMemberIds.includes(user.id)
+          })) || [];
+
+          return {
+            ...workspace,
+            users: workspaceUsers
+          };
+        })
+      );
+
+      setWorkspaces(workspacesWithUsers);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast({
+        title: "Error",
+        description: "Kon gegevens niet ophalen",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOrgUserToggle = (userId: string, hasAccess: boolean) => {
+    setOrgUsers(prev => prev.map(user => 
+      user.id === userId ? { ...user, hasAccess } : user
+    ));
+  };
+
+  const handleWorkspaceUserToggle = (workspaceId: string, userId: string, hasAccess: boolean) => {
+    setWorkspaces(prev => prev.map(workspace => {
+      if (workspace.id === workspaceId) {
+        return {
+          ...workspace,
+          users: workspace.users?.map(user =>
+            user.id === userId ? { ...user, hasAccess } : user
+          ) || []
+        };
+      }
+      return workspace;
+    }));
+  };
+
+  const handleUpdateOrganization = async () => {
+    if (!organization || !orgName.trim()) return;
+
+    try {
+      setLoading(true);
+
+      // Update organization name
+      const { error: updateError } = await supabase
+        .from('organizations')
+        .update({
+          name: orgName.trim(),
+          slug: orgName.toLowerCase().replace(/\s+/g, '-')
+        })
+        .eq('id', organization.id);
+
+      if (updateError) throw updateError;
+
+      // Handle organization membership changes
+      const usersWithAccess = orgUsers.filter(u => u.hasAccess);
+      const usersWithoutAccess = orgUsers.filter(u => !u.hasAccess);
+
+      // Remove users without access
+      for (const user of usersWithoutAccess) {
+        await supabase
+          .from('organization_members')
+          .delete()
+          .eq('organization_id', organization.id)
+          .eq('user_id', user.id);
+      }
+
+      // Add users with access
+      for (const user of usersWithAccess) {
+        const { error } = await supabase
+          .from('organization_members')
+          .upsert({
+            organization_id: organization.id,
+            user_id: user.id,
+            role: 'member'
+          }, {
+            onConflict: 'organization_id,user_id'
+          });
+
+        if (error) {
+          console.error('Error managing organization member:', error);
+        }
+      }
+
+      toast({
+        title: "Succes",
+        description: "Organisatie succesvol bijgewerkt",
+      });
+    } catch (error) {
+      console.error('Error updating organization:', error);
+      toast({
+        title: "Error",
+        description: "Kon organisatie niet bijwerken",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateWorkspace = async (workspaceId: string, name: string) => {
+    try {
+      const { error } = await supabase
+        .from('workspaces')
+        .update({
+          name: name.trim(),
+          slug: name.toLowerCase().replace(/\s+/g, '-')
+        })
+        .eq('id', workspaceId);
+
+      if (error) throw error;
+
+      // Handle workspace membership
+      const workspace = workspaces.find(w => w.id === workspaceId);
+      if (workspace?.users) {
+        const usersWithAccess = workspace.users.filter(u => u.hasAccess);
+        const usersWithoutAccess = workspace.users.filter(u => !u.hasAccess);
+
+        // Remove users without access
+        for (const user of usersWithoutAccess) {
+          await supabase
+            .from('workspace_members')
+            .delete()
+            .eq('workspace_id', workspaceId)
+            .eq('user_id', user.id);
+        }
+
+        // Add users with access
+        for (const user of usersWithAccess) {
+          // Ensure they're in the organization first
+          await supabase
+            .from('organization_members')
+            .upsert({
+              organization_id: organization!.id,
+              user_id: user.id,
+              role: 'member'
+            }, {
+              onConflict: 'organization_id,user_id'
+            });
+
+          // Then add to workspace
+          const { error } = await supabase
+            .from('workspace_members')
+            .upsert({
+              workspace_id: workspaceId,
+              user_id: user.id,
+              role: 'member'
+            }, {
+              onConflict: 'workspace_id,user_id'
+            });
+
+          if (error) {
+            console.error('Error managing workspace member:', error);
+          }
+        }
+      }
+
+      setWorkspaces(prev => prev.map(w => 
+        w.id === workspaceId ? { ...w, name: name.trim() } : w
+      ));
+      setEditingWorkspace(null);
+
+      toast({
+        title: "Succes",
+        description: "Werkruimte succesvol bijgewerkt",
+      });
+    } catch (error) {
+      console.error('Error updating workspace:', error);
+      toast({
+        title: "Error",
+        description: "Kon werkruimte niet bijwerken",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteWorkspace = async (workspaceId: string, workspaceName: string) => {
+    if (!confirm(`Weet je zeker dat je werkruimte "${workspaceName}" wilt verwijderen?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('workspaces')
+        .delete()
+        .eq('id', workspaceId);
+
+      if (error) throw error;
+
+      setWorkspaces(prev => prev.filter(w => w.id !== workspaceId));
+
+      toast({
+        title: "Succes",
+        description: `Werkruimte "${workspaceName}" verwijderd`,
+      });
+    } catch (error) {
+      console.error('Error deleting workspace:', error);
+      toast({
+        title: "Error",
+        description: "Kon werkruimte niet verwijderen",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddWorkspace = async () => {
+    if (!newWorkspaceName.trim() || !organization) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('workspaces')
+        .insert({
+          name: newWorkspaceName.trim(),
+          slug: newWorkspaceName.toLowerCase().replace(/\s+/g, '-'),
+          organization_id: organization.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newWorkspace = {
+        ...data,
+        users: allUsers.map(user => ({ ...user, hasAccess: false }))
+      };
+
+      setWorkspaces(prev => [...prev, newWorkspace]);
+      setNewWorkspaceName('');
+      setShowAddWorkspace(false);
+
+      toast({
+        title: "Succes",
+        description: "Werkruimte succesvol toegevoegd",
+      });
+    } catch (error) {
+      console.error('Error adding workspace:', error);
+      toast({
+        title: "Error",
+        description: "Kon werkruimte niet toevoegen",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveAll = async () => {
+    await handleUpdateOrganization();
+    
+    // Update all workspaces
+    for (const workspace of workspaces) {
+      if (workspace.users) {
+        await handleUpdateWorkspace(workspace.id, workspace.name);
+      }
+    }
+
+    onUpdate();
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-xl">
+            Organisatie & Werkruimtes Beheren
+          </DialogTitle>
+        </DialogHeader>
+        
+        <Tabs defaultValue="organization" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="organization">Organisatie</TabsTrigger>
+            <TabsTrigger value="workspaces">Werkruimtes</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="organization" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Organisatie Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="orgName">Organisatie Naam</Label>
+                  <Input
+                    id="orgName"
+                    value={orgName}
+                    onChange={(e) => setOrgName(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium">Organisatie Gebruikers</Label>
+                  <div className="max-h-48 overflow-y-auto border rounded-md p-2 mt-1 space-y-2">
+                    {loading ? (
+                      <div className="text-sm text-muted-foreground">Laden...</div>
+                    ) : (
+                      orgUsers.map((user) => (
+                        <div key={user.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`org-${user.id}`}
+                            checked={user.hasAccess}
+                            onCheckedChange={(checked) => 
+                              handleOrgUserToggle(user.id, checked as boolean)
+                            }
+                          />
+                          <label 
+                            htmlFor={`org-${user.id}`}
+                            className="text-sm cursor-pointer flex-1"
+                          >
+                            {user.full_name || user.email}
+                            {user.email !== user.full_name && (
+                              <span className="text-muted-foreground ml-2">({user.email})</span>
+                            )}
+                          </label>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="workspaces" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold">Werkruimtes</h3>
+              {!showAddWorkspace && (
+                <Button onClick={() => setShowAddWorkspace(true)} size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Werkruimte Toevoegen
+                </Button>
+              )}
+            </div>
+
+            {showAddWorkspace && (
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex space-x-2">
+                    <Input
+                      placeholder="Werkruimte naam"
+                      value={newWorkspaceName}
+                      onChange={(e) => setNewWorkspaceName(e.target.value)}
+                    />
+                    <Button onClick={handleAddWorkspace} size="sm">
+                      Toevoegen
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowAddWorkspace(false)}
+                      size="sm"
+                    >
+                      Annuleren
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="space-y-3">
+              {workspaces.map((workspace) => (
+                <Card key={workspace.id}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      {editingWorkspace === workspace.id ? (
+                        <div className="flex space-x-2 flex-1">
+                          <Input
+                            value={workspace.name}
+                            onChange={(e) => setWorkspaces(prev => 
+                              prev.map(w => w.id === workspace.id ? {...w, name: e.target.value} : w)
+                            )}
+                            className="flex-1"
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => handleUpdateWorkspace(workspace.id, workspace.name)}
+                          >
+                            Opslaan
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingWorkspace(null)}
+                          >
+                            Annuleren
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <CardTitle className="text-base">{workspace.name}</CardTitle>
+                          <div className="flex space-x-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditingWorkspace(workspace.id)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteWorkspace(workspace.id, workspace.name)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium flex items-center">
+                        <Users className="h-4 w-4 mr-1" />
+                        Werkruimte Gebruikers
+                      </Label>
+                      <div className="max-h-32 overflow-y-auto border rounded-md p-2 space-y-1">
+                        {workspace.users?.map((user) => (
+                          <div key={user.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`ws-${workspace.id}-${user.id}`}
+                              checked={user.hasAccess}
+                              onCheckedChange={(checked) => 
+                                handleWorkspaceUserToggle(workspace.id, user.id, checked as boolean)
+                              }
+                            />
+                            <label 
+                              htmlFor={`ws-${workspace.id}-${user.id}`}
+                              className="text-xs cursor-pointer flex-1"
+                            >
+                              {user.full_name || user.email}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        <div className="flex justify-end space-x-2 pt-4 border-t">
+          <Button variant="outline" onClick={onClose}>
+            Annuleren
+          </Button>
+          <Button onClick={handleSaveAll} disabled={loading}>
+            {loading ? 'Opslaan...' : 'Alles Opslaan'}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
