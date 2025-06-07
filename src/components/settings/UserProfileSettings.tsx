@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -193,11 +194,13 @@ export const UserProfileSettings = () => {
     }
 
     try {
-      console.log('Fetching user profiles');
+      console.log('Fetching user profiles for user:', user.email);
 
       const isAccountOwner = user.email === 'info@schapkun.com';
 
       if (isAccountOwner) {
+        console.log('Account owner detected - fetching ALL users');
+        
         // Account owner sees ALL users and their memberships
         const { data: profilesData, error: profilesError } = await supabase
           .from('user_profiles')
@@ -207,6 +210,14 @@ export const UserProfileSettings = () => {
         if (profilesError) {
           console.error('Profiles error:', profilesError);
           throw profilesError;
+        }
+
+        console.log('Found user profiles:', profilesData?.length || 0);
+
+        if (!profilesData || profilesData.length === 0) {
+          setUserProfiles([]);
+          setLoading(false);
+          return;
         }
 
         // Get all workspace memberships for all users
@@ -232,8 +243,10 @@ export const UserProfileSettings = () => {
           throw workspaceError;
         }
 
+        console.log('Found workspace memberships:', workspaceMemberships?.length || 0);
+
         // Process the profiles and group workspaces by organization
-        const profilesWithMemberships = profilesData?.map(profile => {
+        const profilesWithMemberships = profilesData.map(profile => {
           const userWorkspaces = workspaceMemberships
             ?.filter(wm => wm.user_id === profile.id)
             ?.map(wm => ({
@@ -275,118 +288,203 @@ export const UserProfileSettings = () => {
             created_at: profile.created_at || '',
             organizations: organizations
           };
-        }) || [];
+        });
 
+        console.log('Processed profiles with memberships:', profilesWithMemberships.length);
         setUserProfiles(profilesWithMemberships);
       } else {
-        // Regular users see only users from their organizations
+        console.log('Regular user detected - checking admin/owner status');
+        
+        // First check if user has admin/owner role in any organization
         const { data: membershipData, error: membershipError } = await supabase
-          .from('workspace_members')
-          .select('role, workspace_id, user_id')
-          .eq('user_id', user.id);
+          .from('organization_members')
+          .select('role, organization_id')
+          .eq('user_id', user.id)
+          .in('role', ['admin', 'owner']);
 
         if (membershipError) {
-          console.error('Membership error:', membershipError);
+          console.error('Organization membership error:', membershipError);
           throw membershipError;
         }
 
-        if (!membershipData || membershipData.length === 0) {
-          setUserProfiles([]);
-          setLoading(false);
-          return;
-        }
-
-        // Get workspaces and organizations
-        const workspaceIds = membershipData.map(m => m.workspace_id);
-        const { data: workspaceData, error: workspaceDataError } = await supabase
-          .from('workspaces')
-          .select('id, name, organization_id')
-          .in('id', workspaceIds);
-
-        if (workspaceDataError) throw workspaceDataError;
-
-        const orgIds = [...new Set(workspaceData?.map(w => w.organization_id) || [])];
-        const { data: orgData, error: orgError } = await supabase
-          .from('organizations')
-          .select('id, name')
-          .in('id', orgIds);
-
-        if (orgError) throw orgError;
-
-        // Get all workspace members from user's organizations
-        const { data: allWorkspaceMembers, error: allMembersError } = await supabase
-          .from('workspace_members')
-          .select('user_id, role, workspace_id')
-          .in('workspace_id', workspaceIds);
-
-        if (allMembersError) throw allMembersError;
-
-        // Get unique user IDs
-        const userIds = [...new Set(allWorkspaceMembers?.map(m => m.user_id) || [])];
+        const hasAdminRights = membershipData && membershipData.length > 0;
         
-        if (userIds.length === 0) {
-          setUserProfiles([]);
-          setLoading(false);
-          return;
-        }
+        if (!hasAdminRights) {
+          console.log('User has no admin rights - showing only self');
+          // Regular members see only themselves
+          const { data: ownProfile, error: ownProfileError } = await supabase
+            .from('user_profiles')
+            .select('id, full_name, email, avatar_url, created_at')
+            .eq('id', user.id)
+            .single();
 
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('user_profiles')
-          .select('id, full_name, email, avatar_url, created_at')
-          .in('id', userIds);
+          if (ownProfileError) {
+            console.error('Own profile error:', ownProfileError);
+            throw ownProfileError;
+          }
 
-        if (profilesError) throw profilesError;
+          if (ownProfile) {
+            // Get own workspace memberships
+            const { data: ownWorkspaces, error: ownWorkspacesError } = await supabase
+              .from('workspace_members')
+              .select(`
+                role,
+                workspace_id,
+                workspaces!workspace_members_workspace_id_fkey (
+                  id,
+                  name,
+                  organization_id,
+                  organizations!workspaces_organization_id_fkey (
+                    id,
+                    name
+                  )
+                )
+              `)
+              .eq('user_id', user.id);
 
-        // Process profiles with membership info grouped by organization
-        const profilesWithMemberships = profilesData?.map(profile => {
-          const userWorkspaces = allWorkspaceMembers
-            ?.filter(wm => wm.user_id === profile.id)
-            ?.map(wm => {
-              const workspace = workspaceData?.find(w => w.id === wm.workspace_id);
-              const organization = orgData?.find(o => o.id === workspace?.organization_id);
-              return {
-                id: wm.workspace_id,
-                name: workspace?.name || 'Onbekend',
-                role: wm.role,
-                organization_id: workspace?.organization_id,
-                organization_name: organization?.name || 'Onbekend'
-              };
-            }) || [];
-
-          // Group workspaces by organization
-          const organizationsMap = new Map();
-          userWorkspaces.forEach(workspace => {
-            const orgId = workspace.organization_id;
-            const orgName = workspace.organization_name;
-            
-            if (!organizationsMap.has(orgId)) {
-              organizationsMap.set(orgId, {
-                id: orgId,
-                name: orgName,
-                workspaces: []
-              });
+            if (ownWorkspacesError) {
+              console.error('Own workspaces error:', ownWorkspacesError);
+              throw ownWorkspacesError;
             }
-            
-            organizationsMap.get(orgId).workspaces.push({
-              id: workspace.id,
-              name: workspace.name,
-              role: workspace.role
+
+            const userWorkspaces = ownWorkspaces?.map(wm => ({
+              id: wm.workspace_id,
+              name: wm.workspaces?.name || 'Onbekend',
+              role: wm.role,
+              organization_id: wm.workspaces?.organization_id,
+              organization_name: wm.workspaces?.organizations?.name || 'Onbekend'
+            })) || [];
+
+            // Group workspaces by organization
+            const organizationsMap = new Map();
+            userWorkspaces.forEach(workspace => {
+              const orgId = workspace.organization_id;
+              const orgName = workspace.organization_name;
+              
+              if (!organizationsMap.has(orgId)) {
+                organizationsMap.set(orgId, {
+                  id: orgId,
+                  name: orgName,
+                  workspaces: []
+                });
+              }
+              
+              organizationsMap.get(orgId).workspaces.push({
+                id: workspace.id,
+                name: workspace.name,
+                role: workspace.role
+              });
             });
-          });
 
-          const organizations = Array.from(organizationsMap.values());
+            const organizations = Array.from(organizationsMap.values());
 
-          return {
-            id: profile.id,
-            full_name: profile.full_name || 'Geen naam',
-            email: profile.email || '',
-            avatar_url: profile.avatar_url,
-            created_at: profile.created_at || '',
-            organizations: organizations
-          };
-        }) || [];
+            setUserProfiles([{
+              id: ownProfile.id,
+              full_name: ownProfile.full_name || 'Geen naam',
+              email: ownProfile.email || '',
+              avatar_url: ownProfile.avatar_url,
+              created_at: ownProfile.created_at || '',
+              organizations: organizations
+            }]);
+          } else {
+            setUserProfiles([]);
+          }
+        } else {
+          console.log('User has admin rights - showing organization users');
+          // Admins/owners see users from their organizations
+          const orgIds = membershipData.map(m => m.organization_id);
+          
+          // Get all workspace members from admin's organizations
+          const { data: allWorkspaceMembers, error: allMembersError } = await supabase
+            .from('workspace_members')
+            .select(`
+              user_id,
+              role,
+              workspace_id,
+              workspaces!workspace_members_workspace_id_fkey (
+                id,
+                name,
+                organization_id,
+                organizations!workspaces_organization_id_fkey (
+                  id,
+                  name
+                )
+              )
+            `)
+            .in('workspaces.organization_id', orgIds);
 
-        setUserProfiles(profilesWithMemberships);
+          if (allMembersError) {
+            console.error('All workspace members error:', allMembersError);
+            throw allMembersError;
+          }
+
+          // Get unique user IDs
+          const userIds = [...new Set(allWorkspaceMembers?.map(m => m.user_id) || [])];
+          
+          if (userIds.length === 0) {
+            setUserProfiles([]);
+            setLoading(false);
+            return;
+          }
+
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('user_profiles')
+            .select('id, full_name, email, avatar_url, created_at')
+            .in('id', userIds)
+            .order('created_at', { ascending: false });
+
+          if (profilesError) {
+            console.error('Profiles error:', profilesError);
+            throw profilesError;
+          }
+
+          // Process profiles with membership info grouped by organization
+          const profilesWithMemberships = profilesData?.map(profile => {
+            const userWorkspaces = allWorkspaceMembers
+              ?.filter(wm => wm.user_id === profile.id)
+              ?.map(wm => ({
+                id: wm.workspace_id,
+                name: wm.workspaces?.name || 'Onbekend',
+                role: wm.role,
+                organization_id: wm.workspaces?.organization_id,
+                organization_name: wm.workspaces?.organizations?.name || 'Onbekend'
+              })) || [];
+
+            // Group workspaces by organization
+            const organizationsMap = new Map();
+            userWorkspaces.forEach(workspace => {
+              const orgId = workspace.organization_id;
+              const orgName = workspace.organization_name;
+              
+              if (!organizationsMap.has(orgId)) {
+                organizationsMap.set(orgId, {
+                  id: orgId,
+                  name: orgName,
+                  workspaces: []
+                });
+              }
+              
+              organizationsMap.get(orgId).workspaces.push({
+                id: workspace.id,
+                name: workspace.name,
+                role: workspace.role
+              });
+            });
+
+            const organizations = Array.from(organizationsMap.values());
+
+            return {
+              id: profile.id,
+              full_name: profile.full_name || 'Geen naam',
+              email: profile.email || '',
+              avatar_url: profile.avatar_url,
+              created_at: profile.created_at || '',
+              organizations: organizations
+            };
+          }) || [];
+
+          setUserProfiles(profilesWithMemberships);
+        }
       }
     } catch (error) {
       console.error('Error fetching user profiles:', error);
