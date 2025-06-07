@@ -274,11 +274,11 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-xl font-semibold">Organisaties & Werkruimtes</h2>
-          <p className="text-muted-foreground">Beheer je organisaties en werkruimtes</p>
+    <div className="bg-muted/40 rounded-lg p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <Building2 className="h-5 w-5" />
+          <h3 className="text-lg font-medium">Organisaties & Werkruimtes</h3>
         </div>
         {(user?.email === 'info@schapkun.com') && (
           <Button onClick={() => setShowCreateOrgForm(true)}>
@@ -290,60 +290,51 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
 
       {/* Create Organization Form */}
       {showCreateOrgForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Nieuwe Organisatie Aanmaken</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="new-org-name">Naam</Label>
-                <Input
-                  id="new-org-name"
-                  value={newOrgData.name}
-                  onChange={(e) => setNewOrgData({ ...newOrgData, name: e.target.value })}
-                  placeholder="Organisatie naam"
-                />
-              </div>
-              <div>
-                <Label htmlFor="new-org-slug">Slug</Label>
-                <Input
-                  id="new-org-slug"
-                  value={newOrgData.slug}
-                  onChange={(e) => setNewOrgData({ ...newOrgData, slug: e.target.value })}
-                  placeholder="organisatie-slug"
-                />
-              </div>
+        <div className="bg-background rounded-lg border border-border/50 p-4 mb-4">
+          <h4 className="font-medium text-base mb-4">Nieuwe Organisatie Aanmaken</h4>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <Label htmlFor="new-org-name">Naam</Label>
+              <Input
+                id="new-org-name"
+                value={newOrgData.name}
+                onChange={(e) => setNewOrgData({ ...newOrgData, name: e.target.value })}
+                placeholder="Organisatie naam"
+              />
             </div>
-            <div className="flex space-x-2">
-              <Button onClick={createOrganization}>
-                <Save className="h-4 w-4 mr-2" />
-                Opslaan
-              </Button>
-              <Button variant="outline" onClick={() => setShowCreateOrgForm(false)}>
-                Annuleren
-              </Button>
+            <div>
+              <Label htmlFor="new-org-slug">Slug</Label>
+              <Input
+                id="new-org-slug"
+                value={newOrgData.slug}
+                onChange={(e) => setNewOrgData({ ...newOrgData, slug: e.target.value })}
+                placeholder="organisatie-slug"
+              />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="flex space-x-2">
+            <Button onClick={createOrganization}>
+              <Save className="h-4 w-4 mr-2" />
+              Opslaan
+            </Button>
+            <Button variant="outline" onClick={() => setShowCreateOrgForm(false)}>
+              Annuleren
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* Organizations List */}
       {organizations.length === 0 ? (
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center text-muted-foreground">
-              <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Geen organisaties gevonden</p>
-            </div>
-          </CardContent>
-        </Card>
+        <p className="text-muted-foreground text-sm">
+          Geen organisaties gevonden
+        </p>
       ) : (
         <div className="space-y-4">
           {organizations.map((org) => (
-            <div key={org.id} className="p-4 bg-muted/30 rounded-lg border-l-4 border-l-primary/20">
+            <div key={org.id} className="bg-background rounded-lg border border-border/50">
               {/* Organization Header */}
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between p-4 border-b border-border/30">
                 <div className="flex items-center gap-3">
                   <Building2 className="h-5 w-5 text-muted-foreground" />
                   <div>
@@ -362,9 +353,9 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
                       </div>
                     ) : (
                       <>
-                        <h3 className="font-semibold">{org.name}</h3>
+                        <h4 className="font-medium text-base">{org.name}</h4>
                         <p className="text-sm text-muted-foreground">
-                          Werkruimtes ({org.workspaces.length})
+                          Organisatie • Werkruimtes ({org.workspaces.length})
                         </p>
                       </>
                     )}
@@ -375,7 +366,7 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
                     variant="ghost"
                     size="sm"
                     onClick={() => deleteOrganization(org.id, org.name)}
-                    className="text-destructive hover:text-destructive"
+                    className="text-destructive hover:text-destructive h-8 w-8 p-0 mr-1"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -384,10 +375,10 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
 
               {/* Workspaces under this organization */}
               {org.workspaces.length > 0 && (
-                <div className="ml-6 space-y-2">
+                <div className="p-2">
                   {org.workspaces.map((workspace) => (
-                    <div key={workspace.id} className="flex items-center justify-between p-3 bg-muted/15 rounded-lg">
-                      <div className="flex items-center gap-3">
+                    <div key={workspace.id} className="flex items-center justify-between p-3 rounded-md hover:bg-muted/30">
+                      <div className="flex items-center gap-3 ml-10">
                         <Briefcase className="h-4 w-4 text-muted-foreground" />
                         <div>
                           {editingWorkspace === workspace.id ? (
@@ -404,7 +395,10 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
                               />
                             </div>
                           ) : (
-                            <p className="font-medium">{workspace.name}</p>
+                            <>
+                              <p className="font-medium text-sm">{workspace.name}</p>
+                              <p className="text-xs text-muted-foreground">Werkruimte</p>
+                            </>
                           )}
                         </div>
                       </div>
@@ -413,7 +407,7 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
                           variant="ghost"
                           size="sm"
                           onClick={() => deleteWorkspace(workspace.id, workspace.name)}
-                          className="text-destructive hover:text-destructive w-8 h-8 p-0"
+                          className="text-destructive hover:text-destructive h-8 w-8 p-0"
                           title="Verwijder werkruimte"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -423,7 +417,7 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
                             variant="ghost"
                             size="sm"
                             onClick={() => updateWorkspace(workspace.id)}
-                            className="w-8 h-8 p-0"
+                            className="h-8 w-8 p-0"
                             title="Opslaan"
                           >
                             <Save className="h-4 w-4" />
@@ -436,7 +430,7 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
                               setEditingWorkspace(workspace.id);
                               setEditWorkspaceData({ name: workspace.name, slug: workspace.slug });
                             }}
-                            className="w-8 h-8 p-0"
+                            className="h-8 w-8 p-0"
                             title="Bewerken"
                           >
                             <Edit className="h-4 w-4" />
@@ -450,7 +444,7 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
 
               {/* Create Workspace Form */}
               {showCreateWorkspaceForm === org.id && (
-                <div className="ml-6 mt-2 p-3 bg-muted/15 rounded-lg border-2 border-dashed border-muted-foreground/20">
+                <div className="p-3 bg-muted/15 rounded-lg border-2 border-dashed border-muted-foreground/20 mx-2 mb-2">
                   <div className="grid grid-cols-2 gap-2 mb-2">
                     <Input
                       value={newWorkspaceData.name}
@@ -477,7 +471,7 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
 
               {/* Add Workspace Button */}
               {showCreateWorkspaceForm !== org.id && (
-                <div className="ml-6 mt-2">
+                <div className="p-2">
                   <Button
                     variant="outline"
                     size="sm"
