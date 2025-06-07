@@ -24,8 +24,6 @@ interface HistoryLogCardProps {
 const formatLogDetails = (details: any, action: string) => {
   if (!details) return null;
 
-  console.log('Formatting log details:', { details, action });
-
   // Handle user invitation actions
   if (action.toLowerCase().includes('gebruiker uitgenodigd')) {
     if (details.invited_email) {
@@ -42,25 +40,19 @@ const formatLogDetails = (details: any, action: string) => {
 
   // Handle invitation cancellation actions - ALWAYS show email address like user invitations
   if (action.toLowerCase().includes('uitnodiging geannuleerd')) {
-    console.log('Processing cancelled invitation:', details);
-    
     // Check all possible email fields in the details
     if (details.invited_email) {
-      console.log('Found invited_email:', details.invited_email);
       return `E-mailadres: ${details.invited_email}`;
     }
     if (details.email) {
-      console.log('Found email:', details.email);
       return `E-mailadres: ${details.email}`;
     }
     if (details.user_email) {
-      console.log('Found user_email:', details.user_email);
       return `E-mailadres: ${details.user_email}`;
     }
     
     // Check if details is an array or has nested objects
     if (Array.isArray(details)) {
-      console.log('Details is an array:', details);
       for (const item of details) {
         if (item && typeof item === 'object') {
           if (item.email) return `E-mailadres: ${item.email}`;
@@ -72,7 +64,6 @@ const formatLogDetails = (details: any, action: string) => {
     
     // Check if there are nested objects in details
     if (typeof details === 'object' && details !== null) {
-      console.log('Searching in nested objects...');
       for (const key of Object.keys(details)) {
         const value = details[key];
         if (value && typeof value === 'object') {
@@ -83,7 +74,6 @@ const formatLogDetails = (details: any, action: string) => {
       }
     }
     
-    console.log('No email found in cancelled invitation details');
     return 'E-mailadres: Niet beschikbaar';
   }
 
@@ -244,7 +234,7 @@ export const HistoryLogCard = ({ log }: HistoryLogCardProps) => {
           </div>
         )}
         
-        {/* Always show organization and workspace information */}
+        {/* Always show organization and workspace information when available */}
         <div className="space-y-2">
           {log.organization_name && (
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
