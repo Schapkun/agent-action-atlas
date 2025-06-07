@@ -1,4 +1,5 @@
 
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
@@ -45,7 +46,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Sending invitation email to:", email);
 
     const emailResponse = await resend.emails.send({
-      from: "Uitnodigingen <onboarding@resend.dev>",
+      from: "Uitnodigingen <hallo@meester.app>",
       to: [email],
       subject: `Uitnodiging voor ${organization_name}`,
       html: `
@@ -87,7 +88,7 @@ const handler = async (req: Request): Promise<Response> => {
           <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
           
           <p style="font-size: 12px; color: #aaa; text-align: center;">
-            Deze uitnodiging is verzonden via onze applicatie.
+            Deze uitnodiging is verzonden via Meester App.
           </p>
         </div>
       `,
@@ -115,3 +116,4 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 serve(handler);
+
