@@ -114,7 +114,7 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
     try {
       setLoading(true);
 
-      // Update name
+      // Update name first
       if (type === 'organization') {
         const { error: updateError } = await supabase
           .from('organizations')
@@ -137,35 +137,39 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
         if (updateError) throw updateError;
       }
 
-      // Update user memberships
-      const usersWithAccess = users.filter(u => u.hasAccess).map(u => u.id);
-      const usersWithoutAccess = users.filter(u => !u.hasAccess).map(u => u.id);
+      // Handle membership changes more carefully
+      const currentUsersWithAccess = users.filter(u => u.hasAccess);
+      const currentUsersWithoutAccess = users.filter(u => !u.hasAccess);
 
       if (type === 'organization') {
-        // Remove users who should not have access
-        if (usersWithoutAccess.length > 0) {
+        // For organization: handle org and workspace memberships
+        for (const user of currentUsersWithoutAccess) {
+          // Remove from organization (this will cascade to workspaces via database triggers)
           await supabase
             .from('organization_members')
             .delete()
             .eq('organization_id', item.id)
-            .in('user_id', usersWithoutAccess);
+            .eq('user_id', user.id);
         }
 
-        // Add users who should have access
-        for (const userId of usersWithAccess) {
-          const { error: insertError } = await supabase
+        for (const user of currentUsersWithAccess) {
+          // Use upsert with proper conflict handling
+          const { error: orgMemberError } = await supabase
             .from('organization_members')
             .upsert({
               organization_id: item.id,
-              user_id: userId,
+              user_id: user.id,
               role: 'member'
+            }, {
+              onConflict: 'organization_id,user_id'
             });
-          
-          if (insertError) {
-            console.error('Error adding organization member:', insertError);
+
+          if (orgMemberError) {
+            console.error('Error managing organization member:', orgMemberError);
+            // Don't throw, just log - user might already be a member
           }
 
-          // If user is added to organization, add them to ALL workspaces in that organization
+          // Add to all workspaces in this organization
           const { data: workspaces } = await supabase
             .from('workspaces')
             .select('id')
@@ -173,63 +177,64 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
 
           if (workspaces) {
             for (const workspace of workspaces) {
-              await supabase
+              const { error: workspaceMemberError } = await supabase
                 .from('workspace_members')
                 .upsert({
                   workspace_id: workspace.id,
-                  user_id: userId,
+                  user_id: user.id,
                   role: 'member'
+                }, {
+                  onConflict: 'workspace_id,user_id'
                 });
-            }
-          }
-        }
 
-        // Remove users from all workspaces when removed from organization
-        if (usersWithoutAccess.length > 0) {
-          const { data: workspaces } = await supabase
-            .from('workspaces')
-            .select('id')
-            .eq('organization_id', item.id);
-
-          if (workspaces) {
-            for (const workspace of workspaces) {
-              await supabase
-                .from('workspace_members')
-                .delete()
-                .eq('workspace_id', workspace.id)
-                .in('user_id', usersWithoutAccess);
+              if (workspaceMemberError) {
+                console.error('Error managing workspace member:', workspaceMemberError);
+                // Don't throw, just log
+              }
             }
           }
         }
       } else {
-        // For workspace: manage workspace members only
-        if (usersWithoutAccess.length > 0) {
+        // For workspace: handle workspace membership only
+        for (const user of currentUsersWithoutAccess) {
           await supabase
             .from('workspace_members')
             .delete()
             .eq('workspace_id', item.id)
-            .in('user_id', usersWithoutAccess);
+            .eq('user_id', user.id);
         }
 
-        for (const userId of usersWithAccess) {
-          // Add to workspace
-          await supabase
-            .from('workspace_members')
-            .upsert({
-              workspace_id: item.id,
-              user_id: userId,
-              role: 'member'
-            });
-
-          // Also ensure they're in the parent organization
+        for (const user of currentUsersWithAccess) {
+          // First ensure they're in the parent organization
           if (item.organization_id) {
-            await supabase
+            const { error: orgMemberError } = await supabase
               .from('organization_members')
               .upsert({
                 organization_id: item.organization_id,
-                user_id: userId,
+                user_id: user.id,
                 role: 'member'
+              }, {
+                onConflict: 'organization_id,user_id'
               });
+
+            if (orgMemberError) {
+              console.error('Error ensuring organization membership:', orgMemberError);
+            }
+          }
+
+          // Then add to workspace
+          const { error: workspaceMemberError } = await supabase
+            .from('workspace_members')
+            .upsert({
+              workspace_id: item.id,
+              user_id: user.id,
+              role: 'member'
+            }, {
+              onConflict: 'workspace_id,user_id'
+            });
+
+          if (workspaceMemberError) {
+            console.error('Error managing workspace member:', workspaceMemberError);
           }
         }
       }
