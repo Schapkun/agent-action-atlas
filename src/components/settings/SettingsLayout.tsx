@@ -6,8 +6,13 @@ import { OrganizationWorkspaceView } from './OrganizationWorkspaceView';
 import { UserProfileSettings } from './UserProfileSettings';
 import { HistoryLogs } from './HistoryLogs';
 import { DocumentLayoutSettings } from './DocumentLayoutSettings';
+import { RoleGuard } from '@/components/auth/RoleGuard';
 
 export const SettingsLayout = () => {
+  // Mock user role - in production this would come from your auth context
+  // For now, using 'lid' to demonstrate the restriction
+  const userRole = 'lid'; // Could be 'admin', 'eigenaar', or 'lid'
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl">
       <div className="mb-6">
@@ -42,7 +47,13 @@ export const SettingsLayout = () => {
         <TabsContent value="documents">
           <Card>
             <CardContent className="p-6">
-              <DocumentLayoutSettings />
+              <RoleGuard 
+                requiredRoles={['admin', 'eigenaar']} 
+                userRole={userRole}
+                fallbackMessage="Je hebt geen toegang tot document layout instellingen. Alleen gebruikers met Admin of Eigenaar rol kunnen document layouts beheren."
+              >
+                <DocumentLayoutSettings />
+              </RoleGuard>
             </CardContent>
           </Card>
         </TabsContent>
@@ -50,7 +61,13 @@ export const SettingsLayout = () => {
         <TabsContent value="history">
           <Card>
             <CardContent className="p-6">
-              <HistoryLogs />
+              <RoleGuard 
+                requiredRoles={['admin', 'eigenaar']} 
+                userRole={userRole}
+                fallbackMessage="Je hebt geen toegang tot de geschiedenis. Alleen gebruikers met Admin of Eigenaar rol kunnen de geschiedenis bekijken."
+              >
+                <HistoryLogs />
+              </RoleGuard>
             </CardContent>
           </Card>
         </TabsContent>
