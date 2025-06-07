@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -139,8 +138,8 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
       try {
         console.log('Fetching organizations for user:', targetUserId);
         
-        if (isAccountOwner && !isEditingOtherUser) {
-          // For account owner viewing their own profile, get ALL organizations
+        if (isAccountOwner) {
+          // For account owner, get ALL organizations from the organizations table
           console.log('Fetching ALL organizations for account owner...');
           const { data: allOrgsData, error: allOrgsError } = await supabase
             .from('organizations')
@@ -189,7 +188,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
             }
           }
         } else {
-          // For regular users or account owner viewing other users
+          // For regular users, use the existing logic
           const { data: orgData, error: orgError } = await supabase
             .from('organization_members')
             .select(`
@@ -531,8 +530,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
   }
 
   const isAccountOwner = user?.email === 'info@schapkun.com';
-  // Only allow role management for account owner AND when viewing other users' profiles
-  const showRoleManagement = isAccountOwner && !isViewingOwnProfile && organizations.length > 0;
+  const showRoleManagement = isAccountOwner && organizations.length > 0;
 
   return (
     <div className="space-y-4">
