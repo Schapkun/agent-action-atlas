@@ -515,17 +515,66 @@ export const UserProfileSettings = () => {
     if (!newInvite.email.trim() || !newInvite.organization_id) return;
 
     try {
-      const { error } = await supabase
+      // Insert invitation into database
+      const { data: invitationData, error: inviteError } = await supabase
         .from('user_invitations')
         .insert({
           email: newInvite.email,
           role: newInvite.role as 'owner' | 'admin' | 'member',
           organization_id: newInvite.organization_id,
           invited_by: user?.id
+        })
+        .select()
+        .single();
+
+      if (inviteError) throw inviteError;
+
+      // Get organization name and invited_by name for the email
+      const selectedOrg = organizations.find(org => org.id === newInvite.organization_id);
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('full_name')
+        .eq('id', user?.id)
+        .single();
+
+      // Send invitation email
+      const signupUrl = `${window.location.origin}/auth`;
+      
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-invitation-email', {
+          body: {
+            email: newInvite.email,
+            organization_name: selectedOrg?.name || 'Onbekend',
+            role: newInvite.role,
+            invited_by_name: userProfile?.full_name || 'Onbekend',
+            signup_url: signupUrl
+          }
         });
 
-      if (error) throw error;
+        if (emailError) {
+          console.error('Email error:', emailError);
+          // Don't fail the whole process if email fails
+          toast({
+            title: "Uitnodiging aangemaakt",
+            description: "Uitnodiging is opgeslagen, maar email kon niet worden verzonden",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Succes",
+            description: "Uitnodiging succesvol verzonden en email verstuurd",
+          });
+        }
+      } catch (emailError) {
+        console.error('Email sending failed:', emailError);
+        toast({
+          title: "Uitnodiging aangemaakt", 
+          description: "Uitnodiging is opgeslagen, maar email kon niet worden verzonden",
+          variant: "destructive",
+        });
+      }
 
+      // Log the invitation
       await supabase
         .from('history_logs')
         .insert({
@@ -534,11 +583,6 @@ export const UserProfileSettings = () => {
           action: 'Gebruiker uitgenodigd',
           details: { invited_email: newInvite.email, role: newInvite.role }
         });
-
-      toast({
-        title: "Succes",
-        description: "Uitnodiging succesvol verzonden",
-      });
 
       setNewInvite({ email: '', role: 'member', organization_id: '' });
       setIsInviteDialogOpen(false);
