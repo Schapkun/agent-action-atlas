@@ -3,19 +3,16 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, UserPlus } from 'lucide-react';
+import { Search, UserPlus, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
-import { ContactCard } from './ContactCard';
-import { ContactFolderSidebar } from './ContactFolderSidebar';
-import { folderStructure } from '@/data/contactData';
 
 export const ContactManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['1']));
-  const [selectedFolder, setSelectedFolder] = useState<string | null>('1');
   const [userRole, setUserRole] = useState<string | null>(null);
   const { user } = useAuth();
+  const { selectedOrganization, selectedWorkspace } = useOrganization();
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -49,46 +46,25 @@ export const ContactManager = () => {
     fetchUserRole();
   }, [user]);
 
-  const toggleFolder = (folderId: string) => {
-    const newExpanded = new Set(expandedFolders);
-    if (newExpanded.has(folderId)) {
-      newExpanded.delete(folderId);
-    } else {
-      newExpanded.add(folderId);
+  const getContextInfo = () => {
+    if (selectedWorkspace) {
+      return `Werkruimte: ${selectedWorkspace.name}`;
+    } else if (selectedOrganization) {
+      return `Organisatie: ${selectedOrganization.name}`;
     }
-    setExpandedFolders(newExpanded);
+    return 'Geen selectie';
   };
-
-  const selectedFolderData = folderStructure.find(f => f.id === selectedFolder);
-  const itemsToShow = selectedFolderData?.items || [];
-
-  const filteredItems = itemsToShow.filter(item =>
-    searchTerm === '' || 
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.phone?.includes(searchTerm)
-  );
 
   // Check if user can invite others (not 'lid' role)
   const canInviteUsers = userRole !== 'lid';
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <ContactFolderSidebar
-        folderStructure={folderStructure}
-        expandedFolders={expandedFolders}
-        selectedFolder={selectedFolder}
-        onToggleFolder={toggleFolder}
-        onSelectFolder={setSelectedFolder}
-      />
-
+    <div className="grid grid-cols-1 gap-6">
       {/* Contact List */}
-      <Card className="lg:col-span-3">
+      <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">
-              {selectedFolderData?.name || 'Contacten'}
-            </CardTitle>
+            <CardTitle className="text-lg">Contacten</CardTitle>
             {canInviteUsers && (
               <Button variant="outline" size="sm">
                 <UserPlus className="h-4 w-4 mr-2" />
@@ -96,33 +72,41 @@ export const ContactManager = () => {
               </Button>
             )}
           </div>
-          
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Zoek contacten..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+
+          {!selectedOrganization && !selectedWorkspace && (
+            <div className="text-sm text-muted-foreground">
+              Selecteer een organisatie of werkruimte om contacten te bekijken
+            </div>
+          )}
+
+          {(selectedOrganization || selectedWorkspace) && (
+            <>
+              <div className="text-sm text-muted-foreground">
+                Data voor: {getContextInfo()}
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Zoek contacten..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </>
+          )}
         </CardHeader>
 
         <div className="px-6 pt-3 pb-6">
-          {filteredItems.length > 0 ? (
-            <div className="space-y-2">
-              {filteredItems.map((item) => (
-                <ContactCard key={item.id} item={item} />
-              ))}
+          {!selectedOrganization && !selectedWorkspace ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Selecteer een organisatie of werkruimte om contacten te bekijken</p>
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-              {selectedFolderData 
-                ? filteredItems.length === 0 && searchTerm 
-                  ? 'Geen contacten gevonden die voldoen aan de zoekcriteria.'
-                  : 'Deze categorie heeft nog geen contacten.'
-                : 'Selecteer een categorie om contacten te bekijken.'
-              }
+              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Geen contacten gevonden voor de geselecteerde context</p>
             </div>
           )}
         </div>
