@@ -15,9 +15,9 @@ export const formatLogDetails = (details: any, action: string) => {
     return 'Uitnodiging verzonden';
   }
 
-  // Handle invitation cancellation actions - ALWAYS show email address like user invitations
+  // Handle invitation cancellation actions - use EXACT same logic as user invitations
   if (action.toLowerCase().includes('uitnodiging geannuleerd')) {
-    // First check if we have enriched email data from the invitation enrichment process
+    // Use the EXACT same email extraction logic as "gebruiker uitgenodigd"
     if (details.invited_email) {
       return `E-mailadres: ${details.invited_email}`;
     }
@@ -28,30 +28,27 @@ export const formatLogDetails = (details: any, action: string) => {
       return `E-mailadres: ${details.user_email}`;
     }
     
-    // Check if details is an array or has nested objects
-    if (Array.isArray(details)) {
-      for (const item of details) {
-        if (item && typeof item === 'object') {
-          if (item.email) return `E-mailadres: ${item.email}`;
-          if (item.invited_email) return `E-mailadres: ${item.invited_email}`;
-          if (item.user_email) return `E-mailadres: ${item.user_email}`;
-        }
-      }
+    // Also check if it's stored under invitation data
+    if (details.invitation_data?.email) {
+      return `E-mailadres: ${details.invitation_data.email}`;
     }
     
-    // Check if there are nested objects in details
+    // Check original invitation data structure that might be used
     if (typeof details === 'object' && details !== null) {
-      for (const key of Object.keys(details)) {
-        const value = details[key];
-        if (value && typeof value === 'object') {
-          if (value.email) return `E-mailadres: ${value.email}`;
-          if (value.invited_email) return `E-mailadres: ${value.invited_email}`;
-          if (value.user_email) return `E-mailadres: ${value.user_email}`;
+      // Look through all properties for email-like fields
+      for (const [key, value] of Object.entries(details)) {
+        if (typeof value === 'string' && value.includes('@')) {
+          return `E-mailadres: ${value}`;
+        }
+        if (typeof value === 'object' && value !== null) {
+          const nestedEmail = (value as any).email || (value as any).invited_email || (value as any).user_email;
+          if (nestedEmail) {
+            return `E-mailadres: ${nestedEmail}`;
+          }
         }
       }
     }
     
-    // If no email found, show a more helpful message
     return 'Uitnodiging geannuleerd';
   }
 
