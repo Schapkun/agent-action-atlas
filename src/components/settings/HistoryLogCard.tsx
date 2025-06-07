@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Calendar, User, Mail, Building, Briefcase } from 'lucide-react';
@@ -41,17 +42,48 @@ const formatLogDetails = (details: any, action: string) => {
 
   // Handle invitation cancellation actions - ALWAYS show email address like user invitations
   if (action.toLowerCase().includes('uitnodiging geannuleerd')) {
-    // Try to find the email in various places in details - same logic as user invitations
+    console.log('Processing cancelled invitation:', details);
+    
+    // Check all possible email fields in the details
     if (details.invited_email) {
+      console.log('Found invited_email:', details.invited_email);
       return `E-mailadres: ${details.invited_email}`;
     }
     if (details.email) {
+      console.log('Found email:', details.email);
       return `E-mailadres: ${details.email}`;
     }
     if (details.user_email) {
+      console.log('Found user_email:', details.user_email);
       return `E-mailadres: ${details.user_email}`;
     }
-    // If no email found, return a consistent message (not multiple different ones)
+    
+    // Check if details is an array or has nested objects
+    if (Array.isArray(details)) {
+      console.log('Details is an array:', details);
+      for (const item of details) {
+        if (item && typeof item === 'object') {
+          if (item.email) return `E-mailadres: ${item.email}`;
+          if (item.invited_email) return `E-mailadres: ${item.invited_email}`;
+          if (item.user_email) return `E-mailadres: ${item.user_email}`;
+        }
+      }
+    }
+    
+    // Check if there are nested objects in details
+    if (typeof details === 'object' && details !== null) {
+      console.log('Searching in nested objects...');
+      for (const key of Object.keys(details)) {
+        const value = details[key];
+        if (value && typeof value === 'object') {
+          if (value.email) return `E-mailadres: ${value.email}`;
+          if (value.invited_email) return `E-mailadres: ${value.invited_email}`;
+          if (value.user_email) return `E-mailadres: ${value.user_email}`;
+        }
+      }
+    }
+    
+    console.log('No email found in cancelled invitation details');
     return 'E-mailadres: Niet beschikbaar';
   }
 
