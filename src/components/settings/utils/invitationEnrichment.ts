@@ -27,7 +27,7 @@ export const enrichInvitationData = async (logs: any[]): Promise<HistoryLog[]> =
 
   console.log('Looking up invitation IDs:', invitationIds);
 
-  // Fetch invitation details from user_invitations table
+  // First try to fetch from user_invitations table (for active invitations)
   const { data: invitations, error } = await supabase
     .from('user_invitations')
     .select('id, email, organization_id, workspace_id')
@@ -35,16 +35,43 @@ export const enrichInvitationData = async (logs: any[]): Promise<HistoryLog[]> =
 
   if (error) {
     console.error('Error fetching invitation details:', error);
-    return logs;
   }
 
-  console.log('Found invitation details:', invitations);
+  console.log('Found invitation details from user_invitations:', invitations);
 
   // Create a map for quick lookup
   const invitationMap = new Map();
   invitations?.forEach(inv => {
     invitationMap.set(inv.id, inv);
   });
+
+  // If we couldn't find some invitations, try to get them from history logs of invitation creation
+  const missingIds = invitationIds.filter(id => !invitationMap.has(id));
+  
+  if (missingIds.length > 0) {
+    console.log('Looking for missing invitation emails in history logs for IDs:', missingIds);
+    
+    // Look for invitation creation logs that might contain the email
+    const { data: creationLogs } = await supabase
+      .from('history_logs')
+      .select('details')
+      .or(`details->>invitation_id.in.(${missingIds.join(',')}),details->>email.is.not.null`)
+      .ilike('action', '%uitgenodigd%');
+
+    if (creationLogs) {
+      creationLogs.forEach(log => {
+        if (log.details?.invitation_id && log.details?.email) {
+          invitationMap.set(log.details.invitation_id, {
+            id: log.details.invitation_id,
+            email: log.details.email,
+            organization_id: null,
+            workspace_id: null
+          });
+          console.log(`Found email from creation log for ${log.details.invitation_id}: ${log.details.email}`);
+        }
+      });
+    }
+  }
 
   // Enrich the logs with email addresses
   return logs.map(log => {
@@ -65,23 +92,21 @@ export const enrichInvitationData = async (logs: any[]): Promise<HistoryLog[]> =
           emailAddress = invitation.email;
           orgId = orgId || invitation.organization_id;
           workspaceId = workspaceId || invitation.workspace_id;
-          console.log(`Enriched log ${log.id} with email from DB: ${emailAddress}`);
+          console.log(`Enriched log ${log.id} with email: ${emailAddress}`);
         } else {
-          console.log(`No invitation found in DB for ID: ${log.details.invitation_id}`);
+          console.log(`No invitation found for ID: ${log.details.invitation_id}`);
         }
       } else if (log.details?.invitation_ids && Array.isArray(log.details.invitation_ids)) {
-        // For multiple invitations, get the first email (or could be combined)
-        const firstInvitation = log.details.invitation_ids
-          .map(id => invitationMap.get(id))
-          .find(inv => inv !== undefined);
+        // For multiple invitations, try to get emails for all of them
+        const emails = log.details.invitation_ids
+          .map(id => invitationMap.get(id)?.email)
+          .filter(email => email);
         
-        if (firstInvitation) {
-          emailAddress = firstInvitation.email;
-          orgId = orgId || firstInvitation.organization_id;
-          workspaceId = workspaceId || firstInvitation.workspace_id;
-          console.log(`Enriched log ${log.id} with email from multiple invitations DB: ${emailAddress}`);
+        if (emails.length > 0) {
+          emailAddress = emails.length === 1 ? emails[0] : `${emails.length} uitnodigingen`;
+          console.log(`Enriched log ${log.id} with multiple emails: ${emailAddress}`);
         } else {
-          console.log(`No invitations found in DB for IDs: ${log.details.invitation_ids}`);
+          console.log(`No invitations found for IDs: ${log.details.invitation_ids}`);
         }
       }
     } else {
@@ -93,6 +118,10 @@ export const enrichInvitationData = async (logs: any[]): Promise<HistoryLog[]> =
     if (emailAddress && typeof emailAddress === 'string' && emailAddress.includes('@')) {
       enrichedDetails.invited_email = emailAddress;
       console.log(`Successfully enriched log ${log.id} with email: ${emailAddress}`);
+    } else if (emailAddress && typeof emailAddress === 'string' && emailAddress.includes('uitnodigingen')) {
+      // Handle multiple invitations case
+      enrichedDetails.invited_email = emailAddress;
+      console.log(`Successfully enriched log ${log.id} with multiple invitations info: ${emailAddress}`);
     } else {
       console.log(`No valid email found for log ${log.id}, not adding invited_email field`);
     }

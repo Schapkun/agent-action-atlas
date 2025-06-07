@@ -18,8 +18,12 @@ export const formatLogDetails = (details: any, action: string) => {
   // Handle invitation cancellation actions - prioritize finding email addresses
   if (action.toLowerCase().includes('uitnodiging geannuleerd')) {
     // First try the enriched email field
-    if (details.invited_email && typeof details.invited_email === 'string' && details.invited_email.includes('@')) {
-      return `E-mailadres: ${details.invited_email}`;
+    if (details.invited_email && typeof details.invited_email === 'string') {
+      if (details.invited_email.includes('@')) {
+        return `E-mailadres: ${details.invited_email}`;
+      } else if (details.invited_email.includes('uitnodigingen')) {
+        return details.invited_email; // This will show "X uitnodigingen"
+      }
     }
     
     // Then try other standard email fields
@@ -56,15 +60,15 @@ export const formatLogDetails = (details: any, action: string) => {
       }
     }
     
-    // If no email found, provide fallback information
+    // If no email found, provide better fallback information
     if (details.invitation_id) {
-      return `Uitnodiging geannuleerd (ID: ${details.invitation_id.slice(0, 8)}...)`;
+      return `Uitnodiging verwijderd (ID: ${details.invitation_id.slice(0, 8)}...)`;
     }
     if (details.invitation_ids && Array.isArray(details.invitation_ids)) {
-      return `${details.invitation_ids.length} uitnodiging(en) geannuleerd`;
+      return `${details.invitation_ids.length} uitnodiging(en) verwijderd`;
     }
     
-    return 'Uitnodiging geannuleerd';
+    return 'Uitnodiging verwijderd (e-mailadres onbekend)';
   }
 
   // Handle other invitation actions (general)
