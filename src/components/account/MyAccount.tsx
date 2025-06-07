@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -490,9 +489,9 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                 id="email"
                 type="email"
                 value={profile.email || ''}
-                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
                 placeholder="Voer e-mailadres in"
-                disabled={!isViewingOwnProfile}
+                disabled={true}
+                className="bg-muted/50 cursor-not-allowed"
               />
             </div>
           </div>
@@ -555,12 +554,12 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                       Rol: {org.role}
                     </p>
                   </div>
-                  <div className="flex space-x-1">
+                  <div className="flex space-x-1 w-16 justify-end">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => removeFromOrganization(org.id, org.name)}
-                      className="text-destructive hover:text-destructive"
+                      className="text-destructive hover:text-destructive w-8 h-8 p-0"
                       title="Verwijder uit organisatie"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -568,6 +567,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                     <Button
                       variant="ghost"
                       size="sm"
+                      className="w-8 h-8 p-0"
                       title="Bewerk organisatie"
                     >
                       <Edit className="h-4 w-4" />
@@ -606,12 +606,12 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                       Organisatie: {workspace.organization_name} • Rol: {workspace.role || 'member'}
                     </p>
                   </div>
-                  <div className="flex space-x-1">
+                  <div className="flex space-x-1 w-16 justify-end">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => removeFromWorkspace(workspace.id, workspace.name)}
-                      className="text-destructive hover:text-destructive"
+                      className="text-destructive hover:text-destructive w-8 h-8 p-0"
                       title="Verwijder uit werkruimte"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -619,6 +619,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                     <Button
                       variant="ghost"
                       size="sm"
+                      className="w-8 h-8 p-0"
                       title="Bewerk werkruimte"
                     >
                       <Edit className="h-4 w-4" />

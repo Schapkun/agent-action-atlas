@@ -586,14 +586,14 @@ export const OrganizationWorkspaceView = ({ userRole = 'lid' }: OrganizationWork
                       ({group.workspaces.length} werkruimte{group.workspaces.length !== 1 ? 's' : ''})
                     </span>
                   </div>
-                  <div className="flex space-x-1">
+                  <div className="flex space-x-1 w-16 justify-end">
                     {(user?.email === 'info@schapkun.com') && (
                       <>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => deleteOrganization(group.organization.id, group.organization.name)}
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive w-8 h-8 p-0"
                           title="Verwijder organisatie"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -602,6 +602,7 @@ export const OrganizationWorkspaceView = ({ userRole = 'lid' }: OrganizationWork
                           variant="ghost"
                           size="sm"
                           onClick={() => setEditingOrg(group.organization)}
+                          className="w-8 h-8 p-0"
                           title="Bewerk organisatie"
                         >
                           <Edit className="h-3 w-3" />
@@ -623,11 +624,12 @@ export const OrganizationWorkspaceView = ({ userRole = 'lid' }: OrganizationWork
                             Aangemaakt: {new Date(workspace.created_at).toLocaleDateString('nl-NL')}
                           </p>
                         </div>
-                        <div className="flex space-x-1">
+                        <div className="flex space-x-1 w-20 justify-end">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => viewWorkspaceUsers(workspace.id, workspace.name)}
+                            className="w-8 h-8 p-0"
                             title="Bekijk gebruikers"
                           >
                             <Users className="h-3 w-3" />
@@ -638,7 +640,7 @@ export const OrganizationWorkspaceView = ({ userRole = 'lid' }: OrganizationWork
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => deleteWorkspace(workspace.id, workspace.name)}
-                                className="text-destructive hover:text-destructive"
+                                className="text-destructive hover:text-destructive w-8 h-8 p-0"
                                 title="Verwijder werkruimte"
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -647,6 +649,7 @@ export const OrganizationWorkspaceView = ({ userRole = 'lid' }: OrganizationWork
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setEditingWorkspace(workspace)}
+                                className="w-8 h-8 p-0"
                                 title="Bewerk werkruimte"
                               >
                                 <Edit className="h-3 w-3" />
