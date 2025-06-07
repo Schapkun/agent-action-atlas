@@ -546,7 +546,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
           )}
 
           {isViewingOwnProfile && (
-            <Button onClick={updateProfile} disabled={saving} className="w-full">
+            <Button onClick={updateProfile} disabled={saving}>
               <Save className="h-4 w-4 mr-2" />
               {saving ? 'Opslaan...' : 'Profiel Opslaan'}
             </Button>
