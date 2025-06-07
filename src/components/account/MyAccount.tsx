@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,6 +50,20 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
 
   const targetUserId = viewingUserId || user?.id;
   const isViewingOwnProfile = !isEditingOtherUser && targetUserId === user?.id;
+
+  // Helper function to translate user roles
+  const translateRole = (role: string): string => {
+    switch (role.toLowerCase()) {
+      case 'owner':
+        return 'Eigenaar';
+      case 'admin':
+        return 'Admin';
+      case 'member':
+        return 'Gebruiker';
+      default:
+        return role;
+    }
+  };
 
   useEffect(() => {
     if (targetUserId) {
@@ -119,6 +134,9 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
 
       setProfile(profileData);
 
+      // Check if this is the account owner
+      const isAccountOwner = profileData?.email === 'info@schapkun.com';
+
       // Fetch organizations with their workspaces
       try {
         const { data: orgData, error: orgError } = await supabase
@@ -139,7 +157,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
           const orgs = orgData?.map(item => ({
             id: item.organizations?.id || '',
             name: item.organizations?.name || '',
-            role: item.role,
+            role: isAccountOwner ? 'owner' : item.role, // Force owner role for account owner
             workspaces: []
           })) || [];
 
@@ -169,7 +187,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                   id: item.workspaces?.id || '',
                   name: item.workspaces?.name || '',
                   organization_name: org.name,
-                  role: item.role
+                  role: isAccountOwner ? 'owner' : item.role // Force owner role for account owner
                 })) || [];
 
               return {
@@ -181,8 +199,10 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
 
           setOrganizations(orgsWithWorkspaces);
           
-          // Set global role based on first organization role
-          if (orgsWithWorkspaces.length > 0) {
+          // Set global role based on account owner status or first organization role
+          if (isAccountOwner) {
+            setGlobalRole('owner');
+          } else if (orgsWithWorkspaces.length > 0) {
             setGlobalRole(orgsWithWorkspaces[0].role as UserRole);
           }
         }
@@ -294,7 +314,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
       setGlobalRole(newRole);
       toast({
         title: "Succes",
-        description: `Rol bijgewerkt naar ${newRole} voor alle organisaties en werkruimtes`,
+        description: `Rol bijgewerkt naar ${translateRole(newRole)} voor alle organisaties en werkruimtes`,
       });
 
       // Refresh data to show updated roles
@@ -517,9 +537,9 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="member">Member</SelectItem>
+                  <SelectItem value="member">Gebruiker</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="owner">Owner</SelectItem>
+                  <SelectItem value="owner">Eigenaar</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -560,9 +580,6 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                       <Building2 className="h-5 w-5 text-primary" />
                       <div>
                         <h3 className="font-semibold text-lg">{org.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Rol: <span className="font-medium">{org.role}</span>
-                        </p>
                       </div>
                     </div>
                     <Button
@@ -588,9 +605,6 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                             <Users className="h-4 w-4 text-muted-foreground" />
                             <div>
                               <p className="font-medium">{workspace.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                Rol: {workspace.role || 'member'}
-                              </p>
                             </div>
                           </div>
                           <Button
