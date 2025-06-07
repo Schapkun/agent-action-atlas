@@ -31,15 +31,20 @@ export const WorkspaceSettings = () => {
     }
   }, [user]);
 
-  // Check if user can create workspaces - use same logic as organization creation
+  // Use the EXACT same logic as organization creation
   const canCreateWorkspace = () => {
     console.log('WorkspaceSettings - canCreateWorkspace check:', { userRole, userEmail: user?.email });
     
     // Account owner can always create workspaces
-    if (user?.email === 'info@schapkun.com') return true;
+    if (user?.email === 'info@schapkun.com') {
+      console.log('Account owner detected, can create workspace');
+      return true;
+    }
     
-    // Only admin and owner roles can create workspaces
-    return userRole === 'admin' || userRole === 'eigenaar';
+    // Only admin and eigenaar roles can create workspaces (SAME as organization logic)
+    const canCreate = userRole === 'admin' || userRole === 'eigenaar';
+    console.log('Role-based check result:', canCreate);
+    return canCreate;
   };
 
   // Group workspaces by organization
@@ -59,7 +64,8 @@ export const WorkspaceSettings = () => {
     return <div className="text-sm">Werkruimtes laden...</div>;
   }
 
-  console.log('WorkspaceSettings - Rendering with canCreateWorkspace:', canCreateWorkspace());
+  const canCreate = canCreateWorkspace();
+  console.log('WorkspaceSettings - Final canCreate result:', canCreate);
 
   return (
     <div className="space-y-4">
@@ -68,7 +74,7 @@ export const WorkspaceSettings = () => {
         <CreateWorkspaceDialog
           organizations={organizations}
           onCreateWorkspace={createWorkspace}
-          canCreateWorkspace={canCreateWorkspace()}
+          canCreateWorkspace={canCreate}
         />
       </div>
 
@@ -76,7 +82,7 @@ export const WorkspaceSettings = () => {
         {Object.keys(groupedWorkspaces).length === 0 ? (
           <Card>
             <CardContent className="p-4 text-center text-sm text-muted-foreground">
-              Je hebt nog geen toegang tot werkruimtes. {canCreateWorkspace() ? 'Maak een nieuwe werkruimte aan om te beginnen.' : 'Neem contact op met je beheerder om toegang te krijgen.'}
+              Je hebt nog geen toegang tot werkruimtes. {canCreate ? 'Maak een nieuwe werkruimte aan om te beginnen.' : 'Neem contact op met je beheerder om toegang te krijgen.'}
             </CardContent>
           </Card>
         ) : (
