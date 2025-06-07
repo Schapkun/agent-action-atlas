@@ -30,10 +30,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Handle successful signup
+        if (event === 'SIGNED_UP' && session?.user) {
+          console.log('User signed up successfully:', session.user.email);
+          
+          // Try to find and accept any pending invitations for this email
+          try {
+            const { data: invitations, error } = await supabase
+              .from('user_invitations')
+              .select('*')
+              .eq('email', session.user.email)
+              .is('accepted_at', null);
+
+            if (error) {
+              console.error('Error fetching invitations:', error);
+            } else if (invitations && invitations.length > 0) {
+              console.log('Found pending invitations:', invitations);
+              
+              // Mark all pending invitations as accepted
+              const { error: updateError } = await supabase
+                .from('user_invitations')
+                .update({ accepted_at: new Date().toISOString() })
+                .eq('email', session.user.email)
+                .is('accepted_at', null);
+
+              if (updateError) {
+                console.error('Error accepting invitations:', updateError);
+              } else {
+                console.log('Successfully accepted invitations for:', session.user.email);
+              }
+            }
+          } catch (error) {
+            console.error('Error handling invitations after signup:', error);
+          }
+        }
       }
     );
 
@@ -58,6 +94,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, fullName: string) => {
     const redirectUrl = `${window.location.origin}/`;
     
+    console.log('Attempting signup for:', email);
+    
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -68,6 +106,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       },
     });
+    
+    if (error) {
+      console.error('Signup error:', error);
+    } else {
+      console.log('Signup request sent successfully');
+    }
+    
     return { error };
   };
 
