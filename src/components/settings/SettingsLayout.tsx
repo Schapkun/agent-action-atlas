@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { OrganizationWorkspaceView } from './OrganizationWorkspaceView';
@@ -8,30 +8,37 @@ import { HistoryLogs } from './HistoryLogs';
 import { DocumentLayoutSettings } from './DocumentLayoutSettings';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export const SettingsLayout = () => {
   const { user } = useAuth();
-  
-  // In a real implementation, you would fetch the user's role from your database
-  // For now, we'll simulate getting the role based on user data
-  // This should be replaced with actual role fetching logic from your user management system
-  const getUserRole = () => {
-    if (!user) return 'lid';
-    
-    // Mock logic - in production this would come from your database
-    // You could check user metadata, make an API call, etc.
-    
-    // For testing purposes, let's make specific users have specific roles
-    // Replace this with actual role-checking logic from your database
-    if (user.email === 'info@schapkun.com') return 'eigenaar';
-    if (user.email?.toLowerCase().includes('admin')) return 'admin';
-    
-    // Default to 'lid' role for all other users
-    // This ensures most users get the restricted access unless explicitly assigned a higher role
-    return 'lid';
-  };
+  const [userRole, setUserRole] = useState<string>('lid');
 
-  const userRole = getUserRole();
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (!user?.id) return;
+
+      try {
+        // Get user's role from their organization membership
+        const { data: memberships } = await supabase
+          .from('organization_members')
+          .select('role')
+          .eq('user_id', user.id)
+          .limit(1);
+
+        if (memberships && memberships.length > 0) {
+          setUserRole(memberships[0].role);
+        } else {
+          setUserRole('lid'); // Default role if no membership found
+        }
+      } catch (error) {
+        console.error('Error fetching user role:', error);
+        setUserRole('lid'); // Default to lid on error
+      }
+    };
+
+    fetchUserRole();
+  }, [user?.id]);
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl">
