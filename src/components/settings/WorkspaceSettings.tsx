@@ -282,8 +282,14 @@ export const WorkspaceSettings = () => {
     }
   };
 
-  // Check if user can create workspaces (only admin, owner or account owner)
-  const canCreateWorkspace = userRole === 'admin' || userRole === 'owner';
+  // Check if user can create workspaces - use same logic as organization creation
+  const canCreateWorkspace = () => {
+    // Account owner can always create workspaces
+    if (user?.email === 'info@schapkun.com') return true;
+    
+    // Only admin and owner roles can create workspaces
+    return userRole === 'admin' || userRole === 'owner';
+  };
 
   const createWorkspace = async () => {
     if (!newWorkspace.name.trim() || !newWorkspace.organization_id) return;
@@ -428,7 +434,7 @@ export const WorkspaceSettings = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Werkruimtes</h2>
-        {canCreateWorkspace && (
+        {canCreateWorkspace() && (
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm">
@@ -487,7 +493,7 @@ export const WorkspaceSettings = () => {
         {Object.keys(groupedWorkspaces).length === 0 ? (
           <Card>
             <CardContent className="p-4 text-center text-sm text-muted-foreground">
-              Je hebt nog geen toegang tot werkruimtes. {canCreateWorkspace ? 'Maak een nieuwe werkruimte aan om te beginnen.' : 'Neem contact op met je beheerder om toegang te krijgen.'}
+              Je hebt nog geen toegang tot werkruimtes. {canCreateWorkspace() ? 'Maak een nieuwe werkruimte aan om te beginnen.' : 'Neem contact op met je beheerder om toegang te krijgen.'}
             </CardContent>
           </Card>
         ) : (
