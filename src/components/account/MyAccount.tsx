@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Building2, Settings, Save, Trash2, Edit } from 'lucide-react';
+import { User, Building2, Settings, Save, Trash2 } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -496,7 +496,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
             </div>
           </div>
           
-          {/* Global Role Management */}
+          {/* Global Role Management - only for admins viewing other users */}
           {!isViewingOwnProfile && (organizations.length > 0 || workspaces.length > 0) && (
             <div>
               <Label htmlFor="global-role">Gebruikersrol (voor alle organisaties en werkruimtes)</Label>
@@ -554,7 +554,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                       Rol: {org.role}
                     </p>
                   </div>
-                  <div className="flex space-x-1 w-16 justify-end">
+                  <div className="flex space-x-1">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -563,14 +563,6 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                       title="Verwijder uit organisatie"
                     >
                       <Trash2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-8 h-8 p-0"
-                      title="Bewerk organisatie"
-                    >
-                      <Edit className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -606,7 +598,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                       Organisatie: {workspace.organization_name} • Rol: {workspace.role || 'member'}
                     </p>
                   </div>
-                  <div className="flex space-x-1 w-16 justify-end">
+                  <div className="flex space-x-1">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -615,14 +607,6 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                       title="Verwijder uit werkruimte"
                     >
                       <Trash2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-8 h-8 p-0"
-                      title="Bewerk werkruimte"
-                    >
-                      <Edit className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
