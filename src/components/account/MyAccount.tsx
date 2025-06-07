@@ -130,139 +130,91 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
 
       setProfile(profileData);
 
-      // Check if this is the account owner
-      const isAccountOwner = user?.email === 'info@schapkun.com';
-      console.log('Is account owner?', isAccountOwner);
+      // Check if the currently logged in user is the account owner
+      // NOT the user being viewed
+      const isCurrentUserAccountOwner = user?.email === 'info@schapkun.com';
+      console.log('Is current user (not target user) account owner?', isCurrentUserAccountOwner);
 
-      // Fetch organizations with their workspaces
+      // Fetch organizations with their workspaces for the TARGET USER
       try {
-        console.log('Fetching organizations for user:', targetUserId);
+        console.log('Fetching organizations for TARGET user:', targetUserId);
         
-        if (isAccountOwner) {
-          // For account owner, get ALL organizations from the organizations table
-          console.log('Fetching ALL organizations for account owner...');
-          const { data: allOrgsData, error: allOrgsError } = await supabase
-            .from('organizations')
-            .select('id, name')
-            .order('name');
+        // Always fetch based on actual membership, regardless of who is viewing
+        const { data: orgData, error: orgError } = await supabase
+          .from('organization_members')
+          .select(`
+            role,
+            organizations!fk_organization_members_organization (
+              id,
+              name
+            )
+          `)
+          .eq('user_id', targetUserId);
 
-          if (allOrgsError) {
-            console.error('All organizations fetch error:', allOrgsError);
-            setOrganizations([]);
-          } else {
-            // Map all organizations with owner role for account owner
-            const orgs = allOrgsData?.map(org => ({
-              id: org.id,
-              name: org.name,
-              role: 'owner', // Account owner has owner role everywhere
-              workspaces: []
-            })) || [];
+        console.log('Organization query result for target user:', { orgData, orgError });
 
-            console.log('Mapped all organizations for account owner:', orgs);
-
-            // Now fetch ALL workspaces and map them to their organizations
-            const { data: allWorkspacesData, error: allWorkspacesError } = await supabase
-              .from('workspaces')
-              .select('id, name, organization_id')
-              .order('name');
-
-            if (allWorkspacesError) {
-              console.error('All workspaces fetch error:', allWorkspacesError);
-            } else {
-              // Add workspaces to their respective organizations
-              const orgsWithWorkspaces = orgs.map(org => ({
-                ...org,
-                workspaces: allWorkspacesData
-                  ?.filter(workspace => workspace.organization_id === org.id)
-                  ?.map(workspace => ({
-                    id: workspace.id,
-                    name: workspace.name,
-                    organization_name: org.name,
-                    role: 'owner' // Account owner has owner role everywhere
-                  })) || []
-              }));
-
-              console.log('Final organizations with workspaces for account owner:', orgsWithWorkspaces);
-              setOrganizations(orgsWithWorkspaces);
-              setGlobalRole('owner');
-            }
-          }
+        if (orgError) {
+          console.error('Organizations fetch error:', orgError);
+          setOrganizations([]);
         } else {
-          // For regular users, use the existing logic
-          const { data: orgData, error: orgError } = await supabase
-            .from('organization_members')
-            .select(`
-              role,
-              organizations!fk_organization_members_organization (
-                id,
-                name
-              )
-            `)
-            .eq('user_id', targetUserId);
+          const orgs = orgData?.map(item => ({
+            id: item.organizations?.id || '',
+            name: item.organizations?.name || '',
+            role: item.role,
+            workspaces: []
+          })) || [];
 
-          console.log('Organization query result:', { orgData, orgError });
+          console.log('Mapped organizations for target user:', orgs);
 
-          if (orgError) {
-            console.error('Organizations fetch error:', orgError);
-            setOrganizations([]);
+          // Now fetch workspaces for each organization that the TARGET USER is member of
+          const orgsWithWorkspaces = await Promise.all(
+            orgs.map(async (org) => {
+              console.log('Fetching workspaces for organization:', org.id, 'for target user:', targetUserId);
+              const { data: workspaceData, error: workspaceError } = await supabase
+                .from('workspace_members')
+                .select(`
+                  role,
+                  workspaces!fk_workspace_members_workspace (
+                    id,
+                    name,
+                    organization_id
+                  )
+                `)
+                .eq('user_id', targetUserId);
+
+              console.log('Workspace query result for org', org.id, 'and target user:', { workspaceData, workspaceError });
+
+              if (workspaceError) {
+                console.error('Workspaces fetch error for org:', org.id, workspaceError);
+                return org;
+              }
+
+              const workspaces = workspaceData
+                ?.filter(item => item.workspaces?.organization_id === org.id)
+                ?.map(item => ({
+                  id: item.workspaces?.id || '',
+                  name: item.workspaces?.name || '',
+                  organization_name: org.name,
+                  role: item.role
+                })) || [];
+
+              console.log('Filtered workspaces for org', org.id, 'and target user:', workspaces);
+
+              return {
+                ...org,
+                workspaces
+              };
+            })
+          );
+
+          console.log('Final organizations with workspaces for target user:', orgsWithWorkspaces);
+          setOrganizations(orgsWithWorkspaces);
+          
+          // Set global role based on first organization role
+          if (orgsWithWorkspaces.length > 0) {
+            setGlobalRole(orgsWithWorkspaces[0].role as UserRole);
           } else {
-            const orgs = orgData?.map(item => ({
-              id: item.organizations?.id || '',
-              name: item.organizations?.name || '',
-              role: item.role,
-              workspaces: []
-            })) || [];
-
-            console.log('Mapped organizations:', orgs);
-
-            // Now fetch workspaces for each organization
-            const orgsWithWorkspaces = await Promise.all(
-              orgs.map(async (org) => {
-                console.log('Fetching workspaces for organization:', org.id);
-                const { data: workspaceData, error: workspaceError } = await supabase
-                  .from('workspace_members')
-                  .select(`
-                    role,
-                    workspaces!fk_workspace_members_workspace (
-                      id,
-                      name,
-                      organization_id
-                    )
-                  `)
-                  .eq('user_id', targetUserId);
-
-                console.log('Workspace query result for org', org.id, ':', { workspaceData, workspaceError });
-
-                if (workspaceError) {
-                  console.error('Workspaces fetch error for org:', org.id, workspaceError);
-                  return org;
-                }
-
-                const workspaces = workspaceData
-                  ?.filter(item => item.workspaces?.organization_id === org.id)
-                  ?.map(item => ({
-                    id: item.workspaces?.id || '',
-                    name: item.workspaces?.name || '',
-                    organization_name: org.name,
-                    role: item.role
-                  })) || [];
-
-                console.log('Filtered workspaces for org', org.id, ':', workspaces);
-
-                return {
-                  ...org,
-                  workspaces
-                };
-              })
-            );
-
-            console.log('Final organizations with workspaces:', orgsWithWorkspaces);
-            setOrganizations(orgsWithWorkspaces);
-            
-            // Set global role based on first organization role
-            if (orgsWithWorkspaces.length > 0) {
-              setGlobalRole(orgsWithWorkspaces[0].role as UserRole);
-            }
+            setGlobalRole('member');
           }
         }
       } catch (orgErr) {
@@ -529,8 +481,8 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
     );
   }
 
-  const isAccountOwner = user?.email === 'info@schapkun.com';
-  const showRoleManagement = isAccountOwner && organizations.length > 0;
+  const isCurrentUserAccountOwner = user?.email === 'info@schapkun.com';
+  const showRoleManagement = isCurrentUserAccountOwner && organizations.length > 0;
 
   return (
     <div className="space-y-4">
