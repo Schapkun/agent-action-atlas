@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -46,7 +47,6 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
   const [saving, setSaving] = useState(false);
   const [globalRole, setGlobalRole] = useState<UserRole>('member');
   const [originalGlobalRole, setOriginalGlobalRole] = useState<UserRole>('member');
-  const [hasChanges, setHasChanges] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -72,16 +72,6 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
       fetchUserData();
     }
   }, [targetUserId]);
-
-  // Check for changes whenever profile or globalRole changes
-  useEffect(() => {
-    if (originalProfile && profile) {
-      const profileChanged = originalProfile.full_name !== profile.full_name || 
-                           originalProfile.email !== profile.email;
-      const roleChanged = originalGlobalRole !== globalRole;
-      setHasChanges(profileChanged || roleChanged);
-    }
-  }, [profile, globalRole, originalProfile, originalGlobalRole]);
 
   const fetchUserData = async () => {
     if (!targetUserId) {
@@ -293,7 +283,6 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
       // Update original values to reflect saved state
       setOriginalProfile({ ...profile });
       setOriginalGlobalRole(globalRole);
-      setHasChanges(false);
 
       toast({
         title: "Succes",
@@ -321,7 +310,6 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
       setProfile({ ...originalProfile });
     }
     setGlobalRole(originalGlobalRole);
-    setHasChanges(false);
     
     if (onClose) {
       onClose();
@@ -547,9 +535,6 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
               </AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-lg font-semibold">
-                {isViewingOwnProfile ? 'Mijn Account' : `Account van ${profile.full_name || profile.email}`}
-              </h2>
               <p className="text-sm text-muted-foreground">
                 {isViewingOwnProfile 
                   ? 'Beheer je persoonlijke gegevens en voorkeuren'
@@ -559,7 +544,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
             </div>
           </div>
 
-          {/* Combined Profile Information and Role Management */}
+          {/* Profile Information and Role Management - No section title */}
           <UserProfileSection
             profile={profile}
             setProfile={setProfile}
@@ -572,7 +557,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
             showRoleManagement={showRoleManagement}
           />
 
-          {/* Organizations & Workspaces */}
+          {/* Organizations & Workspaces - No section title */}
           <OrganizationsList
             organizations={organizations}
             isViewingOwnProfile={isViewingOwnProfile}
@@ -587,10 +572,11 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
         <Button variant="outline" onClick={handleCancel}>
           Annuleren
         </Button>
-        <Button onClick={handleSave} disabled={saving || !hasChanges}>
+        <Button onClick={handleSave} disabled={saving}>
           {saving ? 'Opslaan...' : 'Opslaan'}
         </Button>
       </div>
     </div>
   );
 };
+

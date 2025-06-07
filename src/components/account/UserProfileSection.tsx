@@ -1,10 +1,11 @@
 
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Save, User } from 'lucide-react';
+import { Save } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -40,11 +41,6 @@ export const UserProfileSection = ({
 }: UserProfileSectionProps) => {
   return (
     <div className="bg-muted/40 rounded-lg p-6 space-y-4">
-      <div className="flex items-center gap-2">
-        <User className="h-5 w-5" />
-        <h3 className="text-lg font-medium">Persoonlijke Informatie</h3>
-      </div>
-      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="full-name" className="text-sm font-medium mb-2 block">Volledige Naam</Label>
@@ -102,3 +98,4 @@ export const UserProfileSection = ({
     </div>
   );
 };
+

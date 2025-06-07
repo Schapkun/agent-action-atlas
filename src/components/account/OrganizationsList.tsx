@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Building2, Briefcase, Trash2 } from 'lucide-react';
@@ -32,13 +33,6 @@ export const OrganizationsList = ({
 }: OrganizationsListProps) => {
   return (
     <div className="bg-muted/40 rounded-lg p-6">
-      <div className="flex items-center gap-2 mb-6">
-        <Building2 className="h-5 w-5" />
-        <h3 className="text-lg font-medium">
-          {isViewingOwnProfile ? 'Mijn Organisaties & Werkruimtes' : 'Organisaties & Werkruimtes'}
-        </h3>
-      </div>
-      
       {organizations.length === 0 ? (
         <p className="text-muted-foreground text-sm">
           {isViewingOwnProfile 
@@ -102,3 +96,4 @@ export const OrganizationsList = ({
     </div>
   );
 };
+
