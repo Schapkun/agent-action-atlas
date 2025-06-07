@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,6 +28,7 @@ interface Workspace {
   id: string;
   name: string;
   organization_name: string;
+  role?: string;
 }
 
 interface MyAccountProps {
@@ -148,6 +150,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
         const { data: workspaceData, error: workspaceError } = await supabase
           .from('workspace_members')
           .select(`
+            role,
             workspaces!fk_workspace_members_workspace (
               id,
               name,
@@ -164,7 +167,8 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
           const workspaces = workspaceData?.map(item => ({
             id: item.workspaces?.id || '',
             name: item.workspaces?.name || '',
-            organization_name: item.workspaces?.organizations?.name || ''
+            organization_name: item.workspaces?.organizations?.name || '',
+            role: item.role
           })) || [];
           setWorkspaces(workspaces);
         }
@@ -229,10 +233,108 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
     }
   };
 
+  const updateOrganizationRole = async (organizationId: string, newRole: string, organizationName: string) => {
+    if (!targetUserId || !user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('organization_members')
+        .update({ role: newRole })
+        .eq('user_id', targetUserId)
+        .eq('organization_id', organizationId);
+
+      if (error) throw error;
+
+      // Log the action
+      try {
+        await supabase
+          .from('history_logs')
+          .insert({
+            user_id: user.id,
+            action: 'Organisatierol bijgewerkt',
+            details: { 
+              target_user_id: targetUserId,
+              organization_id: organizationId,
+              organization_name: organizationName,
+              new_role: newRole
+            }
+          });
+      } catch (logError) {
+        console.error('Failed to log role update:', logError);
+      }
+
+      toast({
+        title: "Succes",
+        description: `Rol bijgewerkt naar ${newRole} in organisatie "${organizationName}"`,
+      });
+
+      // Refresh data
+      fetchUserData();
+    } catch (error) {
+      console.error('Error updating organization role:', error);
+      toast({
+        title: "Error",
+        description: "Kon rol niet bijwerken",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateWorkspaceRole = async (workspaceId: string, newRole: string, workspaceName: string) => {
+    if (!targetUserId || !user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('workspace_members')
+        .update({ role: newRole })
+        .eq('user_id', targetUserId)
+        .eq('workspace_id', workspaceId);
+
+      if (error) throw error;
+
+      // Log the action
+      try {
+        await supabase
+          .from('history_logs')
+          .insert({
+            user_id: user.id,
+            action: 'Werkruimterol bijgewerkt',
+            details: { 
+              target_user_id: targetUserId,
+              workspace_id: workspaceId,
+              workspace_name: workspaceName,
+              new_role: newRole
+            }
+          });
+      } catch (logError) {
+        console.error('Failed to log role update:', logError);
+      }
+
+      toast({
+        title: "Succes",
+        description: `Rol bijgewerkt naar ${newRole} in werkruimte "${workspaceName}"`,
+      });
+
+      // Refresh data
+      fetchUserData();
+    } catch (error) {
+      console.error('Error updating workspace role:', error);
+      toast({
+        title: "Error",
+        description: "Kon rol niet bijwerken",
+        variant: "destructive",
+      });
+    }
+  };
+
   const removeFromOrganization = async (organizationId: string, organizationName: string) => {
     if (!targetUserId || !user?.id) return;
 
-    if (!confirm(`Weet je zeker dat je deze gebruiker wilt verwijderen uit organisatie "${organizationName}"?`)) {
+    const confirmMessage = isViewingOwnProfile 
+      ? `Weet je zeker dat je jezelf wilt verwijderen uit organisatie "${organizationName}"?`
+      : `Weet je zeker dat je deze gebruiker wilt verwijderen uit organisatie "${organizationName}"?`;
+
+    if (!confirm(confirmMessage)) {
       return;
     }
 
@@ -251,7 +353,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
           .from('history_logs')
           .insert({
             user_id: user.id,
-            action: 'Gebruiker verwijderd uit organisatie',
+            action: isViewingOwnProfile ? 'Zichzelf verwijderd uit organisatie' : 'Gebruiker verwijderd uit organisatie',
             details: { 
               target_user_id: targetUserId,
               organization_id: organizationId,
@@ -264,7 +366,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
 
       toast({
         title: "Succes",
-        description: `Gebruiker verwijderd uit organisatie "${organizationName}"`,
+        description: `${isViewingOwnProfile ? 'Jezelf' : 'Gebruiker'} verwijderd uit organisatie "${organizationName}"`,
       });
 
       // Refresh data
@@ -282,7 +384,11 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
   const removeFromWorkspace = async (workspaceId: string, workspaceName: string) => {
     if (!targetUserId || !user?.id) return;
 
-    if (!confirm(`Weet je zeker dat je deze gebruiker wilt verwijderen uit werkruimte "${workspaceName}"?`)) {
+    const confirmMessage = isViewingOwnProfile 
+      ? `Weet je zeker dat je jezelf wilt verwijderen uit werkruimte "${workspaceName}"?`
+      : `Weet je zeker dat je deze gebruiker wilt verwijderen uit werkruimte "${workspaceName}"?`;
+
+    if (!confirm(confirmMessage)) {
       return;
     }
 
@@ -301,7 +407,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
           .from('history_logs')
           .insert({
             user_id: user.id,
-            action: 'Gebruiker verwijderd uit werkruimte',
+            action: isViewingOwnProfile ? 'Zichzelf verwijderd uit werkruimte' : 'Gebruiker verwijderd uit werkruimte',
             details: { 
               target_user_id: targetUserId,
               workspace_id: workspaceId,
@@ -314,7 +420,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
 
       toast({
         title: "Succes",
-        description: `Gebruiker verwijderd uit werkruimte "${workspaceName}"`,
+        description: `${isViewingOwnProfile ? 'Jezelf' : 'Gebruiker'} verwijderd uit werkruimte "${workspaceName}"`,
       });
 
       // Refresh data
@@ -442,23 +548,39 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
               }
             </p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {organizations.map((org) => (
                 <div key={org.id} className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium">{org.name}</p>
-                    <p className="text-sm text-muted-foreground">Rol: {org.role}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm text-muted-foreground">Rol:</span>
+                      <Select
+                        value={org.role}
+                        onValueChange={(newRole) => updateOrganizationRole(org.id, newRole, org.name)}
+                        disabled={isViewingOwnProfile}
+                      >
+                        <SelectTrigger 
+                          className={`w-32 h-8 text-xs ${isViewingOwnProfile ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="member">Member</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="owner">Owner</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  {!isViewingOwnProfile && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFromOrganization(org.id, org.name)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeFromOrganization(org.id, org.name)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               ))}
             </div>
@@ -483,23 +605,40 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
               }
             </p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {workspaces.map((workspace) => (
                 <div key={workspace.id} className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium">{workspace.name}</p>
-                    <p className="text-sm text-muted-foreground">Organisatie: {workspace.organization_name}</p>
+                    <p className="text-sm text-muted-foreground mb-1">Organisatie: {workspace.organization_name}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Rol:</span>
+                      <Select
+                        value={workspace.role || 'member'}
+                        onValueChange={(newRole) => updateWorkspaceRole(workspace.id, newRole, workspace.name)}
+                        disabled={isViewingOwnProfile}
+                      >
+                        <SelectTrigger 
+                          className={`w-32 h-8 text-xs ${isViewingOwnProfile ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="member">Member</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="owner">Owner</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  {!isViewingOwnProfile && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFromWorkspace(workspace.id, workspace.name)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeFromWorkspace(workspace.id, workspace.name)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               ))}
             </div>
