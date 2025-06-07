@@ -1,8 +1,8 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAutoOwnerMembership } from './useAutoOwnerMembership';
 import type { Workspace, Organization } from '../types/workspace';
 
 export const useWorkspaceOperations = () => {
@@ -11,7 +11,6 @@ export const useWorkspaceOperations = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
-  const { addOwnersToNewWorkspace } = useAutoOwnerMembership();
 
   const fetchWorkspaces = async () => {
     if (!user?.id) {
@@ -234,9 +233,6 @@ export const useWorkspaceOperations = () => {
           role: 'admin'
         });
 
-      // Automatically add all owners to the new workspace
-      await addOwnersToNewWorkspace(workspaceData.id, organizationId);
-
       await supabase
         .from('history_logs')
         .insert({
@@ -249,7 +245,7 @@ export const useWorkspaceOperations = () => {
 
       toast({
         title: "Succes",
-        description: "Werkruimte succesvol aangemaakt en alle eigenaren zijn toegevoegd",
+        description: "Werkruimte succesvol aangemaakt",
       });
 
       fetchWorkspaces();

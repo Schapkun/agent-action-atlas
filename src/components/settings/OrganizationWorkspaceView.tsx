@@ -64,28 +64,6 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
     setShowCreateOrgForm(false);
   };
 
-  const handleUpdateOrganization = async (orgId: string, name: string) => {
-    const organization = organizations.find(org => org.id === orgId);
-    if (organization) {
-      await updateOrganization({ ...organization, name });
-    }
-  };
-
-  const handleUpdateWorkspace = async (workspaceId: string, name: string) => {
-    // Find the workspace across all organizations
-    let targetWorkspace = null;
-    for (const org of organizations) {
-      const workspace = org.workspaces.find(ws => ws.id === workspaceId);
-      if (workspace) {
-        targetWorkspace = { ...workspace, name };
-        break;
-      }
-    }
-    if (targetWorkspace) {
-      await updateWorkspace(targetWorkspace);
-    }
-  };
-
   if (loading) {
     return <div>Laden...</div>;
   }
@@ -133,11 +111,11 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
               key={org.id}
               organization={org}
               canCreate={canCreate}
-              onUpdateOrganization={handleUpdateOrganization}
-              onDeleteOrganization={(orgId, name) => deleteOrganization(orgId, name)}
+              onUpdateOrganization={updateOrganization}
+              onDeleteOrganization={deleteOrganization}
               onCreateWorkspace={createWorkspace}
-              onUpdateWorkspace={handleUpdateWorkspace}
-              onDeleteWorkspace={(workspaceId, name) => deleteWorkspace(workspaceId, name)}
+              onUpdateWorkspace={updateWorkspace}
+              onDeleteWorkspace={deleteWorkspace}
             />
           ))}
         </div>

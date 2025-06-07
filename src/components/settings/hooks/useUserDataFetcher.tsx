@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 interface UserProfile {
@@ -13,7 +14,6 @@ interface UserProfile {
   avatar_url?: string | null;
   updated_at?: string;
   member_since?: string;
-  user_role?: 'owner' | 'admin' | 'member';
 }
 
 export const useUserDataFetcher = () => {
@@ -31,10 +31,31 @@ export const useUserDataFetcher = () => {
 
     console.log('All users data (account owner):', usersData);
     
-    // For each user, get their ACTUAL organization memberships, roles, and workspaces
+    // Get all organizations and workspaces for reference
+    const [allOrgsResponse, allWorkspacesResponse] = await Promise.all([
+      supabase.from('organizations').select('id, name'),
+      supabase.from('workspaces').select('id, name')
+    ]);
+
+    const allOrgs = allOrgsResponse.data || [];
+    const allWorkspaces = allWorkspacesResponse.data || [];
+    
+    // For each user, get their organization memberships, roles, and workspaces
     const usersWithOrgs = await Promise.all(
       (usersData || []).map(async (userProfile) => {
-        // Get ACTUAL organization memberships for ALL users (including account owner)
+        // Special case for the account owner - they have access to ALL organizations and workspaces
+        if (userProfile.email === 'info@schapkun.com') {
+          return {
+            ...userProfile,
+            organizations: allOrgs.map(org => org.name),
+            workspaces: allWorkspaces.map(workspace => workspace.name),
+            isPending: false,
+            role: 'eigenaar',
+            member_since: userProfile.created_at
+          };
+        }
+
+        // Get organization memberships for other users
         const { data: orgMemberships } = await supabase
           .from('organization_members')
           .select(`
@@ -45,7 +66,7 @@ export const useUserDataFetcher = () => {
           `)
           .eq('user_id', userProfile.id);
 
-        // Get ACTUAL workspace memberships  
+        // Get workspace memberships  
         const { data: workspaceMemberships } = await supabase
           .from('workspace_members')
           .select(`
@@ -80,8 +101,7 @@ export const useUserDataFetcher = () => {
           workspaces,
           isPending: false,
           role: highestRole,
-          member_since: new Date(earliestMembership).toISOString(),
-          user_role: userProfile.user_role
+          member_since: new Date(earliestMembership).toISOString()
         };
       })
     );
@@ -124,8 +144,7 @@ export const useUserDataFetcher = () => {
       role: invitation.role,
       avatar_url: null,
       updated_at: invitation.created_at,
-      member_since: invitation.created_at,
-      user_role: invitation.role as 'owner' | 'admin' | 'member'
+      member_since: invitation.created_at
     }));
   };
 
@@ -161,13 +180,7 @@ export const useUserDataFetcher = () => {
         }
         
         console.log('Created new profile:', newProfile);
-        return [{
-          ...newProfile, 
-          isPending: false, 
-          role: 'member', 
-          member_since: newProfile.created_at,
-          user_role: newProfile.user_role
-        }];
+        return [{...newProfile, isPending: false, role: 'member', member_since: newProfile.created_at}];
       } else {
         throw currentUserError;
       }
@@ -194,8 +207,7 @@ export const useUserDataFetcher = () => {
       role: currentUserRole,
       member_since: currentUserMemberSince,
       organizations: [],
-      workspaces: [],
-      user_role: currentUserProfile.user_role
+      workspaces: []
     }];
     
     // Then get their organization memberships
@@ -220,7 +232,7 @@ export const useUserDataFetcher = () => {
           user_id, 
           role, 
           created_at,
-          profiles(id, email, full_name, created_at, avatar_url, updated_at, user_role)
+          profiles(id, email, full_name, created_at, avatar_url, updated_at)
         `)
         .in('organization_id', orgIds)
         .neq('user_id', userId);
@@ -262,8 +274,7 @@ export const useUserDataFetcher = () => {
               role: item.role,
               member_since: item.created_at,
               organizations,
-              workspaces,
-              user_role: userProfile.user_role
+              workspaces
             });
           }
         }
@@ -349,8 +360,7 @@ export const useUserDataFetcher = () => {
       role: invitation.role,
       avatar_url: null,
       updated_at: invitation.created_at,
-      member_since: invitation.created_at,
-      user_role: invitation.role as 'owner' | 'admin' | 'member'
+      member_since: invitation.created_at
     }));
   };
 
