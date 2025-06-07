@@ -47,6 +47,7 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
 }) => {
   const [orgName, setOrgName] = useState('');
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [originalWorkspaces, setOriginalWorkspaces] = useState<Workspace[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [orgUsers, setOrgUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
@@ -62,6 +63,17 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
       fetchUsersAndAccess();
     }
   }, [organization]);
+
+  // Reset workspace names when dialog closes
+  useEffect(() => {
+    if (!isOpen) {
+      // Reset workspaces to their original state
+      setWorkspaces(originalWorkspaces);
+      setEditingWorkspace(null);
+      setShowAddWorkspace(false);
+      setNewWorkspaceName('');
+    }
+  }, [isOpen, originalWorkspaces]);
 
   const fetchUsersAndAccess = async () => {
     if (!organization) return;
@@ -130,6 +142,7 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
 
       console.log('Workspaces with users:', workspacesWithUsers);
       setWorkspaces(workspacesWithUsers);
+      setOriginalWorkspaces(workspacesWithUsers); // Store original state
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
@@ -318,8 +331,13 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
         }
       }
 
+      // Update both current state and original state after successful save
+      const updatedWorkspace = { ...workspaces.find(w => w.id === workspaceId)!, name: name.trim() };
       setWorkspaces(prev => prev.map(w => 
-        w.id === workspaceId ? { ...w, name: name.trim() } : w
+        w.id === workspaceId ? updatedWorkspace : w
+      ));
+      setOriginalWorkspaces(prev => prev.map(w => 
+        w.id === workspaceId ? updatedWorkspace : w
       ));
       setEditingWorkspace(null);
 
@@ -351,6 +369,7 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
       if (error) throw error;
 
       setWorkspaces(prev => prev.filter(w => w.id !== workspaceId));
+      setOriginalWorkspaces(prev => prev.filter(w => w.id !== workspaceId));
 
       toast({
         title: "Succes",
@@ -388,6 +407,7 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
       };
 
       setWorkspaces(prev => [...prev, newWorkspace]);
+      setOriginalWorkspaces(prev => [...prev, newWorkspace]);
       setNewWorkspaceName('');
       setShowAddWorkspace(false);
 
@@ -419,8 +439,18 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
     onClose();
   };
 
+  const handleCancel = () => {
+    // Reset to original state
+    setWorkspaces(originalWorkspaces);
+    setOrgName(organization?.name || '');
+    setEditingWorkspace(null);
+    setShowAddWorkspace(false);
+    setNewWorkspaceName('');
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleCancel}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">
@@ -550,7 +580,16 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => setEditingWorkspace(null)}
+                              onClick={() => {
+                                // Reset to original name when canceling edit
+                                const originalWorkspace = originalWorkspaces.find(w => w.id === workspace.id);
+                                if (originalWorkspace) {
+                                  setWorkspaces(prev => prev.map(w => 
+                                    w.id === workspace.id ? {...w, name: originalWorkspace.name} : w
+                                  ));
+                                }
+                                setEditingWorkspace(null);
+                              }}
                             >
                               Annuleren
                             </Button>
@@ -623,7 +662,7 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
         </Tabs>
 
         <div className="flex justify-end space-x-2 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={handleCancel}>
             Annuleren
           </Button>
           <Button onClick={handleSaveAll} disabled={loading}>
