@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -136,9 +135,30 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
     setOrgUsers(prev => prev.map(user => 
       user.id === userId ? { ...user, hasAccess } : user
     ));
+
+    // If user is being removed from organization, also remove from all workspaces
+    if (!hasAccess) {
+      setWorkspaces(prev => prev.map(workspace => ({
+        ...workspace,
+        users: workspace.users?.map(user =>
+          user.id === userId ? { ...user, hasAccess: false } : user
+        ) || []
+      })));
+    }
   };
 
   const handleWorkspaceUserToggle = (workspaceId: string, userId: string, hasAccess: boolean) => {
+    // Check if user has access to organization first
+    const userHasOrgAccess = orgUsers.find(u => u.id === userId)?.hasAccess;
+    if (!userHasOrgAccess && hasAccess) {
+      toast({
+        title: "Niet toegestaan",
+        description: "Gebruiker moet eerst toegang hebben tot de organisatie",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setWorkspaces(prev => prev.map(workspace => {
       if (workspace.id === workspaceId) {
         return {
@@ -150,6 +170,11 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
       }
       return workspace;
     }));
+  };
+
+  const isUserDisabledForWorkspace = (userId: string) => {
+    const userHasOrgAccess = orgUsers.find(u => u.id === userId)?.hasAccess;
+    return !userHasOrgAccess;
   };
 
   const handleUpdateOrganization = async () => {
@@ -531,23 +556,32 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
                         Werkruimte Gebruikers
                       </Label>
                       <div className="max-h-32 overflow-y-auto border rounded-md p-2 space-y-1">
-                        {workspace.users?.map((user) => (
-                          <div key={user.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`ws-${workspace.id}-${user.id}`}
-                              checked={user.hasAccess}
-                              onCheckedChange={(checked) => 
-                                handleWorkspaceUserToggle(workspace.id, user.id, checked as boolean)
-                              }
-                            />
-                            <label 
-                              htmlFor={`ws-${workspace.id}-${user.id}`}
-                              className="text-xs cursor-pointer flex-1"
-                            >
-                              {user.full_name || user.email}
-                            </label>
-                          </div>
-                        ))}
+                        {workspace.users?.map((user) => {
+                          const isDisabled = isUserDisabledForWorkspace(user.id);
+                          return (
+                            <div key={user.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`ws-${workspace.id}-${user.id}`}
+                                checked={user.hasAccess}
+                                disabled={isDisabled}
+                                onCheckedChange={(checked) => 
+                                  handleWorkspaceUserToggle(workspace.id, user.id, checked as boolean)
+                                }
+                              />
+                              <label 
+                                htmlFor={`ws-${workspace.id}-${user.id}`}
+                                className={`text-xs cursor-pointer flex-1 ${
+                                  isDisabled ? 'text-muted-foreground opacity-50' : ''
+                                }`}
+                              >
+                                {user.full_name || user.email}
+                                {isDisabled && (
+                                  <span className="ml-1 text-red-500">(Eerst organisatie toegang vereist)</span>
+                                )}
+                              </label>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </CardContent>
