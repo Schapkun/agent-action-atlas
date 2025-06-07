@@ -116,6 +116,7 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
               onCreateWorkspace={createWorkspace}
               onUpdateWorkspace={updateWorkspace}
               onDeleteWorkspace={deleteWorkspace}
+              onRefresh={fetchOrganizations}
             />
           ))}
         </div>

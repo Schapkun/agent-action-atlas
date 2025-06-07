@@ -107,6 +107,7 @@ export const OrganizationSettings = () => {
               onCreateWorkspace={createWorkspace}
               onUpdateWorkspace={updateWorkspace}
               onDeleteWorkspace={deleteWorkspace}
+              onRefresh={fetchOrganizations}
             />
           ))
         )}
