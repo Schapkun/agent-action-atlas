@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -523,29 +522,32 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
 
   return (
     <div className="h-full flex flex-col">
-      {/* Content Area - Scrollable */}
-      <ScrollArea className="flex-1 pr-4">
-        <div className="space-y-6 pb-4">
-          <div className="flex items-center space-x-4">
-            <Avatar className="h-12 w-12">
-              <AvatarImage src={profile.avatar_url} />
-              <AvatarFallback className="text-sm">
-                {getInitials(profile.full_name || profile.email || 'U')}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h2 className="text-lg font-semibold">
-                {isViewingOwnProfile ? 'Mijn Account' : `Account van ${profile.full_name || profile.email}`}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {isViewingOwnProfile 
-                  ? 'Beheer je persoonlijke gegevens en voorkeuren'
-                  : 'Bekijk en beheer gebruikersgegevens'
-                }
-              </p>
-            </div>
+      {/* Fixed Header */}
+      <div className="flex-shrink-0 p-6 pb-4">
+        <div className="flex items-center space-x-4">
+          <Avatar className="h-12 w-12">
+            <AvatarImage src={profile.avatar_url} />
+            <AvatarFallback className="text-sm">
+              {getInitials(profile.full_name || profile.email || 'U')}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <h2 className="text-lg font-semibold">
+              {isViewingOwnProfile ? 'Mijn Account' : `Account van ${profile.full_name || profile.email}`}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {isViewingOwnProfile 
+                ? 'Beheer je persoonlijke gegevens en voorkeuren'
+                : 'Bekijk en beheer gebruikersgegevens'
+              }
+            </p>
           </div>
+        </div>
+      </div>
 
+      {/* Scrollable Content Area */}
+      <ScrollArea className="flex-1 px-6">
+        <div className="space-y-6 pb-4">
           {/* Profile Information and Role Management - No section title */}
           <UserProfileSection
             profile={profile}
@@ -570,7 +572,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
       </ScrollArea>
 
       {/* Fixed Footer with Save/Cancel Buttons */}
-      <div className="flex justify-end space-x-2 pt-4 border-t flex-shrink-0">
+      <div className="flex justify-end space-x-2 pt-4 px-6 border-t flex-shrink-0">
         <Button variant="outline" onClick={handleCancel}>
           Annuleren
         </Button>
