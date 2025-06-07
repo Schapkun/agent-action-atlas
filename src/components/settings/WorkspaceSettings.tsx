@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from './hooks/useUserRole';
 import { Trash2, Plus, Edit, Building2 } from 'lucide-react';
 
 interface Workspace {
@@ -39,53 +40,16 @@ export const WorkspaceSettings = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
   const [newWorkspace, setNewWorkspace] = useState({ name: '', organization_id: '' });
-  const [userRole, setUserRole] = useState<string>('member');
   const { user } = useAuth();
+  const { userRole } = useUserRole(user?.id, user?.email);
   const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
-      fetchUserRole();
       fetchWorkspaces();
       fetchOrganizations();
     }
   }, [user]);
-
-  const fetchUserRole = async () => {
-    if (!user?.id) return;
-
-    try {
-      // Check if user is the account owner (Michael Schapkun)
-      if (user.email === 'info@schapkun.com') {
-        setUserRole('owner');
-        return;
-      }
-
-      // Get user's highest role from their organization memberships
-      const { data: memberships } = await supabase
-        .from('organization_members')
-        .select('role')
-        .eq('user_id', user.id)
-        .order('role');
-
-      if (memberships && memberships.length > 0) {
-        // Set the highest role (owner > admin > member)
-        const roles = memberships.map(m => m.role);
-        if (roles.includes('owner')) {
-          setUserRole('owner');
-        } else if (roles.includes('admin')) {
-          setUserRole('admin');
-        } else {
-          setUserRole('member');
-        }
-      } else {
-        setUserRole('member');
-      }
-    } catch (error) {
-      console.error('Error fetching user role:', error);
-      setUserRole('member');
-    }
-  };
 
   const fetchWorkspaces = async () => {
     if (!user?.id) {
@@ -284,11 +248,13 @@ export const WorkspaceSettings = () => {
 
   // Check if user can create workspaces - use same logic as organization creation
   const canCreateWorkspace = () => {
+    console.log('WorkspaceSettings - canCreateWorkspace check:', { userRole, userEmail: user?.email });
+    
     // Account owner can always create workspaces
     if (user?.email === 'info@schapkun.com') return true;
     
     // Only admin and owner roles can create workspaces
-    return userRole === 'admin' || userRole === 'owner';
+    return userRole === 'admin' || userRole === 'eigenaar';
   };
 
   const createWorkspace = async () => {
@@ -429,6 +395,8 @@ export const WorkspaceSettings = () => {
   if (loading) {
     return <div className="text-sm">Werkruimtes laden...</div>;
   }
+
+  console.log('WorkspaceSettings - Rendering with canCreateWorkspace:', canCreateWorkspace());
 
   return (
     <div className="space-y-4">
