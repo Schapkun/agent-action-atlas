@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Trash2, Building2 } from 'lucide-react';
+import { Trash2, Building2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Workspace, GroupedWorkspaces } from '../types/workspace';
 
@@ -43,23 +43,14 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
               </div>
               <div className="flex space-x-1">
                 {(workspace.user_role === 'admin' || workspace.user_role === 'owner' || user?.email === 'info@schapkun.com') && (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEditWorkspace(workspace)}
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onDeleteWorkspace(workspace.id, workspace.name)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDeleteWorkspace(workspace.id, workspace.name)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
                 )}
               </div>
             </div>
