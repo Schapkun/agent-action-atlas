@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Filter, FileText, Phone, Mail, Receipt, Gavel } from 'lucide-react';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import type { AIAction, ActionCategory, ActionStatus } from '@/types/dashboard';
 
 interface ActionOverviewProps {
@@ -17,60 +18,10 @@ export const ActionOverview = ({ limit, showFilters = true }: ActionOverviewProp
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<ActionCategory | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<ActionStatus | 'all'>('all');
+  const { selectedOrganization, selectedWorkspace } = useOrganization();
 
-  // Mock data - in real app this would come from API
-  const mockActions: AIAction[] = [
-    {
-      id: '1',
-      category: 'invoice_created',
-      title: 'Factuur aangemaakt',
-      description: 'Factuur #2024-001 aangemaakt voor juridisch advies',
-      client: 'ABC Holding B.V.',
-      dossier: 'DOS-2024-001',
-      timestamp: new Date('2024-01-15T10:30:00'),
-      status: 'completed'
-    },
-    {
-      id: '2',
-      category: 'phone_call_transcribed',
-      title: 'Telefoongesprek getranscribeerd',
-      description: 'Gesprek met cliënt over contractonderhandeling',
-      client: 'Jan Janssen',
-      dossier: 'DOS-2024-002',
-      timestamp: new Date('2024-01-15T09:15:00'),
-      status: 'completed'
-    },
-    {
-      id: '3',
-      category: 'document_created',
-      title: 'Contract opgesteld',
-      description: 'Arbeidscontract opgesteld voor nieuwe medewerker',
-      client: 'XYZ Corp',
-      dossier: 'DOS-2024-003',
-      timestamp: new Date('2024-01-15T08:45:00'),
-      status: 'draft'
-    },
-    {
-      id: '4',
-      category: 'email_sent',
-      title: 'E-mail verzonden',
-      description: 'Bevestiging van afspraak naar cliënt',
-      client: 'Maria Peters',
-      dossier: 'DOS-2024-004',
-      timestamp: new Date('2024-01-14T16:20:00'),
-      status: 'completed'
-    },
-    {
-      id: '5',
-      category: 'automated_decision',
-      title: 'Herinnering verzonden',
-      description: 'Automatische herinnering voor openstaande factuur',
-      client: 'DEF Partners',
-      dossier: 'DOS-2024-005',
-      timestamp: new Date('2024-01-14T14:10:00'),
-      status: 'pending'
-    }
-  ];
+  // Empty array - no mock data, will be replaced with real data later
+  const actions: AIAction[] = [];
 
   const getActionIcon = (category: ActionCategory) => {
     switch (category) {
@@ -124,24 +75,17 @@ export const ActionOverview = ({ limit, showFilters = true }: ActionOverviewProp
     }
   };
 
-  const getCategoryLabel = (category: ActionCategory) => {
-    const labels = {
-      'invoice_created': 'Factuur aangemaakt',
-      'invoice_sent': 'Factuur verzonden',
-      'invoice_received': 'Factuur ontvangen',
-      'invoice_draft': 'Concept factuur',
-      'phone_call_registered': 'Telefoongesprek geregistreerd',
-      'phone_call_transcribed': 'Telefoongesprek getranscribeerd',
-      'letter_sent': 'Brief verzonden',
-      'email_sent': 'E-mail verzonden',
-      'document_created': 'Document aangemaakt',
-      'automated_decision': 'Automatisch besluit'
-    };
-    return labels[category];
+  const getContextInfo = () => {
+    if (selectedWorkspace) {
+      return `Werkruimte: ${selectedWorkspace.name}`;
+    } else if (selectedOrganization) {
+      return `Organisatie: ${selectedOrganization.name}`;
+    }
+    return 'Geen selectie';
   };
 
   const filteredActions = useMemo(() => {
-    let filtered = mockActions;
+    let filtered = actions;
 
     // Apply search filter
     if (searchTerm) {
@@ -169,7 +113,7 @@ export const ActionOverview = ({ limit, showFilters = true }: ActionOverviewProp
     }
 
     return filtered;
-  }, [mockActions, searchTerm, categoryFilter, statusFilter, limit]);
+  }, [actions, searchTerm, categoryFilter, statusFilter, limit]);
 
   return (
     <Card>
@@ -184,7 +128,19 @@ export const ActionOverview = ({ limit, showFilters = true }: ActionOverviewProp
           )}
         </CardTitle>
         
-        {showFilters && (
+        {!selectedOrganization && !selectedWorkspace && (
+          <div className="text-sm text-muted-foreground">
+            Selecteer een organisatie of werkruimte om acties te bekijken
+          </div>
+        )}
+
+        {(selectedOrganization || selectedWorkspace) && (
+          <div className="text-sm text-muted-foreground">
+            Data voor: {getContextInfo()}
+          </div>
+        )}
+        
+        {showFilters && (selectedOrganization || selectedWorkspace) && (
           <div className="flex flex-col sm:flex-row gap-4 mt-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -228,46 +184,52 @@ export const ActionOverview = ({ limit, showFilters = true }: ActionOverviewProp
 
       <CardContent>
         <div className="space-y-4">
-          {filteredActions.map((action) => {
-            const Icon = getActionIcon(action.category);
-            return (
-              <div key={action.id} className="flex items-start space-x-4 p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Icon className="h-5 w-5 text-primary" />
-                  </div>
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="text-sm font-medium text-foreground truncate">
-                      {action.title}
-                    </h4>
-                    <Badge className={getStatusColor(action.status)}>
-                      {getStatusLabel(action.status)}
-                    </Badge>
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {action.description}
-                  </p>
-                  
-                  <div className="flex items-center text-xs text-muted-foreground space-x-4">
-                    <span className="font-medium">{action.client}</span>
-                    <span>•</span>
-                    <span>{action.dossier}</span>
-                    <span>•</span>
-                    <span>{action.timestamp.toLocaleDateString('nl-NL')} {action.timestamp.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          
-          {filteredActions.length === 0 && (
+          {!selectedOrganization && !selectedWorkspace ? (
             <div className="text-center py-8 text-muted-foreground">
-              Geen acties gevonden die voldoen aan de zoekcriteria.
+              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Selecteer een organisatie of werkruimte om AI acties te bekijken</p>
             </div>
+          ) : filteredActions.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Geen acties gevonden voor de geselecteerde context</p>
+            </div>
+          ) : (
+            filteredActions.map((action) => {
+              const Icon = getActionIcon(action.category);
+              return (
+                <div key={action.id} className="flex items-start space-x-4 p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
+                  <div className="flex-shrink-0">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="text-sm font-medium text-foreground truncate">
+                        {action.title}
+                      </h4>
+                      <Badge className={getStatusColor(action.status)}>
+                        {getStatusLabel(action.status)}
+                      </Badge>
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground mb-2">
+                      {action.description}
+                    </p>
+                    
+                    <div className="flex items-center text-xs text-muted-foreground space-x-4">
+                      <span className="font-medium">{action.client}</span>
+                      <span>•</span>
+                      <span>{action.dossier}</span>
+                      <span>•</span>
+                      <span>{action.timestamp.toLocaleDateString('nl-NL')} {action.timestamp.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
       </CardContent>
