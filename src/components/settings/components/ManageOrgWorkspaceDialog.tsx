@@ -451,25 +451,25 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">
             Organisatie & Werkruimtes Beheren
           </DialogTitle>
         </DialogHeader>
         
-        <Tabs defaultValue="organization" className="w-full">
+        <Tabs defaultValue="organization" className="w-full flex-1 flex flex-col">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="organization" className="text-sm">Organisatie</TabsTrigger>
             <TabsTrigger value="workspaces" className="text-sm">Werkruimtes</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="organization" className="space-y-4 min-h-[500px]">
+          <TabsContent value="organization" className="space-y-4 flex-1 flex flex-col">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">Organisatie Details</h3>
             </div>
 
-            <Card>
+            <Card className="flex-1">
               <CardContent className="p-6 space-y-4">
                 <div>
                   <Label htmlFor="orgName" className="text-sm font-medium">Organisatie Naam</Label>
@@ -483,7 +483,7 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
 
                 <div>
                   <Label className="text-sm font-medium">Organisatie Gebruikers</Label>
-                  <div className="max-h-80 overflow-y-auto border rounded-md p-3 mt-2 space-y-2">
+                  <div className="max-h-60 overflow-y-auto border rounded-md p-3 mt-2 space-y-2">
                     {loading ? (
                       <div className="text-sm text-muted-foreground">Laden...</div>
                     ) : (
@@ -513,7 +513,7 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
               </CardContent>
             </Card>
 
-            <div className="flex justify-end space-x-2 pt-4">
+            <div className="flex justify-end space-x-2 pt-4 border-t">
               <Button variant="outline" onClick={handleCancel}>
                 Annuleren
               </Button>
@@ -523,7 +523,7 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
             </div>
           </TabsContent>
 
-          <TabsContent value="workspaces" className="space-y-4 min-h-[500px]">
+          <TabsContent value="workspaces" className="space-y-4 flex-1 flex flex-col">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">Werkruimtes</h3>
               {!showAddWorkspace && (
@@ -558,7 +558,7 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
               </Card>
             )}
 
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="space-y-3 flex-1 overflow-y-auto">
               {loading ? (
                 <div className="text-sm text-muted-foreground">Werkruimtes laden...</div>
               ) : workspaces.length === 0 ? (
@@ -668,17 +668,17 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
                 ))
               )}
             </div>
+
+            <div className="flex justify-end space-x-2 pt-4 border-t">
+              <Button variant="outline" onClick={handleCancel}>
+                Annuleren
+              </Button>
+              <Button onClick={handleSaveAll} disabled={loading}>
+                {loading ? 'Opslaan...' : 'Alles Opslaan'}
+              </Button>
+            </div>
           </TabsContent>
         </Tabs>
-
-        <div className="flex justify-end space-x-2 pt-4 border-t">
-          <Button variant="outline" onClick={handleCancel}>
-            Annuleren
-          </Button>
-          <Button onClick={handleSaveAll} disabled={loading}>
-            {loading ? 'Opslaan...' : 'Alles Opslaan'}
-          </Button>
-        </div>
       </DialogContent>
     </Dialog>
   );
