@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -112,18 +113,26 @@ export const UserProfileCard = ({
                 {getRoleText(userProfile.role)}
               </Badge>
             </div>
-            <p className={`text-sm ${isPending ? 'text-orange-600' : 'text-muted-foreground'}`}>
+            <p className={`text-sm mb-2 ${isPending ? 'text-orange-600' : 'text-muted-foreground'}`}>
               {isPending ? 'Uitnodiging pending' : userProfile.email}
             </p>
-            <p className="text-xs text-muted-foreground">
-              Organisaties: {userProfile.organizations?.length 
-                ? userProfile.organizations.join(', ')
-                : isAccountOwner ? 'Geen organisaties' : '-'
-              } • Werkruimtes: {userProfile.workspaces?.length 
-                ? userProfile.workspaces.join(', ')
-                : 'Geen werkruimtes'
-              } • {isPending ? 'Uitgenodigd' : 'Lid sinds'}: {new Date((userProfile as any).member_since || userProfile.created_at).toLocaleDateString('nl-NL')}
-            </p>
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <p>
+                <span className="font-medium">Organisaties:</span> {userProfile.organizations?.length 
+                  ? userProfile.organizations.join(', ')
+                  : isAccountOwner ? 'Geen organisaties' : '-'
+                }
+              </p>
+              <p>
+                <span className="font-medium">Werkruimtes:</span> {userProfile.workspaces?.length 
+                  ? userProfile.workspaces.join(', ')
+                  : 'Geen werkruimtes'
+                }
+              </p>
+              <p>
+                <span className="font-medium">{isPending ? 'Uitgenodigd' : 'Lid sinds'}:</span> {new Date((userProfile as any).member_since || userProfile.created_at).toLocaleDateString('nl-NL')}
+              </p>
+            </div>
           </div>
           <div className="flex space-x-1 flex-shrink-0 ml-2">
             {isAccountOwner && (
