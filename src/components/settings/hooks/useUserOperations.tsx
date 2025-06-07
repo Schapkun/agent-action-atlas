@@ -165,13 +165,17 @@ export const useUserOperations = (userId: string | undefined, onUsersUpdate: () 
           throw profileError;
         }
 
-        console.log('Deleting from auth.users...');
-        // Use the admin API to delete the user from auth.users
-        const { error: deleteAuthError } = await supabase.auth.admin.deleteUser(userIdToDelete);
+        console.log('Deleting from auth.users using edge function...');
+        // Use the edge function to delete the user from auth.users
+        const { data: deleteResponse, error: deleteAuthError } = await supabase.functions.invoke('delete-user', {
+          body: { userId: userIdToDelete }
+        });
 
         if (deleteAuthError) {
-          console.error('Error deleting auth user:', deleteAuthError);
-          // Don't throw here as the user data is already deleted
+          console.error('Error calling delete-user function:', deleteAuthError);
+          // Don't throw here as the user data is already deleted from other tables
+        } else {
+          console.log('Auth deletion response:', deleteResponse);
         }
 
         // Log the user deletion
