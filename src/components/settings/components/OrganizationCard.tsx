@@ -43,13 +43,16 @@ export const OrganizationCard = ({
   };
 
   const handleEditOrganization = () => {
+    console.log('OrganizationCard - handleEditOrganization clicked for:', organization.name);
     setEditingItem({
       type: 'organization',
       item: { id: organization.id, name: organization.name }
     });
+    console.log('OrganizationCard - editingItem set to organization:', { id: organization.id, name: organization.name });
   };
 
   const handleEditWorkspace = (workspace: {id: string; name: string; organization_id: string}) => {
+    console.log('OrganizationCard - handleEditWorkspace clicked for:', workspace.name);
     setEditingItem({
       type: 'workspace',
       item: {
@@ -58,7 +61,10 @@ export const OrganizationCard = ({
         organization_id: workspace.organization_id
       }
     });
+    console.log('OrganizationCard - editingItem set to workspace:', workspace);
   };
+
+  console.log('OrganizationCard - Current editingItem state:', editingItem);
 
   return (
     <div className="bg-background rounded-lg border border-border/50">
@@ -132,7 +138,10 @@ export const OrganizationCard = ({
       {/* Single Edit Dialog for both Organization and Workspace */}
       <EditOrgWorkspaceDialog
         isOpen={!!editingItem}
-        onClose={() => setEditingItem(null)}
+        onClose={() => {
+          console.log('OrganizationCard - Closing EditOrgWorkspaceDialog');
+          setEditingItem(null);
+        }}
         type={editingItem?.type || 'organization'}
         item={editingItem?.item || null}
         onUpdate={handleRefreshData}
