@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -580,7 +581,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                       <div>
                         <h3 className="font-semibold">{org.name}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {org.workspaces.length} werkruimte{org.workspaces.length !== 1 ? 's' : ''}
+                          Werkruimtes ({org.workspaces.length})
                         </p>
                       </div>
                     </div>
@@ -596,16 +597,13 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
 
                   {/* Workspaces under this organization */}
                   {org.workspaces.length > 0 && (
-                    <div className="ml-8 space-y-2">
+                    <div className="ml-6 space-y-2">
                       {org.workspaces.map((workspace) => (
                         <div key={workspace.id} className="flex items-center justify-between p-3 bg-muted/15 rounded-lg">
                           <div className="flex items-center gap-3">
                             <Briefcase className="h-4 w-4 text-muted-foreground" />
                             <div>
                               <p className="font-medium">{workspace.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                Werkruimte in {workspace.organization_name}
-                              </p>
                             </div>
                           </div>
                           <Button
