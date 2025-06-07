@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -527,14 +525,11 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
       {/* Content Area - Scrollable */}
       <ScrollArea className="flex-1 pr-4">
         <div className="space-y-6 pb-4">
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-12 w-12">
-              <AvatarImage src={profile.avatar_url} />
-              <AvatarFallback className="text-sm">
-                {getInitials(profile.full_name || profile.email || 'U')}
-              </AvatarFallback>
-            </Avatar>
-            <div>
+          <div className="flex items-center space-x-4">
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold">
+                {isViewingOwnProfile ? 'Mijn Account' : `Account van ${profile.full_name || profile.email}`}
+              </h2>
               <p className="text-sm text-muted-foreground">
                 {isViewingOwnProfile 
                   ? 'Beheer je persoonlijke gegevens en voorkeuren'
@@ -542,6 +537,12 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
                 }
               </p>
             </div>
+            <Avatar className="h-12 w-12">
+              <AvatarImage src={profile.avatar_url} />
+              <AvatarFallback className="text-sm">
+                {getInitials(profile.full_name || profile.email || 'U')}
+              </AvatarFallback>
+            </Avatar>
           </div>
 
           {/* Profile Information and Role Management - No section title */}
@@ -579,4 +580,3 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
     </div>
   );
 };
-
