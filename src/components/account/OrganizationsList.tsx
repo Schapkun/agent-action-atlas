@@ -66,7 +66,7 @@ export const OrganizationsList = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => onRemoveFromOrganization(org.id, org.name)}
-                    className="text-destructive hover:text-destructive h-8 w-8 p-0 mr-1"
+                    className="text-destructive hover:text-destructive h-8 w-8 p-0"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>

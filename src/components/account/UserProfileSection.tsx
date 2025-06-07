@@ -41,7 +41,7 @@ export const UserProfileSection = ({
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="full-name" className="text-sm">Volledige Naam</Label>
+            <Label htmlFor="full-name" className="text-sm font-medium">Volledige Naam</Label>
             <Input
               id="full-name"
               value={profile.full_name || ''}
@@ -52,7 +52,7 @@ export const UserProfileSection = ({
             />
           </div>
           <div>
-            <Label htmlFor="email" className="text-sm">E-mailadres</Label>
+            <Label htmlFor="email" className="text-sm font-medium">E-mailadres</Label>
             <Input
               id="email"
               type="email"
