@@ -276,9 +276,6 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-lg font-medium">Organisaties & Werkruimtes</h3>
-        </div>
         {(user?.email === 'info@schapkun.com') && (
           <Button onClick={() => setShowCreateOrgForm(true)}>
             <Plus className="h-4 w-4 mr-2" />
