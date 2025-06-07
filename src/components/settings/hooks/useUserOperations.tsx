@@ -68,8 +68,19 @@ export const useUserOperations = (userId: string | undefined, onUsersUpdate: () 
     try {
       console.log('Starting deletion process for user:', userEmail, 'with ID:', userIdToDelete);
 
-      // Check if this is a pending invitation (invitation ID instead of user ID)
-      const isPendingInvitation = userIdToDelete.length === 36 && userIdToDelete.includes('-');
+      // First check if this ID exists in user_invitations table (pending invitation)
+      const { data: invitationData, error: invitationCheckError } = await supabase
+        .from('user_invitations')
+        .select('id')
+        .eq('id', userIdToDelete)
+        .maybeSingle();
+
+      if (invitationCheckError) {
+        console.error('Error checking invitation:', invitationCheckError);
+      }
+
+      const isPendingInvitation = !!invitationData;
+      console.log('Is pending invitation:', isPendingInvitation);
       
       if (isPendingInvitation) {
         console.log('Deleting pending invitation:', userIdToDelete);
