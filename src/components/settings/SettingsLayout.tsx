@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -83,7 +84,7 @@ export const SettingsLayout = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 max-w-6xl" style={{ paddingTop: '16px' }}>
+    <div className="container mx-auto px-4 max-w-6xl" style={{ paddingTop: '1px' }}>
       <Tabs defaultValue="organizations" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="organizations">Org & Werkruimtes</TabsTrigger>
