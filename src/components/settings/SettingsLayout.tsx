@@ -19,6 +19,8 @@ export const SettingsLayout = () => {
       if (!user?.id) return;
 
       try {
+        console.log('Fetching role for user:', user.email);
+        
         // Check if user is the account owner (first user in the system)
         const { data: allUsers } = await supabase
           .from('user_profiles')
@@ -27,7 +29,7 @@ export const SettingsLayout = () => {
           .limit(1);
 
         if (allUsers && allUsers.length > 0 && allUsers[0].id === user.id) {
-          console.log('User is account owner');
+          console.log('User is account owner, setting role to eigenaar');
           setUserRole('eigenaar');
           return;
         }
@@ -54,6 +56,8 @@ export const SettingsLayout = () => {
 
     fetchUserRole();
   }, [user?.id]);
+
+  console.log('SettingsLayout userRole state:', userRole);
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl">
