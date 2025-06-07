@@ -100,13 +100,13 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
       console.log('Profile data:', profileData);
       setProfile(profileData);
 
-      // Fetch organization memberships - fix the relationship reference
+      // Fetch organization memberships with correct relationship
       const { data: orgMemberships, error: orgError } = await supabase
         .from('organization_members')
         .select(`
           role,
           created_at,
-          organizations!organization_members_organization_id_fkey(id, name)
+          organizations(id, name)
         `)
         .eq('user_id', targetUserId);
 
@@ -116,14 +116,17 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
         console.error('Error fetching organization memberships:', orgError);
       }
 
-      // Fetch workspace memberships - fix the relationship reference
+      // Fetch workspace memberships with correct relationship
       const { data: workspaceMemberships, error: workspaceError } = await supabase
         .from('workspace_members')
         .select(`
           role,
           created_at,
-          workspaces!workspace_members_workspace_id_fkey(id, name, organization_id),
-          workspaces(organizations!workspaces_organization_id_fkey(name))
+          workspaces(
+            id, 
+            name,
+            organizations(name)
+          )
         `)
         .eq('user_id', targetUserId);
 
