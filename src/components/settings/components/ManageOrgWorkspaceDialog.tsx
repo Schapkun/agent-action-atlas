@@ -59,7 +59,6 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
   useEffect(() => {
     if (organization) {
       setOrgName(organization.name);
-      setWorkspaces(organization.workspaces || []);
       fetchUsersAndAccess();
     }
   }, [organization]);
@@ -77,6 +76,17 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
         .order('email');
 
       if (usersError) throw usersError;
+
+      // Get ALL workspaces for this organization from the database
+      const { data: allWorkspacesData, error: workspacesError } = await supabase
+        .from('workspaces')
+        .select('id, name, organization_id')
+        .eq('organization_id', organization.id)
+        .order('name');
+
+      if (workspacesError) throw workspacesError;
+
+      console.log('Fetched workspaces from database:', allWorkspacesData);
 
       // Get organization members
       const { data: orgMembers, error: orgMembersError } = await supabase
@@ -99,7 +109,7 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
 
       // Get workspace members for each workspace
       const workspacesWithUsers = await Promise.all(
-        workspaces.map(async (workspace) => {
+        (allWorkspacesData || []).map(async (workspace) => {
           const { data: wsMembers } = await supabase
             .from('workspace_members')
             .select('user_id')
@@ -118,6 +128,7 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
         })
       );
 
+      console.log('Workspaces with users:', workspacesWithUsers);
       setWorkspaces(workspacesWithUsers);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -498,95 +509,105 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
             )}
 
             <div className="space-y-3">
-              {workspaces.map((workspace) => (
-                <Card key={workspace.id}>
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      {editingWorkspace === workspace.id ? (
-                        <div className="flex space-x-2 flex-1">
-                          <Input
-                            value={workspace.name}
-                            onChange={(e) => setWorkspaces(prev => 
-                              prev.map(w => w.id === workspace.id ? {...w, name: e.target.value} : w)
-                            )}
-                            className="flex-1"
-                          />
-                          <Button
-                            size="sm"
-                            onClick={() => handleUpdateWorkspace(workspace.id, workspace.name)}
-                          >
-                            Opslaan
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditingWorkspace(null)}
-                          >
-                            Annuleren
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <CardTitle className="text-base">{workspace.name}</CardTitle>
-                          <div className="flex space-x-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setEditingWorkspace(workspace.id)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteWorkspace(workspace.id, workspace.name)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium flex items-center">
-                        <Users className="h-4 w-4 mr-1" />
-                        Werkruimte Gebruikers
-                      </Label>
-                      <div className="max-h-32 overflow-y-auto border rounded-md p-2 space-y-1">
-                        {workspace.users?.map((user) => {
-                          const isDisabled = isUserDisabledForWorkspace(user.id);
-                          return (
-                            <div key={user.id} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`ws-${workspace.id}-${user.id}`}
-                                checked={user.hasAccess}
-                                disabled={isDisabled}
-                                onCheckedChange={(checked) => 
-                                  handleWorkspaceUserToggle(workspace.id, user.id, checked as boolean)
-                                }
-                              />
-                              <label 
-                                htmlFor={`ws-${workspace.id}-${user.id}`}
-                                className={`text-xs cursor-pointer flex-1 ${
-                                  isDisabled ? 'text-muted-foreground opacity-50' : ''
-                                }`}
-                              >
-                                {user.full_name || user.email}
-                                {isDisabled && (
-                                  <span className="ml-1 text-red-500">(Eerst organisatie toegang vereist)</span>
-                                )}
-                              </label>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
+              {loading ? (
+                <div className="text-sm text-muted-foreground">Werkruimtes laden...</div>
+              ) : workspaces.length === 0 ? (
+                <Card>
+                  <CardContent className="p-4 text-center text-sm text-muted-foreground">
+                    Geen werkruimtes gevonden voor deze organisatie.
                   </CardContent>
                 </Card>
-              ))}
+              ) : (
+                workspaces.map((workspace) => (
+                  <Card key={workspace.id}>
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        {editingWorkspace === workspace.id ? (
+                          <div className="flex space-x-2 flex-1">
+                            <Input
+                              value={workspace.name}
+                              onChange={(e) => setWorkspaces(prev => 
+                                prev.map(w => w.id === workspace.id ? {...w, name: e.target.value} : w)
+                              )}
+                              className="flex-1"
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => handleUpdateWorkspace(workspace.id, workspace.name)}
+                            >
+                              Opslaan
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditingWorkspace(null)}
+                            >
+                              Annuleren
+                            </Button>
+                          </div>
+                        ) : (
+                          <>
+                            <CardTitle className="text-base">{workspace.name}</CardTitle>
+                            <div className="flex space-x-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setEditingWorkspace(workspace.id)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteWorkspace(workspace.id, workspace.name)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium flex items-center">
+                          <Users className="h-4 w-4 mr-1" />
+                          Werkruimte Gebruikers
+                        </Label>
+                        <div className="max-h-32 overflow-y-auto border rounded-md p-2 space-y-1">
+                          {workspace.users?.map((user) => {
+                            const isDisabled = isUserDisabledForWorkspace(user.id);
+                            return (
+                              <div key={user.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`ws-${workspace.id}-${user.id}`}
+                                  checked={user.hasAccess}
+                                  disabled={isDisabled}
+                                  onCheckedChange={(checked) => 
+                                    handleWorkspaceUserToggle(workspace.id, user.id, checked as boolean)
+                                  }
+                                />
+                                <label 
+                                  htmlFor={`ws-${workspace.id}-${user.id}`}
+                                  className={`text-xs cursor-pointer flex-1 ${
+                                    isDisabled ? 'text-muted-foreground opacity-50' : ''
+                                  }`}
+                                >
+                                  {user.full_name || user.email}
+                                  {isDisabled && (
+                                    <span className="ml-1 text-red-500">(Eerst organisatie toegang vereist)</span>
+                                  )}
+                                </label>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </TabsContent>
         </Tabs>
