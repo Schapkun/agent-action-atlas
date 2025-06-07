@@ -11,6 +11,8 @@ interface UserProfile {
   created_at: string;
   organizations?: string[];
   workspaces?: string[];
+  isPending?: boolean; // Add flag for pending invitations
+  invitationId?: string; // Store invitation ID for pending users
 }
 
 interface UserManagementProps {
@@ -91,13 +93,50 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
 
             return {
               ...userProfile,
-              organizations
+              organizations,
+              isPending: false
             };
           })
         );
 
+        // Also fetch pending invitations
+        const { data: pendingInvitations, error: invitationsError } = await supabase
+          .from('user_invitations')
+          .select(`
+            id,
+            email,
+            created_at,
+            organization_id,
+            workspace_id,
+            organizations(name),
+            workspaces(name)
+          `)
+          .is('accepted_at', null)
+          .gt('expires_at', new Date().toISOString())
+          .order('created_at', { ascending: false });
+
+        if (invitationsError) {
+          console.error('Invitations fetch error:', invitationsError);
+        }
+
+        // Convert pending invitations to user profile format
+        const pendingUsers = (pendingInvitations || []).map(invitation => ({
+          id: invitation.id,
+          email: invitation.email,
+          full_name: `${invitation.email} (Uitnodiging pending)`,
+          created_at: invitation.created_at,
+          organizations: [(invitation as any).organizations?.name].filter(Boolean),
+          workspaces: [(invitation as any).workspaces?.name].filter(Boolean),
+          isPending: true,
+          invitationId: invitation.id
+        }));
+
+        console.log('Pending invitations:', pendingUsers);
         console.log('Users with organizations:', usersWithOrgs);
-        onUsersUpdate(usersWithOrgs);
+        
+        // Combine existing users and pending invitations
+        const allUsers = [...usersWithOrgs, ...pendingUsers];
+        onUsersUpdate(allUsers);
       } else {
         // For regular users, always include themselves first
         console.log('Fetching users for regular user...');
@@ -134,14 +173,14 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
             }
             
             console.log('Created new profile:', newProfile);
-            onUsersUpdate([newProfile]);
+            onUsersUpdate([{...newProfile, isPending: false}]);
             return;
           } else {
             throw currentUserError;
           }
         }
 
-        let allUsers = [currentUserProfile]; // Always include current user
+        let allUsers = [{...currentUserProfile, isPending: false}]; // Always include current user
         console.log('Starting with current user:', currentUserProfile);
         
         // Then get their organization memberships
@@ -179,17 +218,50 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
             orgUsersData?.forEach(item => {
               const userProfile = (item as any).profiles;
               if (userProfile) {
-                allUsers.push(userProfile);
+                allUsers.push({...userProfile, isPending: false});
               }
             });
+          }
+
+          // Also fetch pending invitations for the organizations the user is part of
+          const { data: pendingInvitations, error: invitationsError } = await supabase
+            .from('user_invitations')
+            .select(`
+              id,
+              email,
+              created_at,
+              organization_id,
+              workspace_id,
+              organizations(name),
+              workspaces(name)
+            `)
+            .in('organization_id', orgIds)
+            .is('accepted_at', null)
+            .gt('expires_at', new Date().toISOString())
+            .order('created_at', { ascending: false });
+
+          if (!invitationsError && pendingInvitations) {
+            // Convert pending invitations to user profile format
+            const pendingUsers = pendingInvitations.map(invitation => ({
+              id: invitation.id,
+              email: invitation.email,
+              full_name: `${invitation.email} (Uitnodiging pending)`,
+              created_at: invitation.created_at,
+              organizations: [(invitation as any).organizations?.name].filter(Boolean),
+              workspaces: [(invitation as any).workspaces?.name].filter(Boolean),
+              isPending: true,
+              invitationId: invitation.id
+            }));
+
+            allUsers = [...allUsers, ...pendingUsers];
           }
         } else {
           console.log('No organization memberships found, showing only current user');
         }
 
-        // Remove duplicates based on user ID
+        // Remove duplicates based on user ID/email
         const uniqueUsers = allUsers.filter((user, index, arr) => 
-          arr.findIndex(u => u.id === user.id) === index
+          arr.findIndex(u => u.id === user.id || u.email === user.email) === index
         );
 
         console.log('Final user list for regular user:', uniqueUsers);

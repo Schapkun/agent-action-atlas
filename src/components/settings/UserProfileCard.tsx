@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Clock } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -11,6 +11,8 @@ interface UserProfile {
   created_at: string;
   organizations?: string[];
   workspaces?: string[];
+  isPending?: boolean;
+  invitationId?: string;
 }
 
 interface UserProfileCardProps {
@@ -30,51 +32,70 @@ export const UserProfileCard = ({
 }: UserProfileCardProps) => {
   const isAccountOwner = currentUserEmail === 'info@schapkun.com';
   const isCurrentUser = currentUserEmail === userProfile.email;
+  const isPending = userProfile.isPending;
 
   const handleEditClick = () => {
-    // Always show the MyAccount popup for all users
-    if (onShowMyAccount) {
+    // Only allow editing for non-pending users
+    if (!isPending && onShowMyAccount) {
       onShowMyAccount(userProfile);
     }
   };
 
+  const handleDeleteClick = () => {
+    if (isPending) {
+      // For pending invitations, we might want to cancel the invitation
+      // For now, use the same delete function but with the invitation ID
+      onDelete(userProfile.invitationId || userProfile.id, userProfile.email);
+    } else {
+      onDelete(userProfile.id, userProfile.email);
+    }
+  };
+
   return (
-    <Card className="flex flex-col h-full">
+    <Card className={`flex flex-col h-full ${isPending ? 'border-orange-200 bg-orange-50' : ''}`}>
       <CardHeader className="pb-3 flex-1">
         <div className="flex justify-between items-start">
           <div className="flex-1 min-w-0">
-            <CardTitle className="text-base">
-              {userProfile.full_name || 'Niet ingesteld'}
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">{userProfile.email}</p>
+            <div className="flex items-center gap-2 mb-1">
+              {isPending && <Clock className="h-4 w-4 text-orange-500" />}
+              <CardTitle className={`text-base ${isPending ? 'text-orange-700' : ''}`}>
+                {isPending ? userProfile.email : (userProfile.full_name || 'Niet ingesteld')}
+              </CardTitle>
+            </div>
+            <p className={`text-sm ${isPending ? 'text-orange-600' : 'text-muted-foreground'}`}>
+              {isPending ? 'Uitnodiging pending' : userProfile.email}
+            </p>
             <p className="text-xs text-muted-foreground">
               Organisaties: {userProfile.organizations?.length 
                 ? userProfile.organizations.join(', ')
                 : isAccountOwner ? 'Geen organisaties' : '-'
-              } • Aangemaakt: {new Date(userProfile.created_at).toLocaleDateString('nl-NL')}
+              } • {isPending ? 'Uitgenodigd' : 'Aangemaakt'}: {new Date(userProfile.created_at).toLocaleDateString('nl-NL')}
             </p>
           </div>
           <div className="flex space-x-1 flex-shrink-0 ml-2">
             {isAccountOwner && (
               <>
-                {!isCurrentUser && (
+                {(!isCurrentUser || isPending) && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => onDelete(userProfile.id, userProfile.email)}
+                    onClick={handleDeleteClick}
                     className="text-destructive hover:text-destructive"
+                    title={isPending ? "Uitnodiging annuleren" : "Gebruiker verwijderen"}
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleEditClick}
-                  title={isCurrentUser ? "Mijn Account" : "Bewerken"}
-                >
-                  <Edit className="h-3 w-3" />
-                </Button>
+                {!isPending && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleEditClick}
+                    title={isCurrentUser ? "Mijn Account" : "Bewerken"}
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                )}
               </>
             )}
           </div>
