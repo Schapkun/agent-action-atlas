@@ -119,7 +119,10 @@ export const UserProfileCard = ({
               Organisaties: {userProfile.organizations?.length 
                 ? userProfile.organizations.join(', ')
                 : isAccountOwner ? 'Geen organisaties' : '-'
-              } • {isPending ? 'Uitgenodigd' : 'Aangemaakt'}: {new Date(userProfile.created_at).toLocaleDateString('nl-NL')}
+              } • Werkruimtes: {userProfile.workspaces?.length 
+                ? userProfile.workspaces.join(', ')
+                : 'Geen werkruimtes'
+              } • {isPending ? 'Uitgenodigd' : 'Lid sinds'}: {new Date((userProfile as any).member_since || userProfile.created_at).toLocaleDateString('nl-NL')}
             </p>
           </div>
           <div className="flex space-x-1 flex-shrink-0 ml-2">

@@ -74,7 +74,7 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
         const { data: usersData, error: usersError } = await supabase
           .from('profiles')
           .select('*')
-          .order('created_at', { ascending: true }); // Sort by creation date (oldest first)
+          .order('created_at', { ascending: true });
 
         if (usersError) {
           console.error('Users fetch error:', usersError);
@@ -83,21 +83,35 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
 
         console.log('All users data (account owner):', usersData);
         
-        // For each user, get their organization memberships and roles
+        // For each user, get their organization memberships, roles, and workspaces
         const usersWithOrgs = await Promise.all(
           (usersData || []).map(async (userProfile) => {
-            // Fix the query by specifying the correct relationship
+            // Get organization memberships
             const { data: orgMemberships } = await supabase
               .from('organization_members')
               .select(`
                 organization_id, 
                 role, 
+                created_at,
                 organizations!organization_members_organization_id_fkey(name)
               `)
               .eq('user_id', userProfile.id);
 
+            // Get workspace memberships  
+            const { data: workspaceMemberships } = await supabase
+              .from('workspace_members')
+              .select(`
+                workspace_id,
+                role,
+                created_at,
+                workspaces!workspace_members_workspace_id_fkey(name)
+              `)
+              .eq('user_id', userProfile.id);
+
             const organizations = orgMemberships?.map(m => (m as any).organizations?.name).filter(Boolean) || [];
-            // Get the highest role (owner > admin > member)
+            const workspaces = workspaceMemberships?.map(m => (m as any).workspaces?.name).filter(Boolean) || [];
+            
+            // Get the highest role from organizations
             const roles = orgMemberships?.map(m => m.role) || [];
             let highestRole = 'member';
             if (roles.includes('owner')) highestRole = 'owner';
@@ -108,11 +122,22 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
               highestRole = 'eigenaar';
             }
 
+            // Use the earliest membership date as "member since" date
+            const membershipDates = [
+              ...(orgMemberships?.map(m => m.created_at) || []),
+              ...(workspaceMemberships?.map(m => m.created_at) || [])
+            ];
+            const earliestMembership = membershipDates.length > 0 
+              ? Math.min(...membershipDates.map(d => new Date(d).getTime()))
+              : new Date(userProfile.created_at).getTime();
+
             return {
               ...userProfile,
               organizations,
+              workspaces,
               isPending: false,
-              role: highestRole
+              role: highestRole,
+              member_since: new Date(earliestMembership).toISOString()
             };
           })
         );
@@ -132,7 +157,7 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
           `)
           .is('accepted_at', null)
           .gt('expires_at', new Date().toISOString())
-          .order('created_at', { ascending: true }); // Sort by creation date (oldest first)
+          .order('created_at', { ascending: true });
 
         if (invitationsError) {
           console.error('Invitations fetch error:', invitationsError);
@@ -150,7 +175,8 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
           invitationId: invitation.id,
           role: invitation.role,
           avatar_url: null,
-          updated_at: invitation.created_at
+          updated_at: invitation.created_at,
+          member_since: invitation.created_at
         }));
 
         console.log('Pending invitations:', pendingUsers);
@@ -175,7 +201,6 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
 
         if (currentUserError) {
           console.error('Current user profile fetch error:', currentUserError);
-          // If we can't find the current user's profile, create it
           if (currentUserError.code === 'PGRST116') {
             console.log('Creating missing profile for user:', user.id);
             const { data: newProfile, error: createError } = await supabase
@@ -194,17 +219,17 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
             }
             
             console.log('Created new profile:', newProfile);
-            onUsersUpdate([{...newProfile, isPending: false, role: 'member'}]);
+            onUsersUpdate([{...newProfile, isPending: false, role: 'member', member_since: newProfile.created_at}]);
             return;
           } else {
             throw currentUserError;
           }
         }
 
-        // Get current user's role
+        // Get current user's role and membership info
         const { data: currentUserMemberships } = await supabase
           .from('organization_members')
-          .select('role')
+          .select('role, created_at')
           .eq('user_id', user.id);
 
         const currentUserRoles = currentUserMemberships?.map(m => m.role) || [];
@@ -212,8 +237,18 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
         if (currentUserRoles.includes('owner')) currentUserRole = 'owner';
         else if (currentUserRoles.includes('admin')) currentUserRole = 'admin';
 
-        let allUsers = [{...currentUserProfile, isPending: false, role: currentUserRole}];
-        console.log('Starting with current user:', currentUserProfile);
+        const currentUserMemberSince = currentUserMemberships?.length > 0 
+          ? currentUserMemberships[0].created_at 
+          : currentUserProfile.created_at;
+
+        let allUsers = [{
+          ...currentUserProfile, 
+          isPending: false, 
+          role: currentUserRole,
+          member_since: currentUserMemberSince,
+          organizations: [],
+          workspaces: []
+        }];
         
         // Then get their organization memberships
         const { data: membershipData, error: membershipError } = await supabase
@@ -233,20 +268,56 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
           // Get all users in these organizations (excluding current user)
           const { data: orgUsersData, error: orgUsersError } = await supabase
             .from('organization_members')
-            .select('user_id, role, profiles(id, email, full_name, created_at, avatar_url, updated_at)')
+            .select(`
+              user_id, 
+              role, 
+              created_at,
+              profiles(id, email, full_name, created_at, avatar_url, updated_at)
+            `)
             .in('organization_id', orgIds)
-            .neq('user_id', user.id); // Exclude current user to avoid duplicates
+            .neq('user_id', user.id);
 
           console.log('Organization users data:', { orgUsersData, orgUsersError });
 
           if (!orgUsersError && orgUsersData) {
-            // Add organization users with their roles
-            orgUsersData.forEach(item => {
+            // Add organization users with their roles and membership info
+            for (const item of orgUsersData) {
               const userProfile = (item as any).profiles;
               if (userProfile) {
-                allUsers.push({...userProfile, isPending: false, role: item.role});
+                // Get this user's organizations and workspaces
+                const { data: userOrgMemberships } = await supabase
+                  .from('organization_members')
+                  .select(`
+                    organization_id, 
+                    role, 
+                    created_at,
+                    organizations!organization_members_organization_id_fkey(name)
+                  `)
+                  .eq('user_id', userProfile.id);
+
+                const { data: userWorkspaceMemberships } = await supabase
+                  .from('workspace_members')
+                  .select(`
+                    workspace_id,
+                    role,
+                    created_at,
+                    workspaces!workspace_members_workspace_id_fkey(name)
+                  `)
+                  .eq('user_id', userProfile.id);
+
+                const organizations = userOrgMemberships?.map(m => (m as any).organizations?.name).filter(Boolean) || [];
+                const workspaces = userWorkspaceMemberships?.map(m => (m as any).workspaces?.name).filter(Boolean) || [];
+
+                allUsers.push({
+                  ...userProfile, 
+                  isPending: false, 
+                  role: item.role,
+                  member_since: item.created_at,
+                  organizations,
+                  workspaces
+                });
               }
-            });
+            }
           }
 
           // Also fetch pending invitations for the organizations the user is part of
@@ -280,11 +351,41 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
               invitationId: invitation.id,
               role: invitation.role,
               avatar_url: null,
-              updated_at: invitation.created_at
+              updated_at: invitation.created_at,
+              member_since: invitation.created_at
             }));
 
             allUsers = [...allUsers, ...pendingUsers];
           }
+        }
+
+        // Update current user with their organization and workspace info
+        if (allUsers.length > 0) {
+          const { data: currentUserOrgMemberships } = await supabase
+            .from('organization_members')
+            .select(`
+              organization_id, 
+              role, 
+              created_at,
+              organizations!organization_members_organization_id_fkey(name)
+            `)
+            .eq('user_id', user.id);
+
+          const { data: currentUserWorkspaceMemberships } = await supabase
+            .from('workspace_members')
+            .select(`
+              workspace_id,
+              role,
+              created_at,
+              workspaces!workspace_members_workspace_id_fkey(name)
+            `)
+            .eq('user_id', user.id);
+
+          const currentUserOrganizations = currentUserOrgMemberships?.map(m => (m as any).organizations?.name).filter(Boolean) || [];
+          const currentUserWorkspaces = currentUserWorkspaceMemberships?.map(m => (m as any).workspaces?.name).filter(Boolean) || [];
+
+          allUsers[0].organizations = currentUserOrganizations;
+          allUsers[0].workspaces = currentUserWorkspaces;
         }
 
         // Remove duplicates based on user ID/email and sort by creation date
