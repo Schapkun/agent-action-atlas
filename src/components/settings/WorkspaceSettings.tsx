@@ -61,15 +61,23 @@ export const WorkspaceSettings = () => {
         return;
       }
 
-      // Get user's role from their organization memberships
+      // Get user's highest role from their organization memberships
       const { data: memberships } = await supabase
         .from('organization_members')
         .select('role')
         .eq('user_id', user.id)
-        .limit(1);
+        .order('role');
 
       if (memberships && memberships.length > 0) {
-        setUserRole(memberships[0].role);
+        // Set the highest role (owner > admin > member)
+        const roles = memberships.map(m => m.role);
+        if (roles.includes('owner')) {
+          setUserRole('owner');
+        } else if (roles.includes('admin')) {
+          setUserRole('admin');
+        } else {
+          setUserRole('member');
+        }
       } else {
         setUserRole('member');
       }
@@ -274,8 +282,8 @@ export const WorkspaceSettings = () => {
     }
   };
 
-  // Check if user can create workspaces (admin, owner or account owner)
-  const canCreateWorkspace = userRole === 'admin' || userRole === 'owner' || user?.email === 'info@schapkun.com';
+  // Check if user can create workspaces (only admin, owner or account owner)
+  const canCreateWorkspace = userRole === 'admin' || userRole === 'owner';
 
   const createWorkspace = async () => {
     if (!newWorkspace.name.trim() || !newWorkspace.organization_id) return;
