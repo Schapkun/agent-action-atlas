@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -56,7 +57,7 @@ export const UserProfileSettings = () => {
         // If account owner, show ALL users in the entire system
         console.log('Fetching ALL users for account owner...');
         const { data: usersData, error: usersError } = await supabase
-          .from('user_profiles')
+          .from('profiles')
           .select('*')
           .order('created_at', { ascending: false });
 
@@ -111,7 +112,7 @@ export const UserProfileSettings = () => {
         // Get all users in these organizations
         const { data: orgUsersData, error: orgUsersError } = await supabase
           .from('organization_members')
-          .select('user_id, user_profiles(id, email, full_name, created_at)')
+          .select('user_id, profiles(id, email, full_name, created_at)')
           .in('organization_id', orgIds);
 
         if (orgUsersError) {
@@ -122,7 +123,7 @@ export const UserProfileSettings = () => {
         // Deduplicate users and format data
         const uniqueUsers = new Map();
         orgUsersData?.forEach(item => {
-          const userProfile = (item as any).user_profiles;
+          const userProfile = (item as any).profiles;
           if (userProfile && !uniqueUsers.has(userProfile.id)) {
             uniqueUsers.set(userProfile.id, userProfile);
           }
@@ -144,7 +145,7 @@ export const UserProfileSettings = () => {
 
     try {
       const { error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .update({
           email: editingUser.email,
           full_name: editingUser.full_name
@@ -187,7 +188,7 @@ export const UserProfileSettings = () => {
 
     try {
       const { error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .delete()
         .eq('id', userId);
 
