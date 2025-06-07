@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -135,9 +136,11 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
 
       // Check if this is the account owner
       const isAccountOwner = profileData?.email === 'info@schapkun.com';
+      console.log('Is account owner?', isAccountOwner);
 
       // Fetch organizations with their workspaces
       try {
+        console.log('Fetching organizations for user:', targetUserId);
         const { data: orgData, error: orgError } = await supabase
           .from('organization_members')
           .select(`
@@ -148,6 +151,8 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
             )
           `)
           .eq('user_id', targetUserId);
+
+        console.log('Organization query result:', { orgData, orgError });
 
         if (orgError) {
           console.error('Organizations fetch error:', orgError);
@@ -160,9 +165,12 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
             workspaces: []
           })) || [];
 
+          console.log('Mapped organizations:', orgs);
+
           // Now fetch workspaces for each organization
           const orgsWithWorkspaces = await Promise.all(
             orgs.map(async (org) => {
+              console.log('Fetching workspaces for organization:', org.id);
               const { data: workspaceData, error: workspaceError } = await supabase
                 .from('workspace_members')
                 .select(`
@@ -174,6 +182,8 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                   )
                 `)
                 .eq('user_id', targetUserId);
+
+              console.log('Workspace query result for org', org.id, ':', { workspaceData, workspaceError });
 
               if (workspaceError) {
                 console.error('Workspaces fetch error for org:', org.id, workspaceError);
@@ -189,6 +199,8 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                   role: isAccountOwner ? 'owner' : item.role // Force owner role for account owner
                 })) || [];
 
+              console.log('Filtered workspaces for org', org.id, ':', workspaces);
+
               return {
                 ...org,
                 workspaces
@@ -196,6 +208,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
             })
           );
 
+          console.log('Final organizations with workspaces:', orgsWithWorkspaces);
           setOrganizations(orgsWithWorkspaces);
           
           // Set global role based on account owner status or first organization role
@@ -528,7 +541,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
           {/* Global Role Management with button next to it */}
           {user?.email === 'info@schapkun.com' && organizations.length > 0 && (
             <div className="flex gap-4 items-end">
-              <div className="flex-1 md:w-1/2">
+              <div className="w-1/2">
                 <Label htmlFor="global-role" className="text-sm">Globale Rol (voor alle organisaties en werkruimtes)</Label>
                 <Select
                   value={globalRole}
