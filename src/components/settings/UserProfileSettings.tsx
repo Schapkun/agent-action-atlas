@@ -370,11 +370,11 @@ export const UserProfileSettings = () => {
       if (isAccountOwner) {
         console.log('User is account owner, fetching all invitations');
         
-        // Account owner sees all invitations
+        // Account owner sees all invitations - but only pending ones (not accepted)
         const { data: invitationsData, error: invitationsError } = await supabase
           .from('user_invitations')
           .select('id, email, role, created_at, expires_at, organization_id, workspace_id, invited_by')
-          .is('accepted_at', null)
+          .is('accepted_at', null)  // Only fetch invitations that haven't been accepted
           .order('created_at', { ascending: false });
 
         if (invitationsError) {
@@ -458,11 +458,11 @@ export const UserProfileSettings = () => {
       } else {
         console.log('Regular user, fetching organization-based invitations');
         
-        // Regular users see invitations from their organizations - this should now work with the RLS policy
+        // Regular users see invitations from their organizations - but only pending ones
         const { data: invitationsData, error: invitationsError } = await supabase
           .from('user_invitations')
           .select('id, email, role, created_at, expires_at, organization_id, workspace_id, invited_by')
-          .is('accepted_at', null)
+          .is('accepted_at', null)  // Only fetch invitations that haven't been accepted
           .order('created_at', { ascending: false });
 
         if (invitationsError) {
