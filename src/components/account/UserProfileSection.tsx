@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Save, User } from 'lucide-react';
 
 interface UserProfile {
@@ -12,6 +13,8 @@ interface UserProfile {
   avatar_url?: string;
 }
 
+type UserRole = "owner" | "admin" | "member";
+
 interface UserProfileSectionProps {
   profile: UserProfile;
   setProfile: (profile: UserProfile) => void;
@@ -19,6 +22,9 @@ interface UserProfileSectionProps {
   saving: boolean;
   onUpdateProfile: () => void;
   showSaveButton: boolean;
+  globalRole?: UserRole;
+  onUpdateGlobalRole?: (newRole: UserRole) => void;
+  showRoleManagement?: boolean;
 }
 
 export const UserProfileSection = ({
@@ -27,7 +33,10 @@ export const UserProfileSection = ({
   isViewingOwnProfile,
   saving,
   onUpdateProfile,
-  showSaveButton
+  showSaveButton,
+  globalRole,
+  onUpdateGlobalRole,
+  showRoleManagement = false
 }: UserProfileSectionProps) => {
   return (
     <div className="bg-muted rounded-lg p-6 space-y-6">
@@ -60,6 +69,36 @@ export const UserProfileSection = ({
           />
         </div>
       </div>
+
+      {showRoleManagement && globalRole && onUpdateGlobalRole && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <Label htmlFor="global-role" className="text-sm font-medium mb-2 block">Gebruikersrol</Label>
+            <Select
+              value={globalRole}
+              onValueChange={(newRole) => onUpdateGlobalRole(newRole as UserRole)}
+            >
+              <SelectTrigger className="w-full text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="member">Gebruiker</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="owner">Eigenaar</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+
+      {(showSaveButton || showRoleManagement) && isViewingOwnProfile && (
+        <div className="flex justify-end">
+          <Button onClick={onUpdateProfile} disabled={saving} size="sm">
+            <Save className="h-4 w-4 mr-2" />
+            {saving ? 'Opslaan...' : 'Profiel Opslaan'}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

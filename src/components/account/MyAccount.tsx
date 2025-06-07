@@ -481,7 +481,6 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
 
   const isAccountOwner = user?.email === 'info@schapkun.com';
   const showRoleManagement = isAccountOwner && organizations.length > 0;
-  const showSaveButtonInProfile = !showRoleManagement;
 
   return (
     <div className="space-y-4">
@@ -505,26 +504,18 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
         </div>
       </div>
 
-      {/* Profile Information */}
+      {/* Combined Profile Information and Role Management */}
       <UserProfileSection
         profile={profile}
         setProfile={setProfile}
         isViewingOwnProfile={isViewingOwnProfile}
         saving={saving}
         onUpdateProfile={updateProfile}
-        showSaveButton={showSaveButtonInProfile}
+        showSaveButton={true}
+        globalRole={globalRole}
+        onUpdateGlobalRole={updateGlobalRole}
+        showRoleManagement={showRoleManagement}
       />
-
-      {/* Role Management for Admin Users */}
-      {showRoleManagement && (
-        <UserRoleManagement
-          globalRole={globalRole}
-          onUpdateGlobalRole={updateGlobalRole}
-          isViewingOwnProfile={isViewingOwnProfile}
-          saving={saving}
-          onUpdateProfile={updateProfile}
-        />
-      )}
 
       {/* Organizations & Workspaces */}
       <OrganizationsList
