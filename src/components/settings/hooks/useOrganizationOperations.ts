@@ -1,8 +1,9 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { generateSlug } from '../utils/slugGenerator';
+import { useAutoOwnerMembership } from './useAutoOwnerMembership';
 import type { Organization } from '../types/organization';
 
 export const useOrganizationOperations = () => {
@@ -10,6 +11,7 @@ export const useOrganizationOperations = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { addOwnersToNewOrganization } = useAutoOwnerMembership();
 
   const fetchOrganizations = async () => {
     if (!user?.id) {
@@ -24,43 +26,42 @@ export const useOrganizationOperations = () => {
       const isAccountOwner = user.email === 'info@schapkun.com';
       
       if (isAccountOwner) {
-        // If account owner, show ALL organizations and workspaces
-        const { data: orgsData, error: orgsError } = await supabase
+        // If account owner, show ALL organizations
+        const { data: orgData, error: orgError } = await supabase
           .from('organizations')
-          .select('*')
-          .order('name');
+          .select('id, name, slug, created_at')
+          .order('created_at', { ascending: false });
 
-        if (orgsError) throw orgsError;
+        if (orgError) {
+          console.error('Organizations fetch error:', orgError);
+          throw orgError;
+        }
 
-        const { data: workspacesData, error: workspacesError } = await supabase
-          .from('workspaces')
-          .select('*')
-          .order('name');
+        console.log('All organization data (account owner):', orgData);
 
-        if (workspacesError) throw workspacesError;
-
-        const organizationsWithWorkspaces = orgsData?.map(org => ({
-          ...org,
-          workspaces: workspacesData?.filter(ws => ws.organization_id === org.id) || []
+        // For account owner, they have owner role on everything
+        const organizationsWithRoles = orgData?.map(org => ({
+          id: org.id,
+          name: org.name,
+          slug: org.slug,
+          created_at: org.created_at,
+          user_role: 'owner' as const
         })) || [];
 
-        setOrganizations(organizationsWithWorkspaces);
+        setOrganizations(organizationsWithRoles);
       } else {
         // For regular users, only show organizations they are members of
-        console.log('Fetching organizations for regular user...');
-        
-        // Get user's organization memberships
         const { data: membershipData, error: membershipError } = await supabase
           .from('organization_members')
-          .select('organization_id')
+          .select('role, organization_id')
           .eq('user_id', user.id);
 
-        console.log('Organization membership data:', membershipData);
-
         if (membershipError) {
-          console.error('Membership fetch error:', membershipError);
+          console.error('Organization membership error:', membershipError);
           throw membershipError;
         }
+
+        console.log('Organization membership data:', membershipData);
 
         if (!membershipData || membershipData.length === 0) {
           console.log('No organization memberships found');
@@ -69,32 +70,33 @@ export const useOrganizationOperations = () => {
           return;
         }
 
-        // Get organizations user is member of
+        // Get organization details
         const orgIds = membershipData.map(m => m.organization_id);
-        const { data: orgsData, error: orgsError } = await supabase
+        const { data: orgData, error: orgError } = await supabase
           .from('organizations')
-          .select('*')
-          .in('id', orgIds)
-          .order('name');
+          .select('id, name, slug, created_at')
+          .in('id', orgIds);
 
-        if (orgsError) throw orgsError;
+        if (orgError) {
+          console.error('Organizations fetch error:', orgError);
+          throw orgError;
+        }
 
-        // Get workspaces for those organizations
-        const { data: workspacesData, error: workspacesError } = await supabase
-          .from('workspaces')
-          .select('*')
-          .in('organization_id', orgIds)
-          .order('name');
+        console.log('Organization data:', orgData);
 
-        if (workspacesError) throw workspacesError;
+        // Combine data
+        const organizationsWithRoles = orgData?.map(org => {
+          const membership = membershipData.find(m => m.organization_id === org.id);
+          return {
+            id: org.id,
+            name: org.name,
+            slug: org.slug,
+            created_at: org.created_at,
+            user_role: membership?.role as 'owner' | 'admin' | 'member'
+          };
+        }) || [];
 
-        const organizationsWithWorkspaces = orgsData?.map(org => ({
-          ...org,
-          workspaces: workspacesData?.filter(ws => ws.organization_id === org.id) || []
-        })) || [];
-
-        console.log('Organizations with workspaces for regular user:', organizationsWithWorkspaces);
-        setOrganizations(organizationsWithWorkspaces);
+        setOrganizations(organizationsWithRoles);
       }
     } catch (error) {
       console.error('Error fetching organizations:', error);
@@ -109,12 +111,12 @@ export const useOrganizationOperations = () => {
   };
 
   const createOrganization = async (name: string) => {
-    if (!name) return;
+    if (!name.trim()) return;
 
     try {
-      const slug = generateSlug(name);
+      const slug = name.toLowerCase().replace(/\s+/g, '-');
       
-      const { data, error } = await supabase
+      const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .insert({
           name: name,
@@ -123,11 +125,32 @@ export const useOrganizationOperations = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (orgError) throw orgError;
+
+      // Add current user as admin/owner
+      await supabase
+        .from('organization_members')
+        .insert({
+          organization_id: orgData.id,
+          user_id: user?.id,
+          role: 'admin'
+        });
+
+      // Automatically add all owners to the new organization
+      await addOwnersToNewOrganization(orgData.id);
+
+      await supabase
+        .from('history_logs')
+        .insert({
+          user_id: user?.id,
+          organization_id: orgData.id,
+          action: 'Organisatie aangemaakt',
+          details: { organization_name: name }
+        });
 
       toast({
         title: "Succes",
-        description: "Organisatie succesvol aangemaakt",
+        description: "Organisatie succesvol aangemaakt en alle eigenaren zijn toegevoegd",
       });
 
       fetchOrganizations();
@@ -141,21 +164,28 @@ export const useOrganizationOperations = () => {
     }
   };
 
-  const updateOrganization = async (orgId: string, name: string) => {
-    if (!name) return;
+  const updateOrganization = async (organization: Organization) => {
+    if (!organization.name.trim()) return;
 
     try {
-      const slug = generateSlug(name);
-      
       const { error } = await supabase
         .from('organizations')
         .update({
-          name: name,
-          slug: slug
+          name: organization.name,
+          slug: organization.name.toLowerCase().replace(/\s+/g, '-')
         })
-        .eq('id', orgId);
+        .eq('id', organization.id);
 
       if (error) throw error;
+
+      await supabase
+        .from('history_logs')
+        .insert({
+          user_id: user?.id,
+          organization_id: organization.id,
+          action: 'Organisatie bijgewerkt',
+          details: { organization_name: organization.name }
+        });
 
       toast({
         title: "Succes",
@@ -173,22 +203,20 @@ export const useOrganizationOperations = () => {
     }
   };
 
-  const deleteOrganization = async (orgId: string, orgName: string) => {
-    if (!confirm(`Weet je zeker dat je organisatie "${orgName}" wilt verwijderen?`)) {
-      return;
-    }
+  const deleteOrganization = async (organizationId: string, organizationName: string) => {
+    if (!confirm(`Weet je zeker dat je organisatie "${organizationName}" wilt verwijderen?`)) return;
 
     try {
       const { error } = await supabase
         .from('organizations')
         .delete()
-        .eq('id', orgId);
+        .eq('id', organizationId);
 
       if (error) throw error;
 
       toast({
         title: "Succes",
-        description: `Organisatie "${orgName}" verwijderd`,
+        description: "Organisatie succesvol verwijderd",
       });
 
       fetchOrganizations();
@@ -202,110 +230,12 @@ export const useOrganizationOperations = () => {
     }
   };
 
-  const createWorkspace = async (organizationId: string, name: string) => {
-    if (!name) return;
-
-    try {
-      const slug = generateSlug(name);
-      
-      const { data, error } = await supabase
-        .from('workspaces')
-        .insert({
-          name: name,
-          slug: slug,
-          organization_id: organizationId
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast({
-        title: "Succes",
-        description: "Werkruimte succesvol aangemaakt",
-      });
-
-      fetchOrganizations();
-    } catch (error) {
-      console.error('Error creating workspace:', error);
-      toast({
-        title: "Error",
-        description: "Kon werkruimte niet aanmaken",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const updateWorkspace = async (workspaceId: string, name: string) => {
-    if (!name) return;
-
-    try {
-      const slug = generateSlug(name);
-      
-      const { error } = await supabase
-        .from('workspaces')
-        .update({
-          name: name,
-          slug: slug
-        })
-        .eq('id', workspaceId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Succes",
-        description: "Werkruimte succesvol bijgewerkt",
-      });
-
-      fetchOrganizations();
-    } catch (error) {
-      console.error('Error updating workspace:', error);
-      toast({
-        title: "Error",
-        description: "Kon werkruimte niet bijwerken",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const deleteWorkspace = async (workspaceId: string, workspaceName: string) => {
-    if (!confirm(`Weet je zeker dat je werkruimte "${workspaceName}" wilt verwijderen?`)) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('workspaces')
-        .delete()
-        .eq('id', workspaceId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Succes",
-        description: `Werkruimte "${workspaceName}" verwijderd`,
-      });
-
-      fetchOrganizations();
-    } catch (error) {
-      console.error('Error deleting workspace:', error);
-      toast({
-        title: "Error",
-        description: "Kon werkruimte niet verwijderen",
-        variant: "destructive",
-      });
-    }
-  };
-
   return {
     organizations,
     loading,
     fetchOrganizations,
     createOrganization,
     updateOrganization,
-    deleteOrganization,
-    createWorkspace,
-    updateWorkspace,
-    deleteWorkspace
+    deleteOrganization
   };
 };
