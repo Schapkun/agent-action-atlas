@@ -36,6 +36,7 @@ export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserD
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [filteredWorkspaces, setFilteredWorkspaces] = useState<Workspace[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -95,7 +96,11 @@ export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserD
       return;
     }
 
+    setIsLoading(true);
+    
     try {
+      console.log('Starting invitation process for:', inviteEmail);
+
       // Create invitation with proper typing
       const invitationData: {
         email: string;
@@ -117,7 +122,54 @@ export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserD
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating invitation:', error);
+        throw error;
+      }
+
+      console.log('Invitation created successfully:', data);
+
+      // Get organization and workspace details for the email
+      const { data: orgData } = await supabase
+        .from('organizations')
+        .select('name')
+        .eq('id', selectedOrganization)
+        .single();
+
+      const { data: inviterData } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', user?.id)
+        .single();
+
+      // Send invitation email using the edge function
+      console.log('Calling send-invitation-email edge function...');
+      
+      const { data: emailResponse, error: emailError } = await supabase.functions.invoke('send-invitation-email', {
+        body: {
+          email: inviteEmail,
+          organization_name: orgData?.name || 'Onbekende Organisatie',
+          role: selectedRole === 'owner' ? 'eigenaar' : selectedRole === 'admin' ? 'admin' : 'gebruiker',
+          invited_by_name: inviterData?.full_name || inviterData?.email || 'Onbekend',
+          signup_url: window.location.origin + '/register'
+        }
+      });
+
+      if (emailError) {
+        console.error('Error sending invitation email:', emailError);
+        // Don't throw here - the invitation is created, just email failed
+        toast({
+          title: "Uitnodiging aangemaakt",
+          description: `Uitnodiging voor ${inviteEmail} is aangemaakt, maar email kon niet worden verzonden. Neem contact op met de gebruiker.`,
+          variant: "destructive",
+        });
+      } else {
+        console.log('Invitation email sent successfully:', emailResponse);
+        toast({
+          title: "Uitnodiging verzonden",
+          description: `Uitnodiging succesvol verzonden naar ${inviteEmail}`,
+        });
+      }
 
       // Log the invitation
       await supabase
@@ -130,14 +182,10 @@ export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserD
           details: {
             email: inviteEmail,
             role: selectedRole,
-            invitation_id: data.id
+            invitation_id: data.id,
+            email_sent: !emailError
           }
         });
-
-      toast({
-        title: "Uitnodiging verzonden",
-        description: `Uitnodiging verzonden naar ${inviteEmail}`,
-      });
 
       // Reset form
       setInviteEmail('');
@@ -152,9 +200,11 @@ export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserD
       console.error('Error inviting user:', error);
       toast({
         title: "Error",
-        description: "Kon uitnodiging niet verzenden",
+        description: "Kon uitnodiging niet verzenden. Probeer opnieuw.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -174,12 +224,13 @@ export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserD
               onChange={(e) => setInviteEmail(e.target.value)}
               placeholder="Voer e-mailadres in"
               className="mt-1"
+              disabled={isLoading}
             />
           </div>
 
           <div>
             <Label htmlFor="invite-role" className="text-sm">Rol *</Label>
-            <Select value={selectedRole} onValueChange={(value: UserRole) => setSelectedRole(value)}>
+            <Select value={selectedRole} onValueChange={(value: UserRole) => setSelectedRole(value)} disabled={isLoading}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Selecteer rol" />
               </SelectTrigger>
@@ -193,7 +244,7 @@ export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserD
 
           <div>
             <Label htmlFor="invite-organization" className="text-sm">Organisatie *</Label>
-            <Select value={selectedOrganization} onValueChange={setSelectedOrganization}>
+            <Select value={selectedOrganization} onValueChange={setSelectedOrganization} disabled={isLoading}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Selecteer organisatie" />
               </SelectTrigger>
@@ -210,7 +261,7 @@ export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserD
           {selectedOrganization && filteredWorkspaces.length > 0 && (
             <div>
               <Label htmlFor="invite-workspace" className="text-sm">Werkruimte (optioneel)</Label>
-              <Select value={selectedWorkspace} onValueChange={setSelectedWorkspace}>
+              <Select value={selectedWorkspace} onValueChange={setSelectedWorkspace} disabled={isLoading}>
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Selecteer werkruimte" />
                 </SelectTrigger>
@@ -227,11 +278,11 @@ export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserD
           )}
 
           <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={isLoading}>
               Annuleren
             </Button>
-            <Button size="sm" onClick={handleInvite}>
-              Uitnodigen
+            <Button size="sm" onClick={handleInvite} disabled={isLoading}>
+              {isLoading ? 'Bezig...' : 'Uitnodigen'}
             </Button>
           </div>
         </div>

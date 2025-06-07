@@ -10,7 +10,7 @@ export const useHistoryLogs = () => {
   const [historyLogs, setHistoryLogs] = useState<HistoryLog[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const { userRole } = useUserRole();
+  const { userRole } = useUserRole(user?.id, user?.email);
   const { toast } = useToast();
 
   useEffect(() => {
