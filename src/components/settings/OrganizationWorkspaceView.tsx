@@ -592,19 +592,19 @@ export const OrganizationWorkspaceView = ({ userRole = 'lid' }: OrganizationWork
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setEditingOrg(group.organization)}
-                          title="Bewerk organisatie"
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
                           onClick={() => deleteOrganization(group.organization.id, group.organization.name)}
                           className="text-destructive hover:text-destructive"
                           title="Verwijder organisatie"
                         >
                           <Trash2 className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingOrg(group.organization)}
+                          title="Bewerk organisatie"
+                        >
+                          <Edit className="h-3 w-3" />
                         </Button>
                       </>
                     )}
@@ -637,19 +637,19 @@ export const OrganizationWorkspaceView = ({ userRole = 'lid' }: OrganizationWork
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => setEditingWorkspace(workspace)}
-                                title="Bewerk werkruimte"
-                              >
-                                <Edit className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
                                 onClick={() => deleteWorkspace(workspace.id, workspace.name)}
                                 className="text-destructive hover:text-destructive"
                                 title="Verwijder werkruimte"
                               >
                                 <Trash2 className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setEditingWorkspace(workspace)}
+                                title="Bewerk werkruimte"
+                              >
+                                <Edit className="h-3 w-3" />
                               </Button>
                             </>
                           )}
