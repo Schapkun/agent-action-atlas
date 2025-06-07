@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { DocumentPreview } from './DocumentPreview';
 import { generatePDF, downloadPDF } from '@/utils/pdfGenerator';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { WorkspaceSelector } from './WorkspaceSelector';
 import { 
   Search, 
   FileText, 
@@ -15,7 +15,8 @@ import {
   Eye,
   Clock,
   AlertCircle,
-  Mail
+  Mail,
+  Plus
 } from 'lucide-react';
 import type { Document as DocumentType } from '@/types/dashboard';
 
@@ -24,8 +25,9 @@ export const PendingTasks = () => {
   const [previewDocument, setPreviewDocument] = useState<DocumentType | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [approvedTasks, setApprovedTasks] = useState<Set<string>>(new Set());
+  const [showWorkspaceSelector, setShowWorkspaceSelector] = useState(false);
   const { toast } = useToast();
-  const { selectedOrganization, selectedWorkspace } = useOrganization();
+  const { selectedOrganization, selectedWorkspace, getFilteredWorkspaces } = useOrganization();
 
   // Empty array - no mock data
   const allPendingTasks: DocumentType[] = [];
@@ -37,6 +39,45 @@ export const PendingTasks = () => {
       return `Organisatie: ${selectedOrganization.name}`;
     }
     return 'Geen selectie';
+  };
+
+  const handleCreateTask = () => {
+    if (!selectedOrganization && !selectedWorkspace) {
+      toast({
+        title: "Geen selectie",
+        description: "Selecteer eerst een organisatie of werkruimte om een taak te maken.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // If only organization is selected, show workspace selector
+    if (selectedOrganization && !selectedWorkspace) {
+      const workspaces = getFilteredWorkspaces();
+      if (workspaces.length > 1) {
+        setShowWorkspaceSelector(true);
+        return;
+      } else if (workspaces.length === 1) {
+        // Auto-select the only workspace
+        createTaskInWorkspace(workspaces[0].id);
+        return;
+      }
+    }
+
+    // If workspace is selected, create directly
+    if (selectedWorkspace) {
+      createTaskInWorkspace(selectedWorkspace.id);
+    }
+  };
+
+  const createTaskInWorkspace = (workspaceId: string) => {
+    console.log('Creating task in workspace:', workspaceId);
+    console.log('Organization:', selectedOrganization?.name);
+    
+    toast({
+      title: "Nieuwe taak",
+      description: "Taak wordt aangemaakt in de geselecteerde werkruimte...",
+    });
   };
 
   // Filter out approved tasks
@@ -162,9 +203,15 @@ export const PendingTasks = () => {
                 </p>
               </div>
             </div>
-            <Badge variant="outline" className="bg-orange-50 text-orange-700">
-              {pendingTasks.length} taken
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="bg-orange-50 text-orange-700">
+                {pendingTasks.length} taken
+              </Badge>
+              <Button variant="outline" size="sm" onClick={handleCreateTask}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nieuwe Taak
+              </Button>
+            </div>
           </div>
 
           {!selectedOrganization && !selectedWorkspace && (
@@ -215,6 +262,14 @@ export const PendingTasks = () => {
         }}
         onApprove={handleApproveDocument}
         onEdit={handleEditDocument}
+      />
+
+      <WorkspaceSelector
+        isOpen={showWorkspaceSelector}
+        onClose={() => setShowWorkspaceSelector(false)}
+        onSelectWorkspace={createTaskInWorkspace}
+        title="Selecteer werkruimte voor nieuwe taak"
+        description="Kies in welke werkruimte de taak moet worden aangemaakt:"
       />
     </>
   );

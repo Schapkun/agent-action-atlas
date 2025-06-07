@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { OrganizationWorkspaceView } from './OrganizationWorkspaceView';
 import { UserProfileSettings } from './UserProfileSettings';
 import { HistoryLogs } from './HistoryLogs';
+import { DocumentLayoutSettings } from './DocumentLayoutSettings';
 
 export const SettingsLayout = () => {
   return (
@@ -15,9 +16,10 @@ export const SettingsLayout = () => {
       </div>
 
       <Tabs defaultValue="organizations" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="organizations">Organisaties & Werkruimtes</TabsTrigger>
           <TabsTrigger value="users">Gebruikers</TabsTrigger>
+          <TabsTrigger value="documents">Document Layouts</TabsTrigger>
           <TabsTrigger value="history">Geschiedenis</TabsTrigger>
         </TabsList>
 
@@ -33,6 +35,14 @@ export const SettingsLayout = () => {
           <Card>
             <CardContent className="p-6">
               <UserProfileSettings />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="documents">
+          <Card>
+            <CardContent className="p-6">
+              <DocumentLayoutSettings />
             </CardContent>
           </Card>
         </TabsContent>
