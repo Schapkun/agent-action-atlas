@@ -20,7 +20,6 @@ export const WorkspaceSettings = ({ userRole }: WorkspaceSettingsProps) => {
     fetchWorkspaces,
     fetchOrganizations,
     createWorkspace,
-    updateWorkspace,
     deleteWorkspace
   } = useWorkspaceOperations();
 
@@ -101,7 +100,7 @@ export const WorkspaceSettings = ({ userRole }: WorkspaceSettingsProps) => {
             <WorkspaceCard
               key={group.organization.id}
               group={group}
-              onEditWorkspace={() => {}}
+              onEditWorkspace={() => {}} // Disabled for now
               onDeleteWorkspace={deleteWorkspace}
             />
           ))
