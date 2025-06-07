@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Clock, Crown, Shield, User } from 'lucide-react';
+import { Edit, Trash2, Clock, Crown, Shield, User, Mail } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -26,6 +25,7 @@ interface UserProfileCardProps {
   onEdit: (userProfile: UserProfile) => void;
   onDelete: (userId: string, userEmail: string) => void;
   onShowMyAccount?: (userProfile: UserProfile) => void;
+  onResendInvitation?: (userProfile: UserProfile) => void;
 }
 
 export const UserProfileCard = ({ 
@@ -33,7 +33,8 @@ export const UserProfileCard = ({
   currentUserEmail, 
   onEdit, 
   onDelete,
-  onShowMyAccount 
+  onShowMyAccount,
+  onResendInvitation 
 }: UserProfileCardProps) => {
   const isAccountOwner = currentUserEmail === 'info@schapkun.com';
   const isCurrentUser = currentUserEmail === userProfile.email;
@@ -53,6 +54,12 @@ export const UserProfileCard = ({
       onDelete(userProfile.invitationId || userProfile.id, userProfile.email);
     } else {
       onDelete(userProfile.id, userProfile.email);
+    }
+  };
+
+  const handleResendClick = () => {
+    if (isPending && onResendInvitation) {
+      onResendInvitation(userProfile);
     }
   };
 
@@ -137,6 +144,17 @@ export const UserProfileCard = ({
           <div className="flex space-x-1 flex-shrink-0 ml-2">
             {isAccountOwner && (
               <>
+                {isPending && onResendInvitation && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleResendClick}
+                    className="text-blue-600 hover:text-blue-700"
+                    title="Uitnodiging opnieuw sturen"
+                  >
+                    <Mail className="h-3 w-3" />
+                  </Button>
+                )}
                 {(!isCurrentUser || isPending) && (
                   <Button
                     variant="ghost"

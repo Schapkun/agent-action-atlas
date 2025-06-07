@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { UserProfileCard } from './UserProfileCard';
@@ -23,6 +24,7 @@ interface UserListProps {
   onEdit: (userProfile: UserProfile) => void;
   onDelete: (userId: string, userEmail: string) => void;
   onShowMyAccount: (userProfile: UserProfile) => void;
+  onResendInvitation: (userProfile: UserProfile) => void;
 }
 
 export const UserList = ({
@@ -30,7 +32,8 @@ export const UserList = ({
   currentUserEmail,
   onEdit,
   onDelete,
-  onShowMyAccount
+  onShowMyAccount,
+  onResendInvitation
 }: UserListProps) => {
   if (users.length === 0) {
     return (
@@ -55,6 +58,7 @@ export const UserList = ({
           onEdit={onEdit}
           onDelete={onDelete}
           onShowMyAccount={onShowMyAccount}
+          onResendInvitation={onResendInvitation}
         />
       ))}
     </div>

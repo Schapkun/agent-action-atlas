@@ -1,9 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { RefreshCw } from 'lucide-react';
 import { MyAccount } from '@/components/account/MyAccount';
 import { UserFilters } from './UserFilters';
@@ -37,6 +38,7 @@ export const UserProfileSettings = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const userManagement = UserManagement({
     onUsersUpdate: (newUsers) => {
@@ -54,6 +56,95 @@ export const UserProfileSettings = () => {
   const handleInviteUser = async (email: string) => {
     // Refresh the users list after invitation
     await userManagement.fetchUsers();
+  };
+
+  const handleResendInvitation = async (userProfile: UserProfile) => {
+    if (!userProfile.isPending || !userProfile.invitationId) {
+      toast({
+        title: "Error",
+        description: "Kan alleen uitnodigingen opnieuw sturen voor pending gebruikers",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      console.log('Resending invitation for:', userProfile.email);
+
+      // Get the invitation details
+      const { data: invitation, error: invitationError } = await supabase
+        .from('user_invitations')
+        .select('*')
+        .eq('id', userProfile.invitationId)
+        .single();
+
+      if (invitationError || !invitation) {
+        throw new Error('Uitnodiging niet gevonden');
+      }
+
+      // Get organization details for the email
+      const { data: orgData } = await supabase
+        .from('organizations')
+        .select('name')
+        .eq('id', invitation.organization_id)
+        .single();
+
+      const { data: inviterData } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', user?.id)
+        .single();
+
+      // Send invitation email using the edge function
+      console.log('Calling send-invitation-email edge function for resend...');
+      
+      const { data: emailResponse, error: emailError } = await supabase.functions.invoke('send-invitation-email', {
+        body: {
+          email: invitation.email,
+          organization_name: orgData?.name || 'Onbekende Organisatie',
+          role: invitation.role === 'owner' ? 'eigenaar' : invitation.role === 'admin' ? 'admin' : 'gebruiker',
+          invited_by_name: inviterData?.full_name || inviterData?.email || 'Onbekend',
+          signup_url: window.location.origin + '/register'
+        }
+      });
+
+      if (emailError) {
+        console.error('Error resending invitation email:', emailError);
+        toast({
+          title: "Error",
+          description: "Kon uitnodiging niet opnieuw sturen. Probeer opnieuw.",
+          variant: "destructive",
+        });
+      } else {
+        console.log('Invitation email resent successfully:', emailResponse);
+        toast({
+          title: "Uitnodiging opnieuw verzonden",
+          description: `Uitnodiging succesvol opnieuw verzonden naar ${userProfile.email}`,
+        });
+
+        // Log the resend action
+        await supabase
+          .from('history_logs')
+          .insert({
+            user_id: user?.id,
+            organization_id: invitation.organization_id,
+            workspace_id: invitation.workspace_id,
+            action: 'Uitnodiging opnieuw verzonden',
+            details: {
+              email: userProfile.email,
+              role: invitation.role,
+              invitation_id: invitation.id
+            }
+          });
+      }
+    } catch (error) {
+      console.error('Error resending invitation:', error);
+      toast({
+        title: "Error",
+        description: "Kon uitnodiging niet opnieuw sturen. Probeer opnieuw.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Filter users based on search term and role filter
@@ -119,6 +210,7 @@ export const UserProfileSettings = () => {
         onEdit={handleShowMyAccount}
         onDelete={userManagement.deleteUser}
         onShowMyAccount={handleShowMyAccount}
+        onResendInvitation={handleResendInvitation}
       />
 
       <InviteUserDialog
