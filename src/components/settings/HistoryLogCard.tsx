@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Calendar, User, Mail, Building, Briefcase } from 'lucide-react';
@@ -40,27 +39,20 @@ const formatLogDetails = (details: any, action: string) => {
     return 'Uitnodiging verzonden';
   }
 
-  // Handle invitation cancellation actions
+  // Handle invitation cancellation actions - ALWAYS show email address like user invitations
   if (action.toLowerCase().includes('uitnodiging geannuleerd')) {
-    // Try to find the email in various places in details
-    if (details.email) {
-      return `E-mailadres: ${details.email}`;
-    }
+    // Try to find the email in various places in details - same logic as user invitations
     if (details.invited_email) {
       return `E-mailadres: ${details.invited_email}`;
+    }
+    if (details.email) {
+      return `E-mailadres: ${details.email}`;
     }
     if (details.user_email) {
       return `E-mailadres: ${details.user_email}`;
     }
-    // For multiple invitation cancellations
-    if (details.invitation_ids && Array.isArray(details.invitation_ids)) {
-      return `${details.invitation_ids.length} uitnodiging(en) geannuleerd`;
-    }
-    // If we have invitation_id but no email, still try to show something useful
-    if (details.invitation_id) {
-      return `Uitnodiging ID: ${details.invitation_id}`;
-    }
-    return 'E-mailadres niet beschikbaar';
+    // If no email found, return a consistent message (not multiple different ones)
+    return 'E-mailadres: Niet beschikbaar';
   }
 
   // Handle other invitation actions (general)
