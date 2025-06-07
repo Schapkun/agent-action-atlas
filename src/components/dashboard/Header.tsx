@@ -100,10 +100,9 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
 
   const getCurrentSelectionLabel = () => {
     if (selectedWorkspace) {
-      const org = organizations.find(o => o.id === selectedWorkspace.organization_id);
-      return `${org?.name} > ${selectedWorkspace.name}`;
+      return selectedWorkspace.name;
     } else if (selectedOrganization) {
-      return selectedOrganization.name;
+      return `${selectedOrganization.name} (hele organisatie)`;
     }
     return 'Selecteer organisatie/werkruimte';
   };
