@@ -60,14 +60,6 @@ export const UserProfileCard = ({
           <div className="flex space-x-1 flex-shrink-0 ml-2">
             {isAccountOwner && (
               <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleEditClick}
-                  title={isCurrentUser ? "Mijn Account" : "Bewerken"}
-                >
-                  <Edit className="h-3 w-3" />
-                </Button>
                 {!isCurrentUser && (
                   <Button
                     variant="ghost"
@@ -78,6 +70,14 @@ export const UserProfileCard = ({
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleEditClick}
+                  title={isCurrentUser ? "Mijn Account" : "Bewerken"}
+                >
+                  <Edit className="h-3 w-3" />
+                </Button>
               </>
             )}
           </div>

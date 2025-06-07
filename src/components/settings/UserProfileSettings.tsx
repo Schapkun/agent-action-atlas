@@ -28,6 +28,7 @@ export const UserProfileSettings = () => {
   const [error, setError] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [showMyAccount, setShowMyAccount] = useState(false);
+  const [viewingUserProfile, setViewingUserProfile] = useState<UserProfile | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -306,7 +307,18 @@ export const UserProfileSettings = () => {
   const canInviteUsers = userRole === 'admin' || userRole === 'owner' || user?.email === 'info@schapkun.com';
 
   const handleShowMyAccount = (userProfile: UserProfile) => {
+    const isCurrentUser = user?.email === userProfile.email;
+    setViewingUserProfile(userProfile);
     setShowMyAccount(true);
+  };
+
+  const handleEditUser = (userProfile: UserProfile) => {
+    const isCurrentUser = user?.email === userProfile.email;
+    if (isCurrentUser) {
+      handleShowMyAccount(userProfile);
+    } else {
+      setEditingUser(userProfile);
+    }
   };
 
   if (loading) {
@@ -371,7 +383,7 @@ export const UserProfileSettings = () => {
               key={userProfile.id}
               userProfile={userProfile}
               currentUserEmail={user?.email}
-              onEdit={setEditingUser}
+              onEdit={handleEditUser}
               onDelete={deleteUser}
               onShowMyAccount={handleShowMyAccount}
             />
@@ -386,9 +398,19 @@ export const UserProfileSettings = () => {
         onUpdateUser={setEditingUser}
       />
 
-      <Dialog open={showMyAccount} onOpenChange={setShowMyAccount}>
+      <Dialog open={showMyAccount} onOpenChange={(open) => {
+        setShowMyAccount(open);
+        if (!open) {
+          setViewingUserProfile(null);
+        }
+      }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <MyAccount />
+          {viewingUserProfile && (
+            <MyAccount 
+              viewingUserId={viewingUserProfile.id}
+              isEditingOtherUser={user?.email !== viewingUserProfile.email}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>

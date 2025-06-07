@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Building2, Settings, Save } from 'lucide-react';
+import { User, Building2, Settings, Save, Trash2 } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -29,7 +29,12 @@ interface Workspace {
   organization_name: string;
 }
 
-export const MyAccount = () => {
+interface MyAccountProps {
+  viewingUserId?: string;
+  isEditingOtherUser?: boolean;
+}
+
+export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccountProps) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -38,27 +43,30 @@ export const MyAccount = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  const targetUserId = viewingUserId || user?.id;
+  const isViewingOwnProfile = !isEditingOtherUser && targetUserId === user?.id;
+
   useEffect(() => {
-    if (user) {
+    if (targetUserId) {
       fetchUserData();
     }
-  }, [user]);
+  }, [targetUserId]);
 
   const fetchUserData = async () => {
-    if (!user?.id) {
+    if (!targetUserId) {
       console.log('No user ID available');
       setLoading(false);
       return;
     }
 
     try {
-      console.log('Fetching user data for user:', user.id);
+      console.log('Fetching user data for user:', targetUserId);
       
       // Fetch or create user profile
       let { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', targetUserId)
         .maybeSingle();
 
       if (profileError) {
@@ -66,15 +74,15 @@ export const MyAccount = () => {
         throw profileError;
       }
 
-      // If no profile exists, create one
-      if (!profileData) {
+      // If no profile exists, create one (only for current user)
+      if (!profileData && isViewingOwnProfile) {
         console.log('No profile found, creating one');
         const { data: newProfile, error: createError } = await supabase
           .from('user_profiles')
           .insert({
-            id: user.id,
-            email: user.email || '',
-            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || ''
+            id: targetUserId,
+            email: user?.email || '',
+            full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || ''
           })
           .select()
           .single();
@@ -99,7 +107,7 @@ export const MyAccount = () => {
               name
             )
           `)
-          .eq('user_id', user.id);
+          .eq('user_id', targetUserId);
 
         if (orgError) {
           console.error('Organizations fetch error:', orgError);
@@ -129,7 +137,7 @@ export const MyAccount = () => {
               )
             )
           `)
-          .eq('user_id', user.id);
+          .eq('user_id', targetUserId);
 
         if (workspaceError) {
           console.error('Workspaces fetch error:', workspaceError);
@@ -179,8 +187,8 @@ export const MyAccount = () => {
           .from('history_logs')
           .insert({
             user_id: user.id,
-            action: 'Profiel bijgewerkt',
-            details: { full_name: profile.full_name, email: profile.email }
+            action: isViewingOwnProfile ? 'Profiel bijgewerkt' : 'Gebruikersprofiel bijgewerkt',
+            details: { full_name: profile.full_name, email: profile.email, target_user_id: profile.id }
           });
       } catch (logError) {
         console.error('Failed to log update:', logError);
@@ -199,6 +207,106 @@ export const MyAccount = () => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const removeFromOrganization = async (organizationId: string, organizationName: string) => {
+    if (!targetUserId || !user?.id) return;
+
+    if (!confirm(`Weet je zeker dat je deze gebruiker wilt verwijderen uit organisatie "${organizationName}"?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('organization_members')
+        .delete()
+        .eq('user_id', targetUserId)
+        .eq('organization_id', organizationId);
+
+      if (error) throw error;
+
+      // Log the action
+      try {
+        await supabase
+          .from('history_logs')
+          .insert({
+            user_id: user.id,
+            action: 'Gebruiker verwijderd uit organisatie',
+            details: { 
+              target_user_id: targetUserId,
+              organization_id: organizationId,
+              organization_name: organizationName
+            }
+          });
+      } catch (logError) {
+        console.error('Failed to log organization removal:', logError);
+      }
+
+      toast({
+        title: "Succes",
+        description: `Gebruiker verwijderd uit organisatie "${organizationName}"`,
+      });
+
+      // Refresh data
+      fetchUserData();
+    } catch (error) {
+      console.error('Error removing from organization:', error);
+      toast({
+        title: "Error",
+        description: "Kon gebruiker niet verwijderen uit organisatie",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const removeFromWorkspace = async (workspaceId: string, workspaceName: string) => {
+    if (!targetUserId || !user?.id) return;
+
+    if (!confirm(`Weet je zeker dat je deze gebruiker wilt verwijderen uit werkruimte "${workspaceName}"?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('workspace_members')
+        .delete()
+        .eq('user_id', targetUserId)
+        .eq('workspace_id', workspaceId);
+
+      if (error) throw error;
+
+      // Log the action
+      try {
+        await supabase
+          .from('history_logs')
+          .insert({
+            user_id: user.id,
+            action: 'Gebruiker verwijderd uit werkruimte',
+            details: { 
+              target_user_id: targetUserId,
+              workspace_id: workspaceId,
+              workspace_name: workspaceName
+            }
+          });
+      } catch (logError) {
+        console.error('Failed to log workspace removal:', logError);
+      }
+
+      toast({
+        title: "Succes",
+        description: `Gebruiker verwijderd uit werkruimte "${workspaceName}"`,
+      });
+
+      // Refresh data
+      fetchUserData();
+    } catch (error) {
+      console.error('Error removing from workspace:', error);
+      toast({
+        title: "Error",
+        description: "Kon gebruiker niet verwijderen uit werkruimte",
+        variant: "destructive",
+      });
     }
   };
 
@@ -245,8 +353,15 @@ export const MyAccount = () => {
           </AvatarFallback>
         </Avatar>
         <div>
-          <h1 className="text-2xl font-bold">Mijn Account</h1>
-          <p className="text-muted-foreground">Beheer je persoonlijke gegevens en voorkeuren</p>
+          <h1 className="text-2xl font-bold">
+            {isViewingOwnProfile ? 'Mijn Account' : `Account van ${profile.full_name || profile.email}`}
+          </h1>
+          <p className="text-muted-foreground">
+            {isViewingOwnProfile 
+              ? 'Beheer je persoonlijke gegevens en voorkeuren'
+              : 'Bekijk en beheer gebruikersgegevens'
+            }
+          </p>
         </div>
       </div>
 
@@ -266,7 +381,8 @@ export const MyAccount = () => {
                 id="full-name"
                 value={profile.full_name || ''}
                 onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                placeholder="Voer je volledige naam in"
+                placeholder="Voer volledige naam in"
+                disabled={!isViewingOwnProfile}
               />
             </div>
             <div>
@@ -276,14 +392,17 @@ export const MyAccount = () => {
                 type="email"
                 value={profile.email || ''}
                 onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                placeholder="Voer je e-mailadres in"
+                placeholder="Voer e-mailadres in"
+                disabled={!isViewingOwnProfile}
               />
             </div>
           </div>
-          <Button onClick={updateProfile} disabled={saving}>
-            <Save className="h-4 w-4 mr-2" />
-            {saving ? 'Opslaan...' : 'Profiel Opslaan'}
-          </Button>
+          {isViewingOwnProfile && (
+            <Button onClick={updateProfile} disabled={saving}>
+              <Save className="h-4 w-4 mr-2" />
+              {saving ? 'Opslaan...' : 'Profiel Opslaan'}
+            </Button>
+          )}
         </CardContent>
       </Card>
 
@@ -292,12 +411,17 @@ export const MyAccount = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5" />
-            Mijn Organisaties
+            {isViewingOwnProfile ? 'Mijn Organisaties' : 'Organisaties'}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {organizations.length === 0 ? (
-            <p className="text-muted-foreground">Je bent nog geen lid van een organisatie</p>
+            <p className="text-muted-foreground">
+              {isViewingOwnProfile 
+                ? 'Je bent nog geen lid van een organisatie'
+                : 'Deze gebruiker is nog geen lid van een organisatie'
+              }
+            </p>
           ) : (
             <div className="space-y-2">
               {organizations.map((org) => (
@@ -306,6 +430,16 @@ export const MyAccount = () => {
                     <p className="font-medium">{org.name}</p>
                     <p className="text-sm text-muted-foreground">Rol: {org.role}</p>
                   </div>
+                  {!isViewingOwnProfile && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFromOrganization(org.id, org.name)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
@@ -318,12 +452,17 @@ export const MyAccount = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            Mijn Werkruimtes
+            {isViewingOwnProfile ? 'Mijn Werkruimtes' : 'Werkruimtes'}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {workspaces.length === 0 ? (
-            <p className="text-muted-foreground">Je hebt nog geen toegang tot werkruimtes</p>
+            <p className="text-muted-foreground">
+              {isViewingOwnProfile 
+                ? 'Je hebt nog geen toegang tot werkruimtes'
+                : 'Deze gebruiker heeft nog geen toegang tot werkruimtes'
+              }
+            </p>
           ) : (
             <div className="space-y-2">
               {workspaces.map((workspace) => (
@@ -332,6 +471,16 @@ export const MyAccount = () => {
                     <p className="font-medium">{workspace.name}</p>
                     <p className="text-sm text-muted-foreground">Organisatie: {workspace.organization_name}</p>
                   </div>
+                  {!isViewingOwnProfile && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFromWorkspace(workspace.id, workspace.name)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
