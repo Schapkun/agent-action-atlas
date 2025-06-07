@@ -53,7 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } else if (invitations && invitations.length > 0) {
               console.log('Found pending invitations:', invitations);
               
-              // Mark all pending invitations as accepted - removing updated_at since it doesn't exist
+              // Mark all pending invitations as accepted
               const { error: updateError } = await supabase
                 .from('user_invitations')
                 .update({ accepted_at: new Date().toISOString() })
