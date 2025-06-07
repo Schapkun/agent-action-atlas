@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,6 +9,7 @@ import { RefreshCw } from 'lucide-react';
 import { UserProfileCard } from './UserProfileCard';
 import { InviteUserDialog } from './InviteUserDialog';
 import { EditUserDialog } from './EditUserDialog';
+import { MyAccount } from '@/components/account/MyAccount';
 
 interface UserProfile {
   id: string;
@@ -25,6 +27,7 @@ export const UserProfileSettings = () => {
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [showMyAccount, setShowMyAccount] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -302,6 +305,10 @@ export const UserProfileSettings = () => {
   // Check if user can invite others (only admin, owner, and account owner)
   const canInviteUsers = userRole === 'admin' || userRole === 'owner' || user?.email === 'info@schapkun.com';
 
+  const handleShowMyAccount = (userProfile: UserProfile) => {
+    setShowMyAccount(true);
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -366,6 +373,7 @@ export const UserProfileSettings = () => {
               currentUserEmail={user?.email}
               onEdit={setEditingUser}
               onDelete={deleteUser}
+              onShowMyAccount={handleShowMyAccount}
             />
           ))
         )}
@@ -377,6 +385,12 @@ export const UserProfileSettings = () => {
         onSave={updateUser}
         onUpdateUser={setEditingUser}
       />
+
+      <Dialog open={showMyAccount} onOpenChange={setShowMyAccount}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <MyAccount />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

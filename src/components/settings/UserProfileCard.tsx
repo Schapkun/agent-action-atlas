@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, User } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -18,10 +18,18 @@ interface UserProfileCardProps {
   currentUserEmail: string | undefined;
   onEdit: (userProfile: UserProfile) => void;
   onDelete: (userId: string, userEmail: string) => void;
+  onShowMyAccount?: (userProfile: UserProfile) => void;
 }
 
-export const UserProfileCard = ({ userProfile, currentUserEmail, onEdit, onDelete }: UserProfileCardProps) => {
+export const UserProfileCard = ({ 
+  userProfile, 
+  currentUserEmail, 
+  onEdit, 
+  onDelete,
+  onShowMyAccount 
+}: UserProfileCardProps) => {
   const isAccountOwner = currentUserEmail === 'info@schapkun.com';
+  const isCurrentUser = currentUserEmail === userProfile.email;
 
   return (
     <Card className="flex flex-col h-full">
@@ -40,6 +48,16 @@ export const UserProfileCard = ({ userProfile, currentUserEmail, onEdit, onDelet
             </p>
           </div>
           <div className="flex space-x-1 flex-shrink-0 ml-2">
+            {isCurrentUser && onShowMyAccount && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onShowMyAccount(userProfile)}
+                title="Mijn Account"
+              >
+                <User className="h-3 w-3" />
+              </Button>
+            )}
             {isAccountOwner && (
               <>
                 <Button
