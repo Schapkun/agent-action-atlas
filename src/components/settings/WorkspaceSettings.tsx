@@ -39,15 +39,45 @@ export const WorkspaceSettings = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
   const [newWorkspace, setNewWorkspace] = useState({ name: '', organization_id: '' });
+  const [userRole, setUserRole] = useState<string>('member');
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
+      fetchUserRole();
       fetchWorkspaces();
       fetchOrganizations();
     }
   }, [user]);
+
+  const fetchUserRole = async () => {
+    if (!user?.id) return;
+
+    try {
+      // Check if user is the account owner (Michael Schapkun)
+      if (user.email === 'info@schapkun.com') {
+        setUserRole('owner');
+        return;
+      }
+
+      // Get user's role from their organization memberships
+      const { data: memberships } = await supabase
+        .from('organization_members')
+        .select('role')
+        .eq('user_id', user.id)
+        .limit(1);
+
+      if (memberships && memberships.length > 0) {
+        setUserRole(memberships[0].role);
+      } else {
+        setUserRole('member');
+      }
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+      setUserRole('member');
+    }
+  };
 
   const fetchWorkspaces = async () => {
     if (!user?.id) {
@@ -108,7 +138,7 @@ export const WorkspaceSettings = () => {
 
         setWorkspaces(workspacesWithRoles);
       } else {
-        // For regular users, use the existing logic
+        // For regular users, only show workspaces they are members of
         const { data: membershipData, error: membershipError } = await supabase
           .from('workspace_members')
           .select('role, workspace_id')
@@ -142,7 +172,7 @@ export const WorkspaceSettings = () => {
 
         console.log('Workspace data:', workspaceData);
 
-        // Get organization names
+        // Get organization names for user's workspaces only
         const orgIds = [...new Set(workspaceData?.map(w => w.organization_id) || [])];
         let orgNames: { [key: string]: string } = {};
         
@@ -209,7 +239,7 @@ export const WorkspaceSettings = () => {
 
         setOrganizations(orgData || []);
       } else {
-        // For regular users, get organizations through membership
+        // For regular users, get organizations through membership only
         const { data: membershipData, error: membershipError } = await supabase
           .from('organization_members')
           .select('organization_id')
@@ -243,6 +273,9 @@ export const WorkspaceSettings = () => {
       console.error('Error fetching organizations:', error);
     }
   };
+
+  // Check if user can create workspaces (admin, owner or account owner)
+  const canCreateWorkspace = userRole === 'admin' || userRole === 'owner' || user?.email === 'info@schapkun.com';
 
   const createWorkspace = async () => {
     if (!newWorkspace.name.trim() || !newWorkspace.organization_id) return;
@@ -387,64 +420,66 @@ export const WorkspaceSettings = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Werkruimtes</h2>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Nieuwe Werkruimte
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-lg">Nieuwe Werkruimte Aanmaken</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="workspace-name" className="text-sm">Werkruimte Naam</Label>
-                <Input
-                  id="workspace-name"
-                  value={newWorkspace.name}
-                  onChange={(e) => setNewWorkspace({ ...newWorkspace, name: e.target.value })}
-                  placeholder="Voer werkruimte naam in"
-                  className="mt-1"
-                />
+        {canCreateWorkspace && (
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Nieuwe Werkruimte
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-lg">Nieuwe Werkruimte Aanmaken</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="workspace-name" className="text-sm">Werkruimte Naam</Label>
+                  <Input
+                    id="workspace-name"
+                    value={newWorkspace.name}
+                    onChange={(e) => setNewWorkspace({ ...newWorkspace, name: e.target.value })}
+                    placeholder="Voer werkruimte naam in"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="organization" className="text-sm">Organisatie</Label>
+                  <Select
+                    value={newWorkspace.organization_id}
+                    onValueChange={(value) => setNewWorkspace({ ...newWorkspace, organization_id: value })}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Selecteer organisatie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {organizations.map((org) => (
+                        <SelectItem key={org.id} value={org.id}>
+                          {org.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-end space-x-2 pt-2">
+                  <Button variant="outline" size="sm" onClick={() => setIsCreateDialogOpen(false)}>
+                    Annuleren
+                  </Button>
+                  <Button size="sm" onClick={createWorkspace}>
+                    Aanmaken
+                  </Button>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="organization" className="text-sm">Organisatie</Label>
-                <Select
-                  value={newWorkspace.organization_id}
-                  onValueChange={(value) => setNewWorkspace({ ...newWorkspace, organization_id: value })}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Selecteer organisatie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {organizations.map((org) => (
-                      <SelectItem key={org.id} value={org.id}>
-                        {org.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex justify-end space-x-2 pt-2">
-                <Button variant="outline" size="sm" onClick={() => setIsCreateDialogOpen(false)}>
-                  Annuleren
-                </Button>
-                <Button size="sm" onClick={createWorkspace}>
-                  Aanmaken
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <div className="space-y-4">
         {Object.keys(groupedWorkspaces).length === 0 ? (
           <Card>
             <CardContent className="p-4 text-center text-sm text-muted-foreground">
-              Je hebt nog geen toegang tot werkruimtes. Maak een nieuwe werkruimte aan om te beginnen.
+              Je hebt nog geen toegang tot werkruimtes. {canCreateWorkspace ? 'Maak een nieuwe werkruimte aan om te beginnen.' : 'Neem contact op met je beheerder om toegang te krijgen.'}
             </CardContent>
           </Card>
         ) : (

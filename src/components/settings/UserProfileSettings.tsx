@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -202,6 +203,7 @@ export const UserProfileSettings = () => {
         filterRole={filterRole}
         setFilterRole={setFilterRole}
         onInviteUser={() => setIsInviteDialogOpen(true)}
+        userRole={userRole || 'member'}
       />
 
       <UserList

@@ -155,6 +155,7 @@ export type Database = {
           organization_id: string | null
           role: Database["public"]["Enums"]["user_role"]
           token: string
+          updated_at: string | null
           workspace_id: string | null
         }
         Insert: {
@@ -167,6 +168,7 @@ export type Database = {
           organization_id?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           token?: string
+          updated_at?: string | null
           workspace_id?: string | null
         }
         Update: {
@@ -179,6 +181,7 @@ export type Database = {
           organization_id?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           token?: string
+          updated_at?: string | null
           workspace_id?: string | null
         }
         Relationships: [

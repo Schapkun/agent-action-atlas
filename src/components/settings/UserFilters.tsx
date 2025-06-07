@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { User } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Search, UserPlus } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UserFiltersProps {
   searchTerm: string;
@@ -11,26 +12,37 @@ interface UserFiltersProps {
   filterRole: string;
   setFilterRole: (role: string) => void;
   onInviteUser: () => void;
+  userRole?: string;
 }
 
-export const UserFilters = ({
-  searchTerm,
-  setSearchTerm,
-  filterRole,
-  setFilterRole,
-  onInviteUser
+export const UserFilters = ({ 
+  searchTerm, 
+  setSearchTerm, 
+  filterRole, 
+  setFilterRole, 
+  onInviteUser,
+  userRole = 'member'
 }: UserFiltersProps) => {
+  const { user } = useAuth();
+  
+  // Check if user can invite users (admin, owner or account owner)
+  const canInviteUsers = userRole === 'admin' || userRole === 'owner' || user?.email === 'info@schapkun.com';
+
   return (
-    <div className="flex justify-between items-center">
-      <div className="flex space-x-4">
-        <Input
-          placeholder="Zoek gebruikers..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-64"
-        />
+    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-3 flex-1">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            placeholder="Zoek gebruikers..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        
         <Select value={filterRole} onValueChange={setFilterRole}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Filter op rol" />
           </SelectTrigger>
           <SelectContent>
@@ -41,10 +53,13 @@ export const UserFilters = ({
           </SelectContent>
         </Select>
       </div>
-      <Button onClick={onInviteUser} className="flex items-center gap-2">
-        <User className="h-4 w-4" />
-        Gebruiker Uitnodigen
-      </Button>
+
+      {canInviteUsers && (
+        <Button onClick={onInviteUser} size="sm" className="w-full sm:w-auto">
+          <UserPlus className="h-4 w-4 mr-2" />
+          Gebruiker Uitnodigen
+        </Button>
+      )}
     </div>
   );
 };

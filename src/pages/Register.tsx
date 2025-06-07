@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Scale, Mail, Lock, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -66,14 +67,25 @@ const Register = () => {
           });
         }
       } else {
+        // Process the invitation after successful signup
+        try {
+          await supabase
+            .from('user_invitations')
+            .update({ accepted_at: new Date().toISOString() })
+            .eq('email', email)
+            .is('accepted_at', null);
+        } catch (inviteError) {
+          console.error('Error updating invitation:', inviteError);
+        }
+
         toast({
-          title: "Account aangemaakt",
-          description: "Check je e-mail om je account te verifiëren.",
+          title: "Account succesvol aangemaakt",
+          description: "Je account is aangemaakt en je bent nu ingelogd. Welkom!",
         });
         
-        // Redirect to login after successful registration
+        // Redirect to dashboard after successful registration
         setTimeout(() => {
-          navigate('/auth');
+          navigate('/');
         }, 2000);
       }
     } catch (error) {
