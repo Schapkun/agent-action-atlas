@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationOperations } from './hooks/useOrganizationOperations';
 import { CreateOrganizationForm } from './components/CreateOrganizationForm';
@@ -8,6 +10,7 @@ import { OrganizationCard } from './components/OrganizationCard';
 
 export const OrganizationSettings = () => {
   const { user } = useAuth();
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const {
     organizations,
     loading,
@@ -44,6 +47,15 @@ export const OrganizationSettings = () => {
     return true;
   };
 
+  const handleCreateOrganization = async (name: string) => {
+    await createOrganization(name);
+    setShowCreateForm(false);
+  };
+
+  const handleCancelCreate = () => {
+    setShowCreateForm(false);
+  };
+
   if (loading) {
     return <div className="text-sm">Organisaties laden...</div>;
   }
@@ -59,10 +71,20 @@ export const OrganizationSettings = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Organisaties & Werkruimtes</h2>
-        {canCreateItems && (
-          <CreateOrganizationForm onCreateOrganization={createOrganization} />
+        {canCreateItems && !showCreateForm && (
+          <Button onClick={() => setShowCreateForm(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nieuwe Organisatie
+          </Button>
         )}
       </div>
+
+      {showCreateForm && (
+        <CreateOrganizationForm
+          onCreateOrganization={handleCreateOrganization}
+          onCancel={handleCancelCreate}
+        />
+      )}
 
       <div className="space-y-4">
         {organizations.length === 0 ? (
