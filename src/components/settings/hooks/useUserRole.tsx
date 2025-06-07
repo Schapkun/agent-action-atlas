@@ -11,7 +11,7 @@ export const useUserRole = (userId: string | undefined, userEmail: string | unde
     try {
       // Check if user is account owner
       if (userEmail === 'info@schapkun.com') {
-        setUserRole('owner');
+        setUserRole('eigenaar'); // Changed from 'owner' to 'eigenaar' to match permission checks
         return;
       }
 
