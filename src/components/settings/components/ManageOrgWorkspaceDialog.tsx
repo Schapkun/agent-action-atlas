@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -459,20 +460,20 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
           </DialogTitle>
         </DialogHeader>
         
-        <div className="flex-1 flex flex-col min-h-0">
-          <Tabs defaultValue="organization" className="flex-1 flex flex-col min-h-0">
-            <TabsList className="grid w-full grid-cols-2">
+        <div className="flex-1 overflow-hidden">
+          <Tabs defaultValue="organization" className="h-full flex flex-col">
+            <TabsList className="grid w-full grid-cols-2 flex-shrink-0">
               <TabsTrigger value="organization" className="text-sm">Organisatie</TabsTrigger>
               <TabsTrigger value="workspaces" className="text-sm">Werkruimtes</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="organization" className="flex-1 flex flex-col min-h-0 mt-4">
-              <h3 className="text-lg font-semibold mb-4">Organisatie Details</h3>
+            <TabsContent value="organization" className="flex-1 overflow-hidden mt-4">
+              <h3 className="text-lg font-semibold mb-4 flex-shrink-0">Organisatie Details</h3>
               
-              <div className="flex-1 flex flex-col min-h-0">
-                <Card className="flex-1 min-h-0">
+              <div className="h-[calc(100%-3rem)] overflow-hidden">
+                <Card className="h-full">
                   <CardContent className="p-6 h-full flex flex-col">
-                    <div className="mb-4">
+                    <div className="mb-4 flex-shrink-0">
                       <Label htmlFor="orgName" className="text-sm font-medium">Organisatie Naam</Label>
                       <Input
                         id="orgName"
@@ -482,9 +483,9 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
                       />
                     </div>
 
-                    <div className="flex-1 min-h-0">
+                    <div className="flex-1 overflow-hidden">
                       <Label className="text-sm font-medium">Organisatie Gebruikers</Label>
-                      <ScrollArea className="h-[300px] border rounded-md p-3 mt-2">
+                      <ScrollArea className="h-[calc(100%-1.5rem)] border rounded-md p-3 mt-2">
                         <div className="space-y-2">
                           {loading ? (
                             <div className="text-sm text-muted-foreground">Laden...</div>
@@ -518,8 +519,8 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
               </div>
             </TabsContent>
 
-            <TabsContent value="workspaces" className="flex-1 flex flex-col min-h-0 mt-4">
-              <div className="flex justify-between items-center mb-4">
+            <TabsContent value="workspaces" className="flex-1 overflow-hidden mt-4">
+              <div className="flex justify-between items-center mb-4 flex-shrink-0">
                 <h3 className="text-lg font-semibold">Werkruimtes</h3>
                 {!showAddWorkspace && (
                   <Button onClick={() => setShowAddWorkspace(true)} size="sm">
@@ -529,9 +530,9 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
                 )}
               </div>
 
-              <div className="flex-1 flex flex-col min-h-0">
+              <div className="h-[calc(100%-4.5rem)] overflow-hidden flex flex-col">
                 {showAddWorkspace && (
-                  <Card className="mb-3">
+                  <Card className="mb-3 flex-shrink-0">
                     <CardContent className="p-4">
                       <div className="flex space-x-2">
                         <Input
@@ -554,8 +555,8 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
                   </Card>
                 )}
 
-                <ScrollArea className="flex-1 min-h-0">
-                  <div className="space-y-3 pr-4">
+                <div className="flex-1 overflow-y-auto">
+                  <div className="space-y-3 pr-2">
                     {loading ? (
                       <div className="text-sm text-muted-foreground">Werkruimtes laden...</div>
                     ) : workspaces.length === 0 ? (
@@ -665,19 +666,19 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
                       ))
                     )}
                   </div>
-                </ScrollArea>
+                </div>
               </div>
             </TabsContent>
           </Tabs>
+        </div>
 
-          <div className="flex justify-end space-x-2 pt-4 border-t mt-4">
-            <Button variant="outline" onClick={handleCancel}>
-              Annuleren
-            </Button>
-            <Button onClick={handleSaveAll} disabled={loading}>
-              {loading ? 'Opslaan...' : 'Alles Opslaan'}
-            </Button>
-          </div>
+        <div className="flex justify-end space-x-2 pt-4 border-t flex-shrink-0">
+          <Button variant="outline" onClick={handleCancel}>
+            Annuleren
+          </Button>
+          <Button onClick={handleSaveAll} disabled={loading}>
+            {loading ? 'Opslaan...' : 'Alles Opslaan'}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
