@@ -131,7 +131,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
         const orgMemberships = (allOrgsResponse.data || []).map(org => ({
           id: org.id,
           name: org.name,
-          role: 'owner',
+          role: 'owner' as const,
           created_at: org.created_at
         }));
 
@@ -140,7 +140,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
           id: workspace.id,
           name: workspace.name,
           organization_name: orgNames[workspace.organization_id] || 'Onbekend',
-          role: 'owner',
+          role: 'owner' as const,
           created_at: workspace.created_at
         }));
 
@@ -324,7 +324,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                 <Label htmlFor="user_role">Gebruikersrol</Label>
                 <Select
                   value={profile.user_role}
-                  onValueChange={(value) => setProfile(prev => prev ? { ...prev, user_role: value } : null)}
+                  onValueChange={(value: 'owner' | 'admin' | 'member') => setProfile(prev => prev ? { ...prev, user_role: value } : null)}
                   disabled={!isViewingOwnProfile}
                 >
                   <SelectTrigger>

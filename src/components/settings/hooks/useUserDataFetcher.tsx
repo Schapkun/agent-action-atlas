@@ -14,6 +14,7 @@ interface UserProfile {
   avatar_url?: string | null;
   updated_at?: string;
   member_since?: string;
+  user_role?: 'owner' | 'admin' | 'member';
 }
 
 export const useUserDataFetcher = () => {
@@ -144,7 +145,8 @@ export const useUserDataFetcher = () => {
       role: invitation.role,
       avatar_url: null,
       updated_at: invitation.created_at,
-      member_since: invitation.created_at
+      member_since: invitation.created_at,
+      user_role: invitation.role as 'owner' | 'admin' | 'member'
     }));
   };
 
@@ -232,7 +234,7 @@ export const useUserDataFetcher = () => {
           user_id, 
           role, 
           created_at,
-          profiles(id, email, full_name, created_at, avatar_url, updated_at)
+          profiles(id, email, full_name, created_at, avatar_url, updated_at, user_role)
         `)
         .in('organization_id', orgIds)
         .neq('user_id', userId);
@@ -360,7 +362,8 @@ export const useUserDataFetcher = () => {
       role: invitation.role,
       avatar_url: null,
       updated_at: invitation.created_at,
-      member_since: invitation.created_at
+      member_since: invitation.created_at,
+      user_role: invitation.role as 'owner' | 'admin' | 'member'
     }));
   };
 

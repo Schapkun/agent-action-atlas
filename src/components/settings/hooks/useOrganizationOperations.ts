@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAutoOwnerMembership } from './useAutoOwnerMembership';
+import { useWorkspaceOperations } from './useWorkspaceOperations';
 import type { Organization } from '../types/organization';
 
 export const useOrganizationOperations = () => {
@@ -12,6 +13,7 @@ export const useOrganizationOperations = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { addOwnersToNewOrganization } = useAutoOwnerMembership();
+  const { createWorkspace: createWorkspaceOperation, updateWorkspace: updateWorkspaceOperation, deleteWorkspace: deleteWorkspaceOperation } = useWorkspaceOperations();
 
   const fetchOrganizations = async () => {
     if (!user?.id) {
@@ -39,16 +41,38 @@ export const useOrganizationOperations = () => {
 
         console.log('All organization data (account owner):', orgData);
 
-        // For account owner, they have owner role on everything
-        const organizationsWithRoles = orgData?.map(org => ({
-          id: org.id,
-          name: org.name,
-          slug: org.slug,
-          created_at: org.created_at,
-          user_role: 'owner' as const
-        })) || [];
+        // For each organization, fetch its workspaces
+        const organizationsWithWorkspaces = await Promise.all(
+          (orgData || []).map(async (org) => {
+            const { data: workspaces, error: workspacesError } = await supabase
+              .from('workspaces')
+              .select('id, name, slug, created_at')
+              .eq('organization_id', org.id)
+              .order('created_at', { ascending: false });
 
-        setOrganizations(organizationsWithRoles);
+            if (workspacesError) {
+              console.error('Workspaces fetch error:', workspacesError);
+            }
+
+            return {
+              id: org.id,
+              name: org.name,
+              slug: org.slug,
+              created_at: org.created_at,
+              user_role: 'owner' as const,
+              workspaces: (workspaces || []).map(ws => ({
+                id: ws.id,
+                name: ws.name,
+                slug: ws.slug,
+                created_at: ws.created_at,
+                organization_id: org.id,
+                user_role: 'owner' as const
+              }))
+            };
+          })
+        );
+
+        setOrganizations(organizationsWithWorkspaces);
       } else {
         // For regular users, only show organizations they are members of
         const { data: membershipData, error: membershipError } = await supabase
@@ -84,19 +108,55 @@ export const useOrganizationOperations = () => {
 
         console.log('Organization data:', orgData);
 
-        // Combine data
-        const organizationsWithRoles = orgData?.map(org => {
-          const membership = membershipData.find(m => m.organization_id === org.id);
-          return {
-            id: org.id,
-            name: org.name,
-            slug: org.slug,
-            created_at: org.created_at,
-            user_role: membership?.role as 'owner' | 'admin' | 'member'
-          };
-        }) || [];
+        // For each organization, fetch its workspaces where user is a member
+        const organizationsWithWorkspaces = await Promise.all(
+          (orgData || []).map(async (org) => {
+            const { data: workspaceMemberships, error: workspaceMembershipError } = await supabase
+              .from('workspace_members')
+              .select('role, workspace_id')
+              .eq('user_id', user.id);
 
-        setOrganizations(organizationsWithRoles);
+            if (workspaceMembershipError) {
+              console.error('Workspace membership error:', workspaceMembershipError);
+            }
+
+            const workspaceIds = (workspaceMemberships || []).map(wm => wm.workspace_id);
+            
+            const { data: workspaces, error: workspacesError } = await supabase
+              .from('workspaces')
+              .select('id, name, slug, created_at')
+              .eq('organization_id', org.id)
+              .in('id', workspaceIds)
+              .order('created_at', { ascending: false });
+
+            if (workspacesError) {
+              console.error('Workspaces fetch error:', workspacesError);
+            }
+
+            const membership = membershipData.find(m => m.organization_id === org.id);
+            
+            return {
+              id: org.id,
+              name: org.name,
+              slug: org.slug,
+              created_at: org.created_at,
+              user_role: membership?.role as 'owner' | 'admin' | 'member',
+              workspaces: (workspaces || []).map(ws => {
+                const workspaceMembership = workspaceMemberships?.find(wm => wm.workspace_id === ws.id);
+                return {
+                  id: ws.id,
+                  name: ws.name,
+                  slug: ws.slug,
+                  created_at: ws.created_at,
+                  organization_id: org.id,
+                  user_role: workspaceMembership?.role as 'owner' | 'admin' | 'member'
+                };
+              })
+            };
+          })
+        );
+
+        setOrganizations(organizationsWithWorkspaces);
       }
     } catch (error) {
       console.error('Error fetching organizations:', error);
@@ -236,6 +296,9 @@ export const useOrganizationOperations = () => {
     fetchOrganizations,
     createOrganization,
     updateOrganization,
-    deleteOrganization
+    deleteOrganization,
+    createWorkspace: createWorkspaceOperation,
+    updateWorkspace: updateWorkspaceOperation,
+    deleteWorkspace: deleteWorkspaceOperation
   };
 };
