@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -88,8 +87,24 @@ export const UserProfileSettings = () => {
         console.log('Users with organizations:', usersWithOrgs);
         setUsers(usersWithOrgs);
       } else {
-        // For regular users, show only users in their organizations
+        // For regular users, show users in their organizations PLUS themselves
         console.log('Fetching users for regular user...');
+        
+        // First, get current user's profile
+        const { data: currentUserProfile, error: currentUserError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (currentUserError) {
+          console.error('Current user profile fetch error:', currentUserError);
+          throw currentUserError;
+        }
+
+        console.log('Current user profile:', currentUserProfile);
+        
+        // Then get their organization memberships
         const { data: membershipData, error: membershipError } = await supabase
           .from('organization_members')
           .select('organization_id')
@@ -100,36 +115,40 @@ export const UserProfileSettings = () => {
           throw membershipError;
         }
 
-        if (!membershipData || membershipData.length === 0) {
-          console.log('No memberships found');
-          setUsers([]);
-          setLoading(false);
-          return;
-        }
+        let allUsers = [currentUserProfile]; // Always include current user
 
-        const orgIds = membershipData.map(m => m.organization_id);
-        
-        // Get all users in these organizations
-        const { data: orgUsersData, error: orgUsersError } = await supabase
-          .from('organization_members')
-          .select('user_id, profiles(id, email, full_name, created_at)')
-          .in('organization_id', orgIds);
+        if (membershipData && membershipData.length > 0) {
+          // If user has organizations, get other users in those organizations
+          const orgIds = membershipData.map(m => m.organization_id);
+          
+          // Get all users in these organizations (excluding current user)
+          const { data: orgUsersData, error: orgUsersError } = await supabase
+            .from('organization_members')
+            .select('user_id, profiles(id, email, full_name, created_at)')
+            .in('organization_id', orgIds)
+            .neq('user_id', user.id); // Exclude current user to avoid duplicates
 
-        if (orgUsersError) {
-          console.error('Organization users fetch error:', orgUsersError);
-          throw orgUsersError;
-        }
-
-        // Deduplicate users and format data
-        const uniqueUsers = new Map();
-        orgUsersData?.forEach(item => {
-          const userProfile = (item as any).profiles;
-          if (userProfile && !uniqueUsers.has(userProfile.id)) {
-            uniqueUsers.set(userProfile.id, userProfile);
+          if (orgUsersError) {
+            console.error('Organization users fetch error:', orgUsersError);
+            throw orgUsersError;
           }
-        });
 
-        setUsers(Array.from(uniqueUsers.values()));
+          // Add organization users
+          orgUsersData?.forEach(item => {
+            const userProfile = (item as any).profiles;
+            if (userProfile) {
+              allUsers.push(userProfile);
+            }
+          });
+        }
+
+        // Remove duplicates based on user ID
+        const uniqueUsers = allUsers.filter((user, index, arr) => 
+          arr.findIndex(u => u.id === user.id) === index
+        );
+
+        console.log('Final user list for regular user:', uniqueUsers);
+        setUsers(uniqueUsers);
       }
     } catch (error) {
       console.error('Error fetching users:', error);
