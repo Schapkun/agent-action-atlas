@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -87,8 +88,10 @@ export const UserProfileSettings = () => {
         console.log('Users with organizations:', usersWithOrgs);
         setUsers(usersWithOrgs);
       } else {
-        // For regular users, show users in their organizations PLUS themselves
+        // For regular users, always include themselves first
         console.log('Fetching users for regular user...');
+        console.log('Regular user ID:', user.id);
+        console.log('Regular user email:', user.email);
         
         // First, get current user's profile
         const { data: currentUserProfile, error: currentUserError } = await supabase
@@ -97,12 +100,38 @@ export const UserProfileSettings = () => {
           .eq('id', user.id)
           .single();
 
+        console.log('Current user profile query result:', { currentUserProfile, currentUserError });
+
         if (currentUserError) {
           console.error('Current user profile fetch error:', currentUserError);
-          throw currentUserError;
+          // If we can't find the current user's profile, create it
+          if (currentUserError.code === 'PGRST116') {
+            console.log('Creating missing profile for user:', user.id);
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert({
+                id: user.id,
+                email: user.email,
+                full_name: user.email
+              })
+              .select()
+              .single();
+            
+            if (createError) {
+              console.error('Error creating profile:', createError);
+              throw createError;
+            }
+            
+            console.log('Created new profile:', newProfile);
+            setUsers([newProfile]);
+            return;
+          } else {
+            throw currentUserError;
+          }
         }
 
-        console.log('Current user profile:', currentUserProfile);
+        let allUsers = [currentUserProfile]; // Always include current user
+        console.log('Starting with current user:', currentUserProfile);
         
         // Then get their organization memberships
         const { data: membershipData, error: membershipError } = await supabase
@@ -110,16 +139,16 @@ export const UserProfileSettings = () => {
           .select('organization_id')
           .eq('user_id', user.id);
 
+        console.log('Organization memberships:', { membershipData, membershipError });
+
         if (membershipError) {
           console.error('Membership fetch error:', membershipError);
-          throw membershipError;
-        }
-
-        let allUsers = [currentUserProfile]; // Always include current user
-
-        if (membershipData && membershipData.length > 0) {
+          // Don't throw error here, just continue with current user only
+          console.log('Continuing with current user only due to membership error');
+        } else if (membershipData && membershipData.length > 0) {
           // If user has organizations, get other users in those organizations
           const orgIds = membershipData.map(m => m.organization_id);
+          console.log('Organization IDs:', orgIds);
           
           // Get all users in these organizations (excluding current user)
           const { data: orgUsersData, error: orgUsersError } = await supabase
@@ -128,18 +157,23 @@ export const UserProfileSettings = () => {
             .in('organization_id', orgIds)
             .neq('user_id', user.id); // Exclude current user to avoid duplicates
 
+          console.log('Organization users data:', { orgUsersData, orgUsersError });
+
           if (orgUsersError) {
             console.error('Organization users fetch error:', orgUsersError);
-            throw orgUsersError;
+            // Don't throw error here, just continue with current user only
+            console.log('Continuing with current user only due to org users error');
+          } else {
+            // Add organization users
+            orgUsersData?.forEach(item => {
+              const userProfile = (item as any).profiles;
+              if (userProfile) {
+                allUsers.push(userProfile);
+              }
+            });
           }
-
-          // Add organization users
-          orgUsersData?.forEach(item => {
-            const userProfile = (item as any).profiles;
-            if (userProfile) {
-              allUsers.push(userProfile);
-            }
-          });
+        } else {
+          console.log('No organization memberships found, showing only current user');
         }
 
         // Remove duplicates based on user ID
@@ -148,6 +182,7 @@ export const UserProfileSettings = () => {
         );
 
         console.log('Final user list for regular user:', uniqueUsers);
+        console.log('Number of users:', uniqueUsers.length);
         setUsers(uniqueUsers);
       }
     } catch (error) {
