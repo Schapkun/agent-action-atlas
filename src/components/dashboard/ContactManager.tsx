@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -266,7 +265,7 @@ export const ContactManager = () => {
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="py-3">
           {filteredItems.length > 0 ? (
             <div className="space-y-2">
               {filteredItems.map((item) => {
