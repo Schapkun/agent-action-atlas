@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,16 +32,20 @@ interface Workspace {
 interface MyAccountProps {
   viewingUserId?: string;
   isEditingOtherUser?: boolean;
+  onClose?: () => void;
 }
 
 type UserRole = "owner" | "admin" | "member";
 
-export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccountProps) => {
+export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }: MyAccountProps) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [originalProfile, setOriginalProfile] = useState<UserProfile | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [globalRole, setGlobalRole] = useState<UserRole>('member');
+  const [originalGlobalRole, setOriginalGlobalRole] = useState<UserRole>('member');
+  const [hasChanges, setHasChanges] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -66,6 +71,16 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
       fetchUserData();
     }
   }, [targetUserId]);
+
+  // Check for changes whenever profile or globalRole changes
+  useEffect(() => {
+    if (originalProfile && profile) {
+      const profileChanged = originalProfile.full_name !== profile.full_name || 
+                           originalProfile.email !== profile.email;
+      const roleChanged = originalGlobalRole !== globalRole;
+      setHasChanges(profileChanged || roleChanged);
+    }
+  }, [profile, globalRole, originalProfile, originalGlobalRole]);
 
   const fetchUserData = async () => {
     if (!targetUserId) {
@@ -234,47 +249,77 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
     }
   };
 
-  const updateProfile = async () => {
+  const handleSave = async () => {
     if (!profile || !user?.id) return;
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({
-          full_name: profile.full_name,
-          email: profile.email
-        })
-        .eq('id', profile.id);
+      // Update profile if changed
+      if (originalProfile && (originalProfile.full_name !== profile.full_name || originalProfile.email !== profile.email)) {
+        const { error } = await supabase
+          .from('user_profiles')
+          .update({
+            full_name: profile.full_name,
+            email: profile.email
+          })
+          .eq('id', profile.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // Log the update
-      try {
-        await supabase
-          .from('history_logs')
-          .insert({
-            user_id: user.id,
-            action: isViewingOwnProfile ? 'Profiel bijgewerkt' : 'Gebruikersprofiel bijgewerkt',
-            details: { full_name: profile.full_name, email: profile.email, target_user_id: profile.id }
-          });
-      } catch (logError) {
-        console.error('Failed to log update:', logError);
+        // Log the update
+        try {
+          await supabase
+            .from('history_logs')
+            .insert({
+              user_id: user.id,
+              action: isViewingOwnProfile ? 'Profiel bijgewerkt' : 'Gebruikersprofiel bijgewerkt',
+              details: { full_name: profile.full_name, email: profile.email, target_user_id: profile.id }
+            });
+        } catch (logError) {
+          console.error('Failed to log update:', logError);
+        }
       }
+
+      // Update global role if changed
+      if (originalGlobalRole !== globalRole) {
+        await updateGlobalRole(globalRole);
+      }
+
+      // Update original values to reflect saved state
+      setOriginalProfile({ ...profile });
+      setOriginalGlobalRole(globalRole);
+      setHasChanges(false);
 
       toast({
         title: "Succes",
-        description: "Profiel succesvol bijgewerkt",
+        description: "Wijzigingen succesvol opgeslagen",
       });
+
+      if (onClose) {
+        onClose();
+      }
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Error saving changes:', error);
       toast({
         title: "Error",
-        description: "Kon profiel niet bijwerken",
+        description: "Kon wijzigingen niet opslaan",
         variant: "destructive",
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    // Reset to original values
+    if (originalProfile) {
+      setProfile({ ...originalProfile });
+    }
+    setGlobalRole(originalGlobalRole);
+    setHasChanges(false);
+    
+    if (onClose) {
+      onClose();
     }
   };
 
@@ -459,10 +504,9 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
 
   if (loading) {
     return (
-      <div className="space-y-4 p-4">
-        <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+      <div className="h-full flex items-center justify-center">
+        <div className="animate-pulse text-sm text-muted-foreground">
+          Gebruikersgegevens laden...
         </div>
       </div>
     );
@@ -470,10 +514,10 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
 
   if (!profile) {
     return (
-      <div className="space-y-4 p-4">
+      <div className="h-full flex items-center justify-center">
         <div className="text-center">
-          <p className="text-muted-foreground text-sm">Kon profiel niet laden. Probeer de pagina te vernieuwen.</p>
-          <Button onClick={fetchUserData} className="mt-3" size="sm">
+          <p className="text-muted-foreground text-sm mb-3">Kon profiel niet laden. Probeer de pagina te vernieuwen.</p>
+          <Button onClick={fetchUserData} size="sm">
             Opnieuw proberen
           </Button>
         </div>
@@ -485,47 +529,62 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
   const showRoleManagement = isCurrentUserAccountOwner && organizations.length > 0;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center space-x-3">
-        <Avatar className="h-12 w-12">
-          <AvatarImage src={profile.avatar_url} />
-          <AvatarFallback className="text-sm">
-            {getInitials(profile.full_name || profile.email || 'U')}
-          </AvatarFallback>
-        </Avatar>
-        <div>
-          <h1 className="text-lg font-semibold">
-            {isViewingOwnProfile ? 'Mijn Account' : `Account van ${profile.full_name || profile.email}`}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {isViewingOwnProfile 
-              ? 'Beheer je persoonlijke gegevens en voorkeuren'
-              : 'Bekijk en beheer gebruikersgegevens'
-            }
-          </p>
+    <div className="h-full flex flex-col">
+      {/* Content Area - Scrollable */}
+      <ScrollArea className="flex-1 pr-4">
+        <div className="space-y-6 pb-4">
+          <div className="flex items-center space-x-3">
+            <Avatar className="h-12 w-12">
+              <AvatarImage src={profile.avatar_url} />
+              <AvatarFallback className="text-sm">
+                {getInitials(profile.full_name || profile.email || 'U')}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h2 className="text-lg font-semibold">
+                {isViewingOwnProfile ? 'Mijn Account' : `Account van ${profile.full_name || profile.email}`}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {isViewingOwnProfile 
+                  ? 'Beheer je persoonlijke gegevens en voorkeuren'
+                  : 'Bekijk en beheer gebruikersgegevens'
+                }
+              </p>
+            </div>
+          </div>
+
+          {/* Combined Profile Information and Role Management */}
+          <UserProfileSection
+            profile={profile}
+            setProfile={setProfile}
+            isViewingOwnProfile={isViewingOwnProfile}
+            saving={false}
+            onUpdateProfile={() => {}} // We handle saving in this component now
+            showSaveButton={false} // We have our own save/cancel buttons
+            globalRole={globalRole}
+            onUpdateGlobalRole={setGlobalRole}
+            showRoleManagement={showRoleManagement}
+          />
+
+          {/* Organizations & Workspaces */}
+          <OrganizationsList
+            organizations={organizations}
+            isViewingOwnProfile={isViewingOwnProfile}
+            onRemoveFromOrganization={removeFromOrganization}
+            onRemoveFromWorkspace={removeFromWorkspace}
+          />
         </div>
+      </ScrollArea>
+
+      {/* Fixed Footer with Save/Cancel Buttons */}
+      <div className="flex justify-end space-x-2 pt-4 border-t flex-shrink-0">
+        <Button variant="outline" onClick={handleCancel}>
+          Annuleren
+        </Button>
+        <Button onClick={handleSave} disabled={saving || !hasChanges}>
+          {saving ? 'Opslaan...' : 'Opslaan'}
+        </Button>
       </div>
-
-      {/* Combined Profile Information and Role Management */}
-      <UserProfileSection
-        profile={profile}
-        setProfile={setProfile}
-        isViewingOwnProfile={isViewingOwnProfile}
-        saving={saving}
-        onUpdateProfile={updateProfile}
-        showSaveButton={true}
-        globalRole={globalRole}
-        onUpdateGlobalRole={updateGlobalRole}
-        showRoleManagement={showRoleManagement}
-      />
-
-      {/* Organizations & Workspaces */}
-      <OrganizationsList
-        organizations={organizations}
-        isViewingOwnProfile={isViewingOwnProfile}
-        onRemoveFromOrganization={removeFromOrganization}
-        onRemoveFromWorkspace={removeFromWorkspace}
-      />
     </div>
   );
 };

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -227,13 +227,25 @@ export const UserProfileSettings = () => {
           setViewingUserProfile(null);
         }
       }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          {viewingUserProfile && (
-            <MyAccount 
-              viewingUserId={viewingUserProfile.id}
-              isEditingOtherUser={user?.email !== viewingUserProfile.email}
-            />
-          )}
+        <DialogContent className="max-w-5xl h-[90vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="text-xl font-semibold">
+              {viewingUserProfile && user?.email === viewingUserProfile.email 
+                ? 'Mijn Account' 
+                : `Account van ${viewingUserProfile?.full_name || viewingUserProfile?.email}`
+              }
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-hidden">
+            {viewingUserProfile && (
+              <MyAccount 
+                viewingUserId={viewingUserProfile.id}
+                isEditingOtherUser={user?.email !== viewingUserProfile.email}
+                onClose={() => setShowMyAccount(false)}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
