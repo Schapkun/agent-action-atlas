@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,21 +8,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Trash2, Edit } from 'lucide-react';
 
 interface User {
   id: string;
   email: string;
   full_name: string;
   hasAccess?: boolean;
-}
-
-interface Workspace {
-  id: string;
-  name: string;
-  slug: string;
-  created_at: string;
-  organization_id: string;
 }
 
 interface EditOrgWorkspaceDialogProps {
@@ -32,7 +24,6 @@ interface EditOrgWorkspaceDialogProps {
     id: string;
     name: string;
     organization_id?: string;
-    workspaces?: Workspace[];
   } | null;
   onUpdate: () => void;
 }
@@ -46,10 +37,6 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [users, setUsers] = useState<User[]>([]);
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [newWorkspaceName, setNewWorkspaceName] = useState('');
-  const [editingWorkspace, setEditingWorkspace] = useState<string | null>(null);
-  const [editWorkspaceName, setEditWorkspaceName] = useState('');
   const [loading, setLoading] = useState(false);
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
@@ -57,12 +44,9 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
   useEffect(() => {
     if (item) {
       setName(item.name);
-      if (type === 'organization') {
-        setWorkspaces(item.workspaces || []);
-      }
       fetchUsers();
     }
-  }, [item, type]);
+  }, [item]);
 
   const fetchUsers = async () => {
     if (!item) return;
@@ -124,107 +108,6 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
     ));
   };
 
-  const handleCreateWorkspace = async () => {
-    if (!newWorkspaceName.trim() || !item) return;
-
-    try {
-      const slug = newWorkspaceName.toLowerCase().replace(/\s+/g, '-');
-      
-      const { data, error } = await supabase
-        .from('workspaces')
-        .insert({
-          name: newWorkspaceName.trim(),
-          slug: slug,
-          organization_id: item.id
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setWorkspaces(prev => [...prev, data]);
-      setNewWorkspaceName('');
-      
-      toast({
-        title: "Succes",
-        description: "Werkruimte aangemaakt",
-      });
-    } catch (error) {
-      console.error('Error creating workspace:', error);
-      toast({
-        title: "Error",
-        description: "Kon werkruimte niet aanmaken",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleUpdateWorkspace = async (workspaceId: string) => {
-    if (!editWorkspaceName.trim()) return;
-
-    try {
-      const slug = editWorkspaceName.toLowerCase().replace(/\s+/g, '-');
-      
-      const { error } = await supabase
-        .from('workspaces')
-        .update({
-          name: editWorkspaceName.trim(),
-          slug: slug
-        })
-        .eq('id', workspaceId);
-
-      if (error) throw error;
-
-      setWorkspaces(prev => prev.map(ws => 
-        ws.id === workspaceId 
-          ? { ...ws, name: editWorkspaceName.trim() }
-          : ws
-      ));
-      
-      setEditingWorkspace(null);
-      setEditWorkspaceName('');
-      
-      toast({
-        title: "Succes",
-        description: "Werkruimte bijgewerkt",
-      });
-    } catch (error) {
-      console.error('Error updating workspace:', error);
-      toast({
-        title: "Error",
-        description: "Kon werkruimte niet bijwerken",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteWorkspace = async (workspaceId: string, workspaceName: string) => {
-    if (!confirm(`Weet je zeker dat je werkruimte "${workspaceName}" wilt verwijderen?`)) return;
-
-    try {
-      const { error } = await supabase
-        .from('workspaces')
-        .delete()
-        .eq('id', workspaceId);
-
-      if (error) throw error;
-
-      setWorkspaces(prev => prev.filter(ws => ws.id !== workspaceId));
-      
-      toast({
-        title: "Succes",
-        description: `Werkruimte "${workspaceName}" verwijderd`,
-      });
-    } catch (error) {
-      console.error('Error deleting workspace:', error);
-      toast({
-        title: "Error",
-        description: "Kon werkruimte niet verwijderen",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleSave = async () => {
     if (!item || !name.trim()) return;
 
@@ -283,25 +166,39 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
           }
 
           // If user is added to organization, add them to ALL workspaces in that organization
-          for (const workspace of workspaces) {
-            await supabase
-              .from('workspace_members')
-              .upsert({
-                workspace_id: workspace.id,
-                user_id: userId,
-                role: 'member'
-              });
+          const { data: workspaces } = await supabase
+            .from('workspaces')
+            .select('id')
+            .eq('organization_id', item.id);
+
+          if (workspaces) {
+            for (const workspace of workspaces) {
+              await supabase
+                .from('workspace_members')
+                .upsert({
+                  workspace_id: workspace.id,
+                  user_id: userId,
+                  role: 'member'
+                });
+            }
           }
         }
 
         // Remove users from all workspaces when removed from organization
         if (usersWithoutAccess.length > 0) {
-          for (const workspace of workspaces) {
-            await supabase
-              .from('workspace_members')
-              .delete()
-              .eq('workspace_id', workspace.id)
-              .in('user_id', usersWithoutAccess);
+          const { data: workspaces } = await supabase
+            .from('workspaces')
+            .select('id')
+            .eq('organization_id', item.id);
+
+          if (workspaces) {
+            for (const workspace of workspaces) {
+              await supabase
+                .from('workspace_members')
+                .delete()
+                .eq('workspace_id', workspace.id)
+                .in('user_id', usersWithoutAccess);
+            }
           }
         }
       } else {
@@ -358,15 +255,14 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg">
             {type === 'organization' ? 'Organisatie' : 'Werkruimte'} Bewerken
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-6">
-          {/* Name Section */}
+        <div className="space-y-4">
           <div>
             <Label htmlFor="name" className="text-sm">Naam</Label>
             <Input
@@ -378,82 +274,6 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
             />
           </div>
 
-          {/* Workspaces Section - Only for Organizations */}
-          {type === 'organization' && (
-            <div>
-              <Label className="text-sm">Werkruimtes</Label>
-              <div className="border rounded-md p-3 mt-1 space-y-3">
-                {/* Existing Workspaces */}
-                {workspaces.map((workspace) => (
-                  <div key={workspace.id} className="flex items-center justify-between p-2 bg-muted/30 rounded">
-                    {editingWorkspace === workspace.id ? (
-                      <div className="flex-1 flex items-center space-x-2">
-                        <Input
-                          value={editWorkspaceName}
-                          onChange={(e) => setEditWorkspaceName(e.target.value)}
-                          className="flex-1"
-                        />
-                        <Button size="sm" onClick={() => handleUpdateWorkspace(workspace.id)}>
-                          Opslaan
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => {
-                            setEditingWorkspace(null);
-                            setEditWorkspaceName('');
-                          }}
-                        >
-                          Annuleren
-                        </Button>
-                      </div>
-                    ) : (
-                      <>
-                        <span className="flex-1">{workspace.name}</span>
-                        <div className="flex space-x-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setEditingWorkspace(workspace.id);
-                              setEditWorkspaceName(workspace.name);
-                            }}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteWorkspace(workspace.id, workspace.name)}
-                            className="text-destructive hover:text-destructive h-8 w-8 p-0"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))}
-                
-                {/* Add New Workspace */}
-                <div className="flex items-center space-x-2 pt-2 border-t">
-                  <Input
-                    value={newWorkspaceName}
-                    onChange={(e) => setNewWorkspaceName(e.target.value)}
-                    placeholder="Nieuwe werkruimte naam"
-                    className="flex-1"
-                  />
-                  <Button size="sm" onClick={handleCreateWorkspace} disabled={!newWorkspaceName.trim()}>
-                    <Plus className="h-3 w-3 mr-1" />
-                    Toevoegen
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Users Section */}
           <div>
             <Label className="text-sm">Gebruikers</Label>
             <div className="max-h-48 overflow-y-auto border rounded-md p-2 mt-1 space-y-2">
@@ -484,7 +304,6 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex justify-end space-x-2 pt-2">
             <Button variant="outline" size="sm" onClick={onClose}>
               Annuleren
