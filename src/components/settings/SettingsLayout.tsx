@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -120,7 +119,6 @@ export const SettingsLayout = () => {
               <RoleGuard 
                 requiredRoles={['admin', 'eigenaar']} 
                 userRole={userRole}
-                fallbackMessage="Je hebt geen toegang tot document layout instellingen. Alleen gebruikers met Admin of Eigenaar rol kunnen document layouts beheren."
               >
                 <DocumentLayoutSettings />
               </RoleGuard>
@@ -134,7 +132,6 @@ export const SettingsLayout = () => {
               <RoleGuard 
                 requiredRoles={['admin', 'eigenaar']} 
                 userRole={userRole}
-                fallbackMessage="Je hebt geen toegang tot de geschiedenis. Alleen gebruikers met Admin of Eigenaar rol kunnen de geschiedenis bekijken."
               >
                 <HistoryLogs />
               </RoleGuard>
