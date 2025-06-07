@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -158,7 +159,7 @@ export const WorkspaceSettings = () => {
           return;
         }
 
-        // Get workspace details
+        // Get workspace details for workspaces user is member of
         const workspaceIds = membershipData.map(m => m.workspace_id);
         const { data: workspaceData, error: workspaceError } = await supabase
           .from('workspaces')

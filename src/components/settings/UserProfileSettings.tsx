@@ -162,6 +162,10 @@ export const UserProfileSettings = () => {
     return matchesSearch && matchesFilter;
   });
 
+  // Check if current user is account owner or admin
+  const isAccountOwner = user?.email === 'info@schapkun.com';
+  const canManageUsers = userRole === 'admin' || userRole === 'owner' || isAccountOwner;
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -197,29 +201,64 @@ export const UserProfileSettings = () => {
 
   return (
     <div className="space-y-6">
-      <UserFilters
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        filterRole={filterRole}
-        setFilterRole={setFilterRole}
-        onInviteUser={() => setIsInviteDialogOpen(true)}
-        userRole={userRole || 'member'}
-      />
+      {canManageUsers && (
+        <UserFilters
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          filterRole={filterRole}
+          setFilterRole={setFilterRole}
+          onInviteUser={() => setIsInviteDialogOpen(true)}
+          userRole={userRole || 'member'}
+        />
+      )}
 
-      <UserList
-        users={filteredUsers}
-        currentUserEmail={user?.email}
-        onEdit={handleShowMyAccount}
-        onDelete={userManagement.deleteUser}
-        onShowMyAccount={handleShowMyAccount}
-        onResendInvitation={handleResendInvitation}
-      />
+      {/* Show current user's profile first if not account owner/admin */}
+      {!canManageUsers && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium">Mijn Profiel</h3>
+                <p className="text-sm text-muted-foreground">{user?.email}</p>
+              </div>
+              <Button 
+                size="sm" 
+                onClick={() => {
+                  const currentUserProfile: UserProfile = {
+                    id: user?.id || '',
+                    email: user?.email || '',
+                    full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || '',
+                    created_at: user?.created_at || new Date().toISOString(),
+                    role: userRole || 'member'
+                  };
+                  handleShowMyAccount(currentUserProfile);
+                }}
+              >
+                Profiel Bewerken
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      <InviteUserDialog
-        isOpen={isInviteDialogOpen}
-        onOpenChange={setIsInviteDialogOpen}
-        onInvite={handleInviteUser}
-      />
+      {canManageUsers && (
+        <UserList
+          users={filteredUsers}
+          currentUserEmail={user?.email}
+          onEdit={handleShowMyAccount}
+          onDelete={userManagement.deleteUser}
+          onShowMyAccount={handleShowMyAccount}
+          onResendInvitation={handleResendInvitation}
+        />
+      )}
+
+      {canManageUsers && (
+        <InviteUserDialog
+          isOpen={isInviteDialogOpen}
+          onOpenChange={setIsInviteDialogOpen}
+          onInvite={handleInviteUser}
+        />
+      )}
 
       <Dialog open={showMyAccount} onOpenChange={(open) => {
         setShowMyAccount(open);
