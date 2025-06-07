@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { OrganizationWorkspaceView } from './OrganizationWorkspaceView';
+import { WorkspaceSettings } from './WorkspaceSettings';
 import { UserProfileSettings } from './UserProfileSettings';
 import { HistoryLogs } from './HistoryLogs';
 import { DocumentLayoutSettings } from './DocumentLayoutSettings';
@@ -84,13 +86,22 @@ export const SettingsLayout = () => {
 
   return (
     <div className="container mx-auto px-4 max-w-6xl" style={{ paddingTop: '-14px' }}>
-      <Tabs defaultValue="organizations" className="space-y-4">
+      <Tabs defaultValue="workspaces" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="workspaces">Werkruimtes</TabsTrigger>
           <TabsTrigger value="organizations">Org & Werkruimtes</TabsTrigger>
           <TabsTrigger value="users">Gebruikers</TabsTrigger>
           <TabsTrigger value="documents">Documenten</TabsTrigger>
           <TabsTrigger value="history">Geschiedenis</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="workspaces">
+          <Card className="rounded-lg border bg-card text-card-foreground shadow-sm">
+            <CardContent className="p-6">
+              <WorkspaceSettings userRole={userRole} />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="organizations">
           <Card className="rounded-lg border bg-card text-card-foreground shadow-sm">
