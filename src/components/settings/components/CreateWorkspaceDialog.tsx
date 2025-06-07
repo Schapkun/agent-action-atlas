@@ -20,49 +20,56 @@ export const CreateWorkspaceDialog: React.FC<CreateWorkspaceDialogProps> = ({
   canCreateWorkspace
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [newWorkspace, setNewWorkspace] = useState({ name: '', organization_id: '' });
+  const [newWorkspaceName, setNewWorkspaceName] = useState('');
+  const [selectedOrganization, setSelectedOrganization] = useState('');
+
+  console.log('CreateWorkspaceDialog - canCreateWorkspace prop:', canCreateWorkspace);
 
   const handleCreate = () => {
-    onCreateWorkspace(newWorkspace.name, newWorkspace.organization_id);
-    setNewWorkspace({ name: '', organization_id: '' });
-    setIsOpen(false);
+    if (newWorkspaceName.trim() && selectedOrganization) {
+      onCreateWorkspace(newWorkspaceName.trim(), selectedOrganization);
+      setNewWorkspaceName('');
+      setSelectedOrganization('');
+      setIsOpen(false);
+    }
   };
 
+  // Don't render the button if user cannot create workspaces
   if (!canCreateWorkspace) {
+    console.log('CreateWorkspaceDialog - Not rendering button, canCreateWorkspace is false');
     return null;
   }
+
+  console.log('CreateWorkspaceDialog - Rendering button, canCreateWorkspace is true');
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button size="sm">
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4 mr-1" />
           Nieuwe Werkruimte
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-lg">Nieuwe Werkruimte Aanmaken</DialogTitle>
+          <DialogTitle className="text-lg">Nieuwe Werkruimte</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div>
             <Label htmlFor="workspace-name" className="text-sm">Werkruimte Naam</Label>
             <Input
               id="workspace-name"
-              value={newWorkspace.name}
-              onChange={(e) => setNewWorkspace({ ...newWorkspace, name: e.target.value })}
-              placeholder="Voer werkruimte naam in"
+              value={newWorkspaceName}
+              onChange={(e) => setNewWorkspaceName(e.target.value)}
+              placeholder="Bijv. Ontwikkeling, Marketing..."
               className="mt-1"
             />
           </div>
           <div>
-            <Label htmlFor="organization" className="text-sm">Organisatie</Label>
-            <Select
-              value={newWorkspace.organization_id}
-              onValueChange={(value) => setNewWorkspace({ ...newWorkspace, organization_id: value })}
-            >
+            <Label htmlFor="organization-select" className="text-sm">Organisatie</Label>
+            <Select value={selectedOrganization} onValueChange={setSelectedOrganization}>
               <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Selecteer organisatie" />
+                <SelectValue placeholder="Selecteer een organisatie" />
               </SelectTrigger>
               <SelectContent>
                 {organizations.map((org) => (
@@ -77,7 +84,11 @@ export const CreateWorkspaceDialog: React.FC<CreateWorkspaceDialogProps> = ({
             <Button variant="outline" size="sm" onClick={() => setIsOpen(false)}>
               Annuleren
             </Button>
-            <Button size="sm" onClick={handleCreate}>
+            <Button 
+              size="sm" 
+              onClick={handleCreate}
+              disabled={!newWorkspaceName.trim() || !selectedOrganization}
+            >
               Aanmaken
             </Button>
           </div>

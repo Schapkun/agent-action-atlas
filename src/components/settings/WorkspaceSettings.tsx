@@ -33,7 +33,11 @@ export const WorkspaceSettings = () => {
 
   // Use the EXACT same logic as organization creation
   const canCreateWorkspace = () => {
-    console.log('WorkspaceSettings - canCreateWorkspace check:', { userRole, userEmail: user?.email });
+    console.log('WorkspaceSettings - canCreateWorkspace check:', { 
+      userRole, 
+      userEmail: user?.email,
+      isAccountOwner: user?.email === 'info@schapkun.com'
+    });
     
     // Account owner can always create workspaces
     if (user?.email === 'info@schapkun.com') {
@@ -43,7 +47,7 @@ export const WorkspaceSettings = () => {
     
     // Only admin and eigenaar roles can create workspaces (SAME as organization logic)
     const canCreate = userRole === 'admin' || userRole === 'eigenaar';
-    console.log('Role-based check result:', canCreate);
+    console.log('Role-based check result:', { userRole, canCreate });
     return canCreate;
   };
 
@@ -65,7 +69,12 @@ export const WorkspaceSettings = () => {
   }
 
   const canCreate = canCreateWorkspace();
-  console.log('WorkspaceSettings - Final canCreate result:', canCreate);
+  console.log('WorkspaceSettings - Final render decision:', { 
+    canCreate, 
+    userRole, 
+    userEmail: user?.email,
+    organizationsCount: organizations.length 
+  });
 
   return (
     <div className="space-y-4">
