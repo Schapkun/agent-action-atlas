@@ -312,15 +312,6 @@ export const UserProfileSettings = () => {
     setShowMyAccount(true);
   };
 
-  const handleEditUser = (userProfile: UserProfile) => {
-    const isCurrentUser = user?.email === userProfile.email;
-    if (isCurrentUser) {
-      handleShowMyAccount(userProfile);
-    } else {
-      setEditingUser(userProfile);
-    }
-  };
-
   if (loading) {
     return (
       <div className="space-y-4">
@@ -383,20 +374,13 @@ export const UserProfileSettings = () => {
               key={userProfile.id}
               userProfile={userProfile}
               currentUserEmail={user?.email}
-              onEdit={handleEditUser}
+              onEdit={handleShowMyAccount}
               onDelete={deleteUser}
               onShowMyAccount={handleShowMyAccount}
             />
           ))
         )}
       </div>
-
-      <EditUserDialog
-        editingUser={editingUser}
-        onClose={() => setEditingUser(null)}
-        onSave={updateUser}
-        onUpdateUser={setEditingUser}
-      />
 
       <Dialog open={showMyAccount} onOpenChange={(open) => {
         setShowMyAccount(open);

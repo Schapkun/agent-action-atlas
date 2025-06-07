@@ -32,12 +32,9 @@ export const UserProfileCard = ({
   const isCurrentUser = currentUserEmail === userProfile.email;
 
   const handleEditClick = () => {
-    if (isCurrentUser && onShowMyAccount) {
-      // For current user, show "Mijn Account" popup
+    // Always show the MyAccount popup for all users
+    if (onShowMyAccount) {
       onShowMyAccount(userProfile);
-    } else {
-      // For other users, show edit dialog
-      onEdit(userProfile);
     }
   };
 
