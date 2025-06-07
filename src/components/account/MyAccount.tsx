@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Building2, Save, Trash2, Briefcase } from 'lucide-react';
+import { UserProfileSection } from './UserProfileSection';
+import { UserRoleManagement } from './UserRoleManagement';
+import { OrganizationsList } from './OrganizationsList';
 
 interface UserProfile {
   id: string;
@@ -481,6 +479,10 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
     );
   }
 
+  const isAccountOwner = user?.email === 'info@schapkun.com';
+  const showRoleManagement = isAccountOwner && organizations.length > 0;
+  const showSaveButtonInProfile = !showRoleManagement;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center space-x-3">
@@ -504,149 +506,33 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
       </div>
 
       {/* Profile Information */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <User className="h-4 w-4" />
-            Persoonlijke Informatie
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="full-name" className="text-sm">Volledige Naam</Label>
-              <Input
-                id="full-name"
-                value={profile.full_name || ''}
-                onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                placeholder="Voer volledige naam in"
-                disabled={!isViewingOwnProfile}
-                className="text-sm"
-              />
-            </div>
-            <div>
-              <Label htmlFor="email" className="text-sm">E-mailadres</Label>
-              <Input
-                id="email"
-                type="email"
-                value={profile.email || ''}
-                placeholder="Voer e-mailadres in"
-                disabled={true}
-                className="bg-muted/50 cursor-not-allowed text-sm"
-              />
-            </div>
-          </div>
-          
-          {/* Global Role Management with button next to it */}
-          {user?.email === 'info@schapkun.com' && organizations.length > 0 && (
-            <div className="flex gap-4 items-end">
-              <div className="w-1/2">
-                <Label htmlFor="global-role" className="text-sm">Globale Rol</Label>
-                <Select
-                  value={globalRole}
-                  onValueChange={(newRole) => updateGlobalRole(newRole as UserRole)}
-                >
-                  <SelectTrigger className="w-full text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="member">Gebruiker</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="owner">Eigenaar</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {isViewingOwnProfile && (
-                <Button onClick={updateProfile} disabled={saving} size="sm">
-                  <Save className="h-4 w-4 mr-2" />
-                  {saving ? 'Opslaan...' : 'Profiel Opslaan'}
-                </Button>
-              )}
-            </div>
-          )}
+      <UserProfileSection
+        profile={profile}
+        setProfile={setProfile}
+        isViewingOwnProfile={isViewingOwnProfile}
+        saving={saving}
+        onUpdateProfile={updateProfile}
+        showSaveButton={showSaveButtonInProfile}
+      />
 
-          {/* If no global role section, show save button normally */}
-          {isViewingOwnProfile && !(user?.email === 'info@schapkun.com' && organizations.length > 0) && (
-            <div className="flex justify-end">
-              <Button onClick={updateProfile} disabled={saving} size="sm">
-                <Save className="h-4 w-4 mr-2" />
-                {saving ? 'Opslaan...' : 'Profiel Opslaan'}
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Role Management for Admin Users */}
+      {showRoleManagement && (
+        <UserRoleManagement
+          globalRole={globalRole}
+          onUpdateGlobalRole={updateGlobalRole}
+          isViewingOwnProfile={isViewingOwnProfile}
+          saving={saving}
+          onUpdateProfile={updateProfile}
+        />
+      )}
 
       {/* Organizations & Workspaces */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Building2 className="h-4 w-4" />
-            {isViewingOwnProfile ? 'Mijn Organisaties & Werkruimtes' : 'Organisaties & Werkruimtes'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {organizations.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              {isViewingOwnProfile 
-                ? 'Je bent nog geen lid van een organisatie'
-                : 'Deze gebruiker is nog geen lid van een organisatie'
-              }
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {organizations.map((org) => (
-                <div key={org.id} className="p-4 bg-muted/30 rounded-lg border-l-4 border-l-primary/20">
-                  {/* Organization Header */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <Building2 className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <h3 className="font-semibold">{org.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Werkruimtes ({org.workspaces.length})
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFromOrganization(org.id, org.name)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  {/* Workspaces under this organization */}
-                  {org.workspaces.length > 0 && (
-                    <div className="ml-6 space-y-2">
-                      {org.workspaces.map((workspace) => (
-                        <div key={workspace.id} className="flex items-center justify-between p-3 bg-muted/15 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <Briefcase className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <p className="font-medium">{workspace.name}</p>
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeFromWorkspace(workspace.id, workspace.name)}
-                            className="text-destructive hover:text-destructive w-8 h-8 p-0"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <OrganizationsList
+        organizations={organizations}
+        isViewingOwnProfile={isViewingOwnProfile}
+        onRemoveFromOrganization={removeFromOrganization}
+        onRemoveFromWorkspace={removeFromWorkspace}
+      />
     </div>
   );
 };
