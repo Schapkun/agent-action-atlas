@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -451,27 +452,27 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl">
+          <DialogTitle className="text-xl font-semibold">
             Organisatie & Werkruimtes Beheren
           </DialogTitle>
         </DialogHeader>
         
         <Tabs defaultValue="organization" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="organization">Organisatie</TabsTrigger>
-            <TabsTrigger value="workspaces">Werkruimtes</TabsTrigger>
+            <TabsTrigger value="organization" className="text-sm">Organisatie</TabsTrigger>
+            <TabsTrigger value="workspaces" className="text-sm">Werkruimtes</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="organization" className="space-y-4">
+          <TabsContent value="organization" className="space-y-4 min-h-[500px]">
             <Card>
               <CardHeader>
-                <CardTitle>Organisatie Details</CardTitle>
+                <CardTitle className="text-lg">Organisatie Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="orgName">Organisatie Naam</Label>
+                  <Label htmlFor="orgName" className="text-sm font-medium">Organisatie Naam</Label>
                   <Input
                     id="orgName"
                     value={orgName}
@@ -482,7 +483,7 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
 
                 <div>
                   <Label className="text-sm font-medium">Organisatie Gebruikers</Label>
-                  <div className="max-h-48 overflow-y-auto border rounded-md p-2 mt-1 space-y-2">
+                  <div className="max-h-80 overflow-y-auto border rounded-md p-3 mt-2 space-y-2">
                     {loading ? (
                       <div className="text-sm text-muted-foreground">Laden...</div>
                     ) : (
@@ -513,7 +514,7 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
             </Card>
           </TabsContent>
 
-          <TabsContent value="workspaces" className="space-y-4">
+          <TabsContent value="workspaces" className="space-y-4 min-h-[500px]">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">Werkruimtes</h3>
               {!showAddWorkspace && (
@@ -548,7 +549,7 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
               </Card>
             )}
 
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-96 overflow-y-auto">
               {loading ? (
                 <div className="text-sm text-muted-foreground">Werkruimtes laden...</div>
               ) : workspaces.length === 0 ? (
@@ -639,7 +640,7 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
                                 />
                                 <label 
                                   htmlFor={`ws-${workspace.id}-${user.id}`}
-                                  className={`text-xs cursor-pointer flex-1 ${
+                                  className={`text-sm cursor-pointer flex-1 ${
                                     isDisabled ? 'text-muted-foreground opacity-50' : ''
                                   }`}
                                 >
