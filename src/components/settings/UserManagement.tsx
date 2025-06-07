@@ -84,10 +84,31 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
 
         console.log('All users data (account owner):', usersData);
         
+        // Get all organizations and workspaces for reference
+        const [allOrgsResponse, allWorkspacesResponse] = await Promise.all([
+          supabase.from('organizations').select('id, name'),
+          supabase.from('workspaces').select('id, name')
+        ]);
+
+        const allOrgs = allOrgsResponse.data || [];
+        const allWorkspaces = allWorkspacesResponse.data || [];
+        
         // For each user, get their organization memberships, roles, and workspaces
         const usersWithOrgs = await Promise.all(
           (usersData || []).map(async (userProfile) => {
-            // Get organization memberships
+            // Special case for the account owner - they have access to ALL organizations and workspaces
+            if (userProfile.email === 'info@schapkun.com') {
+              return {
+                ...userProfile,
+                organizations: allOrgs.map(org => org.name),
+                workspaces: allWorkspaces.map(workspace => workspace.name),
+                isPending: false,
+                role: 'eigenaar',
+                member_since: userProfile.created_at
+              };
+            }
+
+            // Get organization memberships for other users
             const { data: orgMemberships } = await supabase
               .from('organization_members')
               .select(`
@@ -117,11 +138,6 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
             let highestRole = 'member';
             if (roles.includes('owner')) highestRole = 'owner';
             else if (roles.includes('admin')) highestRole = 'admin';
-
-            // Special case for the account owner
-            if (userProfile.email === 'info@schapkun.com') {
-              highestRole = 'eigenaar';
-            }
 
             // Use the earliest membership date as "member since" date
             const membershipDates = [
