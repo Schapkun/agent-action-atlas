@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -542,7 +541,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
           {user?.email === 'info@schapkun.com' && organizations.length > 0 && (
             <div className="flex gap-4 items-end">
               <div className="w-1/2">
-                <Label htmlFor="global-role" className="text-sm">Globale Rol (voor alle organisaties en werkruimtes)</Label>
+                <Label htmlFor="global-role" className="text-sm">Globale Rol</Label>
                 <Select
                   value={globalRole}
                   onValueChange={(newRole) => updateGlobalRole(newRole as UserRole)}
@@ -604,18 +603,16 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                       <Building2 className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <h3 className="font-medium text-sm">{org.name}</h3>
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs text-muted-foreground">
-                            Organisatie • Werkruimtes ({org.workspaces.length})
-                          </p>
-                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Organisatie • Werkruimtes ({org.workspaces.length})
+                        </p>
                       </div>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => removeFromOrganization(org.id, org.name)}
-                      className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                      className="text-destructive hover:text-destructive h-8 w-8 p-0 mr-1"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
