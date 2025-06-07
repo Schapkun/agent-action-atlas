@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Building2, Settings, Save, Trash2 } from 'lucide-react';
+import { User, Building2, Settings, Save, Trash2, Users } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -544,7 +542,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
               }
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {organizations.map((org) => (
                 <div key={org.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border-l-4 border-l-primary/20">
                   <div className="flex-1">
@@ -556,7 +554,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                       Rol: {org.role}
                     </p>
                   </div>
-                  <div className="flex space-x-1 w-8 justify-end">
+                  <div className="flex space-x-1 w-20 justify-end">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -591,25 +589,30 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
               }
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {workspaces.map((workspace) => (
-                <div key={workspace.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium">{workspace.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Organisatie: {workspace.organization_name} • Rol: {workspace.role || 'member'}
-                    </p>
-                  </div>
-                  <div className="flex space-x-1 w-8 justify-end">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFromWorkspace(workspace.id, workspace.name)}
-                      className="text-destructive hover:text-destructive w-8 h-8 p-0"
-                      title="Verwijder uit werkruimte"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                <div key={workspace.id} className="ml-6 space-y-2">
+                  <div className="flex items-center justify-between p-3 bg-muted/15 rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <p className="font-medium">{workspace.name}</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Organisatie: {workspace.organization_name} • Rol: {workspace.role || 'member'}
+                      </p>
+                    </div>
+                    <div className="flex space-x-1 w-20 justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFromWorkspace(workspace.id, workspace.name)}
+                        className="text-destructive hover:text-destructive w-8 h-8 p-0"
+                        title="Verwijder uit werkruimte"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
