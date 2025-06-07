@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -116,15 +115,7 @@ export const SettingsLayout = () => {
                 requiredRoles={['admin', 'eigenaar']} 
                 userRole={userRole}
               >
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-2xl font-semibold">Document Layout Instellingen</h2>
-                    <p className="text-muted-foreground mt-2">
-                      Beheer en pas de lay-out van verschillende document templates aan
-                    </p>
-                  </div>
-                  <DocumentLayoutSettings />
-                </div>
+                <DocumentLayoutSettings />
               </RoleGuard>
             </CardContent>
           </Card>
