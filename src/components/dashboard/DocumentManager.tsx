@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentPreview } from './DocumentPreview';
 import { generatePDF, downloadPDF } from '@/utils/pdfGenerator';
+import { WorkspaceSelector } from './WorkspaceSelector';
 import { 
   Search, 
   FolderOpen, 
@@ -15,7 +15,8 @@ import {
   Download, 
   Eye,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  Upload
 } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import type { DocumentFolder, Document as DocumentType } from '@/types/dashboard';
@@ -26,7 +27,8 @@ export const DocumentManager = () => {
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [previewDocument, setPreviewDocument] = useState<DocumentType | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const { selectedOrganization, selectedWorkspace } = useOrganization();
+  const [showWorkspaceSelector, setShowWorkspaceSelector] = useState(false);
+  const { selectedOrganization, selectedWorkspace, getFilteredWorkspaces } = useOrganization();
   const { toast } = useToast();
 
   // Empty folder structure - no mock data
@@ -61,15 +63,39 @@ export const DocumentManager = () => {
       return;
     }
 
+    // If only organization is selected, show workspace selector
+    if (selectedOrganization && !selectedWorkspace) {
+      const workspaces = getFilteredWorkspaces();
+      if (workspaces.length > 1) {
+        setShowWorkspaceSelector(true);
+        return;
+      } else if (workspaces.length === 1) {
+        // Auto-select the only workspace
+        uploadToWorkspace(workspaces[0].id);
+        return;
+      }
+    }
+
+    // If workspace is selected, upload directly
+    if (selectedWorkspace) {
+      uploadToWorkspace(selectedWorkspace.id);
+    }
+  };
+
+  const uploadToWorkspace = (workspaceId: string) => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.pdf,.doc,.docx,.txt';
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
+        console.log('Uploading document to workspace:', workspaceId);
+        console.log('File:', file.name);
+        console.log('Organization:', selectedOrganization?.name);
+        
         toast({
           title: "Document uploaden",
-          description: `${file.name} wordt geüpload...`,
+          description: `${file.name} wordt geüpload naar werkruimte...`,
         });
         
         setTimeout(() => {
@@ -205,7 +231,7 @@ export const DocumentManager = () => {
                 {selectedFolderData?.name || 'Documenten'}
               </CardTitle>
               <Button variant="outline" size="sm" onClick={handleUploadDocument}>
-                <FolderOpen className="h-4 w-4 mr-2" />
+                <Upload className="h-4 w-4 mr-2" />
                 Upload Document
               </Button>
             </div>
@@ -250,6 +276,14 @@ export const DocumentManager = () => {
           </CardContent>
         </Card>
       </div>
+
+      <WorkspaceSelector
+        isOpen={showWorkspaceSelector}
+        onClose={() => setShowWorkspaceSelector(false)}
+        onSelectWorkspace={uploadToWorkspace}
+        title="Selecteer werkruimte voor document upload"
+        description="Kies in welke werkruimte het document moet worden geüpload:"
+      />
 
       <DocumentPreview
         document={previewDocument}

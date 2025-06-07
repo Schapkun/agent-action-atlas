@@ -1,9 +1,10 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { WorkspaceSelector } from './WorkspaceSelector';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Search, 
   PhoneCall, 
@@ -13,7 +14,8 @@ import {
   FileText,
   ChevronRight,
   ChevronDown,
-  Clock
+  Clock,
+  Plus
 } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 
@@ -21,7 +23,9 @@ export const PhoneCallManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
-  const { selectedOrganization, selectedWorkspace } = useOrganization();
+  const [showWorkspaceSelector, setShowWorkspaceSelector] = useState(false);
+  const { selectedOrganization, selectedWorkspace, getFilteredWorkspaces } = useOrganization();
+  const { toast } = useToast();
 
   // Empty folder structure - no mock data
   const folderStructure: any[] = [];
@@ -33,6 +37,45 @@ export const PhoneCallManager = () => {
       return `Organisatie: ${selectedOrganization.name}`;
     }
     return 'Geen selectie';
+  };
+
+  const handleCreateCall = () => {
+    if (!selectedOrganization && !selectedWorkspace) {
+      toast({
+        title: "Geen selectie",
+        description: "Selecteer eerst een organisatie of werkruimte om een gesprek toe te voegen.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // If only organization is selected, show workspace selector
+    if (selectedOrganization && !selectedWorkspace) {
+      const workspaces = getFilteredWorkspaces();
+      if (workspaces.length > 1) {
+        setShowWorkspaceSelector(true);
+        return;
+      } else if (workspaces.length === 1) {
+        // Auto-select the only workspace
+        createCallInWorkspace(workspaces[0].id);
+        return;
+      }
+    }
+
+    // If workspace is selected, create directly
+    if (selectedWorkspace) {
+      createCallInWorkspace(selectedWorkspace.id);
+    }
+  };
+
+  const createCallInWorkspace = (workspaceId: string) => {
+    console.log('Creating phone call record in workspace:', workspaceId);
+    console.log('Organization:', selectedOrganization?.name);
+    
+    toast({
+      title: "Nieuw gesprek",
+      description: "Gesprek wordt toegevoegd aan de geselecteerde werkruimte...",
+    });
   };
 
   const toggleFolder = (folderId: string) => {
@@ -56,76 +99,86 @@ export const PhoneCallManager = () => {
   );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      {/* Folder Structure */}
-      <Card className="lg:col-span-1">
-        <CardHeader>
-          <CardTitle className="text-lg">Gesprek Categorieën</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!selectedOrganization && !selectedWorkspace ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Folder className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Selecteer een organisatie of werkruimte</p>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <Folder className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Geen categorieën gevonden</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+    <>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Folder Structure */}
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="text-lg">Gesprek Categorieën</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!selectedOrganization && !selectedWorkspace ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Folder className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Selecteer een organisatie of werkruimte</p>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Folder className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Geen categorieën gevonden</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Call List */}
-      <Card className="lg:col-span-3">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Telefoongesprekken</CardTitle>
-            <Button variant="outline" size="sm">
-              <PhoneCall className="h-4 w-4 mr-2" />
-              Nieuw Gesprek
-            </Button>
-          </div>
-
-          {!selectedOrganization && !selectedWorkspace && (
-            <div className="text-sm text-muted-foreground">
-              Selecteer een organisatie of werkruimte om gesprekken te bekijken
+        {/* Call List */}
+        <Card className="lg:col-span-3">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Telefoongesprekken</CardTitle>
+              <Button variant="outline" size="sm" onClick={handleCreateCall}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nieuw Gesprek
+              </Button>
             </div>
-          )}
 
-          {(selectedOrganization || selectedWorkspace) && (
-            <>
+            {!selectedOrganization && !selectedWorkspace && (
               <div className="text-sm text-muted-foreground">
-                Data voor: {getContextInfo()}
+                Selecteer een organisatie of werkruimte om gesprekken te bekijken
               </div>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Zoek gesprekken..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </>
-          )}
-        </CardHeader>
+            )}
 
-        <CardContent>
-          {!selectedOrganization && !selectedWorkspace ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <PhoneCall className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Selecteer een organisatie of werkruimte om gesprekken te bekijken</p>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <PhoneCall className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Geen gesprekken gevonden voor de geselecteerde context</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            {(selectedOrganization || selectedWorkspace) && (
+              <>
+                <div className="text-sm text-muted-foreground">
+                  Data voor: {getContextInfo()}
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Zoek gesprekken..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </>
+            )}
+          </CardHeader>
+
+          <CardContent>
+            {!selectedOrganization && !selectedWorkspace ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <PhoneCall className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Selecteer een organisatie of werkruimte om gesprekken te bekijken</p>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <PhoneCall className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Geen gesprekken gevonden voor de geselecteerde context</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <WorkspaceSelector
+        isOpen={showWorkspaceSelector}
+        onClose={() => setShowWorkspaceSelector(false)}
+        onSelectWorkspace={createCallInWorkspace}
+        title="Selecteer werkruimte voor nieuw gesprek"
+        description="Kies in welke werkruimte het gesprek moet worden toegevoegd:"
+      />
+    </>
   );
 };
