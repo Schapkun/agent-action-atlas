@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,7 +52,7 @@ export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserD
       setFilteredWorkspaces(filtered);
       setSelectedWorkspace(''); // Reset workspace selection when organization changes
     } else {
-      setFilteredWorkspaces([]);
+      setFilteredWorkspaces(workspaces); // Show all workspaces when no organization is selected
       setSelectedWorkspace('');
     }
   }, [selectedOrganization, workspaces]);
@@ -258,24 +257,22 @@ export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserD
             </Select>
           </div>
 
-          {selectedOrganization && filteredWorkspaces.length > 0 && (
-            <div>
-              <Label htmlFor="invite-workspace" className="text-sm">Werkruimte (optioneel)</Label>
-              <Select value={selectedWorkspace} onValueChange={setSelectedWorkspace} disabled={isLoading}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Selecteer werkruimte" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Geen specifieke werkruimte</SelectItem>
-                  {filteredWorkspaces.map((workspace) => (
-                    <SelectItem key={workspace.id} value={workspace.id}>
-                      {workspace.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <div>
+            <Label htmlFor="invite-workspace" className="text-sm">Werkruimte (optioneel)</Label>
+            <Select value={selectedWorkspace} onValueChange={setSelectedWorkspace} disabled={isLoading}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Selecteer werkruimte" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Geen specifieke werkruimte</SelectItem>
+                {filteredWorkspaces.map((workspace) => (
+                  <SelectItem key={workspace.id} value={workspace.id}>
+                    {workspace.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={isLoading}>
