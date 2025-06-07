@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Building2, Settings, Save, Trash2, Briefcase } from 'lucide-react';
+import { User, Building2, Save, Trash2, Briefcase } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -572,13 +571,13 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
               }
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {organizations.map((org) => (
-                <div key={org.id} className="border rounded-lg p-3">
+                <div key={org.id} className="p-3 bg-muted/30 rounded-lg border-l-4 border-l-primary/20">
                   {/* Organization Header */}
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-primary" />
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <h3 className="font-medium text-sm">{org.name}</h3>
                         <p className="text-xs text-muted-foreground">
@@ -587,13 +586,6 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0"
-                      >
-                        <Settings className="h-3 w-3" />
-                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -610,7 +602,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                   {org.workspaces.length > 0 && (
                     <div className="ml-4 space-y-2">
                       {org.workspaces.map((workspace) => (
-                        <div key={workspace.id} className="flex items-center justify-between p-2 bg-muted/30 rounded border">
+                        <div key={workspace.id} className="flex items-center justify-between p-3 bg-muted/15 rounded-lg">
                           <div className="flex items-center gap-2">
                             <Briefcase className="h-3 w-3 text-muted-foreground" />
                             <div>
@@ -621,13 +613,6 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                             </div>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                            >
-                              <Settings className="h-3 w-3" />
-                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"

@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, Settings, Users, Plus, Edit, Trash2, Save } from 'lucide-react';
+import { Building2, Settings, Users, Plus, Edit, Trash2, Save, Briefcase } from 'lucide-react';
 
 interface Organization {
   id: string;
@@ -335,142 +335,148 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
             <CardContent className="p-6">
               <div className="space-y-4">
                 {/* Organization Header */}
-                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border-l-4 border-l-primary/20">
-                  <div className="flex-1">
-                    {editingOrganization === org.id ? (
-                      <div className="grid grid-cols-2 gap-2">
-                        <Input
-                          value={editOrgData.name}
-                          onChange={(e) => setEditOrgData({ ...editOrgData, name: e.target.value })}
-                          placeholder="Organisatie naam"
-                        />
-                        <Input
-                          value={editOrgData.slug}
-                          onChange={(e) => setEditOrgData({ ...editOrgData, slug: e.target.value })}
-                          placeholder="organisatie-slug"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
-                        <p className="font-medium">{org.name}</p>
-                        <span className="text-sm text-muted-foreground">
-                          ({org.workspaces.length} werkruimte{org.workspaces.length !== 1 ? 's' : ''})
-                        </span>
-                      </div>
-                    )}
-                    {!editingOrganization && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Slug: {org.slug} • Aangemaakt: {new Date(org.created_at).toLocaleDateString('nl-NL')}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex space-x-1 w-20 justify-end">
-                    {(user?.email === 'info@schapkun.com') && (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteOrganization(org.id, org.name)}
-                          className="text-destructive hover:text-destructive w-8 h-8 p-0"
-                          title="Verwijder organisatie"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        {editingOrganization === org.id ? (
+                <div className="p-3 bg-muted/30 rounded-lg border-l-4 border-l-primary/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      {editingOrganization === org.id ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            value={editOrgData.name}
+                            onChange={(e) => setEditOrgData({ ...editOrgData, name: e.target.value })}
+                            placeholder="Organisatie naam"
+                          />
+                          <Input
+                            value={editOrgData.slug}
+                            onChange={(e) => setEditOrgData({ ...editOrgData, slug: e.target.value })}
+                            placeholder="organisatie-slug"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">{org.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              ({org.workspaces.length} werkruimte{org.workspaces.length !== 1 ? 's' : ''})
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {!editingOrganization && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Slug: {org.slug} • Aangemaakt: {new Date(org.created_at).toLocaleDateString('nl-NL')}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex space-x-1 w-20 justify-end">
+                      {(user?.email === 'info@schapkun.com') && (
+                        <>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => updateOrganization(org.id)}
-                            className="w-8 h-8 p-0"
-                            title="Opslaan"
+                            onClick={() => deleteOrganization(org.id, org.name)}
+                            className="text-destructive hover:text-destructive w-8 h-8 p-0"
+                            title="Verwijder organisatie"
                           >
-                            <Save className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setEditingOrganization(org.id);
-                              setEditOrgData({ name: org.name, slug: org.slug });
-                            }}
-                            className="w-8 h-8 p-0"
-                            title="Bewerken"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </>
-                    )}
+                          {editingOrganization === org.id ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => updateOrganization(org.id)}
+                              className="w-8 h-8 p-0"
+                              title="Opslaan"
+                            >
+                              <Save className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingOrganization(org.id);
+                                setEditOrgData({ name: org.name, slug: org.slug });
+                              }}
+                              className="w-8 h-8 p-0"
+                              title="Bewerken"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
 
                 {/* Workspaces */}
                 <div className="ml-6 space-y-2">
                   {org.workspaces.map((workspace) => (
-                    <div key={workspace.id} className="flex items-center justify-between p-3 bg-muted/15 rounded-lg">
-                      <div className="flex-1">
-                        {editingWorkspace === workspace.id ? (
-                          <div className="grid grid-cols-2 gap-2">
-                            <Input
-                              value={editWorkspaceData.name}
-                              onChange={(e) => setEditWorkspaceData({ ...editWorkspaceData, name: e.target.value })}
-                              placeholder="Werkruimte naam"
-                            />
-                            <Input
-                              value={editWorkspaceData.slug}
-                              onChange={(e) => setEditWorkspaceData({ ...editWorkspaceData, slug: e.target.value })}
-                              placeholder="werkruimte-slug"
-                            />
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                            <p className="font-medium">{workspace.name}</p>
-                          </div>
-                        )}
-                        {!editingWorkspace && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Slug: {workspace.slug} • 
-                            Aangemaakt: {new Date(workspace.created_at).toLocaleDateString('nl-NL')}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex space-x-1 w-20 justify-end">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteWorkspace(workspace.id, workspace.name)}
-                          className="text-destructive hover:text-destructive w-8 h-8 p-0"
-                          title="Verwijder werkruimte"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        {editingWorkspace === workspace.id ? (
+                    <div key={workspace.id} className="p-3 bg-muted/15 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          {editingWorkspace === workspace.id ? (
+                            <div className="grid grid-cols-2 gap-2">
+                              <Input
+                                value={editWorkspaceData.name}
+                                onChange={(e) => setEditWorkspaceData({ ...editWorkspaceData, name: e.target.value })}
+                                placeholder="Werkruimte naam"
+                              />
+                              <Input
+                                value={editWorkspaceData.slug}
+                                onChange={(e) => setEditWorkspaceData({ ...editWorkspaceData, slug: e.target.value })}
+                                placeholder="werkruimte-slug"
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <Briefcase className="h-4 w-4 text-muted-foreground" />
+                              <div>
+                                <p className="font-medium">{workspace.name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Slug: {workspace.slug} • 
+                                  Aangemaakt: {new Date(workspace.created_at).toLocaleDateString('nl-NL')}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex space-x-1 w-20 justify-end">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => updateWorkspace(workspace.id)}
-                            className="w-8 h-8 p-0"
-                            title="Opslaan"
+                            onClick={() => deleteWorkspace(workspace.id, workspace.name)}
+                            className="text-destructive hover:text-destructive w-8 h-8 p-0"
+                            title="Verwijder werkruimte"
                           >
-                            <Save className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setEditingWorkspace(workspace.id);
-                              setEditWorkspaceData({ name: workspace.name, slug: workspace.slug });
-                            }}
-                            className="w-8 h-8 p-0"
-                            title="Bewerken"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        )}
+                          {editingWorkspace === workspace.id ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => updateWorkspace(workspace.id)}
+                              className="w-8 h-8 p-0"
+                              title="Opslaan"
+                            >
+                              <Save className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingWorkspace(workspace.id);
+                                setEditWorkspaceData({ name: workspace.name, slug: workspace.slug });
+                              }}
+                              className="w-8 h-8 p-0"
+                              title="Bewerken"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
