@@ -21,31 +21,34 @@ export const SettingsLayout = () => {
       try {
         console.log('Fetching role for user:', user.email);
         
-        // Check if user is the account owner (first user in the system)
-        const { data: allUsers } = await supabase
-          .from('user_profiles')
-          .select('id, created_at')
-          .order('created_at', { ascending: true })
-          .limit(1);
-
-        if (allUsers && allUsers.length > 0 && allUsers[0].id === user.id) {
-          console.log('User is account owner, setting role to eigenaar');
+        // Check if user is the account owner (info@schapkun.com)
+        if (user.email === 'info@schapkun.com') {
+          console.log('User is account owner (info@schapkun.com), setting role to eigenaar');
           setUserRole('eigenaar');
           return;
         }
 
-        // Get user's role from their organization membership
-        const { data: memberships } = await supabase
+        // For all other users, get their role from organization membership
+        const { data: memberships, error } = await supabase
           .from('organization_members')
           .select('role')
           .eq('user_id', user.id)
           .limit(1);
 
+        console.log('Organization memberships query result:', { memberships, error });
+
+        if (error) {
+          console.error('Error fetching organization membership:', error);
+          setUserRole('lid');
+          return;
+        }
+
         if (memberships && memberships.length > 0) {
-          console.log('User role from organization:', memberships[0].role);
-          setUserRole(memberships[0].role);
+          const role = memberships[0].role;
+          console.log('User role from organization membership:', role);
+          setUserRole(role);
         } else {
-          console.log('No organization membership found, defaulting to lid');
+          console.log('No organization membership found, setting role to lid');
           setUserRole('lid');
         }
       } catch (error) {
@@ -55,9 +58,10 @@ export const SettingsLayout = () => {
     };
 
     fetchUserRole();
-  }, [user?.id]);
+  }, [user?.id, user?.email]);
 
-  console.log('SettingsLayout userRole state:', userRole);
+  console.log('SettingsLayout - Current user:', user?.email);
+  console.log('SettingsLayout - userRole state:', userRole);
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl">
