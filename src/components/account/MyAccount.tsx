@@ -62,27 +62,44 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
     try {
       console.log('Fetching user data for user:', targetUserId);
       
-      // Fetch or create user profile
+      // First try to get from user_profiles table
       let { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('id', targetUserId)
         .maybeSingle();
 
+      // If no profile in user_profiles, try profiles table as fallback
+      if (!profileData && !profileError) {
+        console.log('No profile in user_profiles, trying profiles table as fallback');
+        const { data: fallbackProfile, error: fallbackError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', targetUserId)
+          .maybeSingle();
+
+        if (fallbackError) {
+          console.error('Fallback profile fetch error:', fallbackError);
+        } else if (fallbackProfile) {
+          profileData = fallbackProfile;
+          console.log('Using fallback profile from profiles table:', fallbackProfile);
+        }
+      }
+
       if (profileError) {
         console.error('Profile fetch error:', profileError);
         throw profileError;
       }
 
-      // If no profile exists, create one (only for current user)
-      if (!profileData && isViewingOwnProfile) {
-        console.log('No profile found, creating one');
+      // If still no profile and we're viewing own profile, create one
+      if (!profileData && isViewingOwnProfile && user) {
+        console.log('No profile found, creating one for current user');
         const { data: newProfile, error: createError } = await supabase
           .from('user_profiles')
           .insert({
             id: targetUserId,
-            email: user?.email || '',
-            full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || ''
+            email: user.email || '',
+            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || ''
           })
           .select()
           .single();
@@ -91,7 +108,9 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
           console.error('Profile creation error:', createError);
           throw createError;
         }
+        
         profileData = newProfile;
+        console.log('Created new profile:', newProfile);
       }
 
       setProfile(profileData);
