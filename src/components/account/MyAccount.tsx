@@ -36,6 +36,8 @@ interface MyAccountProps {
   isEditingOtherUser?: boolean;
 }
 
+type UserRole = "owner" | "admin" | "member";
+
 export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccountProps) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -239,7 +241,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
     try {
       const { error } = await supabase
         .from('organization_members')
-        .update({ role: newRole })
+        .update({ role: newRole as UserRole })
         .eq('user_id', targetUserId)
         .eq('organization_id', organizationId);
 
@@ -286,7 +288,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
     try {
       const { error } = await supabase
         .from('workspace_members')
-        .update({ role: newRole })
+        .update({ role: newRole as UserRole })
         .eq('user_id', targetUserId)
         .eq('workspace_id', workspaceId);
 
@@ -557,7 +559,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                       <span className="text-sm text-muted-foreground">Rol:</span>
                       <Select
                         value={org.role}
-                        onValueChange={(newRole) => updateOrganizationRole(org.id, newRole, org.name)}
+                        onValueChange={(newRole) => updateOrganizationRole(org.id, newRole as UserRole, org.name)}
                         disabled={isViewingOwnProfile}
                       >
                         <SelectTrigger 
@@ -615,7 +617,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                       <span className="text-sm text-muted-foreground">Rol:</span>
                       <Select
                         value={workspace.role || 'member'}
-                        onValueChange={(newRole) => updateWorkspaceRole(workspace.id, newRole, workspace.name)}
+                        onValueChange={(newRole) => updateWorkspaceRole(workspace.id, newRole as UserRole, workspace.name)}
                         disabled={isViewingOwnProfile}
                       >
                         <SelectTrigger 
