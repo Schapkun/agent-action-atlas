@@ -84,18 +84,19 @@ export const SettingsLayout = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 max-w-6xl" style={{ paddingTop: '20px' }}>
+    <div className="container mx-auto px-4 max-w-6xl" style={{ paddingTop: '16px' }}>
       <Tabs defaultValue="organizations" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="organizations">Org & Werkruimtes</TabsTrigger>
           <TabsTrigger value="users">Gebruikers</TabsTrigger>
-          <TabsTrigger value="documents">Document Layouts</TabsTrigger>
+          <TabsTrigger value="documents">Documenten</TabsTrigger>
           <TabsTrigger value="history">Geschiedenis</TabsTrigger>
         </TabsList>
 
         <TabsContent value="organizations">
           <Card className="rounded-lg border bg-card text-card-foreground shadow-sm">
             <CardContent className="p-6">
+              <h2 className="text-xl font-semibold mb-6">Organisaties & Werkruimtes</h2>
               <OrganizationWorkspaceView userRole={userRole} />
             </CardContent>
           </Card>
@@ -104,6 +105,7 @@ export const SettingsLayout = () => {
         <TabsContent value="users">
           <Card>
             <CardContent className="p-6">
+              <h2 className="text-xl font-semibold mb-6">Gebruikersprofielen</h2>
               <UserProfileSettings />
             </CardContent>
           </Card>
@@ -116,6 +118,7 @@ export const SettingsLayout = () => {
                 requiredRoles={['admin', 'eigenaar']} 
                 userRole={userRole}
               >
+                <h2 className="text-xl font-semibold mb-6">Document Layout Instellingen</h2>
                 <DocumentLayoutSettings />
               </RoleGuard>
             </CardContent>
@@ -129,6 +132,7 @@ export const SettingsLayout = () => {
                 requiredRoles={['admin', 'eigenaar']} 
                 userRole={userRole}
               >
+                <h2 className="text-xl font-semibold mb-6">Geschiedenis</h2>
                 <HistoryLogs />
               </RoleGuard>
             </CardContent>
