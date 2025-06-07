@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -147,13 +146,6 @@ export const HistoryLogs = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold flex items-center gap-2">
-          <History className="h-6 w-6" />
-          Geschiedenis
-        </h2>
-      </div>
-
       {/* Filters */}
       <div className="flex space-x-4">
         <div className="flex-1">

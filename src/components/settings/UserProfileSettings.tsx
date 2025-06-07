@@ -10,6 +10,10 @@ import { UserProfileCard } from './UserProfileCard';
 import { InviteUserDialog } from './InviteUserDialog';
 import { EditUserDialog } from './EditUserDialog';
 import { MyAccount } from '@/components/account/MyAccount';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { User } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -29,6 +33,8 @@ export const UserProfileSettings = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [showMyAccount, setShowMyAccount] = useState(false);
   const [viewingUserProfile, setViewingUserProfile] = useState<UserProfile | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterRole, setFilterRole] = useState('all');
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -346,16 +352,32 @@ export const UserProfileSettings = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Filters */}
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold">Gebruikersprofielen</h2>
-        {canInviteUsers && (
-          <InviteUserDialog
-            isOpen={isInviteDialogOpen}
-            onOpenChange={setIsInviteDialogOpen}
-            onInvite={inviteUser}
+        <div className="flex space-x-4">
+          <Input
+            placeholder="Zoek gebruikers..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-64"
           />
-        )}
+          <Select value={filterRole} onValueChange={setFilterRole}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter op rol" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle rollen</SelectItem>
+              <SelectItem value="eigenaar">Eigenaar</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="lid">Lid</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={() => setIsInviteDialogOpen(true)} className="flex items-center gap-2">
+          <User className="h-4 w-4" />
+          Gebruiker Uitnodigen
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-3 items-stretch">
