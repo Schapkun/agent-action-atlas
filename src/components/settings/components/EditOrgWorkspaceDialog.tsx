@@ -4,10 +4,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Trash2, Edit } from 'lucide-react';
+import { Plus, Trash2, Edit, ChevronDown } from 'lucide-react';
 
 interface User {
   id: string;
@@ -48,10 +49,12 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
   const [name, setName] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [allWorkspaces, setAllWorkspaces] = useState<Workspace[]>([]);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [editingWorkspace, setEditingWorkspace] = useState<string | null>(null);
   const [editWorkspaceName, setEditWorkspaceName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showWorkspaceDropdown, setShowWorkspaceDropdown] = useState(false);
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
 
@@ -60,10 +63,29 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
       setName(item.name);
       if (type === 'organization') {
         setWorkspaces(item.workspaces || []);
+        fetchAllWorkspaces();
       }
       fetchUsers();
     }
   }, [item, type]);
+
+  const fetchAllWorkspaces = async () => {
+    if (!item) return;
+
+    try {
+      // Fetch all workspaces for this organization
+      const { data: allOrgWorkspaces, error } = await supabase
+        .from('workspaces')
+        .select('*')
+        .eq('organization_id', item.id)
+        .order('name');
+
+      if (error) throw error;
+      setAllWorkspaces(allOrgWorkspaces || []);
+    } catch (error) {
+      console.error('Error fetching all workspaces:', error);
+    }
+  };
 
   const fetchUsers = async () => {
     if (!item) return;
@@ -93,14 +115,14 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
         const { data: workspaceMembers, error: workspaceMembersError } = await supabase
           .from('workspace_members')
           .select('user_id, workspace_id')
-          .in('workspace_id', workspaces.map(w => w.id));
+          .in('workspace_id', allWorkspaces.map(w => w.id));
 
         if (workspaceMembersError) throw workspaceMembersError;
 
         // Build user data with workspace access info
         const usersWithAccess = allUsers?.map(user => {
           const workspaceAccess: { [workspaceId: string]: boolean } = {};
-          workspaces.forEach(workspace => {
+          allWorkspaces.forEach(workspace => {
             workspaceAccess[workspace.id] = workspaceMembers?.some(
               wm => wm.user_id === user.id && wm.workspace_id === workspace.id
             ) || false;
@@ -163,6 +185,36 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
     ));
   };
 
+  const handleAddExistingWorkspace = (workspaceId: string) => {
+    const workspace = allWorkspaces.find(w => w.id === workspaceId);
+    if (workspace && !workspaces.some(w => w.id === workspaceId)) {
+      setWorkspaces(prev => [...prev, workspace]);
+      
+      // Update users to include this workspace in their access mapping
+      setUsers(prev => prev.map(user => ({
+        ...user,
+        workspaceAccess: {
+          ...user.workspaceAccess,
+          [workspaceId]: false
+        }
+      })));
+    }
+    setShowWorkspaceDropdown(false);
+  };
+
+  const handleRemoveWorkspace = (workspaceId: string) => {
+    setWorkspaces(prev => prev.filter(w => w.id !== workspaceId));
+    
+    // Remove workspace access from all users
+    setUsers(prev => prev.map(user => {
+      const { [workspaceId]: removed, ...remainingAccess } = user.workspaceAccess || {};
+      return {
+        ...user,
+        workspaceAccess: remainingAccess
+      };
+    }));
+  };
+
   const handleCreateWorkspace = async () => {
     if (!newWorkspaceName.trim() || !item) return;
 
@@ -182,7 +234,17 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
       if (error) throw error;
 
       setWorkspaces(prev => [...prev, data]);
+      setAllWorkspaces(prev => [...prev, data]);
       setNewWorkspaceName('');
+      
+      // Update users to include this new workspace in their access mapping
+      setUsers(prev => prev.map(user => ({
+        ...user,
+        workspaceAccess: {
+          ...user.workspaceAccess,
+          [data.id]: false
+        }
+      })));
       
       toast({
         title: "Succes",
@@ -399,6 +461,10 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
     }
   };
 
+  const availableWorkspaces = allWorkspaces.filter(
+    ws => !workspaces.some(selectedWs => selectedWs.id === ws.id)
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -426,7 +492,7 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
             <div>
               <Label className="text-sm">Werkruimtes</Label>
               <div className="border rounded-md p-3 mt-1 space-y-3">
-                {/* Existing Workspaces */}
+                {/* Selected Workspaces */}
                 {workspaces.map((workspace) => (
                   <div key={workspace.id} className="flex items-center justify-between p-2 bg-muted/30 rounded">
                     {editingWorkspace === workspace.id ? (
@@ -468,7 +534,7 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteWorkspace(workspace.id, workspace.name)}
+                            onClick={() => handleRemoveWorkspace(workspace.id)}
                             className="text-destructive hover:text-destructive h-8 w-8 p-0"
                           >
                             <Trash2 className="h-3 w-3" />
@@ -478,6 +544,37 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
                     )}
                   </div>
                 ))}
+                
+                {/* Dropdown for adding existing workspaces */}
+                {availableWorkspaces.length > 0 && (
+                  <div className="space-y-2 pt-2 border-t">
+                    <div className="relative">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowWorkspaceDropdown(!showWorkspaceDropdown)}
+                        className="w-full justify-between"
+                      >
+                        Bestaande werkruimte toevoegen
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                      
+                      {showWorkspaceDropdown && (
+                        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-background border rounded-md shadow-md max-h-32 overflow-y-auto">
+                          {availableWorkspaces.map((workspace) => (
+                            <button
+                              key={workspace.id}
+                              onClick={() => handleAddExistingWorkspace(workspace.id)}
+                              className="w-full text-left px-3 py-2 hover:bg-muted text-sm"
+                            >
+                              {workspace.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 
                 {/* Add New Workspace */}
                 <div className="flex items-center space-x-2 pt-2 border-t">
