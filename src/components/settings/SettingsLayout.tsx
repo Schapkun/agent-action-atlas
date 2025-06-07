@@ -7,11 +7,29 @@ import { UserProfileSettings } from './UserProfileSettings';
 import { HistoryLogs } from './HistoryLogs';
 import { DocumentLayoutSettings } from './DocumentLayoutSettings';
 import { RoleGuard } from '@/components/auth/RoleGuard';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const SettingsLayout = () => {
-  // Mock user role - in production this would come from your auth context
-  // For now, using 'lid' to demonstrate the restriction
-  const userRole = 'lid'; // Could be 'admin', 'eigenaar', or 'lid'
+  const { user } = useAuth();
+  
+  // In a real implementation, you would fetch the user's role from your database
+  // For now, we'll simulate getting the role based on user data
+  // This should be replaced with actual role fetching logic from your user management system
+  const getUserRole = () => {
+    if (!user) return 'lid';
+    
+    // Mock logic - in production this would come from your database
+    // You could check user metadata, make an API call, etc.
+    // For demonstration, let's assume the first user is an 'eigenaar'
+    if (user.email === 'admin@example.com') return 'eigenaar';
+    if (user.email?.includes('admin')) return 'admin';
+    
+    // For now, default to 'eigenaar' so you can test the functionality
+    // Replace this with your actual role-checking logic
+    return 'eigenaar';
+  };
+
+  const userRole = getUserRole();
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl">
