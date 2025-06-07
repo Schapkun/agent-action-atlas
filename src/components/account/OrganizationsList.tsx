@@ -65,7 +65,7 @@ export const OrganizationsList = ({
                   variant="ghost"
                   size="sm"
                   onClick={() => onRemoveFromOrganization(org.id, org.name)}
-                  className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                  className="text-destructive hover:text-destructive h-8 w-8 p-0 -mr-1"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -76,7 +76,7 @@ export const OrganizationsList = ({
                 <div className="p-2">
                   {org.workspaces.map((workspace) => (
                     <div key={workspace.id} className="flex items-center justify-between p-3 rounded-md hover:bg-muted/30">
-                      <div className="flex items-center gap-3 ml-8">
+                      <div className="flex items-center gap-3 ml-10">
                         <Briefcase className="h-4 w-4 text-muted-foreground" />
                         <div>
                           <p className="font-medium text-sm">{workspace.name}</p>
