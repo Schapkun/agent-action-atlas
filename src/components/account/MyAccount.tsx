@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -47,7 +48,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
   const targetUserId = viewingUserId || user?.id;
   const isViewingOwnProfile = !isEditingOtherUser && targetUserId === user?.id;
 
-  // Helper function to translate user roles
+  // Helper function to translate user roles consistently
   const translateRole = (role: string): string => {
     switch (role.toLowerCase()) {
       case 'owner':

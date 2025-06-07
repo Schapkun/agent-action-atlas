@@ -9,9 +9,20 @@ export const useUserRole = (userId: string | undefined, userEmail: string | unde
     if (!userId) return;
 
     try {
-      // Check if user is account owner
+      // Check if user is account owner first - they should have 'owner' role in database
       if (userEmail === 'info@schapkun.com') {
-        setUserRole('eigenaar'); // Changed from 'owner' to 'eigenaar' to match permission checks
+        // Get actual role from database for account owner
+        const { data: memberships } = await supabase
+          .from('organization_members')
+          .select('role')
+          .eq('user_id', userId)
+          .limit(1);
+
+        if (memberships && memberships.length > 0) {
+          setUserRole(memberships[0].role);
+        } else {
+          setUserRole('owner'); // Fallback if no membership found
+        }
         return;
       }
 

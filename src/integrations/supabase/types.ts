@@ -276,24 +276,30 @@ export type Database = {
       workspace_members: {
         Row: {
           created_at: string
+          email: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
           user_id: string
           workspace_id: string
+          workspace_name: string | null
         }
         Insert: {
           created_at?: string
+          email?: string | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
           user_id: string
           workspace_id: string
+          workspace_name?: string | null
         }
         Update: {
           created_at?: string
+          email?: string | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
           user_id?: string
           workspace_id?: string
+          workspace_name?: string | null
         }
         Relationships: [
           {
@@ -315,6 +321,7 @@ export type Database = {
       workspaces: {
         Row: {
           created_at: string
+          email: string | null
           id: string
           name: string
           organization_id: string
@@ -323,6 +330,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          email?: string | null
           id?: string
           name: string
           organization_id: string
@@ -331,6 +339,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          email?: string | null
           id?: string
           name?: string
           organization_id?: string
