@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Edit, Trash2, Save, Plus } from 'lucide-react';
+import { Edit, Trash2, Plus } from 'lucide-react';
 import { WorkspacesList } from './WorkspacesList';
 import { CreateWorkspaceForm } from './CreateWorkspaceForm';
+import { EditOrgWorkspaceDialog } from './EditOrgWorkspaceDialog';
 import type { Organization } from '../types/organization';
 
 interface OrganizationCardProps {
@@ -26,18 +26,18 @@ export const OrganizationCard = ({
   onUpdateWorkspace,
   onDeleteWorkspace
 }: OrganizationCardProps) => {
-  const [editingOrganization, setEditingOrganization] = useState(false);
   const [showCreateWorkspaceForm, setShowCreateWorkspaceForm] = useState(false);
-  const [editOrgData, setEditOrgData] = useState({ name: organization.name });
-
-  const handleUpdateOrganization = async () => {
-    await onUpdateOrganization(organization.id, editOrgData.name);
-    setEditingOrganization(false);
-  };
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingWorkspace, setEditingWorkspace] = useState<{id: string; name: string; organization_id: string} | null>(null);
 
   const handleCreateWorkspace = async (name: string) => {
     await onCreateWorkspace(organization.id, name);
     setShowCreateWorkspaceForm(false);
+  };
+
+  const handleRefreshData = () => {
+    // This will be called after successful updates to refresh the parent data
+    window.location.reload(); // Simple refresh for now
   };
 
   return (
@@ -46,22 +46,10 @@ export const OrganizationCard = ({
       <div className="flex items-center justify-between p-4 border-b border-border/30">
         <div className="flex items-center gap-3">
           <div>
-            {editingOrganization ? (
-              <div className="grid grid-cols-1 gap-2">
-                <Input
-                  value={editOrgData.name}
-                  onChange={(e) => setEditOrgData({ name: e.target.value })}
-                  placeholder="Organisatie naam"
-                />
-              </div>
-            ) : (
-              <>
-                <h4 className="font-medium text-base">{organization.name}</h4>
-                <p className="text-sm text-muted-foreground">
-                  Organisatie • Werkruimtes ({organization.workspaces.length})
-                </p>
-              </>
-            )}
+            <h4 className="font-medium text-base">{organization.name}</h4>
+            <p className="text-sm text-muted-foreground">
+              Organisatie • Werkruimtes ({organization.workspaces.length})
+            </p>
           </div>
         </div>
         {canCreate && (
@@ -74,30 +62,15 @@ export const OrganizationCard = ({
             >
               <Trash2 className="h-4 w-4" />
             </Button>
-            {editingOrganization ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleUpdateOrganization}
-                className="h-8 w-8 p-0"
-                title="Opslaan"
-              >
-                <Save className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setEditingOrganization(true);
-                  setEditOrgData({ name: organization.name });
-                }}
-                className="h-8 w-8 p-0"
-                title="Bewerken"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setEditDialogOpen(true)}
+              className="h-8 w-8 p-0"
+              title="Bewerken"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
           </div>
         )}
       </div>
@@ -109,6 +82,13 @@ export const OrganizationCard = ({
           canCreate={canCreate}
           onUpdateWorkspace={onUpdateWorkspace}
           onDeleteWorkspace={onDeleteWorkspace}
+          onEditWorkspace={(workspace) => 
+            setEditingWorkspace({
+              id: workspace.id,
+              name: workspace.name,
+              organization_id: organization.id
+            })
+          }
         />
       )}
 
@@ -134,6 +114,24 @@ export const OrganizationCard = ({
           </Button>
         </div>
       )}
+
+      {/* Edit Organization Dialog */}
+      <EditOrgWorkspaceDialog
+        isOpen={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        type="organization"
+        item={organization}
+        onUpdate={handleRefreshData}
+      />
+
+      {/* Edit Workspace Dialog */}
+      <EditOrgWorkspaceDialog
+        isOpen={!!editingWorkspace}
+        onClose={() => setEditingWorkspace(null)}
+        type="workspace"
+        item={editingWorkspace}
+        onUpdate={handleRefreshData}
+      />
     </div>
   );
 };
