@@ -114,8 +114,7 @@ export const useUserOperations = (userId: string | undefined, onUsersUpdate: () 
         console.log('Deleting actual user:', userIdToDelete);
         
         // Delete from related tables first (to avoid foreign key constraints)
-        
-        // Delete organization memberships
+        console.log('Deleting organization memberships...');
         const { error: orgMemberError } = await supabase
           .from('organization_members')
           .delete()
@@ -125,7 +124,7 @@ export const useUserOperations = (userId: string | undefined, onUsersUpdate: () 
           console.error('Error deleting organization memberships:', orgMemberError);
         }
 
-        // Delete workspace memberships
+        console.log('Deleting workspace memberships...');
         const { error: workspaceMemberError } = await supabase
           .from('workspace_members')
           .delete()
@@ -135,7 +134,7 @@ export const useUserOperations = (userId: string | undefined, onUsersUpdate: () 
           console.error('Error deleting workspace memberships:', workspaceMemberError);
         }
 
-        // Delete user permissions
+        console.log('Deleting user permissions...');
         const { error: permissionsError } = await supabase
           .from('user_permissions')
           .delete()
@@ -145,7 +144,7 @@ export const useUserOperations = (userId: string | undefined, onUsersUpdate: () 
           console.error('Error deleting user permissions:', permissionsError);
         }
 
-        // Delete from user_profiles table
+        console.log('Deleting user profile...');
         const { error: userProfileError } = await supabase
           .from('user_profiles')
           .delete()
@@ -155,7 +154,7 @@ export const useUserOperations = (userId: string | undefined, onUsersUpdate: () 
           console.error('Error deleting user profile:', userProfileError);
         }
 
-        // Delete from profiles table
+        console.log('Deleting profile...');
         const { error: profileError } = await supabase
           .from('profiles')
           .delete()
@@ -164,6 +163,15 @@ export const useUserOperations = (userId: string | undefined, onUsersUpdate: () 
         if (profileError) {
           console.error('Error deleting profile:', profileError);
           throw profileError;
+        }
+
+        console.log('Deleting from auth.users...');
+        // Use the admin API to delete the user from auth.users
+        const { error: deleteAuthError } = await supabase.auth.admin.deleteUser(userIdToDelete);
+
+        if (deleteAuthError) {
+          console.error('Error deleting auth user:', deleteAuthError);
+          // Don't throw here as the user data is already deleted
         }
 
         // Log the user deletion
