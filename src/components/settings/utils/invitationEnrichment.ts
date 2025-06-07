@@ -17,11 +17,12 @@ export const enrichInvitationData = async (logs: any[]): Promise<HistoryLog[]> =
   // Extract all invitation IDs
   const invitationIds: string[] = [];
   invitationCancellations.forEach(log => {
-    if (log.details.invitation_id) {
-      invitationIds.push(log.details.invitation_id);
+    const details = log.details as any;
+    if (details?.invitation_id) {
+      invitationIds.push(details.invitation_id);
     }
-    if (log.details.invitation_ids && Array.isArray(log.details.invitation_ids)) {
-      invitationIds.push(...log.details.invitation_ids);
+    if (details?.invitation_ids && Array.isArray(details.invitation_ids)) {
+      invitationIds.push(...details.invitation_ids);
     }
   });
 
@@ -60,14 +61,15 @@ export const enrichInvitationData = async (logs: any[]): Promise<HistoryLog[]> =
 
     if (creationLogs) {
       creationLogs.forEach(log => {
-        if (log.details?.invitation_id && log.details?.email) {
-          invitationMap.set(log.details.invitation_id, {
-            id: log.details.invitation_id,
-            email: log.details.email,
+        const details = log.details as any;
+        if (details?.invitation_id && details?.email) {
+          invitationMap.set(details.invitation_id, {
+            id: details.invitation_id,
+            email: details.email,
             organization_id: null,
             workspace_id: null
           });
-          console.log(`Found email from creation log for ${log.details.invitation_id}: ${log.details.email}`);
+          console.log(`Found email from creation log for ${details.invitation_id}: ${details.email}`);
         }
       });
     }
@@ -79,26 +81,28 @@ export const enrichInvitationData = async (logs: any[]): Promise<HistoryLog[]> =
       return log;
     }
 
+    const details = log.details as any;
+    
     // Check if we already have email in the original details
-    let emailAddress = log.details?.email || log.details?.invited_email || log.details?.user_email;
+    let emailAddress = details?.email || details?.invited_email || details?.user_email;
     let orgId = log.organization_id;
     let workspaceId = log.workspace_id;
 
     // Only try database lookup if we don't already have an email
     if (!emailAddress) {
-      if (log.details?.invitation_id) {
-        const invitation = invitationMap.get(log.details.invitation_id);
+      if (details?.invitation_id) {
+        const invitation = invitationMap.get(details.invitation_id);
         if (invitation) {
           emailAddress = invitation.email;
           orgId = orgId || invitation.organization_id;
           workspaceId = workspaceId || invitation.workspace_id;
           console.log(`Enriched log ${log.id} with email: ${emailAddress}`);
         } else {
-          console.log(`No invitation found for ID: ${log.details.invitation_id}`);
+          console.log(`No invitation found for ID: ${details.invitation_id}`);
         }
-      } else if (log.details?.invitation_ids && Array.isArray(log.details.invitation_ids)) {
+      } else if (details?.invitation_ids && Array.isArray(details.invitation_ids)) {
         // For multiple invitations, try to get emails for all of them
-        const emails = log.details.invitation_ids
+        const emails = details.invitation_ids
           .map(id => invitationMap.get(id)?.email)
           .filter(email => email);
         
@@ -106,7 +110,7 @@ export const enrichInvitationData = async (logs: any[]): Promise<HistoryLog[]> =
           emailAddress = emails.length === 1 ? emails[0] : `${emails.length} uitnodigingen`;
           console.log(`Enriched log ${log.id} with multiple emails: ${emailAddress}`);
         } else {
-          console.log(`No invitations found for IDs: ${log.details.invitation_ids}`);
+          console.log(`No invitations found for IDs: ${details.invitation_ids}`);
         }
       }
     } else {
@@ -114,7 +118,7 @@ export const enrichInvitationData = async (logs: any[]): Promise<HistoryLog[]> =
     }
 
     // Only add invited_email if we actually found a valid email address
-    const enrichedDetails = { ...log.details };
+    const enrichedDetails = { ...details };
     if (emailAddress && typeof emailAddress === 'string' && emailAddress.includes('@')) {
       enrichedDetails.invited_email = emailAddress;
       console.log(`Successfully enriched log ${log.id} with email: ${emailAddress}`);
