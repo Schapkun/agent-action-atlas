@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 interface UserProfile {
@@ -32,32 +31,10 @@ export const useUserDataFetcher = () => {
 
     console.log('All users data (account owner):', usersData);
     
-    // Get all organizations and workspaces for reference
-    const [allOrgsResponse, allWorkspacesResponse] = await Promise.all([
-      supabase.from('organizations').select('id, name'),
-      supabase.from('workspaces').select('id, name')
-    ]);
-
-    const allOrgs = allOrgsResponse.data || [];
-    const allWorkspaces = allWorkspacesResponse.data || [];
-    
-    // For each user, get their organization memberships, roles, and workspaces
+    // For each user, get their ACTUAL organization memberships, roles, and workspaces
     const usersWithOrgs = await Promise.all(
       (usersData || []).map(async (userProfile) => {
-        // Special case for the account owner - they have access to ALL organizations and workspaces
-        if (userProfile.email === 'info@schapkun.com') {
-          return {
-            ...userProfile,
-            organizations: allOrgs.map(org => org.name),
-            workspaces: allWorkspaces.map(workspace => workspace.name),
-            isPending: false,
-            role: 'eigenaar',
-            member_since: userProfile.created_at,
-            user_role: 'owner' as const
-          };
-        }
-
-        // Get organization memberships for other users
+        // Get ACTUAL organization memberships for ALL users (including account owner)
         const { data: orgMemberships } = await supabase
           .from('organization_members')
           .select(`
@@ -68,7 +45,7 @@ export const useUserDataFetcher = () => {
           `)
           .eq('user_id', userProfile.id);
 
-        // Get workspace memberships  
+        // Get ACTUAL workspace memberships  
         const { data: workspaceMemberships } = await supabase
           .from('workspace_members')
           .select(`

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -104,106 +103,57 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
       console.log('Profile data:', profileData);
       setProfile(profileData);
 
-      // Check if user is account owner
-      const isAccountOwner = profileData.email === 'info@schapkun.com';
-      console.log('Is account owner:', isAccountOwner);
+      // Fetch ACTUAL organization memberships for this user
+      const { data: orgMemberships, error: orgError } = await supabase
+        .from('organization_members')
+        .select(`
+          role,
+          created_at,
+          organizations!organization_members_organization_id_fkey(id, name)
+        `)
+        .eq('user_id', targetUserId);
 
-      if (isAccountOwner) {
-        // For account owner, get ALL organizations and workspaces
-        console.log('Fetching all organizations and workspaces for account owner');
-        
-        const [allOrgsResponse, allWorkspacesResponse] = await Promise.all([
-          supabase.from('organizations').select('id, name, created_at').order('created_at', { ascending: true }),
-          supabase.from('workspaces').select('id, name, organization_id, created_at').order('created_at', { ascending: true })
-        ]);
-
-        if (allOrgsResponse.error) throw allOrgsResponse.error;
-        if (allWorkspacesResponse.error) throw allWorkspacesResponse.error;
-
-        // Get organization names for workspaces
-        const orgNames = (allOrgsResponse.data || []).reduce((acc, org) => {
-          acc[org.id] = org.name;
-          return acc;
-        }, {} as { [key: string]: string });
-
-        // Map organizations with owner role
-        const orgMemberships = (allOrgsResponse.data || []).map(org => ({
-          id: org.id,
-          name: org.name,
-          role: 'owner' as const,
-          created_at: org.created_at
-        }));
-
-        // Map workspaces with owner role and organization names
-        const workspaceMemberships = (allWorkspacesResponse.data || []).map(workspace => ({
-          id: workspace.id,
-          name: workspace.name,
-          organization_name: orgNames[workspace.organization_id] || 'Onbekend',
-          role: 'owner' as const,
-          created_at: workspace.created_at
-        }));
-
-        console.log('Account owner organizations:', orgMemberships);
-        console.log('Account owner workspaces:', workspaceMemberships);
-
-        setOrganizations(orgMemberships);
-        setWorkspaces(workspaceMemberships);
-      } else {
-        // For regular users, get their actual memberships
-        console.log('Fetching actual memberships for regular user');
-        
-        // Fetch organization memberships
-        const { data: orgMemberships, error: orgError } = await supabase
-          .from('organization_members')
-          .select(`
-            role,
-            created_at,
-            organizations!organization_members_organization_id_fkey(id, name)
-          `)
-          .eq('user_id', targetUserId);
-
-        if (orgError) {
-          console.error('Error fetching organization memberships:', orgError);
-        }
-
-        // Fetch workspace memberships
-        const { data: workspaceMemberships, error: workspaceError } = await supabase
-          .from('workspace_members')
-          .select(`
-            role,
-            created_at,
-            workspaces!workspace_members_workspace_id_fkey(id, name, organization_id),
-            workspaces(organizations!workspaces_organization_id_fkey(name))
-          `)
-          .eq('user_id', targetUserId);
-
-        if (workspaceError) {
-          console.error('Error fetching workspace memberships:', workspaceError);
-        }
-
-        // Process organization memberships
-        const processedOrgs = (orgMemberships || []).map(membership => ({
-          id: (membership as any).organizations.id,
-          name: (membership as any).organizations.name,
-          role: membership.role,
-          created_at: membership.created_at
-        }));
-
-        // Process workspace memberships
-        const processedWorkspaces = (workspaceMemberships || []).map(membership => ({
-          id: (membership as any).workspaces.id,
-          name: (membership as any).workspaces.name,
-          organization_name: (membership as any).workspaces?.organizations?.name || 'Onbekend',
-          role: membership.role,
-          created_at: membership.created_at
-        }));
-
-        console.log('Regular user organizations:', processedOrgs);
-        console.log('Regular user workspaces:', processedWorkspaces);
-
-        setOrganizations(processedOrgs);
-        setWorkspaces(processedWorkspaces);
+      if (orgError) {
+        console.error('Error fetching organization memberships:', orgError);
       }
+
+      // Fetch ACTUAL workspace memberships for this user
+      const { data: workspaceMemberships, error: workspaceError } = await supabase
+        .from('workspace_members')
+        .select(`
+          role,
+          created_at,
+          workspaces!workspace_members_workspace_id_fkey(id, name, organization_id),
+          workspaces(organizations!workspaces_organization_id_fkey(name))
+        `)
+        .eq('user_id', targetUserId);
+
+      if (workspaceError) {
+        console.error('Error fetching workspace memberships:', workspaceError);
+      }
+
+      // Process organization memberships - only show ACTUAL memberships
+      const processedOrgs = (orgMemberships || []).map(membership => ({
+        id: (membership as any).organizations.id,
+        name: (membership as any).organizations.name,
+        role: membership.role,
+        created_at: membership.created_at
+      }));
+
+      // Process workspace memberships - only show ACTUAL memberships
+      const processedWorkspaces = (workspaceMemberships || []).map(membership => ({
+        id: (membership as any).workspaces.id,
+        name: (membership as any).workspaces.name,
+        organization_name: (membership as any).workspaces?.organizations?.name || 'Onbekend',
+        role: membership.role,
+        created_at: membership.created_at
+      }));
+
+      console.log('Actual organization memberships:', processedOrgs);
+      console.log('Actual workspace memberships:', processedWorkspaces);
+
+      setOrganizations(processedOrgs);
+      setWorkspaces(processedWorkspaces);
     } catch (error) {
       console.error('Error fetching user data:', error);
       toast({
