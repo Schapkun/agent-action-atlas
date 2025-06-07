@@ -21,7 +21,80 @@ interface HistoryLogCardProps {
   log: HistoryLog;
 }
 
+const formatLogDetails = (details: any, action: string) => {
+  if (!details) return null;
+
+  // Handle different types of actions
+  if (action.toLowerCase().includes('uitnodiging')) {
+    if (details.invitation_ids && Array.isArray(details.invitation_ids)) {
+      return `${details.invitation_ids.length} uitnodiging(en) verstuurd`;
+    }
+    if (details.email) {
+      return `Uitnodiging verstuurd naar: ${details.email}`;
+    }
+    return 'Uitnodiging verwerkt';
+  }
+
+  if (action.toLowerCase().includes('gebruiker')) {
+    if (details.user_email) {
+      return `Gebruiker: ${details.user_email}`;
+    }
+    if (details.user_name) {
+      return `Gebruiker: ${details.user_name}`;
+    }
+  }
+
+  if (action.toLowerCase().includes('organisatie')) {
+    if (details.organization_name) {
+      return `Organisatie: ${details.organization_name}`;
+    }
+  }
+
+  if (action.toLowerCase().includes('werkruimte')) {
+    if (details.workspace_name) {
+      return `Werkruimte: ${details.workspace_name}`;
+    }
+  }
+
+  if (action.toLowerCase().includes('document')) {
+    if (details.document_name) {
+      return `Document: ${details.document_name}`;
+    }
+    if (details.file_name) {
+      return `Bestand: ${details.file_name}`;
+    }
+  }
+
+  if (action.toLowerCase().includes('login') || action.toLowerCase().includes('ingelogd')) {
+    return 'Gebruiker heeft ingelogd';
+  }
+
+  if (action.toLowerCase().includes('logout') || action.toLowerCase().includes('uitgelogd')) {
+    return 'Gebruiker heeft uitgelogd';
+  }
+
+  // If we have an object with meaningful keys, try to extract useful info
+  if (typeof details === 'object') {
+    const keys = Object.keys(details);
+    
+    // Look for common meaningful fields
+    if (details.name) return `Naam: ${details.name}`;
+    if (details.title) return `Titel: ${details.title}`;
+    if (details.email) return `E-mail: ${details.email}`;
+    if (details.role) return `Rol: ${details.role}`;
+    
+    // If it's just IDs or technical data, show a generic message
+    if (keys.every(key => key.includes('_id') || key.includes('id'))) {
+      return 'Systeem actie uitgevoerd';
+    }
+  }
+
+  return null;
+};
+
 export const HistoryLogCard = ({ log }: HistoryLogCardProps) => {
+  const formattedDetails = formatLogDetails(log.details, log.action);
+
   return (
     <Card>
       <CardHeader>
@@ -44,10 +117,10 @@ export const HistoryLogCard = ({ log }: HistoryLogCardProps) => {
           </div>
         </div>
       </CardHeader>
-      {log.details && (
+      {formattedDetails && (
         <CardContent>
           <div className="bg-muted p-3 rounded-md">
-            <pre className="text-sm">{JSON.stringify(log.details, null, 2)}</pre>
+            <p className="text-sm">{formattedDetails}</p>
           </div>
           {log.organization_name && (
             <p className="text-sm text-muted-foreground mt-2">
