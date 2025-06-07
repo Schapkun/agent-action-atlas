@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -103,7 +104,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
       console.log('Profile data:', profileData);
       setProfile(profileData);
 
-      // Fetch ACTUAL organization memberships for this user
+      // Fetch organization memberships
       const { data: orgMemberships, error: orgError } = await supabase
         .from('organization_members')
         .select(`
@@ -113,11 +114,13 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
         `)
         .eq('user_id', targetUserId);
 
+      console.log('Organization memberships raw data:', orgMemberships);
+
       if (orgError) {
         console.error('Error fetching organization memberships:', orgError);
       }
 
-      // Fetch ACTUAL workspace memberships for this user
+      // Fetch workspace memberships
       const { data: workspaceMemberships, error: workspaceError } = await supabase
         .from('workspace_members')
         .select(`
@@ -128,29 +131,31 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
         `)
         .eq('user_id', targetUserId);
 
+      console.log('Workspace memberships raw data:', workspaceMemberships);
+
       if (workspaceError) {
         console.error('Error fetching workspace memberships:', workspaceError);
       }
 
-      // Process organization memberships - only show ACTUAL memberships
+      // Process organization memberships
       const processedOrgs = (orgMemberships || []).map(membership => ({
-        id: (membership as any).organizations.id,
-        name: (membership as any).organizations.name,
+        id: (membership as any).organizations?.id || '',
+        name: (membership as any).organizations?.name || 'Onbekende Organisatie',
         role: membership.role,
         created_at: membership.created_at
-      }));
+      })).filter(org => org.id); // Filter out any invalid entries
 
-      // Process workspace memberships - only show ACTUAL memberships
+      // Process workspace memberships
       const processedWorkspaces = (workspaceMemberships || []).map(membership => ({
-        id: (membership as any).workspaces.id,
-        name: (membership as any).workspaces.name,
-        organization_name: (membership as any).workspaces?.organizations?.name || 'Onbekend',
+        id: (membership as any).workspaces?.id || '',
+        name: (membership as any).workspaces?.name || 'Onbekende Werkruimte',
+        organization_name: (membership as any).workspaces?.organizations?.name || 'Onbekende Organisatie',
         role: membership.role,
         created_at: membership.created_at
-      }));
+      })).filter(workspace => workspace.id); // Filter out any invalid entries
 
-      console.log('Actual organization memberships:', processedOrgs);
-      console.log('Actual workspace memberships:', processedWorkspaces);
+      console.log('Processed organization memberships:', processedOrgs);
+      console.log('Processed workspace memberships:', processedWorkspaces);
 
       setOrganizations(processedOrgs);
       setWorkspaces(processedWorkspaces);
