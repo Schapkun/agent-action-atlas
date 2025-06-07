@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -267,11 +268,11 @@ export const ContactManager = () => {
 
         <CardContent>
           {filteredItems.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {filteredItems.map((item) => {
                 const IconComponent = getTypeIcon(item.type);
                 return (
-                  <div key={item.id} className="flex items-center space-x-4 py-4 px-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
+                  <div key={item.id} className="flex items-center space-x-4 py-3 px-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
                     <div className="flex-shrink-0">
                       <IconComponent className="h-8 w-8 text-muted-foreground" />
                     </div>
