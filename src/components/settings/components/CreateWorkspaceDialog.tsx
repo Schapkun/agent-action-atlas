@@ -34,13 +34,13 @@ export const CreateWorkspaceDialog: React.FC<CreateWorkspaceDialogProps> = ({
     }
   };
 
-  // Don't render the button if user cannot create workspaces
+  // STRICTLY do not render anything if user cannot create workspaces
   if (!canCreateWorkspace) {
-    console.log('CreateWorkspaceDialog - Not rendering button, canCreateWorkspace is false');
+    console.log('CreateWorkspaceDialog - Not rendering, canCreateWorkspace is false');
     return null;
   }
 
-  console.log('CreateWorkspaceDialog - Rendering button, canCreateWorkspace is true');
+  console.log('CreateWorkspaceDialog - Rendering dialog, canCreateWorkspace is true');
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

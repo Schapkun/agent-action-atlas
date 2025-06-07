@@ -31,7 +31,7 @@ export const WorkspaceSettings = () => {
     }
   }, [user]);
 
-  // Use the EXACT same logic as organization creation
+  // Check if user can create workspaces - ONLY show button if explicitly allowed
   const canCreateWorkspace = () => {
     console.log('WorkspaceSettings - canCreateWorkspace check:', { 
       userRole, 
@@ -45,7 +45,12 @@ export const WorkspaceSettings = () => {
       return true;
     }
     
-    // Only admin and eigenaar roles can create workspaces (SAME as organization logic)
+    // For all other users, they need admin or eigenaar role AND the role must be loaded
+    if (!userRole) {
+      console.log('User role not loaded yet, denying access');
+      return false;
+    }
+    
     const canCreate = userRole === 'admin' || userRole === 'eigenaar';
     console.log('Role-based check result:', { userRole, canCreate });
     return canCreate;
@@ -80,11 +85,13 @@ export const WorkspaceSettings = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Werkruimtes</h2>
-        <CreateWorkspaceDialog
-          organizations={organizations}
-          onCreateWorkspace={createWorkspace}
-          canCreateWorkspace={canCreate}
-        />
+        {canCreate && (
+          <CreateWorkspaceDialog
+            organizations={organizations}
+            onCreateWorkspace={createWorkspace}
+            canCreateWorkspace={canCreate}
+          />
+        )}
       </div>
 
       <div className="space-y-4">
