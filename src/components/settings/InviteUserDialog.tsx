@@ -107,7 +107,7 @@ export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserD
         email: inviteEmail,
         role: selectedRole,
         organization_id: selectedOrganization,
-        workspace_id: selectedWorkspace || null,
+        workspace_id: selectedWorkspace === 'none' ? null : (selectedWorkspace || null),
         invited_by: user?.id || ''
       };
 
@@ -125,7 +125,7 @@ export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserD
         .insert({
           user_id: user?.id,
           organization_id: selectedOrganization,
-          workspace_id: selectedWorkspace || null,
+          workspace_id: selectedWorkspace === 'none' ? null : (selectedWorkspace || null),
           action: 'Gebruiker uitgenodigd',
           details: {
             email: inviteEmail,
@@ -215,7 +215,7 @@ export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserD
                   <SelectValue placeholder="Selecteer werkruimte" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Geen specifieke werkruimte</SelectItem>
+                  <SelectItem value="none">Geen specifieke werkruimte</SelectItem>
                   {filteredWorkspaces.map((workspace) => (
                     <SelectItem key={workspace.id} value={workspace.id}>
                       {workspace.name}
