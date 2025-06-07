@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -554,7 +555,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                       Rol: {org.role}
                     </p>
                   </div>
-                  <div className="flex space-x-1">
+                  <div className="flex space-x-1 w-8 justify-end">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -598,7 +599,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                       Organisatie: {workspace.organization_name} • Rol: {workspace.role || 'member'}
                     </p>
                   </div>
-                  <div className="flex space-x-1">
+                  <div className="flex space-x-1 w-8 justify-end">
                     <Button
                       variant="ghost"
                       size="sm"

@@ -586,7 +586,7 @@ export const OrganizationWorkspaceView = ({ userRole = 'lid' }: OrganizationWork
                       ({group.workspaces.length} werkruimte{group.workspaces.length !== 1 ? 's' : ''})
                     </span>
                   </div>
-                  <div className="flex space-x-1">
+                  <div className="flex space-x-1 w-16 justify-end">
                     {(user?.email === 'info@schapkun.com') && (
                       <>
                         <Button
@@ -624,7 +624,7 @@ export const OrganizationWorkspaceView = ({ userRole = 'lid' }: OrganizationWork
                             Aangemaakt: {new Date(workspace.created_at).toLocaleDateString('nl-NL')}
                           </p>
                         </div>
-                        <div className="flex space-x-1">
+                        <div className="flex space-x-1 w-16 justify-end">
                           <Button
                             variant="ghost"
                             size="sm"
