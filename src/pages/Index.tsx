@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Sidebar } from '@/components/dashboard/Sidebar';
@@ -50,11 +49,6 @@ const Index = ({ children }: IndexProps) => {
             onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
           />
           <main className="flex-1 overflow-auto p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-3">
-                <h1 className="text-2xl font-bold text-foreground">Meester.app</h1>
-              </div>
-            </div>
             {children}
           </main>
         </div>

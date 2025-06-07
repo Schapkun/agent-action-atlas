@@ -61,7 +61,7 @@ export const Sidebar = ({
           {!collapsed && (
             <div className="flex items-center space-x-2">
               <Scale className="h-6 w-6 text-primary" />
-              <span className="font-semibold text-foreground">AI Juridisch</span>
+              <span className="font-semibold text-foreground">Meester.app</span>
             </div>
           )}
           <Button

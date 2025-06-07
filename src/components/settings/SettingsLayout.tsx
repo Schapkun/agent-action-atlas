@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -96,7 +95,6 @@ export const SettingsLayout = () => {
         <TabsContent value="organizations">
           <Card className="rounded-lg border bg-card text-card-foreground shadow-sm">
             <CardContent className="p-6">
-              <h2 className="text-xl font-semibold mb-6">Organisaties & Werkruimtes</h2>
               <OrganizationWorkspaceView userRole={userRole} />
             </CardContent>
           </Card>
@@ -105,7 +103,6 @@ export const SettingsLayout = () => {
         <TabsContent value="users">
           <Card>
             <CardContent className="p-6">
-              <h2 className="text-xl font-semibold mb-6">Gebruikersprofielen</h2>
               <UserProfileSettings />
             </CardContent>
           </Card>
@@ -118,7 +115,6 @@ export const SettingsLayout = () => {
                 requiredRoles={['admin', 'eigenaar']} 
                 userRole={userRole}
               >
-                <h2 className="text-xl font-semibold mb-6">Document Layout Instellingen</h2>
                 <DocumentLayoutSettings />
               </RoleGuard>
             </CardContent>
@@ -132,7 +128,6 @@ export const SettingsLayout = () => {
                 requiredRoles={['admin', 'eigenaar']} 
                 userRole={userRole}
               >
-                <h2 className="text-xl font-semibold mb-6">Geschiedenis</h2>
                 <HistoryLogs />
               </RoleGuard>
             </CardContent>
