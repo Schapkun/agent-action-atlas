@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Trash2, Plus, Edit, RefreshCw, UserPlus } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
+import { UserProfileCard } from './UserProfileCard';
+import { InviteUserDialog } from './InviteUserDialog';
+import { EditUserDialog } from './EditUserDialog';
 
 interface UserProfile {
   id: string;
@@ -23,7 +23,6 @@ export const UserProfileSettings = () => {
   const [loading, setLoading] = useState(true);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
-  const [inviteEmail, setInviteEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const { user } = useAuth();
@@ -293,27 +292,11 @@ export const UserProfileSettings = () => {
     }
   };
 
-  const inviteUser = async () => {
+  const inviteUser = async (inviteEmail: string) => {
     if (!inviteEmail.trim() || !user?.id) return;
 
-    try {
-      // For now, just show a success message
-      // In a real implementation, you would send an invitation email
-      toast({
-        title: "Uitnodiging verzonden",
-        description: `Uitnodiging verzonden naar ${inviteEmail}`,
-      });
-
-      setInviteEmail('');
-      setIsInviteDialogOpen(false);
-    } catch (error) {
-      console.error('Error inviting user:', error);
-      toast({
-        title: "Error",
-        description: "Kon uitnodiging niet verzenden",
-        variant: "destructive",
-      });
-    }
+    // For now, just show a success message
+    // In a real implementation, you would send an invitation email
   };
 
   // Check if user can invite others (only admin, owner, and account owner)
@@ -357,40 +340,11 @@ export const UserProfileSettings = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Gebruikersprofielen</h2>
         {canInviteUsers && (
-          <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <UserPlus className="h-4 w-4 mr-2" />
-                Gebruiker Uitnodigen
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle className="text-lg">Gebruiker Uitnodigen</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="invite-email" className="text-sm">E-mailadres</Label>
-                  <Input
-                    id="invite-email"
-                    type="email"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="Voer e-mailadres in"
-                    className="mt-1"
-                  />
-                </div>
-                <div className="flex justify-end space-x-2 pt-2">
-                  <Button variant="outline" size="sm" onClick={() => setIsInviteDialogOpen(false)}>
-                    Annuleren
-                  </Button>
-                  <Button size="sm" onClick={inviteUser}>
-                    Uitnodigen
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <InviteUserDialog
+            isOpen={isInviteDialogOpen}
+            onOpenChange={setIsInviteDialogOpen}
+            onInvite={inviteUser}
+          />
         )}
       </div>
 
@@ -406,88 +360,23 @@ export const UserProfileSettings = () => {
           </Card>
         ) : (
           users.map((userProfile) => (
-            <Card key={userProfile.id} className="flex flex-col">
-              <CardHeader className="pb-3 flex-1">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base">
-                      {userProfile.full_name || 'Niet ingesteld'}
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">{userProfile.email}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Organisaties: {userProfile.organizations?.length 
-                        ? userProfile.organizations.join(', ')
-                        : user?.email === 'info@schapkun.com' ? 'Geen organisaties' : '-'
-                      } • Aangemaakt: {new Date(userProfile.created_at).toLocaleDateString('nl-NL')}
-                    </p>
-                  </div>
-                  <div className="flex space-x-1 flex-shrink-0 ml-2">
-                    {user?.email === 'info@schapkun.com' && (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingUser(userProfile)}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteUser(userProfile.id, userProfile.email)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
+            <UserProfileCard
+              key={userProfile.id}
+              userProfile={userProfile}
+              currentUserEmail={user?.email}
+              onEdit={setEditingUser}
+              onDelete={deleteUser}
+            />
           ))
         )}
       </div>
 
-      {editingUser && (
-        <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-lg">Gebruiker Bewerken</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="edit-user-email" className="text-sm">E-mailadres</Label>
-                <Input
-                  id="edit-user-email"
-                  type="email"
-                  value={editingUser.email}
-                  onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-user-name" className="text-sm">Volledige Naam</Label>
-                <Input
-                  id="edit-user-name"
-                  value={editingUser.full_name || ''}
-                  onChange={(e) => setEditingUser({ ...editingUser, full_name: e.target.value })}
-                  placeholder="Voer volledige naam in"
-                  className="mt-1"
-                />
-              </div>
-              <div className="flex justify-end space-x-2 pt-2">
-                <Button variant="outline" size="sm" onClick={() => setEditingUser(null)}>
-                  Annuleren
-                </Button>
-                <Button size="sm" onClick={updateUser}>
-                  Opslaan
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      <EditUserDialog
+        editingUser={editingUser}
+        onClose={() => setEditingUser(null)}
+        onSave={updateUser}
+        onUpdateUser={setEditingUser}
+      />
     </div>
   );
 };
