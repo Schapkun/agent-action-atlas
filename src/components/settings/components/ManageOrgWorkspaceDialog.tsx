@@ -451,80 +451,82 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-5xl h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">
             Organisatie & Werkruimtes Beheren
           </DialogTitle>
         </DialogHeader>
         
-        <Tabs defaultValue="organization" className="w-full flex-1 flex flex-col">
+        <Tabs defaultValue="organization" className="w-full flex-1 flex flex-col min-h-0">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="organization" className="text-sm">Organisatie</TabsTrigger>
             <TabsTrigger value="workspaces" className="text-sm">Werkruimtes</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="organization" className="space-y-4 flex-1 flex flex-col">
-            <div className="flex justify-between items-center">
+          <TabsContent value="organization" className="flex-1 flex flex-col min-h-0">
+            <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Organisatie Details</h3>
             </div>
 
-            <Card className="flex-1">
-              <CardContent className="p-6 space-y-4">
-                <div>
-                  <Label htmlFor="orgName" className="text-sm font-medium">Organisatie Naam</Label>
-                  <Input
-                    id="orgName"
-                    value={orgName}
-                    onChange={(e) => setOrgName(e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium">Organisatie Gebruikers</Label>
-                  <div className="max-h-60 overflow-y-auto border rounded-md p-3 mt-2 space-y-2">
-                    {loading ? (
-                      <div className="text-sm text-muted-foreground">Laden...</div>
-                    ) : (
-                      orgUsers.map((user) => (
-                        <div key={user.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`org-${user.id}`}
-                            checked={user.hasAccess}
-                            onCheckedChange={(checked) => 
-                              handleOrgUserToggle(user.id, checked as boolean)
-                            }
-                          />
-                          <label 
-                            htmlFor={`org-${user.id}`}
-                            className="text-sm cursor-pointer flex-1"
-                          >
-                            {user.full_name || user.email}
-                            {user.email !== user.full_name && (
-                              <span className="text-muted-foreground ml-2">({user.email})</span>
-                            )}
-                          </label>
-                        </div>
-                      ))
-                    )}
+            <div className="flex-1 flex flex-col min-h-0">
+              <Card className="flex-1 min-h-0">
+                <CardContent className="p-6 h-full flex flex-col">
+                  <div className="mb-4">
+                    <Label htmlFor="orgName" className="text-sm font-medium">Organisatie Naam</Label>
+                    <Input
+                      id="orgName"
+                      value={orgName}
+                      onChange={(e) => setOrgName(e.target.value)}
+                      className="mt-1"
+                    />
                   </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            <div className="flex justify-end space-x-2 pt-4 border-t">
-              <Button variant="outline" onClick={handleCancel}>
-                Annuleren
-              </Button>
-              <Button onClick={handleUpdateOrganization} disabled={loading}>
-                {loading ? 'Opslaan...' : 'Opslaan'}
-              </Button>
+                  <div className="flex-1 min-h-0">
+                    <Label className="text-sm font-medium">Organisatie Gebruikers</Label>
+                    <div className="h-[300px] overflow-y-auto border rounded-md p-3 mt-2 space-y-2">
+                      {loading ? (
+                        <div className="text-sm text-muted-foreground">Laden...</div>
+                      ) : (
+                        orgUsers.map((user) => (
+                          <div key={user.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`org-${user.id}`}
+                              checked={user.hasAccess}
+                              onCheckedChange={(checked) => 
+                                handleOrgUserToggle(user.id, checked as boolean)
+                              }
+                            />
+                            <label 
+                              htmlFor={`org-${user.id}`}
+                              className="text-sm cursor-pointer flex-1"
+                            >
+                              {user.full_name || user.email}
+                              {user.email !== user.full_name && (
+                                <span className="text-muted-foreground ml-2">({user.email})</span>
+                              )}
+                            </label>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="flex justify-end space-x-2 pt-4 border-t mt-4">
+                <Button variant="outline" onClick={handleCancel}>
+                  Annuleren
+                </Button>
+                <Button onClick={handleUpdateOrganization} disabled={loading}>
+                  {loading ? 'Opslaan...' : 'Opslaan'}
+                </Button>
+              </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="workspaces" className="space-y-4 flex-1 flex flex-col">
-            <div className="flex justify-between items-center">
+          <TabsContent value="workspaces" className="flex-1 flex flex-col min-h-0">
+            <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Werkruimtes</h3>
               {!showAddWorkspace && (
                 <Button onClick={() => setShowAddWorkspace(true)} size="sm">
@@ -534,148 +536,150 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
               )}
             </div>
 
-            {showAddWorkspace && (
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex space-x-2">
-                    <Input
-                      placeholder="Werkruimte naam"
-                      value={newWorkspaceName}
-                      onChange={(e) => setNewWorkspaceName(e.target.value)}
-                    />
-                    <Button onClick={handleAddWorkspace} size="sm">
-                      Toevoegen
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setShowAddWorkspace(false)}
-                      size="sm"
-                    >
-                      Annuleren
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <div className="space-y-3 flex-1 overflow-y-auto">
-              {loading ? (
-                <div className="text-sm text-muted-foreground">Werkruimtes laden...</div>
-              ) : workspaces.length === 0 ? (
-                <Card>
-                  <CardContent className="p-4 text-center text-sm text-muted-foreground">
-                    Geen werkruimtes gevonden voor deze organisatie.
+            <div className="flex-1 flex flex-col min-h-0">
+              {showAddWorkspace && (
+                <Card className="mb-3">
+                  <CardContent className="p-4">
+                    <div className="flex space-x-2">
+                      <Input
+                        placeholder="Werkruimte naam"
+                        value={newWorkspaceName}
+                        onChange={(e) => setNewWorkspaceName(e.target.value)}
+                      />
+                      <Button onClick={handleAddWorkspace} size="sm">
+                        Toevoegen
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setShowAddWorkspace(false)}
+                        size="sm"
+                      >
+                        Annuleren
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
-              ) : (
-                workspaces.map((workspace) => (
-                  <Card key={workspace.id}>
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between">
-                        {editingWorkspace === workspace.id ? (
-                          <div className="flex space-x-2 flex-1">
-                            <Input
-                              value={workspace.name}
-                              onChange={(e) => setWorkspaces(prev => 
-                                prev.map(w => w.id === workspace.id ? {...w, name: e.target.value} : w)
-                              )}
-                              className="flex-1"
-                            />
-                            <Button
-                              size="sm"
-                              onClick={() => handleUpdateWorkspace(workspace.id, workspace.name)}
-                            >
-                              Opslaan
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                // Reset to original name when canceling edit
-                                const originalWorkspace = originalWorkspaces.find(w => w.id === workspace.id);
-                                if (originalWorkspace) {
-                                  setWorkspaces(prev => prev.map(w => 
-                                    w.id === workspace.id ? {...w, name: originalWorkspace.name} : w
-                                  ));
-                                }
-                                setEditingWorkspace(null);
-                              }}
-                            >
-                              Annuleren
-                            </Button>
-                          </div>
-                        ) : (
-                          <>
-                            <CardTitle className="text-base">{workspace.name}</CardTitle>
-                            <div className="flex space-x-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setEditingWorkspace(workspace.id)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteWorkspace(workspace.id, workspace.name)}
-                                className="text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium flex items-center">
-                          <Users className="h-4 w-4 mr-1" />
-                          Werkruimte Gebruikers
-                        </Label>
-                        <div className="max-h-32 overflow-y-auto border rounded-md p-2 space-y-1">
-                          {workspace.users?.map((user) => {
-                            const isDisabled = isUserDisabledForWorkspace(user.id);
-                            return (
-                              <div key={user.id} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={`ws-${workspace.id}-${user.id}`}
-                                  checked={user.hasAccess}
-                                  disabled={isDisabled}
-                                  onCheckedChange={(checked) => 
-                                    handleWorkspaceUserToggle(workspace.id, user.id, checked as boolean)
-                                  }
-                                />
-                                <label 
-                                  htmlFor={`ws-${workspace.id}-${user.id}`}
-                                  className={`text-sm cursor-pointer flex-1 ${
-                                    isDisabled ? 'text-muted-foreground opacity-50' : ''
-                                  }`}
-                                >
-                                  {user.full_name || user.email}
-                                  {isDisabled && (
-                                    <span className="ml-1 text-red-500">(Eerst organisatie toegang vereist)</span>
-                                  )}
-                                </label>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
+              )}
+
+              <div className="flex-1 overflow-y-auto space-y-3 min-h-0">
+                {loading ? (
+                  <div className="text-sm text-muted-foreground">Werkruimtes laden...</div>
+                ) : workspaces.length === 0 ? (
+                  <Card>
+                    <CardContent className="p-4 text-center text-sm text-muted-foreground">
+                      Geen werkruimtes gevonden voor deze organisatie.
                     </CardContent>
                   </Card>
-                ))
-              )}
-            </div>
+                ) : (
+                  workspaces.map((workspace) => (
+                    <Card key={workspace.id}>
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          {editingWorkspace === workspace.id ? (
+                            <div className="flex space-x-2 flex-1">
+                              <Input
+                                value={workspace.name}
+                                onChange={(e) => setWorkspaces(prev => 
+                                  prev.map(w => w.id === workspace.id ? {...w, name: e.target.value} : w)
+                                )}
+                                className="flex-1"
+                              />
+                              <Button
+                                size="sm"
+                                onClick={() => handleUpdateWorkspace(workspace.id, workspace.name)}
+                              >
+                                Opslaan
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  // Reset to original name when canceling edit
+                                  const originalWorkspace = originalWorkspaces.find(w => w.id === workspace.id);
+                                  if (originalWorkspace) {
+                                    setWorkspaces(prev => prev.map(w => 
+                                      w.id === workspace.id ? {...w, name: originalWorkspace.name} : w
+                                    ));
+                                  }
+                                  setEditingWorkspace(null);
+                                }}
+                              >
+                                Annuleren
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              <CardTitle className="text-base">{workspace.name}</CardTitle>
+                              <div className="flex space-x-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setEditingWorkspace(workspace.id)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteWorkspace(workspace.id, workspace.name)}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium flex items-center">
+                            <Users className="h-4 w-4 mr-1" />
+                            Werkruimte Gebruikers
+                          </Label>
+                          <div className="max-h-32 overflow-y-auto border rounded-md p-2 space-y-1">
+                            {workspace.users?.map((user) => {
+                              const isDisabled = isUserDisabledForWorkspace(user.id);
+                              return (
+                                <div key={user.id} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`ws-${workspace.id}-${user.id}`}
+                                    checked={user.hasAccess}
+                                    disabled={isDisabled}
+                                    onCheckedChange={(checked) => 
+                                      handleWorkspaceUserToggle(workspace.id, user.id, checked as boolean)
+                                    }
+                                  />
+                                  <label 
+                                    htmlFor={`ws-${workspace.id}-${user.id}`}
+                                    className={`text-sm cursor-pointer flex-1 ${
+                                      isDisabled ? 'text-muted-foreground opacity-50' : ''
+                                    }`}
+                                  >
+                                    {user.full_name || user.email}
+                                    {isDisabled && (
+                                      <span className="ml-1 text-red-500">(Eerst organisatie toegang vereist)</span>
+                                    )}
+                                  </label>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
 
-            <div className="flex justify-end space-x-2 pt-4 border-t">
-              <Button variant="outline" onClick={handleCancel}>
-                Annuleren
-              </Button>
-              <Button onClick={handleSaveAll} disabled={loading}>
-                {loading ? 'Opslaan...' : 'Alles Opslaan'}
-              </Button>
+              <div className="flex justify-end space-x-2 pt-4 border-t mt-4">
+                <Button variant="outline" onClick={handleCancel}>
+                  Annuleren
+                </Button>
+                <Button onClick={handleSaveAll} disabled={loading}>
+                  {loading ? 'Opslaan...' : 'Alles Opslaan'}
+                </Button>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
