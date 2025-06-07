@@ -52,7 +52,7 @@ export const OrganizationSettings = () => {
       console.log('Is account owner:', isAccountOwner);
       
       if (isAccountOwner) {
-        // If account owner, show ALL organizations
+        // If account owner, show ALL organizations regardless of membership
         const { data: orgData, error: orgError } = await supabase
           .from('organizations')
           .select('id, name, slug, created_at')
@@ -65,33 +65,18 @@ export const OrganizationSettings = () => {
 
         console.log('All organization data (account owner):', orgData);
 
-        // For account owner, get membership info but don't filter by it
-        const { data: membershipData, error: membershipError } = await supabase
-          .from('organization_members')
-          .select('role, organization_id')
-          .eq('user_id', user.id);
-
-        if (membershipError) {
-          console.log('Membership fetch error (non-critical for account owner):', membershipError);
-        }
-
-        console.log('Membership data for account owner:', membershipData);
-
-        // Combine data with role information where available
-        const orgsWithRoles = orgData?.map(org => {
-          const membership = membershipData?.find(m => m.organization_id === org.id);
-          return {
-            id: org.id,
-            name: org.name,
-            slug: org.slug,
-            created_at: org.created_at,
-            user_role: membership?.role || 'owner' // Default to owner for account owner
-          };
-        }) || [];
+        // For account owner, show all organizations with 'super_admin' role
+        const orgsWithRoles = orgData?.map(org => ({
+          id: org.id,
+          name: org.name,
+          slug: org.slug,
+          created_at: org.created_at,
+          user_role: 'super_admin' // Special role for account owner
+        })) || [];
 
         setOrganizations(orgsWithRoles);
       } else {
-        // For regular users, use the existing logic
+        // For regular users, use the existing membership-based logic
         const { data: membershipData, error: membershipError } = await supabase
           .from('organization_members')
           .select('role, organization_id')
@@ -174,21 +159,23 @@ export const OrganizationSettings = () => {
 
       console.log('Organization created:', orgData);
 
-      // Add user as organization owner
-      const { error: memberError } = await supabase
-        .from('organization_members')
-        .insert({
-          organization_id: orgData.id,
-          user_id: user.id,
-          role: 'owner'
-        });
+      // Only add user as organization owner if they're not the super admin
+      if (user.email !== 'info@schapkun.com') {
+        const { error: memberError } = await supabase
+          .from('organization_members')
+          .insert({
+            organization_id: orgData.id,
+            user_id: user.id,
+            role: 'owner'
+          });
 
-      if (memberError) {
-        console.error('Membership creation error:', memberError);
-        throw memberError;
+        if (memberError) {
+          console.error('Membership creation error:', memberError);
+          throw memberError;
+        }
+
+        console.log('Membership created successfully');
       }
-
-      console.log('Membership created successfully');
 
       // Try to log but don't fail if it doesn't work
       try {
@@ -369,7 +356,10 @@ export const OrganizationSettings = () => {
         {organizations.length === 0 ? (
           <Card>
             <CardContent className="p-4 text-center text-sm text-muted-foreground">
-              Je bent nog geen lid van een organisatie. Maak een nieuwe organisatie aan om te beginnen.
+              {user?.email === 'info@schapkun.com' 
+                ? 'Er zijn nog geen organisaties aangemaakt.'
+                : 'Je bent nog geen lid van een organisatie. Maak een nieuwe organisatie aan om te beginnen.'
+              }
             </CardContent>
           </Card>
         ) : (
@@ -380,11 +370,11 @@ export const OrganizationSettings = () => {
                   <div>
                     <CardTitle className="text-base">{org.name}</CardTitle>
                     <p className="text-xs text-muted-foreground">
-                      Rol: {org.user_role} • Aangemaakt: {new Date(org.created_at).toLocaleDateString('nl-NL')}
+                      Rol: {org.user_role === 'super_admin' ? 'Super Administrator' : org.user_role} • Aangemaakt: {new Date(org.created_at).toLocaleDateString('nl-NL')}
                     </p>
                   </div>
                   <div className="flex space-x-1">
-                    {(org.user_role === 'owner' || user?.email === 'info@schapkun.com') && (
+                    {(org.user_role === 'owner' || org.user_role === 'super_admin') && (
                       <>
                         <Button
                           variant="ghost"
