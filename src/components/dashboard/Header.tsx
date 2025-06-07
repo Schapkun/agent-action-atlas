@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Menu, Bell, LogOut, Building2, Users } from 'lucide-react';
@@ -114,7 +113,7 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
   }));
 
   return (
-    <header className="bg-card border-b border-border px-6 py-4">
+    <header className="bg-card border-b border-border px-6" style={{ paddingTop: '13px', paddingBottom: '13px' }}>
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Button
