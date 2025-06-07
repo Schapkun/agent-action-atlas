@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,9 +36,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Handle successful signup - using the correct enum value
-        if (event === 'SIGNED_UP' as AuthChangeEvent && session?.user) {
-          console.log('User signed up successfully:', session.user.email);
+        // Handle successful signup - check for the correct event type
+        if (event === 'SIGNED_IN' && session?.user && session.user.email_confirmed_at) {
+          console.log('User signed up and confirmed email:', session.user.email);
           
           // Try to find and accept any pending invitations for this email
           try {
