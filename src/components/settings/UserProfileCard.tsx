@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -144,17 +145,6 @@ export const UserProfileCard = ({
           <div className="flex space-x-1 flex-shrink-0 ml-2">
             {isAccountOwner && (
               <>
-                {isPending && onResendInvitation && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleResendClick}
-                    className="text-blue-600 hover:text-blue-700"
-                    title="Uitnodiging opnieuw sturen"
-                  >
-                    <Mail className="h-3 w-3" />
-                  </Button>
-                )}
                 {(!isCurrentUser || isPending) && (
                   <Button
                     variant="ghost"
@@ -164,6 +154,17 @@ export const UserProfileCard = ({
                     title={isPending ? "Uitnodiging annuleren" : "Gebruiker verwijderen"}
                   >
                     <Trash2 className="h-3 w-3" />
+                  </Button>
+                )}
+                {isPending && onResendInvitation && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleResendClick}
+                    className="text-blue-600 hover:text-blue-700"
+                    title="Uitnodiging opnieuw sturen"
+                  >
+                    <Mail className="h-3 w-3" />
                   </Button>
                 )}
                 {!isPending && (
