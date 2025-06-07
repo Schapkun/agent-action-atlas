@@ -241,7 +241,7 @@ export const ContactManager = () => {
 
       {/* Contact List */}
       <Card className="lg:col-span-3">
-        <CardHeader>
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">
               {selectedFolderData?.name || 'Contacten'}
@@ -265,7 +265,7 @@ export const ContactManager = () => {
           </div>
         </CardHeader>
 
-        <div className="px-6 pb-6">
+        <div className="px-6 pt-3 pb-6">
           {filteredItems.length > 0 ? (
             <div className="space-y-2">
               {filteredItems.map((item) => {
