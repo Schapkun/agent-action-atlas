@@ -169,7 +169,8 @@ export const useUserDataFetcher = () => {
           .insert({
             id: userId,
             email: userEmail,
-            full_name: userEmail
+            full_name: userEmail,
+            user_role: 'member'
           })
           .select()
           .single();
@@ -232,7 +233,7 @@ export const useUserDataFetcher = () => {
           user_id, 
           role, 
           created_at,
-          profiles(id, email, full_name, created_at, avatar_url, updated_at)
+          profiles(id, email, full_name, created_at, avatar_url, updated_at, user_role)
         `)
         .in('organization_id', orgIds)
         .neq('user_id', userId);
