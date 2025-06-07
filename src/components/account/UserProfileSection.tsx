@@ -91,7 +91,7 @@ export const UserProfileSection = ({
         )}
         
         {(showSaveButton || showRoleManagement) && isViewingOwnProfile && (
-          <div className="flex items-end">
+          <div className="flex items-center justify-center -mt-0.5">
             <Button onClick={onUpdateProfile} disabled={saving} size="sm">
               <Save className="h-4 w-4 mr-2" />
               {saving ? 'Opslaan...' : 'Profiel Opslaan'}
