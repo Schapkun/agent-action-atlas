@@ -44,6 +44,7 @@ export const useOrganizationOperations = () => {
           workspaces: workspacesData?.filter(ws => ws.organization_id === org.id) || []
         })) || [];
 
+        console.log('Setting organizations with fresh data:', organizationsWithWorkspaces);
         setOrganizations(organizationsWithWorkspaces);
       } else {
         // For regular users, only show organizations they are members of

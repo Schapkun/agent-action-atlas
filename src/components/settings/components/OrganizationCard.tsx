@@ -15,6 +15,7 @@ interface OrganizationCardProps {
   onCreateWorkspace: (organizationId: string, name: string) => Promise<void>;
   onUpdateWorkspace: (workspaceId: string, name: string) => Promise<void>;
   onDeleteWorkspace: (workspaceId: string, workspaceName: string) => Promise<void>;
+  onRefresh: () => Promise<void>;
 }
 
 export const OrganizationCard = ({
@@ -24,7 +25,8 @@ export const OrganizationCard = ({
   onDeleteOrganization,
   onCreateWorkspace,
   onUpdateWorkspace,
-  onDeleteWorkspace
+  onDeleteWorkspace,
+  onRefresh
 }: OrganizationCardProps) => {
   const [showCreateWorkspaceForm, setShowCreateWorkspaceForm] = useState(false);
   const [editingItem, setEditingItem] = useState<{
@@ -37,9 +39,9 @@ export const OrganizationCard = ({
     setShowCreateWorkspaceForm(false);
   };
 
-  const handleRefreshData = () => {
-    // This will be called after successful updates to refresh the parent data
-    window.location.reload(); // Simple refresh for now
+  const handleRefreshData = async () => {
+    console.log('OrganizationCard - handleRefreshData called');
+    await onRefresh();
   };
 
   const handleEditOrganization = () => {
