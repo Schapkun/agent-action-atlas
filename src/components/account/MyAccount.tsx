@@ -596,15 +596,15 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
           ) : (
             <div className="space-y-3">
               {organizations.map((org) => (
-                <div key={org.id} className="p-3 bg-muted/30 rounded-lg border-l-4 border-l-primary/20">
+                <div key={org.id} className="p-4 bg-muted/30 rounded-lg border-l-4 border-l-primary/20">
                   {/* Organization Header */}
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <Building2 className="h-5 w-5 text-muted-foreground" />
                       <div>
-                        <h3 className="font-medium text-sm">{org.name}</h3>
-                        <p className="text-xs text-muted-foreground">
-                          Organisatie • Werkruimtes ({org.workspaces.length})
+                        <h3 className="font-semibold">{org.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Werkruimtes ({org.workspaces.length})
                         </p>
                       </div>
                     </div>
@@ -612,31 +612,30 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                       variant="ghost"
                       size="sm"
                       onClick={() => removeFromOrganization(org.id, org.name)}
-                      className="text-destructive hover:text-destructive h-8 w-8 p-0 mr-1"
+                      className="text-destructive hover:text-destructive"
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
 
                   {/* Workspaces under this organization */}
                   {org.workspaces.length > 0 && (
-                    <div className="ml-5 space-y-2">
+                    <div className="ml-6 space-y-2">
                       {org.workspaces.map((workspace) => (
-                        <div key={workspace.id} className="flex items-center justify-between p-2 bg-muted/15 rounded-lg">
-                          <div className="flex items-center gap-2">
-                            <Briefcase className="h-3 w-3 text-muted-foreground" />
+                        <div key={workspace.id} className="flex items-center justify-between p-3 bg-muted/15 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <Briefcase className="h-4 w-4 text-muted-foreground" />
                             <div>
-                              <p className="font-medium text-sm">{workspace.name}</p>
-                              <p className="text-xs text-muted-foreground">Werkruimte</p>
+                              <p className="font-medium">{workspace.name}</p>
                             </div>
                           </div>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => removeFromWorkspace(workspace.id, workspace.name)}
-                            className="text-destructive hover:text-destructive h-7 w-7 p-0"
+                            className="text-destructive hover:text-destructive w-8 h-8 p-0"
                           >
-                            <Trash2 className="h-3 w-3" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       ))}
