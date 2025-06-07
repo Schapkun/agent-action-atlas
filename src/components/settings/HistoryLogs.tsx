@@ -1,235 +1,170 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { History, Calendar, User, Activity } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Search, User, FileText, UserPlus, Clock } from 'lucide-react';
 
 interface HistoryLog {
   id: string;
   action: string;
-  details: any;
-  created_at: string;
-  user_id: string;
-  organization_id?: string;
-  workspace_id?: string;
-  user_name?: string;
-  user_email?: string;
-  organization_name?: string;
-  workspace_name?: string;
+  user: string;
+  timestamp: Date;
+  details: string;
+  type: 'user' | 'document' | 'invitation' | 'system';
 }
 
 export const HistoryLogs = () => {
-  const [historyLogs, setHistoryLogs] = useState<HistoryLog[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterAction, setFilterAction] = useState('all');
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const [filterType, setFilterType] = useState<string>('all');
 
-  useEffect(() => {
-    if (user) {
-      fetchHistoryLogs();
+  // Mock history data
+  const historyLogs: HistoryLog[] = [
+    {
+      id: '1',
+      action: 'Profiel bijgewerkt',
+      user: 'Michael Schapkun',
+      timestamp: new Date('2025-06-07T08:28:31'),
+      details: '{"email": "info@schapkun.com", "full_name": "Michael Schapkun", "target_user_id": "c88a6a2b-67d1-43b2-875a-76cef048ad5e"}',
+      type: 'user'
+    },
+    {
+      id: '2',
+      action: 'Uitnodiging geannuleerd',
+      user: 'Michael Schapkun',
+      timestamp: new Date('2025-06-06T20:09:15'),
+      details: 'Uitnodiging naar test@example.com geannuleerd',
+      type: 'invitation'
+    },
+    {
+      id: '3',
+      action: 'Document template aangepast',
+      user: 'App Nomadisto',
+      timestamp: new Date('2025-06-06T15:22:10'),
+      details: 'Dagvaarding template bijgewerkt',
+      type: 'document'
+    },
+    {
+      id: '4',
+      action: 'Nieuwe werkruimte aangemaakt',
+      user: 'Michael Schapkun',
+      timestamp: new Date('2025-06-06T12:45:30'),
+      details: 'Werkruimte "Strafrecht 123" aangemaakt',
+      type: 'system'
+    },
+    {
+      id: '5',
+      action: 'Gebruiker uitgenodigd',
+      user: 'Michael Schapkun',
+      timestamp: new Date('2025-06-06T10:15:20'),
+      details: 'Uitnodiging verzonden naar app3@nomadisto.com',
+      type: 'invitation'
     }
-  }, [user]);
+  ];
 
-  const fetchHistoryLogs = async () => {
-    if (!user?.id) {
-      setLoading(false);
-      return;
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'user':
+        return <User className="h-4 w-4" />;
+      case 'document':
+        return <FileText className="h-4 w-4" />;
+      case 'invitation':
+        return <UserPlus className="h-4 w-4" />;
+      case 'system':
+        return <Clock className="h-4 w-4" />;
+      default:
+        return <Clock className="h-4 w-4" />;
     }
+  };
 
-    try {
-      console.log('Fetching history logs for user:', user.id);
-
-      // Get history logs for the current user only
-      const { data: logsData, error: logsError } = await supabase
-        .from('history_logs')
-        .select('id, action, details, created_at, user_id, organization_id, workspace_id')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (logsError) {
-        console.error('History logs error:', logsError);
-        throw logsError;
-      }
-
-      console.log('History logs data:', logsData);
-
-      if (!logsData || logsData.length === 0) {
-        setHistoryLogs([]);
-        setLoading(false);
-        return;
-      }
-
-      // Get user profile for the current user
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('id, full_name, email')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) {
-        console.error('Profile error:', profileError);
-      }
-
-      // Get organizations for the logs
-      const orgIds = [...new Set(logsData.map(log => log.organization_id).filter(Boolean))];
-      let orgsData: any[] = [];
-      if (orgIds.length > 0) {
-        const { data, error } = await supabase
-          .from('organizations')
-          .select('id, name')
-          .in('id', orgIds);
-        if (!error) orgsData = data || [];
-      }
-
-      // Get workspaces for the logs
-      const workspaceIds = [...new Set(logsData.map(log => log.workspace_id).filter(Boolean))];
-      let workspacesData: any[] = [];
-      if (workspaceIds.length > 0) {
-        const { data, error } = await supabase
-          .from('workspaces')
-          .select('id, name')
-          .in('id', workspaceIds);
-        if (!error) workspacesData = data || [];
-      }
-
-      // Format the logs
-      const formattedLogs = logsData.map(log => {
-        const organization = orgsData.find(o => o.id === log.organization_id);
-        const workspace = workspacesData.find(w => w.id === log.workspace_id);
-
-        return {
-          id: log.id,
-          action: log.action,
-          details: log.details,
-          created_at: log.created_at,
-          user_id: log.user_id,
-          organization_id: log.organization_id,
-          workspace_id: log.workspace_id,
-          user_name: profileData?.full_name || 'Onbekende gebruiker',
-          user_email: profileData?.email || '',
-          organization_name: organization?.name,
-          workspace_name: workspace?.name
-        };
-      });
-
-      setHistoryLogs(formattedLogs);
-    } catch (error) {
-      console.error('Error fetching history logs:', error);
-      toast({
-        title: "Error",
-        description: "Kon geschiedenis niet ophalen",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'user':
+        return 'bg-blue-100 text-blue-800';
+      case 'document':
+        return 'bg-green-100 text-green-800';
+      case 'invitation':
+        return 'bg-purple-100 text-purple-800';
+      case 'system':
+        return 'bg-orange-100 text-orange-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const filteredLogs = historyLogs.filter(log => {
     const matchesSearch = log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.user_email?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesFilter = filterAction === 'all' || log.action.toLowerCase().includes(filterAction);
-    
+                         log.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         log.details.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterType === 'all' || log.type === filterType;
     return matchesSearch && matchesFilter;
   });
 
-  if (loading) {
-    return <div>Geschiedenis laden...</div>;
-  }
-
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold flex items-center gap-2">
-          <History className="h-6 w-6" />
-          Geschiedenis
-        </h2>
-      </div>
-
-      {/* Filters */}
-      <div className="flex space-x-4">
-        <div className="flex-1">
+      <div className="flex gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             placeholder="Zoek in geschiedenis..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
           />
         </div>
-        <Select value={filterAction} onValueChange={setFilterAction}>
+        <Select value={filterType} onValueChange={setFilterType}>
           <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filter op actie" />
+            <SelectValue placeholder="Alle acties" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Alle acties</SelectItem>
-            <SelectItem value="aangemaakt">Aangemaakt</SelectItem>
-            <SelectItem value="bijgewerkt">Bijgewerkt</SelectItem>
-            <SelectItem value="verwijderd">Verwijderd</SelectItem>
-            <SelectItem value="ingelogd">Ingelogd</SelectItem>
-            <SelectItem value="uitgelogd">Uitgelogd</SelectItem>
+            <SelectItem value="user">Gebruiker acties</SelectItem>
+            <SelectItem value="document">Document acties</SelectItem>
+            <SelectItem value="invitation">Uitnodigingen</SelectItem>
+            <SelectItem value="system">Systeem acties</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* History Logs */}
       <div className="space-y-4">
-        {filteredLogs.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-center text-muted-foreground">
-              Geen geschiedenis gevonden
-            </CardContent>
-          </Card>
-        ) : (
-          filteredLogs.map((log) => (
-            <Card key={log.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Activity className="h-5 w-5 text-primary" />
-                    <div>
-                      <CardTitle className="text-lg">{log.action}</CardTitle>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        <div className="flex items-center space-x-1">
-                          <User className="h-4 w-4" />
-                          <span>{log.user_name}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>{new Date(log.created_at).toLocaleString('nl-NL')}</span>
-                        </div>
-                      </div>
+        {filteredLogs.map((log) => (
+          <Card key={log.id}>
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-3">
+                  <div className="mt-1">
+                    {getTypeIcon(log.type)}
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{log.action}</span>
+                      <Badge variant="outline" className={getTypeColor(log.type)}>
+                        {log.type}
+                      </Badge>
                     </div>
+                    <p className="text-sm text-muted-foreground">
+                      Door: {log.user}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {log.details}
+                    </p>
                   </div>
                 </div>
-              </CardHeader>
-              {log.details && (
-                <CardContent>
-                  <div className="bg-muted p-3 rounded-md">
-                    <pre className="text-sm">{JSON.stringify(log.details, null, 2)}</pre>
-                  </div>
-                  {log.organization_name && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Organisatie: {log.organization_name}
-                    </p>
-                  )}
-                  {log.workspace_name && (
-                    <p className="text-sm text-muted-foreground">
-                      Werkruimte: {log.workspace_name}
-                    </p>
-                  )}
-                </CardContent>
-              )}
-            </Card>
-          ))
-        )}
+                <span className="text-sm text-muted-foreground">
+                  {log.timestamp.toLocaleString('nl-NL')}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
+
+      {filteredLogs.length === 0 && (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Geen geschiedenis gevonden.</p>
+        </div>
+      )}
     </div>
   );
 };
