@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,18 +20,15 @@ export const SettingsLayout = () => {
     
     // Mock logic - in production this would come from your database
     // You could check user metadata, make an API call, etc.
-    // For demonstration, let's check if the user's email contains certain keywords or matches patterns
     
-    // If the email contains 'admin' anywhere, make them admin
+    // For testing purposes, let's make specific users have specific roles
+    // Replace this with actual role-checking logic from your database
+    if (user.email === 'info@schapkun.com') return 'eigenaar';
     if (user.email?.toLowerCase().includes('admin')) return 'admin';
     
-    // For testing purposes, let's make the first logged in user an 'eigenaar'
-    // You can replace this with your actual email or logic
-    if (user.email === 'info@schapkun.com' || user.email?.toLowerCase().includes('schapkun')) return 'eigenaar';
-    
-    // Default to 'eigenaar' for now so you can test - change this to 'lid' when ready for production
-    // Replace this with your actual role-checking logic
-    return 'eigenaar';
+    // Default to 'lid' role for all other users
+    // This ensures most users get the restricted access unless explicitly assigned a higher role
+    return 'lid';
   };
 
   const userRole = getUserRole();
