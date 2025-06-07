@@ -100,7 +100,7 @@ export const SettingsLayout = () => {
         <TabsContent value="organizations">
           <Card>
             <CardContent className="p-6">
-              <OrganizationWorkspaceView />
+              <OrganizationWorkspaceView userRole={userRole} />
             </CardContent>
           </Card>
         </TabsContent>

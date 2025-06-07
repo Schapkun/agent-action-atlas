@@ -43,7 +43,11 @@ interface GroupedData {
   };
 }
 
-export const OrganizationWorkspaceView = () => {
+interface OrganizationWorkspaceViewProps {
+  userRole?: string;
+}
+
+export const OrganizationWorkspaceView = ({ userRole = 'lid' }: OrganizationWorkspaceViewProps) => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
@@ -465,97 +469,102 @@ export const OrganizationWorkspaceView = () => {
     return <div className="text-sm">Gegevens laden...</div>;
   }
 
+  // Check if user can create organizations/workspaces (not 'lid' role)
+  const canCreateOrganizations = userRole !== 'lid';
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Organisaties & Werkruimtes</h2>
-        <div className="flex gap-2">
-          <Dialog open={isCreateOrgDialogOpen} onOpenChange={setIsCreateOrgDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
-                Nieuwe Organisatie
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle className="text-lg">Nieuwe Organisatie</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="org-name" className="text-sm">Naam</Label>
-                  <Input
-                    id="org-name"
-                    value={newOrgName}
-                    onChange={(e) => setNewOrgName(e.target.value)}
-                    placeholder="Organisatie naam"
-                    className="mt-1"
-                  />
+        {canCreateOrganizations && (
+          <div className="flex gap-2">
+            <Dialog open={isCreateOrgDialogOpen} onOpenChange={setIsCreateOrgDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nieuwe Organisatie
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-lg">Nieuwe Organisatie</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="org-name" className="text-sm">Naam</Label>
+                    <Input
+                      id="org-name"
+                      value={newOrgName}
+                      onChange={(e) => setNewOrgName(e.target.value)}
+                      placeholder="Organisatie naam"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2 pt-2">
+                    <Button variant="outline" size="sm" onClick={() => setIsCreateOrgDialogOpen(false)}>
+                      Annuleren
+                    </Button>
+                    <Button size="sm" onClick={createOrganization}>
+                      Aanmaken
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex justify-end space-x-2 pt-2">
-                  <Button variant="outline" size="sm" onClick={() => setIsCreateOrgDialogOpen(false)}>
-                    Annuleren
-                  </Button>
-                  <Button size="sm" onClick={createOrganization}>
-                    Aanmaken
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
 
-          <Dialog open={isCreateWorkspaceDialogOpen} onOpenChange={setIsCreateWorkspaceDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Nieuwe Werkruimte
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle className="text-lg">Nieuwe Werkruimte</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="workspace-name" className="text-sm">Naam</Label>
-                  <Input
-                    id="workspace-name"
-                    value={newWorkspace.name}
-                    onChange={(e) => setNewWorkspace({ ...newWorkspace, name: e.target.value })}
-                    placeholder="Werkruimte naam"
-                    className="mt-1"
-                  />
+            <Dialog open={isCreateWorkspaceDialogOpen} onOpenChange={setIsCreateWorkspaceDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nieuwe Werkruimte
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-lg">Nieuwe Werkruimte</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="workspace-name" className="text-sm">Naam</Label>
+                    <Input
+                      id="workspace-name"
+                      value={newWorkspace.name}
+                      onChange={(e) => setNewWorkspace({ ...newWorkspace, name: e.target.value })}
+                      placeholder="Werkruimte naam"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="organization" className="text-sm">Organisatie</Label>
+                    <Select
+                      value={newWorkspace.organization_id}
+                      onValueChange={(value) => setNewWorkspace({ ...newWorkspace, organization_id: value })}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Selecteer organisatie" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {organizations.map((org) => (
+                          <SelectItem key={org.id} value={org.id}>
+                            {org.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex justify-end space-x-2 pt-2">
+                    <Button variant="outline" size="sm" onClick={() => setIsCreateWorkspaceDialogOpen(false)}>
+                      Annuleren
+                    </Button>
+                    <Button size="sm" onClick={createWorkspace}>
+                      Aanmaken
+                    </Button>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="organization" className="text-sm">Organisatie</Label>
-                  <Select
-                    value={newWorkspace.organization_id}
-                    onValueChange={(value) => setNewWorkspace({ ...newWorkspace, organization_id: value })}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Selecteer organisatie" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {organizations.map((org) => (
-                        <SelectItem key={org.id} value={org.id}>
-                          {org.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex justify-end space-x-2 pt-2">
-                  <Button variant="outline" size="sm" onClick={() => setIsCreateWorkspaceDialogOpen(false)}>
-                    Annuleren
-                  </Button>
-                  <Button size="sm" onClick={createWorkspace}>
-                    Aanmaken
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
       </div>
 
       <div className="space-y-4">
