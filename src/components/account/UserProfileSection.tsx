@@ -30,15 +30,15 @@ export const UserProfileSection = ({
   showSaveButton
 }: UserProfileSectionProps) => {
   return (
-    <div className="space-y-4">
+    <div className="bg-muted/30 rounded-lg p-6 space-y-6">
       <div className="flex items-center gap-2">
-        <User className="h-4 w-4" />
-        <h3 className="text-base font-medium">Persoonlijke Informatie</h3>
+        <User className="h-5 w-5" />
+        <h3 className="text-lg font-medium">Persoonlijke Informatie</h3>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <Label htmlFor="full-name" className="text-sm font-medium">Volledige Naam</Label>
+          <Label htmlFor="full-name" className="text-sm font-medium mb-2 block">Volledige Naam</Label>
           <Input
             id="full-name"
             value={profile.full_name || ''}
@@ -49,7 +49,7 @@ export const UserProfileSection = ({
           />
         </div>
         <div>
-          <Label htmlFor="email" className="text-sm font-medium">E-mailadres</Label>
+          <Label htmlFor="email" className="text-sm font-medium mb-2 block">E-mailadres</Label>
           <Input
             id="email"
             type="email"
@@ -60,15 +60,6 @@ export const UserProfileSection = ({
           />
         </div>
       </div>
-      
-      {showSaveButton && isViewingOwnProfile && (
-        <div className="flex justify-end">
-          <Button onClick={onUpdateProfile} disabled={saving} size="sm">
-            <Save className="h-4 w-4 mr-2" />
-            {saving ? 'Opslaan...' : 'Profiel Opslaan'}
-          </Button>
-        </div>
-      )}
     </div>
   );
 };

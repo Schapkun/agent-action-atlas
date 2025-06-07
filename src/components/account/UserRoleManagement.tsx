@@ -23,29 +23,31 @@ export const UserRoleManagement = ({
   onUpdateProfile
 }: UserRoleManagementProps) => {
   return (
-    <div className="flex gap-4 items-end">
-      <div className="min-w-0 flex-1">
-        <Label htmlFor="global-role" className="text-sm font-medium">Globale Rol</Label>
-        <Select
-          value={globalRole}
-          onValueChange={(newRole) => onUpdateGlobalRole(newRole as UserRole)}
-        >
-          <SelectTrigger className="w-full text-sm">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="member">Gebruiker</SelectItem>
-            <SelectItem value="admin">Admin</SelectItem>
-            <SelectItem value="owner">Eigenaar</SelectItem>
-          </SelectContent>
-        </Select>
+    <div className="bg-muted/30 rounded-lg p-6 space-y-4">
+      <div className="flex justify-between items-end">
+        <div className="flex-1 max-w-md">
+          <Label htmlFor="global-role" className="text-sm font-medium mb-2 block">Globale Rol (voor alle organisaties en werkruimtes)</Label>
+          <Select
+            value={globalRole}
+            onValueChange={(newRole) => onUpdateGlobalRole(newRole as UserRole)}
+          >
+            <SelectTrigger className="w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="member">Gebruiker</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="owner">Eigenaar</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {isViewingOwnProfile && (
+          <Button onClick={onUpdateProfile} disabled={saving} size="sm" className="ml-4">
+            <Save className="h-4 w-4 mr-2" />
+            {saving ? 'Opslaan...' : 'Profiel Opslaan'}
+          </Button>
+        )}
       </div>
-      {isViewingOwnProfile && (
-        <Button onClick={onUpdateProfile} disabled={saving} size="sm">
-          <Save className="h-4 w-4 mr-2" />
-          {saving ? 'Opslaan...' : 'Profiel Opslaan'}
-        </Button>
-      )}
     </div>
   );
 };
