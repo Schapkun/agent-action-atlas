@@ -9,6 +9,7 @@ import { MyAccount } from '@/components/account/MyAccount';
 import { UserFilters } from './UserFilters';
 import { UserList } from './UserList';
 import { UserManagement } from './UserManagement';
+import { InviteUserDialog } from './InviteUserDialog';
 
 interface UserProfile {
   id: string;
@@ -42,6 +43,11 @@ export const UserProfileSettings = () => {
   const handleShowMyAccount = (userProfile: UserProfile) => {
     setViewingUserProfile(userProfile);
     setShowMyAccount(true);
+  };
+
+  const handleInviteUser = async (email: string) => {
+    // Refresh the users list after invitation
+    await userManagement.fetchUsers();
   };
 
   // Filter users based on search term and role filter
@@ -106,6 +112,12 @@ export const UserProfileSettings = () => {
         onEdit={handleShowMyAccount}
         onDelete={userManagement.deleteUser}
         onShowMyAccount={handleShowMyAccount}
+      />
+
+      <InviteUserDialog
+        isOpen={isInviteDialogOpen}
+        onOpenChange={setIsInviteDialogOpen}
+        onInvite={handleInviteUser}
       />
 
       <Dialog open={showMyAccount} onOpenChange={(open) => {
