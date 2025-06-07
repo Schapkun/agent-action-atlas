@@ -59,6 +59,7 @@ export const UserProfileSettings = () => {
   const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
   const [newInvite, setNewInvite] = useState({ email: '', role: 'member', organization_id: '' });
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+  const [isInviting, setIsInviting] = useState(false); // Add loading state to prevent double submissions
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -512,9 +513,12 @@ export const UserProfileSettings = () => {
   };
 
   const inviteUser = async () => {
-    if (!newInvite.email.trim() || !newInvite.organization_id) return;
+    if (!newInvite.email.trim() || !newInvite.organization_id || isInviting) return;
 
+    setIsInviting(true); // Prevent double submissions
     try {
+      console.log('Starting invitation process for:', newInvite.email);
+      
       // Insert invitation into database
       const { data: invitationData, error: inviteError } = await supabase
         .from('user_invitations')
@@ -529,6 +533,8 @@ export const UserProfileSettings = () => {
 
       if (inviteError) throw inviteError;
 
+      console.log('Invitation created in database:', invitationData);
+
       // Get organization name and invited_by name for the email
       const selectedOrg = organizations.find(org => org.id === newInvite.organization_id);
       const { data: userProfile } = await supabase
@@ -537,8 +543,10 @@ export const UserProfileSettings = () => {
         .eq('id', user?.id)
         .single();
 
-      // Send invitation email
+      // Create signup URL that redirects to registration instead of login
       const signupUrl = `${window.location.origin}/auth`;
+      
+      console.log('Sending invitation email to:', newInvite.email);
       
       try {
         const { error: emailError } = await supabase.functions.invoke('send-invitation-email', {
@@ -553,13 +561,13 @@ export const UserProfileSettings = () => {
 
         if (emailError) {
           console.error('Email error:', emailError);
-          // Don't fail the whole process if email fails
           toast({
             title: "Uitnodiging aangemaakt",
             description: "Uitnodiging is opgeslagen, maar email kon niet worden verzonden",
             variant: "destructive",
           });
         } else {
+          console.log('Email sent successfully');
           toast({
             title: "Succes",
             description: "Uitnodiging succesvol verzonden en email verstuurd",
@@ -594,6 +602,8 @@ export const UserProfileSettings = () => {
         description: "Kon uitnodiging niet verzenden",
         variant: "destructive",
       });
+    } finally {
+      setIsInviting(false); // Reset loading state
     }
   };
 
@@ -715,6 +725,7 @@ export const UserProfileSettings = () => {
                   value={newInvite.email}
                   onChange={(e) => setNewInvite({ ...newInvite, email: e.target.value })}
                   placeholder="Voer e-mailadres in"
+                  disabled={isInviting}
                 />
               </div>
               <div>
@@ -722,6 +733,7 @@ export const UserProfileSettings = () => {
                 <Select
                   value={newInvite.role}
                   onValueChange={(value) => setNewInvite({ ...newInvite, role: value })}
+                  disabled={isInviting}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecteer rol" />
@@ -738,6 +750,7 @@ export const UserProfileSettings = () => {
                 <Select
                   value={newInvite.organization_id}
                   onValueChange={(value) => setNewInvite({ ...newInvite, organization_id: value })}
+                  disabled={isInviting}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecteer organisatie" />
@@ -752,11 +765,18 @@ export const UserProfileSettings = () => {
                 </Select>
               </div>
               <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsInviteDialogOpen(false)}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsInviteDialogOpen(false)}
+                  disabled={isInviting}
+                >
                   Annuleren
                 </Button>
-                <Button onClick={inviteUser}>
-                  Uitnodigen
+                <Button 
+                  onClick={inviteUser}
+                  disabled={isInviting || !newInvite.email.trim() || !newInvite.organization_id}
+                >
+                  {isInviting ? 'Bezig...' : 'Uitnodigen'}
                 </Button>
               </div>
             </div>

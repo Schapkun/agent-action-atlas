@@ -1,5 +1,4 @@
 
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
@@ -45,6 +44,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Sending invitation email to:", email);
 
+    // Create the registration URL with email pre-filled
+    const registrationUrl = signup_url.replace('/auth', '/register') + `?email=${encodeURIComponent(email)}`;
+
     const emailResponse = await resend.emails.send({
       from: "Uitnodigingen <hallo@meester.app>",
       to: [email],
@@ -75,7 +77,7 @@ const handler = async (req: Request): Promise<Response> => {
           </p>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${signup_url}" 
+            <a href="${registrationUrl}" 
                style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; display: inline-block;">
               Account Aanmaken
             </a>
@@ -116,4 +118,3 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 serve(handler);
-
