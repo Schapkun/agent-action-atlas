@@ -2,19 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from './hooks/useUserRole';
 import { useWorkspaceOperations } from './hooks/useWorkspaceOperations';
 import { CreateWorkspaceDialog } from './components/CreateWorkspaceDialog';
 import { EditWorkspaceDialog } from './components/EditWorkspaceDialog';
 import { WorkspaceCard } from './components/WorkspaceCard';
 import type { Workspace, GroupedWorkspaces } from './types/workspace';
 
-interface WorkspaceSettingsProps {
-  userRole: string;
-}
-
-export const WorkspaceSettings = ({ userRole }: WorkspaceSettingsProps) => {
+export const WorkspaceSettings = () => {
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
   const { user } = useAuth();
+  const { userRole } = useUserRole(user?.id, user?.email);
   const {
     workspaces,
     organizations,
@@ -47,7 +45,12 @@ export const WorkspaceSettings = ({ userRole }: WorkspaceSettingsProps) => {
       return true;
     }
     
-    // For all other users, they need admin or eigenaar role
+    // For all other users, they need admin or eigenaar role AND the role must be loaded
+    if (!userRole) {
+      console.log('User role not loaded yet, denying access');
+      return false;
+    }
+    
     const canCreate = userRole === 'admin' || userRole === 'eigenaar';
     console.log('Role-based check result:', { userRole, canCreate });
     return canCreate;
