@@ -52,50 +52,40 @@ export const enrichInvitationData = async (logs: any[]): Promise<HistoryLog[]> =
       return log;
     }
 
-    let emailAddress = null;
+    // Check if we already have email in the original details
+    let emailAddress = log.details?.email || log.details?.invited_email || log.details?.user_email;
     let orgId = log.organization_id;
     let workspaceId = log.workspace_id;
 
-    // Try to get email from the invitation lookup first
-    if (log.details?.invitation_id) {
-      const invitation = invitationMap.get(log.details.invitation_id);
-      if (invitation) {
-        emailAddress = invitation.email;
-        orgId = orgId || invitation.organization_id;
-        workspaceId = workspaceId || invitation.workspace_id;
-        console.log(`Enriched log ${log.id} with email: ${emailAddress}`);
-      } else {
-        console.log(`No invitation found for ID: ${log.details.invitation_id}`);
-      }
-    } else if (log.details?.invitation_ids && Array.isArray(log.details.invitation_ids)) {
-      // For multiple invitations, get the first email (or could be combined)
-      const firstInvitation = log.details.invitation_ids
-        .map(id => invitationMap.get(id))
-        .find(inv => inv !== undefined);
-      
-      if (firstInvitation) {
-        emailAddress = firstInvitation.email;
-        orgId = orgId || firstInvitation.organization_id;
-        workspaceId = workspaceId || firstInvitation.workspace_id;
-        console.log(`Enriched log ${log.id} with email from multiple invitations: ${emailAddress}`);
-      } else {
-        console.log(`No invitations found for IDs: ${log.details.invitation_ids}`);
-      }
-    }
-
-    // If we couldn't get email from invitations table, try to extract from details
+    // Only try database lookup if we don't already have an email
     if (!emailAddress) {
-      // Check if there's already an email stored in the log details
-      if (log.details?.email) {
-        emailAddress = log.details.email;
-        console.log(`Using email from log details: ${emailAddress}`);
-      } else if (log.details?.invited_email) {
-        emailAddress = log.details.invited_email;
-        console.log(`Using invited_email from log details: ${emailAddress}`);
-      } else if (log.details?.user_email) {
-        emailAddress = log.details.user_email;
-        console.log(`Using user_email from log details: ${emailAddress}`);
+      if (log.details?.invitation_id) {
+        const invitation = invitationMap.get(log.details.invitation_id);
+        if (invitation) {
+          emailAddress = invitation.email;
+          orgId = orgId || invitation.organization_id;
+          workspaceId = workspaceId || invitation.workspace_id;
+          console.log(`Enriched log ${log.id} with email from DB: ${emailAddress}`);
+        } else {
+          console.log(`No invitation found in DB for ID: ${log.details.invitation_id}`);
+        }
+      } else if (log.details?.invitation_ids && Array.isArray(log.details.invitation_ids)) {
+        // For multiple invitations, get the first email (or could be combined)
+        const firstInvitation = log.details.invitation_ids
+          .map(id => invitationMap.get(id))
+          .find(inv => inv !== undefined);
+        
+        if (firstInvitation) {
+          emailAddress = firstInvitation.email;
+          orgId = orgId || firstInvitation.organization_id;
+          workspaceId = workspaceId || firstInvitation.workspace_id;
+          console.log(`Enriched log ${log.id} with email from multiple invitations DB: ${emailAddress}`);
+        } else {
+          console.log(`No invitations found in DB for IDs: ${log.details.invitation_ids}`);
+        }
       }
+    } else {
+      console.log(`Using email from original log details: ${emailAddress}`);
     }
 
     return {
