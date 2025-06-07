@@ -13,7 +13,7 @@ export const RoleGuard = ({
   children, 
   requiredRoles, 
   userRole = 'lid',
-  fallbackMessage = "Je hebt geen toegang tot deze functionaliteit. Alleen gebruikers met Admin of Eigenaar rol kunnen dit bekijken."
+  fallbackMessage = "Toegang geweigerd, neem contact op met uw beheerder."
 }: RoleGuardProps) => {
   console.log('RoleGuard - Received props:', { userRole, requiredRoles });
   
@@ -28,10 +28,6 @@ export const RoleGuard = ({
           <Shield className="h-4 w-4" />
           <AlertDescription>
             {fallbackMessage}
-            <br />
-            <small className="text-muted-foreground mt-2 block">
-              Jouw rol: {userRole} | Vereiste rollen: {requiredRoles.join(', ')}
-            </small>
           </AlertDescription>
         </Alert>
       </div>
