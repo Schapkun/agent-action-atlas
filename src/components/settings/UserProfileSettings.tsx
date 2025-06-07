@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -318,6 +319,19 @@ export const UserProfileSettings = () => {
     setShowMyAccount(true);
   };
 
+  // Filter users based on search term and role filter
+  const filteredUsers = users.filter(userProfile => {
+    const matchesSearch = userProfile.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      userProfile.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesFilter = filterRole === 'all' || 
+      (filterRole === 'eigenaar' && user?.email === 'info@schapkun.com' && userProfile.email === 'info@schapkun.com') ||
+      (filterRole === 'admin' && userProfile.email !== 'info@schapkun.com') ||
+      (filterRole === 'gebruiker' && userProfile.email !== 'info@schapkun.com');
+    
+    return matchesSearch && matchesFilter;
+  });
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -370,7 +384,7 @@ export const UserProfileSettings = () => {
               <SelectItem value="all">Alle rollen</SelectItem>
               <SelectItem value="eigenaar">Eigenaar</SelectItem>
               <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="lid">Lid</SelectItem>
+              <SelectItem value="gebruiker">Gebruiker</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -381,7 +395,7 @@ export const UserProfileSettings = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-3 items-stretch">
-        {users.length === 0 ? (
+        {filteredUsers.length === 0 ? (
           <Card>
             <CardContent className="p-4 text-center text-sm text-muted-foreground">
               {user?.email === 'info@schapkun.com' 
@@ -391,7 +405,7 @@ export const UserProfileSettings = () => {
             </CardContent>
           </Card>
         ) : (
-          users.map((userProfile) => (
+          filteredUsers.map((userProfile) => (
             <UserProfileCard
               key={userProfile.id}
               userProfile={userProfile}

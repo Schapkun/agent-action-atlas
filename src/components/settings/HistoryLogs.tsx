@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,6 +20,7 @@ interface HistoryLog {
   user_email?: string;
   organization_name?: string;
   workspace_name?: string;
+  user_role?: string;
 }
 
 export const HistoryLogs = () => {
@@ -26,30 +28,89 @@ export const HistoryLogs = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAction, setFilterAction] = useState('all');
+  const [userRole, setUserRole] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
-      fetchHistoryLogs();
+      fetchUserRole();
     }
   }, [user]);
 
+  useEffect(() => {
+    if (user && userRole) {
+      fetchHistoryLogs();
+    }
+  }, [user, userRole]);
+
+  const fetchUserRole = async () => {
+    if (!user?.id) return;
+
+    try {
+      // Check if user is account owner
+      if (user.email === 'info@schapkun.com') {
+        setUserRole('owner');
+        return;
+      }
+
+      // Get user's role from their organization memberships
+      const { data: memberships } = await supabase
+        .from('organization_members')
+        .select('role')
+        .eq('user_id', user.id)
+        .limit(1);
+
+      if (memberships && memberships.length > 0) {
+        setUserRole(memberships[0].role);
+      } else {
+        setUserRole('member');
+      }
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+      setUserRole('member');
+    }
+  };
+
   const fetchHistoryLogs = async () => {
-    if (!user?.id) {
+    if (!user?.id || !userRole) {
       setLoading(false);
       return;
     }
 
     try {
-      console.log('Fetching history logs for user:', user.id);
+      console.log('Fetching history logs for user:', user.id, 'with role:', userRole);
 
-      // Get history logs for the current user only
-      const { data: logsData, error: logsError } = await supabase
+      let logsQuery = supabase
         .from('history_logs')
-        .select('id, action, details, created_at, user_id, organization_id, workspace_id')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .select('id, action, details, created_at, user_id, organization_id, workspace_id');
+
+      // Filter based on user role
+      if (userRole === 'owner' || user.email === 'info@schapkun.com') {
+        // Owner can see all history logs from all users
+        logsQuery = logsQuery.order('created_at', { ascending: false });
+      } else if (userRole === 'admin') {
+        // Admin can see history from all users except the owner
+        // First get all user IDs except the owner
+        const { data: allUsers } = await supabase
+          .from('profiles')
+          .select('id, email')
+          .neq('email', 'info@schapkun.com');
+
+        if (allUsers && allUsers.length > 0) {
+          const userIds = allUsers.map(u => u.id);
+          logsQuery = logsQuery.in('user_id', userIds);
+        } else {
+          // If no users found, just show current user's logs
+          logsQuery = logsQuery.eq('user_id', user.id);
+        }
+        logsQuery = logsQuery.order('created_at', { ascending: false });
+      } else {
+        // Regular users can only see their own history
+        logsQuery = logsQuery.eq('user_id', user.id).order('created_at', { ascending: false });
+      }
+
+      const { data: logsData, error: logsError } = await logsQuery;
 
       if (logsError) {
         console.error('History logs error:', logsError);
@@ -64,15 +125,15 @@ export const HistoryLogs = () => {
         return;
       }
 
-      // Get user profile for the current user
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('id, full_name, email')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) {
-        console.error('Profile error:', profileError);
+      // Get unique user IDs from the logs to fetch their profiles
+      const userIds = [...new Set(logsData.map(log => log.user_id).filter(Boolean))];
+      let usersData: any[] = [];
+      if (userIds.length > 0) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', userIds);
+        if (!error) usersData = data || [];
       }
 
       // Get organizations for the logs
@@ -99,6 +160,7 @@ export const HistoryLogs = () => {
 
       // Format the logs
       const formattedLogs = logsData.map(log => {
+        const userProfile = usersData.find(u => u.id === log.user_id);
         const organization = orgsData.find(o => o.id === log.organization_id);
         const workspace = workspacesData.find(w => w.id === log.workspace_id);
 
@@ -110,8 +172,8 @@ export const HistoryLogs = () => {
           user_id: log.user_id,
           organization_id: log.organization_id,
           workspace_id: log.workspace_id,
-          user_name: profileData?.full_name || 'Onbekende gebruiker',
-          user_email: profileData?.email || '',
+          user_name: userProfile?.full_name || 'Onbekende gebruiker',
+          user_email: userProfile?.email || '',
           organization_name: organization?.name,
           workspace_name: workspace?.name
         };
