@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, User } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -31,6 +31,16 @@ export const UserProfileCard = ({
   const isAccountOwner = currentUserEmail === 'info@schapkun.com';
   const isCurrentUser = currentUserEmail === userProfile.email;
 
+  const handleEditClick = () => {
+    if (isCurrentUser && onShowMyAccount) {
+      // For current user, show "Mijn Account" popup
+      onShowMyAccount(userProfile);
+    } else {
+      // For other users, show edit dialog
+      onEdit(userProfile);
+    }
+  };
+
   return (
     <Card className="flex flex-col h-full">
       <CardHeader className="pb-3 flex-1">
@@ -48,33 +58,26 @@ export const UserProfileCard = ({
             </p>
           </div>
           <div className="flex space-x-1 flex-shrink-0 ml-2">
-            {isCurrentUser && onShowMyAccount && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onShowMyAccount(userProfile)}
-                title="Mijn Account"
-              >
-                <User className="h-3 w-3" />
-              </Button>
-            )}
             {isAccountOwner && (
               <>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => onEdit(userProfile)}
+                  onClick={handleEditClick}
+                  title={isCurrentUser ? "Mijn Account" : "Bewerken"}
                 >
                   <Edit className="h-3 w-3" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDelete(userProfile.id, userProfile.email)}
-                  className="text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+                {!isCurrentUser && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(userProfile.id, userProfile.email)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                )}
               </>
             )}
           </div>
