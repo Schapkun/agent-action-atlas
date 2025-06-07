@@ -209,13 +209,23 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
       const usersWithAccess = orgUsers.filter(u => u.hasAccess);
       const usersWithoutAccess = orgUsers.filter(u => !u.hasAccess);
 
-      // Remove users without access
+      // Remove users without access from organization AND all workspaces
       for (const user of usersWithoutAccess) {
+        // Remove from organization
         await supabase
           .from('organization_members')
           .delete()
           .eq('organization_id', organization.id)
           .eq('user_id', user.id);
+
+        // Remove from ALL workspaces in this organization
+        for (const workspace of workspaces) {
+          await supabase
+            .from('workspace_members')
+            .delete()
+            .eq('workspace_id', workspace.id)
+            .eq('user_id', user.id);
+        }
       }
 
       // Add users with access
