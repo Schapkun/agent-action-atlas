@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Trash2, Plus, Edit, RefreshCw, UserPlus } from 'lucide-react';
 
 interface UserProfile {
@@ -304,72 +303,60 @@ export const UserProfileSettings = () => {
         </Dialog>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {users.length === 0 ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
+      <div className="space-y-3">
+        {users.length === 0 ? (
+          <Card>
+            <CardContent className="p-4 text-center text-sm text-muted-foreground">
               {user?.email === 'info@schapkun.com' 
                 ? 'Er zijn nog geen gebruikers geregistreerd.'
                 : 'Er zijn nog geen gebruikers in je organisaties.'
               }
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Naam</TableHead>
-                  <TableHead>E-mail</TableHead>
-                  <TableHead>Organisaties</TableHead>
-                  <TableHead>Aangemaakt</TableHead>
-                  <TableHead className="w-[100px]">Acties</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((userProfile) => (
-                  <TableRow key={userProfile.id}>
-                    <TableCell className="font-medium">
+            </CardContent>
+          </Card>
+        ) : (
+          users.map((userProfile) => (
+            <Card key={userProfile.id}>
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="text-base">
                       {userProfile.full_name || 'Niet ingesteld'}
-                    </TableCell>
-                    <TableCell>{userProfile.email}</TableCell>
-                    <TableCell>
-                      {userProfile.organizations?.length 
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">{userProfile.email}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Organisaties: {userProfile.organizations?.length 
                         ? userProfile.organizations.join(', ')
                         : user?.email === 'info@schapkun.com' ? 'Geen organisaties' : '-'
-                      }
-                    </TableCell>
-                    <TableCell>
-                      {new Date(userProfile.created_at).toLocaleDateString('nl-NL')}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-1">
-                        {user?.email === 'info@schapkun.com' && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setEditingUser(userProfile)}
-                            >
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteUser(userProfile.id, userProfile.email)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                      } • Aangemaakt: {new Date(userProfile.created_at).toLocaleDateString('nl-NL')}
+                    </p>
+                  </div>
+                  <div className="flex space-x-1">
+                    {user?.email === 'info@schapkun.com' && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingUser(userProfile)}
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteUser(userProfile.id, userProfile.email)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+          ))
+        )}
+      </div>
 
       {editingUser && (
         <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
