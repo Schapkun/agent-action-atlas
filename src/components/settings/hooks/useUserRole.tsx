@@ -1,24 +1,16 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 
-export const useUserRole = () => {
+export const useUserRole = (userId: string | undefined, userEmail: string | undefined) => {
   const [userRole, setUserRole] = useState<string | null>(null);
-  const { user } = useAuth();
-
-  useEffect(() => {
-    if (user) {
-      fetchUserRole();
-    }
-  }, [user]);
 
   const fetchUserRole = async () => {
-    if (!user?.id) return;
+    if (!userId) return;
 
     try {
       // Check if user is account owner
-      if (user.email === 'info@schapkun.com') {
+      if (userEmail === 'info@schapkun.com') {
         setUserRole('owner');
         return;
       }
@@ -27,7 +19,7 @@ export const useUserRole = () => {
       const { data: memberships } = await supabase
         .from('organization_members')
         .select('role')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .limit(1);
 
       if (memberships && memberships.length > 0) {
@@ -41,5 +33,11 @@ export const useUserRole = () => {
     }
   };
 
-  return { userRole, setUserRole };
+  useEffect(() => {
+    if (userId) {
+      fetchUserRole();
+    }
+  }, [userId, userEmail]);
+
+  return { userRole, fetchUserRole };
 };
