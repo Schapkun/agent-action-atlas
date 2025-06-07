@@ -7,10 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Checkbox } from '@/components/ui/checkbox';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Trash2, Plus, Edit, UserPlus, Building2, Users, ChevronDown, ChevronRight, Mail, Clock, X } from 'lucide-react';
+import { Trash2, Plus, Edit, UserPlus, Building2, Users, ChevronDown, ChevronRight, Mail, Clock, X, Check } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -50,16 +52,28 @@ interface Organization {
   name: string;
 }
 
+interface Workspace {
+  id: string;
+  name: string;
+  organization_id: string;
+}
+
 export const UserProfileSettings = () => {
   const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
   const [invitedUsers, setInvitedUsers] = useState<InvitedUser[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
-  const [newInvite, setNewInvite] = useState({ email: '', role: 'member', organization_id: '' });
+  const [newInvite, setNewInvite] = useState({ 
+    email: '', 
+    role: 'member', 
+    organization_ids: [] as string[], 
+    workspace_ids: [] as string[] 
+  });
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
-  const [isInviting, setIsInviting] = useState(false); // Add loading state to prevent double submissions
+  const [isInviting, setIsInviting] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -68,6 +82,7 @@ export const UserProfileSettings = () => {
       fetchUserProfiles();
       fetchInvitedUsers();
       fetchOrganizations();
+      fetchWorkspaces();
     }
   }, [user]);
 
@@ -478,73 +493,147 @@ export const UserProfileSettings = () => {
     if (!user?.id) return;
 
     try {
-      // Get organizations where user has admin or owner role
-      const { data: membershipData, error: membershipError } = await supabase
-        .from('organization_members')
-        .select('organization_id, role')
-        .eq('user_id', user.id)
-        .in('role', ['admin', 'owner']);
+      // Check if user is the account owner (Michael Schapkun)
+      const isAccountOwner = user.email === 'info@schapkun.com';
+      
+      if (isAccountOwner) {
+        // If account owner, show ALL organizations
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .select('id, name')
+          .order('name', { ascending: true });
 
-      if (membershipError) {
-        console.error('Organization membership error:', membershipError);
-        return;
+        if (orgError) {
+          console.error('Organizations fetch error:', orgError);
+          return;
+        }
+
+        setOrganizations(orgData || []);
+      } else {
+        // For regular users, get organizations through membership
+        const { data: membershipData, error: membershipError } = await supabase
+          .from('organization_members')
+          .select('organization_id')
+          .eq('user_id', user.id);
+
+        if (membershipError) {
+          console.error('Organization membership error:', membershipError);
+          return;
+        }
+
+        if (!membershipData || membershipData.length === 0) {
+          setOrganizations([]);
+          return;
+        }
+
+        const orgIds = membershipData.map(m => m.organization_id);
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .select('id, name')
+          .in('id', orgIds)
+          .order('name', { ascending: true });
+
+        if (orgError) {
+          console.error('Organizations fetch error:', orgError);
+          return;
+        }
+
+        setOrganizations(orgData || []);
       }
-
-      if (!membershipData || membershipData.length === 0) {
-        setOrganizations([]);
-        return;
-      }
-
-      const orgIds = membershipData.map(m => m.organization_id);
-      const { data: orgData, error: orgError } = await supabase
-        .from('organizations')
-        .select('id, name')
-        .in('id', orgIds);
-
-      if (orgError) {
-        console.error('Organizations fetch error:', orgError);
-        return;
-      }
-
-      setOrganizations(orgData || []);
     } catch (error) {
       console.error('Error fetching organizations:', error);
     }
   };
 
-  const inviteUser = async () => {
-    if (!newInvite.email.trim() || !newInvite.organization_id || isInviting) return;
+  const fetchWorkspaces = async () => {
+    if (!user?.id) return;
 
-    setIsInviting(true); // Prevent double submissions
+    try {
+      const isAccountOwner = user.email === 'info@schapkun.com';
+      
+      if (isAccountOwner) {
+        // If account owner, show ALL workspaces
+        const { data: workspaceData, error: workspaceError } = await supabase
+          .from('workspaces')
+          .select('id, name, organization_id')
+          .order('name', { ascending: true });
+
+        if (workspaceError) {
+          console.error('Workspaces fetch error:', workspaceError);
+          return;
+        }
+
+        setWorkspaces(workspaceData || []);
+      } else {
+        // For regular users, get workspaces through membership
+        const { data: membershipData, error: membershipError } = await supabase
+          .from('workspace_members')
+          .select('workspace_id')
+          .eq('user_id', user.id);
+
+        if (membershipError) {
+          console.error('Workspace membership error:', membershipError);
+          return;
+        }
+
+        if (!membershipData || membershipData.length === 0) {
+          setWorkspaces([]);
+          return;
+        }
+
+        const workspaceIds = membershipData.map(m => m.workspace_id);
+        const { data: workspaceData, error: workspaceError } = await supabase
+          .from('workspaces')
+          .select('id, name, organization_id')
+          .in('id', workspaceIds)
+          .order('name', { ascending: true });
+
+        if (workspaceError) {
+          console.error('Workspaces fetch error:', workspaceError);
+          return;
+        }
+
+        setWorkspaces(workspaceData || []);
+      }
+    } catch (error) {
+      console.error('Error fetching workspaces:', error);
+    }
+  };
+
+  const inviteUser = async () => {
+    if (!newInvite.email.trim() || newInvite.organization_ids.length === 0 || isInviting) return;
+
+    setIsInviting(true);
     try {
       console.log('Starting invitation process for:', newInvite.email);
       
-      // Insert invitation into database
-      const { data: invitationData, error: inviteError } = await supabase
-        .from('user_invitations')
-        .insert({
-          email: newInvite.email,
-          role: newInvite.role as 'owner' | 'admin' | 'member',
-          organization_id: newInvite.organization_id,
-          invited_by: user?.id
-        })
-        .select()
-        .single();
+      // Create invitations for each selected organization
+      for (const orgId of newInvite.organization_ids) {
+        const { data: invitationData, error: inviteError } = await supabase
+          .from('user_invitations')
+          .insert({
+            email: newInvite.email,
+            role: newInvite.role as 'owner' | 'admin' | 'member',
+            organization_id: orgId,
+            invited_by: user?.id
+          })
+          .select()
+          .single();
 
-      if (inviteError) throw inviteError;
+        if (inviteError) throw inviteError;
 
-      console.log('Invitation created in database:', invitationData);
+        console.log('Invitation created in database:', invitationData);
+      }
 
-      // Get organization name and invited_by name for the email
-      const selectedOrg = organizations.find(org => org.id === newInvite.organization_id);
+      // Get organization names for the email
+      const selectedOrgs = organizations.filter(org => newInvite.organization_ids.includes(org.id));
       const { data: userProfile } = await supabase
         .from('user_profiles')
         .select('full_name')
         .eq('id', user?.id)
         .single();
 
-      // Create signup URL that redirects to registration instead of login
-      const signupUrl = `${window.location.origin}/auth`;
+      const signupUrl = `${window.location.origin}/register?email=${encodeURIComponent(newInvite.email)}`;
       
       console.log('Sending invitation email to:', newInvite.email);
       
@@ -552,7 +641,7 @@ export const UserProfileSettings = () => {
         const { error: emailError } = await supabase.functions.invoke('send-invitation-email', {
           body: {
             email: newInvite.email,
-            organization_name: selectedOrg?.name || 'Onbekend',
+            organization_name: selectedOrgs.map(org => org.name).join(', '),
             role: newInvite.role,
             invited_by_name: userProfile?.full_name || 'Onbekend',
             signup_url: signupUrl
@@ -583,16 +672,18 @@ export const UserProfileSettings = () => {
       }
 
       // Log the invitation
-      await supabase
-        .from('history_logs')
-        .insert({
-          user_id: user?.id,
-          organization_id: newInvite.organization_id,
-          action: 'Gebruiker uitgenodigd',
-          details: { invited_email: newInvite.email, role: newInvite.role }
-        });
+      for (const orgId of newInvite.organization_ids) {
+        await supabase
+          .from('history_logs')
+          .insert({
+            user_id: user?.id,
+            organization_id: orgId,
+            action: 'Gebruiker uitgenodigd',
+            details: { invited_email: newInvite.email, role: newInvite.role }
+          });
+      }
 
-      setNewInvite({ email: '', role: 'member', organization_id: '' });
+      setNewInvite({ email: '', role: 'member', organization_ids: [], workspace_ids: [] });
       setIsInviteDialogOpen(false);
       fetchInvitedUsers();
     } catch (error) {
@@ -603,7 +694,7 @@ export const UserProfileSettings = () => {
         variant: "destructive",
       });
     } finally {
-      setIsInviting(false); // Reset loading state
+      setIsInviting(false);
     }
   };
 
@@ -680,6 +771,38 @@ export const UserProfileSettings = () => {
     }
   };
 
+  const getSelectedOrganizationNames = () => {
+    const selected = organizations.filter(org => newInvite.organization_ids.includes(org.id));
+    if (selected.length === 0) return "Selecteer organisaties";
+    if (selected.length === 1) return selected[0].name;
+    return `${selected.length} organisaties geselecteerd`;
+  };
+
+  const getSelectedWorkspaceNames = () => {
+    const selected = workspaces.filter(ws => newInvite.workspace_ids.includes(ws.id));
+    if (selected.length === 0) return "Selecteer werkruimtes";
+    if (selected.length === 1) return selected[0].name;
+    return `${selected.length} werkruimtes geselecteerd`;
+  };
+
+  const toggleOrganizationSelection = (orgId: string) => {
+    setNewInvite(prev => ({
+      ...prev,
+      organization_ids: prev.organization_ids.includes(orgId)
+        ? prev.organization_ids.filter(id => id !== orgId)
+        : [...prev.organization_ids, orgId]
+    }));
+  };
+
+  const toggleWorkspaceSelection = (workspaceId: string) => {
+    setNewInvite(prev => ({
+      ...prev,
+      workspace_ids: prev.workspace_ids.includes(workspaceId)
+        ? prev.workspace_ids.filter(id => id !== workspaceId)
+        : [...prev.workspace_ids, workspaceId]
+    }));
+  };
+
   if (loading) {
     return <div>Gebruikersprofielen laden...</div>;
   }
@@ -746,23 +869,58 @@ export const UserProfileSettings = () => {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="invite-org">Organisatie</Label>
-                <Select
-                  value={newInvite.organization_id}
-                  onValueChange={(value) => setNewInvite({ ...newInvite, organization_id: value })}
-                  disabled={isInviting}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecteer organisatie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {organizations.map((org) => (
-                      <SelectItem key={org.id} value={org.id}>
-                        {org.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Organisaties</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between" disabled={isInviting}>
+                      {getSelectedOrganizationNames()}
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-full min-w-[var(--radix-dropdown-menu-trigger-width)]">
+                    <div className="p-2 space-y-2">
+                      {organizations.map((org) => (
+                        <div key={org.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`org-${org.id}`}
+                            checked={newInvite.organization_ids.includes(org.id)}
+                            onCheckedChange={() => toggleOrganizationSelection(org.id)}
+                          />
+                          <Label htmlFor={`org-${org.id}`} className="text-sm font-normal cursor-pointer">
+                            {org.name}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div>
+                <Label>Werkruimtes (optioneel)</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between" disabled={isInviting}>
+                      {getSelectedWorkspaceNames()}
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-full min-w-[var(--radix-dropdown-menu-trigger-width)]">
+                    <div className="p-2 space-y-2">
+                      {workspaces.map((workspace) => (
+                        <div key={workspace.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`ws-${workspace.id}`}
+                            checked={newInvite.workspace_ids.includes(workspace.id)}
+                            onCheckedChange={() => toggleWorkspaceSelection(workspace.id)}
+                          />
+                          <Label htmlFor={`ws-${workspace.id}`} className="text-sm font-normal cursor-pointer">
+                            {workspace.name}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               <div className="flex justify-end space-x-2">
                 <Button 
@@ -774,7 +932,7 @@ export const UserProfileSettings = () => {
                 </Button>
                 <Button 
                   onClick={inviteUser}
-                  disabled={isInviting || !newInvite.email.trim() || !newInvite.organization_id}
+                  disabled={isInviting || !newInvite.email.trim() || newInvite.organization_ids.length === 0}
                 >
                   {isInviting ? 'Bezig...' : 'Uitnodigen'}
                 </Button>
