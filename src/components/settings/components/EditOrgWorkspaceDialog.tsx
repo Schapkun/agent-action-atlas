@@ -4,18 +4,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Trash2, Edit, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, Edit } from 'lucide-react';
 
 interface User {
   id: string;
   email: string;
   full_name: string;
   hasAccess?: boolean;
-  workspaceAccess?: { [workspaceId: string]: boolean };
 }
 
 interface Workspace {
@@ -49,12 +47,10 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
   const [name, setName] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [allWorkspaces, setAllWorkspaces] = useState<Workspace[]>([]);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [editingWorkspace, setEditingWorkspace] = useState<string | null>(null);
   const [editWorkspaceName, setEditWorkspaceName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showWorkspaceDropdown, setShowWorkspaceDropdown] = useState(false);
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
 
@@ -63,29 +59,10 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
       setName(item.name);
       if (type === 'organization') {
         setWorkspaces(item.workspaces || []);
-        fetchAllWorkspaces();
       }
       fetchUsers();
     }
   }, [item, type]);
-
-  const fetchAllWorkspaces = async () => {
-    if (!item) return;
-
-    try {
-      // Fetch all workspaces for this organization
-      const { data: allOrgWorkspaces, error } = await supabase
-        .from('workspaces')
-        .select('*')
-        .eq('organization_id', item.id)
-        .order('name');
-
-      if (error) throw error;
-      setAllWorkspaces(allOrgWorkspaces || []);
-    } catch (error) {
-      console.error('Error fetching all workspaces:', error);
-    }
-  };
 
   const fetchUsers = async () => {
     if (!item) return;
@@ -101,58 +78,34 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
 
       if (usersError) throw usersError;
 
+      // Get current members based on type
+      let currentMembers: string[] = [];
+      
       if (type === 'organization') {
-        // For organization: get organization members and their workspace access
-        const { data: orgMembers, error: orgMembersError } = await supabase
+        const { data: members, error: membersError } = await supabase
           .from('organization_members')
           .select('user_id')
           .eq('organization_id', item.id);
         
-        if (orgMembersError) throw orgMembersError;
-        const orgMemberIds = orgMembers?.map(m => m.user_id) || [];
-
-        // Get workspace memberships for all users in this organization
-        const { data: workspaceMembers, error: workspaceMembersError } = await supabase
-          .from('workspace_members')
-          .select('user_id, workspace_id')
-          .in('workspace_id', allWorkspaces.map(w => w.id));
-
-        if (workspaceMembersError) throw workspaceMembersError;
-
-        // Build user data with workspace access info
-        const usersWithAccess = allUsers?.map(user => {
-          const workspaceAccess: { [workspaceId: string]: boolean } = {};
-          allWorkspaces.forEach(workspace => {
-            workspaceAccess[workspace.id] = workspaceMembers?.some(
-              wm => wm.user_id === user.id && wm.workspace_id === workspace.id
-            ) || false;
-          });
-
-          return {
-            ...user,
-            hasAccess: orgMemberIds.includes(user.id),
-            workspaceAccess
-          };
-        }) || [];
-
-        setUsers(usersWithAccess);
+        if (membersError) throw membersError;
+        currentMembers = members?.map(m => m.user_id) || [];
       } else {
-        // For workspace: get workspace members only
         const { data: members, error: membersError } = await supabase
           .from('workspace_members')
           .select('user_id')
           .eq('workspace_id', item.id);
         
         if (membersError) throw membersError;
-        const currentMembers = members?.map(m => m.user_id) || [];
-
-        const usersWithAccess = allUsers?.map(user => ({
-          ...user,
-          hasAccess: currentMembers.includes(user.id)
-        })) || [];
-
-        setUsers(usersWithAccess);
+        currentMembers = members?.map(m => m.user_id) || [];
       }
+
+      // Combine users with access info
+      const usersWithAccess = allUsers?.map(user => ({
+        ...user,
+        hasAccess: currentMembers.includes(user.id)
+      })) || [];
+
+      setUsers(usersWithAccess);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -169,50 +122,6 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
     setUsers(prev => prev.map(user => 
       user.id === userId ? { ...user, hasAccess } : user
     ));
-  };
-
-  const handleWorkspaceToggle = (userId: string, workspaceId: string, hasAccess: boolean) => {
-    setUsers(prev => prev.map(user => 
-      user.id === userId 
-        ? { 
-            ...user, 
-            workspaceAccess: {
-              ...user.workspaceAccess,
-              [workspaceId]: hasAccess
-            }
-          } 
-        : user
-    ));
-  };
-
-  const handleAddExistingWorkspace = (workspaceId: string) => {
-    const workspace = allWorkspaces.find(w => w.id === workspaceId);
-    if (workspace && !workspaces.some(w => w.id === workspaceId)) {
-      setWorkspaces(prev => [...prev, workspace]);
-      
-      // Update users to include this workspace in their access mapping
-      setUsers(prev => prev.map(user => ({
-        ...user,
-        workspaceAccess: {
-          ...user.workspaceAccess,
-          [workspaceId]: false
-        }
-      })));
-    }
-    setShowWorkspaceDropdown(false);
-  };
-
-  const handleRemoveWorkspace = (workspaceId: string) => {
-    setWorkspaces(prev => prev.filter(w => w.id !== workspaceId));
-    
-    // Remove workspace access from all users
-    setUsers(prev => prev.map(user => {
-      const { [workspaceId]: removed, ...remainingAccess } = user.workspaceAccess || {};
-      return {
-        ...user,
-        workspaceAccess: remainingAccess
-      };
-    }));
   };
 
   const handleCreateWorkspace = async () => {
@@ -234,17 +143,7 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
       if (error) throw error;
 
       setWorkspaces(prev => [...prev, data]);
-      setAllWorkspaces(prev => [...prev, data]);
       setNewWorkspaceName('');
-      
-      // Update users to include this new workspace in their access mapping
-      setUsers(prev => prev.map(user => ({
-        ...user,
-        workspaceAccess: {
-          ...user.workspaceAccess,
-          [data.id]: false
-        }
-      })));
       
       toast({
         title: "Succes",
@@ -355,63 +254,58 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
         if (updateError) throw updateError;
       }
 
+      // Update user memberships
+      const usersWithAccess = users.filter(u => u.hasAccess).map(u => u.id);
+      const usersWithoutAccess = users.filter(u => !u.hasAccess).map(u => u.id);
+
       if (type === 'organization') {
-        // Handle organization and workspace memberships
-        for (const user of users) {
-          if (user.hasAccess) {
-            // Add to organization
+        // Remove users who should not have access
+        if (usersWithoutAccess.length > 0) {
+          await supabase
+            .from('organization_members')
+            .delete()
+            .eq('organization_id', item.id)
+            .in('user_id', usersWithoutAccess);
+        }
+
+        // Add users who should have access
+        for (const userId of usersWithAccess) {
+          const { error: insertError } = await supabase
+            .from('organization_members')
+            .upsert({
+              organization_id: item.id,
+              user_id: userId,
+              role: 'member'
+            });
+          
+          if (insertError) {
+            console.error('Error adding organization member:', insertError);
+          }
+
+          // If user is added to organization, add them to ALL workspaces in that organization
+          for (const workspace of workspaces) {
             await supabase
-              .from('organization_members')
+              .from('workspace_members')
               .upsert({
-                organization_id: item.id,
-                user_id: user.id,
+                workspace_id: workspace.id,
+                user_id: userId,
                 role: 'member'
               });
+          }
+        }
 
-            // Handle workspace memberships
-            for (const workspace of workspaces) {
-              const hasWorkspaceAccess = user.workspaceAccess?.[workspace.id] || false;
-              
-              if (hasWorkspaceAccess) {
-                // Add to workspace
-                await supabase
-                  .from('workspace_members')
-                  .upsert({
-                    workspace_id: workspace.id,
-                    user_id: user.id,
-                    role: 'member'
-                  });
-              } else {
-                // Remove from workspace
-                await supabase
-                  .from('workspace_members')
-                  .delete()
-                  .eq('workspace_id', workspace.id)
-                  .eq('user_id', user.id);
-              }
-            }
-          } else {
-            // Remove from organization and all workspaces
+        // Remove users from all workspaces when removed from organization
+        if (usersWithoutAccess.length > 0) {
+          for (const workspace of workspaces) {
             await supabase
-              .from('organization_members')
+              .from('workspace_members')
               .delete()
-              .eq('organization_id', item.id)
-              .eq('user_id', user.id);
-
-            for (const workspace of workspaces) {
-              await supabase
-                .from('workspace_members')
-                .delete()
-                .eq('workspace_id', workspace.id)
-                .eq('user_id', user.id);
-            }
+              .eq('workspace_id', workspace.id)
+              .in('user_id', usersWithoutAccess);
           }
         }
       } else {
-        // Handle workspace memberships only
-        const usersWithAccess = users.filter(u => u.hasAccess).map(u => u.id);
-        const usersWithoutAccess = users.filter(u => !u.hasAccess).map(u => u.id);
-
+        // For workspace: manage workspace members only
         if (usersWithoutAccess.length > 0) {
           await supabase
             .from('workspace_members')
@@ -421,6 +315,7 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
         }
 
         for (const userId of usersWithAccess) {
+          // Add to workspace
           await supabase
             .from('workspace_members')
             .upsert({
@@ -461,10 +356,6 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
     }
   };
 
-  const availableWorkspaces = allWorkspaces.filter(
-    ws => !workspaces.some(selectedWs => selectedWs.id === ws.id)
-  );
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -492,7 +383,7 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
             <div>
               <Label className="text-sm">Werkruimtes</Label>
               <div className="border rounded-md p-3 mt-1 space-y-3">
-                {/* Selected Workspaces */}
+                {/* Existing Workspaces */}
                 {workspaces.map((workspace) => (
                   <div key={workspace.id} className="flex items-center justify-between p-2 bg-muted/30 rounded">
                     {editingWorkspace === workspace.id ? (
@@ -534,7 +425,7 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleRemoveWorkspace(workspace.id)}
+                            onClick={() => handleDeleteWorkspace(workspace.id, workspace.name)}
                             className="text-destructive hover:text-destructive h-8 w-8 p-0"
                           >
                             <Trash2 className="h-3 w-3" />
@@ -544,37 +435,6 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
                     )}
                   </div>
                 ))}
-                
-                {/* Dropdown for adding existing workspaces */}
-                {availableWorkspaces.length > 0 && (
-                  <div className="space-y-2 pt-2 border-t">
-                    <div className="relative">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowWorkspaceDropdown(!showWorkspaceDropdown)}
-                        className="w-full justify-between"
-                      >
-                        Bestaande werkruimte toevoegen
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                      
-                      {showWorkspaceDropdown && (
-                        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-background border rounded-md shadow-md max-h-32 overflow-y-auto">
-                          {availableWorkspaces.map((workspace) => (
-                            <button
-                              key={workspace.id}
-                              onClick={() => handleAddExistingWorkspace(workspace.id)}
-                              className="w-full text-left px-3 py-2 hover:bg-muted text-sm"
-                            >
-                              {workspace.name}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
                 
                 {/* Add New Workspace */}
                 <div className="flex items-center space-x-2 pt-2 border-t">
@@ -601,49 +461,23 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
                 <div className="text-sm text-muted-foreground">Laden...</div>
               ) : (
                 users.map((user) => (
-                  <div key={user.id} className="space-y-2">
-                    {/* Main user checkbox */}
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={user.id}
-                        checked={user.hasAccess}
-                        onCheckedChange={(checked) => 
-                          handleUserToggle(user.id, checked as boolean)
-                        }
-                      />
-                      <label 
-                        htmlFor={user.id}
-                        className="text-sm cursor-pointer flex-1 font-medium"
-                      >
-                        {user.full_name || user.email}
-                        {user.email !== user.full_name && (
-                          <span className="text-muted-foreground ml-2">({user.email})</span>
-                        )}
-                      </label>
-                    </div>
-                    
-                    {/* Workspace checkboxes - Only for organizations and when user has access */}
-                    {type === 'organization' && user.hasAccess && workspaces.length > 0 && (
-                      <div className="ml-6 space-y-1">
-                        {workspaces.map((workspace) => (
-                          <div key={workspace.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`${user.id}-${workspace.id}`}
-                              checked={user.workspaceAccess?.[workspace.id] || false}
-                              onCheckedChange={(checked) => 
-                                handleWorkspaceToggle(user.id, workspace.id, checked as boolean)
-                              }
-                            />
-                            <label 
-                              htmlFor={`${user.id}-${workspace.id}`}
-                              className="text-xs cursor-pointer text-muted-foreground"
-                            >
-                              {workspace.name}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                  <div key={user.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={user.id}
+                      checked={user.hasAccess}
+                      onCheckedChange={(checked) => 
+                        handleUserToggle(user.id, checked as boolean)
+                      }
+                    />
+                    <label 
+                      htmlFor={user.id}
+                      className="text-sm cursor-pointer flex-1"
+                    >
+                      {user.full_name || user.email}
+                      {user.email !== user.full_name && (
+                        <span className="text-muted-foreground ml-2">({user.email})</span>
+                      )}
+                    </label>
                   </div>
                 ))
               )}
