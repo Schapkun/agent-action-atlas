@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,14 +25,44 @@ export const UserProfileSettings = () => {
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
       fetchUsers();
+      fetchUserRole();
     }
   }, [user]);
+
+  const fetchUserRole = async () => {
+    if (!user?.id) return;
+
+    try {
+      // Check if user is account owner
+      if (user.email === 'info@schapkun.com') {
+        setUserRole('owner');
+        return;
+      }
+
+      // Get user's role from their organization memberships
+      const { data: memberships } = await supabase
+        .from('organization_members')
+        .select('role')
+        .eq('user_id', user.id)
+        .limit(1);
+
+      if (memberships && memberships.length > 0) {
+        setUserRole(memberships[0].role);
+      } else {
+        setUserRole('member'); // Default role if no membership found
+      }
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+      setUserRole('member'); // Default to member on error
+    }
+  };
 
   const fetchUsers = async () => {
     if (!user?.id) {
@@ -287,6 +316,9 @@ export const UserProfileSettings = () => {
     }
   };
 
+  // Check if user can invite others (only admin, owner, and account owner)
+  const canInviteUsers = userRole === 'admin' || userRole === 'owner' || user?.email === 'info@schapkun.com';
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -324,40 +356,42 @@ export const UserProfileSettings = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Gebruikersprofielen</h2>
-        <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Gebruiker Uitnodigen
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-lg">Gebruiker Uitnodigen</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="invite-email" className="text-sm">E-mailadres</Label>
-                <Input
-                  id="invite-email"
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder="Voer e-mailadres in"
-                  className="mt-1"
-                />
+        {canInviteUsers && (
+          <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Gebruiker Uitnodigen
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-lg">Gebruiker Uitnodigen</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="invite-email" className="text-sm">E-mailadres</Label>
+                  <Input
+                    id="invite-email"
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="Voer e-mailadres in"
+                    className="mt-1"
+                  />
+                </div>
+                <div className="flex justify-end space-x-2 pt-2">
+                  <Button variant="outline" size="sm" onClick={() => setIsInviteDialogOpen(false)}>
+                    Annuleren
+                  </Button>
+                  <Button size="sm" onClick={inviteUser}>
+                    Uitnodigen
+                  </Button>
+                </div>
               </div>
-              <div className="flex justify-end space-x-2 pt-2">
-                <Button variant="outline" size="sm" onClick={() => setIsInviteDialogOpen(false)}>
-                  Annuleren
-                </Button>
-                <Button size="sm" onClick={inviteUser}>
-                  Uitnodigen
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-3 items-stretch">
