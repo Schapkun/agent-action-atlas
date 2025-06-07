@@ -21,6 +21,7 @@ interface Organization {
   id: string;
   name: string;
   role: string;
+  workspaces: Workspace[];
 }
 
 interface Workspace {
@@ -40,7 +41,6 @@ type UserRole = "owner" | "admin" | "member";
 export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccountProps) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [globalRole, setGlobalRole] = useState<UserRole>('member');
@@ -119,7 +119,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
 
       setProfile(profileData);
 
-      // Fetch organizations with better error handling
+      // Fetch organizations with their workspaces
       try {
         const { data: orgData, error: orgError } = await supabase
           .from('organization_members')
@@ -134,54 +134,61 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
 
         if (orgError) {
           console.error('Organizations fetch error:', orgError);
+          setOrganizations([]);
         } else {
           const orgs = orgData?.map(item => ({
             id: item.organizations?.id || '',
             name: item.organizations?.name || '',
-            role: item.role
+            role: item.role,
+            workspaces: []
           })) || [];
-          setOrganizations(orgs);
+
+          // Now fetch workspaces for each organization
+          const orgsWithWorkspaces = await Promise.all(
+            orgs.map(async (org) => {
+              const { data: workspaceData, error: workspaceError } = await supabase
+                .from('workspace_members')
+                .select(`
+                  role,
+                  workspaces!fk_workspace_members_workspace (
+                    id,
+                    name,
+                    organization_id
+                  )
+                `)
+                .eq('user_id', targetUserId);
+
+              if (workspaceError) {
+                console.error('Workspaces fetch error for org:', org.id, workspaceError);
+                return org;
+              }
+
+              const workspaces = workspaceData
+                ?.filter(item => item.workspaces?.organization_id === org.id)
+                ?.map(item => ({
+                  id: item.workspaces?.id || '',
+                  name: item.workspaces?.name || '',
+                  organization_name: org.name,
+                  role: item.role
+                })) || [];
+
+              return {
+                ...org,
+                workspaces
+              };
+            })
+          );
+
+          setOrganizations(orgsWithWorkspaces);
           
           // Set global role based on first organization role
-          if (orgs.length > 0) {
-            setGlobalRole(orgs[0].role as UserRole);
+          if (orgsWithWorkspaces.length > 0) {
+            setGlobalRole(orgsWithWorkspaces[0].role as UserRole);
           }
         }
       } catch (orgErr) {
         console.error('Organizations error:', orgErr);
         setOrganizations([]);
-      }
-
-      // Fetch workspaces with better error handling
-      try {
-        const { data: workspaceData, error: workspaceError } = await supabase
-          .from('workspace_members')
-          .select(`
-            role,
-            workspaces!fk_workspace_members_workspace (
-              id,
-              name,
-              organizations!fk_workspaces_organization (
-                name
-              )
-            )
-          `)
-          .eq('user_id', targetUserId);
-
-        if (workspaceError) {
-          console.error('Workspaces fetch error:', workspaceError);
-        } else {
-          const workspaces = workspaceData?.map(item => ({
-            id: item.workspaces?.id || '',
-            name: item.workspaces?.name || '',
-            organization_name: item.workspaces?.organizations?.name || '',
-            role: item.role
-          })) || [];
-          setWorkspaces(workspaces);
-        }
-      } catch (wsErr) {
-        console.error('Workspaces error:', wsErr);
-        setWorkspaces([]);
       }
 
     } catch (error) {
@@ -254,12 +261,14 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
       );
 
       // Update all workspace memberships
-      const workspacePromises = workspaces.map(workspace => 
-        supabase
-          .from('workspace_members')
-          .update({ role: newRole })
-          .eq('user_id', targetUserId)
-          .eq('workspace_id', workspace.id)
+      const workspacePromises = organizations.flatMap(org =>
+        org.workspaces.map(workspace => 
+          supabase
+            .from('workspace_members')
+            .update({ role: newRole })
+            .eq('user_id', targetUserId)
+            .eq('workspace_id', workspace.id)
+        )
       );
 
       await Promise.all([...orgPromises, ...workspacePromises]);
@@ -275,7 +284,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
               target_user_id: targetUserId,
               new_role: newRole,
               organizations: organizations.length,
-              workspaces: workspaces.length
+              workspaces: organizations.reduce((acc, org) => acc + org.workspaces.length, 0)
             }
           });
       } catch (logError) {
@@ -497,7 +506,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
           </div>
           
           {/* Global Role Management - for admins viewing other users */}
-          {!isViewingOwnProfile && (organizations.length > 0 || workspaces.length > 0) && (
+          {!isViewingOwnProfile && organizations.length > 0 && (
             <div>
               <Label htmlFor="global-role">Gebruikersrol (voor alle organisaties en werkruimtes)</Label>
               <Select
@@ -525,12 +534,12 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
         </CardContent>
       </Card>
 
-      {/* Organizations */}
+      {/* Organizations & Workspaces */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5" />
-            {isViewingOwnProfile ? 'Mijn Organisaties' : 'Organisaties'}
+            {isViewingOwnProfile ? 'Mijn Organisaties & Werkruimtes' : 'Organisaties & Werkruimtes'}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -542,76 +551,65 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
               }
             </p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-4">
               {organizations.map((org) => (
-                <div key={org.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border-l-4 border-l-primary/20">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <p className="font-medium">{org.name}</p>
+                <div key={org.id}>
+                  {/* Organization Header */}
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border-l-4 border-l-primary/20">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        <p className="font-medium">{org.name}</p>
+                        <span className="text-sm text-muted-foreground">
+                          ({org.workspaces.length} werkruimte{org.workspaces.length !== 1 ? 's' : ''})
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Rol: {org.role}
+                      </p>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Rol: {org.role}
-                    </p>
+                    <div className="flex space-x-1 w-20 justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFromOrganization(org.id, org.name)}
+                        className="text-destructive hover:text-destructive w-8 h-8 p-0"
+                        title="Verwijder uit organisatie"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex space-x-1 w-20 justify-end">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFromOrganization(org.id, org.name)}
-                      className="text-destructive hover:text-destructive w-8 h-8 p-0"
-                      title="Verwijder uit organisatie"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Workspaces */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            {isViewingOwnProfile ? 'Mijn Werkruimtes' : 'Werkruimtes'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {workspaces.length === 0 ? (
-            <p className="text-muted-foreground">
-              {isViewingOwnProfile 
-                ? 'Je hebt nog geen toegang tot werkruimtes'
-                : 'Deze gebruiker heeft nog geen toegang tot werkruimtes'
-              }
-            </p>
-          ) : (
-            <div className="ml-6 space-y-2">
-              {workspaces.map((workspace) => (
-                <div key={workspace.id} className="flex items-center justify-between p-3 bg-muted/15 rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <p className="font-medium">{workspace.name}</p>
+                  {/* Workspaces under this organization */}
+                  {org.workspaces.length > 0 && (
+                    <div className="ml-6 space-y-2 mt-2">
+                      {org.workspaces.map((workspace) => (
+                        <div key={workspace.id} className="flex items-center justify-between p-3 bg-muted/15 rounded-lg">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4 text-muted-foreground" />
+                              <p className="font-medium">{workspace.name}</p>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Rol: {workspace.role || 'member'}
+                            </p>
+                          </div>
+                          <div className="flex space-x-1 w-20 justify-end">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeFromWorkspace(workspace.id, workspace.name)}
+                              className="text-destructive hover:text-destructive w-8 h-8 p-0"
+                              title="Verwijder uit werkruimte"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Organisatie: {workspace.organization_name} • Rol: {workspace.role || 'member'}
-                    </p>
-                  </div>
-                  <div className="flex space-x-1 w-20 justify-end">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFromWorkspace(workspace.id, workspace.name)}
-                      className="text-destructive hover:text-destructive w-8 h-8 p-0"
-                      title="Verwijder uit werkruimte"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  )}
                 </div>
               ))}
             </div>
