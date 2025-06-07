@@ -5,20 +5,7 @@ import { formatLogDetails } from './utils/logDetailsFormatter';
 import { HistoryLogHeader } from './components/HistoryLogHeader';
 import { HistoryLogDetails } from './components/HistoryLogDetails';
 import { HistoryLogContext } from './components/HistoryLogContext';
-
-interface HistoryLog {
-  id: string;
-  action: string;
-  details: any;
-  created_at: string;
-  user_id: string;
-  organization_id?: string;
-  workspace_id?: string;
-  user_name?: string;
-  user_email?: string;
-  organization_name?: string;
-  workspace_name?: string;
-}
+import { HistoryLog } from './types/HistoryLog';
 
 interface HistoryLogCardProps {
   log: HistoryLog;
