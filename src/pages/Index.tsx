@@ -20,16 +20,16 @@ const Index = ({ children }: IndexProps) => {
   const getCurrentView = () => {
     const path = location.pathname;
     if (path === '/') return 'overview';
-    if (path === '/pending-tasks') return 'pending-tasks';
-    if (path === '/actions') return 'actions';
-    if (path === '/documents') return 'documents';
-    if (path === '/active-dossiers') return 'active-dossiers';
-    if (path === '/closed-dossiers') return 'closed-dossiers';
-    if (path === '/invoices') return 'invoices';
-    if (path === '/phone-calls') return 'phone-calls';
-    if (path === '/emails') return 'emails';
-    if (path === '/contacts') return 'contacts';
-    if (path === '/settings') return 'settings';
+    if (path === '/openstaande-taken') return 'pending-tasks';
+    if (path === '/ai-acties') return 'actions';
+    if (path === '/documenten') return 'documents';
+    if (path === '/actieve-dossiers') return 'active-dossiers';
+    if (path === '/gesloten-dossiers') return 'closed-dossiers';
+    if (path === '/facturen') return 'invoices';
+    if (path === '/telefoongesprekken') return 'phone-calls';
+    if (path === '/e-mails') return 'emails';
+    if (path === '/contacten') return 'contacts';
+    if (path === '/instellingen') return 'settings';
     return 'overview';
   };
 

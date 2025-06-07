@@ -38,16 +38,16 @@ export const Sidebar = ({
 
   const menuItems = [
     { id: 'overview' as ViewType, label: 'Dashboard', icon: LayoutDashboard, path: '/' },
-    { id: 'pending-tasks' as ViewType, label: 'Openstaande Taken', icon: Clock, badge: pendingTasksCount, path: '/pending-tasks' },
-    { id: 'actions' as ViewType, label: 'AI Acties', icon: Activity, path: '/actions' },
-    { id: 'documents' as ViewType, label: 'Documenten', icon: FolderOpen, path: '/documents' },
-    { id: 'active-dossiers' as ViewType, label: 'Actieve Dossiers', icon: FileText, path: '/active-dossiers' },
-    { id: 'closed-dossiers' as ViewType, label: 'Gesloten Dossiers', icon: FolderX, path: '/closed-dossiers' },
-    { id: 'invoices' as ViewType, label: 'Facturen', icon: CreditCard, path: '/invoices' },
-    { id: 'phone-calls' as ViewType, label: 'Telefoongesprekken', icon: Phone, path: '/phone-calls' },
-    { id: 'emails' as ViewType, label: 'E-mails', icon: Mail, path: '/emails' },
-    { id: 'contacts' as ViewType, label: 'Contacten', icon: Users, path: '/contacts' },
-    { id: 'settings' as ViewType, label: 'Instellingen', icon: Settings, path: '/settings' },
+    { id: 'pending-tasks' as ViewType, label: 'Openstaande Taken', icon: Clock, badge: pendingTasksCount, path: '/openstaande-taken' },
+    { id: 'actions' as ViewType, label: 'AI Acties', icon: Activity, path: '/ai-acties' },
+    { id: 'documents' as ViewType, label: 'Documenten', icon: FolderOpen, path: '/documenten' },
+    { id: 'active-dossiers' as ViewType, label: 'Actieve Dossiers', icon: FileText, path: '/actieve-dossiers' },
+    { id: 'closed-dossiers' as ViewType, label: 'Gesloten Dossiers', icon: FolderX, path: '/gesloten-dossiers' },
+    { id: 'invoices' as ViewType, label: 'Facturen', icon: CreditCard, path: '/facturen' },
+    { id: 'phone-calls' as ViewType, label: 'Telefoongesprekken', icon: Phone, path: '/telefoongesprekken' },
+    { id: 'emails' as ViewType, label: 'E-mails', icon: Mail, path: '/e-mails' },
+    { id: 'contacts' as ViewType, label: 'Contacten', icon: Users, path: '/contacten' },
+    { id: 'settings' as ViewType, label: 'Instellingen', icon: Settings, path: '/instellingen' },
   ];
 
   return (
