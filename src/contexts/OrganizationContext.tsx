@@ -75,43 +75,79 @@ export const OrganizationProvider = ({ children }: OrganizationProviderProps) =>
         setOrganizations(orgResponse.data || []);
         setWorkspaces(workspaceResponse.data || []);
       } else {
-        // For regular users, fetch based on workspace membership
-        const workspaceMembership = await supabase
-          .from('workspace_members')
-          .select('workspace_id')
+        // For regular users, first get organization memberships
+        const orgMembership = await supabase
+          .from('organization_members')
+          .select('organization_id')
           .eq('user_id', user.id);
 
-        if (workspaceMembership.error) throw workspaceMembership.error;
+        if (orgMembership.error) throw orgMembership.error;
 
-        if (workspaceMembership.data && workspaceMembership.data.length > 0) {
-          const workspaceIds = workspaceMembership.data.map(m => m.workspace_id);
+        if (orgMembership.data && orgMembership.data.length > 0) {
+          // Get organizations user is member of
+          const orgIds = orgMembership.data.map(m => m.organization_id);
+          const { data: orgData, error: orgError } = await supabase
+            .from('organizations')
+            .select('id, name, slug')
+            .in('id', orgIds)
+            .order('created_at', { ascending: true });
+
+          if (orgError) throw orgError;
+          setOrganizations(orgData || []);
+
+          // Get workspaces for those organizations
           const { data: workspaceData, error: workspaceError } = await supabase
             .from('workspaces')
             .select('id, name, slug, organization_id')
-            .in('id', workspaceIds)
+            .in('organization_id', orgIds)
             .order('created_at', { ascending: true });
 
           if (workspaceError) throw workspaceError;
-
           setWorkspaces(workspaceData || []);
+        } else {
+          // User is not member of any organization, check workspace membership
+          const workspaceMembership = await supabase
+            .from('workspace_members')
+            .select('workspace_id')
+            .eq('user_id', user.id);
 
-          // Get unique organization IDs from workspaces
-          const orgIds = [...new Set(workspaceData?.map(w => w.organization_id) || [])];
-          
-          if (orgIds.length > 0) {
-            const { data: orgData, error: orgError } = await supabase
-              .from('organizations')
-              .select('id, name, slug')
-              .in('id', orgIds)
+          if (workspaceMembership.error) throw workspaceMembership.error;
+
+          if (workspaceMembership.data && workspaceMembership.data.length > 0) {
+            const workspaceIds = workspaceMembership.data.map(m => m.workspace_id);
+            const { data: workspaceData, error: workspaceError } = await supabase
+              .from('workspaces')
+              .select('id, name, slug, organization_id')
+              .in('id', workspaceIds)
               .order('created_at', { ascending: true });
 
-            if (orgError) throw orgError;
-            setOrganizations(orgData || []);
+            if (workspaceError) throw workspaceError;
+            setWorkspaces(workspaceData || []);
+
+            // Get unique organization IDs from workspaces
+            const orgIds = [...new Set(workspaceData?.map(w => w.organization_id) || [])];
+            
+            if (orgIds.length > 0) {
+              const { data: orgData, error: orgError } = await supabase
+                .from('organizations')
+                .select('id, name, slug')
+                .in('id', orgIds)
+                .order('created_at', { ascending: true });
+
+              if (orgError) throw orgError;
+              setOrganizations(orgData || []);
+            }
+          } else {
+            // User has no memberships at all
+            setOrganizations([]);
+            setWorkspaces([]);
           }
         }
       }
     } catch (error) {
       console.error('Error fetching organizations and workspaces:', error);
+      setOrganizations([]);
+      setWorkspaces([]);
     } finally {
       setIsLoadingOrganizations(false);
     }

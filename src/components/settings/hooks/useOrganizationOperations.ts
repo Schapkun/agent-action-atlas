@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,27 +12,90 @@ export const useOrganizationOperations = () => {
   const { toast } = useToast();
 
   const fetchOrganizations = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      const { data: orgsData, error: orgsError } = await supabase
-        .from('organizations')
-        .select('*')
-        .order('name');
+      console.log('Fetching organizations for user:', user.id);
+      
+      // Check if user is the account owner (Michael Schapkun)
+      const isAccountOwner = user.email === 'info@schapkun.com';
+      
+      if (isAccountOwner) {
+        // If account owner, show ALL organizations and workspaces
+        const { data: orgsData, error: orgsError } = await supabase
+          .from('organizations')
+          .select('*')
+          .order('name');
 
-      if (orgsError) throw orgsError;
+        if (orgsError) throw orgsError;
 
-      const { data: workspacesData, error: workspacesError } = await supabase
-        .from('workspaces')
-        .select('*')
-        .order('name');
+        const { data: workspacesData, error: workspacesError } = await supabase
+          .from('workspaces')
+          .select('*')
+          .order('name');
 
-      if (workspacesError) throw workspacesError;
+        if (workspacesError) throw workspacesError;
 
-      const organizationsWithWorkspaces = orgsData?.map(org => ({
-        ...org,
-        workspaces: workspacesData?.filter(ws => ws.organization_id === org.id) || []
-      })) || [];
+        const organizationsWithWorkspaces = orgsData?.map(org => ({
+          ...org,
+          workspaces: workspacesData?.filter(ws => ws.organization_id === org.id) || []
+        })) || [];
 
-      setOrganizations(organizationsWithWorkspaces);
+        setOrganizations(organizationsWithWorkspaces);
+      } else {
+        // For regular users, only show organizations they are members of
+        console.log('Fetching organizations for regular user...');
+        
+        // Get user's organization memberships
+        const { data: membershipData, error: membershipError } = await supabase
+          .from('organization_members')
+          .select('organization_id')
+          .eq('user_id', user.id);
+
+        console.log('Organization membership data:', membershipData);
+
+        if (membershipError) {
+          console.error('Membership fetch error:', membershipError);
+          throw membershipError;
+        }
+
+        if (!membershipData || membershipData.length === 0) {
+          console.log('No organization memberships found');
+          setOrganizations([]);
+          setLoading(false);
+          return;
+        }
+
+        // Get organizations user is member of
+        const orgIds = membershipData.map(m => m.organization_id);
+        const { data: orgsData, error: orgsError } = await supabase
+          .from('organizations')
+          .select('*')
+          .in('id', orgIds)
+          .order('name');
+
+        if (orgsError) throw orgsError;
+
+        // Get workspaces for those organizations
+        const { data: workspacesData, error: workspacesError } = await supabase
+          .from('workspaces')
+          .select('*')
+          .in('organization_id', orgIds)
+          .order('name');
+
+        if (workspacesError) throw workspacesError;
+
+        const organizationsWithWorkspaces = orgsData?.map(org => ({
+          ...org,
+          workspaces: workspacesData?.filter(ws => ws.organization_id === org.id) || []
+        })) || [];
+
+        console.log('Organizations with workspaces for regular user:', organizationsWithWorkspaces);
+        setOrganizations(organizationsWithWorkspaces);
+      }
     } catch (error) {
       console.error('Error fetching organizations:', error);
       toast({
