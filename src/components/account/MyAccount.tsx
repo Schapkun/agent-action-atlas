@@ -525,27 +525,36 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
             </div>
           </div>
           
-          {/* Global Role Management - show for account owner when there are organizations */}
+          {/* Global Role Management with button next to it */}
           {user?.email === 'info@schapkun.com' && organizations.length > 0 && (
-            <div>
-              <Label htmlFor="global-role" className="text-sm">Globale Rol (voor alle organisaties en werkruimtes)</Label>
-              <Select
-                value={globalRole}
-                onValueChange={(newRole) => updateGlobalRole(newRole as UserRole)}
-              >
-                <SelectTrigger className="w-full text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="member">Gebruiker</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="owner">Eigenaar</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex gap-4 items-end">
+              <div className="flex-1 md:w-1/2">
+                <Label htmlFor="global-role" className="text-sm">Globale Rol (voor alle organisaties en werkruimtes)</Label>
+                <Select
+                  value={globalRole}
+                  onValueChange={(newRole) => updateGlobalRole(newRole as UserRole)}
+                >
+                  <SelectTrigger className="w-full text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="member">Gebruiker</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="owner">Eigenaar</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {isViewingOwnProfile && (
+                <Button onClick={updateProfile} disabled={saving} size="sm">
+                  <Save className="h-4 w-4 mr-2" />
+                  {saving ? 'Opslaan...' : 'Profiel Opslaan'}
+                </Button>
+              )}
             </div>
           )}
 
-          {isViewingOwnProfile && (
+          {/* If no global role section, show save button normally */}
+          {isViewingOwnProfile && !(user?.email === 'info@schapkun.com' && organizations.length > 0) && (
             <div className="flex justify-end">
               <Button onClick={updateProfile} disabled={saving} size="sm">
                 <Save className="h-4 w-4 mr-2" />
@@ -582,9 +591,11 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                       <Building2 className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <h3 className="font-medium text-sm">{org.name}</h3>
-                        <p className="text-xs text-muted-foreground">
-                          Werkruimtes ({org.workspaces.length})
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-muted-foreground">
+                            Organisatie • Werkruimtes ({org.workspaces.length})
+                          </p>
+                        </div>
                       </div>
                     </div>
                     <Button
@@ -606,6 +617,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
                             <Briefcase className="h-3 w-3 text-muted-foreground" />
                             <div>
                               <p className="font-medium text-sm">{workspace.name}</p>
+                              <p className="text-xs text-muted-foreground">Werkruimte</p>
                             </div>
                           </div>
                           <Button
