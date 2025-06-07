@@ -35,9 +35,16 @@ const Register = () => {
     
     if (inviteEmail) {
       setEmail(inviteEmail);
-      // You could also fetch invitation details here if needed
+    } else {
+      // If no email in URL, redirect to login page
+      toast({
+        title: "Geen uitnodiging gevonden",
+        description: "Je hebt een geldige uitnodiging nodig om een account aan te maken.",
+        variant: "destructive",
+      });
+      navigate('/auth');
     }
-  }, [searchParams]);
+  }, [searchParams, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,13 +133,15 @@ const Register = () => {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="jan@advocatenkantoor.nl"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
+                  className="pl-10 bg-muted cursor-not-allowed"
+                  readOnly
+                  disabled
                 />
               </div>
+              <p className="text-xs text-muted-foreground">
+                E-mailadres uit de uitnodiging
+              </p>
             </div>
 
             <div className="space-y-2">
