@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -363,7 +362,15 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
                   </div>
                 </div>
                 {(user?.email === 'info@schapkun.com') && (
-                  <div className="flex space-x-1">
+                  <div className="flex space-x-1 mr-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteOrganization(org.id, org.name)}
+                      className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                     {editingOrganization === org.id ? (
                       <Button
                         variant="ghost"
@@ -388,14 +395,6 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
                         <Edit className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteOrganization(org.id, org.name)}
-                      className="text-destructive hover:text-destructive h-8 w-8 p-0"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
                 )}
               </div>
@@ -430,6 +429,15 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
                         </div>
                       </div>
                       <div className="flex space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteWorkspace(workspace.id, workspace.name)}
+                          className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                          title="Verwijder werkruimte"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                         {editingWorkspace === workspace.id ? (
                           <Button
                             variant="ghost"
@@ -454,15 +462,6 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
                             <Edit className="h-4 w-4" />
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteWorkspace(workspace.id, workspace.name)}
-                          className="text-destructive hover:text-destructive h-8 w-8 p-0"
-                          title="Verwijder werkruimte"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
                   ))}
