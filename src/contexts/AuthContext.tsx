@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType {
@@ -30,46 +30,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event: AuthChangeEvent, session) => {
-        console.log('Auth state change:', event, session?.user?.email);
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-
-        // Handle successful signup - check for the correct event type
-        if (event === 'SIGNED_IN' && session?.user && session.user.email_confirmed_at) {
-          console.log('User signed up and confirmed email:', session.user.email);
-          
-          // Try to find and accept any pending invitations for this email
-          try {
-            const { data: invitations, error } = await supabase
-              .from('user_invitations')
-              .select('*')
-              .eq('email', session.user.email)
-              .is('accepted_at', null);
-
-            if (error) {
-              console.error('Error fetching invitations:', error);
-            } else if (invitations && invitations.length > 0) {
-              console.log('Found pending invitations:', invitations);
-              
-              // Mark all pending invitations as accepted - removing updated_at since it doesn't exist
-              const { error: updateError } = await supabase
-                .from('user_invitations')
-                .update({ accepted_at: new Date().toISOString() })
-                .eq('email', session.user.email)
-                .is('accepted_at', null);
-
-              if (updateError) {
-                console.error('Error accepting invitations:', updateError);
-              } else {
-                console.log('Successfully accepted invitations for:', session.user.email);
-              }
-            }
-          } catch (error) {
-            console.error('Error handling invitations after signup:', error);
-          }
-        }
       }
     );
 
@@ -94,8 +58,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, fullName: string) => {
     const redirectUrl = `${window.location.origin}/`;
     
-    console.log('Attempting signup for:', email);
-    
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -106,13 +68,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       },
     });
-    
-    if (error) {
-      console.error('Signup error:', error);
-    } else {
-      console.log('Signup request sent successfully');
-    }
-    
     return { error };
   };
 
