@@ -57,19 +57,19 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
     } else {
       const filtered = organizations.map(org => {
         const orgMatches = org.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchingWorkspaces = org.workspaces.filter(workspace =>
+        const hasMatchingWorkspace = org.workspaces.some(workspace =>
           workspace.name.toLowerCase().includes(searchTerm.toLowerCase())
         );
         
-        // If organization name matches, show all workspaces
-        // If organization doesn't match but some workspaces do, show only matching workspaces
+        // If organization name matches OR has matching workspaces, show all workspaces for that organization
+        // This ensures when searching for a workspace, all other workspaces in that org remain visible
         return {
           ...org,
-          workspaces: orgMatches ? org.workspaces : matchingWorkspaces
+          workspaces: (orgMatches || hasMatchingWorkspace) ? org.workspaces : []
         };
       }).filter(org =>
         org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        org.workspaces.length > 0
+        org.workspaces.some(workspace => workspace.name.toLowerCase().includes(searchTerm.toLowerCase()))
       );
       setFilteredOrganizations(filtered);
     }
