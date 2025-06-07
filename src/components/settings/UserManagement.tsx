@@ -15,6 +15,7 @@ interface UserProfile {
   role?: string;
   avatar_url?: string | null;
   updated_at?: string;
+  member_since?: string;
 }
 
 interface UserManagementProps {

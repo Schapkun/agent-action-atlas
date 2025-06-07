@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { UserProfileCard } from './UserProfileCard';
@@ -15,6 +14,7 @@ interface UserProfile {
   role?: string;
   avatar_url?: string | null;
   updated_at?: string;
+  member_since?: string;
 }
 
 interface UserListProps {
