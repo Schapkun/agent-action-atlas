@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -466,11 +465,12 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
           </TabsList>
 
           <TabsContent value="organization" className="space-y-4 min-h-[500px]">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold">Organisatie Details</h3>
+            </div>
+
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Organisatie Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="p-6 space-y-4">
                 <div>
                   <Label htmlFor="orgName" className="text-sm font-medium">Organisatie Naam</Label>
                   <Input
@@ -512,6 +512,15 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
                 </div>
               </CardContent>
             </Card>
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={handleCancel}>
+                Annuleren
+              </Button>
+              <Button onClick={handleUpdateOrganization} disabled={loading}>
+                {loading ? 'Opslaan...' : 'Opslaan'}
+              </Button>
+            </div>
           </TabsContent>
 
           <TabsContent value="workspaces" className="space-y-4 min-h-[500px]">
