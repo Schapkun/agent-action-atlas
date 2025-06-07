@@ -88,14 +88,20 @@ export const enrichInvitationData = async (logs: any[]): Promise<HistoryLog[]> =
       console.log(`Using email from original log details: ${emailAddress}`);
     }
 
+    // Only add invited_email if we actually found a valid email address
+    const enrichedDetails = { ...log.details };
+    if (emailAddress && typeof emailAddress === 'string' && emailAddress.includes('@')) {
+      enrichedDetails.invited_email = emailAddress;
+      console.log(`Successfully enriched log ${log.id} with email: ${emailAddress}`);
+    } else {
+      console.log(`No valid email found for log ${log.id}, not adding invited_email field`);
+    }
+
     return {
       ...log,
       organization_id: orgId,
       workspace_id: workspaceId,
-      details: {
-        ...log.details,
-        invited_email: emailAddress
-      }
+      details: enrichedDetails
     };
   });
 };

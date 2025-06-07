@@ -1,4 +1,3 @@
-
 export const formatLogDetails = (details: any, action: string) => {
   if (!details) return null;
 
@@ -16,35 +15,34 @@ export const formatLogDetails = (details: any, action: string) => {
     return 'Uitnodiging verzonden';
   }
 
-  // Handle invitation cancellation actions - check ALL possible email fields
+  // Handle invitation cancellation actions - prioritize finding email addresses
   if (action.toLowerCase().includes('uitnodiging geannuleerd')) {
     // First try the enriched email field
-    if (details.invited_email) {
+    if (details.invited_email && typeof details.invited_email === 'string' && details.invited_email.includes('@')) {
       return `E-mailadres: ${details.invited_email}`;
     }
     
     // Then try other standard email fields
-    if (details.email) {
+    if (details.email && typeof details.email === 'string' && details.email.includes('@')) {
       return `E-mailadres: ${details.email}`;
     }
-    if (details.user_email) {
+    if (details.user_email && typeof details.user_email === 'string' && details.user_email.includes('@')) {
       return `E-mailadres: ${details.user_email}`;
     }
     
     // Check if email is stored in nested invitation data
-    if (details.invitation_data?.email) {
+    if (details.invitation_data?.email && typeof details.invitation_data.email === 'string' && details.invitation_data.email.includes('@')) {
       return `E-mailadres: ${details.invitation_data.email}`;
     }
     
-    // Look for any string that looks like an email address in the details object
+    // Recursively search through all properties for email addresses
     if (typeof details === 'object' && details !== null) {
-      // Recursively search through all properties
       const findEmailInObject = (obj: any): string | null => {
         for (const [key, value] of Object.entries(obj)) {
-          if (typeof value === 'string' && value.includes('@') && value.includes('.')) {
+          if (typeof value === 'string' && value.includes('@') && value.includes('.') && value.length > 5) {
             return value;
           }
-          if (typeof value === 'object' && value !== null) {
+          if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
             const nestedEmail = findEmailInObject(value);
             if (nestedEmail) return nestedEmail;
           }
@@ -58,7 +56,7 @@ export const formatLogDetails = (details: any, action: string) => {
       }
     }
     
-    // If still no email found, check if there's an invitation_id to show
+    // If no email found, provide fallback information
     if (details.invitation_id) {
       return `Uitnodiging geannuleerd (ID: ${details.invitation_id.slice(0, 8)}...)`;
     }
