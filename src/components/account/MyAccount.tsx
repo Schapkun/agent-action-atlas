@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -525,7 +523,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
   return (
     <div className="h-full flex flex-col">
       {/* Fixed Header */}
-      <div className="flex-shrink-0 pt-1 px-6 pb-4">
+      <div className="flex-shrink-0 pt-0 px-6 pb-4">
         <div className="flex items-center space-x-4">
           <Avatar className="h-12 w-12">
             <AvatarImage src={profile.avatar_url} />
@@ -585,4 +583,3 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
     </div>
   );
 };
-
