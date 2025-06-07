@@ -102,7 +102,10 @@ export const UserProfileSettings = () => {
   }, [user]);
 
   useEffect(() => {
-    // Group invitations by email address
+    // First, mark invitations as accepted for existing users
+    markInvitationsAsAccepted();
+    
+    // Then group remaining pending invitations by email address
     const grouped = invitedUsers.reduce((acc, invitation) => {
       const existingGroup = acc.find(group => group.email === invitation.email);
       
@@ -133,7 +136,45 @@ export const UserProfileSettings = () => {
     }, [] as GroupedInvitation[]);
     
     setGroupedInvitations(grouped);
-  }, [invitedUsers]);
+  }, [invitedUsers, userProfiles]);
+
+  const markInvitationsAsAccepted = async () => {
+    if (!userProfiles.length || !invitedUsers.length) return;
+
+    try {
+      // Get emails of all existing users
+      const existingUserEmails = userProfiles.map(profile => profile.email);
+      
+      // Find invitations for emails that now have user accounts
+      const invitationsToMark = invitedUsers.filter(invitation => 
+        existingUserEmails.includes(invitation.email)
+      );
+
+      if (invitationsToMark.length > 0) {
+        console.log('Marking invitations as accepted for existing users:', invitationsToMark.map(i => i.email));
+        
+        const invitationIds = invitationsToMark.map(invitation => invitation.id);
+        
+        const { error } = await supabase
+          .from('user_invitations')
+          .update({ 
+            accepted_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .in('id', invitationIds);
+
+        if (error) {
+          console.error('Error marking invitations as accepted:', error);
+        } else {
+          console.log('Successfully marked invitations as accepted');
+          // Refresh the invited users list to remove the now-accepted invitations
+          setTimeout(() => fetchInvitedUsers(), 1000);
+        }
+      }
+    } catch (error) {
+      console.error('Error in markInvitationsAsAccepted:', error);
+    }
+  };
 
   const toggleUserExpanded = (userId: string) => {
     const newExpanded = new Set(expandedUsers);
@@ -368,7 +409,7 @@ export const UserProfileSettings = () => {
       const isAccountOwner = user.email === 'info@schapkun.com';
 
       if (isAccountOwner) {
-        console.log('User is account owner, fetching all invitations');
+        console.log('User is account owner, fetching all pending invitations');
         
         // Account owner sees all invitations - but only pending ones (not accepted)
         const { data: invitationsData, error: invitationsError } = await supabase
@@ -383,7 +424,7 @@ export const UserProfileSettings = () => {
           return;
         }
 
-        console.log('Found invitations:', invitationsData?.length || 0);
+        console.log('Found pending invitations:', invitationsData?.length || 0);
 
         if (!invitationsData || invitationsData.length === 0) {
           setInvitedUsers([]);
@@ -456,7 +497,7 @@ export const UserProfileSettings = () => {
 
         setInvitedUsers(processedInvitations);
       } else {
-        console.log('Regular user, fetching organization-based invitations');
+        console.log('Regular user, fetching organization-based pending invitations');
         
         // Regular users see invitations from their organizations - but only pending ones
         const { data: invitationsData, error: invitationsError } = await supabase
