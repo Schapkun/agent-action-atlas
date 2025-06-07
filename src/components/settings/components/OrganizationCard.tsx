@@ -27,8 +27,10 @@ export const OrganizationCard = ({
   onDeleteWorkspace
 }: OrganizationCardProps) => {
   const [showCreateWorkspaceForm, setShowCreateWorkspaceForm] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingWorkspace, setEditingWorkspace] = useState<{id: string; name: string; organization_id: string} | null>(null);
+  const [editingItem, setEditingItem] = useState<{
+    type: 'organization' | 'workspace';
+    item: { id: string; name: string; organization_id?: string };
+  } | null>(null);
 
   const handleCreateWorkspace = async (name: string) => {
     await onCreateWorkspace(organization.id, name);
@@ -38,6 +40,24 @@ export const OrganizationCard = ({
   const handleRefreshData = () => {
     // This will be called after successful updates to refresh the parent data
     window.location.reload(); // Simple refresh for now
+  };
+
+  const handleEditOrganization = () => {
+    setEditingItem({
+      type: 'organization',
+      item: { id: organization.id, name: organization.name }
+    });
+  };
+
+  const handleEditWorkspace = (workspace: {id: string; name: string; organization_id: string}) => {
+    setEditingItem({
+      type: 'workspace',
+      item: {
+        id: workspace.id,
+        name: workspace.name,
+        organization_id: workspace.organization_id
+      }
+    });
   };
 
   return (
@@ -65,7 +85,7 @@ export const OrganizationCard = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setEditDialogOpen(true)}
+              onClick={handleEditOrganization}
               className="h-8 w-8 p-0"
               title="Bewerken"
             >
@@ -82,13 +102,7 @@ export const OrganizationCard = ({
           canCreate={canCreate}
           onUpdateWorkspace={onUpdateWorkspace}
           onDeleteWorkspace={onDeleteWorkspace}
-          onEditWorkspace={(workspace) => 
-            setEditingWorkspace({
-              id: workspace.id,
-              name: workspace.name,
-              organization_id: organization.id
-            })
-          }
+          onEditWorkspace={handleEditWorkspace}
         />
       )}
 
@@ -115,21 +129,12 @@ export const OrganizationCard = ({
         </div>
       )}
 
-      {/* Edit Organization Dialog */}
+      {/* Single Edit Dialog for both Organization and Workspace */}
       <EditOrgWorkspaceDialog
-        isOpen={editDialogOpen}
-        onClose={() => setEditDialogOpen(false)}
-        type="organization"
-        item={organization}
-        onUpdate={handleRefreshData}
-      />
-
-      {/* Edit Workspace Dialog */}
-      <EditOrgWorkspaceDialog
-        isOpen={!!editingWorkspace}
-        onClose={() => setEditingWorkspace(null)}
-        type="workspace"
-        item={editingWorkspace}
+        isOpen={!!editingItem}
+        onClose={() => setEditingItem(null)}
+        type={editingItem?.type || 'organization'}
+        item={editingItem?.item || null}
         onUpdate={handleRefreshData}
       />
     </div>
