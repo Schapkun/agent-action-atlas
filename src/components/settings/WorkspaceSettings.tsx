@@ -1,12 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspaceOperations } from './hooks/useWorkspaceOperations';
 import { CreateWorkspaceDialog } from './components/CreateWorkspaceDialog';
-import { EditWorkspaceDialog } from './components/EditWorkspaceDialog';
 import { WorkspaceCard } from './components/WorkspaceCard';
 import type { Workspace, GroupedWorkspaces } from './types/workspace';
+import { EditOrgWorkspaceDialog } from './components/EditOrgWorkspaceDialog';
 
 interface WorkspaceSettingsProps {
   userRole: string;
@@ -110,10 +109,15 @@ export const WorkspaceSettings = ({ userRole }: WorkspaceSettingsProps) => {
         )}
       </div>
 
-      <EditWorkspaceDialog
-        workspace={editingWorkspace}
-        onUpdateWorkspace={updateWorkspace}
+      <EditOrgWorkspaceDialog
+        isOpen={!!editingWorkspace}
         onClose={() => setEditingWorkspace(null)}
+        type="workspace"
+        item={editingWorkspace}
+        onUpdate={() => {
+          fetchWorkspaces();
+          fetchOrganizations();
+        }}
       />
     </div>
   );
