@@ -21,6 +21,9 @@ const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  // Calculate pending tasks count - currently 0 since we removed all mock data
+  const pendingTasksCount = 0;
+
   const renderContent = () => {
     switch (currentView) {
       case 'overview':
@@ -63,6 +66,7 @@ const Index = () => {
           onViewChange={setCurrentView}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          pendingTasksCount={pendingTasksCount}
         />
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header 

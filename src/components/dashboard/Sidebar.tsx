@@ -1,3 +1,4 @@
+
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +32,7 @@ export const Sidebar = ({
   onViewChange, 
   collapsed, 
   onToggleCollapse,
-  pendingTasksCount = 3 
+  pendingTasksCount = 0 
 }: SidebarProps) => {
   const menuItems = [
     { id: 'overview' as ViewType, label: 'Dashboard', icon: LayoutDashboard },
