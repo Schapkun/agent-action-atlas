@@ -30,6 +30,16 @@ interface OrganizationWorkspaceViewProps {
   userRole: string;
 }
 
+// Helper function to generate slug from name
+const generateSlug = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single
+    .trim();
+};
+
 export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceViewProps) => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [filteredOrganizations, setFilteredOrganizations] = useState<Organization[]>([]);
@@ -39,10 +49,10 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
   const [editingWorkspace, setEditingWorkspace] = useState<string | null>(null);
   const [showCreateOrgForm, setShowCreateOrgForm] = useState(false);
   const [showCreateWorkspaceForm, setShowCreateWorkspaceForm] = useState<string | null>(null);
-  const [newOrgData, setNewOrgData] = useState({ name: '', slug: '' });
-  const [newWorkspaceData, setNewWorkspaceData] = useState({ name: '', slug: '' });
-  const [editOrgData, setEditOrgData] = useState({ name: '', slug: '' });
-  const [editWorkspaceData, setEditWorkspaceData] = useState({ name: '', slug: '' });
+  const [newOrgData, setNewOrgData] = useState({ name: '' });
+  const [newWorkspaceData, setNewWorkspaceData] = useState({ name: '' });
+  const [editOrgData, setEditOrgData] = useState({ name: '' });
+  const [editWorkspaceData, setEditWorkspaceData] = useState({ name: '' });
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -110,14 +120,16 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
   };
 
   const createOrganization = async () => {
-    if (!newOrgData.name || !newOrgData.slug) return;
+    if (!newOrgData.name) return;
 
     try {
+      const slug = generateSlug(newOrgData.name);
+      
       const { data, error } = await supabase
         .from('organizations')
         .insert({
           name: newOrgData.name,
-          slug: newOrgData.slug
+          slug: slug
         })
         .select()
         .single();
@@ -129,7 +141,7 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
         description: "Organisatie succesvol aangemaakt",
       });
 
-      setNewOrgData({ name: '', slug: '' });
+      setNewOrgData({ name: '' });
       setShowCreateOrgForm(false);
       fetchOrganizations();
     } catch (error) {
@@ -143,14 +155,16 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
   };
 
   const updateOrganization = async (orgId: string) => {
-    if (!editOrgData.name || !editOrgData.slug) return;
+    if (!editOrgData.name) return;
 
     try {
+      const slug = generateSlug(editOrgData.name);
+      
       const { error } = await supabase
         .from('organizations')
         .update({
           name: editOrgData.name,
-          slug: editOrgData.slug
+          slug: slug
         })
         .eq('id', orgId);
 
@@ -203,14 +217,16 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
   };
 
   const createWorkspace = async (organizationId: string) => {
-    if (!newWorkspaceData.name || !newWorkspaceData.slug) return;
+    if (!newWorkspaceData.name) return;
 
     try {
+      const slug = generateSlug(newWorkspaceData.name);
+      
       const { data, error } = await supabase
         .from('workspaces')
         .insert({
           name: newWorkspaceData.name,
-          slug: newWorkspaceData.slug,
+          slug: slug,
           organization_id: organizationId
         })
         .select()
@@ -223,7 +239,7 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
         description: "Werkruimte succesvol aangemaakt",
       });
 
-      setNewWorkspaceData({ name: '', slug: '' });
+      setNewWorkspaceData({ name: '' });
       setShowCreateWorkspaceForm(null);
       fetchOrganizations();
     } catch (error) {
@@ -237,14 +253,16 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
   };
 
   const updateWorkspace = async (workspaceId: string) => {
-    if (!editWorkspaceData.name || !editWorkspaceData.slug) return;
+    if (!editWorkspaceData.name) return;
 
     try {
+      const slug = generateSlug(editWorkspaceData.name);
+      
       const { error } = await supabase
         .from('workspaces')
         .update({
           name: editWorkspaceData.name,
-          slug: editWorkspaceData.slug
+          slug: slug
         })
         .eq('id', workspaceId);
 
@@ -325,23 +343,14 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
       {showCreateOrgForm && (
         <div className="bg-background rounded-lg border border-border/50 p-4 mb-4">
           <h4 className="font-medium text-base mb-4">Nieuwe Organisatie Aanmaken</h4>
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 gap-4 mb-4">
             <div>
               <Label htmlFor="new-org-name">Naam</Label>
               <Input
                 id="new-org-name"
                 value={newOrgData.name}
-                onChange={(e) => setNewOrgData({ ...newOrgData, name: e.target.value })}
+                onChange={(e) => setNewOrgData({ name: e.target.value })}
                 placeholder="Organisatie naam"
-              />
-            </div>
-            <div>
-              <Label htmlFor="new-org-slug">Slug</Label>
-              <Input
-                id="new-org-slug"
-                value={newOrgData.slug}
-                onChange={(e) => setNewOrgData({ ...newOrgData, slug: e.target.value })}
-                placeholder="organisatie-slug"
               />
             </div>
           </div>
@@ -371,16 +380,11 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
                 <div className="flex items-center gap-3">
                   <div>
                     {editingOrganization === org.id ? (
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 gap-2">
                         <Input
                           value={editOrgData.name}
-                          onChange={(e) => setEditOrgData({ ...editOrgData, name: e.target.value })}
+                          onChange={(e) => setEditOrgData({ name: e.target.value })}
                           placeholder="Organisatie naam"
-                        />
-                        <Input
-                          value={editOrgData.slug}
-                          onChange={(e) => setEditOrgData({ ...editOrgData, slug: e.target.value })}
-                          placeholder="organisatie-slug"
                         />
                       </div>
                     ) : (
@@ -419,7 +423,7 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
                         size="sm"
                         onClick={() => {
                           setEditingOrganization(org.id);
-                          setEditOrgData({ name: org.name, slug: org.slug });
+                          setEditOrgData({ name: org.name });
                         }}
                         className="h-8 w-8 p-0"
                         title="Bewerken"
@@ -440,16 +444,11 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
                         <Briefcase className="h-4 w-4 text-muted-foreground" />
                         <div>
                           {editingWorkspace === workspace.id ? (
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-1 gap-2">
                               <Input
                                 value={editWorkspaceData.name}
-                                onChange={(e) => setEditWorkspaceData({ ...editWorkspaceData, name: e.target.value })}
+                                onChange={(e) => setEditWorkspaceData({ name: e.target.value })}
                                 placeholder="Werkruimte naam"
-                              />
-                              <Input
-                                value={editWorkspaceData.slug}
-                                onChange={(e) => setEditWorkspaceData({ ...editWorkspaceData, slug: e.target.value })}
-                                placeholder="werkruimte-slug"
                               />
                             </div>
                           ) : (
@@ -486,7 +485,7 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
                             size="sm"
                             onClick={() => {
                               setEditingWorkspace(workspace.id);
-                              setEditWorkspaceData({ name: workspace.name, slug: workspace.slug });
+                              setEditWorkspaceData({ name: workspace.name });
                             }}
                             className="h-8 w-8 p-0"
                             title="Bewerken"
@@ -503,16 +502,11 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
               {/* Create Workspace Form */}
               {showCreateWorkspaceForm === org.id && (
                 <div className="p-3 bg-muted/15 rounded-lg border-2 border-dashed border-muted-foreground/20 mx-2 mb-2">
-                  <div className="grid grid-cols-2 gap-2 mb-2">
+                  <div className="grid grid-cols-1 gap-2 mb-2">
                     <Input
                       value={newWorkspaceData.name}
-                      onChange={(e) => setNewWorkspaceData({ ...newWorkspaceData, name: e.target.value })}
+                      onChange={(e) => setNewWorkspaceData({ name: e.target.value })}
                       placeholder="Werkruimte naam"
-                    />
-                    <Input
-                      value={newWorkspaceData.slug}
-                      onChange={(e) => setNewWorkspaceData({ ...newWorkspaceData, slug: e.target.value })}
-                      placeholder="werkruimte-slug"
                     />
                   </div>
                   <div className="flex space-x-2">
