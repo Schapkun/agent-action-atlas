@@ -8,14 +8,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Scale, Mail, Lock, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 
 const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [invitation, setInvitation] = useState<any>(null);
   const { signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -30,11 +28,12 @@ const Register = () => {
 
   // Check for invitation token in URL
   useEffect(() => {
-    const token = searchParams.get('token');
     const inviteEmail = searchParams.get('email');
     
     if (inviteEmail) {
-      setEmail(inviteEmail);
+      // Clean up the email in case there are any URL artifacts
+      const cleanEmail = inviteEmail.split('?')[0]; // Remove any query parameters that might be attached
+      setEmail(cleanEmail);
     } else {
       // If no email in URL, redirect to login page
       toast({
