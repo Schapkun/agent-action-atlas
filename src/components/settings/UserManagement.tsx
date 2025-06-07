@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -87,9 +86,14 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
         // For each user, get their organization memberships and roles
         const usersWithOrgs = await Promise.all(
           (usersData || []).map(async (userProfile) => {
+            // Fix the query by specifying the correct relationship
             const { data: orgMemberships } = await supabase
               .from('organization_members')
-              .select('organization_id, role, organizations(name)')
+              .select(`
+                organization_id, 
+                role, 
+                organizations!organization_members_organization_id_fkey(name)
+              `)
               .eq('user_id', userProfile.id);
 
             const organizations = orgMemberships?.map(m => (m as any).organizations?.name).filter(Boolean) || [];
