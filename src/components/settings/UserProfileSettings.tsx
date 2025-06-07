@@ -650,7 +650,7 @@ export const UserProfileSettings = () => {
   };
 
   const inviteUser = async () => {
-    if (!newInvite.email.trim() || newInvite.organization_ids.length === 0 || isInviting) return;
+    if (!newInvite.email.trim() || newInvite.organization_ids.length === 0 || newInvite.workspace_ids.length === 0 || isInviting) return;
 
     setIsInviting(true);
     try {
@@ -947,7 +947,7 @@ export const UserProfileSettings = () => {
                 </DropdownMenu>
               </div>
               <div>
-                <Label>Werkruimtes (optioneel)</Label>
+                <Label>Werkruimtes (verplicht)</Label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="w-full justify-between" disabled={isInviting}>
@@ -983,7 +983,7 @@ export const UserProfileSettings = () => {
                 </Button>
                 <Button 
                   onClick={inviteUser}
-                  disabled={isInviting || !newInvite.email.trim() || newInvite.organization_ids.length === 0}
+                  disabled={isInviting || !newInvite.email.trim() || newInvite.organization_ids.length === 0 || newInvite.workspace_ids.length === 0}
                 >
                   {isInviting ? 'Bezig...' : 'Uitnodigen'}
                 </Button>
