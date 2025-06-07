@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, Settings, Users, Plus, Edit, Trash2, Save, Briefcase } from 'lucide-react';
+import { Settings, Users, Plus, Edit, Trash2, Save, Briefcase } from 'lucide-react';
 
 interface Organization {
   id: string;
@@ -277,8 +276,7 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <Building2 className="h-5 w-5" />
+        <div>
           <h3 className="text-lg font-medium">Organisaties & Werkruimtes</h3>
         </div>
         {(user?.email === 'info@schapkun.com') && (
@@ -337,7 +335,6 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
               {/* Organization Header */}
               <div className="flex items-center justify-between p-4 border-b border-border/30">
                 <div className="flex items-center gap-3">
-                  <Building2 className="h-5 w-5 text-muted-foreground" />
                   <div>
                     {editingOrganization === org.id ? (
                       <div className="grid grid-cols-2 gap-2">
@@ -363,7 +360,7 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
                   </div>
                 </div>
                 {(user?.email === 'info@schapkun.com') && (
-                  <div className="flex space-x-1 mr-1">
+                  <div className="flex space-x-1 mr-4">
                     <Button
                       variant="ghost"
                       size="sm"

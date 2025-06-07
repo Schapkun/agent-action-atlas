@@ -84,12 +84,7 @@ export const SettingsLayout = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-6xl">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold">Instellingen</h1>
-        <p className="text-muted-foreground">Beheer je organisaties, werkruimtes en gebruikersprofielen</p>
-      </div>
-
+    <div className="container mx-auto px-4 py-4 max-w-6xl">
       <Tabs defaultValue="organizations" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="organizations">Org & Werkruimtes</TabsTrigger>
@@ -99,7 +94,7 @@ export const SettingsLayout = () => {
         </TabsList>
 
         <TabsContent value="organizations">
-          <Card>
+          <Card className="rounded-lg border bg-card text-card-foreground shadow-sm">
             <CardContent className="p-6">
               <OrganizationWorkspaceView userRole={userRole} />
             </CardContent>
