@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -526,7 +527,13 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
       <ScrollArea className="flex-1 pr-4">
         <div className="space-y-6 pb-4">
           <div className="flex items-center space-x-4">
-            <div className="flex-1">
+            <Avatar className="h-12 w-12">
+              <AvatarImage src={profile.avatar_url} />
+              <AvatarFallback className="text-sm">
+                {getInitials(profile.full_name || profile.email || 'U')}
+              </AvatarFallback>
+            </Avatar>
+            <div>
               <h2 className="text-lg font-semibold">
                 {isViewingOwnProfile ? 'Mijn Account' : `Account van ${profile.full_name || profile.email}`}
               </h2>
@@ -537,12 +544,6 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false, onClose }
                 }
               </p>
             </div>
-            <Avatar className="h-12 w-12">
-              <AvatarImage src={profile.avatar_url} />
-              <AvatarFallback className="text-sm">
-                {getInitials(profile.full_name || profile.email || 'U')}
-              </AvatarFallback>
-            </Avatar>
           </div>
 
           {/* Profile Information and Role Management - No section title */}
