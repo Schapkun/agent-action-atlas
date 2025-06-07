@@ -55,12 +55,19 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
     if (!searchTerm.trim()) {
       setFilteredOrganizations(organizations);
     } else {
-      const filtered = organizations.map(org => ({
-        ...org,
-        workspaces: org.workspaces.filter(workspace =>
+      const filtered = organizations.map(org => {
+        const orgMatches = org.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchingWorkspaces = org.workspaces.filter(workspace =>
           workspace.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      })).filter(org =>
+        );
+        
+        // If organization name matches, show all workspaces
+        // If organization doesn't match but some workspaces do, show only matching workspaces
+        return {
+          ...org,
+          workspaces: orgMatches ? org.workspaces : matchingWorkspaces
+        };
+      }).filter(org =>
         org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         org.workspaces.length > 0
       );
