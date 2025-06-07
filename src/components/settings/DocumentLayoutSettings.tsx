@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentTemplate } from './types/DocumentTemplate';
@@ -125,6 +126,10 @@ export const DocumentLayoutSettings = () => {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-semibold mb-2">Document Layout Instellingen</h2>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <TemplateList
           templates={documentTemplates}
