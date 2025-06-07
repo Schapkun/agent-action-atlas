@@ -265,7 +265,7 @@ export const ContactManager = () => {
           </div>
         </CardHeader>
 
-        <CardContent className="py-3">
+        <div className="px-6 pb-6">
           {filteredItems.length > 0 ? (
             <div className="space-y-2">
               {filteredItems.map((item) => {
@@ -333,7 +333,7 @@ export const ContactManager = () => {
               }
             </div>
           )}
-        </CardContent>
+        </div>
       </Card>
     </div>
   );
