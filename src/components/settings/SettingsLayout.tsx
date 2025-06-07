@@ -13,10 +13,14 @@ import { supabase } from '@/integrations/supabase/client';
 export const SettingsLayout = () => {
   const { user } = useAuth();
   const [userRole, setUserRole] = useState<string>('lid');
+  const [isRoleLoading, setIsRoleLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserRole = async () => {
-      if (!user?.id) return;
+      if (!user?.id) {
+        setIsRoleLoading(false);
+        return;
+      }
 
       try {
         console.log('Fetching role for user:', user.email);
@@ -25,6 +29,7 @@ export const SettingsLayout = () => {
         if (user.email === 'info@schapkun.com') {
           console.log('User is account owner (info@schapkun.com), setting role to eigenaar');
           setUserRole('eigenaar');
+          setIsRoleLoading(false);
           return;
         }
 
@@ -40,6 +45,7 @@ export const SettingsLayout = () => {
         if (error) {
           console.error('Error fetching organization membership:', error);
           setUserRole('lid');
+          setIsRoleLoading(false);
           return;
         }
 
@@ -51,9 +57,11 @@ export const SettingsLayout = () => {
           console.log('No organization membership found, setting role to lid');
           setUserRole('lid');
         }
+        setIsRoleLoading(false);
       } catch (error) {
         console.error('Error fetching user role:', error);
         setUserRole('lid');
+        setIsRoleLoading(false);
       }
     };
 
@@ -62,6 +70,18 @@ export const SettingsLayout = () => {
 
   console.log('SettingsLayout - Current user:', user?.email);
   console.log('SettingsLayout - userRole state:', userRole);
+  console.log('SettingsLayout - isRoleLoading:', isRoleLoading);
+
+  if (isRoleLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6 max-w-6xl">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Gebruikersrol laden...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl">
