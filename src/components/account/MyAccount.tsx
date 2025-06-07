@@ -553,59 +553,55 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
           ) : (
             <div className="space-y-4">
               {organizations.map((org) => (
-                <div key={org.id}>
+                <div key={org.id} className="border rounded-lg p-4 bg-muted/20">
                   {/* Organization Header */}
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border-l-4 border-l-primary/20">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
-                        <p className="font-medium">{org.name}</p>
-                        <span className="text-sm text-muted-foreground">
-                          ({org.workspaces.length} werkruimte{org.workspaces.length !== 1 ? 's' : ''})
-                        </span>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <Building2 className="h-5 w-5 text-primary" />
+                      <div>
+                        <h3 className="font-semibold text-lg">{org.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Rol: <span className="font-medium">{org.role}</span>
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Rol: {org.role}
-                      </p>
                     </div>
-                    <div className="flex space-x-1 w-20 justify-end">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFromOrganization(org.id, org.name)}
-                        className="text-destructive hover:text-destructive w-8 h-8 p-0"
-                        title="Verwijder uit organisatie"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFromOrganization(org.id, org.name)}
+                      className="text-destructive hover:text-destructive"
+                      title="Verwijder uit organisatie"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
 
                   {/* Workspaces under this organization */}
                   {org.workspaces.length > 0 && (
-                    <div className="ml-6 space-y-2 mt-2">
+                    <div className="ml-6 space-y-2">
+                      <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                        Werkruimtes ({org.workspaces.length})
+                      </h4>
                       {org.workspaces.map((workspace) => (
-                        <div key={workspace.id} className="flex items-center justify-between p-3 bg-muted/15 rounded-lg">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-muted-foreground" />
+                        <div key={workspace.id} className="flex items-center justify-between p-3 bg-background rounded-md border">
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <div>
                               <p className="font-medium">{workspace.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Rol: {workspace.role || 'member'}
+                              </p>
                             </div>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Rol: {workspace.role || 'member'}
-                            </p>
                           </div>
-                          <div className="flex space-x-1 w-20 justify-end">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeFromWorkspace(workspace.id, workspace.name)}
-                              className="text-destructive hover:text-destructive w-8 h-8 p-0"
-                              title="Verwijder uit werkruimte"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeFromWorkspace(workspace.id, workspace.name)}
+                            className="text-destructive hover:text-destructive"
+                            title="Verwijder uit werkruimte"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       ))}
                     </div>
