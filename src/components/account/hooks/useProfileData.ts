@@ -12,7 +12,10 @@ export const useProfileData = (targetUserId?: string) => {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async () => {
-    if (!targetUserId) return;
+    if (!targetUserId) {
+      setLoading(false);
+      return;
+    }
 
     try {
       console.log('Fetching profile for user:', targetUserId);
@@ -32,7 +35,7 @@ export const useProfileData = (targetUserId?: string) => {
       console.log('Profile data:', profileData);
       setProfile(profileData);
 
-      // Fetch organization memberships with correct relationship
+      // Fetch organization memberships
       const { data: orgMemberships, error: orgError } = await supabase
         .from('organization_members')
         .select(`
@@ -48,7 +51,7 @@ export const useProfileData = (targetUserId?: string) => {
         console.error('Error fetching organization memberships:', orgError);
       }
 
-      // Fetch workspace memberships with correct relationship
+      // Fetch workspace memberships
       const { data: workspaceMemberships, error: workspaceError } = await supabase
         .from('workspace_members')
         .select(`
