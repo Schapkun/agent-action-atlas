@@ -20,13 +20,13 @@ export const SettingsLayout = () => {
     
     // Mock logic - in production this would come from your database
     // You could check user metadata, make an API call, etc.
-    // For demonstration, let's assume the first user is an 'eigenaar'
+    // For demonstration, let's assume specific emails have certain roles
     if (user.email === 'admin@example.com') return 'eigenaar';
     if (user.email?.includes('admin')) return 'admin';
     
-    // For now, default to 'eigenaar' so you can test the functionality
+    // Default to 'lid' role for all other users
     // Replace this with your actual role-checking logic
-    return 'eigenaar';
+    return 'lid';
   };
 
   const userRole = getUserRole();
