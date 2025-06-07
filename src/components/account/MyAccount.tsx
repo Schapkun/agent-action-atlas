@@ -505,8 +505,8 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
             </div>
           </div>
           
-          {/* Global Role Management - for admins viewing other users */}
-          {!isViewingOwnProfile && organizations.length > 0 && (
+          {/* Global Role Management - show for account owner (info@schapkun.com) when there are organizations */}
+          {user?.email === 'info@schapkun.com' && organizations.length > 0 && (
             <div>
               <Label htmlFor="global-role">Gebruikersrol (voor alle organisaties en werkruimtes)</Label>
               <Select
