@@ -27,9 +27,11 @@ interface Workspace {
   organization_id: string;
 }
 
+type UserRole = 'owner' | 'admin' | 'member';
+
 export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserDialogProps) => {
   const [inviteEmail, setInviteEmail] = useState('');
-  const [selectedRole, setSelectedRole] = useState('member');
+  const [selectedRole, setSelectedRole] = useState<UserRole>('member');
   const [selectedOrganization, setSelectedOrganization] = useState('');
   const [selectedWorkspace, setSelectedWorkspace] = useState('');
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -95,13 +97,19 @@ export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserD
     }
 
     try {
-      // Create invitation
-      const invitationData = {
+      // Create invitation with proper typing
+      const invitationData: {
+        email: string;
+        role: UserRole;
+        organization_id: string;
+        workspace_id: string | null;
+        invited_by: string;
+      } = {
         email: inviteEmail,
         role: selectedRole,
         organization_id: selectedOrganization,
         workspace_id: selectedWorkspace || null,
-        invited_by: user?.id
+        invited_by: user?.id || ''
       };
 
       const { data, error } = await supabase
@@ -178,7 +186,7 @@ export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserD
 
           <div>
             <Label htmlFor="invite-role" className="text-sm">Rol *</Label>
-            <Select value={selectedRole} onValueChange={setSelectedRole}>
+            <Select value={selectedRole} onValueChange={(value: UserRole) => setSelectedRole(value)}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Selecteer rol" />
               </SelectTrigger>
