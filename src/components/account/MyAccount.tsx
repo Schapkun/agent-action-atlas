@@ -10,11 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Separator } from '@/components/ui/separator';
-import { UserProfileSection } from './UserProfileSection';
-import { OrganizationsList } from './OrganizationsList';
 import { User, Save, Crown, Shield, UserCheck } from 'lucide-react';
-import { useUserRole } from '@/components/settings/hooks/useUserRole';
-import { usePermissions } from '@/components/settings/hooks/usePermissions';
 
 interface MyAccountProps {
   viewingUserId?: string;
@@ -104,7 +100,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
       console.log('Profile data:', profileData);
       setProfile(profileData);
 
-      // Fetch organization memberships
+      // Fetch organization memberships - fix the relationship reference
       const { data: orgMemberships, error: orgError } = await supabase
         .from('organization_members')
         .select(`
@@ -120,7 +116,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
         console.error('Error fetching organization memberships:', orgError);
       }
 
-      // Fetch workspace memberships
+      // Fetch workspace memberships - fix the relationship reference
       const { data: workspaceMemberships, error: workspaceError } = await supabase
         .from('workspace_members')
         .select(`
@@ -143,7 +139,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
         name: (membership as any).organizations?.name || 'Onbekende Organisatie',
         role: membership.role,
         created_at: membership.created_at
-      })).filter(org => org.id); // Filter out any invalid entries
+      })).filter(org => org.id);
 
       // Process workspace memberships
       const processedWorkspaces = (workspaceMemberships || []).map(membership => ({
@@ -152,7 +148,7 @@ export const MyAccount = ({ viewingUserId, isEditingOtherUser = false }: MyAccou
         organization_name: (membership as any).workspaces?.organizations?.name || 'Onbekende Organisatie',
         role: membership.role,
         created_at: membership.created_at
-      })).filter(workspace => workspace.id); // Filter out any invalid entries
+      })).filter(workspace => workspace.id);
 
       console.log('Processed organization memberships:', processedOrgs);
       console.log('Processed workspace memberships:', processedWorkspaces);
