@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Settings, Users, Plus, Edit, Trash2, Save, Briefcase } from 'lucide-react';
+import { Settings, Users, Plus, Edit, Trash2, Save, Briefcase, Search } from 'lucide-react';
 
 interface Organization {
   id: string;
@@ -32,6 +32,8 @@ interface OrganizationWorkspaceViewProps {
 
 export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceViewProps) => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [filteredOrganizations, setFilteredOrganizations] = useState<Organization[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [editingOrganization, setEditingOrganization] = useState<string | null>(null);
   const [editingWorkspace, setEditingWorkspace] = useState<string | null>(null);
@@ -47,6 +49,24 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
   useEffect(() => {
     fetchOrganizations();
   }, []);
+
+  useEffect(() => {
+    // Filter organizations and workspaces based on search term
+    if (!searchTerm.trim()) {
+      setFilteredOrganizations(organizations);
+    } else {
+      const filtered = organizations.map(org => ({
+        ...org,
+        workspaces: org.workspaces.filter(workspace =>
+          workspace.name.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      })).filter(org =>
+        org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        org.workspaces.length > 0
+      );
+      setFilteredOrganizations(filtered);
+    }
+  }, [searchTerm, organizations]);
 
   const fetchOrganizations = async () => {
     try {
@@ -275,7 +295,17 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
 
   return (
     <div>
-      <div className="flex items-center justify-end mb-6">
+      {/* Search and Create Button Row */}
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            placeholder="Zoek organisaties en werkruimtes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9"
+          />
+        </div>
         {(user?.email === 'info@schapkun.com') && (
           <Button onClick={() => setShowCreateOrgForm(true)}>
             <Plus className="h-4 w-4 mr-2" />
@@ -321,13 +351,13 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
       )}
 
       {/* Organizations List */}
-      {organizations.length === 0 ? (
+      {filteredOrganizations.length === 0 ? (
         <p className="text-muted-foreground text-sm">
-          Geen organisaties gevonden
+          {searchTerm ? 'Geen organisaties of werkruimtes gevonden voor uw zoekopdracht' : 'Geen organisaties gevonden'}
         </p>
       ) : (
         <div className="space-y-4">
-          {organizations.map((org) => (
+          {filteredOrganizations.map((org) => (
             <div key={org.id} className="bg-background rounded-lg border border-border/50">
               {/* Organization Header */}
               <div className="flex items-center justify-between p-4 border-b border-border/30">
