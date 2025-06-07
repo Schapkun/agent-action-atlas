@@ -85,7 +85,7 @@ export const SettingsLayout = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 max-w-6xl" style={{ paddingTop: '-4px' }}>
+    <div className="container mx-auto px-4 max-w-6xl" style={{ paddingTop: '-9px' }}>
       <Tabs defaultValue="organizations" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="organizations">Org & Werkruimtes</TabsTrigger>
