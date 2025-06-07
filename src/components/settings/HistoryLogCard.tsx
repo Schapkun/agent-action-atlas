@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity, Calendar, User, Mail } from 'lucide-react';
+import { Activity, Calendar, User, Mail, Building, Briefcase } from 'lucide-react';
 
 interface HistoryLog {
   id: string;
@@ -42,25 +42,25 @@ const formatLogDetails = (details: any, action: string) => {
 
   // Handle invitation cancellation actions
   if (action.toLowerCase().includes('uitnodiging geannuleerd')) {
-    // For single invitation cancellations, try to find the email
-    if (details.invitation_id) {
-      // We might need to extract email from other details if available
-      if (details.email) {
-        return `E-mailadres: ${details.email}`;
-      }
-      if (details.invited_email) {
-        return `E-mailadres: ${details.invited_email}`;
-      }
-      if (details.user_email) {
-        return `E-mailadres: ${details.user_email}`;
-      }
-      return 'Uitnodiging geannuleerd';
+    // Try to find the email in various places in details
+    if (details.email) {
+      return `E-mailadres: ${details.email}`;
+    }
+    if (details.invited_email) {
+      return `E-mailadres: ${details.invited_email}`;
+    }
+    if (details.user_email) {
+      return `E-mailadres: ${details.user_email}`;
     }
     // For multiple invitation cancellations
     if (details.invitation_ids && Array.isArray(details.invitation_ids)) {
       return `${details.invitation_ids.length} uitnodiging(en) geannuleerd`;
     }
-    return 'Uitnodiging geannuleerd';
+    // If we have invitation_id but no email, still try to show something useful
+    if (details.invitation_id) {
+      return `Uitnodiging ID: ${details.invitation_id}`;
+    }
+    return 'E-mailadres niet beschikbaar';
   }
 
   // Handle other invitation actions (general)
@@ -210,26 +210,32 @@ export const HistoryLogCard = ({ log }: HistoryLogCardProps) => {
           </div>
         </div>
       </CardHeader>
-      {formattedDetails && (
-        <CardContent>
-          <div className="bg-muted p-3 rounded-md">
+      <CardContent>
+        {formattedDetails && (
+          <div className="bg-muted p-3 rounded-md mb-3">
             <div className="flex items-start space-x-2">
               <Mail className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
               <p className="text-sm">{formattedDetails}</p>
             </div>
           </div>
+        )}
+        
+        {/* Always show organization and workspace information */}
+        <div className="space-y-2">
           {log.organization_name && (
-            <p className="text-sm text-muted-foreground mt-2">
-              Organisatie: {log.organization_name}
-            </p>
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <Building className="h-4 w-4" />
+              <span>Organisatie: {log.organization_name}</span>
+            </div>
           )}
           {log.workspace_name && (
-            <p className="text-sm text-muted-foreground">
-              Werkruimte: {log.workspace_name}
-            </p>
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <Briefcase className="h-4 w-4" />
+              <span>Werkruimte: {log.workspace_name}</span>
+            </div>
           )}
-        </CardContent>
-      )}
+        </div>
+      </CardContent>
     </Card>
   );
 };
