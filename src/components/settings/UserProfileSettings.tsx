@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -359,7 +360,7 @@ export const UserProfileSettings = () => {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-1 gap-3 items-stretch">
         {users.length === 0 ? (
           <Card>
             <CardContent className="p-4 text-center text-sm text-muted-foreground">
@@ -371,10 +372,10 @@ export const UserProfileSettings = () => {
           </Card>
         ) : (
           users.map((userProfile) => (
-            <Card key={userProfile.id} className="h-full">
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start h-full">
-                  <div className="flex-1">
+            <Card key={userProfile.id} className="flex flex-col">
+              <CardHeader className="pb-3 flex-1">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1 min-w-0">
                     <CardTitle className="text-base">
                       {userProfile.full_name || 'Niet ingesteld'}
                     </CardTitle>
@@ -386,7 +387,7 @@ export const UserProfileSettings = () => {
                       } • Aangemaakt: {new Date(userProfile.created_at).toLocaleDateString('nl-NL')}
                     </p>
                   </div>
-                  <div className="flex space-x-1 flex-shrink-0">
+                  <div className="flex space-x-1 flex-shrink-0 ml-2">
                     {user?.email === 'info@schapkun.com' && (
                       <>
                         <Button
