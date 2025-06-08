@@ -25,27 +25,28 @@ export const LayoutSelector = ({
         </p>
       </div>
       
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-2">
         {layouts.map((layout) => (
           <Card 
             key={layout.id}
             className={`cursor-pointer transition-all hover:shadow-md ${
               selectedLayoutId === layout.id 
-                ? 'ring-2 ring-primary shadow-sm' 
+                ? 'ring-1 ring-primary shadow-sm' 
                 : 'hover:shadow-sm'
             }`}
             onClick={() => onSelectLayout(layout.id)}
+            style={{ maxWidth: '120px' }}
           >
-            <CardContent style={{ padding: '6px' }}>
+            <CardContent style={{ padding: '4px' }}>
               <div className="relative">
-                {/* Layout Thumbnail - echt 30% van originele grootte */}
+                {/* Layout Thumbnail - 30% van originele grootte */}
                 <div 
-                  className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-md mb-1 flex items-center justify-center relative overflow-hidden"
-                  style={{ height: '24px', width: '100%' }}
+                  className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-sm mb-1 flex items-center justify-center relative overflow-hidden"
+                  style={{ height: '40px', width: '100%' }}
                 >
                   <div 
                     className="text-blue-600 font-medium text-center"
-                    style={{ fontSize: '4px' }}
+                    style={{ fontSize: '6px', lineHeight: '1' }}
                   >
                     {layout.name}
                   </div>
@@ -53,32 +54,32 @@ export const LayoutSelector = ({
                     <div 
                       className="absolute bg-primary text-primary-foreground rounded-full flex items-center justify-center"
                       style={{ 
-                        top: '1px', 
-                        right: '1px', 
-                        width: '8px', 
-                        height: '8px' 
+                        top: '2px', 
+                        right: '2px', 
+                        width: '12px', 
+                        height: '12px' 
                       }}
                     >
-                      <Check style={{ height: '4px', width: '4px' }} />
+                      <Check style={{ height: '6px', width: '6px' }} />
                     </div>
                   )}
                 </div>
                 
                 <div style={{ marginTop: '2px' }}>
-                  <div className="flex items-center justify-between" style={{ marginBottom: '1px' }}>
+                  <div className="flex items-center justify-between mb-1">
                     <h4 
                       className="font-medium truncate" 
-                      style={{ fontSize: '6px' }}
+                      style={{ fontSize: '8px' }}
                     >
                       {layout.name}
                     </h4>
                     <Badge 
                       variant="outline" 
                       style={{ 
-                        fontSize: '4px', 
-                        padding: '0px 2px',
-                        height: '8px',
-                        lineHeight: '8px'
+                        fontSize: '6px', 
+                        padding: '1px 3px',
+                        height: '12px',
+                        lineHeight: '10px'
                       }}
                     >
                       {layout.category}
@@ -86,7 +87,7 @@ export const LayoutSelector = ({
                   </div>
                   <p 
                     className="text-muted-foreground leading-tight" 
-                    style={{ fontSize: '4px' }}
+                    style={{ fontSize: '6px', lineHeight: '1.2' }}
                   >
                     {layout.description}
                   </p>
