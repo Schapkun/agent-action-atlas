@@ -1,16 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { Plus, Edit, Trash2, Check, X } from 'lucide-react';
+import { OrganizationTab } from './OrganizationTab';
+import { WorkspacesTab } from './WorkspacesTab';
 
 interface Organization {
   id: string;
@@ -48,12 +45,6 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [newWorkspaceName, setNewWorkspaceName] = useState('');
-  const [showAddWorkspace, setShowAddWorkspace] = useState(false);
-  const [editingWorkspace, setEditingWorkspace] = useState<string | null>(null);
-  const [editWorkspaceName, setEditWorkspaceName] = useState('');
-  const [editingOrganization, setEditingOrganization] = useState(false);
-  const [editOrgName, setEditOrgName] = useState('');
   const { toast } = useToast();
   const { refreshData } = useOrganization();
 
@@ -149,11 +140,9 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
   };
 
   const handleOrgUserToggle = async (userId: string, hasAccess: boolean) => {
-    // Update local state immediately
     setUsers(prev => prev.map(user => {
       if (user.id === userId) {
         const newWorkspaceAccess = { ...user.workspaceAccess };
-        // If removing from org, remove from all workspaces
         if (!hasAccess) {
           Object.keys(newWorkspaceAccess).forEach(wsId => {
             newWorkspaceAccess[wsId] = false;
@@ -184,29 +173,21 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
     }));
   };
 
-  const handleEditOrganization = (currentName: string) => {
-    setEditingOrganization(true);
-    setEditOrgName(currentName);
-  };
-
-  const handleSaveOrganizationName = async () => {
-    if (!editOrgName.trim() || !item) return;
+  const handleEditOrganization = async (newName: string) => {
+    if (!item) return;
 
     try {
       const { error } = await supabase
         .from('organizations')
         .update({
-          name: editOrgName.trim(),
-          slug: editOrgName.toLowerCase().replace(/\s+/g, '-')
+          name: newName,
+          slug: newName.toLowerCase().replace(/\s+/g, '-')
         })
         .eq('id', item.id);
 
       if (error) throw error;
 
-      // Update local state
-      setName(editOrgName.trim());
-      setEditingOrganization(false);
-      setEditOrgName('');
+      setName(newName);
 
       toast({
         title: "Succes",
@@ -220,11 +201,6 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
         variant: "destructive",
       });
     }
-  };
-
-  const handleCancelEditOrganization = () => {
-    setEditingOrganization(false);
-    setEditOrgName('');
   };
 
   const handleDeleteOrganization = async () => {
@@ -258,15 +234,15 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
     }
   };
 
-  const handleAddWorkspace = async () => {
-    if (!newWorkspaceName.trim() || !item) return;
+  const handleAddWorkspace = async (workspaceName: string) => {
+    if (!item) return;
 
     try {
       const { data, error } = await supabase
         .from('workspaces')
         .insert({
-          name: newWorkspaceName.trim(),
-          slug: newWorkspaceName.toLowerCase().replace(/\s+/g, '-'),
+          name: workspaceName,
+          slug: workspaceName.toLowerCase().replace(/\s+/g, '-'),
           organization_id: item.id
         })
         .select()
@@ -274,12 +250,8 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
 
       if (error) throw error;
 
-      // Add to local state
       setWorkspaces(prev => [...prev, data]);
-      setNewWorkspaceName('');
-      setShowAddWorkspace(false);
       
-      // Update users to include this workspace
       setUsers(prev => prev.map(user => ({
         ...user,
         workspaceAccess: {
@@ -302,6 +274,38 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
     }
   };
 
+  const handleEditWorkspace = async (workspaceId: string, newName: string) => {
+    try {
+      const { error } = await supabase
+        .from('workspaces')
+        .update({
+          name: newName,
+          slug: newName.toLowerCase().replace(/\s+/g, '-')
+        })
+        .eq('id', workspaceId);
+
+      if (error) throw error;
+
+      setWorkspaces(prev => prev.map(ws => 
+        ws.id === workspaceId 
+          ? { ...ws, name: newName }
+          : ws
+      ));
+
+      toast({
+        title: "Succes",
+        description: "Werkruimte naam bijgewerkt",
+      });
+    } catch (error) {
+      console.error('Error updating workspace name:', error);
+      toast({
+        title: "Error",
+        description: "Kon werkruimte naam niet bijwerken",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDeleteWorkspace = async (workspaceId: string, workspaceName: string) => {
     if (!confirm(`Weet je zeker dat je werkruimte "${workspaceName}" wilt verwijderen?`)) {
       return;
@@ -315,10 +319,8 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
 
       if (error) throw error;
 
-      // Remove from local state
       setWorkspaces(prev => prev.filter(ws => ws.id !== workspaceId));
       
-      // Update users to remove this workspace
       setUsers(prev => prev.map(user => {
         const newWorkspaceAccess = { ...user.workspaceAccess };
         delete newWorkspaceAccess[workspaceId];
@@ -340,54 +342,6 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
         variant: "destructive",
       });
     }
-  };
-
-  const handleEditWorkspace = (workspaceId: string, currentName: string) => {
-    setEditingWorkspace(workspaceId);
-    setEditWorkspaceName(currentName);
-  };
-
-  const handleSaveWorkspaceName = async (workspaceId: string) => {
-    if (!editWorkspaceName.trim()) return;
-
-    try {
-      const { error } = await supabase
-        .from('workspaces')
-        .update({
-          name: editWorkspaceName.trim(),
-          slug: editWorkspaceName.toLowerCase().replace(/\s+/g, '-')
-        })
-        .eq('id', workspaceId);
-
-      if (error) throw error;
-
-      // Update local state
-      setWorkspaces(prev => prev.map(ws => 
-        ws.id === workspaceId 
-          ? { ...ws, name: editWorkspaceName.trim() }
-          : ws
-      ));
-
-      setEditingWorkspace(null);
-      setEditWorkspaceName('');
-
-      toast({
-        title: "Succes",
-        description: "Werkruimte naam bijgewerkt",
-      });
-    } catch (error) {
-      console.error('Error updating workspace name:', error);
-      toast({
-        title: "Error",
-        description: "Kon werkruimte naam niet bijwerken",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCancelEditWorkspace = () => {
-    setEditingWorkspace(null);
-    setEditWorkspaceName('');
   };
 
   const handleSave = async () => {
@@ -459,7 +413,6 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
 
         // Add users to workspace
         for (const user of workspaceUsers) {
-          // Only add if user is also in organization
           if (user.hasOrgAccess) {
             const { error: workspaceMemberError } = await supabase
               .from('workspace_members')
@@ -498,6 +451,8 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
     }
   };
 
+  if (!item) return null;
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -518,240 +473,26 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
             </TabsList>
             
             <TabsContent value="organisatie" className="flex-1 overflow-hidden">
-              <div className="h-full flex flex-col space-y-4">
-                {/* Add exact same whitespace as workspaces tab */}
-                <div className="flex-shrink-0">
-                  <div className="flex items-center justify-end h-10 mb-3">
-                    {/* Empty div to match workspace button space */}
-                  </div>
-                </div>
-                
-                <div className="flex-1 overflow-hidden">
-                  <ScrollArea className="h-full border rounded-md bg-muted/10">
-                    <div className="p-3">
-                      {loading ? (
-                        <div className="text-sm text-muted-foreground">Laden...</div>
-                      ) : (
-                        <div className="space-y-4">
-                          <div className="border rounded-lg bg-background/50 p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              {editingOrganization ? (
-                                <div className="flex items-center gap-2 flex-1">
-                                  <Input
-                                    value={editOrgName}
-                                    onChange={(e) => setEditOrgName(e.target.value)}
-                                    className="flex-1"
-                                    autoFocus
-                                  />
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={handleSaveOrganizationName}
-                                    className="text-green-600 hover:text-green-700"
-                                  >
-                                    <Check className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={handleCancelEditOrganization}
-                                    className="text-gray-600 hover:text-gray-700"
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <>
-                                  <span className="font-medium">{name}</span>
-                                  <div className="flex items-center gap-2">
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={handleDeleteOrganization}
-                                      className="text-red-600 hover:text-red-700"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => handleEditOrganization(name)}
-                                      className="text-black hover:text-gray-700"
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                            
-                            <div>
-                              <Label className="text-xs font-medium mb-2 block text-muted-foreground">Organisatie Gebruikers</Label>
-                              <div className="space-y-1">
-                                {users.map((user) => (
-                                  <div key={user.id} className="flex items-center space-x-3 p-1 hover:bg-muted/30 rounded">
-                                    <Checkbox
-                                      id={`org-${user.id}`}
-                                      checked={user.hasOrgAccess}
-                                      onCheckedChange={(checked) => 
-                                        handleOrgUserToggle(user.id, checked as boolean)
-                                      }
-                                    />
-                                    <label 
-                                      htmlFor={`org-${user.id}`}
-                                      className="text-sm cursor-pointer flex-1"
-                                    >
-                                      {user.full_name || user.email}
-                                      {user.email !== user.full_name && (
-                                        <span className="text-muted-foreground ml-2">({user.email})</span>
-                                      )}
-                                    </label>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </div>
-              </div>
+              <OrganizationTab
+                organization={item}
+                users={users}
+                loading={loading}
+                onEditOrganization={handleEditOrganization}
+                onDeleteOrganization={handleDeleteOrganization}
+                onUserToggle={handleOrgUserToggle}
+              />
             </TabsContent>
             
             <TabsContent value="werkruimtes" className="flex-1 overflow-hidden">
-              <div className="h-full flex flex-col space-y-4">
-                <div className="flex-shrink-0">
-                  <div className="flex items-center justify-end h-10 mb-3">
-                    <Button
-                      size="sm"
-                      onClick={() => setShowAddWorkspace(!showAddWorkspace)}
-                      className="flex items-center gap-2"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Werkruimte Toevoegen
-                    </Button>
-                  </div>
-                  
-                  {showAddWorkspace && (
-                    <div className="flex gap-2 p-3 border rounded-md bg-muted/20 mb-3">
-                      <Input
-                        value={newWorkspaceName}
-                        onChange={(e) => setNewWorkspaceName(e.target.value)}
-                        placeholder="Werkruimte naam"
-                        className="flex-1"
-                      />
-                      <Button size="sm" onClick={handleAddWorkspace}>
-                        Toevoegen
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setShowAddWorkspace(false)}>
-                        Annuleren
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex-1 overflow-hidden">
-                  <ScrollArea className="h-full border rounded-md bg-muted/10">
-                    <div className="p-3">
-                      {loading ? (
-                        <div className="text-sm text-muted-foreground">Laden...</div>
-                      ) : workspaces.length === 0 ? (
-                        <div className="text-sm text-muted-foreground">Geen werkruimtes gevonden</div>
-                      ) : (
-                        <div className="space-y-4">
-                          {workspaces.map((workspace) => (
-                            <div key={workspace.id} className="border rounded-lg bg-background/50 p-4">
-                              <div className="flex items-center justify-between mb-3">
-                                {editingWorkspace === workspace.id ? (
-                                  <div className="flex items-center gap-2 flex-1">
-                                    <Input
-                                      value={editWorkspaceName}
-                                      onChange={(e) => setEditWorkspaceName(e.target.value)}
-                                      className="flex-1"
-                                      autoFocus
-                                    />
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => handleSaveWorkspaceName(workspace.id)}
-                                      className="text-green-600 hover:text-green-700"
-                                    >
-                                      <Check className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={handleCancelEditWorkspace}
-                                      className="text-gray-600 hover:text-gray-700"
-                                    >
-                                      <X className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <span className="font-medium">{workspace.name}</span>
-                                    <div className="flex items-center gap-2">
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => handleDeleteWorkspace(workspace.id, workspace.name)}
-                                        className="text-red-600 hover:text-red-700"
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => handleEditWorkspace(workspace.id, workspace.name)}
-                                        className="text-black hover:text-gray-700"
-                                      >
-                                        <Edit className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                              
-                              <div>
-                                <Label className="text-xs font-medium mb-2 block text-muted-foreground">Werkruimte Gebruikers</Label>
-                                <div className="space-y-1">
-                                  {users.map((user) => (
-                                    <div key={user.id} className="flex items-center space-x-3 p-1 hover:bg-muted/30 rounded">
-                                      <Checkbox
-                                        id={`ws-${workspace.id}-${user.id}`}
-                                        checked={user.workspaceAccess?.[workspace.id] || false}
-                                        disabled={!user.hasOrgAccess}
-                                        onCheckedChange={(checked) => 
-                                          handleWorkspaceUserToggle(workspace.id, user.id, checked as boolean)
-                                        }
-                                      />
-                                      <label 
-                                        htmlFor={`ws-${workspace.id}-${user.id}`}
-                                        className={`text-sm cursor-pointer flex-1 ${
-                                          !user.hasOrgAccess ? 'text-muted-foreground' : ''
-                                        }`}
-                                      >
-                                        {user.full_name || user.email}
-                                        {user.email !== user.full_name && (
-                                          <span className="text-muted-foreground ml-2">({user.email})</span>
-                                        )}
-                                        {!user.hasOrgAccess && (
-                                          <span className="text-xs text-muted-foreground ml-2">(niet in organisatie)</span>
-                                        )}
-                                      </label>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </div>
-              </div>
+              <WorkspacesTab
+                workspaces={workspaces}
+                users={users}
+                loading={loading}
+                onAddWorkspace={handleAddWorkspace}
+                onEditWorkspace={handleEditWorkspace}
+                onDeleteWorkspace={handleDeleteWorkspace}
+                onUserToggle={handleWorkspaceUserToggle}
+              />
             </TabsContent>
           </Tabs>
         </div>
