@@ -170,42 +170,45 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
                   {isLoadingOrganizations ? 'Laden...' : getCurrentSelectionLabel()}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="w-64">
                 {/* Show all data option */}
-                <SelectItem value="all">
+                <SelectItem value="all" className="py-3">
                   <div className="flex items-center justify-between w-full">
-                    <span>Alle gegevens</span>
+                    <span className="font-medium">Alle gegevens</span>
                     <Star 
-                      className={`h-4 w-4 cursor-pointer hover:text-yellow-500 ${favoriteFilter === 'all' ? 'fill-current text-yellow-500' : ''}`}
+                      className={`h-4 w-4 cursor-pointer hover:text-yellow-500 transition-colors ${favoriteFilter === 'all' ? 'fill-current text-yellow-500' : 'text-gray-400'}`}
                       onClick={(e) => handleSetFavorite('all', e)}
                     />
                   </div>
                 </SelectItem>
 
                 {groupedOptions.map((group) => (
-                  <div key={group.organization.id}>
-                    <SelectItem value={`org:${group.organization.id}`}>
+                  <div key={group.organization.id} className="border-t border-border mt-1 pt-1">
+                    {/* Organization header */}
+                    <SelectItem value={`org:${group.organization.id}`} className="py-3">
                       <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-2">
-                          <Building2 className="h-4 w-4" />
-                          <span className="font-medium">{group.organization.name}</span>
-                          <span className="text-xs text-muted-foreground">(hele organisatie)</span>
+                          <Building2 className="h-4 w-4 text-primary" />
+                          <span className="font-semibold">{group.organization.name}</span>
+                          <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">hele organisatie</span>
                         </div>
                         <Star 
-                          className={`h-4 w-4 cursor-pointer hover:text-yellow-500 ${favoriteFilter === `org:${group.organization.id}` ? 'fill-current text-yellow-500' : ''}`}
+                          className={`h-4 w-4 cursor-pointer hover:text-yellow-500 transition-colors ${favoriteFilter === `org:${group.organization.id}` ? 'fill-current text-yellow-500' : 'text-gray-400'}`}
                           onClick={(e) => handleSetFavorite(`org:${group.organization.id}`, e)}
                         />
                       </div>
                     </SelectItem>
+                    
+                    {/* Workspaces under this organization */}
                     {group.workspaces.map((workspace) => (
-                      <SelectItem key={workspace.id} value={`workspace:${workspace.id}`}>
+                      <SelectItem key={workspace.id} value={`workspace:${workspace.id}`} className="py-2.5 pl-8">
                         <div className="flex items-center justify-between w-full">
-                          <div className="flex items-center gap-2 ml-4">
-                            <Users className="h-3 w-3" />
-                            <span>{workspace.name}</span>
+                          <div className="flex items-center gap-2">
+                            <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-sm">{workspace.name}</span>
                           </div>
                           <Star 
-                            className={`h-4 w-4 cursor-pointer hover:text-yellow-500 ${favoriteFilter === `workspace:${workspace.id}` ? 'fill-current text-yellow-500' : ''}`}
+                            className={`h-4 w-4 cursor-pointer hover:text-yellow-500 transition-colors ${favoriteFilter === `workspace:${workspace.id}` ? 'fill-current text-yellow-500' : 'text-gray-400'}`}
                             onClick={(e) => handleSetFavorite(`workspace:${workspace.id}`, e)}
                           />
                         </div>
