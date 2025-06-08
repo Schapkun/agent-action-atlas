@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ZoomIn, ZoomOut, Download, FileText, Save, Star } from 'lucide-react';
 import { VisualTemplateData } from '../types/VisualTemplate';
+import { getLayoutSpecificStyles } from '../../../utils/layoutStyles';
 
 interface EnhancedLivePreviewProps {
   templateData: VisualTemplateData;
@@ -30,55 +31,8 @@ export const EnhancedLivePreview = ({
   const renderPreviewContent = () => {
     const { companyInfo, styling, layout } = templateData;
     
-    // Apply layout-specific styling
-    const getLayoutSpecificStyles = () => {
-      switch(layout) {
-        case 'modern-blue':
-          return {
-            headerBg: 'bg-blue-600',
-            headerText: 'text-white',
-            accentColor: 'text-blue-600',
-            borderColor: 'border-blue-200'
-          };
-        case 'classic-elegant':
-          return {
-            headerBg: 'bg-gray-800',
-            headerText: 'text-white',
-            accentColor: 'text-gray-800',
-            borderColor: 'border-gray-300'
-          };
-        case 'minimal-clean':
-          return {
-            headerBg: 'bg-white',
-            headerText: 'text-black',
-            accentColor: 'text-black',
-            borderColor: 'border-gray-100'
-          };
-        case 'corporate-formal':
-          return {
-            headerBg: 'bg-slate-800',
-            headerText: 'text-white',
-            accentColor: 'text-slate-800',
-            borderColor: 'border-slate-200'
-          };
-        case 'creative-modern':
-          return {
-            headerBg: 'bg-purple-600',
-            headerText: 'text-white',
-            accentColor: 'text-purple-600',
-            borderColor: 'border-purple-200'
-          };
-        default:
-          return {
-            headerBg: 'bg-green-600',
-            headerText: 'text-white',
-            accentColor: 'text-green-600',
-            borderColor: 'border-green-200'
-          };
-      }
-    };
-
-    const layoutStyles = getLayoutSpecificStyles();
+    // Use shared layout-specific styling utility
+    const layoutStyles = getLayoutSpecificStyles(layout || 'business-green');
     
     return (
       <div 
@@ -157,7 +111,7 @@ export const EnhancedLivePreview = ({
         <div className="mb-8">
           <table className="w-full border-collapse">
             <thead>
-              <tr className={`border-b-2 ${layoutStyles.borderColor}`} style={{ borderColor: styling.primaryColor }}>
+              <tr className={`border-b-2 ${layoutStyles.borderColor}`} style={{ borderColor: layoutStyles.primaryColor }}>
                 <th className="text-left py-2">Beschrijving</th>
                 <th className="text-right py-2">Aantal</th>
                 <th className="text-right py-2">Prijs</th>
@@ -187,7 +141,7 @@ export const EnhancedLivePreview = ({
                 <td colSpan={3} className="text-right py-2">BTW (21%):</td>
                 <td className="text-right py-2">€ 168,00</td>
               </tr>
-              <tr className={`border-t-2 ${layoutStyles.borderColor}`} style={{ borderColor: styling.primaryColor }}>
+              <tr className={`border-t-2 ${layoutStyles.borderColor}`} style={{ borderColor: layoutStyles.primaryColor }}>
                 <td colSpan={3} className="text-right py-2 font-bold">Totaal:</td>
                 <td className="text-right py-2 font-bold">€ 968,00</td>
               </tr>
@@ -213,7 +167,7 @@ export const EnhancedLivePreview = ({
           </div>
           
           <div className="flex items-center gap-2">
-            {/* Zoom Controls - nu in preview */}
+            {/* Zoom Controls */}
             <div className="flex items-center gap-1 mr-2">
               <Button
                 variant="ghost"
@@ -238,7 +192,7 @@ export const EnhancedLivePreview = ({
               </Button>
             </div>
             
-            {/* Header Actions - Template Library en PDF Download */}
+            {/* Header Actions */}
             <Button
               variant="outline"
               size="sm"

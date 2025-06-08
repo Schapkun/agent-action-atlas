@@ -176,7 +176,7 @@ export const VisualTemplateEditor = ({
       </div>
 
       <div className="flex-1 grid grid-cols-5 gap-4 p-4 overflow-hidden">
-        {/* Sidebar */}
+        {/* Sidebar with fixed height */}
         <div className="col-span-2 flex flex-col min-h-0">
           <Tabs defaultValue="layout" className="flex-1 flex flex-col min-h-0">
             <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
@@ -196,31 +196,37 @@ export const VisualTemplateEditor = ({
             
             <div className="flex-1 min-h-0 mt-4">
               <TabsContent value="layout" className="h-full m-0">
-                <ScrollArea className="h-full">
-                  <UniqueLayoutSelector
-                    layouts={UNIQUE_LAYOUT_TEMPLATES}
-                    selectedLayoutId={templateData.layout}
-                    onSelectLayout={handleLayoutSelect}
-                  />
-                </ScrollArea>
+                <div className="h-full max-h-[calc(100vh-250px)]">
+                  <ScrollArea className="h-full">
+                    <UniqueLayoutSelector
+                      layouts={UNIQUE_LAYOUT_TEMPLATES}
+                      selectedLayoutId={templateData.layout}
+                      onSelectLayout={handleLayoutSelect}
+                    />
+                  </ScrollArea>
+                </div>
               </TabsContent>
               
               <TabsContent value="company" className="h-full m-0">
-                <ScrollArea className="h-full">
-                  <CompanyInfoForm
-                    companyInfo={templateData.companyInfo}
-                    onUpdateCompanyInfo={handleCompanyInfoUpdate}
-                  />
-                </ScrollArea>
+                <div className="h-full max-h-[calc(100vh-250px)]">
+                  <ScrollArea className="h-full">
+                    <CompanyInfoForm
+                      companyInfo={templateData.companyInfo}
+                      onUpdateCompanyInfo={handleCompanyInfoUpdate}
+                    />
+                  </ScrollArea>
+                </div>
               </TabsContent>
               
               <TabsContent value="styling" className="h-full m-0">
-                <ScrollArea className="h-full">
-                  <StyleEditor
-                    styling={templateData.styling}
-                    onUpdateStyling={handleStylesUpdate}
-                  />
-                </ScrollArea>
+                <div className="h-full max-h-[calc(100vh-250px)]">
+                  <ScrollArea className="h-full">
+                    <StyleEditor
+                      styling={templateData.styling}
+                      onUpdateStyling={handleStylesUpdate}
+                    />
+                  </ScrollArea>
+                </div>
               </TabsContent>
             </div>
           </Tabs>

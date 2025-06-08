@@ -1,6 +1,7 @@
 
 import jsPDF from 'jspdf';
 import { VisualTemplateData } from '../types/VisualTemplate';
+import { getLayoutSpecificStyles, getLayoutFont } from '../../../utils/layoutStyles';
 
 export class PDFGenerator {
   private doc: jsPDF;
@@ -10,21 +11,78 @@ export class PDFGenerator {
   }
 
   generateFromTemplate(templateData: VisualTemplateData): jsPDF {
-    const { companyInfo, styling, documentType } = templateData;
+    const { companyInfo, styling, documentType, layout } = templateData;
     
-    // Set font based on template
+    // Get layout-specific styles using shared utility
+    const layoutStyles = getLayoutSpecificStyles(layout || 'business-green');
+    const layoutFont = getLayoutFont(layout || 'business-green');
+    
+    // Set font based on layout
     this.doc.setFont('helvetica');
     
-    // Company header
+    // Apply layout-specific header styling
+    this.generateLayoutSpecificHeader(companyInfo, layoutStyles, layoutFont);
+    
+    // Document content with layout-aware styling
+    this.generateDocumentContent(templateData, layoutStyles);
+    
+    // Table with consistent styling
+    this.drawLayoutAwareTable(layoutStyles);
+
+    return this.doc;
+  }
+
+  private generateLayoutSpecificHeader(companyInfo: any, layoutStyles: any, layoutFont: string) {
+    let yPos = 30;
+    
+    // Company name with layout-specific color
     this.doc.setFontSize(20);
-    const rgb = this.hexToRgb(styling.primaryColor);
+    const rgb = this.hexToRgb(layoutStyles.primaryColor);
     this.doc.setTextColor(rgb[0], rgb[1], rgb[2]);
-    this.doc.text(companyInfo.name || 'Uw Bedrijf', 20, 30);
+    this.doc.text(companyInfo.name || 'Uw Bedrijf', 20, yPos);
+    
+    yPos += 15;
+    
+    // Layout-specific header styling
+    switch(layoutStyles.headerPattern) {
+      case 'gradient-header':
+      case 'corporate-header':
+        // Add colored background for header
+        this.doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+        this.doc.rect(15, 15, 180, 25, 'F');
+        this.doc.setTextColor(255, 255, 255);
+        this.doc.text(companyInfo.name || 'Uw Bedrijf', 20, 30);
+        yPos = 50;
+        break;
+      
+      case 'centered-formal':
+        // Centered with border
+        this.doc.setLineWidth(1);
+        this.doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
+        this.doc.rect(50, 20, 110, 20);
+        const textWidth = this.doc.getTextWidth(companyInfo.name || 'Uw Bedrijf');
+        this.doc.text(companyInfo.name || 'Uw Bedrijf', 105 - textWidth/2, 32);
+        yPos = 50;
+        break;
+      
+      case 'clean-lines':
+        // Minimal with subtle line
+        this.doc.setLineWidth(0.5);
+        this.doc.setDrawColor(200, 200, 200);
+        this.doc.line(20, 35, 190, 35);
+        break;
+      
+      case 'business-header':
+        // Left border accent
+        this.doc.setLineWidth(3);
+        this.doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
+        this.doc.line(15, 20, 15, 40);
+        break;
+    }
     
     // Company details
     this.doc.setFontSize(10);
     this.doc.setTextColor(100, 100, 100);
-    let yPos = 40;
     
     if (companyInfo.address) {
       this.doc.text(companyInfo.address, 20, yPos);
@@ -45,17 +103,22 @@ export class PDFGenerator {
       this.doc.text(`Email: ${companyInfo.email}`, 20, yPos);
       yPos += 5;
     }
+  }
 
-    // Document title
+  private generateDocumentContent(templateData: VisualTemplateData, layoutStyles: any) {
+    const { documentType } = templateData;
+    let yPos = 80;
+
+    // Document title with layout-specific styling
     this.doc.setFontSize(16);
-    const titleRgb = this.hexToRgb(styling.primaryColor);
+    const titleRgb = this.hexToRgb(layoutStyles.primaryColor);
     this.doc.setTextColor(titleRgb[0], titleRgb[1], titleRgb[2]);
     const docTitle = documentType === 'invoice' ? 'FACTUUR' : 
                     documentType === 'quote' ? 'OFFERTE' : 
                     documentType === 'letter' ? 'BRIEF' : 'DOCUMENT';
-    this.doc.text(docTitle, 20, yPos + 15);
+    this.doc.text(docTitle, 20, yPos);
     
-    yPos += 30;
+    yPos += 20;
 
     // Invoice details
     this.doc.setFontSize(12);
@@ -82,23 +145,18 @@ export class PDFGenerator {
     this.doc.text('Voorbeeldstraat 123', 20, yPos);
     yPos += 5;
     this.doc.text('1234 AB Amsterdam', 20, yPos);
-
-    // Table
-    yPos += 20;
-    this.drawTable(yPos, styling.primaryColor);
-
-    return this.doc;
   }
 
-  private drawTable(startY: number, primaryColor: string) {
+  private drawLayoutAwareTable(layoutStyles: any) {
+    const startY = 160;
     const tableHeaders = ['Beschrijving', 'Aantal', 'Prijs', 'Totaal'];
     const tableData = [
       ['Consultancy diensten', '10', '€ 75,00', '€ 750,00'],
       ['Reiskosten', '1', '€ 50,00', '€ 50,00']
     ];
 
-    // Table headers
-    const headerRgb = this.hexToRgb(primaryColor);
+    // Table headers with layout-specific styling
+    const headerRgb = this.hexToRgb(layoutStyles.primaryColor);
     this.doc.setFillColor(headerRgb[0], headerRgb[1], headerRgb[2]);
     this.doc.rect(20, startY, 170, 8, 'F');
     
@@ -121,7 +179,7 @@ export class PDFGenerator {
       rowY += 8;
     });
 
-    // Totals
+    // Totals with layout-specific accent
     rowY += 5;
     this.doc.text('Subtotaal:', 140, rowY);
     this.doc.text('€ 800,00', 170, rowY);
@@ -131,6 +189,8 @@ export class PDFGenerator {
     rowY += 8;
     
     this.doc.setFontSize(12);
+    const totalRgb = this.hexToRgb(layoutStyles.primaryColor);
+    this.doc.setTextColor(totalRgb[0], totalRgb[1], totalRgb[2]);
     this.doc.text('Totaal:', 140, rowY);
     this.doc.text('€ 968,00', 170, rowY);
   }
