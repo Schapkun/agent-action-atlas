@@ -53,7 +53,7 @@ export const WorkspacesTab = ({
   return (
     <div className="h-full flex flex-col space-y-4">
       <div className="flex-shrink-0">
-        <div className="flex items-center justify-end h-10 mb-3">
+        <div className="flex items-center justify-end h-10">
           <Button
             size="sm"
             onClick={() => setShowAddWorkspace(!showAddWorkspace)}
