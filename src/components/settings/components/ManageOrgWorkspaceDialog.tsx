@@ -622,7 +622,7 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
             <TabsContent value="werkruimtes" className="flex-1 overflow-hidden">
               <div className="h-full flex flex-col space-y-4">
                 <div className="flex-shrink-0">
-                  <div className="flex items-center justify-center h-10 mb-3">
+                  <div className="flex items-center justify-end h-10 mb-3">
                     <Button
                       size="sm"
                       onClick={() => setShowAddWorkspace(!showAddWorkspace)}
