@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -87,31 +88,42 @@ export const SettingsLayout = () => {
   return (
     <div className="container mx-auto px-2 sm:px-4 max-w-6xl">
       <Tabs defaultValue="organizations" className="space-y-4">
-        <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} ${isMobile ? 'h-auto' : ''}`}>
-          <TabsTrigger value="organizations" className={isMobile ? 'text-xs py-3' : ''}>
-            {isMobile ? 'Org.' : 'Organisaties'}
-          </TabsTrigger>
-          <TabsTrigger value="users" className={isMobile ? 'text-xs py-3' : ''}>
-            Gebruikers
-          </TabsTrigger>
-          {!isMobile && (
-            <>
-              <TabsTrigger value="documents">Documenten</TabsTrigger>
-              <TabsTrigger value="history">Geschiedenis</TabsTrigger>
-            </>
-          )}
-        </TabsList>
-
-        {/* Mobile: Additional tabs row */}
-        {isMobile && (
-          <TabsList className="grid w-full grid-cols-2 h-auto">
-            <TabsTrigger value="documents" className="text-xs py-3">
+        {!isMobile ? (
+          // Desktop: Single row with all tabs
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="organizations">
+              Organisaties
+            </TabsTrigger>
+            <TabsTrigger value="users">
+              Gebruikers
+            </TabsTrigger>
+            <TabsTrigger value="documents">
               Documenten
             </TabsTrigger>
-            <TabsTrigger value="history" className="text-xs py-3">
+            <TabsTrigger value="history">
               Geschiedenis
             </TabsTrigger>
           </TabsList>
+        ) : (
+          // Mobile: Two rows with 2 tabs each
+          <div className="space-y-2">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="organizations" className="text-sm px-2 py-3">
+                Organisaties
+              </TabsTrigger>
+              <TabsTrigger value="users" className="text-sm px-2 py-3">
+                Gebruikers
+              </TabsTrigger>
+            </TabsList>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="documents" className="text-sm px-2 py-3">
+                Documenten
+              </TabsTrigger>
+              <TabsTrigger value="history" className="text-sm px-2 py-3">
+                Geschiedenis
+              </TabsTrigger>
+            </TabsList>
+          </div>
         )}
 
         <TabsContent value="organizations">
