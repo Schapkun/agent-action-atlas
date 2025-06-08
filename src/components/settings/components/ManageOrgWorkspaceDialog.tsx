@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { Plus, Edit2, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Edit2, Trash2 } from 'lucide-react';
 
 interface Organization {
   id: string;
@@ -46,7 +45,6 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
   const [name, setName] = useState(item?.name || '');
   const [users, setUsers] = useState<User[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [expandedWorkspaces, setExpandedWorkspaces] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
@@ -265,18 +263,6 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
     }
   };
 
-  const toggleWorkspaceExpanded = (workspaceId: string) => {
-    setExpandedWorkspaces(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(workspaceId)) {
-        newSet.delete(workspaceId);
-      } else {
-        newSet.add(workspaceId);
-      }
-      return newSet;
-    });
-  };
-
   const handleSave = async () => {
     if (!item || !name.trim()) {
       toast({
@@ -390,20 +376,20 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg">
             Organisatie Beheren
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="organisatie" className="w-full">
+        <Tabs defaultValue="organisatie" className="w-full h-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="organisatie">Organisatie</TabsTrigger>
             <TabsTrigger value="werkruimtes">Werkruimtes</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="organisatie" className="space-y-4">
+          <TabsContent value="organisatie" className="space-y-4 h-full">
             <div>
               <Label className="text-sm font-medium">Organisatie Details</Label>
             </div>
@@ -420,7 +406,7 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
             
             <div>
               <Label className="text-sm font-medium">Organisatie Gebruikers</Label>
-              <div className="max-h-64 overflow-y-auto border rounded-md p-3 mt-2 space-y-2">
+              <div className="max-h-96 overflow-y-auto border rounded-md p-3 mt-2 space-y-2">
                 {loading ? (
                   <div className="text-sm text-muted-foreground">Laden...</div>
                 ) : (
@@ -449,7 +435,7 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
             </div>
           </TabsContent>
           
-          <TabsContent value="werkruimtes" className="space-y-4">
+          <TabsContent value="werkruimtes" className="space-y-4 h-full">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium">Werkruimtes</Label>
               <Button
@@ -479,28 +465,16 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
               </div>
             )}
             
-            <div className="space-y-3">
+            <div className="space-y-6 max-h-96 overflow-y-auto">
               {loading ? (
                 <div className="text-sm text-muted-foreground">Laden...</div>
               ) : workspaces.length === 0 ? (
                 <div className="text-sm text-muted-foreground">Geen werkruimtes gevonden</div>
               ) : (
                 workspaces.map((workspace) => (
-                  <div key={workspace.id} className="border rounded-md">
-                    <div className="flex items-center justify-between p-3 bg-muted/30">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => toggleWorkspaceExpanded(workspace.id)}
-                          className="p-1 hover:bg-muted rounded"
-                        >
-                          {expandedWorkspaces.has(workspace.id) ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                        </button>
-                        <span className="font-medium">{workspace.name}</span>
-                      </div>
+                  <div key={workspace.id} className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-md">
+                      <span className="font-medium">{workspace.name}</span>
                       <div className="flex items-center gap-2">
                         <Button
                           size="sm"
@@ -512,39 +486,37 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
                       </div>
                     </div>
                     
-                    {expandedWorkspaces.has(workspace.id) && (
-                      <div className="p-3 border-t">
-                        <Label className="text-xs font-medium mb-2 block">Werkruimte Gebruikers</Label>
-                        <div className="space-y-2 max-h-48 overflow-y-auto">
-                          {users.map((user) => (
-                            <div key={user.id} className="flex items-center space-x-3">
-                              <Checkbox
-                                id={`ws-${workspace.id}-${user.id}`}
-                                checked={user.workspaceAccess?.[workspace.id] || false}
-                                disabled={!user.hasOrgAccess}
-                                onCheckedChange={(checked) => 
-                                  handleWorkspaceUserToggle(workspace.id, user.id, checked as boolean)
-                                }
-                              />
-                              <label 
-                                htmlFor={`ws-${workspace.id}-${user.id}`}
-                                className={`text-sm cursor-pointer flex-1 ${
-                                  !user.hasOrgAccess ? 'text-muted-foreground' : ''
-                                }`}
-                              >
-                                {user.full_name || user.email}
-                                {user.email !== user.full_name && (
-                                  <span className="text-muted-foreground ml-2">({user.email})</span>
-                                )}
-                                {!user.hasOrgAccess && (
-                                  <span className="text-xs text-muted-foreground ml-2">(niet in organisatie)</span>
-                                )}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
+                    <div className="pl-3">
+                      <Label className="text-xs font-medium mb-2 block">Werkruimte Gebruikers</Label>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {users.map((user) => (
+                          <div key={user.id} className="flex items-center space-x-3">
+                            <Checkbox
+                              id={`ws-${workspace.id}-${user.id}`}
+                              checked={user.workspaceAccess?.[workspace.id] || false}
+                              disabled={!user.hasOrgAccess}
+                              onCheckedChange={(checked) => 
+                                handleWorkspaceUserToggle(workspace.id, user.id, checked as boolean)
+                              }
+                            />
+                            <label 
+                              htmlFor={`ws-${workspace.id}-${user.id}`}
+                              className={`text-sm cursor-pointer flex-1 ${
+                                !user.hasOrgAccess ? 'text-muted-foreground' : ''
+                              }`}
+                            >
+                              {user.full_name || user.email}
+                              {user.email !== user.full_name && (
+                                <span className="text-muted-foreground ml-2">({user.email})</span>
+                              )}
+                              {!user.hasOrgAccess && (
+                                <span className="text-xs text-muted-foreground ml-2">(niet in organisatie)</span>
+                              )}
+                            </label>
+                          </div>
+                        ))}
                       </div>
-                    )}
+                    </div>
                   </div>
                 ))
               )}
