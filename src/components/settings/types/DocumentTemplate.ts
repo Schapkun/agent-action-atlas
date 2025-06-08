@@ -6,6 +6,7 @@ export interface DocumentTemplate {
   description: string;
   lastModified: Date;
   isDefault: boolean;
+  content?: string;
 }
 
 export const getTypeColor = (type: string) => {
