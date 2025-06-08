@@ -36,16 +36,16 @@ export const LayoutSelector = ({
             }`}
             onClick={() => onSelectLayout(layout.id)}
           >
-            <CardContent className="p-2">
+            <CardContent className="p-1.5">
               <div className="relative">
-                {/* Layout Thumbnail Placeholder - 30% kleiner */}
-                <div className="aspect-[4/3] bg-gradient-to-br from-blue-50 to-blue-100 rounded-md mb-1 flex items-center justify-center relative overflow-hidden"
-                     style={{ height: '60px' }}>
+                {/* Layout Thumbnail Placeholder - 30% van originele grootte */}
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-md mb-1 flex items-center justify-center relative overflow-hidden"
+                     style={{ height: '35px', width: '100%' }}>
                   <div className="text-xs text-blue-600 font-medium">
                     {layout.name}
                   </div>
                   {selectedLayoutId === layout.id && (
-                    <div className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full p-1">
+                    <div className="absolute top-0.5 right-0.5 bg-primary text-primary-foreground rounded-full p-0.5">
                       <Check className="h-2 w-2" />
                     </div>
                   )}
