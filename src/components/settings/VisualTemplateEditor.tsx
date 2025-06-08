@@ -160,7 +160,7 @@ export const VisualTemplateEditor = ({
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-screen flex flex-col overflow-hidden">
       {/* Header met workspace/organization switcher */}
       <div className="flex-shrink-0 px-4 py-3 bg-muted/50 border-b">
         <div className="flex items-center justify-between">
@@ -176,9 +176,9 @@ export const VisualTemplateEditor = ({
       </div>
 
       <div className="flex-1 grid grid-cols-5 gap-4 p-4 overflow-hidden">
-        {/* Sidebar with MORE height for proper scrolling */}
-        <div className="col-span-2 flex flex-col h-[calc(100vh-100px)] overflow-hidden">
-          <Tabs defaultValue="layout" className="flex-1 flex flex-col overflow-hidden">
+        {/* Sidebar met VOLLEDIGE height en geen height restrictions */}
+        <div className="col-span-2 flex flex-col min-h-0">
+          <Tabs defaultValue="layout" className="flex-1 flex flex-col min-h-0">
             <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
               <TabsTrigger value="layout" className="text-xs">
                 <FileText className="h-3 w-3 mr-1" />
@@ -194,10 +194,10 @@ export const VisualTemplateEditor = ({
               </TabsTrigger>
             </TabsList>
             
-            <div className="flex-1 mt-4 overflow-hidden">
-              <TabsContent value="layout" className="h-full m-0 overflow-hidden">
-                <ScrollArea className="h-full p-0">
-                  <div className="p-1 pb-16">
+            <div className="flex-1 mt-4 min-h-0">
+              <TabsContent value="layout" className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col">
+                <ScrollArea className="flex-1">
+                  <div className="p-1 pb-24">
                     <UniqueLayoutSelector
                       layouts={UNIQUE_LAYOUT_TEMPLATES}
                       selectedLayoutId={templateData.layout}
@@ -207,9 +207,9 @@ export const VisualTemplateEditor = ({
                 </ScrollArea>
               </TabsContent>
               
-              <TabsContent value="company" className="h-full m-0 overflow-hidden">
-                <ScrollArea className="h-full p-0">
-                  <div className="p-1 pb-16">
+              <TabsContent value="company" className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col">
+                <ScrollArea className="flex-1">
+                  <div className="p-1 pb-24">
                     <CompanyInfoForm
                       companyInfo={templateData.companyInfo}
                       onUpdateCompanyInfo={handleCompanyInfoUpdate}
@@ -218,9 +218,9 @@ export const VisualTemplateEditor = ({
                 </ScrollArea>
               </TabsContent>
               
-              <TabsContent value="styling" className="h-full m-0 overflow-hidden">
-                <ScrollArea className="h-full p-0">
-                  <div className="p-1 pb-16">
+              <TabsContent value="styling" className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col">
+                <ScrollArea className="flex-1">
+                  <div className="p-1 pb-24">
                     <StyleEditor
                       styling={templateData.styling}
                       onUpdateStyling={handleStylesUpdate}
