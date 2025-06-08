@@ -176,8 +176,8 @@ export const VisualTemplateEditor = ({
       </div>
 
       <div className="flex-1 grid grid-cols-5 gap-4 p-4 overflow-hidden">
-        {/* Sidebar with optimized height for proper scrolling */}
-        <div className="col-span-2 flex flex-col h-[calc(100vh-160px)] overflow-hidden">
+        {/* Sidebar with MORE height for proper scrolling */}
+        <div className="col-span-2 flex flex-col h-[calc(100vh-100px)] overflow-hidden">
           <Tabs defaultValue="layout" className="flex-1 flex flex-col overflow-hidden">
             <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
               <TabsTrigger value="layout" className="text-xs">
@@ -195,9 +195,9 @@ export const VisualTemplateEditor = ({
             </TabsList>
             
             <div className="flex-1 mt-4 overflow-hidden">
-              <TabsContent value="layout" className="h-full m-0">
+              <TabsContent value="layout" className="h-full m-0 overflow-hidden">
                 <ScrollArea className="h-full p-0">
-                  <div className="p-1 pb-8">
+                  <div className="p-1 pb-16">
                     <UniqueLayoutSelector
                       layouts={UNIQUE_LAYOUT_TEMPLATES}
                       selectedLayoutId={templateData.layout}
@@ -207,9 +207,9 @@ export const VisualTemplateEditor = ({
                 </ScrollArea>
               </TabsContent>
               
-              <TabsContent value="company" className="h-full m-0">
+              <TabsContent value="company" className="h-full m-0 overflow-hidden">
                 <ScrollArea className="h-full p-0">
-                  <div className="p-1 pb-8">
+                  <div className="p-1 pb-16">
                     <CompanyInfoForm
                       companyInfo={templateData.companyInfo}
                       onUpdateCompanyInfo={handleCompanyInfoUpdate}
@@ -218,9 +218,9 @@ export const VisualTemplateEditor = ({
                 </ScrollArea>
               </TabsContent>
               
-              <TabsContent value="styling" className="h-full m-0">
+              <TabsContent value="styling" className="h-full m-0 overflow-hidden">
                 <ScrollArea className="h-full p-0">
-                  <div className="p-1 pb-8">
+                  <div className="p-1 pb-16">
                     <StyleEditor
                       styling={templateData.styling}
                       onUpdateStyling={handleStylesUpdate}
