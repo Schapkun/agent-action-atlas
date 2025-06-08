@@ -36,9 +36,9 @@ export const LivePreview = ({
         style={{ 
           transform: `scale(${zoom})`,
           transformOrigin: 'top center',
-          width: '210mm',
-          minHeight: '297mm',
-          padding: '20mm',
+          width: '794px', // A4 width in pixels at 96 DPI
+          minHeight: '1123px', // A4 height in pixels at 96 DPI
+          padding: '76px', // 20mm converted to pixels
           fontFamily: styling.font,
           fontSize: '11pt',
           lineHeight: '1.4'
@@ -51,7 +51,7 @@ export const LivePreview = ({
               src={companyInfo.logo} 
               alt="Company logo" 
               className="object-contain"
-              style={{ height: '16mm' }}
+              style={{ height: '64px' }}
             />
           )}
           <div className={`${styling.logoPosition === 'left' ? 'text-right' : styling.logoPosition === 'right' ? 'text-left' : 'text-center'}`}>
@@ -78,7 +78,7 @@ export const LivePreview = ({
         </div>
 
         {/* Document Title */}
-        <div style={{ marginBottom: '8mm' }}>
+        <div style={{ marginBottom: '32px' }}>
           <h2 
             className="font-semibold mb-4"
             style={{ 
@@ -93,7 +93,7 @@ export const LivePreview = ({
           </h2>
           
           {/* Sample Content */}
-          <div className="grid grid-cols-2" style={{ gap: '8mm' }}>
+          <div className="grid grid-cols-2" style={{ gap: '32px' }}>
             <div>
               <h3 className="font-medium mb-2" style={{ fontSize: '12pt' }}>Factuurgegevens</h3>
               <div className="space-y-1" style={{ fontSize: '10pt' }}>
@@ -115,42 +115,42 @@ export const LivePreview = ({
         </div>
 
         {/* Sample Table */}
-        <div style={{ marginBottom: '8mm' }}>
+        <div style={{ marginBottom: '32px' }}>
           <table className="w-full border-collapse" style={{ fontSize: '10pt' }}>
             <thead>
               <tr style={{ borderBottom: '2pt solid', borderColor: styling.primaryColor }}>
-                <th className="text-left" style={{ padding: '2mm 0' }}>Beschrijving</th>
-                <th className="text-right" style={{ padding: '2mm 0' }}>Aantal</th>
-                <th className="text-right" style={{ padding: '2mm 0' }}>Prijs</th>
-                <th className="text-right" style={{ padding: '2mm 0' }}>Totaal</th>
+                <th className="text-left" style={{ padding: '8px 0' }}>Beschrijving</th>
+                <th className="text-right" style={{ padding: '8px 0' }}>Aantal</th>
+                <th className="text-right" style={{ padding: '8px 0' }}>Prijs</th>
+                <th className="text-right" style={{ padding: '8px 0' }}>Totaal</th>
               </tr>
             </thead>
             <tbody>
               <tr style={{ borderBottom: '1pt solid #e5e7eb' }}>
-                <td style={{ padding: '2mm 0' }}>Consultancy diensten</td>
-                <td className="text-right" style={{ padding: '2mm 0' }}>10</td>
-                <td className="text-right" style={{ padding: '2mm 0' }}>€ 75,00</td>
-                <td className="text-right" style={{ padding: '2mm 0' }}>€ 750,00</td>
+                <td style={{ padding: '8px 0' }}>Consultancy diensten</td>
+                <td className="text-right" style={{ padding: '8px 0' }}>10</td>
+                <td className="text-right" style={{ padding: '8px 0' }}>€ 75,00</td>
+                <td className="text-right" style={{ padding: '8px 0' }}>€ 750,00</td>
               </tr>
               <tr style={{ borderBottom: '1pt solid #e5e7eb' }}>
-                <td style={{ padding: '2mm 0' }}>Reiskosten</td>
-                <td className="text-right" style={{ padding: '2mm 0' }}>1</td>
-                <td className="text-right" style={{ padding: '2mm 0' }}>€ 50,00</td>
-                <td className="text-right" style={{ padding: '2mm 0' }}>€ 50,00</td>
+                <td style={{ padding: '8px 0' }}>Reiskosten</td>
+                <td className="text-right" style={{ padding: '8px 0' }}>1</td>
+                <td className="text-right" style={{ padding: '8px 0' }}>€ 50,00</td>
+                <td className="text-right" style={{ padding: '8px 0' }}>€ 50,00</td>
               </tr>
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={3} className="text-right font-medium" style={{ padding: '2mm 0' }}>Subtotaal:</td>
-                <td className="text-right" style={{ padding: '2mm 0' }}>€ 800,00</td>
+                <td colSpan={3} className="text-right font-medium" style={{ padding: '8px 0' }}>Subtotaal:</td>
+                <td className="text-right" style={{ padding: '8px 0' }}>€ 800,00</td>
               </tr>
               <tr>
-                <td colSpan={3} className="text-right" style={{ padding: '2mm 0' }}>BTW (21%):</td>
-                <td className="text-right" style={{ padding: '2mm 0' }}>€ 168,00</td>
+                <td colSpan={3} className="text-right" style={{ padding: '8px 0' }}>BTW (21%):</td>
+                <td className="text-right" style={{ padding: '8px 0' }}>€ 168,00</td>
               </tr>
               <tr style={{ borderTop: '2pt solid', borderColor: styling.primaryColor }}>
-                <td colSpan={3} className="text-right font-bold" style={{ padding: '2mm 0' }}>Totaal:</td>
-                <td className="text-right font-bold" style={{ padding: '2mm 0' }}>€ 968,00</td>
+                <td colSpan={3} className="text-right font-bold" style={{ padding: '8px 0' }}>Totaal:</td>
+                <td className="text-right font-bold" style={{ padding: '8px 0' }}>€ 968,00</td>
               </tr>
             </tfoot>
           </table>
@@ -158,7 +158,7 @@ export const LivePreview = ({
 
         {/* Footer */}
         <div className="mt-auto text-gray-500 border-t" style={{ 
-          paddingTop: '8mm', 
+          paddingTop: '32px', 
           fontSize: '9pt',
           borderTopWidth: '1pt',
           borderTopColor: '#d1d5db'

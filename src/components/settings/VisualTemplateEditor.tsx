@@ -16,7 +16,6 @@ import {
   CompanyInfo 
 } from './types/VisualTemplate';
 import { UNIQUE_LAYOUT_TEMPLATES, UniqueLayoutTemplate } from './types/LayoutTemplates';
-import { useToast } from '@/hooks/use-toast';
 
 interface VisualTemplateEditorProps {
   templateData: VisualTemplateData;
@@ -38,7 +37,6 @@ export const VisualTemplateEditor = ({
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [originalTemplateData, setOriginalTemplateData] = useState<VisualTemplateData>(templateData);
-  const { toast } = useToast();
 
   // Track changes
   useEffect(() => {
@@ -95,17 +93,9 @@ export const VisualTemplateEditor = ({
       const filename = `${templateData.name || 'document'}_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(filename);
       
-      toast({
-        title: "PDF Gedownload",
-        description: `${filename} is succesvol gedownload.`
-      });
+      console.log(`PDF "${filename}" downloaded successfully`);
     } catch (error) {
       console.error('PDF generation error:', error);
-      toast({
-        title: "PDF Fout",
-        description: "Er is een fout opgetreden bij het genereren van de PDF.",
-        variant: "destructive"
-      });
     }
   };
 

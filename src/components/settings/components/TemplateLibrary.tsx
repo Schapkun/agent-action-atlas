@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Save, Upload, Download, Trash2, FileText, Star } from 'lucide-react';
 import { VisualTemplateData } from '../types/VisualTemplate';
-import { useToast } from '@/hooks/use-toast';
 
 interface TemplateLibraryProps {
   currentTemplate: VisualTemplateData;
@@ -39,7 +38,6 @@ export const TemplateLibrary = ({
   const [templateName, setTemplateName] = useState('');
   const [templateDescription, setTemplateDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
   // Load templates on component mount
   useEffect(() => {
@@ -64,11 +62,6 @@ export const TemplateLibrary = ({
       }
     } catch (error) {
       console.error('Error loading templates:', error);
-      toast({
-        title: "Fout bij laden",
-        description: "Kon templates niet laden.",
-        variant: "destructive"
-      });
     } finally {
       setIsLoading(false);
     }
@@ -76,11 +69,7 @@ export const TemplateLibrary = ({
 
   const saveTemplate = () => {
     if (!templateName.trim()) {
-      toast({
-        title: "Naam vereist",
-        description: "Voer een naam in voor de template.",
-        variant: "destructive"
-      });
+      console.log('Template name required');
       return;
     }
 
@@ -109,26 +98,15 @@ export const TemplateLibrary = ({
       setTemplateName('');
       setTemplateDescription('');
       
-      toast({
-        title: "Template opgeslagen",
-        description: `"${newTemplate.name}" is toegevoegd aan de library.`
-      });
+      console.log(`Template "${newTemplate.name}" saved successfully`);
     } catch (error) {
       console.error('Error saving template:', error);
-      toast({
-        title: "Fout bij opslaan",
-        description: "Kon template niet opslaan.",
-        variant: "destructive"
-      });
     }
   };
 
   const loadTemplate = (template: SavedTemplate) => {
     onLoadTemplate(template.data);
-    toast({
-      title: "Template geladen",
-      description: `"${template.name}" is geladen in de editor.`
-    });
+    console.log(`Template "${template.name}" loaded successfully`);
   };
 
   const deleteTemplate = (templateId: string) => {
@@ -141,17 +119,9 @@ export const TemplateLibrary = ({
       localStorage.setItem(storageKey, JSON.stringify(updated));
       setSavedTemplates(updated);
       
-      toast({
-        title: "Template verwijderd",
-        description: "Template is verwijderd uit de library."
-      });
+      console.log('Template deleted successfully');
     } catch (error) {
       console.error('Error deleting template:', error);
-      toast({
-        title: "Fout bij verwijderen",
-        description: "Kon template niet verwijderen.",
-        variant: "destructive"
-      });
     }
   };
 
@@ -211,17 +181,9 @@ export const TemplateLibrary = ({
         localStorage.setItem(storageKey, JSON.stringify(updated));
         setSavedTemplates(updated);
         
-        toast({
-          title: "Template geïmporteerd",
-          description: `"${newTemplate.name}" is toegevoegd aan de library.`
-        });
+        console.log(`Template "${newTemplate.name}" imported successfully`);
       } catch (error) {
         console.error('Error importing template:', error);
-        toast({
-          title: "Import fout",
-          description: "Kon template bestand niet laden.",
-          variant: "destructive"
-        });
       }
     };
     reader.readAsText(file);

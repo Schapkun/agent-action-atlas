@@ -46,10 +46,12 @@ export const EnhancedLivePreview = ({
         style={{ 
           transform: `scale(${zoom})`,
           transformOrigin: 'top center',
-          width: '210mm',
-          minHeight: '297mm',
-          padding: '20mm',
-          fontFamily: styling.font
+          width: '794px', // A4 width in pixels at 96 DPI
+          minHeight: '1123px', // A4 height in pixels at 96 DPI
+          padding: '76px', // 20mm converted to pixels
+          fontFamily: styling.font,
+          fontSize: '11pt',
+          lineHeight: '1.4'
         }}
       >
         {/* Header met layout-specifieke styling en logo positioning */}
@@ -63,18 +65,20 @@ export const EnhancedLivePreview = ({
               <img 
                 src={companyInfo.logo} 
                 alt="Company logo" 
-                className={`h-16 object-contain ${styling.logoPosition === 'center' ? 'mb-4' : ''}`}
+                className={`object-contain ${styling.logoPosition === 'center' ? 'mb-4' : ''}`}
+                style={{ height: '64px' }}
               />
             )}
             
             <div className={textAlignment}>
               <h1 
-                className={`text-2xl font-bold mb-2 ${styling.headerStyle === 'colored' ? layoutStyles.headerText : layoutStyles.accentColor}`}
+                className={`font-bold mb-2 ${styling.headerStyle === 'colored' ? layoutStyles.headerText : layoutStyles.accentColor}`}
+                style={{ fontSize: '18pt', lineHeight: '1.2' }}
               >
                 {companyInfo.name || 'Uw Bedrijf'}
               </h1>
               {companyInfo.address && (
-                <div className={`text-sm space-y-1 ${styling.headerStyle === 'colored' ? 'text-white/90' : 'text-gray-600'}`}>
+                <div className={`space-y-1 ${styling.headerStyle === 'colored' ? 'text-white/90' : 'text-gray-600'}`} style={{ fontSize: '10pt' }}>
                   <p>{companyInfo.address}</p>
                   <p>{companyInfo.postalCode} {companyInfo.city}</p>
                   {companyInfo.phone && <p>Tel: {companyInfo.phone}</p>}
@@ -88,16 +92,18 @@ export const EnhancedLivePreview = ({
               <img 
                 src={companyInfo.logo} 
                 alt="Company logo" 
-                className="h-16 object-contain"
+                className="object-contain"
+                style={{ height: '64px' }}
               />
             )}
           </div>
         </div>
 
         {/* Document Title */}
-        <div className="mb-8">
+        <div style={{ marginBottom: '32px' }}>
           <h2 
-            className={`text-xl font-semibold mb-4 ${layoutStyles.accentColor}`}
+            className={`font-semibold mb-4 ${layoutStyles.accentColor}`}
+            style={{ fontSize: '16pt', lineHeight: '1.3' }}
           >
             {templateData.documentType === 'invoice' ? 'FACTUUR' : 
              templateData.documentType === 'quote' ? 'OFFERTE' : 
@@ -105,10 +111,10 @@ export const EnhancedLivePreview = ({
           </h2>
           
           {/* Sample Content met layout-specifieke styling */}
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-2" style={{ gap: '32px' }}>
             <div>
-              <h3 className="font-medium mb-2">Factuurgegevens</h3>
-              <div className="text-sm space-y-1">
+              <h3 className="font-medium mb-2" style={{ fontSize: '12pt' }}>Factuurgegevens</h3>
+              <div className="space-y-1" style={{ fontSize: '10pt' }}>
                 <p>Factuurnummer: 2024-001</p>
                 <p>Factuurdatum: {new Date().toLocaleDateString('nl-NL')}</p>
                 <p>Vervaldatum: {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL')}</p>
@@ -116,8 +122,8 @@ export const EnhancedLivePreview = ({
             </div>
             
             <div>
-              <h3 className="font-medium mb-2">Klantgegevens</h3>
-              <div className="text-sm space-y-1">
+              <h3 className="font-medium mb-2" style={{ fontSize: '12pt' }}>Klantgegevens</h3>
+              <div className="space-y-1" style={{ fontSize: '10pt' }}>
                 <p>Voorbeeld Klant B.V.</p>
                 <p>Voorbeeldstraat 123</p>
                 <p>1234 AB Amsterdam</p>
@@ -127,49 +133,54 @@ export const EnhancedLivePreview = ({
         </div>
 
         {/* Sample Table met layout-specifieke styling */}
-        <div className="mb-8">
-          <table className="w-full border-collapse">
+        <div style={{ marginBottom: '32px' }}>
+          <table className="w-full border-collapse" style={{ fontSize: '10pt' }}>
             <thead>
-              <tr className={`border-b-2 ${layoutStyles.borderColor}`} style={{ borderColor: layoutStyles.primaryColor }}>
-                <th className="text-left py-2">Beschrijving</th>
-                <th className="text-right py-2">Aantal</th>
-                <th className="text-right py-2">Prijs</th>
-                <th className="text-right py-2">Totaal</th>
+              <tr style={{ borderBottom: '2pt solid', borderColor: layoutStyles.primaryColor }}>
+                <th className="text-left" style={{ padding: '8px 0' }}>Beschrijving</th>
+                <th className="text-right" style={{ padding: '8px 0' }}>Aantal</th>
+                <th className="text-right" style={{ padding: '8px 0' }}>Prijs</th>
+                <th className="text-right" style={{ padding: '8px 0' }}>Totaal</th>
               </tr>
             </thead>
             <tbody>
-              <tr className={`border-b ${layoutStyles.borderColor}`}>
-                <td className="py-2">Consultancy diensten</td>
-                <td className="text-right py-2">10</td>
-                <td className="text-right py-2">€ 75,00</td>
-                <td className="text-right py-2">€ 750,00</td>
+              <tr style={{ borderBottom: '1pt solid #e5e7eb' }}>
+                <td style={{ padding: '8px 0' }}>Consultancy diensten</td>
+                <td className="text-right" style={{ padding: '8px 0' }}>10</td>
+                <td className="text-right" style={{ padding: '8px 0' }}>€ 75,00</td>
+                <td className="text-right" style={{ padding: '8px 0' }}>€ 750,00</td>
               </tr>
-              <tr className={`border-b ${layoutStyles.borderColor}`}>
-                <td className="py-2">Reiskosten</td>
-                <td className="text-right py-2">1</td>
-                <td className="text-right py-2">€ 50,00</td>
-                <td className="text-right py-2">€ 50,00</td>
+              <tr style={{ borderBottom: '1pt solid #e5e7eb' }}>
+                <td style={{ padding: '8px 0' }}>Reiskosten</td>
+                <td className="text-right" style={{ padding: '8px 0' }}>1</td>
+                <td className="text-right" style={{ padding: '8px 0' }}>€ 50,00</td>
+                <td className="text-right" style={{ padding: '8px 0' }}>€ 50,00</td>
               </tr>
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={3} className="text-right py-2 font-medium">Subtotaal:</td>
-                <td className="text-right py-2">€ 800,00</td>
+                <td colSpan={3} className="text-right font-medium" style={{ padding: '8px 0' }}>Subtotaal:</td>
+                <td className="text-right" style={{ padding: '8px 0' }}>€ 800,00</td>
               </tr>
               <tr>
-                <td colSpan={3} className="text-right py-2">BTW (21%):</td>
-                <td className="text-right py-2">€ 168,00</td>
+                <td colSpan={3} className="text-right" style={{ padding: '8px 0' }}>BTW (21%):</td>
+                <td className="text-right" style={{ padding: '8px 0' }}>€ 168,00</td>
               </tr>
-              <tr className={`border-t-2 ${layoutStyles.borderColor}`} style={{ borderColor: layoutStyles.primaryColor }}>
-                <td colSpan={3} className="text-right py-2 font-bold">Totaal:</td>
-                <td className="text-right py-2 font-bold">€ 968,00</td>
+              <tr style={{ borderTop: '2pt solid', borderColor: layoutStyles.primaryColor }}>
+                <td colSpan={3} className="text-right font-bold" style={{ padding: '8px 0' }}>Totaal:</td>
+                <td className="text-right font-bold" style={{ padding: '8px 0' }}>€ 968,00</td>
               </tr>
             </tfoot>
           </table>
         </div>
 
         {/* Footer */}
-        <div className="mt-auto pt-8 text-xs text-gray-500 border-t">
+        <div className="mt-auto text-gray-500 border-t" style={{ 
+          paddingTop: '32px', 
+          fontSize: '9pt',
+          borderTopWidth: '1pt',
+          borderTopColor: '#d1d5db'
+        }}>
           <p>Betaling binnen 30 dagen na factuurdatum.</p>
         </div>
       </div>
