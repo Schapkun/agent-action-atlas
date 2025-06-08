@@ -51,8 +51,12 @@ export const WorkspaceOrgSwitcher = ({
       setPendingWorkspaceId(workspaceId);
       setShowConfirmDialog(true);
     } else {
-      const workspace = workspaces?.find(w => w.id === workspaceId) || null;
-      setSelectedWorkspace(workspace);
+      if (workspaceId === 'org-only') {
+        setSelectedWorkspace(null);
+      } else {
+        const workspace = workspaces?.find(w => w.id === workspaceId) || null;
+        setSelectedWorkspace(workspace);
+      }
       setShowSwitcher(false);
     }
   };
@@ -68,8 +72,12 @@ export const WorkspaceOrgSwitcher = ({
     }
     
     if (pendingWorkspaceId) {
-      const workspace = workspaces?.find(w => w.id === pendingWorkspaceId) || null;
-      setSelectedWorkspace(workspace);
+      if (pendingWorkspaceId === 'org-only') {
+        setSelectedWorkspace(null);
+      } else {
+        const workspace = workspaces?.find(w => w.id === pendingWorkspaceId) || null;
+        setSelectedWorkspace(workspace);
+      }
       setPendingWorkspaceId(null);
     }
     
@@ -88,8 +96,12 @@ export const WorkspaceOrgSwitcher = ({
     }
     
     if (pendingWorkspaceId) {
-      const workspace = workspaces?.find(w => w.id === pendingWorkspaceId) || null;
-      setSelectedWorkspace(workspace);
+      if (pendingWorkspaceId === 'org-only') {
+        setSelectedWorkspace(null);
+      } else {
+        const workspace = workspaces?.find(w => w.id === pendingWorkspaceId) || null;
+        setSelectedWorkspace(workspace);
+      }
       setPendingWorkspaceId(null);
     }
     
@@ -165,14 +177,14 @@ export const WorkspaceOrgSwitcher = ({
               <div className="space-y-2">
                 <label className="text-sm font-medium">Workspace</label>
                 <Select
-                  value={selectedWorkspace?.id || ''}
+                  value={selectedWorkspace?.id || 'org-only'}
                   onValueChange={handleWorkspaceChange}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecteer workspace" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">
+                    <SelectItem value="org-only">
                       <div className="flex items-center gap-2">
                         <Building className="h-4 w-4" />
                         Alleen organisatie
