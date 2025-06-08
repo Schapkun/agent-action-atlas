@@ -125,7 +125,7 @@ export const TemplateEditDialog = ({
   if (!open || !template) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+    <div className="fixed inset-0 z-50 bg-background border border-border shadow-2xl flex flex-col overflow-hidden">
       {/* Close button */}
       <div className="absolute top-4 right-4 z-10">
         <Button 
