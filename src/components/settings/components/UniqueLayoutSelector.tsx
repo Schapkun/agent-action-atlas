@@ -19,7 +19,7 @@ export const UniqueLayoutSelector = ({
     const baseClasses = `bg-gradient-to-br ${layout.preview.backgroundColor} rounded-md mb-2 flex flex-col relative overflow-hidden border`;
     
     return (
-      <div className={baseClasses} style={{ aspectRatio: '4/3', height: '120px' }}>
+      <div className={baseClasses} style={{ aspectRatio: '1/1.414', height: '140px' }}>
         {/* Header based on layout style */}
         <div className="absolute top-0 left-0 right-0" style={{ padding: '3px' }}>
           {layout.preview.headerPattern === 'gradient-header' && (
@@ -150,7 +150,7 @@ export const UniqueLayoutSelector = ({
         </p>
       </div>
       
-      <div className="grid grid-cols-2 gap-4 px-2 pb-4">
+      <div className="grid grid-cols-2 gap-3 px-2 pb-4">
         {layouts.map((layout) => (
           <Card 
             key={layout.id}
@@ -165,24 +165,15 @@ export const UniqueLayoutSelector = ({
               <div className="relative">
                 {renderUniquePreview(layout)}
                 
-                {/* Checkmark positioned at top-right within card border */}
+                {/* Checkmark positioned at top-right of the card */}
                 {selectedLayoutId === layout.id && (
-                  <div className="absolute bg-primary text-primary-foreground rounded-full flex items-center justify-center" style={{ top: '3px', right: '3px', width: '18px', height: '18px' }}>
+                  <div className="absolute bg-primary text-primary-foreground rounded-full flex items-center justify-center" style={{ top: '6px', right: '6px', width: '18px', height: '18px' }}>
                     <Check style={{ height: '10px', width: '10px' }} />
                   </div>
                 )}
                 
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium truncate text-sm">{layout.name}</h4>
-                  </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <div 
-                      className="rounded-full border w-3 h-3"
-                      style={{ backgroundColor: layout.styling.primaryColor }}
-                      title={`Hoofdkleur: ${layout.styling.primaryColor}`}
-                    />
-                  </div>
+                <div className="mt-2">
+                  <h4 className="font-medium truncate text-sm">{layout.name}</h4>
                 </div>
               </div>
             </CardContent>
