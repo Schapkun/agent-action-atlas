@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -198,35 +196,29 @@ export const VisualTemplateEditor = ({
             <div className="flex-1 mt-4 overflow-hidden">
               <TabsContent value="layout" className="h-full m-0 overflow-hidden">
                 <ScrollArea className="h-full">
-                  <div className="pb-4">
-                    <UniqueLayoutSelector
-                      layouts={UNIQUE_LAYOUT_TEMPLATES}
-                      selectedLayoutId={templateData.layout}
-                      onSelectLayout={handleLayoutSelect}
-                    />
-                  </div>
+                  <UniqueLayoutSelector
+                    layouts={UNIQUE_LAYOUT_TEMPLATES}
+                    selectedLayoutId={templateData.layout}
+                    onSelectLayout={handleLayoutSelect}
+                  />
                 </ScrollArea>
               </TabsContent>
               
               <TabsContent value="company" className="h-full m-0 overflow-hidden">
                 <ScrollArea className="h-full">
-                  <div className="pb-4">
-                    <CompanyInfoForm
-                      companyInfo={templateData.companyInfo}
-                      onUpdateCompanyInfo={handleCompanyInfoUpdate}
-                    />
-                  </div>
+                  <CompanyInfoForm
+                    companyInfo={templateData.companyInfo}
+                    onUpdateCompanyInfo={handleCompanyInfoUpdate}
+                  />
                 </ScrollArea>
               </TabsContent>
               
               <TabsContent value="styling" className="h-full m-0 overflow-hidden">
                 <ScrollArea className="h-full">
-                  <div className="pb-4">
-                    <StyleEditor
-                      styling={templateData.styling}
-                      onUpdateStyling={handleStylesUpdate}
-                    />
-                  </div>
+                  <StyleEditor
+                    styling={templateData.styling}
+                    onUpdateStyling={handleStylesUpdate}
+                  />
                 </ScrollArea>
               </TabsContent>
             </div>
@@ -273,4 +265,3 @@ export const VisualTemplateEditor = ({
     </div>
   );
 };
-
