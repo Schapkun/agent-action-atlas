@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -413,28 +414,34 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
   };
 
   const handleSaveAll = async () => {
-    try {
-      setLoading(true);
+    // Close popup immediately and show loading toast
+    setLoading(true);
+    onClose();
+    
+    toast({
+      title: "Bezig met opslaan",
+      description: "De wijzigingen worden verwerkt...",
+    });
 
-      // Update organization
+    try {
+      // Update organization in background
       await handleUpdateOrganization();
       
-      // Update all workspaces
+      // Update all workspaces in background
       for (const workspace of workspaces) {
         if (workspace.users) {
           await handleUpdateWorkspace(workspace.id, workspace.name);
         }
       }
 
-      // Show single success message for all changes
+      // Show success message
       toast({
         title: "Succes",
         description: "De wijzigingen zijn opgeslagen",
       });
 
-      // Update parent and close immediately
+      // Update parent component
       onUpdate();
-      onClose();
     } catch (error) {
       console.error('Error saving changes:', error);
       toast({
