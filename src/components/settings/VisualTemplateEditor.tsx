@@ -195,9 +195,9 @@ export const VisualTemplateEditor = ({
             </TabsList>
             
             <div className="flex-1 mt-4 overflow-hidden">
-              <TabsContent value="layout" className="h-full m-0 min-h-0">
-                <ScrollArea className="h-0 flex-1 p-0">
-                  <div className="p-1 pb-6 min-h-0">
+              <TabsContent value="layout" className="h-full m-0">
+                <ScrollArea className="h-full p-0">
+                  <div className="p-1 pb-8">
                     <UniqueLayoutSelector
                       layouts={UNIQUE_LAYOUT_TEMPLATES}
                       selectedLayoutId={templateData.layout}
@@ -207,9 +207,9 @@ export const VisualTemplateEditor = ({
                 </ScrollArea>
               </TabsContent>
               
-              <TabsContent value="company" className="h-full m-0 min-h-0">
-                <ScrollArea className="h-0 flex-1 p-0">
-                  <div className="p-1 pb-6 min-h-0">
+              <TabsContent value="company" className="h-full m-0">
+                <ScrollArea className="h-full p-0">
+                  <div className="p-1 pb-8">
                     <CompanyInfoForm
                       companyInfo={templateData.companyInfo}
                       onUpdateCompanyInfo={handleCompanyInfoUpdate}
@@ -218,9 +218,9 @@ export const VisualTemplateEditor = ({
                 </ScrollArea>
               </TabsContent>
               
-              <TabsContent value="styling" className="h-full m-0 min-h-0">
-                <ScrollArea className="h-0 flex-1 p-0">
-                  <div className="p-1 pb-6 min-h-0">
+              <TabsContent value="styling" className="h-full m-0">
+                <ScrollArea className="h-full p-0">
+                  <div className="p-1 pb-8">
                     <StyleEditor
                       styling={templateData.styling}
                       onUpdateStyling={handleStylesUpdate}
