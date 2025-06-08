@@ -519,8 +519,12 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
             
             <TabsContent value="organisatie" className="flex-1 overflow-hidden">
               <div className="h-full flex flex-col space-y-4">
-                {/* Add whitespace to match workspaces tab */}
-                <div className="flex-shrink-0 h-10"></div>
+                {/* Add exact same whitespace as workspaces tab */}
+                <div className="flex-shrink-0">
+                  <div className="flex items-center justify-end h-10 mb-3">
+                    {/* Empty div to match workspace button space */}
+                  </div>
+                </div>
                 
                 <div className="flex-shrink-0 space-y-3 p-4 border rounded-lg bg-muted/20">
                   <div className="flex items-center justify-between">
@@ -556,18 +560,18 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleEditOrganization(name)}
-                            className="text-black hover:text-gray-700"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
                             onClick={handleDeleteOrganization}
                             className="text-red-600 hover:text-red-700"
                           >
                             <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEditOrganization(name)}
+                            className="text-black hover:text-gray-700"
+                          >
+                            <Edit className="h-4 w-4" />
                           </Button>
                         </div>
                       </>
