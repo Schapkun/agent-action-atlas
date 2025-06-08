@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { Plus, Edit2, Trash2, Check, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Check, X } from 'lucide-react';
 
 interface Organization {
   id: string;
@@ -573,7 +573,7 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
                                         onClick={() => handleEditWorkspace(workspace.id, workspace.name)}
                                         className="text-blue-600 hover:text-blue-700"
                                       >
-                                        <Edit2 className="h-4 w-4" />
+                                        <Edit className="h-4 w-4" />
                                       </Button>
                                       <Button
                                         size="sm"
