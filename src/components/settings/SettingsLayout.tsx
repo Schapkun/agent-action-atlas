@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,11 +8,13 @@ import { DocumentLayoutSettings } from './DocumentLayoutSettings';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const SettingsLayout = () => {
   const { user } = useAuth();
   const [userRole, setUserRole] = useState<string>('lid');
   const [isRoleLoading, setIsRoleLoading] = useState(true);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -84,18 +85,38 @@ export const SettingsLayout = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 max-w-6xl" style={{ paddingTop: '-14px' }}>
+    <div className="container mx-auto px-2 sm:px-4 max-w-6xl">
       <Tabs defaultValue="organizations" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="organizations">Organisaties</TabsTrigger>
-          <TabsTrigger value="users">Gebruikers</TabsTrigger>
-          <TabsTrigger value="documents">Documenten</TabsTrigger>
-          <TabsTrigger value="history">Geschiedenis</TabsTrigger>
+        <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2' : 'grid-cols-4'} ${isMobile ? 'h-auto' : ''}`}>
+          <TabsTrigger value="organizations" className={isMobile ? 'text-xs py-3' : ''}>
+            {isMobile ? 'Org.' : 'Organisaties'}
+          </TabsTrigger>
+          <TabsTrigger value="users" className={isMobile ? 'text-xs py-3' : ''}>
+            Gebruikers
+          </TabsTrigger>
+          {!isMobile && (
+            <>
+              <TabsTrigger value="documents">Documenten</TabsTrigger>
+              <TabsTrigger value="history">Geschiedenis</TabsTrigger>
+            </>
+          )}
         </TabsList>
+
+        {/* Mobile: Additional tabs row */}
+        {isMobile && (
+          <TabsList className="grid w-full grid-cols-2 h-auto">
+            <TabsTrigger value="documents" className="text-xs py-3">
+              Documenten
+            </TabsTrigger>
+            <TabsTrigger value="history" className="text-xs py-3">
+              Geschiedenis
+            </TabsTrigger>
+          </TabsList>
+        )}
 
         <TabsContent value="organizations">
           <Card className="rounded-lg border bg-card text-card-foreground shadow-sm">
-            <CardContent className="p-6">
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
               <OrganizationWorkspaceView userRole={userRole} />
             </CardContent>
           </Card>
@@ -103,7 +124,7 @@ export const SettingsLayout = () => {
 
         <TabsContent value="users">
           <Card>
-            <CardContent className="p-6">
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
               <UserProfileSettings />
             </CardContent>
           </Card>
@@ -111,7 +132,7 @@ export const SettingsLayout = () => {
 
         <TabsContent value="documents">
           <Card>
-            <CardContent className="p-6">
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
               <RoleGuard 
                 requiredRoles={['admin', 'eigenaar']} 
                 userRole={userRole}
@@ -124,7 +145,7 @@ export const SettingsLayout = () => {
 
         <TabsContent value="history">
           <Card>
-            <CardContent className="p-6">
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
               <RoleGuard 
                 requiredRoles={['admin', 'eigenaar']} 
                 userRole={userRole}

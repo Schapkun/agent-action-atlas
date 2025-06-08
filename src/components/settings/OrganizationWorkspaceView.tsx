@@ -7,6 +7,7 @@ import { useOrganizationOperations } from './hooks/useOrganizationOperations';
 import { usePermissions } from './hooks/usePermissions';
 import { CreateOrganizationForm } from './components/CreateOrganizationForm';
 import { OrganizationCard } from './components/OrganizationCard';
+import { useIsMobile } from '@/hooks/use-mobile';
 import type { Organization } from './types/organization';
 
 interface OrganizationWorkspaceViewProps {
@@ -17,6 +18,7 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
   const [filteredOrganizations, setFilteredOrganizations] = useState<Organization[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateOrgForm, setShowCreateOrgForm] = useState(false);
+  const isMobile = useIsMobile();
 
   const {
     organizations,
@@ -72,21 +74,25 @@ export const OrganizationWorkspaceView = ({ userRole }: OrganizationWorkspaceVie
 
   return (
     <div>
-      {/* Search and Create Button Row */}
-      <div className="flex items-center justify-between gap-4 mb-6">
+      {/* Search and Create Button Row - Mobile Responsive */}
+      <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} ${isMobile ? 'space-y-3' : 'items-center justify-between'} gap-4 mb-6`}>
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Zoek organisaties en werkruimtes..."
+            placeholder={isMobile ? "Zoek..." : "Zoek organisaties en werkruimtes..."}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9"
           />
         </div>
         {canCreate && (
-          <Button onClick={() => setShowCreateOrgForm(true)}>
+          <Button 
+            onClick={() => setShowCreateOrgForm(true)}
+            className={isMobile ? 'w-full' : ''}
+            size={isMobile ? 'default' : 'default'}
+          >
             <Plus className="h-4 w-4 mr-2" />
-            Nieuwe Organisatie
+            {isMobile ? 'Nieuwe Org.' : 'Nieuwe Organisatie'}
           </Button>
         )}
       </div>
