@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -48,7 +47,7 @@ export const CompanyInfoForm = ({
   };
 
   return (
-    <div className="space-y-4 pb-2">
+    <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Building className="h-4 w-4" />
         <h3 className="text-sm font-medium">Bedrijfsgegevens</h3>
