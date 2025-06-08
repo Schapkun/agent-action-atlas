@@ -19,7 +19,7 @@ export const UniqueLayoutSelector = ({
     const baseClasses = `bg-gradient-to-br ${layout.preview.backgroundColor} rounded-md mb-2 flex flex-col relative overflow-hidden border`;
     
     return (
-      <div className={baseClasses} style={{ aspectRatio: '1/1.414', height: '120px' }}>
+      <div className={baseClasses} style={{ aspectRatio: '4/3', height: '120px' }}>
         {/* Header based on layout style */}
         <div className="absolute top-0 left-0 right-0" style={{ padding: '3px' }}>
           {layout.preview.headerPattern === 'gradient-header' && (
@@ -175,6 +175,13 @@ export const UniqueLayoutSelector = ({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <h4 className="font-medium truncate text-sm">{layout.name}</h4>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2">
+                    <div 
+                      className="rounded-full border w-3 h-3"
+                      style={{ backgroundColor: layout.styling.primaryColor }}
+                      title={`Hoofdkleur: ${layout.styling.primaryColor}`}
+                    />
                   </div>
                 </div>
               </div>
