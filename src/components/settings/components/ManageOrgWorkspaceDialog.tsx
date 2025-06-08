@@ -344,17 +344,9 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
     }
   };
 
-  const handleSave = async () => {
-    if (!item || !name.trim()) {
-      toast({
-        title: "Fout",
-        description: "Naam is verplicht",
-        variant: "destructive"
-      });
-      return;
-    }
+  const performBackgroundUpdates = async () => {
+    if (!item || !name.trim()) return;
 
-    setSaving(true);
     try {
       // Update organization name first
       const { error: updateError } = await supabase
@@ -431,24 +423,36 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
         }
       }
 
-      toast({
-        title: "Succes",
-        description: "Organisatie succesvol bijgewerkt",
-      });
-
       await refreshData();
-      setOpen(false);
-      onSaved();
     } catch (error) {
-      console.error('Error updating:', error);
+      console.error('Error in background updates:', error);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!item || !name.trim()) {
       toast({
         title: "Fout",
-        description: "Kon organisatie niet bijwerken",
-        variant: "destructive",
+        description: "Naam is verplicht",
+        variant: "destructive"
       });
-    } finally {
-      setSaving(false);
+      return;
     }
+
+    setSaving(true);
+    
+    // Close dialog immediately and show success toast
+    setOpen(false);
+    toast({
+      title: "Succes",
+      description: "Organisatie wordt bijgewerkt...",
+    });
+    
+    // Perform updates in background
+    await performBackgroundUpdates();
+    
+    setSaving(false);
+    onSaved();
   };
 
   if (!item) return null;
