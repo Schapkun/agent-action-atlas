@@ -38,7 +38,8 @@ export const WorkspaceOrgSwitcher = ({
       setPendingOrgId(orgId);
       setShowConfirmDialog(true);
     } else {
-      setSelectedOrganization(orgId);
+      const org = organizations?.find(o => o.id === orgId) || null;
+      setSelectedOrganization(org);
       // Reset workspace when changing org
       setSelectedWorkspace(null);
       setShowSwitcher(false);
@@ -50,7 +51,8 @@ export const WorkspaceOrgSwitcher = ({
       setPendingWorkspaceId(workspaceId);
       setShowConfirmDialog(true);
     } else {
-      setSelectedWorkspace(workspaceId);
+      const workspace = workspaces?.find(w => w.id === workspaceId) || null;
+      setSelectedWorkspace(workspace);
       setShowSwitcher(false);
     }
   };
@@ -59,13 +61,15 @@ export const WorkspaceOrgSwitcher = ({
     onSaveChanges();
     
     if (pendingOrgId) {
-      setSelectedOrganization(pendingOrgId);
+      const org = organizations?.find(o => o.id === pendingOrgId) || null;
+      setSelectedOrganization(org);
       setSelectedWorkspace(null);
       setPendingOrgId(null);
     }
     
     if (pendingWorkspaceId) {
-      setSelectedWorkspace(pendingWorkspaceId);
+      const workspace = workspaces?.find(w => w.id === pendingWorkspaceId) || null;
+      setSelectedWorkspace(workspace);
       setPendingWorkspaceId(null);
     }
     
@@ -77,13 +81,15 @@ export const WorkspaceOrgSwitcher = ({
     onDiscardChanges();
     
     if (pendingOrgId) {
-      setSelectedOrganization(pendingOrgId);
+      const org = organizations?.find(o => o.id === pendingOrgId) || null;
+      setSelectedOrganization(org);
       setSelectedWorkspace(null);
       setPendingOrgId(null);
     }
     
     if (pendingWorkspaceId) {
-      setSelectedWorkspace(pendingWorkspaceId);
+      const workspace = workspaces?.find(w => w.id === pendingWorkspaceId) || null;
+      setSelectedWorkspace(workspace);
       setPendingWorkspaceId(null);
     }
     
