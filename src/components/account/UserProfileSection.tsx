@@ -52,8 +52,8 @@ export const UserProfileSection = ({
 
   return (
     <div className="space-y-6">
-      {/* Profile Information */}
-      <div className="space-y-4">
+      {/* Profile Information - All fields on one row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label htmlFor="full_name">Volledige Naam</Label>
           <Input
@@ -78,7 +78,7 @@ export const UserProfileSection = ({
         </div>
 
         {/* Role Management - only show if enabled */}
-        {showRoleManagement && globalRole && onUpdateGlobalRole && (
+        {showRoleManagement && globalRole && onUpdateGlobalRole ? (
           <div className="space-y-2">
             <Label htmlFor="user_role">Gebruikersrol</Label>
             <Select
@@ -97,19 +97,21 @@ export const UserProfileSection = ({
               </SelectContent>
             </Select>
           </div>
-        )}
-
-        {/* Only show save button if showSaveButton is true */}
-        {showSaveButton && (
-          <Button 
-            onClick={onUpdateProfile} 
-            disabled={saving}
-            className="w-full"
-          >
-            {saving ? 'Profiel Opslaan...' : 'Profiel Opslaan'}
-          </Button>
+        ) : (
+          <div></div>
         )}
       </div>
+
+      {/* Only show save button if showSaveButton is true */}
+      {showSaveButton && (
+        <Button 
+          onClick={onUpdateProfile} 
+          disabled={saving}
+          className="w-full"
+        >
+          {saving ? 'Profiel Opslaan...' : 'Profiel Opslaan'}
+        </Button>
+      )}
     </div>
   );
 };
