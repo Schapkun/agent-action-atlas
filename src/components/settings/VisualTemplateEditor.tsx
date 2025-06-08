@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -177,8 +175,8 @@ export const VisualTemplateEditor = ({
       </div>
 
       <div className="flex-1 grid grid-cols-5 gap-4 p-4 overflow-hidden">
-        {/* Sidebar with restored height for scrolling functionality */}
-        <div className="col-span-2 flex flex-col h-[calc(100vh-200px)] overflow-hidden">
+        {/* Sidebar with optimized height for proper scrolling */}
+        <div className="col-span-2 flex flex-col h-[calc(100vh-160px)] overflow-hidden">
           <Tabs defaultValue="layout" className="flex-1 flex flex-col overflow-hidden">
             <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
               <TabsTrigger value="layout" className="text-xs">
@@ -196,9 +194,9 @@ export const VisualTemplateEditor = ({
             </TabsList>
             
             <div className="flex-1 mt-4 overflow-hidden">
-              <TabsContent value="layout" className="h-full m-0 overflow-hidden">
+              <TabsContent value="layout" className="h-full m-0">
                 <ScrollArea className="h-full p-0">
-                  <div className="p-1">
+                  <div className="p-1 pb-4">
                     <UniqueLayoutSelector
                       layouts={UNIQUE_LAYOUT_TEMPLATES}
                       selectedLayoutId={templateData.layout}
@@ -208,9 +206,9 @@ export const VisualTemplateEditor = ({
                 </ScrollArea>
               </TabsContent>
               
-              <TabsContent value="company" className="h-full m-0 overflow-hidden">
+              <TabsContent value="company" className="h-full m-0">
                 <ScrollArea className="h-full p-0">
-                  <div className="p-1">
+                  <div className="p-1 pb-4">
                     <CompanyInfoForm
                       companyInfo={templateData.companyInfo}
                       onUpdateCompanyInfo={handleCompanyInfoUpdate}
@@ -219,9 +217,9 @@ export const VisualTemplateEditor = ({
                 </ScrollArea>
               </TabsContent>
               
-              <TabsContent value="styling" className="h-full m-0 overflow-hidden">
+              <TabsContent value="styling" className="h-full m-0">
                 <ScrollArea className="h-full p-0">
-                  <div className="p-1">
+                  <div className="p-1 pb-4">
                     <StyleEditor
                       styling={templateData.styling}
                       onUpdateStyling={handleStylesUpdate}
@@ -273,4 +271,3 @@ export const VisualTemplateEditor = ({
     </div>
   );
 };
-
