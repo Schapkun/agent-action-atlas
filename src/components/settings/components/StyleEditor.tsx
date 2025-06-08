@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Palette, Type, Layout, Spacing } from 'lucide-react';
+import { Palette, Type, Layout, Move } from 'lucide-react';
 
 interface StyleEditorProps {
   styling: {
