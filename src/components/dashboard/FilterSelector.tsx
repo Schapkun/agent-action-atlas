@@ -1,3 +1,4 @@
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Building2, Briefcase, Star } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -99,7 +100,7 @@ export const FilterSelector = () => {
         </SelectTrigger>
         <SelectContent className="w-64 max-h-80">
           {/* Show all data option */}
-          <SelectItem value="all" className="py-2 pl-12 pr-12 relative">
+          <SelectItem value="all" className="py-2 pl-8 pr-12 relative">
             <div className="flex items-center w-full">
               <span className="text-sm font-medium">Alle gegevens</span>
             </div>
@@ -112,7 +113,7 @@ export const FilterSelector = () => {
           {groupedOptions.map((group) => (
             <div key={group.organization.id}>
               {/* Organization option */}
-              <SelectItem value={`org:${group.organization.id}`} className="py-2 pl-12 pr-12 border-t border-border relative">
+              <SelectItem value={`org:${group.organization.id}`} className="py-2 pl-8 pr-12 border-t border-border relative">
                 <div className="flex items-center gap-2 w-full">
                   <Building2 className="h-4 w-4 text-primary flex-shrink-0" />
                   <div className="flex flex-col min-w-0 flex-1">
@@ -128,7 +129,7 @@ export const FilterSelector = () => {
               
               {/* Workspaces under this organization */}
               {group.workspaces.map((workspace) => (
-                <SelectItem key={workspace.id} value={`workspace:${workspace.id}`} className="py-2 pl-14 pr-12 relative">
+                <SelectItem key={workspace.id} value={`workspace:${workspace.id}`} className="py-2 pl-10 pr-12 relative">
                   <div className="flex items-center gap-2 w-full">
                     <Briefcase className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                     <span className="text-sm truncate">{workspace.name}</span>
