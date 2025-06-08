@@ -286,22 +286,25 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
+      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-lg">
             {type === 'organization' ? 'Organisatie' : 'Werkruimte'} Beheren
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="general" className="w-full">
+        <Tabs defaultValue="organisatie" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="general">Algemeen</TabsTrigger>
-            <TabsTrigger value="users">Gebruikers</TabsTrigger>
+            <TabsTrigger value="organisatie">Organisatie</TabsTrigger>
+            <TabsTrigger value="gebruikers">Gebruikers</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="general" className="space-y-4">
+          <TabsContent value="organisatie" className="space-y-4">
             <div>
-              <Label htmlFor="name" className="text-sm">Naam</Label>
+              <Label className="text-sm">Organisatie Details</Label>
+            </div>
+            <div>
+              <Label htmlFor="name" className="text-sm">Organisatie Naam</Label>
               <Input
                 id="name"
                 value={name}
@@ -312,15 +315,15 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
             </div>
           </TabsContent>
           
-          <TabsContent value="users" className="space-y-4">
+          <TabsContent value="gebruikers" className="space-y-4">
             <div>
-              <Label className="text-sm">Gebruikers Toegang</Label>
-              <div className="max-h-64 overflow-y-auto border rounded-md p-4 mt-2 space-y-3">
+              <Label className="text-sm">Organisatie Gebruikers</Label>
+              <div className="max-h-48 overflow-y-auto border rounded-md p-2 mt-1 space-y-2">
                 {loading ? (
                   <div className="text-sm text-muted-foreground">Laden...</div>
                 ) : (
                   users.map((user) => (
-                    <div key={user.id} className="flex items-center space-x-3">
+                    <div key={user.id} className="flex items-center space-x-2">
                       <Checkbox
                         id={user.id}
                         checked={user.hasAccess}
@@ -345,11 +348,11 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end space-x-2 pt-4">
-          <Button variant="outline" onClick={() => setOpen(false)}>
+        <div className="flex justify-end space-x-2 pt-2">
+          <Button variant="outline" size="sm" onClick={() => setOpen(false)}>
             Annuleren
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button size="sm" onClick={handleSave} disabled={saving}>
             {saving ? 'Opslaan...' : 'Opslaan'}
           </Button>
         </div>
