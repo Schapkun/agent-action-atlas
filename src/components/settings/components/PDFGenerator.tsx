@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { VisualTemplateData } from '../types/VisualTemplate';
 import { getLayoutSpecificStyles, getLayoutFont } from '../../../utils/layoutStyles';
@@ -20,8 +19,8 @@ export class PDFGenerator {
     // Set font based on layout
     this.doc.setFont('helvetica');
     
-    // Apply layout-specific header styling
-    this.generateLayoutSpecificHeader(companyInfo, layoutStyles, layoutFont);
+    // Apply layout-specific header styling with logo positioning
+    this.generateLayoutSpecificHeader(companyInfo, styling, layoutStyles, layoutFont);
     
     // Document content with layout-aware styling
     this.generateDocumentContent(templateData, layoutStyles);
@@ -32,75 +31,135 @@ export class PDFGenerator {
     return this.doc;
   }
 
-  private generateLayoutSpecificHeader(companyInfo: any, layoutStyles: any, layoutFont: string) {
+  private generateLayoutSpecificHeader(companyInfo: any, styling: any, layoutStyles: any, layoutFont: string) {
     let yPos = 30;
+    const pageWidth = 210; // A4 width in mm
     
-    // Company name with layout-specific color
+    // Apply header styling based on headerStyle
+    if (styling.headerStyle === 'colored') {
+      const rgb = this.hexToRgb(layoutStyles.primaryColor);
+      this.doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+      this.doc.rect(15, 15, 180, 30, 'F');
+      this.doc.setTextColor(255, 255, 255);
+      yPos = 35;
+    } else if (styling.headerStyle === 'bordered') {
+      const rgb = this.hexToRgb(layoutStyles.primaryColor);
+      this.doc.setLineWidth(2);
+      this.doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
+      this.doc.rect(15, 15, 180, 30);
+      this.doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+      yPos = 35;
+    } else {
+      const rgb = this.hexToRgb(layoutStyles.primaryColor);
+      this.doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+    }
+    
+    // Company name with logo positioning
     this.doc.setFontSize(20);
-    const rgb = this.hexToRgb(layoutStyles.primaryColor);
-    this.doc.setTextColor(rgb[0], rgb[1], rgb[2]);
-    this.doc.text(companyInfo.name || 'Uw Bedrijf', 20, yPos);
+    
+    let companyNameX = 20;
+    let detailsX = 20;
+    let detailsAlign = 'left';
+    
+    // Apply logo positioning logic
+    switch (styling.logoPosition) {
+      case 'center':
+        companyNameX = pageWidth / 2;
+        detailsX = pageWidth / 2;
+        detailsAlign = 'center';
+        this.doc.text(companyInfo.name || 'Uw Bedrijf', companyNameX, yPos, { align: 'center' });
+        break;
+      case 'right':
+        companyNameX = pageWidth - 20;
+        detailsX = pageWidth - 20;
+        detailsAlign = 'right';
+        this.doc.text(companyInfo.name || 'Uw Bedrijf', companyNameX, yPos, { align: 'right' });
+        break;
+      case 'left':
+      default:
+        this.doc.text(companyInfo.name || 'Uw Bedrijf', companyNameX, yPos);
+        break;
+    }
     
     yPos += 15;
     
-    // Layout-specific header styling
+    // Layout-specific header pattern
     switch(layoutStyles.headerPattern) {
       case 'gradient-header':
       case 'corporate-header':
-        // Add colored background for header
-        this.doc.setFillColor(rgb[0], rgb[1], rgb[2]);
-        this.doc.rect(15, 15, 180, 25, 'F');
-        this.doc.setTextColor(255, 255, 255);
-        this.doc.text(companyInfo.name || 'Uw Bedrijf', 20, 30);
-        yPos = 50;
-        break;
-      
-      case 'centered-formal':
-        // Centered with border
-        this.doc.setLineWidth(1);
-        this.doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
-        this.doc.rect(50, 20, 110, 20);
-        const textWidth = this.doc.getTextWidth(companyInfo.name || 'Uw Bedrijf');
-        this.doc.text(companyInfo.name || 'Uw Bedrijf', 105 - textWidth/2, 32);
-        yPos = 50;
-        break;
-      
-      case 'clean-lines':
-        // Minimal with subtle line
-        this.doc.setLineWidth(0.5);
-        this.doc.setDrawColor(200, 200, 200);
-        this.doc.line(20, 35, 190, 35);
+        if (styling.headerStyle !== 'colored') {
+          const rgb = this.hexToRgb(layoutStyles.primaryColor);
+          this.doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+          this.doc.rect(15, 15, 180, 25, 'F');
+          this.doc.setTextColor(255, 255, 255);
+          if (styling.logoPosition === 'center') {
+            this.doc.text(companyInfo.name || 'Uw Bedrijf', pageWidth / 2, 30, { align: 'center' });
+          } else if (styling.logoPosition === 'right') {
+            this.doc.text(companyInfo.name || 'Uw Bedrijf', pageWidth - 20, 30, { align: 'right' });
+          } else {
+            this.doc.text(companyInfo.name || 'Uw Bedrijf', 20, 30);
+          }
+          yPos = 50;
+        }
         break;
       
       case 'business-header':
         // Left border accent
+        const rgb = this.hexToRgb(layoutStyles.primaryColor);
         this.doc.setLineWidth(3);
         this.doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
         this.doc.line(15, 20, 15, 40);
         break;
     }
     
-    // Company details
+    // Company details with proper positioning
     this.doc.setFontSize(10);
     this.doc.setTextColor(100, 100, 100);
     
     if (companyInfo.address) {
-      this.doc.text(companyInfo.address, 20, yPos);
+      if (detailsAlign === 'center') {
+        this.doc.text(companyInfo.address, detailsX, yPos, { align: 'center' });
+      } else if (detailsAlign === 'right') {
+        this.doc.text(companyInfo.address, detailsX, yPos, { align: 'right' });
+      } else {
+        this.doc.text(companyInfo.address, detailsX, yPos);
+      }
       yPos += 5;
     }
     
     if (companyInfo.postalCode && companyInfo.city) {
-      this.doc.text(`${companyInfo.postalCode} ${companyInfo.city}`, 20, yPos);
+      const addressLine = `${companyInfo.postalCode} ${companyInfo.city}`;
+      if (detailsAlign === 'center') {
+        this.doc.text(addressLine, detailsX, yPos, { align: 'center' });
+      } else if (detailsAlign === 'right') {
+        this.doc.text(addressLine, detailsX, yPos, { align: 'right' });
+      } else {
+        this.doc.text(addressLine, detailsX, yPos);
+      }
       yPos += 5;
     }
     
     if (companyInfo.phone) {
-      this.doc.text(`Tel: ${companyInfo.phone}`, 20, yPos);
+      const phoneLine = `Tel: ${companyInfo.phone}`;
+      if (detailsAlign === 'center') {
+        this.doc.text(phoneLine, detailsX, yPos, { align: 'center' });
+      } else if (detailsAlign === 'right') {
+        this.doc.text(phoneLine, detailsX, yPos, { align: 'right' });
+      } else {
+        this.doc.text(phoneLine, detailsX, yPos);
+      }
       yPos += 5;
     }
     
     if (companyInfo.email) {
-      this.doc.text(`Email: ${companyInfo.email}`, 20, yPos);
+      const emailLine = `Email: ${companyInfo.email}`;
+      if (detailsAlign === 'center') {
+        this.doc.text(emailLine, detailsX, yPos, { align: 'center' });
+      } else if (detailsAlign === 'right') {
+        this.doc.text(emailLine, detailsX, yPos, { align: 'right' });
+      } else {
+        this.doc.text(emailLine, detailsX, yPos);
+      }
       yPos += 5;
     }
   }

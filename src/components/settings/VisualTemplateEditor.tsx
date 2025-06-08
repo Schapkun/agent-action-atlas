@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -160,7 +159,7 @@ export const VisualTemplateEditor = ({
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Header met workspace/organization switcher */}
       <div className="flex-shrink-0 px-4 py-3 bg-muted/50 border-b">
         <div className="flex items-center justify-between">
@@ -176,9 +175,9 @@ export const VisualTemplateEditor = ({
       </div>
 
       <div className="flex-1 grid grid-cols-5 gap-4 p-4 overflow-hidden">
-        {/* Sidebar with fixed height */}
-        <div className="col-span-2 flex flex-col min-h-0">
-          <Tabs defaultValue="layout" className="flex-1 flex flex-col min-h-0">
+        {/* Sidebar with fixed height and proper overflow */}
+        <div className="col-span-2 flex flex-col h-[calc(100vh-180px)] overflow-hidden">
+          <Tabs defaultValue="layout" className="flex-1 flex flex-col overflow-hidden">
             <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
               <TabsTrigger value="layout" className="text-xs">
                 <FileText className="h-3 w-3 mr-1" />
@@ -194,46 +193,40 @@ export const VisualTemplateEditor = ({
               </TabsTrigger>
             </TabsList>
             
-            <div className="flex-1 min-h-0 mt-4">
-              <TabsContent value="layout" className="h-full m-0">
-                <div className="h-full max-h-[calc(100vh-250px)]">
-                  <ScrollArea className="h-full">
-                    <UniqueLayoutSelector
-                      layouts={UNIQUE_LAYOUT_TEMPLATES}
-                      selectedLayoutId={templateData.layout}
-                      onSelectLayout={handleLayoutSelect}
-                    />
-                  </ScrollArea>
-                </div>
+            <div className="flex-1 mt-4 overflow-hidden">
+              <TabsContent value="layout" className="h-full m-0 overflow-hidden">
+                <ScrollArea className="h-full">
+                  <UniqueLayoutSelector
+                    layouts={UNIQUE_LAYOUT_TEMPLATES}
+                    selectedLayoutId={templateData.layout}
+                    onSelectLayout={handleLayoutSelect}
+                  />
+                </ScrollArea>
               </TabsContent>
               
-              <TabsContent value="company" className="h-full m-0">
-                <div className="h-full max-h-[calc(100vh-250px)]">
-                  <ScrollArea className="h-full">
-                    <CompanyInfoForm
-                      companyInfo={templateData.companyInfo}
-                      onUpdateCompanyInfo={handleCompanyInfoUpdate}
-                    />
-                  </ScrollArea>
-                </div>
+              <TabsContent value="company" className="h-full m-0 overflow-hidden">
+                <ScrollArea className="h-full">
+                  <CompanyInfoForm
+                    companyInfo={templateData.companyInfo}
+                    onUpdateCompanyInfo={handleCompanyInfoUpdate}
+                  />
+                </ScrollArea>
               </TabsContent>
               
-              <TabsContent value="styling" className="h-full m-0">
-                <div className="h-full max-h-[calc(100vh-250px)]">
-                  <ScrollArea className="h-full">
-                    <StyleEditor
-                      styling={templateData.styling}
-                      onUpdateStyling={handleStylesUpdate}
-                    />
-                  </ScrollArea>
-                </div>
+              <TabsContent value="styling" className="h-full m-0 overflow-hidden">
+                <ScrollArea className="h-full">
+                  <StyleEditor
+                    styling={templateData.styling}
+                    onUpdateStyling={handleStylesUpdate}
+                  />
+                </ScrollArea>
               </TabsContent>
             </div>
           </Tabs>
         </div>
 
         {/* Preview */}
-        <div className="col-span-3 min-h-0">
+        <div className="col-span-3 h-[calc(100vh-180px)] overflow-hidden">
           <EnhancedLivePreview
             templateData={templateData}
             onSaveToLibrary={handleSaveToLibrary}

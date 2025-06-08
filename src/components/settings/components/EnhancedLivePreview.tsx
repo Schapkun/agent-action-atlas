@@ -34,6 +34,12 @@ export const EnhancedLivePreview = ({
     // Use shared layout-specific styling utility
     const layoutStyles = getLayoutSpecificStyles(layout || 'business-green');
     
+    // Determine header alignment and positioning based on logo position
+    const headerAlignment = styling.logoPosition === 'center' ? 'center' : 
+                           styling.logoPosition === 'right' ? 'end' : 'start';
+    const textAlignment = styling.logoPosition === 'center' ? 'text-center' : 
+                         styling.logoPosition === 'right' ? 'text-right' : 'text-left';
+    
     return (
       <div 
         className="bg-white border shadow-sm mx-auto transition-transform duration-200"
@@ -46,17 +52,22 @@ export const EnhancedLivePreview = ({
           fontFamily: styling.font
         }}
       >
-        {/* Header met layout-specifieke styling */}
-        <div className={`${styling.headerStyle === 'colored' ? layoutStyles.headerBg : ''} ${styling.headerStyle === 'bordered' ? `border-2 ${layoutStyles.borderColor}` : ''} p-4 mb-8 rounded-md`}>
-          <div className={`flex items-${styling.logoPosition === 'center' ? 'center' : styling.logoPosition === 'right' ? 'end' : 'start'} justify-between`}>
-            {companyInfo.logo && (
+        {/* Header met layout-specifieke styling en logo positioning */}
+        <div className={`${
+          styling.headerStyle === 'colored' ? layoutStyles.headerBg + ' ' + layoutStyles.headerText : ''
+        } ${
+          styling.headerStyle === 'bordered' ? `border-2 ${layoutStyles.borderColor}` : ''
+        } p-4 mb-8 rounded-md`}>
+          <div className={`flex items-${headerAlignment} ${styling.logoPosition === 'center' ? 'flex-col' : 'justify-between'}`}>
+            {companyInfo.logo && styling.logoPosition !== 'right' && (
               <img 
                 src={companyInfo.logo} 
                 alt="Company logo" 
-                className="h-16 object-contain"
+                className={`h-16 object-contain ${styling.logoPosition === 'center' ? 'mb-4' : ''}`}
               />
             )}
-            <div className={`${styling.logoPosition === 'left' ? 'text-right' : styling.logoPosition === 'right' ? 'text-left' : 'text-center'}`}>
+            
+            <div className={textAlignment}>
               <h1 
                 className={`text-2xl font-bold mb-2 ${styling.headerStyle === 'colored' ? layoutStyles.headerText : layoutStyles.accentColor}`}
               >
@@ -72,6 +83,14 @@ export const EnhancedLivePreview = ({
                 </div>
               )}
             </div>
+            
+            {companyInfo.logo && styling.logoPosition === 'right' && (
+              <img 
+                src={companyInfo.logo} 
+                alt="Company logo" 
+                className="h-16 object-contain"
+              />
+            )}
           </div>
         </div>
 
@@ -158,7 +177,7 @@ export const EnhancedLivePreview = ({
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
       <CardHeader className="py-3 px-4 border-b flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
