@@ -1,7 +1,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Menu, Bell, LogOut, Building2, Users, Star } from 'lucide-react';
+import { Menu, Bell, LogOut, Building2, Briefcase, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useToast } from '@/hooks/use-toast';
@@ -170,30 +170,32 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
                   {isLoadingOrganizations ? 'Laden...' : getCurrentSelectionLabel()}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent className="w-64">
+              <SelectContent className="w-64 max-h-80">
                 {/* Show all data option */}
-                <SelectItem value="all" className="py-3">
+                <SelectItem value="all" className="py-2 px-3">
                   <div className="flex items-center justify-between w-full">
-                    <span className="font-medium">Alle gegevens</span>
+                    <span className="text-sm font-medium">Alle gegevens</span>
                     <Star 
-                      className={`h-4 w-4 cursor-pointer hover:text-yellow-500 transition-colors ${favoriteFilter === 'all' ? 'fill-current text-yellow-500' : 'text-gray-400'}`}
+                      className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors ml-2 ${favoriteFilter === 'all' ? 'fill-current text-yellow-500' : 'text-gray-400'}`}
                       onClick={(e) => handleSetFavorite('all', e)}
                     />
                   </div>
                 </SelectItem>
 
                 {groupedOptions.map((group) => (
-                  <div key={group.organization.id} className="border-t border-border mt-1 pt-1">
-                    {/* Organization header */}
-                    <SelectItem value={`org:${group.organization.id}`} className="py-3">
+                  <div key={group.organization.id}>
+                    {/* Organization option */}
+                    <SelectItem value={`org:${group.organization.id}`} className="py-2 px-3 border-t border-border">
                       <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-2">
-                          <Building2 className="h-4 w-4 text-primary" />
-                          <span className="font-semibold">{group.organization.name}</span>
-                          <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">hele organisatie</span>
+                          <Building2 className="h-4 w-4 text-primary flex-shrink-0" />
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">{group.organization.name}</span>
+                            <span className="text-xs text-muted-foreground">Hele organisatie</span>
+                          </div>
                         </div>
                         <Star 
-                          className={`h-4 w-4 cursor-pointer hover:text-yellow-500 transition-colors ${favoriteFilter === `org:${group.organization.id}` ? 'fill-current text-yellow-500' : 'text-gray-400'}`}
+                          className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors ml-2 flex-shrink-0 ${favoriteFilter === `org:${group.organization.id}` ? 'fill-current text-yellow-500' : 'text-gray-400'}`}
                           onClick={(e) => handleSetFavorite(`org:${group.organization.id}`, e)}
                         />
                       </div>
@@ -201,14 +203,14 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
                     
                     {/* Workspaces under this organization */}
                     {group.workspaces.map((workspace) => (
-                      <SelectItem key={workspace.id} value={`workspace:${workspace.id}`} className="py-2.5 pl-8">
+                      <SelectItem key={workspace.id} value={`workspace:${workspace.id}`} className="py-2 px-3 pl-8">
                         <div className="flex items-center justify-between w-full">
                           <div className="flex items-center gap-2">
-                            <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                            <Briefcase className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                             <span className="text-sm">{workspace.name}</span>
                           </div>
                           <Star 
-                            className={`h-4 w-4 cursor-pointer hover:text-yellow-500 transition-colors ${favoriteFilter === `workspace:${workspace.id}` ? 'fill-current text-yellow-500' : 'text-gray-400'}`}
+                            className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors ml-2 flex-shrink-0 ${favoriteFilter === `workspace:${workspace.id}` ? 'fill-current text-yellow-500' : 'text-gray-400'}`}
                             onClick={(e) => handleSetFavorite(`workspace:${workspace.id}`, e)}
                           />
                         </div>
