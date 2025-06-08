@@ -1,5 +1,4 @@
 
-
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Menu, Bell, LogOut, Building2, Users, Star } from 'lucide-react';
@@ -106,7 +105,8 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
     }
   };
 
-  const handleSetFavorite = (value: string) => {
+  const handleSetFavorite = (value: string, event: React.MouseEvent) => {
+    event.stopPropagation();
     setFavoriteFilter(value);
     localStorage.setItem('favoriteFilter', value);
     toast({
@@ -173,38 +173,41 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
               <SelectContent>
                 {/* Show all data option */}
                 <SelectItem value="all">
-                  <div className="flex items-center gap-2 justify-between w-full">
+                  <div className="flex items-center justify-between w-full">
                     <span>Alle gegevens</span>
-                    {favoriteFilter === 'all' && (
-                      <Star className="h-3 w-3 fill-current text-yellow-500" />
-                    )}
+                    <Star 
+                      className={`h-4 w-4 cursor-pointer hover:text-yellow-500 ${favoriteFilter === 'all' ? 'fill-current text-yellow-500' : ''}`}
+                      onClick={(e) => handleSetFavorite('all', e)}
+                    />
                   </div>
                 </SelectItem>
 
                 {groupedOptions.map((group) => (
                   <div key={group.organization.id}>
                     <SelectItem value={`org:${group.organization.id}`}>
-                      <div className="flex items-center gap-2 justify-between w-full">
+                      <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-2">
                           <Building2 className="h-4 w-4" />
                           <span className="font-medium">{group.organization.name}</span>
                           <span className="text-xs text-muted-foreground">(hele organisatie)</span>
                         </div>
-                        {favoriteFilter === `org:${group.organization.id}` && (
-                          <Star className="h-3 w-3 fill-current text-yellow-500" />
-                        )}
+                        <Star 
+                          className={`h-4 w-4 cursor-pointer hover:text-yellow-500 ${favoriteFilter === `org:${group.organization.id}` ? 'fill-current text-yellow-500' : ''}`}
+                          onClick={(e) => handleSetFavorite(`org:${group.organization.id}`, e)}
+                        />
                       </div>
                     </SelectItem>
                     {group.workspaces.map((workspace) => (
                       <SelectItem key={workspace.id} value={`workspace:${workspace.id}`}>
-                        <div className="flex items-center gap-2 justify-between w-full">
+                        <div className="flex items-center justify-between w-full">
                           <div className="flex items-center gap-2 ml-4">
                             <Users className="h-3 w-3" />
                             <span>{workspace.name}</span>
                           </div>
-                          {favoriteFilter === `workspace:${workspace.id}` && (
-                            <Star className="h-3 w-3 fill-current text-yellow-500" />
-                          )}
+                          <Star 
+                            className={`h-4 w-4 cursor-pointer hover:text-yellow-500 ${favoriteFilter === `workspace:${workspace.id}` ? 'fill-current text-yellow-500' : ''}`}
+                            onClick={(e) => handleSetFavorite(`workspace:${workspace.id}`, e)}
+                          />
                         </div>
                       </SelectItem>
                     ))}
@@ -212,17 +215,6 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
                 ))}
               </SelectContent>
             </Select>
-            
-            {/* Favorite button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleSetFavorite(getCurrentSelectionValue())}
-              className="h-8 w-8 p-0"
-              title="Als favoriet instellen"
-            >
-              <Star className={`h-4 w-4 ${favoriteFilter === getCurrentSelectionValue() ? 'fill-current text-yellow-500' : ''}`} />
-            </Button>
           </div>
 
           <Button variant="ghost" size="sm">
@@ -237,4 +229,3 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
     </header>
   );
 };
-
