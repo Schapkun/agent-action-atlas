@@ -10,7 +10,7 @@ interface TemplateEditorProps {
 
 export const TemplateEditor = ({ template, onUpdateTemplate }: TemplateEditorProps) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div>
         <label className="text-sm font-medium">Template Naam</label>
         <Input
@@ -35,7 +35,7 @@ export const TemplateEditor = ({ template, onUpdateTemplate }: TemplateEditorPro
         <label className="text-sm font-medium">Template Inhoud</label>
         <Textarea
           placeholder="Voer de template inhoud in..."
-          className="min-h-[300px] font-mono text-sm"
+          className="min-h-[200px] font-mono text-sm"
           defaultValue={`<!DOCTYPE html>
 <html>
 <head>
