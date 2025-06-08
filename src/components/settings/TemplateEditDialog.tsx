@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { DocumentTemplate } from './types/DocumentTemplate';
 import { VisualTemplateEditor } from './VisualTemplateEditor';
@@ -25,6 +24,20 @@ export const TemplateEditDialog = ({
   saving = false
 }: TemplateEditDialogProps) => {
   const { selectedOrganization, selectedWorkspace } = useOrganization();
+
+  // Block body scroll when dialog is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [open]);
 
   // Convert DocumentTemplate to VisualTemplateData state and functions
   const [visualTemplateData, setVisualTemplateData] = useState<VisualTemplateData>(() => {
@@ -125,39 +138,41 @@ export const TemplateEditDialog = ({
   if (!open || !template) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col">
-      {/* Close button */}
-      <div className="absolute top-4 right-4 z-10">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={handleCancel}
-          className="h-8 w-8 bg-background/80 hover:bg-background"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+      <div className="bg-background rounded-lg shadow-2xl border w-full h-full max-w-none max-h-none flex flex-col overflow-hidden">
+        {/* Close button */}
+        <div className="absolute top-4 right-4 z-10">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={handleCancel}
+            className="h-8 w-8 bg-background/80 hover:bg-background shadow-md"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
 
-      {/* Main content */}
-      <div className="flex-1 overflow-hidden">
-        <VisualTemplateEditor
-          templateData={visualTemplateData}
-          onUpdateTemplate={handleUpdateVisualTemplate}
-          workspaceId={selectedWorkspace?.id}
-          organizationId={selectedOrganization?.id}
-          workspaceName={selectedWorkspace?.name}
-          organizationName={selectedOrganization?.name}
-        />
-      </div>
+        {/* Main content */}
+        <div className="flex-1 overflow-hidden">
+          <VisualTemplateEditor
+            templateData={visualTemplateData}
+            onUpdateTemplate={handleUpdateVisualTemplate}
+            workspaceId={selectedWorkspace?.id}
+            organizationId={selectedOrganization?.id}
+            workspaceName={selectedWorkspace?.name}
+            organizationName={selectedOrganization?.name}
+          />
+        </div>
 
-      {/* Footer buttons */}
-      <div className="flex-shrink-0 flex justify-end space-x-2 p-4 border-t bg-background">
-        <Button variant="outline" size="sm" onClick={handleCancel}>
-          Annuleren
-        </Button>
-        <Button size="sm" onClick={onSaveTemplate} disabled={saving}>
-          {saving ? 'Opslaan...' : 'Opslaan'}
-        </Button>
+        {/* Footer buttons */}
+        <div className="flex-shrink-0 flex justify-end space-x-2 p-4 border-t bg-background">
+          <Button variant="outline" size="sm" onClick={handleCancel}>
+            Annuleren
+          </Button>
+          <Button size="sm" onClick={onSaveTemplate} disabled={saving}>
+            {saving ? 'Opslaan...' : 'Opslaan'}
+          </Button>
+        </div>
       </div>
     </div>
   );
