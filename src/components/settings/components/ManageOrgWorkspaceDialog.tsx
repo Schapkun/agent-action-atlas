@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -260,17 +259,10 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
         }
       }
 
-      toast({
-        title: "Succes",
-        description: "Organisatie succesvol bijgewerkt",
-      });
+      // Don't show toast here - will be shown in handleSaveAll
     } catch (error) {
       console.error('Error updating organization:', error);
-      toast({
-        title: "Error",
-        description: "Kon organisatie niet bijwerken",
-        variant: "destructive",
-      });
+      throw error; // Re-throw to be caught in handleSaveAll
     } finally {
       setLoading(false);
     }
@@ -343,17 +335,10 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
       ));
       setEditingWorkspace(null);
 
-      toast({
-        title: "Succes",
-        description: "Werkruimte succesvol bijgewerkt",
-      });
+      // Don't show toast here - will be shown in handleSaveAll
     } catch (error) {
       console.error('Error updating workspace:', error);
-      toast({
-        title: "Error",
-        description: "Kon werkruimte niet bijwerken",
-        variant: "destructive",
-      });
+      throw error; // Re-throw to be caught in handleSaveAll
     }
   };
 
@@ -428,17 +413,38 @@ export const ManageOrgWorkspaceDialog: React.FC<ManageOrgWorkspaceDialogProps> =
   };
 
   const handleSaveAll = async () => {
-    await handleUpdateOrganization();
-    
-    // Update all workspaces
-    for (const workspace of workspaces) {
-      if (workspace.users) {
-        await handleUpdateWorkspace(workspace.id, workspace.name);
-      }
-    }
+    try {
+      setLoading(true);
 
-    onUpdate();
-    onClose();
+      // Update organization
+      await handleUpdateOrganization();
+      
+      // Update all workspaces
+      for (const workspace of workspaces) {
+        if (workspace.users) {
+          await handleUpdateWorkspace(workspace.id, workspace.name);
+        }
+      }
+
+      // Show single success message for all changes
+      toast({
+        title: "Succes",
+        description: "De wijzigingen zijn opgeslagen",
+      });
+
+      // Update parent and close immediately
+      onUpdate();
+      onClose();
+    } catch (error) {
+      console.error('Error saving changes:', error);
+      toast({
+        title: "Error",
+        description: "Kon wijzigingen niet opslaan",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
