@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Palette, FileText, Settings, Building } from 'lucide-react';
 import { UniqueLayoutSelector } from './components/UniqueLayoutSelector';
 import { CompanyInfoForm } from './components/CompanyInfoForm';
@@ -175,71 +175,80 @@ export const VisualTemplateEditor = ({
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-5 gap-4 p-4 min-h-0">
-        {/* Sidebar with proper height allocation */}
-        <div className="col-span-2 min-h-0">
-          <Tabs defaultValue="layout" className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
-              <TabsTrigger value="layout" className="text-xs">
-                <FileText className="h-3 w-3 mr-1" />
-                Layout
-              </TabsTrigger>
-              <TabsTrigger value="company" className="text-xs">
-                <Building className="h-3 w-3 mr-1" />
-                Bedrijf
-              </TabsTrigger>
-              <TabsTrigger value="styling" className="text-xs">
-                <Palette className="h-3 w-3 mr-1" />
-                Stijl
-              </TabsTrigger>
-            </TabsList>
-            
-            <div className="flex-1 mt-4 min-h-0">
-              <TabsContent value="layout" className="h-full m-0">
-                <ScrollArea className="h-full">
-                  <div className="p-1 pb-8">
-                    <UniqueLayoutSelector
-                      layouts={UNIQUE_LAYOUT_TEMPLATES}
-                      selectedLayoutId={templateData.layout}
-                      onSelectLayout={handleLayoutSelect}
-                    />
-                  </div>
-                </ScrollArea>
-              </TabsContent>
-              
-              <TabsContent value="company" className="h-full m-0">
-                <ScrollArea className="h-full">
-                  <div className="p-1 pb-8">
-                    <CompanyInfoForm
-                      companyInfo={templateData.companyInfo}
-                      onUpdateCompanyInfo={handleCompanyInfoUpdate}
-                    />
-                  </div>
-                </ScrollArea>
-              </TabsContent>
-              
-              <TabsContent value="styling" className="h-full m-0">
-                <ScrollArea className="h-full">
-                  <div className="p-1 pb-8">
-                    <StyleEditor
-                      styling={templateData.styling}
-                      onUpdateStyling={handleStylesUpdate}
-                    />
-                  </div>
-                </ScrollArea>
-              </TabsContent>
+      {/* Main content met ResizablePanelGroup */}
+      <div className="flex-1 p-4">
+        <ResizablePanelGroup direction="horizontal" className="h-full">
+          {/* Sidebar Panel */}
+          <ResizablePanel defaultSize={40} minSize={30} maxSize={50}>
+            <div className="h-full pr-2">
+              <Tabs defaultValue="layout" className="h-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="layout" className="text-xs">
+                    <FileText className="h-3 w-3 mr-1" />
+                    Layout
+                  </TabsTrigger>
+                  <TabsTrigger value="company" className="text-xs">
+                    <Building className="h-3 w-3 mr-1" />
+                    Bedrijf
+                  </TabsTrigger>
+                  <TabsTrigger value="styling" className="text-xs">
+                    <Palette className="h-3 w-3 mr-1" />
+                    Stijl
+                  </TabsTrigger>
+                </TabsList>
+                
+                <div className="mt-4 h-[calc(100%-48px)]">
+                  <TabsContent value="layout" className="h-full m-0">
+                    <ScrollArea className="h-full">
+                      <div className="pr-4 pb-6">
+                        <UniqueLayoutSelector
+                          layouts={UNIQUE_LAYOUT_TEMPLATES}
+                          selectedLayoutId={templateData.layout}
+                          onSelectLayout={handleLayoutSelect}
+                        />
+                      </div>
+                    </ScrollArea>
+                  </TabsContent>
+                  
+                  <TabsContent value="company" className="h-full m-0">
+                    <ScrollArea className="h-full">
+                      <div className="pr-4 pb-6">
+                        <CompanyInfoForm
+                          companyInfo={templateData.companyInfo}
+                          onUpdateCompanyInfo={handleCompanyInfoUpdate}
+                        />
+                      </div>
+                    </ScrollArea>
+                  </TabsContent>
+                  
+                  <TabsContent value="styling" className="h-full m-0">
+                    <ScrollArea className="h-full">
+                      <div className="pr-4 pb-6">
+                        <StyleEditor
+                          styling={templateData.styling}
+                          onUpdateStyling={handleStylesUpdate}
+                        />
+                      </div>
+                    </ScrollArea>
+                  </TabsContent>
+                </div>
+              </Tabs>
             </div>
-          </Tabs>
-        </div>
+          </ResizablePanel>
 
-        {/* Preview with full height */}
-        <div className="col-span-3 min-h-0">
-          <EnhancedLivePreview
-            templateData={templateData}
-            onSaveToLibrary={handleSaveToLibrary}
-            onDownloadPDF={handleDownloadPDF}
-          />
-        </div>
+          <ResizableHandle withHandle />
+
+          {/* Preview Panel */}
+          <ResizablePanel defaultSize={60} minSize={50}>
+            <div className="h-full pl-2">
+              <EnhancedLivePreview
+                templateData={templateData}
+                onSaveToLibrary={handleSaveToLibrary}
+                onDownloadPDF={handleDownloadPDF}
+              />
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
 
       {/* Template Library Modal/Overlay */}
