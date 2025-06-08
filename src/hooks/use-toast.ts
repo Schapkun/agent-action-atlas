@@ -6,7 +6,8 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 800 // Changed from 1500 to 800ms for faster dismissal
+const TOAST_REMOVE_DELAY = 1500 // 1.5 seconds
+const TOAST_DURATION = 1500 // 1.5 seconds display time
 
 type ToasterToast = ToastProps & {
   id: string
@@ -69,6 +70,25 @@ const addToRemoveQueue = (toastId: string) => {
   }, TOAST_REMOVE_DELAY)
 
   toastTimeouts.set(toastId, timeout)
+}
+
+// Auto-dismiss timeout for toast duration
+const autoHideTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+
+const setAutoHide = (toastId: string) => {
+  if (autoHideTimeouts.has(toastId)) {
+    return
+  }
+
+  const timeout = setTimeout(() => {
+    autoHideTimeouts.delete(toastId)
+    dispatch({
+      type: "DISMISS_TOAST",
+      toastId: toastId,
+    })
+  }, TOAST_DURATION)
+
+  autoHideTimeouts.set(toastId, timeout)
 }
 
 export const reducer = (state: State, action: Action): State => {
@@ -155,11 +175,15 @@ function toast({ ...props }: Toast) {
       ...props,
       id,
       open: true,
+      duration: TOAST_DURATION,
       onOpenChange: (open) => {
         if (!open) dismiss()
       },
     },
   })
+
+  // Set auto-hide timer
+  setAutoHide(id)
 
   return {
     id: id,
