@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Check, X } from 'lucide-react';
 
 interface Organization {
   id: string;
@@ -50,6 +50,8 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
   const [loading, setLoading] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [showAddWorkspace, setShowAddWorkspace] = useState(false);
+  const [editingWorkspace, setEditingWorkspace] = useState<string | null>(null);
+  const [editWorkspaceName, setEditWorkspaceName] = useState('');
   const { toast } = useToast();
   const { refreshData } = useOrganization();
 
@@ -264,6 +266,54 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
     }
   };
 
+  const handleEditWorkspace = (workspaceId: string, currentName: string) => {
+    setEditingWorkspace(workspaceId);
+    setEditWorkspaceName(currentName);
+  };
+
+  const handleSaveWorkspaceName = async (workspaceId: string) => {
+    if (!editWorkspaceName.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from('workspaces')
+        .update({
+          name: editWorkspaceName.trim(),
+          slug: editWorkspaceName.toLowerCase().replace(/\s+/g, '-')
+        })
+        .eq('id', workspaceId);
+
+      if (error) throw error;
+
+      // Update local state
+      setWorkspaces(prev => prev.map(ws => 
+        ws.id === workspaceId 
+          ? { ...ws, name: editWorkspaceName.trim() }
+          : ws
+      ));
+
+      setEditingWorkspace(null);
+      setEditWorkspaceName('');
+
+      toast({
+        title: "Succes",
+        description: "Werkruimte naam bijgewerkt",
+      });
+    } catch (error) {
+      console.error('Error updating workspace name:', error);
+      toast({
+        title: "Error",
+        description: "Kon werkruimte naam niet bijwerken",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCancelEditWorkspace = () => {
+    setEditingWorkspace(null);
+    setEditWorkspaceName('');
+  };
+
   const handleSave = async () => {
     if (!item || !name.trim()) {
       toast({
@@ -393,49 +443,51 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
             
             <TabsContent value="organisatie" className="flex-1 overflow-hidden">
               <div className="h-full flex flex-col space-y-4">
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 space-y-3 p-4 border rounded-lg bg-muted/20">
                   <Label className="text-sm font-medium">Organisatie Details</Label>
-                </div>
-                <div className="flex-shrink-0">
-                  <Label htmlFor="name" className="text-sm">Organisatie Naam</Label>
-                  <Input
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="mt-1"
-                    placeholder="Organisatie naam"
-                  />
+                  <div>
+                    <Label htmlFor="name" className="text-sm">Organisatie Naam</Label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="mt-1"
+                      placeholder="Organisatie naam"
+                    />
+                  </div>
                 </div>
                 
                 <div className="flex-1 overflow-hidden">
                   <Label className="text-sm font-medium">Organisatie Gebruikers</Label>
-                  <ScrollArea className="h-full mt-2 border rounded-md p-3">
-                    {loading ? (
-                      <div className="text-sm text-muted-foreground">Laden...</div>
-                    ) : (
-                      <div className="space-y-2">
-                        {users.map((user) => (
-                          <div key={user.id} className="flex items-center space-x-3">
-                            <Checkbox
-                              id={`org-${user.id}`}
-                              checked={user.hasOrgAccess}
-                              onCheckedChange={(checked) => 
-                                handleOrgUserToggle(user.id, checked as boolean)
-                              }
-                            />
-                            <label 
-                              htmlFor={`org-${user.id}`}
-                              className="text-sm cursor-pointer flex-1"
-                            >
-                              {user.full_name || user.email}
-                              {user.email !== user.full_name && (
-                                <span className="text-muted-foreground ml-2">({user.email})</span>
-                              )}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                  <ScrollArea className="h-full mt-2 border rounded-md bg-muted/10">
+                    <div className="p-3">
+                      {loading ? (
+                        <div className="text-sm text-muted-foreground">Laden...</div>
+                      ) : (
+                        <div className="space-y-2">
+                          {users.map((user) => (
+                            <div key={user.id} className="flex items-center space-x-3 p-2 hover:bg-muted/50 rounded">
+                              <Checkbox
+                                id={`org-${user.id}`}
+                                checked={user.hasOrgAccess}
+                                onCheckedChange={(checked) => 
+                                  handleOrgUserToggle(user.id, checked as boolean)
+                                }
+                              />
+                              <label 
+                                htmlFor={`org-${user.id}`}
+                                className="text-sm cursor-pointer flex-1"
+                              >
+                                {user.full_name || user.email}
+                                {user.email !== user.full_name && (
+                                  <span className="text-muted-foreground ml-2">({user.email})</span>
+                                )}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </ScrollArea>
                 </div>
               </div>
@@ -443,94 +495,135 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
             
             <TabsContent value="werkruimtes" className="flex-1 overflow-hidden">
               <div className="h-full flex flex-col space-y-4">
-                <div className="flex-shrink-0 flex items-center justify-between">
-                  <Label className="text-sm font-medium">Werkruimtes</Label>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowAddWorkspace(!showAddWorkspace)}
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Werkruimte Toevoegen
-                  </Button>
-                </div>
-                
-                {showAddWorkspace && (
-                  <div className="flex-shrink-0 flex gap-2 p-3 border rounded-md bg-muted/50">
-                    <Input
-                      value={newWorkspaceName}
-                      onChange={(e) => setNewWorkspaceName(e.target.value)}
-                      placeholder="Werkruimte naam"
-                      className="flex-1"
-                    />
-                    <Button size="sm" onClick={handleAddWorkspace}>
-                      Toevoegen
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setShowAddWorkspace(false)}>
-                      Annuleren
+                <div className="flex-shrink-0">
+                  <div className="flex items-center justify-between mb-3">
+                    <Label className="text-sm font-medium">Werkruimtes</Label>
+                    <Button
+                      size="sm"
+                      onClick={() => setShowAddWorkspace(!showAddWorkspace)}
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Werkruimte Toevoegen
                     </Button>
                   </div>
-                )}
+                  
+                  {showAddWorkspace && (
+                    <div className="flex gap-2 p-3 border rounded-md bg-muted/20 mb-3">
+                      <Input
+                        value={newWorkspaceName}
+                        onChange={(e) => setNewWorkspaceName(e.target.value)}
+                        placeholder="Werkruimte naam"
+                        className="flex-1"
+                      />
+                      <Button size="sm" onClick={handleAddWorkspace}>
+                        Toevoegen
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setShowAddWorkspace(false)}>
+                        Annuleren
+                      </Button>
+                    </div>
+                  )}
+                </div>
                 
                 <div className="flex-1 overflow-hidden">
-                  <ScrollArea className="h-full">
-                    {loading ? (
-                      <div className="text-sm text-muted-foreground">Laden...</div>
-                    ) : workspaces.length === 0 ? (
-                      <div className="text-sm text-muted-foreground">Geen werkruimtes gevonden</div>
-                    ) : (
-                      <div className="space-y-6">
-                        {workspaces.map((workspace) => (
-                          <div key={workspace.id} className="space-y-3">
-                            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-md">
-                              <span className="font-medium">{workspace.name}</span>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleDeleteWorkspace(workspace.id, workspace.name)}
-                                  className="text-destructive hover:text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            
-                            <div className="pl-3">
-                              <Label className="text-xs font-medium mb-2 block">Werkruimte Gebruikers</Label>
-                              <div className="space-y-2">
-                                {users.map((user) => (
-                                  <div key={user.id} className="flex items-center space-x-3">
-                                    <Checkbox
-                                      id={`ws-${workspace.id}-${user.id}`}
-                                      checked={user.workspaceAccess?.[workspace.id] || false}
-                                      disabled={!user.hasOrgAccess}
-                                      onCheckedChange={(checked) => 
-                                        handleWorkspaceUserToggle(workspace.id, user.id, checked as boolean)
-                                      }
+                  <ScrollArea className="h-full border rounded-md bg-muted/10">
+                    <div className="p-3">
+                      {loading ? (
+                        <div className="text-sm text-muted-foreground">Laden...</div>
+                      ) : workspaces.length === 0 ? (
+                        <div className="text-sm text-muted-foreground">Geen werkruimtes gevonden</div>
+                      ) : (
+                        <div className="space-y-4">
+                          {workspaces.map((workspace) => (
+                            <div key={workspace.id} className="border rounded-lg bg-background/50 p-4">
+                              <div className="flex items-center justify-between mb-3">
+                                {editingWorkspace === workspace.id ? (
+                                  <div className="flex items-center gap-2 flex-1">
+                                    <Input
+                                      value={editWorkspaceName}
+                                      onChange={(e) => setEditWorkspaceName(e.target.value)}
+                                      className="flex-1"
+                                      autoFocus
                                     />
-                                    <label 
-                                      htmlFor={`ws-${workspace.id}-${user.id}`}
-                                      className={`text-sm cursor-pointer flex-1 ${
-                                        !user.hasOrgAccess ? 'text-muted-foreground' : ''
-                                      }`}
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleSaveWorkspaceName(workspace.id)}
+                                      className="text-green-600 hover:text-green-700"
                                     >
-                                      {user.full_name || user.email}
-                                      {user.email !== user.full_name && (
-                                        <span className="text-muted-foreground ml-2">({user.email})</span>
-                                      )}
-                                      {!user.hasOrgAccess && (
-                                        <span className="text-xs text-muted-foreground ml-2">(niet in organisatie)</span>
-                                      )}
-                                    </label>
+                                      <Check className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={handleCancelEditWorkspace}
+                                      className="text-gray-600 hover:text-gray-700"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
                                   </div>
-                                ))}
+                                ) : (
+                                  <>
+                                    <span className="font-medium">{workspace.name}</span>
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => handleEditWorkspace(workspace.id, workspace.name)}
+                                        className="text-blue-600 hover:text-blue-700"
+                                      >
+                                        <Edit2 className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => handleDeleteWorkspace(workspace.id, workspace.name)}
+                                        className="text-red-600 hover:text-red-700"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                              
+                              <div>
+                                <Label className="text-xs font-medium mb-2 block text-muted-foreground">Werkruimte Gebruikers</Label>
+                                <div className="space-y-2">
+                                  {users.map((user) => (
+                                    <div key={user.id} className="flex items-center space-x-3 p-2 hover:bg-muted/30 rounded">
+                                      <Checkbox
+                                        id={`ws-${workspace.id}-${user.id}`}
+                                        checked={user.workspaceAccess?.[workspace.id] || false}
+                                        disabled={!user.hasOrgAccess}
+                                        onCheckedChange={(checked) => 
+                                          handleWorkspaceUserToggle(workspace.id, user.id, checked as boolean)
+                                        }
+                                      />
+                                      <label 
+                                        htmlFor={`ws-${workspace.id}-${user.id}`}
+                                        className={`text-sm cursor-pointer flex-1 ${
+                                          !user.hasOrgAccess ? 'text-muted-foreground' : ''
+                                        }`}
+                                      >
+                                        {user.full_name || user.email}
+                                        {user.email !== user.full_name && (
+                                          <span className="text-muted-foreground ml-2">({user.email})</span>
+                                        )}
+                                        {!user.hasOrgAccess && (
+                                          <span className="text-xs text-muted-foreground ml-2">(niet in organisatie)</span>
+                                        )}
+                                      </label>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </ScrollArea>
                 </div>
               </div>
@@ -538,7 +631,7 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
           </Tabs>
         </div>
 
-        <div className="flex-shrink-0 flex justify-end space-x-2 pt-4 border-t">
+        <div className="flex-shrink-0 flex justify-end space-x-2 pt-4 border-t bg-background">
           <Button variant="outline" size="sm" onClick={() => setOpen(false)}>
             Annuleren
           </Button>
