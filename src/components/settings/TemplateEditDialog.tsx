@@ -30,9 +30,9 @@ export const TemplateEditDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-lg">
             {template.name} - Template Bewerken
           </DialogTitle>
         </DialogHeader>
