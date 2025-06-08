@@ -24,7 +24,7 @@ export const LivePreview = ({
   };
 
   const handleZoomOut = () => {
-    onZoomChange(Math.max(zoom - 0.1, 0.5));
+    onZoomChange(Math.max(zoom - 0.1, 0.3));
   };
 
   const renderPreviewContent = () => {
@@ -32,16 +32,17 @@ export const LivePreview = ({
     
     return (
       <div 
-        className="bg-white border shadow-sm mx-auto transition-transform duration-200"
+        className="bg-white border shadow-lg mx-auto transition-transform duration-200"
         style={{ 
           transform: `scale(${zoom})`,
           transformOrigin: 'top center',
-          width: '794px', // A4 width in pixels at 96 DPI
-          minHeight: '1123px', // A4 height in pixels at 96 DPI
-          padding: '76px', // 20mm converted to pixels
-          fontFamily: styling.font,
+          width: '794px', // A4 width exact pixels
+          minHeight: '1123px', // A4 height exact pixels
+          padding: '60px', // Consistent padding
+          fontFamily: styling.font || 'Arial',
           fontSize: '11pt',
-          lineHeight: '1.4'
+          lineHeight: '1.4',
+          color: '#000000'
         }}
       >
         {/* Header */}
@@ -59,7 +60,7 @@ export const LivePreview = ({
               className="font-bold mb-2"
               style={{ 
                 color: styling.primaryColor,
-                fontSize: '18pt',
+                fontSize: '20pt',
                 lineHeight: '1.2'
               }}
             >
@@ -83,7 +84,7 @@ export const LivePreview = ({
             className="font-semibold mb-4"
             style={{ 
               color: styling.primaryColor,
-              fontSize: '16pt',
+              fontSize: '18pt',
               lineHeight: '1.3'
             }}
           >
@@ -186,7 +187,7 @@ export const LivePreview = ({
               variant="ghost"
               size="sm"
               onClick={handleZoomOut}
-              disabled={zoom <= 0.5}
+              disabled={zoom <= 0.3}
               className="h-8 w-8 p-0"
             >
               <ZoomOut className="h-4 w-4" />

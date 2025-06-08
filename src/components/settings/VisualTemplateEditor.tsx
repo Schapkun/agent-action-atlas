@@ -37,6 +37,7 @@ export const VisualTemplateEditor = ({
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [originalTemplateData, setOriginalTemplateData] = useState<VisualTemplateData>(templateData);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Track changes
   useEffect(() => {
@@ -53,6 +54,8 @@ export const VisualTemplateEditor = ({
         ...layout.styling
       }
     });
+    // Force refresh to show changes immediately
+    setRefreshKey(prev => prev + 1);
   };
 
   const handleCompanyInfoUpdate = (companyInfo: CompanyInfo) => {
@@ -60,6 +63,7 @@ export const VisualTemplateEditor = ({
       ...templateData,
       companyInfo
     });
+    setRefreshKey(prev => prev + 1);
   };
 
   const handleStyleUpdate = (field: string, value: string) => {
@@ -70,6 +74,7 @@ export const VisualTemplateEditor = ({
         [field]: value
       }
     });
+    setRefreshKey(prev => prev + 1);
   };
 
   const handleStylesUpdate = (styles: any) => {
@@ -80,6 +85,7 @@ export const VisualTemplateEditor = ({
         ...styles
       }
     });
+    setRefreshKey(prev => prev + 1);
   };
 
   const handleSaveToLibrary = () => {
@@ -103,6 +109,7 @@ export const VisualTemplateEditor = ({
     onUpdateTemplate(template);
     setOriginalTemplateData(template);
     setShowTemplateLibrary(false);
+    setRefreshKey(prev => prev + 1);
   };
 
   const handleSaveTemplate = () => {
@@ -118,6 +125,7 @@ export const VisualTemplateEditor = ({
   const handleDiscardChanges = () => {
     onUpdateTemplate(originalTemplateData);
     setHasUnsavedChanges(false);
+    setRefreshKey(prev => prev + 1);
   };
 
   return (
@@ -197,6 +205,7 @@ export const VisualTemplateEditor = ({
         {/* Preview Panel - 50% */}
         <div className="w-1/2 h-full p-4">
           <EnhancedLivePreview
+            key={refreshKey}
             templateData={templateData}
             onSaveToLibrary={handleSaveToLibrary}
             onDownloadPDF={handleDownloadPDF}

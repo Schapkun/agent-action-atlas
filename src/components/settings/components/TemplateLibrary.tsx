@@ -69,7 +69,6 @@ export const TemplateLibrary = ({
 
   const saveTemplate = () => {
     if (!templateName.trim()) {
-      console.log('Template name required');
       return;
     }
 
@@ -98,7 +97,6 @@ export const TemplateLibrary = ({
       setTemplateName('');
       setTemplateDescription('');
       
-      console.log(`Template "${newTemplate.name}" saved successfully`);
     } catch (error) {
       console.error('Error saving template:', error);
     }
@@ -106,7 +104,6 @@ export const TemplateLibrary = ({
 
   const loadTemplate = (template: SavedTemplate) => {
     onLoadTemplate(template.data);
-    console.log(`Template "${template.name}" loaded successfully`);
   };
 
   const deleteTemplate = (templateId: string) => {
@@ -119,7 +116,6 @@ export const TemplateLibrary = ({
       localStorage.setItem(storageKey, JSON.stringify(updated));
       setSavedTemplates(updated);
       
-      console.log('Template deleted successfully');
     } catch (error) {
       console.error('Error deleting template:', error);
     }
@@ -181,7 +177,6 @@ export const TemplateLibrary = ({
         localStorage.setItem(storageKey, JSON.stringify(updated));
         setSavedTemplates(updated);
         
-        console.log(`Template "${newTemplate.name}" imported successfully`);
       } catch (error) {
         console.error('Error importing template:', error);
       }
