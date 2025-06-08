@@ -101,21 +101,6 @@ export const OrganizationCard = ({
         />
       )}
 
-      {/* Add Workspace Button */}
-      {!showCreateWorkspaceForm && canCreate && (
-        <div className="p-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowCreateWorkspaceForm(true)}
-            className="w-full"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Nieuwe Werkruimte
-          </Button>
-        </div>
-      )}
-
       {/* All-in-One Management Dialog */}
       <ManageOrgWorkspaceDialog
         isOpen={showManageDialog}
