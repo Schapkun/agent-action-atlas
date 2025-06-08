@@ -29,7 +29,6 @@ export const OrganizationCard = ({
   onRefresh
 }: OrganizationCardProps) => {
   const [showCreateWorkspaceForm, setShowCreateWorkspaceForm] = useState(false);
-  const [showManageDialog, setShowManageDialog] = useState(false);
 
   const handleCreateWorkspace = async (name: string) => {
     await onCreateWorkspace(organization.id, name);
@@ -44,7 +43,6 @@ export const OrganizationCard = ({
   const handleEditWorkspace = (workspace: {id: string; name: string; organization_id: string}) => {
     console.log('OrganizationCard - handleEditWorkspace clicked for:', workspace.name);
     // Open the manage dialog instead of individual edit
-    setShowManageDialog(true);
   };
 
   return (
@@ -69,15 +67,21 @@ export const OrganizationCard = ({
             >
               <Trash2 className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowManageDialog(true)}
-              className="h-8 w-8 p-0"
-              title="Alles Beheren"
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
+            <ManageOrgWorkspaceDialog
+              type="organization"
+              item={organization}
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  title="Alles Beheren"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              }
+              onSaved={handleRefreshData}
+            />
           </div>
         )}
       </div>
@@ -100,14 +104,6 @@ export const OrganizationCard = ({
           onCancel={() => setShowCreateWorkspaceForm(false)}
         />
       )}
-
-      {/* All-in-One Management Dialog */}
-      <ManageOrgWorkspaceDialog
-        isOpen={showManageDialog}
-        onClose={() => setShowManageDialog(false)}
-        organization={organization}
-        onUpdate={handleRefreshData}
-      />
     </div>
   );
 };
