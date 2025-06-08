@@ -1,10 +1,12 @@
 
+
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Menu, Bell, LogOut, Building2, Users } from 'lucide-react';
+import { Menu, Bell, LogOut, Building2, Users, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from 'react';
 import type { ViewType } from '@/components/dashboard/Sidebar';
 
 interface HeaderProps {
@@ -24,6 +26,17 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
     isLoadingOrganizations 
   } = useOrganization();
   const { toast } = useToast();
+  const [favoriteFilter, setFavoriteFilter] = useState<string | null>(null);
+
+  // Load favorite filter from localStorage on component mount
+  useEffect(() => {
+    const savedFavorite = localStorage.getItem('favoriteFilter');
+    if (savedFavorite) {
+      setFavoriteFilter(savedFavorite);
+      // Apply the favorite filter if it exists
+      handleSelectionChange(savedFavorite);
+    }
+  }, [organizations, workspaces]);
 
   const handleLogout = async () => {
     try {
@@ -71,7 +84,11 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
   };
 
   const handleSelectionChange = (value: string) => {
-    if (value.startsWith('org:')) {
+    if (value === 'all') {
+      // Show all data - reset selections
+      setSelectedOrganization(null);
+      setSelectedWorkspace(null);
+    } else if (value.startsWith('org:')) {
       const orgId = value.substring(4);
       const organization = organizations.find(org => org.id === orgId);
       if (organization) {
@@ -89,13 +106,22 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
     }
   };
 
+  const handleSetFavorite = (value: string) => {
+    setFavoriteFilter(value);
+    localStorage.setItem('favoriteFilter', value);
+    toast({
+      title: "Favoriet ingesteld",
+      description: "Deze filter wordt nu standaard geladen.",
+    });
+  };
+
   const getCurrentSelectionValue = () => {
     if (selectedWorkspace) {
       return `workspace:${selectedWorkspace.id}`;
     } else if (selectedOrganization) {
       return `org:${selectedOrganization.id}`;
     }
-    return '';
+    return 'all';
   };
 
   const getCurrentSelectionLabel = () => {
@@ -104,7 +130,7 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
     } else if (selectedOrganization) {
       return `${selectedOrganization.name} (hele organisatie)`;
     }
-    return 'Selecteer organisatie/werkruimte';
+    return 'Alle gegevens';
   };
 
   // Group workspaces by organization for better display
@@ -131,39 +157,73 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
         </div>
 
         <div className="flex items-center space-x-4">
-          {/* Organisatie/Werkruimte Selector */}
-          <Select
-            value={getCurrentSelectionValue()}
-            onValueChange={handleSelectionChange}
-            disabled={isLoadingOrganizations}
-          >
-            <SelectTrigger className="w-64">
-              <SelectValue>
-                {isLoadingOrganizations ? 'Laden...' : getCurrentSelectionLabel()}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {groupedOptions.map((group) => (
-                <div key={group.organization.id}>
-                  <SelectItem value={`org:${group.organization.id}`}>
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4" />
-                      <span className="font-medium">{group.organization.name}</span>
-                      <span className="text-xs text-muted-foreground">(hele organisatie)</span>
-                    </div>
-                  </SelectItem>
-                  {group.workspaces.map((workspace) => (
-                    <SelectItem key={workspace.id} value={`workspace:${workspace.id}`}>
-                      <div className="flex items-center gap-2 ml-4">
-                        <Users className="h-3 w-3" />
-                        <span>{workspace.name}</span>
+          {/* Filter Label and Selector */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-muted-foreground">Filter</span>
+            <Select
+              value={getCurrentSelectionValue()}
+              onValueChange={handleSelectionChange}
+              disabled={isLoadingOrganizations}
+            >
+              <SelectTrigger className="w-64 border-2 border-foreground">
+                <SelectValue>
+                  {isLoadingOrganizations ? 'Laden...' : getCurrentSelectionLabel()}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {/* Show all data option */}
+                <SelectItem value="all">
+                  <div className="flex items-center gap-2 justify-between w-full">
+                    <span>Alle gegevens</span>
+                    {favoriteFilter === 'all' && (
+                      <Star className="h-3 w-3 fill-current text-yellow-500" />
+                    )}
+                  </div>
+                </SelectItem>
+
+                {groupedOptions.map((group) => (
+                  <div key={group.organization.id}>
+                    <SelectItem value={`org:${group.organization.id}`}>
+                      <div className="flex items-center gap-2 justify-between w-full">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4" />
+                          <span className="font-medium">{group.organization.name}</span>
+                          <span className="text-xs text-muted-foreground">(hele organisatie)</span>
+                        </div>
+                        {favoriteFilter === `org:${group.organization.id}` && (
+                          <Star className="h-3 w-3 fill-current text-yellow-500" />
+                        )}
                       </div>
                     </SelectItem>
-                  ))}
-                </div>
-              ))}
-            </SelectContent>
-          </Select>
+                    {group.workspaces.map((workspace) => (
+                      <SelectItem key={workspace.id} value={`workspace:${workspace.id}`}>
+                        <div className="flex items-center gap-2 justify-between w-full">
+                          <div className="flex items-center gap-2 ml-4">
+                            <Users className="h-3 w-3" />
+                            <span>{workspace.name}</span>
+                          </div>
+                          {favoriteFilter === `workspace:${workspace.id}` && (
+                            <Star className="h-3 w-3 fill-current text-yellow-500" />
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </div>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            {/* Favorite button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleSetFavorite(getCurrentSelectionValue())}
+              className="h-8 w-8 p-0"
+              title="Als favoriet instellen"
+            >
+              <Star className={`h-4 w-4 ${favoriteFilter === getCurrentSelectionValue() ? 'fill-current text-yellow-500' : ''}`} />
+            </Button>
+          </div>
 
           <Button variant="ghost" size="sm">
             <Bell className="h-4 w-4" />
@@ -177,3 +237,4 @@ export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
     </header>
   );
 };
+
