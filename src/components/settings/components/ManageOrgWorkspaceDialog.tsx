@@ -519,6 +519,9 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
             
             <TabsContent value="organisatie" className="flex-1 overflow-hidden">
               <div className="h-full flex flex-col space-y-4">
+                {/* Add whitespace to match workspaces tab */}
+                <div className="flex-shrink-0 h-10"></div>
+                
                 <div className="flex-shrink-0 space-y-3 p-4 border rounded-lg bg-muted/20">
                   <div className="flex items-center justify-between">
                     {editingOrganization ? (
@@ -579,9 +582,9 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
                       {loading ? (
                         <div className="text-sm text-muted-foreground">Laden...</div>
                       ) : (
-                        <div className="space-y-2">
+                        <div className="space-y-1">
                           {users.map((user) => (
-                            <div key={user.id} className="flex items-center space-x-3 p-2 hover:bg-muted/50 rounded">
+                            <div key={user.id} className="flex items-center space-x-3 p-1 hover:bg-muted/50 rounded">
                               <Checkbox
                                 id={`org-${user.id}`}
                                 checked={user.hasOrgAccess}
@@ -611,7 +614,7 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
             <TabsContent value="werkruimtes" className="flex-1 overflow-hidden">
               <div className="h-full flex flex-col space-y-4">
                 <div className="flex-shrink-0">
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-end h-10 mb-3">
                     <Button
                       size="sm"
                       onClick={() => setShowAddWorkspace(!showAddWorkspace)}
@@ -684,18 +687,18 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
                                       <Button
                                         size="sm"
                                         variant="ghost"
-                                        onClick={() => handleEditWorkspace(workspace.id, workspace.name)}
-                                        className="text-black hover:text-gray-700"
-                                      >
-                                        <Edit className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
                                         onClick={() => handleDeleteWorkspace(workspace.id, workspace.name)}
                                         className="text-red-600 hover:text-red-700"
                                       >
                                         <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => handleEditWorkspace(workspace.id, workspace.name)}
+                                        className="text-black hover:text-gray-700"
+                                      >
+                                        <Edit className="h-4 w-4" />
                                       </Button>
                                     </div>
                                   </>
@@ -704,9 +707,9 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
                               
                               <div>
                                 <Label className="text-xs font-medium mb-2 block text-muted-foreground">Werkruimte Gebruikers</Label>
-                                <div className="space-y-2">
+                                <div className="space-y-1">
                                   {users.map((user) => (
-                                    <div key={user.id} className="flex items-center space-x-3 p-2 hover:bg-muted/30 rounded">
+                                    <div key={user.id} className="flex items-center space-x-3 p-1 hover:bg-muted/30 rounded">
                                       <Checkbox
                                         id={`ws-${workspace.id}-${user.id}`}
                                         checked={user.workspaceAccess?.[workspace.id] || false}
