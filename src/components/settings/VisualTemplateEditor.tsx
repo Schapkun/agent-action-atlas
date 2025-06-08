@@ -160,7 +160,7 @@ export const VisualTemplateEditor = ({
   };
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="flex flex-col w-full" style={{ height: '70vh' }}>
       {/* Header met workspace/organization switcher */}
       <div className="flex-shrink-0 px-4 py-3 bg-muted/50 border-b">
         <div className="flex items-center justify-between">
@@ -175,14 +175,14 @@ export const VisualTemplateEditor = ({
         </div>
       </div>
 
-      {/* Main content met ResizablePanelGroup */}
-      <div className="flex-1 p-4">
+      {/* Main content area */}
+      <div className="flex-1 overflow-hidden">
         <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* Sidebar Panel */}
           <ResizablePanel defaultSize={40} minSize={30} maxSize={50}>
-            <div className="h-full pr-2">
-              <Tabs defaultValue="layout" className="h-full">
-                <TabsList className="grid w-full grid-cols-3">
+            <div className="h-full p-4">
+              <Tabs defaultValue="layout" className="h-full flex flex-col">
+                <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
                   <TabsTrigger value="layout" className="text-xs">
                     <FileText className="h-3 w-3 mr-1" />
                     Layout
@@ -197,38 +197,32 @@ export const VisualTemplateEditor = ({
                   </TabsTrigger>
                 </TabsList>
                 
-                <div className="mt-4 h-[calc(100%-48px)]">
+                <div className="flex-1 mt-4 overflow-hidden">
                   <TabsContent value="layout" className="h-full m-0">
                     <ScrollArea className="h-full">
-                      <div className="pr-4 pb-6">
-                        <UniqueLayoutSelector
-                          layouts={UNIQUE_LAYOUT_TEMPLATES}
-                          selectedLayoutId={templateData.layout}
-                          onSelectLayout={handleLayoutSelect}
-                        />
-                      </div>
+                      <UniqueLayoutSelector
+                        layouts={UNIQUE_LAYOUT_TEMPLATES}
+                        selectedLayoutId={templateData.layout}
+                        onSelectLayout={handleLayoutSelect}
+                      />
                     </ScrollArea>
                   </TabsContent>
                   
                   <TabsContent value="company" className="h-full m-0">
                     <ScrollArea className="h-full">
-                      <div className="pr-4 pb-6">
-                        <CompanyInfoForm
-                          companyInfo={templateData.companyInfo}
-                          onUpdateCompanyInfo={handleCompanyInfoUpdate}
-                        />
-                      </div>
+                      <CompanyInfoForm
+                        companyInfo={templateData.companyInfo}
+                        onUpdateCompanyInfo={handleCompanyInfoUpdate}
+                      />
                     </ScrollArea>
                   </TabsContent>
                   
                   <TabsContent value="styling" className="h-full m-0">
                     <ScrollArea className="h-full">
-                      <div className="pr-4 pb-6">
-                        <StyleEditor
-                          styling={templateData.styling}
-                          onUpdateStyling={handleStylesUpdate}
-                        />
-                      </div>
+                      <StyleEditor
+                        styling={templateData.styling}
+                        onUpdateStyling={handleStylesUpdate}
+                      />
                     </ScrollArea>
                   </TabsContent>
                 </div>
@@ -240,7 +234,7 @@ export const VisualTemplateEditor = ({
 
           {/* Preview Panel */}
           <ResizablePanel defaultSize={60} minSize={50}>
-            <div className="h-full pl-2">
+            <div className="h-full p-4">
               <EnhancedLivePreview
                 templateData={templateData}
                 onSaveToLibrary={handleSaveToLibrary}
