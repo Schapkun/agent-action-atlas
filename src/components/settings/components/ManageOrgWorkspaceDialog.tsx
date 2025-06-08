@@ -526,87 +526,91 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
                   </div>
                 </div>
                 
-                <div className="flex-shrink-0 space-y-3 p-4 border rounded-lg bg-muted/20">
-                  <div className="flex items-center justify-between">
-                    {editingOrganization ? (
-                      <div className="flex items-center gap-2 flex-1">
-                        <Input
-                          value={editOrgName}
-                          onChange={(e) => setEditOrgName(e.target.value)}
-                          className="flex-1"
-                          autoFocus
-                        />
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={handleSaveOrganizationName}
-                          className="text-green-600 hover:text-green-700"
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={handleCancelEditOrganization}
-                          className="text-gray-600 hover:text-gray-700"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <>
-                        <span className="font-medium text-lg">{name}</span>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={handleDeleteOrganization}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleEditOrganization(name)}
-                            className="text-black hover:text-gray-700"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-                
                 <div className="flex-1 overflow-hidden">
-                  <Label className="text-sm font-medium">Organisatie Gebruikers</Label>
-                  <ScrollArea className="h-full mt-2 border rounded-md bg-muted/10">
+                  <ScrollArea className="h-full border rounded-md bg-muted/10">
                     <div className="p-3">
                       {loading ? (
                         <div className="text-sm text-muted-foreground">Laden...</div>
                       ) : (
-                        <div className="space-y-1">
-                          {users.map((user) => (
-                            <div key={user.id} className="flex items-center space-x-3 p-1 hover:bg-muted/50 rounded">
-                              <Checkbox
-                                id={`org-${user.id}`}
-                                checked={user.hasOrgAccess}
-                                onCheckedChange={(checked) => 
-                                  handleOrgUserToggle(user.id, checked as boolean)
-                                }
-                              />
-                              <label 
-                                htmlFor={`org-${user.id}`}
-                                className="text-sm cursor-pointer flex-1"
-                              >
-                                {user.full_name || user.email}
-                                {user.email !== user.full_name && (
-                                  <span className="text-muted-foreground ml-2">({user.email})</span>
-                                )}
-                              </label>
+                        <div className="space-y-4">
+                          <div className="border rounded-lg bg-background/50 p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              {editingOrganization ? (
+                                <div className="flex items-center gap-2 flex-1">
+                                  <Input
+                                    value={editOrgName}
+                                    onChange={(e) => setEditOrgName(e.target.value)}
+                                    className="flex-1"
+                                    autoFocus
+                                  />
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={handleSaveOrganizationName}
+                                    className="text-green-600 hover:text-green-700"
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={handleCancelEditOrganization}
+                                    className="text-gray-600 hover:text-gray-700"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <>
+                                  <span className="font-medium">{name}</span>
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={handleDeleteOrganization}
+                                      className="text-red-600 hover:text-red-700"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleEditOrganization(name)}
+                                      className="text-black hover:text-gray-700"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </>
+                              )}
                             </div>
-                          ))}
+                            
+                            <div>
+                              <Label className="text-xs font-medium mb-2 block text-muted-foreground">Organisatie Gebruikers</Label>
+                              <div className="space-y-1">
+                                {users.map((user) => (
+                                  <div key={user.id} className="flex items-center space-x-3 p-1 hover:bg-muted/30 rounded">
+                                    <Checkbox
+                                      id={`org-${user.id}`}
+                                      checked={user.hasOrgAccess}
+                                      onCheckedChange={(checked) => 
+                                        handleOrgUserToggle(user.id, checked as boolean)
+                                      }
+                                    />
+                                    <label 
+                                      htmlFor={`org-${user.id}`}
+                                      className="text-sm cursor-pointer flex-1"
+                                    >
+                                      {user.full_name || user.email}
+                                      {user.email !== user.full_name && (
+                                        <span className="text-muted-foreground ml-2">({user.email})</span>
+                                      )}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -618,7 +622,7 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
             <TabsContent value="werkruimtes" className="flex-1 overflow-hidden">
               <div className="h-full flex flex-col space-y-4">
                 <div className="flex-shrink-0">
-                  <div className="flex items-center justify-end h-10 mb-3">
+                  <div className="flex items-center justify-center h-10 mb-3">
                     <Button
                       size="sm"
                       onClick={() => setShowAddWorkspace(!showAddWorkspace)}
