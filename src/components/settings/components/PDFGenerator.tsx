@@ -17,7 +17,8 @@ export class PDFGenerator {
     
     // Company header
     this.doc.setFontSize(20);
-    this.doc.setTextColor(this.hexToRgb(styling.primaryColor));
+    const rgb = this.hexToRgb(styling.primaryColor);
+    this.doc.setTextColor(rgb[0], rgb[1], rgb[2]);
     this.doc.text(companyInfo.name || 'Uw Bedrijf', 20, 30);
     
     // Company details
@@ -47,7 +48,8 @@ export class PDFGenerator {
 
     // Document title
     this.doc.setFontSize(16);
-    this.doc.setTextColor(this.hexToRgb(styling.primaryColor));
+    const titleRgb = this.hexToRgb(styling.primaryColor);
+    this.doc.setTextColor(titleRgb[0], titleRgb[1], titleRgb[2]);
     const docTitle = documentType === 'invoice' ? 'FACTUUR' : 
                     documentType === 'quote' ? 'OFFERTE' : 
                     documentType === 'letter' ? 'BRIEF' : 'DOCUMENT';
@@ -96,7 +98,8 @@ export class PDFGenerator {
     ];
 
     // Table headers
-    this.doc.setFillColor(this.hexToRgb(primaryColor));
+    const headerRgb = this.hexToRgb(primaryColor);
+    this.doc.setFillColor(headerRgb[0], headerRgb[1], headerRgb[2]);
     this.doc.rect(20, startY, 170, 8, 'F');
     
     this.doc.setTextColor(255, 255, 255);

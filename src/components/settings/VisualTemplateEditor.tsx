@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Palette, FileText, Settings, Building } from 'lucide-react';
@@ -8,6 +8,7 @@ import { CompanyInfoForm } from './components/CompanyInfoForm';
 import { EnhancedLivePreview } from './components/EnhancedLivePreview';
 import { StyleEditor } from './components/StyleEditor';
 import { TemplateLibrary } from './components/TemplateLibrary';
+import { WorkspaceOrgSwitcher } from './components/WorkspaceOrgSwitcher';
 import { PDFGenerator } from './components/PDFGenerator';
 import { 
   VisualTemplateData, 
@@ -35,7 +36,15 @@ export const VisualTemplateEditor = ({
   organizationName
 }: VisualTemplateEditorProps) => {
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [originalTemplateData, setOriginalTemplateData] = useState<VisualTemplateData>(templateData);
   const { toast } = useToast();
+
+  // Track changes
+  useEffect(() => {
+    const hasChanges = JSON.stringify(templateData) !== JSON.stringify(originalTemplateData);
+    setHasUnsavedChanges(hasChanges);
+  }, [templateData, originalTemplateData]);
 
   const handleLayoutSelect = (layout: UniqueLayoutTemplate) => {
     onUpdateTemplate({
@@ -111,6 +120,7 @@ export const VisualTemplateEditor = ({
 
   const handleLoadTemplate = (template: VisualTemplateData) => {
     onUpdateTemplate(template);
+    setOriginalTemplateData(template);
     setShowTemplateLibrary(false);
     
     toast({
@@ -120,27 +130,45 @@ export const VisualTemplateEditor = ({
   };
 
   const handleSaveTemplate = () => {
-    // Deze functie wordt afgehandeld door TemplateLibrary component
+    setOriginalTemplateData({ ...templateData });
+    setHasUnsavedChanges(false);
+    
     toast({
       title: "Template opgeslagen",
       description: "Uw template is opgeslagen in de library."
     });
   };
 
+  const handleSaveChanges = () => {
+    setOriginalTemplateData({ ...templateData });
+    setHasUnsavedChanges(false);
+    
+    toast({
+      title: "Wijzigingen opgeslagen",
+      description: "Al uw wijzigingen zijn opgeslagen."
+    });
+  };
+
+  const handleDiscardChanges = () => {
+    onUpdateTemplate(originalTemplateData);
+    setHasUnsavedChanges(false);
+    
+    toast({
+      title: "Wijzigingen verwijderd",
+      description: "Alle wijzigingen zijn ongedaan gemaakt."
+    });
+  };
+
   return (
     <div className="h-full flex flex-col">
-      {/* Header met workspace/organization info */}
+      {/* Header met workspace/organization switcher */}
       <div className="flex-shrink-0 px-4 py-3 bg-muted/50 border-b">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Settings className="h-4 w-4" />
-            <span>
-              {organizationName && workspaceName 
-                ? `${organizationName} / ${workspaceName}`
-                : organizationName || workspaceName || 'Algemeen'
-              }
-            </span>
-          </div>
+          <WorkspaceOrgSwitcher
+            hasUnsavedChanges={hasUnsavedChanges}
+            onSaveChanges={handleSaveChanges}
+            onDiscardChanges={handleDiscardChanges}
+          />
           <div className="text-xs text-muted-foreground">
             Visual Template Builder
           </div>
@@ -167,37 +195,31 @@ export const VisualTemplateEditor = ({
             </TabsList>
             
             <div className="flex-1 min-h-0 mt-4">
-              <TabsContent value="layout" className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col">
-                <ScrollArea className="flex-1">
-                  <div className="pr-4">
-                    <UniqueLayoutSelector
-                      layouts={UNIQUE_LAYOUT_TEMPLATES}
-                      selectedLayoutId={templateData.layout}
-                      onSelectLayout={handleLayoutSelect}
-                    />
-                  </div>
+              <TabsContent value="layout" className="h-full m-0">
+                <ScrollArea className="h-full">
+                  <UniqueLayoutSelector
+                    layouts={UNIQUE_LAYOUT_TEMPLATES}
+                    selectedLayoutId={templateData.layout}
+                    onSelectLayout={handleLayoutSelect}
+                  />
                 </ScrollArea>
               </TabsContent>
               
-              <TabsContent value="company" className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col">
-                <ScrollArea className="flex-1">
-                  <div className="pr-4">
-                    <CompanyInfoForm
-                      companyInfo={templateData.companyInfo}
-                      onUpdateCompanyInfo={handleCompanyInfoUpdate}
-                    />
-                  </div>
+              <TabsContent value="company" className="h-full m-0">
+                <ScrollArea className="h-full">
+                  <CompanyInfoForm
+                    companyInfo={templateData.companyInfo}
+                    onUpdateCompanyInfo={handleCompanyInfoUpdate}
+                  />
                 </ScrollArea>
               </TabsContent>
               
-              <TabsContent value="styling" className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col">
-                <ScrollArea className="flex-1">
-                  <div className="pr-4">
-                    <StyleEditor
-                      styling={templateData.styling}
-                      onUpdateStyling={handleStylesUpdate}
-                    />
-                  </div>
+              <TabsContent value="styling" className="h-full m-0">
+                <ScrollArea className="h-full">
+                  <StyleEditor
+                    styling={templateData.styling}
+                    onUpdateStyling={handleStylesUpdate}
+                  />
                 </ScrollArea>
               </TabsContent>
             </div>

@@ -20,19 +20,21 @@ export interface UniqueLayoutTemplate {
     backgroundColor: string;
     accentColor: string;
     textStyle: string;
+    headerPattern: string;
+    layoutStructure: string;
   };
 }
 
 export const UNIQUE_LAYOUT_TEMPLATES: UniqueLayoutTemplate[] = [
   {
     id: 'modern-blue',
-    name: 'Modern Blue',
+    name: 'Modern Professional',
     thumbnail: '/layouts/modern-blue.png',
-    description: 'Clean modern design with blue accents',
+    description: 'Strak blauw design met moderne typografie',
     category: 'modern',
     styling: {
-      primaryColor: '#2563eb',
-      secondaryColor: '#64748b',
+      primaryColor: '#1e40af',
+      secondaryColor: '#3b82f6',
       font: 'Inter',
       logoPosition: 'left',
       headerStyle: 'colored',
@@ -41,15 +43,17 @@ export const UNIQUE_LAYOUT_TEMPLATES: UniqueLayoutTemplate[] = [
     },
     preview: {
       backgroundColor: 'from-blue-50 to-blue-100',
-      accentColor: 'text-blue-600',
-      textStyle: 'modern'
+      accentColor: 'text-blue-700',
+      textStyle: 'modern',
+      headerPattern: 'gradient-header',
+      layoutStructure: 'sidebar-left'
     }
   },
   {
     id: 'classic-elegant',
-    name: 'Classic Elegant',
+    name: 'Klassiek Elegant',
     thumbnail: '/layouts/classic-elegant.png',
-    description: 'Traditional business style',
+    description: 'Traditioneel zakelijk met serif lettertype',
     category: 'classic',
     styling: {
       primaryColor: '#1f2937',
@@ -63,14 +67,16 @@ export const UNIQUE_LAYOUT_TEMPLATES: UniqueLayoutTemplate[] = [
     preview: {
       backgroundColor: 'from-gray-50 to-gray-100',
       accentColor: 'text-gray-800',
-      textStyle: 'classic'
+      textStyle: 'classic',
+      headerPattern: 'centered-formal',
+      layoutStructure: 'centered'
     }
   },
   {
     id: 'minimal-clean',
-    name: 'Minimal Clean',
+    name: 'Minimalistisch',
     thumbnail: '/layouts/minimal-clean.png',
-    description: 'Simple and professional',
+    description: 'Wit en zwart met veel witruimte',
     category: 'minimal',
     styling: {
       primaryColor: '#000000',
@@ -84,14 +90,16 @@ export const UNIQUE_LAYOUT_TEMPLATES: UniqueLayoutTemplate[] = [
     preview: {
       backgroundColor: 'from-white to-gray-50',
       accentColor: 'text-black',
-      textStyle: 'minimal'
+      textStyle: 'minimal',
+      headerPattern: 'clean-lines',
+      layoutStructure: 'minimal-grid'
     }
   },
   {
     id: 'corporate-formal',
-    name: 'Corporate Formal',
+    name: 'Corporate Donker',
     thumbnail: '/layouts/corporate-formal.png',
-    description: 'Professional corporate design',
+    description: 'Donkere corporate styling met structuur',
     category: 'corporate',
     styling: {
       primaryColor: '#0f172a',
@@ -103,16 +111,18 @@ export const UNIQUE_LAYOUT_TEMPLATES: UniqueLayoutTemplate[] = [
       borderStyle: 'bold'
     },
     preview: {
-      backgroundColor: 'from-slate-50 to-slate-100',
-      accentColor: 'text-slate-800',
-      textStyle: 'formal'
+      backgroundColor: 'from-slate-100 to-slate-200',
+      accentColor: 'text-slate-900',
+      textStyle: 'formal',
+      headerPattern: 'corporate-header',
+      layoutStructure: 'structured'
     }
   },
   {
     id: 'creative-modern',
-    name: 'Creative Modern',
+    name: 'Creatief Paars',
     thumbnail: '/layouts/creative-modern.png',
-    description: 'Creative design with bold elements',
+    description: 'Paarse accenten met creatieve layouts',
     category: 'modern',
     styling: {
       primaryColor: '#7c3aed',
@@ -125,15 +135,17 @@ export const UNIQUE_LAYOUT_TEMPLATES: UniqueLayoutTemplate[] = [
     },
     preview: {
       backgroundColor: 'from-purple-50 to-purple-100',
-      accentColor: 'text-purple-600',
-      textStyle: 'creative'
+      accentColor: 'text-purple-700',
+      textStyle: 'creative',
+      headerPattern: 'artistic-header',
+      layoutStructure: 'creative-flow'
     }
   },
   {
-    id: 'business-classic',
-    name: 'Business Classic',
+    id: 'business-green',
+    name: 'Zakelijk Groen',
     thumbnail: '/layouts/business-classic.png',
-    description: 'Conservative business approach',
+    description: 'Groene accenten voor zakelijke vertrouwen',
     category: 'classic',
     styling: {
       primaryColor: '#059669',
@@ -146,8 +158,10 @@ export const UNIQUE_LAYOUT_TEMPLATES: UniqueLayoutTemplate[] = [
     },
     preview: {
       backgroundColor: 'from-green-50 to-green-100',
-      accentColor: 'text-green-600',
-      textStyle: 'business'
+      accentColor: 'text-green-700',
+      textStyle: 'business',
+      headerPattern: 'business-header',
+      layoutStructure: 'traditional'
     }
   }
 ];
