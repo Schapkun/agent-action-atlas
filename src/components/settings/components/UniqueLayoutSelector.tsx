@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Check, Palette } from 'lucide-react';
 import { UniqueLayoutTemplate } from '../types/LayoutTemplates';
 
@@ -135,12 +134,6 @@ export const UniqueLayoutSelector = ({
             </div>
           )}
         </div>
-        
-        {selectedLayoutId === layout.id && (
-          <div className="absolute bg-primary text-primary-foreground rounded-full flex items-center justify-center" style={{ top: '6px', right: '6px', width: '20px', height: '20px' }}>
-            <Check style={{ height: '10px', width: '10px' }} />
-          </div>
-        )}
       </div>
     );
   };
@@ -161,7 +154,7 @@ export const UniqueLayoutSelector = ({
         {layouts.map((layout) => (
           <Card 
             key={layout.id}
-            className={`cursor-pointer transition-all hover:shadow-md ${
+            className={`cursor-pointer transition-all hover:shadow-md relative ${
               selectedLayoutId === layout.id 
                 ? 'ring-2 ring-primary shadow-md' 
                 : 'hover:shadow-sm'
@@ -172,25 +165,23 @@ export const UniqueLayoutSelector = ({
               <div className="relative">
                 {renderUniquePreview(layout)}
                 
+                {/* Checkmark positioned at top-right within card border */}
+                {selectedLayoutId === layout.id && (
+                  <div className="absolute bg-primary text-primary-foreground rounded-full flex items-center justify-center" style={{ top: '3px', right: '3px', width: '18px', height: '18px' }}>
+                    <Check style={{ height: '10px', width: '10px' }} />
+                  </div>
+                )}
+                
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <h4 className="font-medium truncate text-sm">{layout.name}</h4>
-                    <Badge variant="outline" className="text-xs">
-                      {layout.category}
-                    </Badge>
                   </div>
-                  <p className="text-muted-foreground leading-tight line-clamp-2 text-xs">
-                    {layout.description}
-                  </p>
                   <div className="flex items-center gap-2 mt-2">
                     <div 
                       className="rounded-full border w-3 h-3"
                       style={{ backgroundColor: layout.styling.primaryColor }}
                       title={`Hoofdkleur: ${layout.styling.primaryColor}`}
                     />
-                    <span className="text-muted-foreground truncate text-xs">
-                      {layout.styling.font}
-                    </span>
                   </div>
                 </div>
               </div>
