@@ -2,18 +2,20 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Palette, FileText, Settings, Library } from 'lucide-react';
-import { LayoutSelector } from './components/LayoutSelector';
+import { Palette, FileText, Settings, Building } from 'lucide-react';
+import { UniqueLayoutSelector } from './components/UniqueLayoutSelector';
 import { CompanyInfoForm } from './components/CompanyInfoForm';
-import { LivePreview } from './components/LivePreview';
-import { TemplateLibrary } from './components/TemplateLibrary';
+import { EnhancedLivePreview } from './components/EnhancedLivePreview';
 import { StyleEditor } from './components/StyleEditor';
+import { TemplateLibrary } from './components/TemplateLibrary';
+import { PDFGenerator } from './components/PDFGenerator';
 import { 
   VisualTemplateData, 
-  DEFAULT_LAYOUTS, 
   DEFAULT_VARIABLES,
   CompanyInfo 
 } from './types/VisualTemplate';
+import { UNIQUE_LAYOUT_TEMPLATES, UniqueLayoutTemplate } from './types/LayoutTemplates';
+import { useToast } from '@/hooks/use-toast';
 
 interface VisualTemplateEditorProps {
   templateData: VisualTemplateData;
@@ -32,12 +34,22 @@ export const VisualTemplateEditor = ({
   workspaceName,
   organizationName
 }: VisualTemplateEditorProps) => {
-  const [zoom, setZoom] = useState(0.7);
+  const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
+  const { toast } = useToast();
 
-  const handleLayoutSelect = (layoutId: string) => {
+  const handleLayoutSelect = (layout: UniqueLayoutTemplate) => {
     onUpdateTemplate({
       ...templateData,
-      layout: layoutId
+      layout: layout.id,
+      styling: {
+        ...templateData.styling,
+        ...layout.styling
+      }
+    });
+    
+    toast({
+      title: "Layout toegepast",
+      description: `${layout.name} is nu actief met unieke styling.`
     });
   };
 
@@ -68,23 +80,56 @@ export const VisualTemplateEditor = ({
     });
   };
 
-  const handleSaveTemplate = () => {
-    // TODO: Implement save to template library
-    console.log('Saving template:', templateData);
+  const handleSaveToLibrary = () => {
+    setShowTemplateLibrary(true);
+    toast({
+      title: "Template Library geopend",
+      description: "U kunt nu uw template opslaan in de library."
+    });
+  };
+
+  const handleDownloadPDF = () => {
+    try {
+      const pdfGenerator = new PDFGenerator();
+      const pdf = pdfGenerator.generateFromTemplate(templateData);
+      const filename = `${templateData.name || 'document'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(filename);
+      
+      toast({
+        title: "PDF Gedownload",
+        description: `${filename} is succesvol gedownload.`
+      });
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast({
+        title: "PDF Fout",
+        description: "Er is een fout opgetreden bij het genereren van de PDF.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleLoadTemplate = (template: VisualTemplateData) => {
     onUpdateTemplate(template);
+    setShowTemplateLibrary(false);
+    
+    toast({
+      title: "Template geladen",
+      description: `"${template.name}" is geladen in de editor.`
+    });
   };
 
-  const handleExport = () => {
-    // TODO: Implement PDF export functionality
-    console.log('Exporting template:', templateData);
+  const handleSaveTemplate = () => {
+    // Deze functie wordt afgehandeld door TemplateLibrary component
+    toast({
+      title: "Template opgeslagen",
+      description: "Uw template is opgeslagen in de library."
+    });
   };
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header with workspace/organization info */}
+      {/* Header met workspace/organization info */}
       <div className="flex-shrink-0 px-4 py-3 bg-muted/50 border-b">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -97,7 +142,7 @@ export const VisualTemplateEditor = ({
             </span>
           </div>
           <div className="text-xs text-muted-foreground">
-            Document Builder
+            Visual Template Builder
           </div>
         </div>
       </div>
@@ -106,22 +151,18 @@ export const VisualTemplateEditor = ({
         {/* Sidebar */}
         <div className="col-span-2 flex flex-col min-h-0">
           <Tabs defaultValue="layout" className="flex-1 flex flex-col min-h-0">
-            <TabsList className="grid w-full grid-cols-4 flex-shrink-0">
+            <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
               <TabsTrigger value="layout" className="text-xs">
                 <FileText className="h-3 w-3 mr-1" />
                 Layout
               </TabsTrigger>
               <TabsTrigger value="company" className="text-xs">
-                <Settings className="h-3 w-3 mr-1" />
+                <Building className="h-3 w-3 mr-1" />
                 Bedrijf
               </TabsTrigger>
               <TabsTrigger value="styling" className="text-xs">
                 <Palette className="h-3 w-3 mr-1" />
                 Stijl
-              </TabsTrigger>
-              <TabsTrigger value="library" className="text-xs">
-                <Library className="h-3 w-3 mr-1" />
-                Library
               </TabsTrigger>
             </TabsList>
             
@@ -129,8 +170,8 @@ export const VisualTemplateEditor = ({
               <TabsContent value="layout" className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col">
                 <ScrollArea className="flex-1">
                   <div className="pr-4">
-                    <LayoutSelector
-                      layouts={DEFAULT_LAYOUTS}
+                    <UniqueLayoutSelector
+                      layouts={UNIQUE_LAYOUT_TEMPLATES}
                       selectedLayoutId={templateData.layout}
                       onSelectLayout={handleLayoutSelect}
                     />
@@ -159,34 +200,47 @@ export const VisualTemplateEditor = ({
                   </div>
                 </ScrollArea>
               </TabsContent>
-
-              <TabsContent value="library" className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col">
-                <ScrollArea className="flex-1">
-                  <div className="pr-4">
-                    <TemplateLibrary
-                      currentTemplate={templateData}
-                      workspaceId={workspaceId}
-                      organizationId={organizationId}
-                      onSaveTemplate={handleSaveTemplate}
-                      onLoadTemplate={handleLoadTemplate}
-                    />
-                  </div>
-                </ScrollArea>
-              </TabsContent>
             </div>
           </Tabs>
         </div>
 
         {/* Preview */}
         <div className="col-span-3 min-h-0">
-          <LivePreview
+          <EnhancedLivePreview
             templateData={templateData}
-            zoom={zoom}
-            onZoomChange={setZoom}
-            onExport={handleExport}
+            onSaveToLibrary={handleSaveToLibrary}
+            onDownloadPDF={handleDownloadPDF}
           />
         </div>
       </div>
+
+      {/* Template Library Modal/Overlay */}
+      {showTemplateLibrary && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+            <div className="p-4 border-b">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Template Library</h2>
+                <button 
+                  onClick={() => setShowTemplateLibrary(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div className="p-4 overflow-y-auto max-h-[calc(80vh-80px)]">
+              <TemplateLibrary
+                currentTemplate={templateData}
+                workspaceId={workspaceId}
+                organizationId={organizationId}
+                onSaveTemplate={handleSaveTemplate}
+                onLoadTemplate={handleLoadTemplate}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
