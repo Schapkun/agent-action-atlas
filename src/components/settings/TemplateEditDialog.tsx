@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -126,7 +125,7 @@ export const TemplateEditDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="fixed inset-0 w-full h-full max-w-none max-h-none p-0 m-0 border-0 rounded-none overflow-hidden flex flex-col">
+      <DialogContent className="fixed inset-0 w-full h-full max-w-none max-h-none p-0 m-0 border-0 rounded-none overflow-hidden flex flex-col translate-x-0 translate-y-0">
         <div className="flex-1 overflow-hidden">
           <VisualTemplateEditor
             templateData={visualTemplateData}
