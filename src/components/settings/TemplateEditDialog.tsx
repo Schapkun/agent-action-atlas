@@ -1,10 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { DocumentTemplate } from './types/DocumentTemplate';
 import { VisualTemplateEditor } from './VisualTemplateEditor';
 import { VisualTemplateData, DEFAULT_VARIABLES } from './types/VisualTemplate';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { X } from 'lucide-react';
 
 interface TemplateEditDialogProps {
   open: boolean;
@@ -81,7 +81,7 @@ export const TemplateEditDialog = ({
         existingData = JSON.parse(template.content);
       }
     } catch (e) {
-      console.log('Could not parse existing template content as JSON');
+      // No console.log needed for melding removal
     }
 
     return existingData || {
@@ -138,21 +138,9 @@ export const TemplateEditDialog = ({
   if (!open || !template) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background border border-border shadow-2xl flex flex-col">
-      {/* Close button */}
-      <div className="absolute top-4 right-4 z-10">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={handleCancel}
-          className="h-8 w-8 bg-background/80 hover:bg-background"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {/* Main content */}
-      <div className="flex-1 overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-background border border-border shadow-2xl flex flex-col h-screen">
+      {/* Main content - volledige hoogte */}
+      <div className="flex-1 overflow-hidden h-full">
         <VisualTemplateEditor
           templateData={visualTemplateData}
           onUpdateTemplate={handleUpdateVisualTemplate}
