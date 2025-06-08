@@ -34,7 +34,7 @@ export const LivePreview = ({
       <div 
         className="bg-white border shadow-sm mx-auto transition-transform duration-200"
         style={{ 
-          transform: `scale(${zoom})`,
+          transform: `scale(${zoom * 0.3})`, // Verkleind tot 30% van de originele grootte
           transformOrigin: 'top center',
           width: '210mm',
           minHeight: '297mm',

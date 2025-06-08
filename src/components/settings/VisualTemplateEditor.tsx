@@ -201,29 +201,35 @@ export const VisualTemplateEditor = ({
                 <div className="flex-1 mt-4 overflow-hidden min-h-0">
                   <TabsContent value="layout" className="h-full m-0">
                     <ScrollArea className="h-full">
-                      <UniqueLayoutSelector
-                        layouts={UNIQUE_LAYOUT_TEMPLATES}
-                        selectedLayoutId={templateData.layout}
-                        onSelectLayout={handleLayoutSelect}
-                      />
+                      <div className="pb-5">
+                        <UniqueLayoutSelector
+                          layouts={UNIQUE_LAYOUT_TEMPLATES}
+                          selectedLayoutId={templateData.layout}
+                          onSelectLayout={handleLayoutSelect}
+                        />
+                      </div>
                     </ScrollArea>
                   </TabsContent>
                   
                   <TabsContent value="company" className="h-full m-0">
                     <ScrollArea className="h-full">
-                      <CompanyInfoForm
-                        companyInfo={templateData.companyInfo}
-                        onUpdateCompanyInfo={handleCompanyInfoUpdate}
-                      />
+                      <div className="pb-5">
+                        <CompanyInfoForm
+                          companyInfo={templateData.companyInfo}
+                          onUpdateCompanyInfo={handleCompanyInfoUpdate}
+                        />
+                      </div>
                     </ScrollArea>
                   </TabsContent>
                   
                   <TabsContent value="styling" className="h-full m-0">
                     <ScrollArea className="h-full">
-                      <StyleEditor
-                        styling={templateData.styling}
-                        onUpdateStyling={handleStylesUpdate}
-                      />
+                      <div className="pb-5">
+                        <StyleEditor
+                          styling={templateData.styling}
+                          onUpdateStyling={handleStylesUpdate}
+                        />
+                      </div>
                     </ScrollArea>
                   </TabsContent>
                 </div>
