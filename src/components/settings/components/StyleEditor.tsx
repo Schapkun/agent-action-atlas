@@ -44,7 +44,7 @@ export const StyleEditor = ({ styling, onUpdateStyling }: StyleEditorProps) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
           <Palette className="h-4 w-4" />
@@ -150,14 +150,14 @@ export const StyleEditor = ({ styling, onUpdateStyling }: StyleEditorProps) => {
       </Card>
 
       {/* Typography */}
-      <Card>
+      <Card className="mb-0">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Type className="h-4 w-4" />
             Typografie
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pb-3">
           <div>
             <Label className="text-xs text-muted-foreground">Lettertype</Label>
             <Select value={styling.font} onValueChange={(value) => handleStyleChange('font', value)}>

@@ -48,7 +48,7 @@ export const CompanyInfoForm = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-2">
       <div className="flex items-center gap-2">
         <Building className="h-4 w-4" />
         <h3 className="text-sm font-medium">Bedrijfsgegevens</h3>
