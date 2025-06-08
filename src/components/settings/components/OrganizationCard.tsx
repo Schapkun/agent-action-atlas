@@ -75,7 +75,7 @@ export const OrganizationCard = ({
                   variant="ghost"
                   size="sm"
                   className="h-8 w-8 p-0"
-                  title="Alles Beheren"
+                  title="Organisatie Beheren"
                 >
                   <Settings className="h-4 w-4" />
                 </Button>
