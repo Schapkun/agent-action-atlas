@@ -1,6 +1,8 @@
 
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 import { DocumentTemplate } from './types/DocumentTemplate';
 
 interface TemplateEditorProps {
@@ -9,29 +11,16 @@ interface TemplateEditorProps {
 }
 
 export const TemplateEditor = ({ template, onUpdateTemplate }: TemplateEditorProps) => {
-  const defaultContent = `<!DOCTYPE html>
-<html>
-<head>
-    <title>${template.name}</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .content { line-height: 1.6; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>${template.name.toUpperCase()}</h1>
-    </div>
-    <div class="content">
-        <p>Dit is een voorbeeld template voor ${template.name}.</p>
-        <p>Pas de inhoud aan naar uw behoeften.</p>
-    </div>
-</body>
-</html>`;
-
   return (
     <div className="space-y-3">
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription className="text-sm">
+          Deze template wordt nu bewerkt met de nieuwe Visual Editor. 
+          Hier kunt u alleen de naam en beschrijving aanpassen.
+        </AlertDescription>
+      </Alert>
+
       <div>
         <label className="text-sm font-medium">Template Naam</label>
         <Input
@@ -40,8 +29,10 @@ export const TemplateEditor = ({ template, onUpdateTemplate }: TemplateEditorPro
             ...template,
             name: e.target.value
           })}
+          className="mt-1"
         />
       </div>
+      
       <div>
         <label className="text-sm font-medium">Beschrijving</label>
         <Input
@@ -50,18 +41,7 @@ export const TemplateEditor = ({ template, onUpdateTemplate }: TemplateEditorPro
             ...template,
             description: e.target.value
           })}
-        />
-      </div>
-      <div>
-        <label className="text-sm font-medium">Template Inhoud</label>
-        <Textarea
-          placeholder="Voer de template inhoud in..."
-          className="min-h-[200px] font-mono text-sm"
-          value={template.content || defaultContent}
-          onChange={(e) => onUpdateTemplate({
-            ...template,
-            content: e.target.value
-          })}
+          className="mt-1"
         />
       </div>
     </div>
