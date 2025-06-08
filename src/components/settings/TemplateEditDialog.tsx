@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -26,7 +25,7 @@ export const TemplateEditDialog = ({
 }: TemplateEditDialogProps) => {
   const { selectedOrganization, selectedWorkspace } = useOrganization();
 
-  // Convert DocumentTemplate to VisualTemplateData
+  // Convert DocumentTemplate to VisualTemplateData state and functions
   const [visualTemplateData, setVisualTemplateData] = useState<VisualTemplateData>(() => {
     if (!template) {
       return {
@@ -126,7 +125,7 @@ export const TemplateEditDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col p-0">
         <div className="flex-1 overflow-hidden">
           <VisualTemplateEditor
             templateData={visualTemplateData}
