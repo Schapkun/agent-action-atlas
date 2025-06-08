@@ -1,11 +1,9 @@
 
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Save } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -24,7 +22,7 @@ interface UserProfileSectionProps {
   onUpdateProfile: () => void;
   showSaveButton: boolean;
   globalRole?: UserRole;
-  onUpdateGlobalRole?: (newRole: UserRole) => void;
+  onUpdateGlobalRole?: (role: UserRole) => void;
   showRoleManagement?: boolean;
 }
 
@@ -37,65 +35,79 @@ export const UserProfileSection = ({
   showSaveButton,
   globalRole,
   onUpdateGlobalRole,
-  showRoleManagement = false
+  showRoleManagement
 }: UserProfileSectionProps) => {
+  const translateRole = (role: string): string => {
+    switch (role.toLowerCase()) {
+      case 'owner':
+        return 'Eigenaar';
+      case 'admin':
+        return 'Admin';
+      case 'member':
+        return 'Gebruiker';
+      default:
+        return role;
+    }
+  };
+
   return (
-    <div className="bg-muted/40 rounded-lg p-6 space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="full-name" className="text-sm font-medium mb-2 block">Volledige Naam</Label>
+    <div className="space-y-6">
+      {/* Profile Information */}
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="full_name">Volledige Naam</Label>
           <Input
-            id="full-name"
+            id="full_name"
             value={profile.full_name || ''}
             onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-            placeholder="Voer volledige naam in"
-            disabled={!isViewingOwnProfile}
-            className="text-sm"
+            placeholder="Voer je volledige naam in"
           />
         </div>
-        <div>
-          <Label htmlFor="email" className="text-sm font-medium mb-2 block">E-mailadres</Label>
+
+        <div className="space-y-2">
+          <Label htmlFor="email">E-mailadres</Label>
           <Input
             id="email"
             type="email"
             value={profile.email || ''}
-            placeholder="Voer e-mailadres in"
-            disabled={true}
-            className="bg-muted/50 cursor-not-allowed text-sm"
+            onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+            placeholder="Voer je e-mailadres in"
           />
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Role Management - only show if enabled */}
         {showRoleManagement && globalRole && onUpdateGlobalRole && (
-          <div>
-            <Label htmlFor="global-role" className="text-sm font-medium mb-2 block">Gebruikersrol</Label>
+          <div className="space-y-2">
+            <Label htmlFor="user_role">Gebruikersrol</Label>
             <Select
               value={globalRole}
-              onValueChange={(newRole) => onUpdateGlobalRole(newRole as UserRole)}
+              onValueChange={(value: UserRole) => onUpdateGlobalRole(value)}
             >
-              <SelectTrigger className="w-full text-sm">
-                <SelectValue />
+              <SelectTrigger>
+                <SelectValue placeholder="Selecteer rol">
+                  {translateRole(globalRole)}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="member">Gebruiker</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="owner">Eigenaar</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="member">Gebruiker</SelectItem>
               </SelectContent>
             </Select>
           </div>
         )}
-        
-        {(showSaveButton || showRoleManagement) && isViewingOwnProfile && (
-          <div className="flex items-end justify-end">
-            <Button onClick={onUpdateProfile} disabled={saving} size="sm">
-              <Save className="h-4 w-4 mr-2" />
-              {saving ? 'Opslaan...' : 'Profiel Opslaan'}
-            </Button>
-          </div>
+
+        {/* Only show save button if showSaveButton is true */}
+        {showSaveButton && (
+          <Button 
+            onClick={onUpdateProfile} 
+            disabled={saving}
+            className="w-full"
+          >
+            {saving ? 'Profiel Opslaan...' : 'Profiel Opslaan'}
+          </Button>
         )}
       </div>
     </div>
   );
 };
-
