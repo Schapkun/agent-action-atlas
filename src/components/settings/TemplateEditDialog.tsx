@@ -126,7 +126,7 @@ export const TemplateEditDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-screen h-screen max-w-none max-h-none overflow-hidden flex flex-col p-0 m-0">
+      <DialogContent className="w-screen h-screen max-w-none max-h-none overflow-hidden flex flex-col p-0">
         <div className="flex-1 overflow-hidden">
           <VisualTemplateEditor
             templateData={visualTemplateData}
