@@ -100,48 +100,44 @@ export const FilterSelector = () => {
         </SelectTrigger>
         <SelectContent className="w-64 max-h-80">
           {/* Show all data option */}
-          <SelectItem value="all" className="py-2 px-3">
-            <div className="flex items-center justify-between w-full">
+          <SelectItem value="all" className="py-2 pl-10 pr-2 relative">
+            <div className="flex items-center w-full">
               <span className="text-sm font-medium">Alle gegevens</span>
-              <Star 
-                className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors ${favoriteFilter === 'all' ? 'fill-current text-yellow-500' : 'text-gray-400'}`}
-                onClick={(e) => handleSetFavorite('all', e)}
-              />
             </div>
+            <Star 
+              className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors absolute right-1 top-1/2 transform -translate-y-1/2 ${favoriteFilter === 'all' ? 'fill-current text-yellow-500' : 'text-gray-400'}`}
+              onClick={(e) => handleSetFavorite('all', e)}
+            />
           </SelectItem>
 
           {groupedOptions.map((group) => (
             <div key={group.organization.id}>
               {/* Organization option */}
-              <SelectItem value={`org:${group.organization.id}`} className="py-2 px-3 border-t border-border">
-                <div className="flex items-center justify-between w-full min-w-0">
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <Building2 className="h-4 w-4 text-primary flex-shrink-0" />
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <span className="text-sm font-medium truncate">{group.organization.name}</span>
-                      <span className="text-xs text-muted-foreground">Hele organisatie</span>
-                    </div>
+              <SelectItem value={`org:${group.organization.id}`} className="py-2 pl-10 pr-2 border-t border-border relative">
+                <div className="flex items-center gap-2 w-full">
+                  <Building2 className="h-4 w-4 text-primary flex-shrink-0" />
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-sm font-medium truncate">{group.organization.name}</span>
+                    <span className="text-xs text-muted-foreground">Hele organisatie</span>
                   </div>
-                  <Star 
-                    className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors ml-4 flex-shrink-0 ${favoriteFilter === `org:${group.organization.id}` ? 'fill-current text-yellow-500' : 'text-gray-400'}`}
-                    onClick={(e) => handleSetFavorite(`org:${group.organization.id}`, e)}
-                  />
                 </div>
+                <Star 
+                  className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors absolute right-1 top-1/2 transform -translate-y-1/2 ${favoriteFilter === `org:${group.organization.id}` ? 'fill-current text-yellow-500' : 'text-gray-400'}`}
+                  onClick={(e) => handleSetFavorite(`org:${group.organization.id}`, e)}
+                />
               </SelectItem>
               
               {/* Workspaces under this organization */}
               {group.workspaces.map((workspace) => (
-                <SelectItem key={workspace.id} value={`workspace:${workspace.id}`} className="py-2 px-3 pl-8">
-                  <div className="flex items-center justify-between w-full min-w-0">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <Briefcase className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                      <span className="text-sm truncate">{workspace.name}</span>
-                    </div>
-                    <Star 
-                      className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors ml-4 flex-shrink-0 ${favoriteFilter === `workspace:${workspace.id}` ? 'fill-current text-yellow-500' : 'text-gray-400'}`}
-                      onClick={(e) => handleSetFavorite(`workspace:${workspace.id}`, e)}
-                    />
+                <SelectItem key={workspace.id} value={`workspace:${workspace.id}`} className="py-2 pl-12 pr-2 relative">
+                  <div className="flex items-center gap-2 w-full">
+                    <Briefcase className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                    <span className="text-sm truncate">{workspace.name}</span>
                   </div>
+                  <Star 
+                    className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors absolute right-1 top-1/2 transform -translate-y-1/2 ${favoriteFilter === `workspace:${workspace.id}` ? 'fill-current text-yellow-500' : 'text-gray-400'}`}
+                    onClick={(e) => handleSetFavorite(`workspace:${workspace.id}`, e)}
+                  />
                 </SelectItem>
               ))}
             </div>
