@@ -25,6 +25,7 @@ interface OrganizationContextType {
   setSelectedWorkspace: (workspace: Workspace | null) => void;
   isLoadingOrganizations: boolean;
   getFilteredWorkspaces: () => Workspace[];
+  refreshData: () => Promise<void>;
 }
 
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
@@ -153,6 +154,10 @@ export const OrganizationProvider = ({ children }: OrganizationProviderProps) =>
     }
   };
 
+  const refreshData = async () => {
+    await fetchOrganizationsAndWorkspaces();
+  };
+
   const getFilteredWorkspaces = () => {
     if (selectedOrganization) {
       return workspaces.filter(w => w.organization_id === selectedOrganization.id);
@@ -175,6 +180,7 @@ export const OrganizationProvider = ({ children }: OrganizationProviderProps) =>
     setSelectedWorkspace,
     isLoadingOrganizations,
     getFilteredWorkspaces,
+    refreshData,
   };
 
   return (
