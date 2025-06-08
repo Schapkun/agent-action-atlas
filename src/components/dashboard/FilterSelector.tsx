@@ -99,7 +99,7 @@ export const FilterSelector = () => {
           onValueChange={handleSelectionChange}
           disabled={isLoadingOrganizations}
         >
-          <SelectTrigger className="w-64 border-2 border-foreground">
+          <SelectTrigger className="w-64">
             <SelectValue>
               {isLoadingOrganizations ? 'Laden...' : getCurrentSelectionLabel()}
             </SelectValue>
