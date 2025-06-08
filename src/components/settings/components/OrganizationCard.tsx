@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Plus, Settings } from 'lucide-react';
 import { WorkspacesList } from './WorkspacesList';
 import { CreateWorkspaceForm } from './CreateWorkspaceForm';
-import { EditOrgWorkspaceDialog } from './EditOrgWorkspaceDialog';
+import { ManageOrgWorkspaceDialog } from './ManageOrgWorkspaceDialog';
 import type { Organization } from '../types/organization';
 
 interface OrganizationCardProps {
@@ -29,7 +29,6 @@ export const OrganizationCard = ({
   onRefresh
 }: OrganizationCardProps) => {
   const [showCreateWorkspaceForm, setShowCreateWorkspaceForm] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const handleCreateWorkspace = async (name: string) => {
     await onCreateWorkspace(organization.id, name);
@@ -68,15 +67,21 @@ export const OrganizationCard = ({
             >
               <Trash2 className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowEditDialog(true)}
-              className="h-8 w-8 p-0"
-              title="Organisatie Beheren"
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
+            <ManageOrgWorkspaceDialog
+              type="organization"
+              item={organization}
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  title="Organisatie Beheren"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              }
+              onSaved={handleRefreshData}
+            />
           </div>
         )}
       </div>
@@ -99,15 +104,6 @@ export const OrganizationCard = ({
           onCancel={() => setShowCreateWorkspaceForm(false)}
         />
       )}
-
-      {/* Edit Organization Dialog */}
-      <EditOrgWorkspaceDialog
-        isOpen={showEditDialog}
-        onClose={() => setShowEditDialog(false)}
-        type="organization"
-        item={organization}
-        onUpdate={handleRefreshData}
-      />
     </div>
   );
 };
