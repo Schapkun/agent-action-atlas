@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -32,19 +32,23 @@ export const useManageOrgWorkspaceDialog = (item: Organization | null) => {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [dataFetched, setDataFetched] = useState(false);
   const { toast } = useToast();
   const { refreshData } = useOrganization();
 
   useEffect(() => {
     if (item) {
       setName(item.name || '');
+      // Reset data fetched flag when item changes
+      setDataFetched(false);
     } else {
       setName('');
+      setDataFetched(false);
     }
   }, [item]);
 
-  const fetchData = async () => {
-    if (!item) return;
+  const fetchData = useCallback(async () => {
+    if (!item || dataFetched || loading) return;
 
     try {
       setLoading(true);
@@ -108,6 +112,7 @@ export const useManageOrgWorkspaceDialog = (item: Organization | null) => {
       })) || [];
 
       setUsers(usersWithAccess);
+      setDataFetched(true);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
@@ -118,7 +123,7 @@ export const useManageOrgWorkspaceDialog = (item: Organization | null) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [item, dataFetched, loading, toast]);
 
   const handleOrgUserToggle = async (userId: string, hasAccess: boolean) => {
     setUsers(prev => prev.map(user => {

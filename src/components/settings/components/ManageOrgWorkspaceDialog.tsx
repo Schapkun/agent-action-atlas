@@ -52,11 +52,13 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
   const { handleEditOrganization, handleDeleteOrganization, performBackgroundUpdates } = useOrganizationOperations();
   const { handleAddWorkspace, handleEditWorkspace, handleDeleteWorkspace } = useWorkspaceOperations();
 
+  // Fetch data immediately when dialog opens, don't wait
   useEffect(() => {
     if (open && item) {
+      // Start fetching data in background immediately
       fetchData();
     }
-  }, [open, item]);
+  }, [open, item, fetchData]);
 
   const handleSave = async () => {
     if (!item || !name.trim()) {
