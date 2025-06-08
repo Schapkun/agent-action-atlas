@@ -52,6 +52,8 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
   const [showAddWorkspace, setShowAddWorkspace] = useState(false);
   const [editingWorkspace, setEditingWorkspace] = useState<string | null>(null);
   const [editWorkspaceName, setEditWorkspaceName] = useState('');
+  const [editingOrganization, setEditingOrganization] = useState(false);
+  const [editOrgName, setEditOrgName] = useState('');
   const { toast } = useToast();
   const { refreshData } = useOrganization();
 
@@ -180,6 +182,80 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
       }
       return user;
     }));
+  };
+
+  const handleEditOrganization = (currentName: string) => {
+    setEditingOrganization(true);
+    setEditOrgName(currentName);
+  };
+
+  const handleSaveOrganizationName = async () => {
+    if (!editOrgName.trim() || !item) return;
+
+    try {
+      const { error } = await supabase
+        .from('organizations')
+        .update({
+          name: editOrgName.trim(),
+          slug: editOrgName.toLowerCase().replace(/\s+/g, '-')
+        })
+        .eq('id', item.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setName(editOrgName.trim());
+      setEditingOrganization(false);
+      setEditOrgName('');
+
+      toast({
+        title: "Succes",
+        description: "Organisatie naam bijgewerkt",
+      });
+    } catch (error) {
+      console.error('Error updating organization name:', error);
+      toast({
+        title: "Error",
+        description: "Kon organisatie naam niet bijwerken",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCancelEditOrganization = () => {
+    setEditingOrganization(false);
+    setEditOrgName('');
+  };
+
+  const handleDeleteOrganization = async () => {
+    if (!item || !confirm(`Weet je zeker dat je organisatie "${item.name}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('organizations')
+        .delete()
+        .eq('id', item.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succes",
+        description: `Organisatie "${item.name}" verwijderd`,
+      });
+
+      await refreshData();
+      setOpen(false);
+      onSaved();
+    } catch (error) {
+      console.error('Error deleting organization:', error);
+      toast({
+        title: "Error",
+        description: "Kon organisatie niet verwijderen",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleAddWorkspace = async () => {
@@ -444,16 +520,55 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
             <TabsContent value="organisatie" className="flex-1 overflow-hidden">
               <div className="h-full flex flex-col space-y-4">
                 <div className="flex-shrink-0 space-y-3 p-4 border rounded-lg bg-muted/20">
-                  <Label className="text-sm font-medium">Organisatie Details</Label>
-                  <div>
-                    <Label htmlFor="name" className="text-sm">Organisatie Naam</Label>
-                    <Input
-                      id="name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="mt-1"
-                      placeholder="Organisatie naam"
-                    />
+                  <div className="flex items-center justify-between">
+                    {editingOrganization ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        <Input
+                          value={editOrgName}
+                          onChange={(e) => setEditOrgName(e.target.value)}
+                          className="flex-1"
+                          autoFocus
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleSaveOrganizationName}
+                          className="text-green-600 hover:text-green-700"
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleCancelEditOrganization}
+                          className="text-gray-600 hover:text-gray-700"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <span className="font-medium text-lg">{name}</span>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEditOrganization(name)}
+                            className="text-black hover:text-gray-700"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleDeleteOrganization}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
                 
@@ -497,7 +612,6 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
               <div className="h-full flex flex-col space-y-4">
                 <div className="flex-shrink-0">
                   <div className="flex items-center justify-between mb-3">
-                    <Label className="text-sm font-medium">Werkruimtes</Label>
                     <Button
                       size="sm"
                       onClick={() => setShowAddWorkspace(!showAddWorkspace)}
@@ -571,7 +685,7 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
                                         size="sm"
                                         variant="ghost"
                                         onClick={() => handleEditWorkspace(workspace.id, workspace.name)}
-                                        className="text-blue-600 hover:text-blue-700"
+                                        className="text-black hover:text-gray-700"
                                       >
                                         <Edit className="h-4 w-4" />
                                       </Button>
