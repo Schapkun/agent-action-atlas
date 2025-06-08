@@ -51,8 +51,7 @@ export const FilterSelector = () => {
     }
   };
 
-  const handleSetFavorite = (value: string, event: React.MouseEvent) => {
-    event.stopPropagation();
+  const handleSetFavorite = (value: string) => {
     setFavoriteFilter(value);
     localStorage.setItem('favoriteFilter', value);
     toast({
@@ -104,10 +103,20 @@ export const FilterSelector = () => {
             <div className="flex items-center w-full">
               <span className="text-sm font-medium">Alle gegevens</span>
             </div>
-            <Star 
-              className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors absolute right-4 top-1/2 transform -translate-y-1/2 ${favoriteFilter === 'all' ? 'fill-current text-yellow-500' : 'text-gray-400'}`}
-              onClick={(e) => handleSetFavorite('all', e)}
-            />
+            <button
+              className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors absolute right-4 top-1/2 transform -translate-y-1/2 ${favoriteFilter === 'all' ? 'text-yellow-500' : 'text-gray-400'}`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleSetFavorite('all');
+              }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              <Star className={`h-3.5 w-3.5 ${favoriteFilter === 'all' ? 'fill-current' : ''}`} />
+            </button>
           </SelectItem>
 
           {groupedOptions.map((group) => (
@@ -121,10 +130,20 @@ export const FilterSelector = () => {
                     <span className="text-xs text-muted-foreground">Hele organisatie</span>
                   </div>
                 </div>
-                <Star 
-                  className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors absolute right-4 top-1/2 transform -translate-y-1/2 ${favoriteFilter === `org:${group.organization.id}` ? 'fill-current text-yellow-500' : 'text-gray-400'}`}
-                  onClick={(e) => handleSetFavorite(`org:${group.organization.id}`, e)}
-                />
+                <button
+                  className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors absolute right-4 top-1/2 transform -translate-y-1/2 ${favoriteFilter === `org:${group.organization.id}` ? 'text-yellow-500' : 'text-gray-400'}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleSetFavorite(`org:${group.organization.id}`);
+                  }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                >
+                  <Star className={`h-3.5 w-3.5 ${favoriteFilter === `org:${group.organization.id}` ? 'fill-current' : ''}`} />
+                </button>
               </SelectItem>
               
               {/* Workspaces under this organization */}
@@ -134,10 +153,20 @@ export const FilterSelector = () => {
                     <Briefcase className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                     <span className="text-sm truncate">{workspace.name}</span>
                   </div>
-                  <Star 
-                    className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors absolute right-4 top-1/2 transform -translate-y-1/2 ${favoriteFilter === `workspace:${workspace.id}` ? 'fill-current text-yellow-500' : 'text-gray-400'}`}
-                    onClick={(e) => handleSetFavorite(`workspace:${workspace.id}`, e)}
-                  />
+                  <button
+                    className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors absolute right-4 top-1/2 transform -translate-y-1/2 ${favoriteFilter === `workspace:${workspace.id}` ? 'text-yellow-500' : 'text-gray-400'}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSetFavorite(`workspace:${workspace.id}`);
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  >
+                    <Star className={`h-3.5 w-3.5 ${favoriteFilter === `workspace:${workspace.id}` ? 'fill-current' : ''}`} />
+                  </button>
                 </SelectItem>
               ))}
             </div>
