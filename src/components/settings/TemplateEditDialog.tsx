@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { DocumentTemplate } from './types/DocumentTemplate';
 import { VisualTemplateEditor } from './VisualTemplateEditor';
@@ -25,6 +24,20 @@ export const TemplateEditDialog = ({
   saving = false
 }: TemplateEditDialogProps) => {
   const { selectedOrganization, selectedWorkspace } = useOrganization();
+
+  // Prevent background scrolling when dialog is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup function to restore scrolling when component unmounts
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [open]);
 
   // Convert DocumentTemplate to VisualTemplateData state and functions
   const [visualTemplateData, setVisualTemplateData] = useState<VisualTemplateData>(() => {
@@ -125,7 +138,7 @@ export const TemplateEditDialog = ({
   if (!open || !template) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background border border-border shadow-2xl flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-background border border-border shadow-2xl flex flex-col">
       {/* Close button */}
       <div className="absolute top-4 right-4 z-10">
         <Button 
