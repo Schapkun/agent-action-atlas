@@ -161,7 +161,7 @@ export const VisualTemplateEditor = ({
   };
 
   return (
-    <div className="flex flex-col w-full h-screen">
+    <div className="flex flex-col w-full" style={{ height: 'calc(100vh - 80px)' }}>
       {/* Header met workspace/organization switcher */}
       <div className="flex-shrink-0 px-4 py-3 bg-muted/50 border-b">
         <div className="flex items-center justify-between">
