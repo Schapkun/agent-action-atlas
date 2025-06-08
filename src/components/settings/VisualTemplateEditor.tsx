@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -160,7 +161,7 @@ export const VisualTemplateEditor = ({
   };
 
   return (
-    <div className="flex flex-col w-full" style={{ height: '70vh' }}>
+    <div className="flex flex-col w-full h-screen">
       {/* Header met workspace/organization switcher */}
       <div className="flex-shrink-0 px-4 py-3 bg-muted/50 border-b">
         <div className="flex items-center justify-between">
@@ -176,7 +177,7 @@ export const VisualTemplateEditor = ({
       </div>
 
       {/* Main content area */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden min-h-0">
         <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* Sidebar Panel */}
           <ResizablePanel defaultSize={40} minSize={30} maxSize={50}>
@@ -197,7 +198,7 @@ export const VisualTemplateEditor = ({
                   </TabsTrigger>
                 </TabsList>
                 
-                <div className="flex-1 mt-4 overflow-hidden">
+                <div className="flex-1 mt-4 overflow-hidden min-h-0">
                   <TabsContent value="layout" className="h-full m-0">
                     <ScrollArea className="h-full">
                       <UniqueLayoutSelector
