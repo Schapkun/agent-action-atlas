@@ -77,6 +77,20 @@ export const DEFAULT_LAYOUTS: TemplateLayout[] = [
     thumbnail: '/layouts/corporate-formal.png',
     description: 'Professional corporate design',
     category: 'corporate'
+  },
+  {
+    id: 'creative-modern',
+    name: 'Creative Modern',
+    thumbnail: '/layouts/creative-modern.png',
+    description: 'Creative design with bold elements',
+    category: 'modern'
+  },
+  {
+    id: 'business-classic',
+    name: 'Business Classic',
+    thumbnail: '/layouts/business-classic.png',
+    description: 'Conservative business approach',
+    category: 'classic'
   }
 ];
 
@@ -110,10 +124,45 @@ export const DEFAULT_VARIABLES: Variable[] = [
     required: true
   },
   {
+    id: 'customer_address',
+    name: 'customer_address',
+    label: 'Klantadres',
+    type: 'text',
+    required: false
+  },
+  {
+    id: 'customer_postal_code',
+    name: 'customer_postal_code',
+    label: 'Postcode klant',
+    type: 'text',
+    required: false
+  },
+  {
+    id: 'customer_city',
+    name: 'customer_city',
+    label: 'Plaats klant',
+    type: 'text',
+    required: false
+  },
+  {
     id: 'total_amount',
     name: 'total_amount',
     label: 'Totaalbedrag',
     type: 'currency',
     required: true
+  },
+  {
+    id: 'tax_amount',
+    name: 'tax_amount',
+    label: 'BTW bedrag',
+    type: 'currency',
+    required: false
+  },
+  {
+    id: 'subtotal_amount',
+    name: 'subtotal_amount',
+    label: 'Subtotaal',
+    type: 'currency',
+    required: false
   }
 ];

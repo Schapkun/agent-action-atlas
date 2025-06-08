@@ -2,10 +2,12 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Palette, FileText, Settings } from 'lucide-react';
+import { Palette, FileText, Settings, Library } from 'lucide-react';
 import { LayoutSelector } from './components/LayoutSelector';
 import { CompanyInfoForm } from './components/CompanyInfoForm';
 import { LivePreview } from './components/LivePreview';
+import { TemplateLibrary } from './components/TemplateLibrary';
+import { StyleEditor } from './components/StyleEditor';
 import { 
   VisualTemplateData, 
   DEFAULT_LAYOUTS, 
@@ -16,11 +18,19 @@ import {
 interface VisualTemplateEditorProps {
   templateData: VisualTemplateData;
   onUpdateTemplate: (data: VisualTemplateData) => void;
+  workspaceId?: string;
+  organizationId?: string;
+  workspaceName?: string;
+  organizationName?: string;
 }
 
 export const VisualTemplateEditor = ({ 
   templateData, 
-  onUpdateTemplate 
+  onUpdateTemplate,
+  workspaceId,
+  organizationId,
+  workspaceName,
+  organizationName
 }: VisualTemplateEditorProps) => {
   const [zoom, setZoom] = useState(0.7);
 
@@ -48,120 +58,134 @@ export const VisualTemplateEditor = ({
     });
   };
 
+  const handleStylesUpdate = (styles: any) => {
+    onUpdateTemplate({
+      ...templateData,
+      styling: {
+        ...templateData.styling,
+        ...styles
+      }
+    });
+  };
+
+  const handleSaveTemplate = () => {
+    // TODO: Implement save to template library
+    console.log('Saving template:', templateData);
+  };
+
+  const handleLoadTemplate = (template: VisualTemplateData) => {
+    onUpdateTemplate(template);
+  };
+
   const handleExport = () => {
     // TODO: Implement PDF export functionality
     console.log('Exporting template:', templateData);
   };
 
   return (
-    <div className="h-full grid grid-cols-5 gap-4">
-      {/* Sidebar */}
-      <div className="col-span-2 flex flex-col">
-        <Tabs defaultValue="layout" className="flex-1 flex flex-col">
-          <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
-            <TabsTrigger value="layout" className="text-xs">
-              <FileText className="h-3 w-3 mr-1" />
-              Layout
-            </TabsTrigger>
-            <TabsTrigger value="company" className="text-xs">
-              <Settings className="h-3 w-3 mr-1" />
-              Bedrijf
-            </TabsTrigger>
-            <TabsTrigger value="styling" className="text-xs">
-              <Palette className="h-3 w-3 mr-1" />
-              Stijl
-            </TabsTrigger>
-          </TabsList>
-          
-          <div className="flex-1 overflow-hidden">
-            <TabsContent value="layout" className="h-full m-0">
-              <ScrollArea className="h-full p-3">
-                <LayoutSelector
-                  layouts={DEFAULT_LAYOUTS}
-                  selectedLayoutId={templateData.layout}
-                  onSelectLayout={handleLayoutSelect}
-                />
-              </ScrollArea>
-            </TabsContent>
-            
-            <TabsContent value="company" className="h-full m-0">
-              <ScrollArea className="h-full p-3">
-                <CompanyInfoForm
-                  companyInfo={templateData.companyInfo}
-                  onUpdateCompanyInfo={handleCompanyInfoUpdate}
-                />
-              </ScrollArea>
-            </TabsContent>
-            
-            <TabsContent value="styling" className="h-full m-0">
-              <ScrollArea className="h-full p-3">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium mb-3">Kleuren & Stijl</h3>
-                    
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-xs font-medium block mb-1">Hoofdkleur</label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="color"
-                            value={templateData.styling.primaryColor}
-                            onChange={(e) => handleStyleUpdate('primaryColor', e.target.value)}
-                            className="w-8 h-8 rounded border cursor-pointer"
-                          />
-                          <input
-                            type="text"
-                            value={templateData.styling.primaryColor}
-                            onChange={(e) => handleStyleUpdate('primaryColor', e.target.value)}
-                            className="flex-1 text-xs px-2 py-1 border rounded"
-                            placeholder="#000000"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <label className="text-xs font-medium block mb-1">Lettertype</label>
-                        <select
-                          value={templateData.styling.font}
-                          onChange={(e) => handleStyleUpdate('font', e.target.value)}
-                          className="w-full text-xs px-2 py-1 border rounded"
-                        >
-                          <option value="Arial">Arial</option>
-                          <option value="Times New Roman">Times New Roman</option>
-                          <option value="Helvetica">Helvetica</option>
-                          <option value="Georgia">Georgia</option>
-                        </select>
-                      </div>
-                      
-                      <div>
-                        <label className="text-xs font-medium block mb-1">Logo Positie</label>
-                        <select
-                          value={templateData.styling.logoPosition}
-                          onChange={(e) => handleStyleUpdate('logoPosition', e.target.value)}
-                          className="w-full text-xs px-2 py-1 border rounded"
-                        >
-                          <option value="left">Links</option>
-                          <option value="center">Midden</option>
-                          <option value="right">Rechts</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </ScrollArea>
-            </TabsContent>
+    <div className="h-full flex flex-col">
+      {/* Header with workspace/organization info */}
+      <div className="flex-shrink-0 px-4 py-3 bg-muted/50 border-b">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Settings className="h-4 w-4" />
+            <span>
+              {organizationName && workspaceName 
+                ? `${organizationName} / ${workspaceName}`
+                : organizationName || workspaceName || 'Algemeen'
+              }
+            </span>
           </div>
-        </Tabs>
+          <div className="text-xs text-muted-foreground">
+            Document Builder
+          </div>
+        </div>
       </div>
 
-      {/* Preview */}
-      <div className="col-span-3">
-        <LivePreview
-          templateData={templateData}
-          zoom={zoom}
-          onZoomChange={setZoom}
-          onExport={handleExport}
-        />
+      <div className="flex-1 grid grid-cols-5 gap-4 p-4 overflow-hidden">
+        {/* Sidebar */}
+        <div className="col-span-2 flex flex-col min-h-0">
+          <Tabs defaultValue="layout" className="flex-1 flex flex-col min-h-0">
+            <TabsList className="grid w-full grid-cols-4 flex-shrink-0">
+              <TabsTrigger value="layout" className="text-xs">
+                <FileText className="h-3 w-3 mr-1" />
+                Layout
+              </TabsTrigger>
+              <TabsTrigger value="company" className="text-xs">
+                <Settings className="h-3 w-3 mr-1" />
+                Bedrijf
+              </TabsTrigger>
+              <TabsTrigger value="styling" className="text-xs">
+                <Palette className="h-3 w-3 mr-1" />
+                Stijl
+              </TabsTrigger>
+              <TabsTrigger value="library" className="text-xs">
+                <Library className="h-3 w-3 mr-1" />
+                Library
+              </TabsTrigger>
+            </TabsList>
+            
+            <div className="flex-1 min-h-0 mt-4">
+              <TabsContent value="layout" className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col">
+                <ScrollArea className="flex-1">
+                  <div className="pr-4">
+                    <LayoutSelector
+                      layouts={DEFAULT_LAYOUTS}
+                      selectedLayoutId={templateData.layout}
+                      onSelectLayout={handleLayoutSelect}
+                    />
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+              
+              <TabsContent value="company" className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col">
+                <ScrollArea className="flex-1">
+                  <div className="pr-4">
+                    <CompanyInfoForm
+                      companyInfo={templateData.companyInfo}
+                      onUpdateCompanyInfo={handleCompanyInfoUpdate}
+                    />
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+              
+              <TabsContent value="styling" className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col">
+                <ScrollArea className="flex-1">
+                  <div className="pr-4">
+                    <StyleEditor
+                      styling={templateData.styling}
+                      onUpdateStyling={handleStylesUpdate}
+                    />
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+
+              <TabsContent value="library" className="h-full m-0 data-[state=active]:flex data-[state=active]:flex-col">
+                <ScrollArea className="flex-1">
+                  <div className="pr-4">
+                    <TemplateLibrary
+                      currentTemplate={templateData}
+                      workspaceId={workspaceId}
+                      organizationId={organizationId}
+                      onSaveTemplate={handleSaveTemplate}
+                      onLoadTemplate={handleLoadTemplate}
+                    />
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            </div>
+          </Tabs>
+        </div>
+
+        {/* Preview */}
+        <div className="col-span-3 min-h-0">
+          <LivePreview
+            templateData={templateData}
+            zoom={zoom}
+            onZoomChange={setZoom}
+            onExport={handleExport}
+          />
+        </div>
       </div>
     </div>
   );
