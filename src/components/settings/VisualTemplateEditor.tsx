@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -175,8 +176,8 @@ export const VisualTemplateEditor = ({
       </div>
 
       <div className="flex-1 grid grid-cols-5 gap-4 p-4 overflow-hidden">
-        {/* Sidebar with fixed height and proper overflow */}
-        <div className="col-span-2 flex flex-col h-[calc(100vh-180px)] overflow-hidden">
+        {/* Sidebar with corrected height calculation */}
+        <div className="col-span-2 flex flex-col h-[calc(100vh-350px)] overflow-hidden">
           <Tabs defaultValue="layout" className="flex-1 flex flex-col overflow-hidden">
             <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
               <TabsTrigger value="layout" className="text-xs">
@@ -196,37 +197,43 @@ export const VisualTemplateEditor = ({
             <div className="flex-1 mt-4 overflow-hidden">
               <TabsContent value="layout" className="h-full m-0 overflow-hidden">
                 <ScrollArea className="h-full">
-                  <UniqueLayoutSelector
-                    layouts={UNIQUE_LAYOUT_TEMPLATES}
-                    selectedLayoutId={templateData.layout}
-                    onSelectLayout={handleLayoutSelect}
-                  />
+                  <div className="pb-4">
+                    <UniqueLayoutSelector
+                      layouts={UNIQUE_LAYOUT_TEMPLATES}
+                      selectedLayoutId={templateData.layout}
+                      onSelectLayout={handleLayoutSelect}
+                    />
+                  </div>
                 </ScrollArea>
               </TabsContent>
               
               <TabsContent value="company" className="h-full m-0 overflow-hidden">
                 <ScrollArea className="h-full">
-                  <CompanyInfoForm
-                    companyInfo={templateData.companyInfo}
-                    onUpdateCompanyInfo={handleCompanyInfoUpdate}
-                  />
+                  <div className="pb-4">
+                    <CompanyInfoForm
+                      companyInfo={templateData.companyInfo}
+                      onUpdateCompanyInfo={handleCompanyInfoUpdate}
+                    />
+                  </div>
                 </ScrollArea>
               </TabsContent>
               
               <TabsContent value="styling" className="h-full m-0 overflow-hidden">
                 <ScrollArea className="h-full">
-                  <StyleEditor
-                    styling={templateData.styling}
-                    onUpdateStyling={handleStylesUpdate}
-                  />
+                  <div className="pb-4">
+                    <StyleEditor
+                      styling={templateData.styling}
+                      onUpdateStyling={handleStylesUpdate}
+                    />
+                  </div>
                 </ScrollArea>
               </TabsContent>
             </div>
           </Tabs>
         </div>
 
-        {/* Preview */}
-        <div className="col-span-3 h-[calc(100vh-180px)] overflow-hidden">
+        {/* Preview with corrected height */}
+        <div className="col-span-3 h-[calc(100vh-350px)] overflow-hidden">
           <EnhancedLivePreview
             templateData={templateData}
             onSaveToLibrary={handleSaveToLibrary}
