@@ -86,7 +86,6 @@ export const VisualTemplateEditor = ({
 
   const handleSaveToLibrary = () => {
     setShowTemplateLibrary(true);
-    // Removed the toast notification that was showing when opening template library
   };
 
   const handleDownloadPDF = () => {
@@ -114,41 +113,21 @@ export const VisualTemplateEditor = ({
     onUpdateTemplate(template);
     setOriginalTemplateData(template);
     setShowTemplateLibrary(false);
-    
-    toast({
-      title: "Template geladen",
-      description: `"${template.name}" is geladen in de editor.`
-    });
   };
 
   const handleSaveTemplate = () => {
     setOriginalTemplateData({ ...templateData });
     setHasUnsavedChanges(false);
-    
-    toast({
-      title: "Template opgeslagen",
-      description: "Uw template is opgeslagen in de library."
-    });
   };
 
   const handleSaveChanges = () => {
     setOriginalTemplateData({ ...templateData });
     setHasUnsavedChanges(false);
-    
-    toast({
-      title: "Wijzigingen opgeslagen",
-      description: "Al uw wijzigingen zijn opgeslagen."
-    });
   };
 
   const handleDiscardChanges = () => {
     onUpdateTemplate(originalTemplateData);
     setHasUnsavedChanges(false);
-    
-    toast({
-      title: "Wijzigingen verwijderd",
-      description: "Alle wijzigingen zijn ongedaan gemaakt."
-    });
   };
 
   return (
