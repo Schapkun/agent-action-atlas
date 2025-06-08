@@ -177,8 +177,8 @@ export const VisualTemplateEditor = ({
       </div>
 
       <div className="flex-1 grid grid-cols-5 gap-4 p-4 overflow-hidden">
-        {/* Sidebar with full height minus header */}
-        <div className="col-span-2 flex flex-col h-full overflow-hidden">
+        {/* Sidebar with calculated height to fix scrolling */}
+        <div className="col-span-2 flex flex-col h-[calc(100vh-350px)] overflow-hidden">
           <Tabs defaultValue="layout" className="flex-1 flex flex-col overflow-hidden">
             <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
               <TabsTrigger value="layout" className="text-xs">
