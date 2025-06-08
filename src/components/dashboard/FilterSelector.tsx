@@ -21,6 +21,7 @@ export const FilterSelector = () => {
   // Load favorite filter from localStorage on component mount
   useEffect(() => {
     const savedFavorite = localStorage.getItem('favoriteFilter');
+    console.log('FilterSelector - Loading saved favorite:', savedFavorite);
     if (savedFavorite) {
       setFavoriteFilter(savedFavorite);
       // Apply the favorite filter if it exists
@@ -29,6 +30,7 @@ export const FilterSelector = () => {
   }, [organizations, workspaces]);
 
   const handleSelectionChange = (value: string) => {
+    console.log('FilterSelector - Selection changed to:', value);
     if (value === 'all') {
       // Show all data - reset selections
       setSelectedOrganization(null);
@@ -52,8 +54,10 @@ export const FilterSelector = () => {
   };
 
   const handleSetFavorite = (value: string) => {
+    console.log('FilterSelector - Setting favorite to:', value);
     setFavoriteFilter(value);
     localStorage.setItem('favoriteFilter', value);
+    console.log('FilterSelector - Favorite saved to localStorage:', localStorage.getItem('favoriteFilter'));
     toast({
       title: "Favoriet ingesteld",
       description: "Deze filter wordt nu standaard geladen.",
@@ -104,13 +108,16 @@ export const FilterSelector = () => {
               <span className="text-sm font-medium">Alle gegevens</span>
             </div>
             <button
-              className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors absolute right-4 top-1/2 transform -translate-y-1/2 ${favoriteFilter === 'all' ? 'text-yellow-500' : 'text-gray-400'}`}
+              type="button"
+              className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors absolute right-4 top-1/2 transform -translate-y-1/2 z-10 ${favoriteFilter === 'all' ? 'text-yellow-500' : 'text-gray-400'}`}
               onClick={(e) => {
+                console.log('FilterSelector - Star clicked for: all');
                 e.preventDefault();
                 e.stopPropagation();
                 handleSetFavorite('all');
               }}
               onMouseDown={(e) => {
+                console.log('FilterSelector - Star mousedown for: all');
                 e.preventDefault();
                 e.stopPropagation();
               }}
@@ -131,13 +138,16 @@ export const FilterSelector = () => {
                   </div>
                 </div>
                 <button
-                  className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors absolute right-4 top-1/2 transform -translate-y-1/2 ${favoriteFilter === `org:${group.organization.id}` ? 'text-yellow-500' : 'text-gray-400'}`}
+                  type="button"
+                  className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors absolute right-4 top-1/2 transform -translate-y-1/2 z-10 ${favoriteFilter === `org:${group.organization.id}` ? 'text-yellow-500' : 'text-gray-400'}`}
                   onClick={(e) => {
+                    console.log('FilterSelector - Star clicked for org:', group.organization.id);
                     e.preventDefault();
                     e.stopPropagation();
                     handleSetFavorite(`org:${group.organization.id}`);
                   }}
                   onMouseDown={(e) => {
+                    console.log('FilterSelector - Star mousedown for org:', group.organization.id);
                     e.preventDefault();
                     e.stopPropagation();
                   }}
@@ -154,13 +164,16 @@ export const FilterSelector = () => {
                     <span className="text-sm truncate">{workspace.name}</span>
                   </div>
                   <button
-                    className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors absolute right-4 top-1/2 transform -translate-y-1/2 ${favoriteFilter === `workspace:${workspace.id}` ? 'text-yellow-500' : 'text-gray-400'}`}
+                    type="button"
+                    className={`h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors absolute right-4 top-1/2 transform -translate-y-1/2 z-10 ${favoriteFilter === `workspace:${workspace.id}` ? 'text-yellow-500' : 'text-gray-400'}`}
                     onClick={(e) => {
+                      console.log('FilterSelector - Star clicked for workspace:', workspace.id);
                       e.preventDefault();
                       e.stopPropagation();
                       handleSetFavorite(`workspace:${workspace.id}`);
                     }}
                     onMouseDown={(e) => {
+                      console.log('FilterSelector - Star mousedown for workspace:', workspace.id);
                       e.preventDefault();
                       e.stopPropagation();
                     }}
