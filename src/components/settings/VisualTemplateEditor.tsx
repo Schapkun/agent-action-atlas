@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -57,10 +56,7 @@ export const VisualTemplateEditor = ({
       }
     });
     
-    toast({
-      title: "Layout toegepast",
-      description: `${layout.name} is nu actief met unieke styling.`
-    });
+    // Removed toast notification
   };
 
   const handleCompanyInfoUpdate = (companyInfo: CompanyInfo) => {

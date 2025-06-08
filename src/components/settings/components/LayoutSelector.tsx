@@ -25,7 +25,7 @@ export const LayoutSelector = ({
         </p>
       </div>
       
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-4 gap-1">
         {layouts.map((layout) => (
           <Card 
             key={layout.id}
@@ -35,18 +35,18 @@ export const LayoutSelector = ({
                 : 'hover:shadow-sm'
             }`}
             onClick={() => onSelectLayout(layout.id)}
-            style={{ maxWidth: '120px' }}
+            style={{ maxWidth: '80px' }}
           >
-            <CardContent style={{ padding: '4px' }}>
+            <CardContent style={{ padding: '3px' }}>
               <div className="relative">
-                {/* Layout Thumbnail - 30% van originele grootte */}
+                {/* Layout Thumbnail - veel kleiner gemaakt */}
                 <div 
                   className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-sm mb-1 flex items-center justify-center relative overflow-hidden"
-                  style={{ height: '40px', width: '100%' }}
+                  style={{ height: '24px', width: '100%' }}
                 >
                   <div 
                     className="text-blue-600 font-medium text-center"
-                    style={{ fontSize: '6px', lineHeight: '1' }}
+                    style={{ fontSize: '4px', lineHeight: '1' }}
                   >
                     {layout.name}
                   </div>
@@ -54,32 +54,32 @@ export const LayoutSelector = ({
                     <div 
                       className="absolute bg-primary text-primary-foreground rounded-full flex items-center justify-center"
                       style={{ 
-                        top: '2px', 
-                        right: '2px', 
-                        width: '12px', 
-                        height: '12px' 
+                        top: '1px', 
+                        right: '1px', 
+                        width: '8px', 
+                        height: '8px' 
                       }}
                     >
-                      <Check style={{ height: '6px', width: '6px' }} />
+                      <Check style={{ height: '3px', width: '3px' }} />
                     </div>
                   )}
                 </div>
                 
-                <div style={{ marginTop: '2px' }}>
+                <div style={{ marginTop: '1px' }}>
                   <div className="flex items-center justify-between mb-1">
                     <h4 
                       className="font-medium truncate" 
-                      style={{ fontSize: '8px' }}
+                      style={{ fontSize: '5px' }}
                     >
                       {layout.name}
                     </h4>
                     <Badge 
                       variant="outline" 
                       style={{ 
-                        fontSize: '6px', 
-                        padding: '1px 3px',
-                        height: '12px',
-                        lineHeight: '10px'
+                        fontSize: '4px', 
+                        padding: '0px 1px',
+                        height: '8px',
+                        lineHeight: '8px'
                       }}
                     >
                       {layout.category}
@@ -87,7 +87,7 @@ export const LayoutSelector = ({
                   </div>
                   <p 
                     className="text-muted-foreground leading-tight" 
-                    style={{ fontSize: '6px', lineHeight: '1.2' }}
+                    style={{ fontSize: '4px', lineHeight: '1.1' }}
                   >
                     {layout.description}
                   </p>
