@@ -157,19 +157,19 @@ export const UniqueLayoutSelector = ({
         </p>
       </div>
       
-      <div className="grid grid-cols-2 gap-4 pr-2">
+      <div className="grid grid-cols-2 gap-6 px-4 pb-6">
         {layouts.map((layout) => (
           <Card 
             key={layout.id}
             className={`cursor-pointer transition-all hover:shadow-md ${
               selectedLayoutId === layout.id 
-                ? 'ring-1 ring-primary shadow-sm' 
+                ? 'ring-2 ring-primary shadow-md' 
                 : 'hover:shadow-sm'
             }`}
             onClick={() => onSelectLayout(layout)}
-            style={{ minWidth: '280px' }}
+            style={{ minWidth: '300px', maxWidth: '350px' }}
           >
-            <CardContent style={{ padding: '8px' }}>
+            <CardContent style={{ padding: '12px' }}>
               <div className="relative">
                 {renderUniquePreview(layout)}
                 
