@@ -34,31 +34,31 @@ export const LivePreview = ({
       <div 
         className="bg-white border shadow-sm mx-auto transition-transform duration-200"
         style={{ 
-          transform: `scale(${zoom * 0.3})`,
+          transform: `scale(${zoom})`,
           transformOrigin: 'top center',
-          width: '210px', // A4 width scaled down
-          height: '297px', // A4 height scaled down (210 * 1.414 ≈ 297)
-          padding: '12px' // Scaled down padding
+          width: '210px', // A4 width at small scale
+          height: '297px', // A4 height at small scale (210 * 1.414)
+          padding: '8px' // Scaled down padding
         }}
       >
         {/* Header */}
-        <div className={`flex items-${styling.logoPosition === 'center' ? 'center' : styling.logoPosition === 'right' ? 'end' : 'start'} justify-between mb-4`}>
+        <div className={`flex items-${styling.logoPosition === 'center' ? 'center' : styling.logoPosition === 'right' ? 'end' : 'start'} justify-between mb-2`}>
           {companyInfo.logo && (
             <img 
               src={companyInfo.logo} 
               alt="Company logo" 
-              className="h-8 object-contain"
+              className="h-4 object-contain"
             />
           )}
           <div className={`${styling.logoPosition === 'left' ? 'text-right' : styling.logoPosition === 'right' ? 'text-left' : 'text-center'}`}>
             <h1 
-              className="text-sm font-bold mb-1"
+              className="text-xs font-bold mb-1"
               style={{ color: styling.primaryColor }}
             >
               {companyInfo.name || 'Uw Bedrijf'}
             </h1>
             {companyInfo.address && (
-              <div className="text-xs text-gray-600 space-y-0.5">
+              <div className="text-xs text-gray-600 space-y-0.5" style={{ fontSize: '6px', lineHeight: '8px' }}>
                 <p>{companyInfo.address}</p>
                 <p>{companyInfo.postalCode} {companyInfo.city}</p>
                 {companyInfo.phone && <p>Tel: {companyInfo.phone}</p>}
@@ -70,10 +70,10 @@ export const LivePreview = ({
         </div>
 
         {/* Document Title */}
-        <div className="mb-4">
+        <div className="mb-2">
           <h2 
-            className="text-sm font-semibold mb-2"
-            style={{ color: styling.primaryColor }}
+            className="text-xs font-semibold mb-1"
+            style={{ color: styling.primaryColor, fontSize: '8px' }}
           >
             {templateData.documentType === 'invoice' ? 'FACTUUR' : 
              templateData.documentType === 'quote' ? 'OFFERTE' : 
@@ -81,10 +81,10 @@ export const LivePreview = ({
           </h2>
           
           {/* Sample Content */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-2">
             <div>
-              <h3 className="text-xs font-medium mb-1">Factuurgegevens</h3>
-              <div className="text-xs space-y-0.5">
+              <h3 className="font-medium mb-1" style={{ fontSize: '6px' }}>Factuurgegevens</h3>
+              <div className="space-y-0.5" style={{ fontSize: '5px', lineHeight: '6px' }}>
                 <p>Factuurnummer: 2024-001</p>
                 <p>Factuurdatum: {new Date().toLocaleDateString('nl-NL')}</p>
                 <p>Vervaldatum: {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL')}</p>
@@ -92,8 +92,8 @@ export const LivePreview = ({
             </div>
             
             <div>
-              <h3 className="text-xs font-medium mb-1">Klantgegevens</h3>
-              <div className="text-xs space-y-0.5">
+              <h3 className="font-medium mb-1" style={{ fontSize: '6px' }}>Klantgegevens</h3>
+              <div className="space-y-0.5" style={{ fontSize: '5px', lineHeight: '6px' }}>
                 <p>Voorbeeld Klant B.V.</p>
                 <p>Voorbeeldstraat 123</p>
                 <p>1234 AB Amsterdam</p>
@@ -103,50 +103,50 @@ export const LivePreview = ({
         </div>
 
         {/* Sample Table */}
-        <div className="mb-4">
-          <table className="w-full border-collapse text-xs">
+        <div className="mb-2">
+          <table className="w-full border-collapse" style={{ fontSize: '5px' }}>
             <thead>
               <tr className="border-b" style={{ borderColor: styling.primaryColor }}>
-                <th className="text-left py-1 text-xs">Beschrijving</th>
-                <th className="text-right py-1 text-xs">Aantal</th>
-                <th className="text-right py-1 text-xs">Prijs</th>
-                <th className="text-right py-1 text-xs">Totaal</th>
+                <th className="text-left py-0.5" style={{ fontSize: '5px' }}>Beschrijving</th>
+                <th className="text-right py-0.5" style={{ fontSize: '5px' }}>Aantal</th>
+                <th className="text-right py-0.5" style={{ fontSize: '5px' }}>Prijs</th>
+                <th className="text-right py-0.5" style={{ fontSize: '5px' }}>Totaal</th>
               </tr>
             </thead>
             <tbody>
               <tr className="border-b">
-                <td className="py-1 text-xs">Consultancy diensten</td>
-                <td className="text-right py-1 text-xs">10</td>
-                <td className="text-right py-1 text-xs">€ 75,00</td>
-                <td className="text-right py-1 text-xs">€ 750,00</td>
+                <td className="py-0.5">Consultancy diensten</td>
+                <td className="text-right py-0.5">10</td>
+                <td className="text-right py-0.5">€ 75,00</td>
+                <td className="text-right py-0.5">€ 750,00</td>
               </tr>
               <tr className="border-b">
-                <td className="py-1 text-xs">Reiskosten</td>
-                <td className="text-right py-1 text-xs">1</td>
-                <td className="text-right py-1 text-xs">€ 50,00</td>
-                <td className="text-right py-1 text-xs">€ 50,00</td>
+                <td className="py-0.5">Reiskosten</td>
+                <td className="text-right py-0.5">1</td>
+                <td className="text-right py-0.5">€ 50,00</td>
+                <td className="text-right py-0.5">€ 50,00</td>
               </tr>
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={3} className="text-right py-1 text-xs font-medium">Subtotaal:</td>
-                <td className="text-right py-1 text-xs">€ 800,00</td>
+                <td colSpan={3} className="text-right py-0.5 font-medium">Subtotaal:</td>
+                <td className="text-right py-0.5">€ 800,00</td>
               </tr>
               <tr>
-                <td colSpan={3} className="text-right py-1 text-xs">BTW (21%):</td>
-                <td className="text-right py-1 text-xs">€ 168,00</td>
+                <td colSpan={3} className="text-right py-0.5">BTW (21%):</td>
+                <td className="text-right py-0.5">€ 168,00</td>
               </tr>
               <tr className="border-t" style={{ borderColor: styling.primaryColor }}>
-                <td colSpan={3} className="text-right py-1 text-xs font-bold">Totaal:</td>
-                <td className="text-right py-1 text-xs font-bold">€ 968,00</td>
+                <td colSpan={3} className="text-right py-0.5 font-bold">Totaal:</td>
+                <td className="text-right py-0.5 font-bold">€ 968,00</td>
               </tr>
             </tfoot>
           </table>
         </div>
 
         {/* Footer */}
-        <div className="mt-auto pt-2 text-xs text-gray-500 border-t">
-          <p>Betaling binnen 30 dagen na factuurdatum.</p>
+        <div className="mt-auto pt-1 border-t" style={{ fontSize: '4px', lineHeight: '5px' }}>
+          <p className="text-gray-500">Betaling binnen 30 dagen na factuurdatum.</p>
         </div>
       </div>
     );

@@ -86,10 +86,7 @@ export const VisualTemplateEditor = ({
 
   const handleSaveToLibrary = () => {
     setShowTemplateLibrary(true);
-    toast({
-      title: "Template Library geopend",
-      description: "U kunt nu uw template opslaan in de library."
-    });
+    // Removed the toast notification that was showing when opening template library
   };
 
   const handleDownloadPDF = () => {
