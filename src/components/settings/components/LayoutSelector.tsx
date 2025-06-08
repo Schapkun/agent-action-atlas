@@ -40,25 +40,25 @@ export const LayoutSelector = ({
               <div className="relative">
                 {/* Layout Thumbnail Placeholder - 30% van originele grootte */}
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-md mb-1 flex items-center justify-center relative overflow-hidden"
-                     style={{ height: '20px', width: '100%' }}>
-                  <div className="text-xs text-blue-600 font-medium text-center" style={{ fontSize: '8px' }}>
+                     style={{ height: '12px', width: '100%' }}>
+                  <div className="text-blue-600 font-medium text-center" style={{ fontSize: '6px' }}>
                     {layout.name}
                   </div>
                   {selectedLayoutId === layout.id && (
-                    <div className="absolute top-0.5 right-0.5 bg-primary text-primary-foreground rounded-full p-0.5">
-                      <Check className="h-1.5 w-1.5" />
+                    <div className="absolute top-0 right-0 bg-primary text-primary-foreground rounded-full" style={{ padding: '1px' }}>
+                      <Check style={{ height: '6px', width: '6px' }} />
                     </div>
                   )}
                 </div>
                 
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-medium truncate">{layout.name}</h4>
-                    <Badge variant="outline" className="text-xs" style={{ fontSize: '8px', padding: '1px 4px' }}>
+                    <h4 className="font-medium truncate" style={{ fontSize: '8px' }}>{layout.name}</h4>
+                    <Badge variant="outline" style={{ fontSize: '6px', padding: '1px 2px' }}>
                       {layout.category}
                     </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-tight" style={{ fontSize: '8px' }}>
+                  <p className="text-muted-foreground leading-tight" style={{ fontSize: '6px' }}>
                     {layout.description}
                   </p>
                 </div>

@@ -138,7 +138,7 @@ export const TemplateEditDialog = ({
   if (!open || !template) return null;
 
   return (
-    <div className="fixed top-0 left-0 w-screen h-screen z-50 bg-background border border-border shadow-2xl flex flex-col">
+    <div className="fixed inset-0 z-50 bg-background flex flex-col" style={{ width: '100vw', height: '100vh' }}>
       {/* Main content - volledige viewport hoogte minus footer */}
       <div className="flex-1 overflow-hidden">
         <VisualTemplateEditor
