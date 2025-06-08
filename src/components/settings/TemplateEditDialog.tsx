@@ -138,9 +138,9 @@ export const TemplateEditDialog = ({
   if (!open || !template) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background border border-border shadow-2xl flex flex-col" style={{ height: '100vh', width: '100vw' }}>
-      {/* Main content - volledige viewport hoogte */}
-      <div className="flex-1 overflow-hidden" style={{ height: 'calc(100vh - 80px)' }}>
+    <div className="fixed top-0 left-0 w-screen h-screen z-50 bg-background border border-border shadow-2xl flex flex-col">
+      {/* Main content - volledige viewport hoogte minus footer */}
+      <div className="flex-1 overflow-hidden">
         <VisualTemplateEditor
           templateData={visualTemplateData}
           onUpdateTemplate={handleUpdateVisualTemplate}
@@ -152,7 +152,7 @@ export const TemplateEditDialog = ({
       </div>
 
       {/* Footer buttons */}
-      <div className="flex-shrink-0 flex justify-end space-x-2 p-4 border-t bg-background" style={{ height: '80px' }}>
+      <div className="flex-shrink-0 flex justify-end space-x-2 p-4 border-t bg-background h-20">
         <Button variant="outline" size="sm" onClick={handleCancel}>
           Annuleren
         </Button>
