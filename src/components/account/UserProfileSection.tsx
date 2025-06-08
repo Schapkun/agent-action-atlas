@@ -60,7 +60,8 @@ export const UserProfileSection = ({
             id="full_name"
             value={profile.full_name || ''}
             onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-            placeholder="Voer je volledige naam in"
+            placeholder="Voer volledige naam in"
+            disabled={!isViewingOwnProfile}
           />
         </div>
 
@@ -70,8 +71,9 @@ export const UserProfileSection = ({
             id="email"
             type="email"
             value={profile.email || ''}
-            onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-            placeholder="Voer je e-mailadres in"
+            placeholder="Voer e-mailadres in"
+            disabled={true}
+            className="bg-muted/50 cursor-not-allowed"
           />
         </div>
 
