@@ -1,11 +1,11 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { DocumentTemplate } from './types/DocumentTemplate';
 import { VisualTemplateEditor } from './VisualTemplateEditor';
 import { VisualTemplateData, DEFAULT_VARIABLES } from './types/VisualTemplate';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { X } from 'lucide-react';
 
 interface TemplateEditDialogProps {
   open: boolean;
@@ -122,31 +122,43 @@ export const TemplateEditDialog = ({
     onOpenChange(false);
   };
 
-  if (!template) return null;
+  if (!open || !template) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !p-0 !m-0 !border-0 !rounded-none !transform-none !translate-x-0 !translate-y-0 overflow-hidden flex flex-col">
-        <div className="flex-1 overflow-hidden">
-          <VisualTemplateEditor
-            templateData={visualTemplateData}
-            onUpdateTemplate={handleUpdateVisualTemplate}
-            workspaceId={selectedWorkspace?.id}
-            organizationId={selectedOrganization?.id}
-            workspaceName={selectedWorkspace?.name}
-            organizationName={selectedOrganization?.name}
-          />
-        </div>
+    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+      {/* Close button */}
+      <div className="absolute top-4 right-4 z-10">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={handleCancel}
+          className="h-8 w-8 bg-background/80 hover:bg-background"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
 
-        <div className="flex-shrink-0 flex justify-end space-x-2 p-4 border-t bg-background">
-          <Button variant="outline" size="sm" onClick={handleCancel}>
-            Annuleren
-          </Button>
-          <Button size="sm" onClick={onSaveTemplate} disabled={saving}>
-            {saving ? 'Opslaan...' : 'Opslaan'}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      {/* Main content */}
+      <div className="flex-1 overflow-hidden">
+        <VisualTemplateEditor
+          templateData={visualTemplateData}
+          onUpdateTemplate={handleUpdateVisualTemplate}
+          workspaceId={selectedWorkspace?.id}
+          organizationId={selectedOrganization?.id}
+          workspaceName={selectedWorkspace?.name}
+          organizationName={selectedOrganization?.name}
+        />
+      </div>
+
+      {/* Footer buttons */}
+      <div className="flex-shrink-0 flex justify-end space-x-2 p-4 border-t bg-background">
+        <Button variant="outline" size="sm" onClick={handleCancel}>
+          Annuleren
+        </Button>
+        <Button size="sm" onClick={onSaveTemplate} disabled={saving}>
+          {saving ? 'Opslaan...' : 'Opslaan'}
+        </Button>
+      </div>
+    </div>
   );
 };
