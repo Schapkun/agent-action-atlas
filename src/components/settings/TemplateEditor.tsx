@@ -35,7 +35,7 @@ export const TemplateEditor = ({ template, onUpdateTemplate }: TemplateEditorPro
         <label className="text-sm font-medium">Template Inhoud</label>
         <Textarea
           placeholder="Voer de template inhoud in..."
-          className="min-h-[200px] font-mono text-sm"
+          className="min-h-[400px] font-mono text-sm"
           defaultValue={`<!DOCTYPE html>
 <html>
 <head>
