@@ -1,8 +1,9 @@
+
 import { useState } from 'react';
 import { User, Users, FileText, History, Building2, Layout, User2 } from 'lucide-react';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { UserManagement } from './UserManagement';
+import { UserManagementComponent } from './UserManagementComponent';
 import { HistoryLogs } from './HistoryLogs';
 import { DocumentLayoutSettings } from './DocumentLayoutSettings';
 import { OrganizationWorkspaceView } from './OrganizationWorkspaceView';
@@ -11,12 +12,13 @@ import { HTMLBuilderSettings } from './HTMLBuilderSettings';
 
 export const SettingsLayout = () => {
   const [activeTab, setActiveTab] = useState('users');
+  const [userRole, setUserRole] = useState<string>('user'); // Default role
 
   const tabs = [
     { id: 'users', label: 'Gebruikers', icon: Users },
     { id: 'history', label: 'Historie', icon: History },
     { id: 'templates', label: 'Templates', icon: FileText },
-    { id: 'htmlbuilder', label: 'HTML Builder', icon: Layout }, // Added HTML Builder tab
+    { id: 'htmlbuilder', label: 'HTML Builder', icon: Layout },
     { id: 'workspace', label: 'Workspace', icon: Building2 },
     { id: 'profile', label: 'Profiel', icon: User2 }
   ];
@@ -24,19 +26,19 @@ export const SettingsLayout = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'users':
-        return <UserManagement />;
+        return <UserManagementComponent />;
       case 'history':
         return <HistoryLogs />;
       case 'templates':
         return <DocumentLayoutSettings />;
       case 'htmlbuilder':
-        return <HTMLBuilderSettings />; // Added HTML Builder content
+        return <HTMLBuilderSettings />;
       case 'workspace':
-        return <OrganizationWorkspaceView />;
+        return <OrganizationWorkspaceView userRole={userRole} />;
       case 'profile':
         return <UserProfileSettings />;
       default:
-        return <UserManagement />;
+        return <UserManagementComponent />;
     }
   };
 

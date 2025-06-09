@@ -1,14 +1,14 @@
 
 import React, { useRef, useEffect } from 'react';
-import { HTMLElement } from '../types/HTMLBuilder';
+import { HTMLElement as HTMLBuilderElement } from '../types/HTMLBuilder';
 
 interface HTMLPreviewProps {
   html: string;
   zoom?: number;
   showBounds?: boolean;
-  selectedElement?: HTMLElement | null;
-  onSelectElement?: (element: HTMLElement | null) => void;
-  onUpdateElement?: (id: string, updates: Partial<HTMLElement>) => void;
+  selectedElement?: HTMLBuilderElement | null;
+  onSelectElement?: (element: HTMLBuilderElement | null) => void;
+  onUpdateElement?: (id: string, updates: Partial<HTMLBuilderElement>) => void;
   editable?: boolean;
 }
 
@@ -66,10 +66,11 @@ export const HTMLPreview: React.FC<HTMLPreviewProps> = ({
         e.preventDefault();
         e.stopPropagation();
         
-        const target = e.target as HTMLElement;
+        const target = e.target as Element; // Use DOM Element type
         if (target !== container) {
           // Find element data and select it
-          const elementId = target.dataset.elementId;
+          const htmlElement = target as HTMLElement; // Now cast to DOM HTMLElement
+          const elementId = htmlElement.dataset?.elementId;
           if (elementId && onSelectElement) {
             // This would need to be connected to the actual element data
             console.log('Selected element:', elementId);
