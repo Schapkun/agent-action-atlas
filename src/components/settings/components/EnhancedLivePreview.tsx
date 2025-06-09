@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ZoomIn, ZoomOut, Download, FileText, Star } from 'lucide-react';
 import { VisualTemplateData } from '../types/VisualTemplate';
+import { SharedStyleEngine } from './SharedStyleEngine';
 
 interface EnhancedLivePreviewProps {
   templateData: VisualTemplateData;
@@ -20,11 +21,11 @@ export const EnhancedLivePreview = ({
   const [zoom, setZoom] = useState(0.6);
   const [forceRefresh, setForceRefresh] = useState(0);
 
-  // Force refresh on styling changes - CRITICAL FIX
+  // Force refresh on styling changes
   useEffect(() => {
     const timestamp = Date.now();
     setForceRefresh(timestamp);
-    console.log('🎨 Preview refreshed for styling change:', templateData.styling);
+    console.log('🎨 Preview refreshed with new SharedStyleEngine');
   }, [templateData.styling, templateData.layout, templateData.companyInfo]);
 
   const handleZoomIn = () => {
@@ -36,75 +37,56 @@ export const EnhancedLivePreview = ({
   };
 
   const renderPreviewContent = () => {
-    const { companyInfo, styling } = templateData;
+    const { companyInfo } = templateData;
+    const styleEngine = new SharedStyleEngine(templateData);
+    const styles = styleEngine.getPreviewStyles();
     
-    // DIRECT styling usage - NO layout overrides
-    const primaryColor = styling.primaryColor;
-    const secondaryColor = styling.secondaryColor;
-    
-    console.log('🎨 Using colors from styling:', { primaryColor, secondaryColor });
-    
-    const containerStyle = {
-      transform: `scale(${zoom})`,
-      transformOrigin: 'top center',
-      width: '794px',
-      minHeight: '1123px',
-      padding: '60px',
-      fontFamily: styling.font || 'Arial',
-      fontSize: '11pt',
-      lineHeight: '1.4',
-      color: '#000000',
-      backgroundColor: '#ffffff',
-      border: '1px solid #e5e7eb',
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-      margin: '0 auto'
-    };
-    
-    // Header alignment based on logo position
-    const headerAlignment = styling.logoPosition === 'center' ? 'center' : 
-                           styling.logoPosition === 'right' ? 'end' : 'start';
-    const textAlignment = styling.logoPosition === 'center' ? 'text-center' : 
-                         styling.logoPosition === 'right' ? 'text-right' : 'text-left';
+    // Header alignment gebaseerd op logo positie
+    const headerAlignment = templateData.styling.logoPosition === 'center' ? 'center' : 
+                           templateData.styling.logoPosition === 'right' ? 'end' : 'start';
+    const textAlignment = templateData.styling.logoPosition === 'center' ? 'text-center' : 
+                         templateData.styling.logoPosition === 'right' ? 'text-right' : 'text-left';
     
     return (
       <div 
         key={`preview-content-${forceRefresh}`}
         className="bg-white border shadow-lg mx-auto transition-transform duration-200"
-        style={containerStyle}
-      >
-        {/* Header with DIRECT color styling */}
-        <div className={`${
-          styling.headerStyle === 'colored' ? 'text-white' : ''
-        } ${
-          styling.headerStyle === 'bordered' ? 'border-2' : ''
-        } p-4 mb-8 rounded-md`}
         style={{
-          backgroundColor: styling.headerStyle === 'colored' ? primaryColor : 'transparent',
-          borderColor: styling.headerStyle === 'bordered' ? primaryColor : 'transparent'
-        }}>
-          <div className={`flex items-${headerAlignment} ${styling.logoPosition === 'center' ? 'flex-col' : 'justify-between'}`}>
-            {companyInfo.logo && styling.logoPosition !== 'right' && (
+          ...styles.container,
+          transform: `scale(${zoom})`,
+          transformOrigin: 'top center'
+        }}
+      >
+        {/* Header met SharedStyleEngine styling */}
+        <div 
+          className={`p-4 mb-8 rounded-md ${textAlignment}`}
+          style={styles.header}
+        >
+          <div className={`flex items-${headerAlignment} ${templateData.styling.logoPosition === 'center' ? 'flex-col' : 'justify-between'}`}>
+            {companyInfo.logo && templateData.styling.logoPosition !== 'right' && (
               <img 
                 src={companyInfo.logo} 
                 alt="Company logo" 
-                className={`object-contain ${styling.logoPosition === 'center' ? 'mb-4' : ''}`}
+                className={`object-contain ${templateData.styling.logoPosition === 'center' ? 'mb-4' : ''}`}
                 style={{ height: '64px' }}
               />
             )}
             
-            <div className={textAlignment}>
-              <h1 
-                className="font-bold mb-2"
-                style={{ 
-                  fontSize: '20pt', 
-                  lineHeight: '1.2',
-                  color: styling.headerStyle === 'colored' ? '#ffffff' : primaryColor
-                }}
-              >
+            <div>
+              <h1 style={{ 
+                fontSize: '20pt', 
+                lineHeight: '1.2',
+                fontWeight: 'bold',
+                marginBottom: '8px',
+                color: styles.header.color
+              }}>
                 {companyInfo.name || 'Uw Bedrijf'}
               </h1>
               {companyInfo.address && (
-                <div className={`space-y-1 ${styling.headerStyle === 'colored' ? 'text-white/90' : 'text-gray-600'}`} style={{ fontSize: '10pt' }}>
+                <div className="space-y-1" style={{ 
+                  fontSize: '10pt',
+                  color: templateData.styling.headerStyle === 'colored' ? 'rgba(255,255,255,0.9)' : '#6b7280'
+                }}>
                   <p>{companyInfo.address}</p>
                   <p>{companyInfo.postalCode} {companyInfo.city}</p>
                   {companyInfo.phone && <p>Tel: {companyInfo.phone}</p>}
@@ -114,7 +96,7 @@ export const EnhancedLivePreview = ({
               )}
             </div>
             
-            {companyInfo.logo && styling.logoPosition === 'right' && (
+            {companyInfo.logo && templateData.styling.logoPosition === 'right' && (
               <img 
                 src={companyInfo.logo} 
                 alt="Company logo" 
@@ -125,19 +107,10 @@ export const EnhancedLivePreview = ({
           </div>
         </div>
 
-        {/* Document Title with DIRECT color */}
-        <div style={{ marginBottom: '32px' }}>
-          <h2 
-            className="font-semibold mb-4"
-            style={{ 
-              fontSize: '18pt', 
-              lineHeight: '1.3',
-              color: primaryColor
-            }}
-          >
-            {templateData.documentType === 'invoice' ? 'FACTUUR' : 
-             templateData.documentType === 'quote' ? 'OFFERTE' : 
-             templateData.documentType === 'letter' ? 'BRIEF' : 'DOCUMENT'}
+        {/* Document Title */}
+        <div style={{ marginBottom: `${styles.title.marginBottom}` }}>
+          <h2 style={styles.title}>
+            {styleEngine.getDocumentTitle(templateData.documentType)}
           </h2>
           
           {/* Content Grid */}
@@ -146,8 +119,8 @@ export const EnhancedLivePreview = ({
               <h3 className="font-medium mb-2" style={{ fontSize: '12pt' }}>Factuurgegevens</h3>
               <div className="space-y-1" style={{ fontSize: '10pt' }}>
                 <p>Factuurnummer: 2024-001</p>
-                <p>Factuurdatum: {new Date().toLocaleDateString('nl-NL')}</p>
-                <p>Vervaldatum: {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL')}</p>
+                <p>Factuurdatum: {styleEngine.getCurrentDate()}</p>
+                <p>Vervaldatum: {styleEngine.getFutureDate(30)}</p>
               </div>
             </div>
             
@@ -162,11 +135,11 @@ export const EnhancedLivePreview = ({
           </div>
         </div>
 
-        {/* Table with DIRECT color styling */}
+        {/* Table met secundaire kleur integratie */}
         <div style={{ marginBottom: '32px' }}>
           <table className="w-full border-collapse" style={{ fontSize: '10pt' }}>
             <thead>
-              <tr style={{ borderBottom: '2pt solid', borderColor: primaryColor }}>
+              <tr style={styles.tableHeader}>
                 <th className="text-left" style={{ padding: '8px 0' }}>Beschrijving</th>
                 <th className="text-right" style={{ padding: '8px 0' }}>Aantal</th>
                 <th className="text-right" style={{ padding: '8px 0' }}>Prijs</th>
@@ -174,13 +147,13 @@ export const EnhancedLivePreview = ({
               </tr>
             </thead>
             <tbody>
-              <tr style={{ borderBottom: '1pt solid #e5e7eb' }}>
+              <tr style={styles.tableRow}>
                 <td style={{ padding: '8px 0' }}>Consultancy diensten</td>
                 <td className="text-right" style={{ padding: '8px 0' }}>10</td>
                 <td className="text-right" style={{ padding: '8px 0' }}>€ 75,00</td>
                 <td className="text-right" style={{ padding: '8px 0' }}>€ 750,00</td>
               </tr>
-              <tr style={{ borderBottom: '1pt solid #e5e7eb' }}>
+              <tr style={styles.tableRow}>
                 <td style={{ padding: '8px 0' }}>Reiskosten</td>
                 <td className="text-right" style={{ padding: '8px 0' }}>1</td>
                 <td className="text-right" style={{ padding: '8px 0' }}>€ 50,00</td>
@@ -193,12 +166,24 @@ export const EnhancedLivePreview = ({
                 <td className="text-right" style={{ padding: '8px 0' }}>€ 800,00</td>
               </tr>
               <tr>
-                <td colSpan={3} className="text-right" style={{ padding: '8px 0' }}>BTW (21%):</td>
-                <td className="text-right" style={{ padding: '8px 0' }}>€ 168,00</td>
+                <td colSpan={3} className="text-right" style={{ 
+                  padding: '8px 0',
+                  color: styles.accents.secondary // Secundaire kleur voor BTW
+                }}>BTW (21%):</td>
+                <td className="text-right" style={{ 
+                  padding: '8px 0',
+                  color: styles.accents.secondary
+                }}>€ 168,00</td>
               </tr>
-              <tr style={{ borderTop: '2pt solid', borderColor: primaryColor }}>
-                <td colSpan={3} className="text-right font-bold" style={{ padding: '8px 0', color: primaryColor }}>Totaal:</td>
-                <td className="text-right font-bold" style={{ padding: '8px 0', color: primaryColor }}>€ 968,00</td>
+              <tr style={styles.tableTotal}>
+                <td colSpan={3} className="text-right font-bold" style={{ 
+                  padding: '8px 0',
+                  color: styles.tableTotal.color
+                }}>Totaal:</td>
+                <td className="text-right font-bold" style={{ 
+                  padding: '8px 0',
+                  color: styles.tableTotal.color
+                }}>€ 968,00</td>
               </tr>
             </tfoot>
           </table>

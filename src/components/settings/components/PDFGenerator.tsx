@@ -1,6 +1,7 @@
 
 import jsPDF from 'jspdf';
 import { VisualTemplateData } from '../types/VisualTemplate';
+import { SharedStyleEngine } from './SharedStyleEngine';
 
 export class PDFGenerator {
   private doc: jsPDF;
@@ -14,60 +15,52 @@ export class PDFGenerator {
   }
 
   generateFromTemplate(templateData: VisualTemplateData): jsPDF {
-    const { companyInfo, styling, documentType } = templateData;
+    console.log('📄 PDF Generator - Using SharedStyleEngine');
     
-    console.log('📄 PDF Generator - Using styling directly:', styling);
-    
-    // Use styling colors DIRECTLY - no overrides
-    const primaryColor = styling.primaryColor;
-    const secondaryColor = styling.secondaryColor;
-    
-    console.log('🎨 PDF Colors:', { primaryColor, secondaryColor });
+    const styleEngine = new SharedStyleEngine(templateData);
+    const pdfStyles = styleEngine.getPDFStyles();
     
     // Set base font
     this.doc.setFont('helvetica');
     
-    // Generate sections with simple, working positioning
-    this.generateHeader(companyInfo, styling, primaryColor);
-    this.generateContent(templateData, primaryColor);
-    this.generateTable(primaryColor);
+    // Generate sections using SharedStyleEngine
+    this.generateHeader(templateData.companyInfo, templateData.styling, styleEngine, pdfStyles);
+    this.generateContent(templateData, styleEngine, pdfStyles);
+    this.generateTable(styleEngine, pdfStyles);
     this.generateFooter();
 
-    console.log('✅ PDF generation completed');
+    console.log('✅ PDF generation completed with SharedStyleEngine');
     return this.doc;
   }
 
-  private generateHeader(companyInfo: any, styling: any, primaryColor: string): void {
+  private generateHeader(companyInfo: any, styling: any, styleEngine: SharedStyleEngine, pdfStyles: any): void {
     let yPos = this.margins + 10;
     
-    // Convert hex to RGB
-    const rgb = this.hexToRgb(primaryColor);
+    // Header styling using SharedStyleEngine
+    const headerHeight = 30;
     
-    // Header styling based on headerStyle
-    if (styling.headerStyle === 'colored') {
-      this.doc.setFillColor(rgb[0], rgb[1], rgb[2]);
-      this.doc.rect(this.margins, this.margins, this.contentWidth, 30, 'F');
-      this.doc.setTextColor(255, 255, 255);
-    } else if (styling.headerStyle === 'bordered') {
+    if (styling.headerStyle === 'colored' && pdfStyles.colors.headerBg) {
+      this.doc.setFillColor(...pdfStyles.colors.headerBg);
+      this.doc.rect(this.margins, this.margins, this.contentWidth, headerHeight, 'F');
+      this.doc.setTextColor(...pdfStyles.colors.headerText);
+    } else if (styling.headerStyle === 'bordered' && pdfStyles.colors.headerBorder) {
       this.doc.setLineWidth(0.5);
-      this.doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
-      this.doc.rect(this.margins, this.margins, this.contentWidth, 30);
-      this.doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+      this.doc.setDrawColor(...pdfStyles.colors.headerBorder);
+      this.doc.rect(this.margins, this.margins, this.contentWidth, headerHeight);
+      this.doc.setTextColor(...pdfStyles.colors.primary);
     } else {
-      this.doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+      this.doc.setTextColor(...pdfStyles.colors.primary);
     }
     
-    // Company name
+    // Company name positioning using SharedStyleEngine alignment
     this.doc.setFontSize(20);
     let nameX = this.margins + 5;
-    let align: 'left' | 'center' | 'right' = 'left';
+    let align: 'left' | 'center' | 'right' = pdfStyles.alignment.align;
     
-    if (styling.logoPosition === 'center') {
+    if (pdfStyles.alignment.position === 'center') {
       nameX = this.pageWidth / 2;
-      align = 'center';
-    } else if (styling.logoPosition === 'right') {
+    } else if (pdfStyles.alignment.position === 'right') {
       nameX = this.pageWidth - this.margins - 5;
-      align = 'right';
     }
     
     this.doc.text(companyInfo.name || 'Uw Bedrijf', nameX, yPos + 15, { align });
@@ -99,22 +92,22 @@ export class PDFGenerator {
     
     if (companyInfo.email) {
       this.doc.text(`Email: ${companyInfo.email}`, nameX, yPos, { align });
+      yPos += 4;
+    }
+    
+    if (companyInfo.website) {
+      this.doc.text(`Web: ${companyInfo.website}`, nameX, yPos, { align });
     }
   }
 
-  private generateContent(templateData: VisualTemplateData, primaryColor: string): void {
-    const { documentType } = templateData;
-    
+  private generateContent(templateData: VisualTemplateData, styleEngine: SharedStyleEngine, pdfStyles: any): void {
     let yPos = this.margins + 50;
     
-    // Convert hex to RGB
-    const rgb = this.hexToRgb(primaryColor);
-    
-    // Document title
+    // Document title using SharedStyleEngine
     this.doc.setFontSize(18);
-    this.doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+    this.doc.setTextColor(...pdfStyles.colors.primary);
     
-    const docTitle = this.getDocumentTitle(documentType);
+    const docTitle = styleEngine.getDocumentTitle(templateData.documentType);
     this.doc.text(docTitle, this.margins + 5, yPos);
     
     yPos += 20;
@@ -135,9 +128,9 @@ export class PDFGenerator {
     
     this.doc.text('Factuurnummer: 2024-001', leftColumnX, yPos);
     yPos += 5;
-    this.doc.text(`Factuurdatum: ${this.getCurrentDate()}`, leftColumnX, yPos);
+    this.doc.text(`Factuurdatum: ${styleEngine.getCurrentDate()}`, leftColumnX, yPos);
     yPos += 5;
-    this.doc.text(`Vervaldatum: ${this.getFutureDate(30)}`, leftColumnX, yPos);
+    this.doc.text(`Vervaldatum: ${styleEngine.getFutureDate(30)}`, leftColumnX, yPos);
     
     // Right column
     const rightColumnX = this.margins + (this.contentWidth * 0.5) + 5;
@@ -158,17 +151,14 @@ export class PDFGenerator {
     this.doc.text('1234 AB Amsterdam', rightColumnX, yPos);
   }
 
-  private generateTable(primaryColor: string): void {
+  private generateTable(styleEngine: SharedStyleEngine, pdfStyles: any): void {
     const startY = this.margins + 120;
     const tableWidth = this.contentWidth;
     const rowHeight = 8;
     
-    // Convert hex to RGB
-    const rgb = this.hexToRgb(primaryColor);
-    
-    // Table headers
-    this.doc.setLineWidth(0.5);
-    this.doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
+    // Table headers using primary color
+    this.doc.setLineWidth(0.7);
+    this.doc.setDrawColor(...pdfStyles.colors.primary);
     this.doc.line(this.margins, startY + 8, this.margins + tableWidth, startY + 8);
     
     // Header text
@@ -219,17 +209,19 @@ export class PDFGenerator {
     this.doc.text('€ 800,00', col4X, rowY, { align: 'right' });
     rowY += 6;
     
+    // BTW met secundaire kleur
+    this.doc.setTextColor(...pdfStyles.colors.secondary);
     this.doc.text('BTW (21%):', col3X, rowY, { align: 'right' });
     this.doc.text('€ 168,00', col4X, rowY, { align: 'right' });
     rowY += 8;
     
-    // Total with colored line
-    this.doc.setLineWidth(0.5);
-    this.doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
+    // Total met secundaire kleur lijn en tekst
+    this.doc.setLineWidth(0.7);
+    this.doc.setDrawColor(...pdfStyles.colors.secondary);
     this.doc.line(col3X - 10, rowY - 2, this.margins + tableWidth, rowY - 2);
     
     this.doc.setFont('helvetica', 'bold');
-    this.doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+    this.doc.setTextColor(...pdfStyles.colors.secondary);
     this.doc.text('Totaal:', col3X, rowY, { align: 'right' });
     this.doc.text('€ 968,00', col4X, rowY, { align: 'right' });
   }
@@ -248,34 +240,6 @@ export class PDFGenerator {
     this.doc.setFont('helvetica', 'normal');
     
     this.doc.text('Betaling binnen 30 dagen na factuurdatum.', this.margins + 5, footerY);
-  }
-
-  private hexToRgb(hex: string): [number, number, number] {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result 
-      ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)]
-      : [0, 0, 0];
-  }
-
-  private getDocumentTitle(documentType: string): string {
-    switch (documentType) {
-      case 'invoice':
-        return 'FACTUUR';
-      case 'quote':
-        return 'OFFERTE';
-      case 'letter':
-        return 'BRIEF';
-      default:
-        return 'DOCUMENT';
-    }
-  }
-
-  private getCurrentDate(): string {
-    return new Date().toLocaleDateString('nl-NL');
-  }
-
-  private getFutureDate(daysFromNow: number): string {
-    return new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL');
   }
 
   download(filename: string = 'document.pdf') {
