@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,13 @@ export const EnhancedLivePreview = ({
   onDownloadPDF
 }: EnhancedLivePreviewProps) => {
   const [zoom, setZoom] = useState(0.6);
+  const [renderVersion] = useState(() => Date.now());
+
+  useEffect(() => {
+    console.log('🖼️ EnhancedLivePreview rendered - Version:', renderVersion);
+    console.log('📐 A4 Preview dimensions: 794px × 1123px (NO NOTIFICATIONS)');
+    console.log('🎨 Current layout:', templateData.layout);
+  }, [renderVersion, templateData.layout]);
 
   const handleZoomIn = () => {
     setZoom(Math.min(zoom + 0.1, 2));
@@ -46,8 +53,8 @@ export const EnhancedLivePreview = ({
         style={{ 
           transform: `scale(${zoom})`,
           transformOrigin: 'top center',
-          width: '794px', // A4 width exact pixels
-          minHeight: '1123px', // A4 height exact pixels
+          width: '794px', // A4 width exact pixels - FIXED SIZE
+          minHeight: '1123px', // A4 height exact pixels - FIXED SIZE
           padding: '60px', // Consistent padding
           fontFamily: styling.font || 'Arial',
           fontSize: '11pt',
@@ -55,6 +62,11 @@ export const EnhancedLivePreview = ({
           color: '#000000'
         }}
       >
+        {/* Debug info - hidden but present for verification */}
+        <div className="hidden">
+          Render: {renderVersion} | Layout: {layout} | Size: 794×1123px
+        </div>
+
         {/* Header met layout-specifieke styling en logo positioning */}
         <div className={`${
           styling.headerStyle === 'colored' ? layoutStyles.headerBg + ' ' + layoutStyles.headerText : ''
@@ -195,6 +207,9 @@ export const EnhancedLivePreview = ({
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             <span className="text-sm font-medium">Live Preview</span>
+            <Badge variant="outline" className="text-xs">
+              A4 (794×1123px)
+            </Badge>
           </div>
           
           <div className="flex items-center gap-2">
@@ -223,11 +238,14 @@ export const EnhancedLivePreview = ({
               </Button>
             </div>
             
-            {/* Header Actions */}
+            {/* Header Actions - NO TOAST NOTIFICATIONS */}
             <Button
               variant="outline"
               size="sm"
-              onClick={onSaveToLibrary}
+              onClick={() => {
+                console.log('💾 Save to library clicked - NO TOAST');
+                onSaveToLibrary();
+              }}
               className="flex items-center gap-1"
             >
               <Star className="h-4 w-4" />
@@ -236,7 +254,10 @@ export const EnhancedLivePreview = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={onDownloadPDF}
+              onClick={() => {
+                console.log('📄 PDF download clicked - NO TOAST');
+                onDownloadPDF();
+              }}
               className="flex items-center gap-1"
             >
               <Download className="h-4 w-4" />

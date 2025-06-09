@@ -38,11 +38,13 @@ export const TemplateLibrary = ({
   const [templateName, setTemplateName] = useState('');
   const [templateDescription, setTemplateDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [libraryVersion] = useState(() => Date.now());
 
   // Load templates on component mount
   useEffect(() => {
+    console.log('📚 TemplateLibrary initialized - Version:', libraryVersion);
     loadTemplates();
-  }, [workspaceId, organizationId]);
+  }, [workspaceId, organizationId, libraryVersion]);
 
   const loadTemplates = () => {
     setIsLoading(true);
@@ -52,6 +54,7 @@ export const TemplateLibrary = ({
                         organizationId ? `templates_org_${organizationId}` : 
                         'templates_global';
       
+      console.log('📂 Loading templates from:', storageKey);
       const stored = localStorage.getItem(storageKey);
       if (stored) {
         const templates = JSON.parse(stored).map((t: any) => ({
@@ -59,9 +62,12 @@ export const TemplateLibrary = ({
           createdAt: new Date(t.createdAt)
         }));
         setSavedTemplates(templates);
+        console.log('✅ Loaded', templates.length, 'templates');
+      } else {
+        console.log('📂 No templates found in storage');
       }
     } catch (error) {
-      console.error('Error loading templates:', error);
+      console.error('❌ Error loading templates:', error);
     } finally {
       setIsLoading(false);
     }
@@ -69,6 +75,7 @@ export const TemplateLibrary = ({
 
   const saveTemplate = () => {
     if (!templateName.trim()) {
+      console.log('⚠️ Template name required');
       return;
     }
 
@@ -97,12 +104,14 @@ export const TemplateLibrary = ({
       setTemplateName('');
       setTemplateDescription('');
       
+      console.log('💾 Template saved successfully - NO NOTIFICATION SHOWN');
     } catch (error) {
-      console.error('Error saving template:', error);
+      console.error('❌ Error saving template:', error);
     }
   };
 
   const loadTemplate = (template: SavedTemplate) => {
+    console.log('📂 Loading template:', template.name, '- NO NOTIFICATION SHOWN');
     onLoadTemplate(template.data);
   };
 
@@ -116,8 +125,9 @@ export const TemplateLibrary = ({
       localStorage.setItem(storageKey, JSON.stringify(updated));
       setSavedTemplates(updated);
       
+      console.log('🗑️ Template deleted successfully - NO NOTIFICATION SHOWN');
     } catch (error) {
-      console.error('Error deleting template:', error);
+      console.error('❌ Error deleting template:', error);
     }
   };
 
@@ -133,12 +143,14 @@ export const TemplateLibrary = ({
       
       localStorage.setItem(storageKey, JSON.stringify(updated));
       setSavedTemplates(updated);
+      console.log('⭐ Favorite toggled - NO NOTIFICATION SHOWN');
     } catch (error) {
-      console.error('Error toggling favorite:', error);
+      console.error('❌ Error toggling favorite:', error);
     }
   };
 
   const exportTemplate = (template: SavedTemplate) => {
+    console.log('📤 Exporting template:', template.name, '- NO NOTIFICATION SHOWN');
     const dataStr = JSON.stringify(template, null, 2);
     const dataBlob = new Blob([dataStr], {type: 'application/json'});
     const url = URL.createObjectURL(dataBlob);
@@ -153,6 +165,7 @@ export const TemplateLibrary = ({
     const file = event.target.files?.[0];
     if (!file) return;
 
+    console.log('📥 Importing template file:', file.name);
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -177,8 +190,9 @@ export const TemplateLibrary = ({
         localStorage.setItem(storageKey, JSON.stringify(updated));
         setSavedTemplates(updated);
         
+        console.log('✅ Template imported successfully - NO NOTIFICATION SHOWN');
       } catch (error) {
-        console.error('Error importing template:', error);
+        console.error('❌ Error importing template:', error);
       }
     };
     reader.readAsText(file);
@@ -196,6 +210,9 @@ export const TemplateLibrary = ({
 
   return (
     <div className="space-y-4">
+      {/* Debug info */}
+      <div className="hidden">Library Version: {libraryVersion}</div>
+      
       {/* Save Current Template */}
       <Card>
         <CardHeader className="pb-3">

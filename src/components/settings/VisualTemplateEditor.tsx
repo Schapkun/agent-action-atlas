@@ -38,6 +38,29 @@ export const VisualTemplateEditor = ({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [originalTemplateData, setOriginalTemplateData] = useState<VisualTemplateData>(templateData);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [cacheVersion] = useState(() => Date.now());
+
+  // Clear localStorage cache on component mount to force fresh start
+  useEffect(() => {
+    console.log('🔄 VisualTemplateEditor Cache Clearing - Version:', cacheVersion);
+    
+    // Clear any cached template data
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('templates_') || key.includes('template'))) {
+        keysToRemove.push(key);
+      }
+    }
+    
+    keysToRemove.forEach(key => {
+      console.log('🗑️ Clearing cached template data:', key);
+      localStorage.removeItem(key);
+    });
+
+    console.log('✅ Template Editor loaded with cleared cache');
+    console.log('📋 Current template data:', templateData);
+  }, [cacheVersion]);
 
   // Track changes
   useEffect(() => {
@@ -46,6 +69,7 @@ export const VisualTemplateEditor = ({
   }, [templateData, originalTemplateData]);
 
   const handleLayoutSelect = (layout: UniqueLayoutTemplate) => {
+    console.log('🎨 Layout selected:', layout.id);
     onUpdateTemplate({
       ...templateData,
       layout: layout.id,
@@ -54,19 +78,21 @@ export const VisualTemplateEditor = ({
         ...layout.styling
       }
     });
-    // Force refresh to show changes immediately
-    setRefreshKey(prev => prev + 1);
+    // Force refresh with new timestamp
+    setRefreshKey(Date.now());
   };
 
   const handleCompanyInfoUpdate = (companyInfo: CompanyInfo) => {
+    console.log('🏢 Company info updated');
     onUpdateTemplate({
       ...templateData,
       companyInfo
     });
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey(Date.now());
   };
 
   const handleStyleUpdate = (field: string, value: string) => {
+    console.log('🎨 Style updated:', field, value);
     onUpdateTemplate({
       ...templateData,
       styling: {
@@ -74,10 +100,11 @@ export const VisualTemplateEditor = ({
         [field]: value
       }
     });
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey(Date.now());
   };
 
   const handleStylesUpdate = (styles: any) => {
+    console.log('🎨 Styles batch updated:', styles);
     onUpdateTemplate({
       ...templateData,
       styling: {
@@ -85,51 +112,60 @@ export const VisualTemplateEditor = ({
         ...styles
       }
     });
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey(Date.now());
   };
 
   const handleSaveToLibrary = () => {
+    console.log('💾 Opening template library');
     setShowTemplateLibrary(true);
   };
 
   const handleDownloadPDF = () => {
     try {
+      console.log('📄 PDF Download initiated - NO NOTIFICATIONS VERSION');
       const pdfGenerator = new PDFGenerator();
       const pdf = pdfGenerator.generateFromTemplate(templateData);
       const filename = `${templateData.name || 'document'}_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(filename);
       
-      console.log(`PDF "${filename}" downloaded successfully`);
+      console.log(`✅ PDF "${filename}" downloaded successfully - NO TOAST SHOWN`);
     } catch (error) {
-      console.error('PDF generation error:', error);
+      console.error('❌ PDF generation error:', error);
     }
   };
 
   const handleLoadTemplate = (template: VisualTemplateData) => {
+    console.log('📂 Template loaded from library');
     onUpdateTemplate(template);
     setOriginalTemplateData(template);
     setShowTemplateLibrary(false);
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey(Date.now());
   };
 
   const handleSaveTemplate = () => {
+    console.log('💾 Template saved');
     setOriginalTemplateData({ ...templateData });
     setHasUnsavedChanges(false);
   };
 
   const handleSaveChanges = () => {
+    console.log('💾 Changes saved');
     setOriginalTemplateData({ ...templateData });
     setHasUnsavedChanges(false);
   };
 
   const handleDiscardChanges = () => {
+    console.log('🔄 Changes discarded');
     onUpdateTemplate(originalTemplateData);
     setHasUnsavedChanges(false);
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey(Date.now());
   };
 
   return (
     <div className="flex flex-col w-full" style={{ height: 'calc(100vh - 80px)' }}>
+      {/* Cache version indicator for debugging */}
+      <div className="hidden">{cacheVersion}</div>
+      
       {/* Header met workspace/organization switcher */}
       <div className="flex-shrink-0 px-4 py-3 bg-muted/50 border-b">
         <div className="flex items-center justify-between">
@@ -139,7 +175,7 @@ export const VisualTemplateEditor = ({
             onDiscardChanges={handleDiscardChanges}
           />
           <div className="text-xs text-muted-foreground">
-            Visual Template Builder
+            Visual Template Builder (Cache Cleared v{cacheVersion})
           </div>
         </div>
       </div>
@@ -205,7 +241,7 @@ export const VisualTemplateEditor = ({
         {/* Preview Panel - 50% */}
         <div className="w-1/2 h-full p-4">
           <EnhancedLivePreview
-            key={refreshKey}
+            key={`preview-${refreshKey}-${cacheVersion}`}
             templateData={templateData}
             onSaveToLibrary={handleSaveToLibrary}
             onDownloadPDF={handleDownloadPDF}
@@ -230,6 +266,7 @@ export const VisualTemplateEditor = ({
             </div>
             <div className="p-4 overflow-y-auto max-h-[calc(80vh-80px)]">
               <TemplateLibrary
+                key={`library-${cacheVersion}`}
                 currentTemplate={templateData}
                 workspaceId={workspaceId}
                 organizationId={organizationId}
