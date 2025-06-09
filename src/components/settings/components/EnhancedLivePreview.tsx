@@ -1,10 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ZoomIn, ZoomOut, Download, FileText, Star } from 'lucide-react';
 import { VisualTemplateData } from '../types/VisualTemplate';
-import { getLayoutSpecificStyles } from '../../../utils/layoutStyles';
 
 interface EnhancedLivePreviewProps {
   templateData: VisualTemplateData;
@@ -20,13 +20,12 @@ export const EnhancedLivePreview = ({
   const [zoom, setZoom] = useState(0.6);
   const [forceRefresh, setForceRefresh] = useState(0);
 
-  // Force refresh on mount and template changes (but keep debug info in console only)
+  // Force refresh on styling changes - CRITICAL FIX
   useEffect(() => {
     const timestamp = Date.now();
     setForceRefresh(timestamp);
-    console.log('🔄 Preview refreshed - Timestamp:', timestamp);
-    console.log('✅ A4 Preview loaded - 794px × 1123px');
-  }, [templateData.layout, templateData.styling, templateData.companyInfo]);
+    console.log('🎨 Preview refreshed for styling change:', templateData.styling);
+  }, [templateData.styling, templateData.layout, templateData.companyInfo]);
 
   const handleZoomIn = () => {
     setZoom(Math.min(zoom + 0.1, 2));
@@ -37,18 +36,19 @@ export const EnhancedLivePreview = ({
   };
 
   const renderPreviewContent = () => {
-    const { companyInfo, styling, layout } = templateData;
+    const { companyInfo, styling } = templateData;
     
-    // Use shared layout-specific styling utility
-    const layoutStyles = getLayoutSpecificStyles(layout || 'business-green');
+    // DIRECT styling usage - NO layout overrides
+    const primaryColor = styling.primaryColor;
+    const secondaryColor = styling.secondaryColor;
     
-    // Force A4 dimensions with !important to override any caching
+    console.log('🎨 Using colors from styling:', { primaryColor, secondaryColor });
+    
     const containerStyle = {
       transform: `scale(${zoom})`,
       transformOrigin: 'top center',
-      width: '794px !important', // A4 width FORCED
-      minHeight: '1123px !important', // A4 height FORCED
-      maxWidth: '794px !important',
+      width: '794px',
+      minHeight: '1123px',
       padding: '60px',
       fontFamily: styling.font || 'Arial',
       fontSize: '11pt',
@@ -57,11 +57,10 @@ export const EnhancedLivePreview = ({
       backgroundColor: '#ffffff',
       border: '1px solid #e5e7eb',
       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-      margin: '0 auto',
-      position: 'relative' as const
+      margin: '0 auto'
     };
     
-    // Determine header alignment and positioning based on logo position
+    // Header alignment based on logo position
     const headerAlignment = styling.logoPosition === 'center' ? 'center' : 
                            styling.logoPosition === 'right' ? 'end' : 'start';
     const textAlignment = styling.logoPosition === 'center' ? 'text-center' : 
@@ -73,12 +72,16 @@ export const EnhancedLivePreview = ({
         className="bg-white border shadow-lg mx-auto transition-transform duration-200"
         style={containerStyle}
       >
-        {/* Header met layout-specifieke styling en logo positioning */}
+        {/* Header with DIRECT color styling */}
         <div className={`${
-          styling.headerStyle === 'colored' ? layoutStyles.headerBg + ' ' + layoutStyles.headerText : ''
+          styling.headerStyle === 'colored' ? 'text-white' : ''
         } ${
-          styling.headerStyle === 'bordered' ? `border-2 ${layoutStyles.borderColor}` : ''
-        } p-4 mb-8 rounded-md`}>
+          styling.headerStyle === 'bordered' ? 'border-2' : ''
+        } p-4 mb-8 rounded-md`}
+        style={{
+          backgroundColor: styling.headerStyle === 'colored' ? primaryColor : 'transparent',
+          borderColor: styling.headerStyle === 'bordered' ? primaryColor : 'transparent'
+        }}>
           <div className={`flex items-${headerAlignment} ${styling.logoPosition === 'center' ? 'flex-col' : 'justify-between'}`}>
             {companyInfo.logo && styling.logoPosition !== 'right' && (
               <img 
@@ -91,8 +94,12 @@ export const EnhancedLivePreview = ({
             
             <div className={textAlignment}>
               <h1 
-                className={`font-bold mb-2 ${styling.headerStyle === 'colored' ? layoutStyles.headerText : layoutStyles.accentColor}`}
-                style={{ fontSize: '20pt', lineHeight: '1.2' }}
+                className="font-bold mb-2"
+                style={{ 
+                  fontSize: '20pt', 
+                  lineHeight: '1.2',
+                  color: styling.headerStyle === 'colored' ? '#ffffff' : primaryColor
+                }}
               >
                 {companyInfo.name || 'Uw Bedrijf'}
               </h1>
@@ -118,18 +125,22 @@ export const EnhancedLivePreview = ({
           </div>
         </div>
 
-        {/* Document Title */}
+        {/* Document Title with DIRECT color */}
         <div style={{ marginBottom: '32px' }}>
           <h2 
-            className={`font-semibold mb-4 ${layoutStyles.accentColor}`}
-            style={{ fontSize: '18pt', lineHeight: '1.3' }}
+            className="font-semibold mb-4"
+            style={{ 
+              fontSize: '18pt', 
+              lineHeight: '1.3',
+              color: primaryColor
+            }}
           >
             {templateData.documentType === 'invoice' ? 'FACTUUR' : 
              templateData.documentType === 'quote' ? 'OFFERTE' : 
              templateData.documentType === 'letter' ? 'BRIEF' : 'DOCUMENT'}
           </h2>
           
-          {/* Sample Content met layout-specifieke styling */}
+          {/* Content Grid */}
           <div className="grid grid-cols-2" style={{ gap: '32px' }}>
             <div>
               <h3 className="font-medium mb-2" style={{ fontSize: '12pt' }}>Factuurgegevens</h3>
@@ -151,11 +162,11 @@ export const EnhancedLivePreview = ({
           </div>
         </div>
 
-        {/* Sample Table met layout-specifieke styling */}
+        {/* Table with DIRECT color styling */}
         <div style={{ marginBottom: '32px' }}>
           <table className="w-full border-collapse" style={{ fontSize: '10pt' }}>
             <thead>
-              <tr style={{ borderBottom: '2pt solid', borderColor: layoutStyles.primaryColor }}>
+              <tr style={{ borderBottom: '2pt solid', borderColor: primaryColor }}>
                 <th className="text-left" style={{ padding: '8px 0' }}>Beschrijving</th>
                 <th className="text-right" style={{ padding: '8px 0' }}>Aantal</th>
                 <th className="text-right" style={{ padding: '8px 0' }}>Prijs</th>
@@ -185,9 +196,9 @@ export const EnhancedLivePreview = ({
                 <td colSpan={3} className="text-right" style={{ padding: '8px 0' }}>BTW (21%):</td>
                 <td className="text-right" style={{ padding: '8px 0' }}>€ 168,00</td>
               </tr>
-              <tr style={{ borderTop: '2pt solid', borderColor: layoutStyles.primaryColor }}>
-                <td colSpan={3} className="text-right font-bold" style={{ padding: '8px 0' }}>Totaal:</td>
-                <td className="text-right font-bold" style={{ padding: '8px 0' }}>€ 968,00</td>
+              <tr style={{ borderTop: '2pt solid', borderColor: primaryColor }}>
+                <td colSpan={3} className="text-right font-bold" style={{ padding: '8px 0', color: primaryColor }}>Totaal:</td>
+                <td className="text-right font-bold" style={{ padding: '8px 0', color: primaryColor }}>€ 968,00</td>
               </tr>
             </tfoot>
           </table>
@@ -219,7 +230,6 @@ export const EnhancedLivePreview = ({
           </div>
           
           <div className="flex items-center gap-2">
-            {/* Zoom Controls */}
             <div className="flex items-center gap-1 mr-2">
               <Button
                 variant="ghost"
@@ -241,14 +251,10 @@ export const EnhancedLivePreview = ({
               </Button>
             </div>
             
-            {/* Header Actions */}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                console.log('💾 Save to library clicked');
-                onSaveToLibrary();
-              }}
+              onClick={onSaveToLibrary}
               className="flex items-center gap-1"
             >
               <Star className="h-4 w-4" />
@@ -257,10 +263,7 @@ export const EnhancedLivePreview = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                console.log('📄 PDF download clicked');
-                onDownloadPDF();
-              }}
+              onClick={onDownloadPDF}
               className="flex items-center gap-1"
             >
               <Download className="h-4 w-4" />
