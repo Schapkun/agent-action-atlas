@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,13 +20,12 @@ export const EnhancedLivePreview = ({
   const [zoom, setZoom] = useState(0.6);
   const [forceRefresh, setForceRefresh] = useState(0);
 
-  // Force refresh on mount and template changes
+  // Force refresh on mount and template changes (but keep debug info in console only)
   useEffect(() => {
     const timestamp = Date.now();
     setForceRefresh(timestamp);
-    console.log('🔄 FORCE REFRESH - Timestamp:', timestamp);
-    console.log('✅ A4 Preview DEFINITIEF GEFORCEERD - 794px × 1123px');
-    console.log('🚫 GEEN NOTIFICATIONS - CONFIRMED DISABLED');
+    console.log('🔄 Preview refreshed - Timestamp:', timestamp);
+    console.log('✅ A4 Preview loaded - 794px × 1123px');
   }, [templateData.layout, templateData.styling, templateData.companyInfo]);
 
   const handleZoomIn = () => {
@@ -75,11 +73,6 @@ export const EnhancedLivePreview = ({
         className="bg-white border shadow-lg mx-auto transition-transform duration-200"
         style={containerStyle}
       >
-        {/* Force refresh indicator */}
-        <div style={{ position: 'absolute', top: '-20px', left: '0', fontSize: '8px', color: '#666', display: 'none' }}>
-          Force Refresh: {forceRefresh} | A4: 794×1123px
-        </div>
-
         {/* Header met layout-specifieke styling en logo positioning */}
         <div className={`${
           styling.headerStyle === 'colored' ? layoutStyles.headerBg + ' ' + layoutStyles.headerText : ''
@@ -221,10 +214,7 @@ export const EnhancedLivePreview = ({
             <FileText className="h-4 w-4" />
             <span className="text-sm font-medium">Live Preview</span>
             <Badge variant="outline" className="text-xs">
-              A4 (794×1123px) - GEFORCEERD
-            </Badge>
-            <Badge variant="secondary" className="text-xs">
-              Refresh: {forceRefresh}
+              {Math.round(zoom * 100)}%
             </Badge>
           </div>
           
@@ -240,9 +230,6 @@ export const EnhancedLivePreview = ({
               >
                 <ZoomOut className="h-4 w-4" />
               </Button>
-              <Badge variant="outline" className="text-xs">
-                {Math.round(zoom * 100)}%
-              </Badge>
               <Button
                 variant="ghost"
                 size="sm"
@@ -254,12 +241,12 @@ export const EnhancedLivePreview = ({
               </Button>
             </div>
             
-            {/* Header Actions - GEEN TOAST NOTIFICATIONS */}
+            {/* Header Actions */}
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
-                console.log('💾 Save to library clicked - DEFINITIEF GEEN TOAST');
+                console.log('💾 Save to library clicked');
                 onSaveToLibrary();
               }}
               className="flex items-center gap-1"
@@ -271,7 +258,7 @@ export const EnhancedLivePreview = ({
               variant="outline"
               size="sm"
               onClick={() => {
-                console.log('📄 PDF download clicked - DEFINITIEF GEEN TOAST');
+                console.log('📄 PDF download clicked');
                 onDownloadPDF();
               }}
               className="flex items-center gap-1"

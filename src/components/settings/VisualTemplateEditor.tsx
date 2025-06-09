@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -38,11 +39,11 @@ export const VisualTemplateEditor = ({
   const [originalTemplateData, setOriginalTemplateData] = useState<VisualTemplateData>(templateData);
   const [forceUpdateKey, setForceUpdateKey] = useState(0);
 
-  // DEFINITIEVE CACHE CLEARING + FORCE REFRESH
+  // Cache clearing and force refresh (debug info in console only)
   useEffect(() => {
     const timestamp = Date.now();
     
-    console.log('🔄 DEFINITIEVE CACHE CLEARING - Timestamp:', timestamp);
+    console.log('🔄 Cache clearing - Timestamp:', timestamp);
     
     // Force complete cache clear
     try {
@@ -56,7 +57,7 @@ export const VisualTemplateEditor = ({
       }
       keysToRemove.forEach(key => {
         localStorage.removeItem(key);
-        console.log('🗑️ Verwijderd uit localStorage:', key);
+        console.log('🗑️ Removed from localStorage:', key);
       });
 
       // Clear sessionStorage
@@ -69,7 +70,7 @@ export const VisualTemplateEditor = ({
       }
       sessionKeys.forEach(key => {
         sessionStorage.removeItem(key);
-        console.log('🗑️ Verwijderd uit sessionStorage:', key);
+        console.log('🗑️ Removed from sessionStorage:', key);
       });
 
     } catch (error) {
@@ -79,9 +80,8 @@ export const VisualTemplateEditor = ({
     // Force component refresh
     setForceUpdateKey(timestamp);
     
-    console.log('✅ DEFINITIEVE TEMPLATE EDITOR GELADEN - Cache volledig gewist');
+    console.log('✅ Template editor loaded - Cache cleared');
     console.log('📋 Template data:', templateData);
-    console.log('🎯 Force Update Key:', timestamp);
     
   }, []);
 
@@ -139,19 +139,19 @@ export const VisualTemplateEditor = ({
   };
 
   const handleSaveToLibrary = () => {
-    console.log('💾 Opening template library - GEEN NOTIFICATIONS');
+    console.log('💾 Opening template library');
     setShowTemplateLibrary(true);
   };
 
   const handleDownloadPDF = () => {
     try {
-      console.log('📄 PDF Download initiated - DEFINITIEF GEEN NOTIFICATIONS');
+      console.log('📄 PDF Download initiated');
       const pdfGenerator = new PDFGenerator();
       const pdf = pdfGenerator.generateFromTemplate(templateData);
       const filename = `${templateData.name || 'document'}_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(filename);
       
-      console.log(`✅ PDF "${filename}" downloaded successfully - DEFINITIEF GEEN TOAST`);
+      console.log(`✅ PDF "${filename}" downloaded successfully`);
     } catch (error) {
       console.error('❌ PDF generation error:', error);
     }
@@ -186,9 +186,6 @@ export const VisualTemplateEditor = ({
 
   return (
     <div className="flex flex-col w-full" style={{ height: 'calc(100vh - 80px)' }}>
-      {/* Force update indicator */}
-      <div className="hidden">Force Update: {forceUpdateKey}</div>
-      
       {/* Header met workspace/organization switcher */}
       <div className="flex-shrink-0 px-4 py-3 bg-muted/50 border-b">
         <div className="flex items-center justify-between">
@@ -198,7 +195,7 @@ export const VisualTemplateEditor = ({
             onDiscardChanges={handleDiscardChanges}
           />
           <div className="text-xs text-muted-foreground">
-            Visual Template Builder (DEFINITIEF GEFORCEERD v{forceUpdateKey})
+            Visual Template Builder
           </div>
         </div>
       </div>
@@ -264,7 +261,7 @@ export const VisualTemplateEditor = ({
         {/* Preview Panel - 50% */}
         <div className="w-1/2 h-full p-4">
           <EnhancedLivePreview
-            key={`definitive-preview-${forceUpdateKey}`}
+            key={`preview-${forceUpdateKey}`}
             templateData={templateData}
             onSaveToLibrary={handleSaveToLibrary}
             onDownloadPDF={handleDownloadPDF}
@@ -289,7 +286,7 @@ export const VisualTemplateEditor = ({
             </div>
             <div className="p-4 overflow-y-auto max-h-[calc(80vh-80px)]">
               <TemplateLibrary
-                key={`definitive-library-${forceUpdateKey}`}
+                key={`library-${forceUpdateKey}`}
                 currentTemplate={templateData}
                 workspaceId={workspaceId}
                 organizationId={organizationId}
