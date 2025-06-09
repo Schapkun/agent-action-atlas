@@ -1,5 +1,6 @@
 
 import jsPDF from 'jspdf';
+import { PDFUtils } from './PDFUtils';
 
 export class PDFFooterGenerator {
   private doc: jsPDF;
@@ -15,17 +16,20 @@ export class PDFFooterGenerator {
   }
 
   generateFooter(): void {
-    const footerY = this.pageHeight - 35; // FIXED: Better positioning (was -25)
+    // EXACT CSS positioning: bottom margin + padding conversion
+    const footerY = this.pageHeight - PDFUtils.pxToMm(60); // Match CSS bottom padding
     
-    // Footer border - exact preview styling
-    this.doc.setDrawColor(209, 213, 219);
-    this.doc.setLineWidth(0.1); // Subtle border like preview
-    this.doc.line(this.margins, footerY - 5, this.margins + this.contentWidth, footerY - 5);
+    // Footer border - EXACT CSS: 1pt border-top → 0.353mm
+    this.doc.setDrawColor(209, 213, 219); // CSS: border-gray-300
+    this.doc.setLineWidth(0.353); // EXACT CSS 1pt conversion
+    this.doc.line(this.margins, footerY - PDFUtils.pxToMm(32), this.margins + this.contentWidth, footerY - PDFUtils.pxToMm(32));
     
-    // Footer text with exact preview styling
-    this.doc.setTextColor(107, 114, 128);
-    this.doc.setFontSize(9);
+    // Footer text with EXACT CSS styling
+    this.doc.setTextColor(107, 114, 128); // CSS: text-gray-500
+    this.doc.setFontSize(9); // CSS: 9pt font-size
     this.doc.setFont('helvetica', 'normal');
-    this.doc.text('Betaling binnen 30 dagen na factuurdatum.', this.margins + 5, footerY);
+    
+    // EXACT CSS padding-top: 32px conversion
+    this.doc.text('Betaling binnen 30 dagen na factuurdatum.', this.margins + PDFUtils.pxToMm(16), footerY);
   }
 }

@@ -21,39 +21,48 @@ export class PDFGenerator {
   generateFromTemplate(templateData: VisualTemplateData): jsPDF {
     const { companyInfo, styling, documentType, layout } = templateData;
     
-    // DEBUG: Log actual layout being used
-    console.log('🎨 PDF Generator - Layout used:', layout);
-    console.log('🎨 PDF Generator - Styling:', styling);
+    // ENHANCED DEBUGGING: Track the entire color chain
+    console.log('🔍 PDF Generator - Complete Debug Chain:');
+    console.log('  - Raw layout parameter:', layout);
+    console.log('  - Template data layout:', templateData.layout);
+    console.log('  - Styling object:', styling);
+    console.log('  - Company info:', companyInfo);
     
-    // FORCE business-green layout if undefined or incorrect
+    // FORCE business-green layout with enhanced fallback
     const actualLayout = layout || 'business-green';
-    console.log('🎨 PDF Generator - Forced layout:', actualLayout);
+    console.log('  - Resolved layout:', actualLayout);
     
-    // Get layout-specific styles - FORCE green colors
+    // Get layout-specific styles with debugging
     const layoutStyles = getLayoutSpecificStyles(actualLayout);
+    console.log('  - Layout styles received:', layoutStyles);
     
-    // OVERRIDE to ensure green color is used (fix for blue showing up)
+    // TRIPLE FORCE: Ensure green color is ALWAYS used
     if (actualLayout === 'business-green' || !layout) {
-      layoutStyles.primaryColor = '#059669'; // Force business green
-      layoutStyles.secondaryColor = '#10b981'; // Force business green secondary
-      console.log('🟢 PDF Generator - FORCED green colors:', layoutStyles.primaryColor);
+      layoutStyles.primaryColor = '#059669'; // Business green
+      layoutStyles.secondaryColor = '#10b981';
+      console.log('🟢 FORCED GREEN - Primary:', layoutStyles.primaryColor);
+      console.log('🟢 FORCED GREEN - Secondary:', layoutStyles.secondaryColor);
     }
+    
+    // FINAL VERIFICATION: Log the exact color that will be used
+    console.log('✅ FINAL COLOR TO BE USED:', layoutStyles.primaryColor);
     
     // Set base font
     this.doc.setFont('helvetica');
     
-    // Initialize generators
+    // Initialize generators with EXACT measurements
     const headerGenerator = new PDFHeaderGenerator(this.doc, this.margins, this.contentWidth, this.pageWidth);
     const contentGenerator = new PDFContentGenerator(this.doc, this.margins, this.contentWidth);
     const tableGenerator = new PDFTableGenerator(this.doc, this.margins, this.contentWidth);
     const footerGenerator = new PDFFooterGenerator(this.doc, this.margins, this.contentWidth, this.pageHeight);
     
-    // Generate sections
+    // Generate sections with exact positioning
     headerGenerator.generateHeader(companyInfo, styling, layoutStyles);
     contentGenerator.generateContent(templateData, layoutStyles);
     tableGenerator.generateTable(layoutStyles);
     footerGenerator.generateFooter();
 
+    console.log('📄 PDF generation completed with exact CSS-to-PDF conversion');
     return this.doc;
   }
 

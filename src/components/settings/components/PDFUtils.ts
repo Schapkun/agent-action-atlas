@@ -27,4 +27,25 @@ export class PDFUtils {
   static getFutureDate(daysFromNow: number): string {
     return new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL');
   }
+
+  // NEW: Exact CSS-to-PDF conversion utilities
+  static pxToMm(pixels: number): number {
+    // A4 width: 794px = 210mm, so 1px = 0.264mm
+    return pixels * 0.264;
+  }
+
+  static cssToJsPDFSpacing(cssValue: string | number): number {
+    if (typeof cssValue === 'number') return this.pxToMm(cssValue);
+    
+    // Convert CSS values like "8px", "1rem", etc to mm
+    if (cssValue.includes('px')) {
+      return this.pxToMm(parseInt(cssValue));
+    }
+    return 8; // fallback
+  }
+
+  // CSS line-height 1.4 to PDF spacing conversion
+  static getLineSpacing(fontSize: number): number {
+    return fontSize * 1.4 * 0.264; // Convert CSS line-height to mm
+  }
 }
