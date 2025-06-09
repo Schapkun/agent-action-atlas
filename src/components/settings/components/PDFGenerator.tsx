@@ -29,7 +29,7 @@ export class PDFGenerator {
     // Generate document content matching preview
     this.generateMatchingContent(templateData, layoutStyles);
     
-    // Generate table matching preview styling
+    // Generate table matching preview styling EXACTLY
     this.generateMatchingTable(layoutStyles);
     
     // Generate footer matching preview
@@ -59,7 +59,8 @@ export class PDFGenerator {
     }
     
     // Company name with logo positioning (same as preview)
-    this.doc.setFontSize(16);
+    // Match preview typography: 20pt font size
+    this.doc.setFontSize(20);
     let nameX = this.margins + 5;
     let detailsX = this.margins + 5;
     let align: 'left' | 'center' | 'right' = 'left';
@@ -81,7 +82,8 @@ export class PDFGenerator {
     
     // Company details with proper positioning (same as preview)
     yPos += 8;
-    this.doc.setFontSize(8);
+    // Match preview typography: 10pt font size
+    this.doc.setFontSize(10);
     
     if (styling.headerStyle === 'colored') {
       this.doc.setTextColor(255, 255, 255);
@@ -119,7 +121,8 @@ export class PDFGenerator {
     let yPos = 70;
 
     // Document title with exact same styling as preview
-    this.doc.setFontSize(14);
+    // Match preview typography: 18pt font size
+    this.doc.setFontSize(18);
     const titleRgb = this.hexToRgb(layoutStyles.primaryColor);
     this.doc.setTextColor(titleRgb[0], titleRgb[1], titleRgb[2]);
     
@@ -130,8 +133,9 @@ export class PDFGenerator {
     
     yPos += 15;
 
-    // Two-column layout for invoice and customer details (same as preview grid)
-    this.doc.setFontSize(10);
+    // Two-column layout for invoice and customer details (same as preview grid-cols-2)
+    // Match preview typography: 12pt for headers
+    this.doc.setFontSize(12);
     this.doc.setTextColor(0, 0, 0);
     
     // Left column - Invoice details
@@ -139,7 +143,8 @@ export class PDFGenerator {
     this.doc.text('Factuurgegevens', this.margins + 5, yPos);
     
     this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(8);
+    // Match preview typography: 10pt for content
+    this.doc.setFontSize(10);
     yPos += 6;
     this.doc.text('Factuurnummer: 2024-001', this.margins + 5, yPos);
     yPos += 4;
@@ -147,16 +152,18 @@ export class PDFGenerator {
     yPos += 4;
     this.doc.text(`Vervaldatum: ${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL')}`, this.margins + 5, yPos);
     
-    // Right column - Customer details (positioned like preview grid)
-    const rightColumnX = this.margins + (this.contentWidth / 2) + 10;
+    // Right column - Customer details (positioned exactly like preview grid at 50%)
+    const rightColumnX = this.margins + (this.contentWidth * 0.5);
     yPos = 85; // Reset to same height as left column
     
-    this.doc.setFontSize(10);
+    // Match preview typography: 12pt for headers
+    this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
     this.doc.text('Klantgegevens', rightColumnX, yPos);
     
     this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(8);
+    // Match preview typography: 10pt for content
+    this.doc.setFontSize(10);
     yPos += 6;
     this.doc.text('Voorbeeld Klant B.V.', rightColumnX, yPos);
     yPos += 4;
@@ -171,17 +178,22 @@ export class PDFGenerator {
     const rowHeight = 8;
     const headerHeight = 10;
     
-    // Table headers with exact same styling as preview
+    // Table headers with EXACT same styling as preview
+    // Preview uses border-bottom: '2pt solid' NOT filled background
     const headerRgb = this.hexToRgb(layoutStyles.primaryColor);
-    this.doc.setFillColor(headerRgb[0], headerRgb[1], headerRgb[2]);
-    this.doc.rect(this.margins, startY, tableWidth, headerHeight, 'F');
     
-    // Header text
-    this.doc.setTextColor(255, 255, 255);
-    this.doc.setFontSize(8);
+    // NO background fill - just border like preview
+    this.doc.setLineWidth(2); // Match preview's 2pt border
+    this.doc.setDrawColor(headerRgb[0], headerRgb[1], headerRgb[2]);
+    this.doc.line(this.margins, startY + headerHeight, this.margins + tableWidth, startY + headerHeight);
+    
+    // Header text - black color like preview
+    this.doc.setTextColor(0, 0, 0); // Black text like preview
+    // Match preview typography: 10pt for table
+    this.doc.setFontSize(10);
     this.doc.setFont('helvetica', 'bold');
     
-    // Column positions matching preview table layout
+    // Column positions matching preview table layout exactly
     const col1X = this.margins + 2;
     const col2X = this.margins + (tableWidth * 0.6);
     const col3X = this.margins + (tableWidth * 0.75);
@@ -215,7 +227,7 @@ export class PDFGenerator {
       this.doc.text(row[2], col3X, rowY + 4);
       this.doc.text(row[3], col4X, rowY + 4);
       
-      // Bottom border
+      // Bottom border matching preview's 1pt
       this.doc.setDrawColor(229, 231, 235);
       this.doc.setLineWidth(0.1);
       this.doc.line(this.margins, rowY + rowHeight, this.margins + tableWidth, rowY + rowHeight);
@@ -223,7 +235,7 @@ export class PDFGenerator {
       rowY += rowHeight;
     });
 
-    // Totals section matching preview styling
+    // Totals section matching preview styling exactly
     rowY += 5;
     this.doc.setFont('helvetica', 'normal');
     
@@ -235,9 +247,9 @@ export class PDFGenerator {
     this.doc.text('€ 168,00', col4X, rowY);
     rowY += 8;
     
-    // Total with accent color and border (same as preview)
+    // Total with accent color and border EXACTLY like preview
     const totalRgb = this.hexToRgb(layoutStyles.primaryColor);
-    this.doc.setLineWidth(1);
+    this.doc.setLineWidth(2); // Match preview's 2pt border
     this.doc.setDrawColor(totalRgb[0], totalRgb[1], totalRgb[2]);
     this.doc.line(col3X, rowY - 2, this.margins + tableWidth, rowY - 2);
     
@@ -250,14 +262,15 @@ export class PDFGenerator {
   private generateMatchingFooter() {
     const footerY = this.pageHeight - 25;
     
-    // Footer border matching preview
+    // Footer border matching preview exactly
     this.doc.setDrawColor(209, 213, 219);
     this.doc.setLineWidth(0.2);
     this.doc.line(this.margins, footerY - 5, this.margins + this.contentWidth, footerY - 5);
     
     // Footer text matching preview styling
     this.doc.setTextColor(107, 114, 128);
-    this.doc.setFontSize(7);
+    // Match preview typography: 9pt for footer
+    this.doc.setFontSize(9);
     this.doc.setFont('helvetica', 'normal');
     this.doc.text('Betaling binnen 30 dagen na factuurdatum.', this.margins + 5, footerY);
   }
