@@ -31,10 +31,11 @@ export const HTMLBuilderSettings = () => {
       await HTMLToPDFService.generatePDF(html);
       
       toast({
-        title: "PDF Export",
-        description: "PDF wordt gegenereerd via browser print functie.",
+        title: "PDF Export Gestart",
+        description: "PDF wordt gegenereerd en gedownload via browser print.",
       });
     } catch (error) {
+      console.error('PDF Export Error:', error);
       toast({
         title: "Export fout",
         description: "Er is een fout opgetreden bij het exporteren naar PDF.",
@@ -44,7 +45,7 @@ export const HTMLBuilderSettings = () => {
   };
 
   return (
-    <div className="h-full">
+    <div className="h-full bg-white">
       <HTMLBuilderEditor
         onSave={handleSaveDocument}
         onExportPDF={handleExportPDF}

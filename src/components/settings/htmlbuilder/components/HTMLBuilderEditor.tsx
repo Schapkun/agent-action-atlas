@@ -1,25 +1,23 @@
 
 import React, { useState, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Type, 
-  Image, 
-  Square, 
-  Table,
   Download,
   Save,
   Eye,
+  ZoomIn,
+  ZoomOut,
+  Layers,
   Settings,
-  Layers
+  MousePointer
 } from 'lucide-react';
 import { HTMLBuilderEngine } from '../core/HTMLBuilderEngine';
 import { HTMLDocument, HTMLElement } from '../types/HTMLBuilder';
-import { HTMLPreview } from './HTMLPreview';
-import { ElementToolbox } from './ElementToolbox';
-import { ElementProperties } from './ElementProperties';
+import { InteractiveCanvas } from './InteractiveCanvas';
+import { DragDropToolbox } from './DragDropToolbox';
+import { AdvancedElementProperties } from './AdvancedElementProperties';
 import { LayerManager } from './LayerManager';
 
 interface HTMLBuilderEditorProps {
@@ -36,20 +34,10 @@ export const HTMLBuilderEditor: React.FC<HTMLBuilderEditorProps> = ({
   const [engine] = useState(() => new HTMLBuilderEngine(initialDocument));
   const [document, setDocument] = useState(engine.getDocument());
   const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null);
-  const [previewMode, setPreviewMode] = useState(false);
+  const [zoom, setZoom] = useState(0.7);
 
-  const handleAddElement = useCallback((type: HTMLElement['type']) => {
-    const newElement = engine.addElement({
-      type,
-      content: type === 'text' ? 'Nieuwe tekst' : undefined,
-      position: { x: 50, y: 50, width: 200, height: 50 },
-      styles: {
-        fontSize: '14px',
-        fontFamily: 'Arial',
-        color: '#000000'
-      }
-    });
-    
+  const handleAddElement = useCallback((element: Omit<HTMLElement, 'id'>) => {
+    const newElement = engine.addElement(element);
     setDocument(engine.getDocument());
     setSelectedElement(newElement);
   }, [engine]);
@@ -82,72 +70,37 @@ export const HTMLBuilderEditor: React.FC<HTMLBuilderEditorProps> = ({
     onExportPDF?.(html);
   }, [engine, onExportPDF]);
 
-  const togglePreviewMode = useCallback(() => {
-    setPreviewMode(!previewMode);
-    setSelectedElement(null);
-  }, [previewMode]);
-
-  if (previewMode) {
-    return (
-      <div className="h-full flex flex-col">
-        <div className="flex-shrink-0 p-4 border-b bg-muted/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Eye className="h-4 w-4" />
-              <span className="font-medium">Preview Mode</span>
-              <Badge variant="outline">A4 Document</Badge>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={togglePreviewMode}>
-                Terug naar Editor
-              </Button>
-              <Button size="sm" onClick={handleExportPDF}>
-                <Download className="h-4 w-4 mr-2" />
-                Export PDF
-              </Button>
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex-1 overflow-auto bg-gray-50 p-8">
-          <HTMLPreview
-            html={engine.generateHTML()}
-            zoom={0.8}
-            showBounds={false}
-          />
-        </div>
-      </div>
-    );
-  }
+  const adjustZoom = (delta: number) => {
+    setZoom(prev => Math.max(0.1, Math.min(2, prev + delta)));
+  };
 
   return (
-    <div className="h-full flex">
-      {/* Left Sidebar - Tools */}
-      <div className="w-80 border-r bg-muted/30 flex flex-col">
+    <div className="h-full flex bg-gray-50">
+      {/* Left Sidebar - Tools & Properties */}
+      <div className="w-80 bg-white border-r flex flex-col">
+        {/* Header */}
         <div className="p-4 border-b">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">HTML Builder</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-lg">Visual Builder</h3>
             <div className="flex gap-1">
               <Button variant="ghost" size="sm" onClick={handleSave}>
                 <Save className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="sm" onClick={togglePreviewMode}>
-                <Eye className="h-4 w-4" />
-              </Button>
             </div>
           </div>
           
-          <div className="text-sm text-muted-foreground">
-            {document.name} • {document.elements.length} elementen
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Badge variant="outline">{document.elements.length} elementen</Badge>
+            <Badge variant="outline">A4 Document</Badge>
           </div>
         </div>
 
-        <Tabs defaultValue="elements" className="flex-1 flex flex-col">
+        {/* Tabs for different panels */}
+        <Tabs defaultValue="tools" className="flex-1 flex flex-col">
           <TabsList className="grid w-full grid-cols-3 mx-4 mt-2">
-            <TabsTrigger value="elements" className="text-xs">
-              <Square className="h-3 w-3 mr-1" />
-              Elementen
+            <TabsTrigger value="tools" className="text-xs">
+              <MousePointer className="h-3 w-3 mr-1" />
+              Tools
             </TabsTrigger>
             <TabsTrigger value="layers" className="text-xs">
               <Layers className="h-3 w-3 mr-1" />
@@ -160,8 +113,8 @@ export const HTMLBuilderEditor: React.FC<HTMLBuilderEditorProps> = ({
           </TabsList>
           
           <div className="flex-1 overflow-hidden">
-            <TabsContent value="elements" className="h-full m-0 p-4">
-              <ElementToolbox onAddElement={handleAddElement} />
+            <TabsContent value="tools" className="h-full m-0 p-4">
+              <DragDropToolbox />
             </TabsContent>
             
             <TabsContent value="layers" className="h-full m-0 p-4">
@@ -175,26 +128,77 @@ export const HTMLBuilderEditor: React.FC<HTMLBuilderEditorProps> = ({
             </TabsContent>
             
             <TabsContent value="properties" className="h-full m-0 p-4">
-              <ElementProperties
+              <AdvancedElementProperties
                 element={selectedElement}
                 onUpdateElement={handleUpdateElement}
+                onDeleteElement={handleDeleteElement}
               />
             </TabsContent>
           </div>
         </Tabs>
       </div>
 
-      {/* Main Canvas */}
-      <div className="flex-1 overflow-auto bg-gray-50 p-8">
-        <HTMLPreview
-          html={engine.generateHTML()}
-          zoom={0.7}
-          showBounds={true}
-          selectedElement={selectedElement}
-          onSelectElement={setSelectedElement}
-          onUpdateElement={handleUpdateElement}
-          editable={true}
-        />
+      {/* Main Canvas Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Top Toolbar */}
+        <div className="flex-shrink-0 p-3 bg-white border-b">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => adjustZoom(-0.1)}
+                  disabled={zoom <= 0.1}
+                >
+                  <ZoomOut className="h-4 w-4" />
+                </Button>
+                <span className="text-sm font-medium min-w-16 text-center">
+                  {Math.round(zoom * 100)}%
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => adjustZoom(0.1)}
+                  disabled={zoom >= 2}
+                >
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {selectedElement && (
+                <Badge variant="secondary" className="text-xs">
+                  {selectedElement.type === 'text' 
+                    ? `"${selectedElement.content?.substring(0, 15)}..."` 
+                    : selectedElement.type} geselecteerd
+                </Badge>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm">
+                <Eye className="h-4 w-4 mr-2" />
+                Preview
+              </Button>
+              <Button size="sm" onClick={handleExportPDF}>
+                <Download className="h-4 w-4 mr-2" />
+                Export PDF
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Canvas */}
+        <div className="flex-1 overflow-auto">
+          <InteractiveCanvas
+            elements={document.elements}
+            selectedElement={selectedElement}
+            onSelectElement={setSelectedElement}
+            onUpdateElement={handleUpdateElement}
+            onAddElement={handleAddElement}
+            zoom={zoom}
+          />
+        </div>
       </div>
     </div>
   );
