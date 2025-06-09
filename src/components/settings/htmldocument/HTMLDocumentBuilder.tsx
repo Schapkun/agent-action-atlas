@@ -15,7 +15,7 @@ export const HTMLDocumentBuilder = () => {
   const [elements, setElements] = useState<DocumentElement[]>([]);
   const [documentSettings, setDocumentSettings] = useState({
     title: 'Nieuw Document',
-    format: 'A4',
+    format: 'A4' as 'A4' | 'A3' | 'Letter',
     orientation: 'portrait' as 'portrait' | 'landscape'
   });
   const [showPreview, setShowPreview] = useState(false);
