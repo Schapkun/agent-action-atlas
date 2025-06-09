@@ -81,7 +81,7 @@ export const HTMLBuilderEditor: React.FC<HTMLBuilderEditorProps> = ({
         {/* Header */}
         <div className="p-4 border-b">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-lg">Visual Builder</h3>
+            <h3 className="font-semibold text-lg">Document Builder</h3>
             <div className="flex gap-1">
               <Button variant="ghost" size="sm" onClick={handleSave}>
                 <Save className="h-4 w-4" />
