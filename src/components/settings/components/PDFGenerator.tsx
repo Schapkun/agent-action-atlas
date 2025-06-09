@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import { VisualTemplateData } from '../types/VisualTemplate';
 import { getLayoutSpecificStyles } from '../../../utils/layoutStyles';
@@ -16,22 +17,37 @@ export class PDFGenerator {
   generateFromTemplate(templateData: VisualTemplateData): jsPDF {
     const { companyInfo, styling, documentType, layout } = templateData;
     
-    // Get layout-specific styles using shared utility (same as preview)
-    const layoutStyles = getLayoutSpecificStyles(layout || 'business-green');
+    // DEBUG: Log actual layout being used
+    console.log('🎨 PDF Generator - Layout used:', layout);
+    console.log('🎨 PDF Generator - Styling:', styling);
+    
+    // FORCE business-green layout if undefined or incorrect
+    const actualLayout = layout || 'business-green';
+    console.log('🎨 PDF Generator - Forced layout:', actualLayout);
+    
+    // Get layout-specific styles - FORCE green colors
+    const layoutStyles = getLayoutSpecificStyles(actualLayout);
+    
+    // OVERRIDE to ensure green color is used (fix for blue showing up)
+    if (actualLayout === 'business-green' || !layout) {
+      layoutStyles.primaryColor = '#059669'; // Force business green
+      layoutStyles.secondaryColor = '#10b981'; // Force business green secondary
+      console.log('🟢 PDF Generator - FORCED green colors:', layoutStyles.primaryColor);
+    }
     
     // Set base font
     this.doc.setFont('helvetica');
     
-    // Generate header with same logic as preview
+    // Generate header with exact preview matching
     this.generateMatchingHeader(companyInfo, styling, layoutStyles);
     
-    // Generate document content matching preview
+    // Generate document content with exact spacing
     this.generateMatchingContent(templateData, layoutStyles);
     
-    // Generate table matching preview styling EXACTLY
+    // Generate table with EXACT preview styling
     this.generateMatchingTable(layoutStyles);
     
-    // Generate footer matching preview
+    // Generate footer with correct positioning
     this.generateMatchingFooter();
 
     return this.doc;
@@ -40,7 +56,7 @@ export class PDFGenerator {
   private generateMatchingHeader(companyInfo: any, styling: any, layoutStyles: any) {
     let yPos = this.margins + 10;
     
-    // Header background/border based on headerStyle (same as preview logic)
+    // Header background/border based on headerStyle (exact preview logic)
     if (styling.headerStyle === 'colored') {
       const rgb = this.hexToRgb(layoutStyles.primaryColor);
       this.doc.setFillColor(rgb[0], rgb[1], rgb[2]);
@@ -57,8 +73,7 @@ export class PDFGenerator {
       this.doc.setTextColor(rgb[0], rgb[1], rgb[2]);
     }
     
-    // Company name with logo positioning (same as preview)
-    // Match preview typography: 20pt font size
+    // Company name with exact logo positioning (match preview)
     this.doc.setFontSize(20);
     let nameX = this.margins + 5;
     let detailsX = this.margins + 5;
@@ -79,9 +94,8 @@ export class PDFGenerator {
     
     this.doc.text(companyInfo.name || 'Uw Bedrijf', nameX, yPos, { align });
     
-    // Company details with proper positioning (same as preview)
-    yPos += 8;
-    // Match preview typography: 10pt font size
+    // Company details with harmonized spacing (3mm like preview 8px)
+    yPos += 7; // Reduced from 8 to match preview better
     this.doc.setFontSize(10);
     
     if (styling.headerStyle === 'colored') {
@@ -90,24 +104,25 @@ export class PDFGenerator {
       this.doc.setTextColor(120, 120, 120);
     }
     
+    // Improved spacing - match preview line height exactly
     if (companyInfo.address) {
       this.doc.text(companyInfo.address, detailsX, yPos, { align });
-      yPos += 4;
+      yPos += 3.5; // Harmonized spacing
     }
     
     if (companyInfo.postalCode && companyInfo.city) {
       this.doc.text(`${companyInfo.postalCode} ${companyInfo.city}`, detailsX, yPos, { align });
-      yPos += 4;
+      yPos += 3.5;
     }
     
     if (companyInfo.phone) {
       this.doc.text(`Tel: ${companyInfo.phone}`, detailsX, yPos, { align });
-      yPos += 4;
+      yPos += 3.5;
     }
     
     if (companyInfo.email) {
       this.doc.text(`Email: ${companyInfo.email}`, detailsX, yPos, { align });
-      yPos += 4;
+      yPos += 3.5;
     }
     
     if (companyInfo.website) {
@@ -119,8 +134,7 @@ export class PDFGenerator {
     const { documentType } = templateData;
     let yPos = 70;
 
-    // Document title with exact same styling as preview
-    // Match preview typography: 18pt font size
+    // Document title with exact preview styling
     this.doc.setFontSize(18);
     const titleRgb = this.hexToRgb(layoutStyles.primaryColor);
     this.doc.setTextColor(titleRgb[0], titleRgb[1], titleRgb[2]);
@@ -132,8 +146,7 @@ export class PDFGenerator {
     
     yPos += 15;
 
-    // Two-column layout for invoice and customer details (same as preview grid-cols-2)
-    // Match preview typography: 12pt for headers
+    // Two-column layout with exact spacing (harmonized with preview)
     this.doc.setFontSize(12);
     this.doc.setTextColor(0, 0, 0);
     
@@ -142,7 +155,6 @@ export class PDFGenerator {
     this.doc.text('Factuurgegevens', this.margins + 5, yPos);
     
     this.doc.setFont('helvetica', 'normal');
-    // Match preview typography: 10pt for content
     this.doc.setFontSize(10);
     yPos += 6;
     this.doc.text('Factuurnummer: 2024-001', this.margins + 5, yPos);
@@ -151,17 +163,15 @@ export class PDFGenerator {
     yPos += 4;
     this.doc.text(`Vervaldatum: ${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL')}`, this.margins + 5, yPos);
     
-    // Right column - Customer details (positioned exactly like preview grid at 50%)
+    // Right column positioned exactly like preview (50% width)
     const rightColumnX = this.margins + (this.contentWidth * 0.5);
-    yPos = 85; // Reset to same height as left column
+    yPos = 85;
     
-    // Match preview typography: 12pt for headers
     this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
     this.doc.text('Klantgegevens', rightColumnX, yPos);
     
     this.doc.setFont('helvetica', 'normal');
-    // Match preview typography: 10pt for content
     this.doc.setFontSize(10);
     yPos += 6;
     this.doc.text('Voorbeeld Klant B.V.', rightColumnX, yPos);
@@ -174,37 +184,35 @@ export class PDFGenerator {
   private generateMatchingTable(layoutStyles: any) {
     const startY = 120;
     const tableWidth = this.contentWidth;
-    const rowHeight = 8;
-    const headerHeight = 10;
+    const rowHeight = 11; // Increased from 8 to match 8px padding (3mm) + content
+    const headerHeight = 12; // Slightly increased for better header spacing
     
-    // Table headers with EXACT same styling as preview
-    // Preview uses border-bottom: '2pt solid' NOT filled background
+    // Table headers - EXACT preview styling with correct border thickness
     const headerRgb = this.hexToRgb(layoutStyles.primaryColor);
     
-    // NO background fill - just border like preview
-    this.doc.setLineWidth(2); // Match preview's 2pt border
+    // CORRECTED border thickness: CSS 2pt = PDF 0.7mm (not 2mm!)
+    this.doc.setLineWidth(0.7); // FIXED: CSS 2pt conversion
     this.doc.setDrawColor(headerRgb[0], headerRgb[1], headerRgb[2]);
     this.doc.line(this.margins, startY + headerHeight, this.margins + tableWidth, startY + headerHeight);
     
-    // Header text - black color like preview
-    this.doc.setTextColor(0, 0, 0); // Black text like preview
-    // Match preview typography: 10pt for table
+    // Header text - black like preview
+    this.doc.setTextColor(0, 0, 0);
     this.doc.setFontSize(10);
     this.doc.setFont('helvetica', 'bold');
     
-    // Column positions - RIGHT alignment for columns 2, 3, 4
-    const col1X = this.margins + 2; // Left aligned
-    const col2RightX = this.margins + (tableWidth * 0.7); // Right edge of column 2
-    const col3RightX = this.margins + (tableWidth * 0.85); // Right edge of column 3  
-    const col4RightX = this.margins + tableWidth - 2; // Right edge of column 4
+    // Column positions - EXACT right alignment
+    const col1X = this.margins + 2;
+    const col2RightX = this.margins + (tableWidth * 0.7);
+    const col3RightX = this.margins + (tableWidth * 0.85);
+    const col4RightX = this.margins + tableWidth - 2;
     
-    // Headers with correct alignment
-    this.doc.text('Beschrijving', col1X, startY + 6); // Left aligned
-    this.doc.text('Aantal', col2RightX, startY + 6, { align: 'right' }); // Right aligned
-    this.doc.text('Prijs', col3RightX, startY + 6, { align: 'right' }); // Right aligned
-    this.doc.text('Totaal', col4RightX, startY + 6, { align: 'right' }); // Right aligned
+    // Headers with perfect alignment
+    this.doc.text('Beschrijving', col1X, startY + 7); // Adjusted Y for better spacing
+    this.doc.text('Aantal', col2RightX, startY + 7, { align: 'right' });
+    this.doc.text('Prijs', col3RightX, startY + 7, { align: 'right' });
+    this.doc.text('Totaal', col4RightX, startY + 7, { align: 'right' });
 
-    // Table data with same formatting as preview
+    // Table data with harmonized spacing
     this.doc.setTextColor(0, 0, 0);
     this.doc.setFont('helvetica', 'normal');
     
@@ -213,22 +221,22 @@ export class PDFGenerator {
       ['Reiskosten', '1', '€ 50,00', '€ 50,00']
     ];
     
-    let rowY = startY + headerHeight + 2;
+    let rowY = startY + headerHeight + 3; // Improved spacing
     
     tableData.forEach((row, index) => {
-      // Row background (alternating like preview if needed)
+      // Alternating row background
       if (index % 2 === 1) {
         this.doc.setFillColor(248, 249, 250);
         this.doc.rect(this.margins, rowY - 2, tableWidth, rowHeight, 'F');
       }
       
-      // Data with correct alignment
-      this.doc.text(row[0], col1X, rowY + 4); // Left aligned
-      this.doc.text(row[1], col2RightX, rowY + 4, { align: 'right' }); // Right aligned
-      this.doc.text(row[2], col3RightX, rowY + 4, { align: 'right' }); // Right aligned
-      this.doc.text(row[3], col4RightX, rowY + 4, { align: 'right' }); // Right aligned
+      // Data with perfect right alignment
+      this.doc.text(row[0], col1X, rowY + 5); // Adjusted for 3mm padding equivalent
+      this.doc.text(row[1], col2RightX, rowY + 5, { align: 'right' });
+      this.doc.text(row[2], col3RightX, rowY + 5, { align: 'right' });
+      this.doc.text(row[3], col4RightX, rowY + 5, { align: 'right' });
       
-      // Bottom border matching preview's 1pt
+      // Bottom border - subtle like preview
       this.doc.setDrawColor(229, 231, 235);
       this.doc.setLineWidth(0.1);
       this.doc.line(this.margins, rowY + rowHeight, this.margins + tableWidth, rowY + rowHeight);
@@ -236,42 +244,41 @@ export class PDFGenerator {
       rowY += rowHeight;
     });
 
-    // Totals section matching preview styling exactly
-    rowY += 5;
+    // Totals section with EXACT preview alignment
+    rowY += 6; // Better spacing
     this.doc.setFont('helvetica', 'normal');
     
-    // Subtotals with RIGHT alignment like preview
-    this.doc.text('Subtotaal:', col3RightX, rowY, { align: 'right' }); // Right aligned
-    this.doc.text('€ 800,00', col4RightX, rowY, { align: 'right' }); // Right aligned
+    // Subtotals - perfect right alignment
+    this.doc.text('Subtotaal:', col3RightX, rowY, { align: 'right' });
+    this.doc.text('€ 800,00', col4RightX, rowY, { align: 'right' });
     rowY += 5;
     
-    this.doc.text('BTW (21%):', col3RightX, rowY, { align: 'right' }); // Right aligned
-    this.doc.text('€ 168,00', col4RightX, rowY, { align: 'right' }); // Right aligned
+    this.doc.text('BTW (21%):', col3RightX, rowY, { align: 'right' });
+    this.doc.text('€ 168,00', col4RightX, rowY, { align: 'right' });
     rowY += 8;
     
-    // Total with accent color and border EXACTLY like preview
+    // Total with CORRECTED border thickness and exact color
     const totalRgb = this.hexToRgb(layoutStyles.primaryColor);
-    this.doc.setLineWidth(2); // Match preview's 2pt border
+    this.doc.setLineWidth(0.7); // FIXED: CSS 2pt = 0.7mm
     this.doc.setDrawColor(totalRgb[0], totalRgb[1], totalRgb[2]);
-    this.doc.line(col3RightX - 40, rowY - 2, this.margins + tableWidth, rowY - 2); // Adjust line start
+    this.doc.line(col3RightX - 40, rowY - 2, this.margins + tableWidth, rowY - 2);
     
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(totalRgb[0], totalRgb[1], totalRgb[2]);
-    this.doc.text('Totaal:', col3RightX, rowY, { align: 'right' }); // Right aligned
-    this.doc.text('€ 968,00', col4RightX, rowY, { align: 'right' }); // Right aligned
+    this.doc.text('Totaal:', col3RightX, rowY, { align: 'right' });
+    this.doc.text('€ 968,00', col4RightX, rowY, { align: 'right' });
   }
 
   private generateMatchingFooter() {
-    const footerY = this.pageHeight - 25;
+    const footerY = this.pageHeight - 35; // FIXED: Better positioning (was -25)
     
-    // Footer border matching preview exactly
+    // Footer border - exact preview styling
     this.doc.setDrawColor(209, 213, 219);
-    this.doc.setLineWidth(0.2);
+    this.doc.setLineWidth(0.1); // Subtle border like preview
     this.doc.line(this.margins, footerY - 5, this.margins + this.contentWidth, footerY - 5);
     
-    // Footer text matching preview styling
+    // Footer text with exact preview styling
     this.doc.setTextColor(107, 114, 128);
-    // Match preview typography: 9pt for footer
     this.doc.setFontSize(9);
     this.doc.setFont('helvetica', 'normal');
     this.doc.text('Betaling binnen 30 dagen na factuurdatum.', this.margins + 5, footerY);
