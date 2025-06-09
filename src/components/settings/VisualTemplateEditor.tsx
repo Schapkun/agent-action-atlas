@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -37,30 +36,54 @@ export const VisualTemplateEditor = ({
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [originalTemplateData, setOriginalTemplateData] = useState<VisualTemplateData>(templateData);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [cacheVersion] = useState(() => Date.now());
+  const [forceUpdateKey, setForceUpdateKey] = useState(0);
 
-  // Clear localStorage cache on component mount to force fresh start
+  // DEFINITIEVE CACHE CLEARING + FORCE REFRESH
   useEffect(() => {
-    console.log('🔄 VisualTemplateEditor Cache Clearing - Version:', cacheVersion);
+    const timestamp = Date.now();
     
-    // Clear any cached template data
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (key.startsWith('templates_') || key.includes('template'))) {
-        keysToRemove.push(key);
+    console.log('🔄 DEFINITIEVE CACHE CLEARING - Timestamp:', timestamp);
+    
+    // Force complete cache clear
+    try {
+      // Clear localStorage
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.includes('template') || key.includes('cache') || key.includes('preview'))) {
+          keysToRemove.push(key);
+        }
       }
-    }
-    
-    keysToRemove.forEach(key => {
-      console.log('🗑️ Clearing cached template data:', key);
-      localStorage.removeItem(key);
-    });
+      keysToRemove.forEach(key => {
+        localStorage.removeItem(key);
+        console.log('🗑️ Verwijderd uit localStorage:', key);
+      });
 
-    console.log('✅ Template Editor loaded with cleared cache');
-    console.log('📋 Current template data:', templateData);
-  }, [cacheVersion]);
+      // Clear sessionStorage
+      const sessionKeys = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && (key.includes('template') || key.includes('cache') || key.includes('preview'))) {
+          sessionKeys.push(key);
+        }
+      }
+      sessionKeys.forEach(key => {
+        sessionStorage.removeItem(key);
+        console.log('🗑️ Verwijderd uit sessionStorage:', key);
+      });
+
+    } catch (error) {
+      console.log('Cache clearing error (not critical):', error);
+    }
+
+    // Force component refresh
+    setForceUpdateKey(timestamp);
+    
+    console.log('✅ DEFINITIEVE TEMPLATE EDITOR GELADEN - Cache volledig gewist');
+    console.log('📋 Template data:', templateData);
+    console.log('🎯 Force Update Key:', timestamp);
+    
+  }, []);
 
   // Track changes
   useEffect(() => {
@@ -78,8 +101,8 @@ export const VisualTemplateEditor = ({
         ...layout.styling
       }
     });
-    // Force refresh with new timestamp
-    setRefreshKey(Date.now());
+    // Force complete refresh
+    setForceUpdateKey(Date.now());
   };
 
   const handleCompanyInfoUpdate = (companyInfo: CompanyInfo) => {
@@ -88,7 +111,7 @@ export const VisualTemplateEditor = ({
       ...templateData,
       companyInfo
     });
-    setRefreshKey(Date.now());
+    setForceUpdateKey(Date.now());
   };
 
   const handleStyleUpdate = (field: string, value: string) => {
@@ -100,7 +123,7 @@ export const VisualTemplateEditor = ({
         [field]: value
       }
     });
-    setRefreshKey(Date.now());
+    setForceUpdateKey(Date.now());
   };
 
   const handleStylesUpdate = (styles: any) => {
@@ -112,23 +135,23 @@ export const VisualTemplateEditor = ({
         ...styles
       }
     });
-    setRefreshKey(Date.now());
+    setForceUpdateKey(Date.now());
   };
 
   const handleSaveToLibrary = () => {
-    console.log('💾 Opening template library');
+    console.log('💾 Opening template library - GEEN NOTIFICATIONS');
     setShowTemplateLibrary(true);
   };
 
   const handleDownloadPDF = () => {
     try {
-      console.log('📄 PDF Download initiated - NO NOTIFICATIONS VERSION');
+      console.log('📄 PDF Download initiated - DEFINITIEF GEEN NOTIFICATIONS');
       const pdfGenerator = new PDFGenerator();
       const pdf = pdfGenerator.generateFromTemplate(templateData);
       const filename = `${templateData.name || 'document'}_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(filename);
       
-      console.log(`✅ PDF "${filename}" downloaded successfully - NO TOAST SHOWN`);
+      console.log(`✅ PDF "${filename}" downloaded successfully - DEFINITIEF GEEN TOAST`);
     } catch (error) {
       console.error('❌ PDF generation error:', error);
     }
@@ -139,7 +162,7 @@ export const VisualTemplateEditor = ({
     onUpdateTemplate(template);
     setOriginalTemplateData(template);
     setShowTemplateLibrary(false);
-    setRefreshKey(Date.now());
+    setForceUpdateKey(Date.now());
   };
 
   const handleSaveTemplate = () => {
@@ -158,13 +181,13 @@ export const VisualTemplateEditor = ({
     console.log('🔄 Changes discarded');
     onUpdateTemplate(originalTemplateData);
     setHasUnsavedChanges(false);
-    setRefreshKey(Date.now());
+    setForceUpdateKey(Date.now());
   };
 
   return (
     <div className="flex flex-col w-full" style={{ height: 'calc(100vh - 80px)' }}>
-      {/* Cache version indicator for debugging */}
-      <div className="hidden">{cacheVersion}</div>
+      {/* Force update indicator */}
+      <div className="hidden">Force Update: {forceUpdateKey}</div>
       
       {/* Header met workspace/organization switcher */}
       <div className="flex-shrink-0 px-4 py-3 bg-muted/50 border-b">
@@ -175,7 +198,7 @@ export const VisualTemplateEditor = ({
             onDiscardChanges={handleDiscardChanges}
           />
           <div className="text-xs text-muted-foreground">
-            Visual Template Builder (Cache Cleared v{cacheVersion})
+            Visual Template Builder (DEFINITIEF GEFORCEERD v{forceUpdateKey})
           </div>
         </div>
       </div>
@@ -241,7 +264,7 @@ export const VisualTemplateEditor = ({
         {/* Preview Panel - 50% */}
         <div className="w-1/2 h-full p-4">
           <EnhancedLivePreview
-            key={`preview-${refreshKey}-${cacheVersion}`}
+            key={`definitive-preview-${forceUpdateKey}`}
             templateData={templateData}
             onSaveToLibrary={handleSaveToLibrary}
             onDownloadPDF={handleDownloadPDF}
@@ -266,7 +289,7 @@ export const VisualTemplateEditor = ({
             </div>
             <div className="p-4 overflow-y-auto max-h-[calc(80vh-80px)]">
               <TemplateLibrary
-                key={`library-${cacheVersion}`}
+                key={`definitive-library-${forceUpdateKey}`}
                 currentTemplate={templateData}
                 workspaceId={workspaceId}
                 organizationId={organizationId}
