@@ -1,164 +1,61 @@
-import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
-import { OrganizationWorkspaceView } from './OrganizationWorkspaceView';
-import { UserProfileSettings } from './UserProfileSettings';
+import { useState } from 'react';
+import { User, Users, FileText, History, Building2, Layout, User2 } from 'lucide-react';
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { UserManagement } from './UserManagement';
 import { HistoryLogs } from './HistoryLogs';
 import { DocumentLayoutSettings } from './DocumentLayoutSettings';
-import { RoleGuard } from '@/components/auth/RoleGuard';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { OrganizationWorkspaceView } from './OrganizationWorkspaceView';
+import { UserProfileSettings } from './UserProfileSettings';
+import { HTMLBuilderSettings } from './HTMLBuilderSettings';
 
 export const SettingsLayout = () => {
-  const { user } = useAuth();
-  const [userRole, setUserRole] = useState<string>('lid');
-  const [isRoleLoading, setIsRoleLoading] = useState(true);
-  const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState('users');
 
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      if (!user?.id) {
-        setIsRoleLoading(false);
-        return;
-      }
+  const tabs = [
+    { id: 'users', label: 'Gebruikers', icon: Users },
+    { id: 'history', label: 'Historie', icon: History },
+    { id: 'templates', label: 'Templates', icon: FileText },
+    { id: 'htmlbuilder', label: 'HTML Builder', icon: Layout }, // Added HTML Builder tab
+    { id: 'workspace', label: 'Workspace', icon: Building2 },
+    { id: 'profile', label: 'Profiel', icon: User2 }
+  ];
 
-      try {
-        console.log('Fetching role for user:', user.email);
-        
-        // Check if user is the account owner (info@schapkun.com)
-        if (user.email === 'info@schapkun.com') {
-          console.log('User is account owner (info@schapkun.com), setting role to eigenaar');
-          setUserRole('eigenaar');
-          setIsRoleLoading(false);
-          return;
-        }
-
-        // For all other users, get their role from organization membership
-        const { data: memberships, error } = await supabase
-          .from('organization_members')
-          .select('role')
-          .eq('user_id', user.id)
-          .limit(1);
-
-        console.log('Organization memberships query result:', { memberships, error });
-
-        if (error) {
-          console.error('Error fetching organization membership:', error);
-          setUserRole('lid');
-          setIsRoleLoading(false);
-          return;
-        }
-
-        if (memberships && memberships.length > 0) {
-          const role = memberships[0].role;
-          console.log('User role from organization membership:', role);
-          setUserRole(role);
-        } else {
-          console.log('No organization membership found, setting role to lid');
-          setUserRole('lid');
-        }
-        setIsRoleLoading(false);
-      } catch (error) {
-        console.error('Error fetching user role:', error);
-        setUserRole('lid');
-        setIsRoleLoading(false);
-      }
-    };
-
-    fetchUserRole();
-  }, [user?.id, user?.email]);
-
-  console.log('SettingsLayout - Current user:', user?.email);
-  console.log('SettingsLayout - userRole state:', userRole);
-  console.log('SettingsLayout - isRoleLoading:', isRoleLoading);
-
-  if (isRoleLoading) {
-    return (
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-muted-foreground">Gebruikersrol laden...</p>
-        </div>
-      </div>
-    );
-  }
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'users':
+        return <UserManagement />;
+      case 'history':
+        return <HistoryLogs />;
+      case 'templates':
+        return <DocumentLayoutSettings />;
+      case 'htmlbuilder':
+        return <HTMLBuilderSettings />; // Added HTML Builder content
+      case 'workspace':
+        return <OrganizationWorkspaceView />;
+      case 'profile':
+        return <UserProfileSettings />;
+      default:
+        return <UserManagement />;
+    }
+  };
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 max-w-6xl">
-      <Tabs defaultValue="organizations" className="space-y-4">
-        <TabsList className={`grid w-full gap-1 h-auto p-1 ${
-          isMobile 
-            ? 'grid-cols-2 grid-rows-2' 
-            : 'grid-cols-4 grid-rows-1'
-        }`}>
-          <TabsTrigger 
-            value="organizations" 
-            className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
-          >
-            {isMobile ? 'Organisaties' : 'Organisaties'}
-          </TabsTrigger>
-          <TabsTrigger 
-            value="users" 
-            className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
-          >
-            Gebruikers
-          </TabsTrigger>
-          <TabsTrigger 
-            value="documents" 
-            className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
-          >
-            Documenten
-          </TabsTrigger>
-          <TabsTrigger 
-            value="history" 
-            className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
-          >
-            Geschiedenis
-          </TabsTrigger>
+    <div className="container h-full mx-auto py-10">
+      <Tabs defaultValue="users" className="h-full">
+        <TabsList>
+          {tabs.map((tab) => (
+            <TabsTrigger key={tab.id} value={tab.id} className="text-sm">
+              <tab.icon className="h-4 w-4 mr-2" />
+              {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
-
-        <TabsContent value="organizations">
-          <Card className="rounded-lg border bg-card text-card-foreground shadow-sm">
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
-              <OrganizationWorkspaceView userRole={userRole} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="users">
-          <Card>
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
-              <UserProfileSettings />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="documents">
-          <Card>
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
-              <RoleGuard 
-                requiredRoles={['admin', 'eigenaar']} 
-                userRole={userRole}
-              >
-                <DocumentLayoutSettings />
-              </RoleGuard>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="history">
-          <Card>
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
-              <RoleGuard 
-                requiredRoles={['admin', 'eigenaar']} 
-                userRole={userRole}
-              >
-                <HistoryLogs />
-              </RoleGuard>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {tabs.map((tab) => (
+          <TabsContent key={tab.id} value={tab.id} className="h-full outline-none">
+            {renderContent()}
+          </TabsContent>
+        ))}
       </Tabs>
     </div>
   );
