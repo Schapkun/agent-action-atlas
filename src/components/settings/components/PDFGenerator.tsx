@@ -40,16 +40,21 @@ export class PDFGenerator {
     const headerHeight = 30;
     
     if (styling.headerStyle === 'colored' && pdfStyles.colors.headerBg) {
-      this.doc.setFillColor(...pdfStyles.colors.headerBg);
+      const [r, g, b] = pdfStyles.colors.headerBg;
+      this.doc.setFillColor(r, g, b);
       this.doc.rect(this.margins, this.margins, this.contentWidth, headerHeight, 'F');
-      this.doc.setTextColor(...pdfStyles.colors.headerText);
+      const [tr, tg, tb] = pdfStyles.colors.headerText;
+      this.doc.setTextColor(tr, tg, tb);
     } else if (styling.headerStyle === 'bordered' && pdfStyles.colors.headerBorder) {
       this.doc.setLineWidth(0.5);
-      this.doc.setDrawColor(...pdfStyles.colors.headerBorder);
+      const [br, bg, bb] = pdfStyles.colors.headerBorder;
+      this.doc.setDrawColor(br, bg, bb);
       this.doc.rect(this.margins, this.margins, this.contentWidth, headerHeight);
-      this.doc.setTextColor(...pdfStyles.colors.primary);
+      const [pr, pg, pb] = pdfStyles.colors.primary;
+      this.doc.setTextColor(pr, pg, pb);
     } else {
-      this.doc.setTextColor(...pdfStyles.colors.primary);
+      const [pr, pg, pb] = pdfStyles.colors.primary;
+      this.doc.setTextColor(pr, pg, pb);
     }
     
     // Company name positioning using SharedStyleEngine alignment
@@ -105,7 +110,8 @@ export class PDFGenerator {
     
     // Document title using SharedStyleEngine
     this.doc.setFontSize(18);
-    this.doc.setTextColor(...pdfStyles.colors.primary);
+    const [pr, pg, pb] = pdfStyles.colors.primary;
+    this.doc.setTextColor(pr, pg, pb);
     
     const docTitle = styleEngine.getDocumentTitle(templateData.documentType);
     this.doc.text(docTitle, this.margins + 5, yPos);
@@ -158,7 +164,8 @@ export class PDFGenerator {
     
     // Table headers using primary color
     this.doc.setLineWidth(0.7);
-    this.doc.setDrawColor(...pdfStyles.colors.primary);
+    const [pr, pg, pb] = pdfStyles.colors.primary;
+    this.doc.setDrawColor(pr, pg, pb);
     this.doc.line(this.margins, startY + 8, this.margins + tableWidth, startY + 8);
     
     // Header text
@@ -210,18 +217,19 @@ export class PDFGenerator {
     rowY += 6;
     
     // BTW met secundaire kleur
-    this.doc.setTextColor(...pdfStyles.colors.secondary);
+    const [sr, sg, sb] = pdfStyles.colors.secondary;
+    this.doc.setTextColor(sr, sg, sb);
     this.doc.text('BTW (21%):', col3X, rowY, { align: 'right' });
     this.doc.text('€ 168,00', col4X, rowY, { align: 'right' });
     rowY += 8;
     
     // Total met secundaire kleur lijn en tekst
     this.doc.setLineWidth(0.7);
-    this.doc.setDrawColor(...pdfStyles.colors.secondary);
+    this.doc.setDrawColor(sr, sg, sb);
     this.doc.line(col3X - 10, rowY - 2, this.margins + tableWidth, rowY - 2);
     
     this.doc.setFont('helvetica', 'bold');
-    this.doc.setTextColor(...pdfStyles.colors.secondary);
+    this.doc.setTextColor(sr, sg, sb);
     this.doc.text('Totaal:', col3X, rowY, { align: 'right' });
     this.doc.text('€ 968,00', col4X, rowY, { align: 'right' });
   }
