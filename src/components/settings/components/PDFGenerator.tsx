@@ -1,9 +1,14 @@
+
 import jsPDF from 'jspdf';
 import { VisualTemplateData } from '../types/VisualTemplate';
-import { getLayoutSpecificStyles, getLayoutFont } from '../../../utils/layoutStyles';
+import { getLayoutSpecificStyles } from '../../../utils/layoutStyles';
 
 export class PDFGenerator {
   private doc: jsPDF;
+  private pageWidth = 210; // A4 width in mm
+  private pageHeight = 297; // A4 height in mm
+  private margins = 15; // 15mm margins
+  private contentWidth = 180; // 210 - 30 (15mm on each side)
   
   constructor() {
     this.doc = new jsPDF('p', 'mm', 'a4');
@@ -12,246 +17,249 @@ export class PDFGenerator {
   generateFromTemplate(templateData: VisualTemplateData): jsPDF {
     const { companyInfo, styling, documentType, layout } = templateData;
     
-    // Get layout-specific styles using shared utility
+    // Get layout-specific styles using shared utility (same as preview)
     const layoutStyles = getLayoutSpecificStyles(layout || 'business-green');
-    const layoutFont = getLayoutFont(layout || 'business-green');
     
-    // Set font based on layout
+    // Set base font
     this.doc.setFont('helvetica');
     
-    // Apply layout-specific header styling with logo positioning
-    this.generateLayoutSpecificHeader(companyInfo, styling, layoutStyles, layoutFont);
+    // Generate header with same logic as preview
+    this.generateMatchingHeader(companyInfo, styling, layoutStyles);
     
-    // Document content with layout-aware styling
-    this.generateDocumentContent(templateData, layoutStyles);
+    // Generate document content matching preview
+    this.generateMatchingContent(templateData, layoutStyles);
     
-    // Table with consistent styling
-    this.drawLayoutAwareTable(layoutStyles);
+    // Generate table matching preview styling
+    this.generateMatchingTable(layoutStyles);
+    
+    // Generate footer matching preview
+    this.generateMatchingFooter();
 
     return this.doc;
   }
 
-  private generateLayoutSpecificHeader(companyInfo: any, styling: any, layoutStyles: any, layoutFont: string) {
-    let yPos = 30;
-    const pageWidth = 210; // A4 width in mm
+  private generateMatchingHeader(companyInfo: any, styling: any, layoutStyles: any) {
+    let yPos = this.margins + 10;
     
-    // Apply header styling based on headerStyle
+    // Header background/border based on headerStyle (same as preview logic)
     if (styling.headerStyle === 'colored') {
       const rgb = this.hexToRgb(layoutStyles.primaryColor);
       this.doc.setFillColor(rgb[0], rgb[1], rgb[2]);
-      this.doc.rect(15, 15, 180, 30, 'F');
+      this.doc.rect(this.margins, this.margins, this.contentWidth, 25, 'F');
       this.doc.setTextColor(255, 255, 255);
-      yPos = 35;
     } else if (styling.headerStyle === 'bordered') {
       const rgb = this.hexToRgb(layoutStyles.primaryColor);
-      this.doc.setLineWidth(2);
+      this.doc.setLineWidth(1);
       this.doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
-      this.doc.rect(15, 15, 180, 30);
+      this.doc.rect(this.margins, this.margins, this.contentWidth, 25);
       this.doc.setTextColor(rgb[0], rgb[1], rgb[2]);
-      yPos = 35;
     } else {
       const rgb = this.hexToRgb(layoutStyles.primaryColor);
       this.doc.setTextColor(rgb[0], rgb[1], rgb[2]);
     }
     
-    // Company name with logo positioning
-    this.doc.setFontSize(20);
+    // Company name with logo positioning (same as preview)
+    this.doc.setFontSize(16);
+    let nameX = this.margins + 5;
+    let detailsX = this.margins + 5;
+    let align: 'left' | 'center' | 'right' = 'left';
     
-    let companyNameX = 20;
-    let detailsX = 20;
-    let detailsAlign = 'left';
-    
-    // Apply logo positioning logic
     switch (styling.logoPosition) {
       case 'center':
-        companyNameX = pageWidth / 2;
-        detailsX = pageWidth / 2;
-        detailsAlign = 'center';
-        this.doc.text(companyInfo.name || 'Uw Bedrijf', companyNameX, yPos, { align: 'center' });
+        nameX = this.pageWidth / 2;
+        detailsX = this.pageWidth / 2;
+        align = 'center';
         break;
       case 'right':
-        companyNameX = pageWidth - 20;
-        detailsX = pageWidth - 20;
-        detailsAlign = 'right';
-        this.doc.text(companyInfo.name || 'Uw Bedrijf', companyNameX, yPos, { align: 'right' });
-        break;
-      case 'left':
-      default:
-        this.doc.text(companyInfo.name || 'Uw Bedrijf', companyNameX, yPos);
+        nameX = this.pageWidth - this.margins - 5;
+        detailsX = this.pageWidth - this.margins - 5;
+        align = 'right';
         break;
     }
     
-    yPos += 15;
+    this.doc.text(companyInfo.name || 'Uw Bedrijf', nameX, yPos, { align });
     
-    // Layout-specific header pattern
-    switch(layoutStyles.headerPattern) {
-      case 'gradient-header':
-      case 'corporate-header':
-        if (styling.headerStyle !== 'colored') {
-          const rgb = this.hexToRgb(layoutStyles.primaryColor);
-          this.doc.setFillColor(rgb[0], rgb[1], rgb[2]);
-          this.doc.rect(15, 15, 180, 25, 'F');
-          this.doc.setTextColor(255, 255, 255);
-          if (styling.logoPosition === 'center') {
-            this.doc.text(companyInfo.name || 'Uw Bedrijf', pageWidth / 2, 30, { align: 'center' });
-          } else if (styling.logoPosition === 'right') {
-            this.doc.text(companyInfo.name || 'Uw Bedrijf', pageWidth - 20, 30, { align: 'right' });
-          } else {
-            this.doc.text(companyInfo.name || 'Uw Bedrijf', 20, 30);
-          }
-          yPos = 50;
-        }
-        break;
-      
-      case 'business-header':
-        // Left border accent
-        const rgb = this.hexToRgb(layoutStyles.primaryColor);
-        this.doc.setLineWidth(3);
-        this.doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
-        this.doc.line(15, 20, 15, 40);
-        break;
+    // Company details with proper positioning (same as preview)
+    yPos += 8;
+    this.doc.setFontSize(8);
+    
+    if (styling.headerStyle === 'colored') {
+      this.doc.setTextColor(255, 255, 255);
+    } else {
+      this.doc.setTextColor(120, 120, 120);
     }
-    
-    // Company details with proper positioning
-    this.doc.setFontSize(10);
-    this.doc.setTextColor(100, 100, 100);
     
     if (companyInfo.address) {
-      if (detailsAlign === 'center') {
-        this.doc.text(companyInfo.address, detailsX, yPos, { align: 'center' });
-      } else if (detailsAlign === 'right') {
-        this.doc.text(companyInfo.address, detailsX, yPos, { align: 'right' });
-      } else {
-        this.doc.text(companyInfo.address, detailsX, yPos);
-      }
-      yPos += 5;
+      this.doc.text(companyInfo.address, detailsX, yPos, { align });
+      yPos += 4;
     }
     
     if (companyInfo.postalCode && companyInfo.city) {
-      const addressLine = `${companyInfo.postalCode} ${companyInfo.city}`;
-      if (detailsAlign === 'center') {
-        this.doc.text(addressLine, detailsX, yPos, { align: 'center' });
-      } else if (detailsAlign === 'right') {
-        this.doc.text(addressLine, detailsX, yPos, { align: 'right' });
-      } else {
-        this.doc.text(addressLine, detailsX, yPos);
-      }
-      yPos += 5;
+      this.doc.text(`${companyInfo.postalCode} ${companyInfo.city}`, detailsX, yPos, { align });
+      yPos += 4;
     }
     
     if (companyInfo.phone) {
-      const phoneLine = `Tel: ${companyInfo.phone}`;
-      if (detailsAlign === 'center') {
-        this.doc.text(phoneLine, detailsX, yPos, { align: 'center' });
-      } else if (detailsAlign === 'right') {
-        this.doc.text(phoneLine, detailsX, yPos, { align: 'right' });
-      } else {
-        this.doc.text(phoneLine, detailsX, yPos);
-      }
-      yPos += 5;
+      this.doc.text(`Tel: ${companyInfo.phone}`, detailsX, yPos, { align });
+      yPos += 4;
     }
     
     if (companyInfo.email) {
-      const emailLine = `Email: ${companyInfo.email}`;
-      if (detailsAlign === 'center') {
-        this.doc.text(emailLine, detailsX, yPos, { align: 'center' });
-      } else if (detailsAlign === 'right') {
-        this.doc.text(emailLine, detailsX, yPos, { align: 'right' });
-      } else {
-        this.doc.text(emailLine, detailsX, yPos);
-      }
-      yPos += 5;
+      this.doc.text(`Email: ${companyInfo.email}`, detailsX, yPos, { align });
+      yPos += 4;
+    }
+    
+    if (companyInfo.website) {
+      this.doc.text(`Web: ${companyInfo.website}`, detailsX, yPos, { align });
     }
   }
 
-  private generateDocumentContent(templateData: VisualTemplateData, layoutStyles: any) {
+  private generateMatchingContent(templateData: VisualTemplateData, layoutStyles: any) {
     const { documentType } = templateData;
-    let yPos = 80;
+    let yPos = 70;
 
-    // Document title with layout-specific styling
-    this.doc.setFontSize(16);
+    // Document title with exact same styling as preview
+    this.doc.setFontSize(14);
     const titleRgb = this.hexToRgb(layoutStyles.primaryColor);
     this.doc.setTextColor(titleRgb[0], titleRgb[1], titleRgb[2]);
+    
     const docTitle = documentType === 'invoice' ? 'FACTUUR' : 
                     documentType === 'quote' ? 'OFFERTE' : 
                     documentType === 'letter' ? 'BRIEF' : 'DOCUMENT';
-    this.doc.text(docTitle, 20, yPos);
+    this.doc.text(docTitle, this.margins + 5, yPos);
     
-    yPos += 20;
-
-    // Invoice details
-    this.doc.setFontSize(12);
-    this.doc.setTextColor(0, 0, 0);
-    this.doc.text('Factuurgegevens:', 20, yPos);
-    
-    this.doc.setFontSize(10);
-    yPos += 8;
-    this.doc.text('Factuurnummer: 2024-001', 20, yPos);
-    yPos += 5;
-    this.doc.text(`Factuurdatum: ${new Date().toLocaleDateString('nl-NL')}`, 20, yPos);
-    yPos += 5;
-    this.doc.text(`Vervaldatum: ${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL')}`, 20, yPos);
-    
-    // Customer details
     yPos += 15;
-    this.doc.setFontSize(12);
-    this.doc.text('Klantgegevens:', 20, yPos);
+
+    // Two-column layout for invoice and customer details (same as preview grid)
+    this.doc.setFontSize(10);
+    this.doc.setTextColor(0, 0, 0);
+    
+    // Left column - Invoice details
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Factuurgegevens', this.margins + 5, yPos);
+    
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(8);
+    yPos += 6;
+    this.doc.text('Factuurnummer: 2024-001', this.margins + 5, yPos);
+    yPos += 4;
+    this.doc.text(`Factuurdatum: ${new Date().toLocaleDateString('nl-NL')}`, this.margins + 5, yPos);
+    yPos += 4;
+    this.doc.text(`Vervaldatum: ${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL')}`, this.margins + 5, yPos);
+    
+    // Right column - Customer details (positioned like preview grid)
+    const rightColumnX = this.margins + (this.contentWidth / 2) + 10;
+    yPos = 85; // Reset to same height as left column
     
     this.doc.setFontSize(10);
-    yPos += 8;
-    this.doc.text('Voorbeeld Klant B.V.', 20, yPos);
-    yPos += 5;
-    this.doc.text('Voorbeeldstraat 123', 20, yPos);
-    yPos += 5;
-    this.doc.text('1234 AB Amsterdam', 20, yPos);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Klantgegevens', rightColumnX, yPos);
+    
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(8);
+    yPos += 6;
+    this.doc.text('Voorbeeld Klant B.V.', rightColumnX, yPos);
+    yPos += 4;
+    this.doc.text('Voorbeeldstraat 123', rightColumnX, yPos);
+    yPos += 4;
+    this.doc.text('1234 AB Amsterdam', rightColumnX, yPos);
   }
 
-  private drawLayoutAwareTable(layoutStyles: any) {
-    const startY = 160;
-    const tableHeaders = ['Beschrijving', 'Aantal', 'Prijs', 'Totaal'];
+  private generateMatchingTable(layoutStyles: any) {
+    const startY = 120;
+    const tableWidth = this.contentWidth;
+    const rowHeight = 8;
+    const headerHeight = 10;
+    
+    // Table headers with exact same styling as preview
+    const headerRgb = this.hexToRgb(layoutStyles.primaryColor);
+    this.doc.setFillColor(headerRgb[0], headerRgb[1], headerRgb[2]);
+    this.doc.rect(this.margins, startY, tableWidth, headerHeight, 'F');
+    
+    // Header text
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.setFontSize(8);
+    this.doc.setFont('helvetica', 'bold');
+    
+    // Column positions matching preview table layout
+    const col1X = this.margins + 2;
+    const col2X = this.margins + (tableWidth * 0.6);
+    const col3X = this.margins + (tableWidth * 0.75);
+    const col4X = this.margins + (tableWidth * 0.9);
+    
+    this.doc.text('Beschrijving', col1X, startY + 6);
+    this.doc.text('Aantal', col2X, startY + 6);
+    this.doc.text('Prijs', col3X, startY + 6);
+    this.doc.text('Totaal', col4X, startY + 6);
+
+    // Table data with same formatting as preview
+    this.doc.setTextColor(0, 0, 0);
+    this.doc.setFont('helvetica', 'normal');
+    
     const tableData = [
       ['Consultancy diensten', '10', '€ 75,00', '€ 750,00'],
       ['Reiskosten', '1', '€ 50,00', '€ 50,00']
     ];
-
-    // Table headers with layout-specific styling
-    const headerRgb = this.hexToRgb(layoutStyles.primaryColor);
-    this.doc.setFillColor(headerRgb[0], headerRgb[1], headerRgb[2]);
-    this.doc.rect(20, startY, 170, 8, 'F');
     
-    this.doc.setTextColor(255, 255, 255);
-    this.doc.setFontSize(10);
-    this.doc.text('Beschrijving', 22, startY + 5);
-    this.doc.text('Aantal', 120, startY + 5);
-    this.doc.text('Prijs', 140, startY + 5);
-    this.doc.text('Totaal', 170, startY + 5);
-
-    // Table rows
-    this.doc.setTextColor(0, 0, 0);
-    let rowY = startY + 10;
+    let rowY = startY + headerHeight + 2;
     
-    tableData.forEach((row) => {
-      this.doc.text(row[0], 22, rowY);
-      this.doc.text(row[1], 120, rowY);
-      this.doc.text(row[2], 140, rowY);
-      this.doc.text(row[3], 170, rowY);
-      rowY += 8;
+    tableData.forEach((row, index) => {
+      // Row background (alternating like preview if needed)
+      if (index % 2 === 1) {
+        this.doc.setFillColor(248, 249, 250);
+        this.doc.rect(this.margins, rowY - 2, tableWidth, rowHeight, 'F');
+      }
+      
+      this.doc.text(row[0], col1X, rowY + 4);
+      this.doc.text(row[1], col2X, rowY + 4);
+      this.doc.text(row[2], col3X, rowY + 4);
+      this.doc.text(row[3], col4X, rowY + 4);
+      
+      // Bottom border
+      this.doc.setDrawColor(229, 231, 235);
+      this.doc.setLineWidth(0.1);
+      this.doc.line(this.margins, rowY + rowHeight, this.margins + tableWidth, rowY + rowHeight);
+      
+      rowY += rowHeight;
     });
 
-    // Totals with layout-specific accent
+    // Totals section matching preview styling
     rowY += 5;
-    this.doc.text('Subtotaal:', 140, rowY);
-    this.doc.text('€ 800,00', 170, rowY);
+    this.doc.setFont('helvetica', 'normal');
+    
+    this.doc.text('Subtotaal:', col3X, rowY);
+    this.doc.text('€ 800,00', col4X, rowY);
     rowY += 5;
-    this.doc.text('BTW (21%):', 140, rowY);
-    this.doc.text('€ 168,00', 170, rowY);
+    
+    this.doc.text('BTW (21%):', col3X, rowY);
+    this.doc.text('€ 168,00', col4X, rowY);
     rowY += 8;
     
-    this.doc.setFontSize(12);
+    // Total with accent color and border (same as preview)
     const totalRgb = this.hexToRgb(layoutStyles.primaryColor);
+    this.doc.setLineWidth(1);
+    this.doc.setDrawColor(totalRgb[0], totalRgb[1], totalRgb[2]);
+    this.doc.line(col3X, rowY - 2, this.margins + tableWidth, rowY - 2);
+    
+    this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(totalRgb[0], totalRgb[1], totalRgb[2]);
-    this.doc.text('Totaal:', 140, rowY);
-    this.doc.text('€ 968,00', 170, rowY);
+    this.doc.text('Totaal:', col3X, rowY);
+    this.doc.text('€ 968,00', col4X, rowY);
+  }
+
+  private generateMatchingFooter() {
+    const footerY = this.pageHeight - 25;
+    
+    // Footer border matching preview
+    this.doc.setDrawColor(209, 213, 219);
+    this.doc.setLineWidth(0.2);
+    this.doc.line(this.margins, footerY - 5, this.margins + this.contentWidth, footerY - 5);
+    
+    // Footer text matching preview styling
+    this.doc.setTextColor(107, 114, 128);
+    this.doc.setFontSize(7);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.text('Betaling binnen 30 dagen na factuurdatum.', this.margins + 5, footerY);
   }
 
   private hexToRgb(hex: string): [number, number, number] {
