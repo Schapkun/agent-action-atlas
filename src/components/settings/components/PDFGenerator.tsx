@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { VisualTemplateData } from '../types/VisualTemplate';
 import { getLayoutSpecificStyles } from '../../../utils/layoutStyles';
@@ -193,16 +192,17 @@ export class PDFGenerator {
     this.doc.setFontSize(10);
     this.doc.setFont('helvetica', 'bold');
     
-    // Column positions matching preview table layout exactly
-    const col1X = this.margins + 2;
-    const col2X = this.margins + (tableWidth * 0.6);
-    const col3X = this.margins + (tableWidth * 0.75);
-    const col4X = this.margins + (tableWidth * 0.9);
+    // Column positions - RIGHT alignment for columns 2, 3, 4
+    const col1X = this.margins + 2; // Left aligned
+    const col2RightX = this.margins + (tableWidth * 0.7); // Right edge of column 2
+    const col3RightX = this.margins + (tableWidth * 0.85); // Right edge of column 3  
+    const col4RightX = this.margins + tableWidth - 2; // Right edge of column 4
     
-    this.doc.text('Beschrijving', col1X, startY + 6);
-    this.doc.text('Aantal', col2X, startY + 6);
-    this.doc.text('Prijs', col3X, startY + 6);
-    this.doc.text('Totaal', col4X, startY + 6);
+    // Headers with correct alignment
+    this.doc.text('Beschrijving', col1X, startY + 6); // Left aligned
+    this.doc.text('Aantal', col2RightX, startY + 6, { align: 'right' }); // Right aligned
+    this.doc.text('Prijs', col3RightX, startY + 6, { align: 'right' }); // Right aligned
+    this.doc.text('Totaal', col4RightX, startY + 6, { align: 'right' }); // Right aligned
 
     // Table data with same formatting as preview
     this.doc.setTextColor(0, 0, 0);
@@ -222,10 +222,11 @@ export class PDFGenerator {
         this.doc.rect(this.margins, rowY - 2, tableWidth, rowHeight, 'F');
       }
       
-      this.doc.text(row[0], col1X, rowY + 4);
-      this.doc.text(row[1], col2X, rowY + 4);
-      this.doc.text(row[2], col3X, rowY + 4);
-      this.doc.text(row[3], col4X, rowY + 4);
+      // Data with correct alignment
+      this.doc.text(row[0], col1X, rowY + 4); // Left aligned
+      this.doc.text(row[1], col2RightX, rowY + 4, { align: 'right' }); // Right aligned
+      this.doc.text(row[2], col3RightX, rowY + 4, { align: 'right' }); // Right aligned
+      this.doc.text(row[3], col4RightX, rowY + 4, { align: 'right' }); // Right aligned
       
       // Bottom border matching preview's 1pt
       this.doc.setDrawColor(229, 231, 235);
@@ -239,24 +240,25 @@ export class PDFGenerator {
     rowY += 5;
     this.doc.setFont('helvetica', 'normal');
     
-    this.doc.text('Subtotaal:', col3X, rowY);
-    this.doc.text('€ 800,00', col4X, rowY);
+    // Subtotals with RIGHT alignment like preview
+    this.doc.text('Subtotaal:', col3RightX, rowY, { align: 'right' }); // Right aligned
+    this.doc.text('€ 800,00', col4RightX, rowY, { align: 'right' }); // Right aligned
     rowY += 5;
     
-    this.doc.text('BTW (21%):', col3X, rowY);
-    this.doc.text('€ 168,00', col4X, rowY);
+    this.doc.text('BTW (21%):', col3RightX, rowY, { align: 'right' }); // Right aligned
+    this.doc.text('€ 168,00', col4RightX, rowY, { align: 'right' }); // Right aligned
     rowY += 8;
     
     // Total with accent color and border EXACTLY like preview
     const totalRgb = this.hexToRgb(layoutStyles.primaryColor);
     this.doc.setLineWidth(2); // Match preview's 2pt border
     this.doc.setDrawColor(totalRgb[0], totalRgb[1], totalRgb[2]);
-    this.doc.line(col3X, rowY - 2, this.margins + tableWidth, rowY - 2);
+    this.doc.line(col3RightX - 40, rowY - 2, this.margins + tableWidth, rowY - 2); // Adjust line start
     
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(totalRgb[0], totalRgb[1], totalRgb[2]);
-    this.doc.text('Totaal:', col3X, rowY);
-    this.doc.text('€ 968,00', col4X, rowY);
+    this.doc.text('Totaal:', col3RightX, rowY, { align: 'right' }); // Right aligned
+    this.doc.text('€ 968,00', col4RightX, rowY, { align: 'right' }); // Right aligned
   }
 
   private generateMatchingFooter() {
