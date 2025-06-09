@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Settings, Palette, Type, Move, Resize } from 'lucide-react';
+import { Settings, Palette, Type, Move, Expand } from 'lucide-react';
 import { DocumentElement, DocumentSettings } from '../types/HTMLDocumentTypes';
 
 interface PropertyPanelProps {
@@ -147,7 +147,7 @@ export const PropertyPanel = ({
 
             <div>
               <Label className="text-xs flex items-center gap-1 mb-2">
-                <Resize className="h-3 w-3" />
+                <Expand className="h-3 w-3" />
                 Grootte
               </Label>
               <div className="grid grid-cols-2 gap-2">
