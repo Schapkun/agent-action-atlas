@@ -25,14 +25,14 @@ export const DocumentLayoutSettings = () => {
               Nieuw Document Template
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-7xl h-[90vh] p-0">
+          <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0">
             <DialogHeader className="p-6 pb-0">
               <DialogTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                Document Builder
+                HTML Document Builder
               </DialogTitle>
             </DialogHeader>
-            <div className="flex-1 p-6 pt-0">
+            <div className="flex-1 p-6 pt-0 h-full">
               <HTMLDocumentBuilder />
             </div>
           </DialogContent>

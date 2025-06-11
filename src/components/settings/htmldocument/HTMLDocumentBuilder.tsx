@@ -72,11 +72,9 @@ export const HTMLDocumentBuilder = () => {
 </body>
 </html>`);
   
-  const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
 
   const handleSaveTemplate = () => {
-    // TODO: Implement save to database
     console.log('Saving HTML template:', htmlCode);
     
     toast({
@@ -108,7 +106,6 @@ export const HTMLDocumentBuilder = () => {
       const newValue = htmlCode.substring(0, start) + snippet + htmlCode.substring(end);
       setHtmlCode(newValue);
       
-      // Focus and set cursor position after snippet
       setTimeout(() => {
         textarea.focus();
         textarea.setSelectionRange(start + snippet.length, start + snippet.length);
@@ -148,10 +145,6 @@ export const HTMLDocumentBuilder = () => {
           <h2 className="text-xl font-semibold">HTML Document Builder</h2>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setShowPreview(!showPreview)}>
-            {showPreview ? <Code className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
-            {showPreview ? 'Code' : 'Preview'}
-          </Button>
           <Button variant="outline" onClick={handleSaveTemplate}>
             <Save className="h-4 w-4 mr-2" />
             Opslaan
@@ -185,37 +178,44 @@ export const HTMLDocumentBuilder = () => {
           </Card>
         </div>
 
-        {/* Main Editor */}
-        <div className="col-span-10">
-          {showPreview ? (
-            <Card className="h-full">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Live Preview</CardTitle>
-              </CardHeader>
-              <CardContent className="h-full p-0">
-                <iframe
-                  srcDoc={htmlCode}
-                  className="w-full h-full border-0"
-                  title="HTML Preview"
-                />
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="h-full flex flex-col">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">HTML Code Editor</CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 p-4">
-                <Textarea
-                  value={htmlCode}
-                  onChange={(e) => setHtmlCode(e.target.value)}
-                  className="w-full h-full font-mono text-sm resize-none"
-                  placeholder="Schrijf je HTML code hier..."
-                  style={{ minHeight: '500px' }}
-                />
-              </CardContent>
-            </Card>
-          )}
+        {/* HTML Editor */}
+        <div className="col-span-5">
+          <Card className="h-full flex flex-col">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Code className="h-4 w-4" />
+                HTML Code Editor
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 p-4">
+              <Textarea
+                value={htmlCode}
+                onChange={(e) => setHtmlCode(e.target.value)}
+                className="w-full h-full font-mono text-sm resize-none"
+                placeholder="Schrijf je HTML code hier..."
+                style={{ minHeight: '500px' }}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Live Preview */}
+        <div className="col-span-5">
+          <Card className="h-full flex flex-col">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                Live Preview
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 p-0">
+              <iframe
+                srcDoc={htmlCode}
+                className="w-full h-full border-0 rounded-b-lg"
+                title="HTML Preview"
+              />
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
