@@ -14,60 +14,99 @@ export const HTMLDocumentBuilder = () => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nieuw Document</title>
     <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
         body {
             font-family: Arial, sans-serif;
-            margin: 40px;
+            margin: 0;
+            padding: 0;
             line-height: 1.6;
+            font-size: 12pt;
+        }
+        .document {
+            width: 21cm;
+            min-height: 29.7cm;
+            padding: 2cm;
+            box-sizing: border-box;
+            background: white;
         }
         .header {
             text-align: center;
             margin-bottom: 40px;
         }
         .content {
-            max-width: 800px;
-            margin: 0 auto;
+            margin-bottom: 40px;
         }
         .footer {
             text-align: center;
             margin-top: 40px;
-            font-size: 12px;
+            font-size: 10pt;
             color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        @media screen {
+            .document {
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                margin: 20px auto;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Document Titel</h1>
-        <p>Subtitel of beschrijving</p>
-    </div>
-    
-    <div class="content">
-        <h2>Sectie 1</h2>
-        <p>Begin hier met het schrijven van je document inhoud.</p>
+    <div class="document">
+        <div class="header">
+            <h1>Document Titel</h1>
+            <p>Subtitel of beschrijving</p>
+        </div>
         
-        <h2>Sectie 2</h2>
-        <p>Voeg meer secties toe naar behoefte.</p>
+        <div class="content">
+            <h2>Sectie 1</h2>
+            <p>Begin hier met het schrijven van je document inhoud. Deze tekst wordt weergegeven in het A4 formaat zoals het zal worden afgedrukt.</p>
+            
+            <h2>Sectie 2</h2>
+            <p>Voeg meer secties toe naar behoefte. Let op de marges en lettergrootte voor optimale leesbaarheid.</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Kolom 1</th>
+                        <th>Kolom 2</th>
+                        <th>Kolom 3</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Data 1</td>
+                        <td>Data 2</td>
+                        <td>Data 3</td>
+                    </tr>
+                    <tr>
+                        <td>Data 4</td>
+                        <td>Data 5</td>
+                        <td>Data 6</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
         
-        <table border="1" style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-            <thead>
-                <tr>
-                    <th style="padding: 8px; background-color: #f5f5f5;">Kolom 1</th>
-                    <th style="padding: 8px; background-color: #f5f5f5;">Kolom 2</th>
-                    <th style="padding: 8px; background-color: #f5f5f5;">Kolom 3</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td style="padding: 8px;">Data 1</td>
-                    <td style="padding: 8px;">Data 2</td>
-                    <td style="padding: 8px;">Data 3</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    
-    <div class="footer">
-        <p>© 2024 - Gegenereerd op ${new Date().toLocaleDateString('nl-NL')}</p>
+        <div class="footer">
+            <p>© 2024 - Gegenereerd op ${new Date().toLocaleDateString('nl-NL')}</p>
+        </div>
     </div>
 </body>
 </html>`);
@@ -116,23 +155,27 @@ export const HTMLDocumentBuilder = () => {
   const snippets = [
     {
       name: 'Heading',
-      code: '\n<h2>Nieuwe Titel</h2>\n'
+      code: '\n        <h2>Nieuwe Titel</h2>\n'
     },
     {
       name: 'Paragraph',
-      code: '\n<p>Nieuwe paragraaf tekst.</p>\n'
+      code: '\n        <p>Nieuwe paragraaf tekst.</p>\n'
     },
     {
       name: 'Table',
-      code: '\n<table border="1" style="width: 100%; border-collapse: collapse; margin: 20px 0;">\n    <thead>\n        <tr>\n            <th style="padding: 8px; background-color: #f5f5f5;">Header 1</th>\n            <th style="padding: 8px; background-color: #f5f5f5;">Header 2</th>\n        </tr>\n    </thead>\n    <tbody>\n        <tr>\n            <td style="padding: 8px;">Data 1</td>\n            <td style="padding: 8px;">Data 2</td>\n        </tr>\n    </tbody>\n</table>\n'
+      code: '\n        <table>\n            <thead>\n                <tr>\n                    <th>Header 1</th>\n                    <th>Header 2</th>\n                </tr>\n            </thead>\n            <tbody>\n                <tr>\n                    <td>Data 1</td>\n                    <td>Data 2</td>\n                </tr>\n            </tbody>\n        </table>\n'
     },
     {
       name: 'Image',
-      code: '\n<img src="image-url.jpg" alt="Beschrijving" style="max-width: 100%; height: auto;" />\n'
+      code: '\n        <img src="image-url.jpg" alt="Beschrijving" style="max-width: 100%; height: auto;" />\n'
     },
     {
       name: 'List',
-      code: '\n<ul>\n    <li>Item 1</li>\n    <li>Item 2</li>\n    <li>Item 3</li>\n</ul>\n'
+      code: '\n        <ul>\n            <li>Item 1</li>\n            <li>Item 2</li>\n            <li>Item 3</li>\n        </ul>\n'
+    },
+    {
+      name: 'Page Break',
+      code: '\n        <div style="page-break-after: always;"></div>\n'
     }
   ];
 
@@ -199,21 +242,35 @@ export const HTMLDocumentBuilder = () => {
           </Card>
         </div>
 
-        {/* Live Preview */}
+        {/* A4 Preview */}
         <div className="col-span-5">
           <Card className="h-full flex flex-col">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Eye className="h-4 w-4" />
-                Live Preview
+                A4 Document Preview
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 p-0">
-              <iframe
-                srcDoc={htmlCode}
-                className="w-full h-full border-0 rounded-b-lg"
-                title="HTML Preview"
-              />
+            <CardContent className="flex-1 p-4 overflow-auto bg-gray-100">
+              <div className="flex justify-center">
+                <div className="bg-white shadow-lg" style={{ 
+                  width: '21cm', 
+                  minHeight: '29.7cm',
+                  transform: 'scale(0.4)',
+                  transformOrigin: 'top center',
+                  border: '1px solid #ddd'
+                }}>
+                  <iframe
+                    srcDoc={htmlCode}
+                    className="w-full h-full border-0"
+                    title="A4 Document Preview"
+                    style={{ 
+                      width: '21cm', 
+                      minHeight: '29.7cm'
+                    }}
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
