@@ -202,7 +202,7 @@ export const HTMLDocumentBuilder = () => {
       <div className="flex-1 grid grid-cols-12 gap-4 min-h-0">
         {/* Code Snippets */}
         <div className="col-span-2">
-          <Card className="h-fit">
+          <Card className="h-full">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm">HTML Snippets</CardTitle>
             </CardHeader>
@@ -251,22 +251,27 @@ export const HTMLDocumentBuilder = () => {
                 A4 Document Preview
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 p-4 overflow-auto bg-gray-100">
-              <div className="flex justify-center">
-                <div className="bg-white shadow-lg" style={{ 
-                  width: '21cm', 
-                  minHeight: '29.7cm',
-                  transform: 'scale(0.4)',
-                  transformOrigin: 'top center',
-                  border: '1px solid #ddd'
-                }}>
+            <CardContent className="flex-1 p-2 overflow-hidden bg-gray-100">
+              <div className="w-full h-full flex items-start justify-center overflow-auto">
+                <div 
+                  className="bg-white shadow-lg border border-gray-300 mx-auto"
+                  style={{ 
+                    width: 'calc(21cm * 0.45)',
+                    minHeight: 'calc(29.7cm * 0.45)',
+                    maxWidth: '100%',
+                    aspectRatio: '21 / 29.7'
+                  }}
+                >
                   <iframe
                     srcDoc={htmlCode}
                     className="w-full h-full border-0"
                     title="A4 Document Preview"
                     style={{ 
-                      width: '21cm', 
-                      minHeight: '29.7cm'
+                      minHeight: 'calc(29.7cm * 0.45)',
+                      transform: 'scale(0.45)',
+                      transformOrigin: 'top left',
+                      width: 'calc(100% / 0.45)',
+                      height: 'calc(100% / 0.45)'
                     }}
                   />
                 </div>
