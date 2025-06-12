@@ -428,23 +428,28 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
             </div>
           </div>
 
-          {/* Preview - 50% breedte, zelfde hoogte als editor */}
+          {/* Preview - 50% breedte, responsive A4 preview */}
           <div className="w-1/2 flex flex-col">
             <div className="p-4 border-b">
               <h3 className="font-semibold">Document Preview</h3>
             </div>
             <div className="flex-1 p-4 overflow-hidden flex items-center justify-center">
-              <div className="bg-white border rounded-lg shadow-sm" style={{
-                width: '595px',
-                height: '842px',
-                transform: 'scale(0.8)',
-                transformOrigin: 'center center'
-              }}>
-                <iframe
-                  srcDoc={htmlContent}
-                  className="w-full h-full border-0"
-                  title="Document Preview"
-                />
+              <div className="w-full h-full flex items-center justify-center">
+                <div 
+                  className="bg-white border rounded-lg shadow-sm"
+                  style={{
+                    aspectRatio: '210/297', // A4 aspect ratio
+                    width: '100%',
+                    maxHeight: '100%',
+                    maxWidth: 'min(100%, calc(100vh * 210/297))', // Prevent it from being wider than viewport allows
+                  }}
+                >
+                  <iframe
+                    srcDoc={htmlContent}
+                    className="w-full h-full border-0 rounded-lg"
+                    title="Document Preview"
+                  />
+                </div>
               </div>
             </div>
           </div>
