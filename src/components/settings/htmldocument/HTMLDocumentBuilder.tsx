@@ -439,9 +439,9 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
                   className="bg-white border rounded-lg shadow-sm"
                   style={{
                     aspectRatio: '210/297', // A4 aspect ratio
-                    width: '100%',
+                    width: '95%',
                     maxHeight: '100%',
-                    maxWidth: 'min(100%, calc(100vh * 210/297))', // Prevent it from being wider than viewport allows
+                    maxWidth: 'min(95%, calc(100vh * 210/297))', // Prevent it from being wider than viewport allows
                   }}
                 >
                   <iframe
