@@ -264,9 +264,8 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
           description: `Nieuw document "${documentName}" is aangemaakt.`
         });
 
-        // Call callback if provided - we don't need the return value since saveDocument returns void
+        // Call callback if provided
         if (onDocumentSaved) {
-          // Create a mock document for the callback since we can't get it from saveDocument
           const mockDocument: DocumentTemplate = {
             ...newDocumentData,
             id: Date.now().toString(),
@@ -434,8 +433,13 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
             <div className="p-4 border-b">
               <h3 className="font-semibold">Document Preview</h3>
             </div>
-            <div className="flex-1 p-4 overflow-auto">
-              <div className="h-full bg-white border rounded-lg shadow-sm">
+            <div className="flex-1 p-4 overflow-hidden flex items-center justify-center">
+              <div className="bg-white border rounded-lg shadow-sm" style={{
+                width: '595px',
+                height: '842px',
+                transform: 'scale(0.6)',
+                transformOrigin: 'center center'
+              }}>
                 <iframe
                   srcDoc={htmlContent}
                   className="w-full h-full border-0"
