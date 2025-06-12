@@ -182,18 +182,6 @@ export const HTMLDocumentBuilder = () => {
     }
   ];
 
-  // A4 verhoudingen: 210mm x 297mm = 21:29.7 ≈ 1:1.414
-  const calculateA4Dimensions = (containerHeight: number) => {
-    const A4_RATIO = 297 / 210; // hoogte / breedte
-    const maxHeight = containerHeight - 40; // ruimte voor padding
-    const maxWidth = maxHeight / A4_RATIO;
-    
-    return {
-      width: Math.min(maxWidth, 400), // max 400px breedte
-      height: Math.min(maxWidth * A4_RATIO, maxHeight)
-    };
-  };
-
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Simple Header without buttons */}
@@ -247,7 +235,7 @@ export const HTMLDocumentBuilder = () => {
           </Card>
         </div>
 
-        {/* A4 Preview */}
+        {/* A4 Preview - Optimized for maximum size */}
         <div className="col-span-5 overflow-hidden">
           <Card className="h-full flex flex-col">
             <CardHeader className="pb-2 px-3 pt-3 flex-shrink-0">
@@ -261,19 +249,17 @@ export const HTMLDocumentBuilder = () => {
                 <div 
                   className="bg-white shadow-lg border border-gray-300"
                   style={{ 
-                    width: '210px',
-                    height: '297px',
-                    maxWidth: '100%',
+                    width: '100%',
+                    height: '100%',
+                    maxWidth: 'calc(100vh * 0.707)', // A4 verhouding: 210/297 ≈ 0.707
                     maxHeight: '100%',
-                    aspectRatio: '210 / 297',
-                    transform: 'scale(0.9)'
+                    aspectRatio: '210 / 297'
                   }}
                 >
                   <iframe
                     srcDoc={htmlCode}
                     className="w-full h-full border-0"
                     title="A4 Document Preview"
-                    style={{ transform: 'scale(1)' }}
                   />
                 </div>
               </div>
