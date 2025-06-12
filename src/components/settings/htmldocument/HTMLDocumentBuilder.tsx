@@ -345,12 +345,13 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
           /* Scaling CSS to prevent scrollbars */
           html, body {
             margin: 0;
-            padding: 0;
+            padding: 25px;
             overflow: hidden;
             transform-origin: top left;
             transform: scale(0.85);
             width: 117.65%; /* 100% / 0.85 to compensate for scaling */
             height: 117.65%;
+            box-sizing: border-box;
           }
         </style>`;
       }
