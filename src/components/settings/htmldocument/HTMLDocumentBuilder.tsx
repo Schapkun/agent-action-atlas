@@ -17,8 +17,7 @@ import {
   DivideSquare,
   MousePointer
 } from 'lucide-react';
-import { DocumentTemplate } from '../types/DocumentTemplate';
-import { useDocumentContext } from '../contexts/DocumentContext';
+import { useDocumentTemplates, DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { DocumentPDFGenerator } from '../utils/PDFGenerator';
 import { useToast } from '@/hooks/use-toast';
 
@@ -185,7 +184,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
   const [documentType, setDocumentType] = useState<'factuur' | 'contract' | 'brief' | 'custom'>('factuur');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
-  const { saveDocument, updateDocument } = useDocumentContext();
+  const { createTemplate, updateTemplate } = useDocumentTemplates();
   const { toast } = useToast();
 
   // Load editing document
@@ -193,7 +192,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     if (editingDocument) {
       setDocumentName(editingDocument.name);
       setDocumentType(editingDocument.type);
-      setHtmlContent(editingDocument.htmlContent || DEFAULT_INVOICE_TEMPLATE);
+      setHtmlContent(editingDocument.html_content || DEFAULT_INVOICE_TEMPLATE);
       setHasUnsavedChanges(false);
     } else {
       // New document
@@ -208,7 +207,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
   useEffect(() => {
     if (editingDocument) {
       const hasChanges = 
-        htmlContent !== (editingDocument.htmlContent || DEFAULT_INVOICE_TEMPLATE) ||
+        htmlContent !== (editingDocument.html_content || DEFAULT_INVOICE_TEMPLATE) ||
         documentName !== editingDocument.name ||
         documentType !== editingDocument.type;
       setHasUnsavedChanges(hasChanges);
@@ -222,7 +221,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     }
   }, [htmlContent, documentName, documentType, editingDocument]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!documentName.trim()) {
       toast({
         title: "Fout",
@@ -235,10 +234,10 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     try {
       if (editingDocument) {
         // Update existing document
-        updateDocument(editingDocument.id, {
+        const updatedDoc = await updateTemplate(editingDocument.id, {
           name: documentName.trim(),
           type: documentType,
-          htmlContent: htmlContent,
+          html_content: htmlContent,
           description: `${documentType} document`
         });
         
@@ -246,18 +245,22 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
           title: "Opgeslagen",
           description: `Document "${documentName}" is bijgewerkt.`
         });
+
+        if (onDocumentSaved) {
+          onDocumentSaved(updatedDoc);
+        }
       } else {
         // Create new document
         const newDocumentData = {
           name: documentName.trim(),
           type: documentType,
-          htmlContent: htmlContent,
+          html_content: htmlContent,
           description: `${documentType} document`,
-          lastModified: new Date(),
-          isDefault: false
+          is_default: false,
+          is_active: true
         };
         
-        saveDocument(newDocumentData);
+        const newDoc = await createTemplate(newDocumentData);
         
         toast({
           title: "Opgeslagen",
@@ -266,13 +269,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
 
         // Call callback if provided
         if (onDocumentSaved) {
-          const mockDocument: DocumentTemplate = {
-            ...newDocumentData,
-            id: Date.now().toString(),
-            createdAt: new Date(),
-            updatedAt: new Date()
-          };
-          onDocumentSaved(mockDocument);
+          onDocumentSaved(newDoc);
         }
       }
       

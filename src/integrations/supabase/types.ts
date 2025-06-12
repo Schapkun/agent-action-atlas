@@ -9,6 +9,132 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      clients: {
+        Row: {
+          address: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          name: string
+          organization_id: string
+          phone: string | null
+          postal_code: string | null
+          updated_at: string
+          vat_number: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          phone?: string | null
+          postal_code?: string | null
+          updated_at?: string
+          vat_number?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          phone?: string | null
+          postal_code?: string | null
+          updated_at?: string
+          vat_number?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          html_content: string
+          id: string
+          is_active: boolean
+          is_default: boolean
+          name: string
+          organization_id: string | null
+          type: string
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          html_content: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name: string
+          organization_id?: string | null
+          type: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          html_content?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name?: string
+          organization_id?: string | null
+          type?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_templates_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       history_logs: {
         Row: {
           action: string
@@ -47,6 +173,150 @@ export type Database = {
           },
           {
             foreignKeyName: "history_logs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_lines: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          line_total: number
+          quantity: number
+          sort_order: number | null
+          unit_price: number
+          vat_rate: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+          line_total: number
+          quantity?: number
+          sort_order?: number | null
+          unit_price: number
+          vat_rate?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          line_total?: number
+          quantity?: number
+          sort_order?: number | null
+          unit_price?: number
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_lines_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          client_address: string | null
+          client_city: string | null
+          client_country: string | null
+          client_email: string | null
+          client_name: string
+          client_postal_code: string | null
+          created_at: string
+          created_by: string | null
+          due_date: string
+          id: string
+          invoice_date: string
+          invoice_number: string
+          notes: string | null
+          organization_id: string
+          payment_terms: number | null
+          status: string
+          subtotal: number
+          template_id: string | null
+          total_amount: number
+          updated_at: string
+          vat_amount: number
+          vat_percentage: number
+          workspace_id: string | null
+        }
+        Insert: {
+          client_address?: string | null
+          client_city?: string | null
+          client_country?: string | null
+          client_email?: string | null
+          client_name: string
+          client_postal_code?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_date: string
+          id?: string
+          invoice_date?: string
+          invoice_number: string
+          notes?: string | null
+          organization_id: string
+          payment_terms?: number | null
+          status?: string
+          subtotal?: number
+          template_id?: string | null
+          total_amount?: number
+          updated_at?: string
+          vat_amount?: number
+          vat_percentage?: number
+          workspace_id?: string | null
+        }
+        Update: {
+          client_address?: string | null
+          client_city?: string | null
+          client_country?: string | null
+          client_email?: string | null
+          client_name?: string
+          client_postal_code?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_date?: string
+          id?: string
+          invoice_date?: string
+          invoice_number?: string
+          notes?: string | null
+          organization_id?: string
+          payment_terms?: number | null
+          status?: string
+          subtotal?: number
+          template_id?: string | null
+          total_amount?: number
+          updated_at?: string
+          vat_amount?: number
+          vat_percentage?: number
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -389,6 +659,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_invoice_number: {
+        Args: { org_id: string; workspace_id?: string }
+        Returns: string
+      }
       get_user_org_role: {
         Args: { org_id: string; user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
