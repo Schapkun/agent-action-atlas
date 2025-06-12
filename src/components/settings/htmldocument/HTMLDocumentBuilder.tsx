@@ -262,6 +262,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
           description: `Nieuw document "${documentName}" is aangemaakt.`
         });
 
+        // Fixed: Check if callback exists and newDocument exists, then call it
         if (onDocumentSaved && newDocument) {
           onDocumentSaved(newDocument);
         }
