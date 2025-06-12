@@ -1,12 +1,20 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { FileText, Eye, Code } from 'lucide-react';
+import { FileText, Eye, Code, Save, Download, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { DocumentPDFGenerator } from '../utils/PDFGenerator';
+import { useDocumentContext } from '../contexts/DocumentContext';
+import { DocumentTemplate } from '../types/DocumentTemplate';
 
-export const HTMLDocumentBuilder = () => {
+interface HTMLDocumentBuilderProps {
+  editingDocument?: DocumentTemplate | null;
+  onDocumentSaved?: (document: DocumentTemplate) => void;
+}
+
+export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDocumentBuilderProps) => {
   const [htmlCode, setHtmlCode] = useState(`<!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -270,15 +278,108 @@ export const HTMLDocumentBuilder = () => {
 </body>
 </html>`);
   
+  const [documentName, setDocumentName] = useState('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const { toast } = useToast();
+  const { saveDocument, updateDocument } = useDocumentContext();
 
-  const handleSaveTemplate = () => {
-    console.log('Saving HTML template:', htmlCode);
-    
-    toast({
-      title: "Template opgeslagen",
-      description: "HTML document template is succesvol opgeslagen."
-    });
+  // Load editing document if provided
+  useEffect(() => {
+    if (editingDocument) {
+      setHtmlCode(editingDocument.htmlContent);
+      setDocumentName(editingDocument.name);
+      setHasUnsavedChanges(false);
+    }
+  }, [editingDocument]);
+
+  // Track changes for unsaved warning
+  useEffect(() => {
+    if (editingDocument) {
+      setHasUnsavedChanges(
+        htmlCode !== editingDocument.htmlContent || 
+        documentName !== editingDocument.name
+      );
+    } else {
+      setHasUnsavedChanges(documentName.trim() !== '' || htmlCode !== '');
+    }
+  }, [htmlCode, documentName, editingDocument]);
+
+  const handleSaveDocument = () => {
+    if (!documentName.trim()) {
+      toast({
+        title: "Naam vereist",
+        description: "Voer een naam in voor het document.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      if (editingDocument) {
+        // Update existing document
+        const updatedDocument = {
+          ...editingDocument,
+          name: documentName.trim(),
+          htmlContent: htmlCode
+        };
+        updateDocument(editingDocument.id, updatedDocument);
+        onDocumentSaved?.(updatedDocument);
+        
+        toast({
+          title: "Document bijgewerkt",
+          description: `"${documentName}" is succesvol bijgewerkt.`
+        });
+      } else {
+        // Create new document
+        const newDoc = saveDocument({
+          name: documentName.trim(),
+          type: 'factuur',
+          description: '',
+          htmlContent: htmlCode,
+          lastModified: new Date(),
+          isDefault: false
+        });
+        onDocumentSaved?.(newDoc);
+        
+        toast({
+          title: "Document opgeslagen",
+          description: `"${documentName}" is succesvol aangemaakt.`
+        });
+      }
+      
+      setHasUnsavedChanges(false);
+    } catch (error) {
+      toast({
+        title: "Fout bij opslaan",
+        description: "Er is een fout opgetreden bij het opslaan van het document.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDownloadPDF = () => {
+    if (!documentName.trim()) {
+      toast({
+        title: "Naam vereist",
+        description: "Voer eerst een naam in voor het document.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      DocumentPDFGenerator.generateFromHTML(htmlCode, documentName);
+      toast({
+        title: "PDF gedownload",
+        description: `PDF van "${documentName}" is gedownload.`
+      });
+    } catch (error) {
+      toast({
+        title: "PDF fout",
+        description: "Er is een fout opgetreden bij het genereren van de PDF.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleExportHTML = () => {
@@ -286,7 +387,7 @@ export const HTMLDocumentBuilder = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'factuur-template.html';
+    link.download = `${(documentName || 'document').replace(/[^a-z0-9]/gi, '_').toLowerCase()}.html`;
     link.click();
     URL.revokeObjectURL(url);
     
@@ -311,6 +412,7 @@ export const HTMLDocumentBuilder = () => {
     }
   };
 
+  // ... keep existing code (snippets array)
   const snippets = [
     {
       name: 'Factuur Rij',
@@ -352,13 +454,64 @@ export const HTMLDocumentBuilder = () => {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {/* Simple Header without buttons */}
-      <div className="flex items-center gap-2 mb-2 flex-shrink-0">
-        <FileText className="h-4 w-4" />
-        <h3 className="text-lg font-semibold">HTML Document Builder</h3>
+      {/* Enhanced Header with document controls */}
+      <div className="flex-shrink-0 p-3 border-b bg-muted/50">
+        <div className="flex items-center gap-2 mb-2">
+          <FileText className="h-4 w-4" />
+          <h3 className="text-lg font-semibold">HTML Document Builder</h3>
+        </div>
+        
+        {/* Document controls */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex-1 min-w-0">
+            <Input
+              placeholder="Document naam..."
+              value={documentName}
+              onChange={(e) => setDocumentName(e.target.value)}
+              className="h-8 text-sm"
+            />
+          </div>
+          
+          <Button 
+            onClick={handleSaveDocument}
+            size="sm"
+            disabled={!documentName.trim()}
+            className="flex items-center gap-1"
+          >
+            <Save className="h-3 w-3" />
+            {editingDocument ? 'Bijwerken' : 'Opslaan'}
+          </Button>
+          
+          <Button 
+            onClick={handleDownloadPDF}
+            size="sm"
+            variant="outline"
+            disabled={!documentName.trim()}
+            className="flex items-center gap-1"
+          >
+            <Download className="h-3 w-3" />
+            PDF
+          </Button>
+          
+          <Button 
+            onClick={handleExportHTML}
+            size="sm"
+            variant="outline"
+            className="flex items-center gap-1"
+          >
+            <FileDown className="h-3 w-3" />
+            HTML
+          </Button>
+        </div>
+        
+        {hasUnsavedChanges && (
+          <div className="text-xs text-orange-600 mt-1">
+            Niet opgeslagen wijzigingen
+          </div>
+        )}
       </div>
 
-      <div className="flex-1 grid grid-cols-12 gap-2 min-h-0 overflow-hidden">
+      <div className="flex-1 grid grid-cols-12 gap-2 min-h-0 overflow-hidden p-2">
         {/* Code Snippets */}
         <div className="col-span-2 overflow-hidden">
           <Card className="h-full flex flex-col">
@@ -403,13 +556,13 @@ export const HTMLDocumentBuilder = () => {
           </Card>
         </div>
 
-        {/* A4 Preview - Optimized for maximum size */}
+        {/* A4 Preview */}
         <div className="col-span-5 overflow-hidden">
           <Card className="h-full flex flex-col">
             <CardHeader className="pb-2 px-3 pt-3 flex-shrink-0">
               <CardTitle className="text-xs flex items-center gap-2">
                 <Eye className="h-3 w-3" />
-                Factuur Template Preview
+                Document Preview
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 p-3 overflow-hidden bg-gray-100 min-h-0">
@@ -427,7 +580,7 @@ export const HTMLDocumentBuilder = () => {
                   <iframe
                     srcDoc={htmlCode}
                     className="w-full h-full border-0"
-                    title="Factuur Template Preview"
+                    title="Document Preview"
                   />
                 </div>
               </div>
