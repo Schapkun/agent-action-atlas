@@ -248,23 +248,32 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
         });
       } else {
         // Create new document
-        const newDocument = saveDocument({
+        const newDocumentData = {
           name: documentName.trim(),
           type: documentType,
           htmlContent: htmlContent,
           description: `${documentType} document`,
           lastModified: new Date(),
           isDefault: false
-        });
+        };
+        
+        saveDocument(newDocumentData);
         
         toast({
           title: "Opgeslagen",
           description: `Nieuw document "${documentName}" is aangemaakt.`
         });
 
-        // Fixed: Check if callback exists first, then check if newDocument exists, then call it
-        if (onDocumentSaved && newDocument) {
-          onDocumentSaved(newDocument);
+        // Call callback if provided - we don't need the return value since saveDocument returns void
+        if (onDocumentSaved) {
+          // Create a mock document for the callback since we can't get it from saveDocument
+          const mockDocument: DocumentTemplate = {
+            ...newDocumentData,
+            id: Date.now().toString(),
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+          onDocumentSaved(mockDocument);
         }
       }
       
