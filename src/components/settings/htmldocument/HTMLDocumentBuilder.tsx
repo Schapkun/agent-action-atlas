@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -183,46 +182,48 @@ export const HTMLDocumentBuilder = () => {
   ];
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Simple Header without buttons */}
       <div className="flex items-center gap-2 mb-2 flex-shrink-0">
         <FileText className="h-4 w-4" />
         <h3 className="text-lg font-semibold">HTML Document Builder</h3>
       </div>
 
-      <div className="flex-1 grid grid-cols-12 gap-2 min-h-0">
+      <div className="flex-1 grid grid-cols-12 gap-2 min-h-0 overflow-hidden">
         {/* Code Snippets */}
-        <div className="col-span-2">
-          <Card className="h-full">
-            <CardHeader className="pb-2 px-3 pt-3">
+        <div className="col-span-2 overflow-hidden">
+          <Card className="h-full flex flex-col">
+            <CardHeader className="pb-2 px-3 pt-3 flex-shrink-0">
               <CardTitle className="text-xs">HTML Snippets</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-1 px-3 pb-3">
-              {snippets.map((snippet) => (
-                <Button
-                  key={snippet.name}
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start text-xs h-7"
-                  onClick={() => insertSnippet(snippet.code)}
-                >
-                  {snippet.name}
-                </Button>
-              ))}
+            <CardContent className="flex-1 px-3 pb-3 overflow-y-auto">
+              <div className="space-y-1">
+                {snippets.map((snippet) => (
+                  <Button
+                    key={snippet.name}
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start text-xs h-7"
+                    onClick={() => insertSnippet(snippet.code)}
+                  >
+                    {snippet.name}
+                  </Button>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </div>
 
         {/* HTML Editor */}
-        <div className="col-span-5">
+        <div className="col-span-5 overflow-hidden">
           <Card className="h-full flex flex-col">
-            <CardHeader className="pb-2 px-3 pt-3">
+            <CardHeader className="pb-2 px-3 pt-3 flex-shrink-0">
               <CardTitle className="text-xs flex items-center gap-2">
                 <Code className="h-3 w-3" />
                 HTML Code Editor
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 p-3 min-h-0">
+            <CardContent className="flex-1 p-3 min-h-0 overflow-hidden">
               <Textarea
                 value={htmlCode}
                 onChange={(e) => setHtmlCode(e.target.value)}
@@ -234,9 +235,9 @@ export const HTMLDocumentBuilder = () => {
         </div>
 
         {/* A4 Preview */}
-        <div className="col-span-5">
+        <div className="col-span-5 overflow-hidden">
           <Card className="h-full flex flex-col">
-            <CardHeader className="pb-2 px-3 pt-3">
+            <CardHeader className="pb-2 px-3 pt-3 flex-shrink-0">
               <CardTitle className="text-xs flex items-center gap-2">
                 <Eye className="h-3 w-3" />
                 A4 Document Preview
