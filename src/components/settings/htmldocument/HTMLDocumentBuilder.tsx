@@ -408,37 +408,40 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
           ))}
         </div>
 
-        {/* HTML Editor */}
-        <div className="flex-1 flex flex-col">
-          <div className="p-4 border-b">
-            <h3 className="font-semibold flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              HTML Editor
-            </h3>
-          </div>
-          <div className="flex-1 p-4">
-            <textarea
-              id="html-editor"
-              value={htmlContent}
-              onChange={(e) => setHtmlContent(e.target.value)}
-              className="w-full h-full font-mono text-sm border rounded-lg p-4 resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="HTML code hier..."
-            />
-          </div>
-        </div>
-
-        {/* Preview */}
-        <div className="flex-1 flex flex-col border-l">
-          <div className="p-4 border-b">
-            <h3 className="font-semibold">Document Preview</h3>
-          </div>
-          <div className="flex-1 p-4 overflow-auto">
-            <div className="max-w-4xl mx-auto bg-white border rounded-lg shadow-sm">
-              <iframe
-                srcDoc={htmlContent}
-                className="w-full h-full min-h-[600px] border-0"
-                title="Document Preview"
+        {/* HTML Editor en Preview - beide gelijke hoogte */}
+        <div className="flex-1 flex">
+          {/* HTML Editor - 50% breedte */}
+          <div className="w-1/2 flex flex-col border-r">
+            <div className="p-4 border-b">
+              <h3 className="font-semibold flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                HTML Editor
+              </h3>
+            </div>
+            <div className="flex-1 p-4">
+              <textarea
+                id="html-editor"
+                value={htmlContent}
+                onChange={(e) => setHtmlContent(e.target.value)}
+                className="w-full h-full font-mono text-sm border rounded-lg p-4 resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="HTML code hier..."
               />
+            </div>
+          </div>
+
+          {/* Preview - 50% breedte, zelfde hoogte als editor */}
+          <div className="w-1/2 flex flex-col">
+            <div className="p-4 border-b">
+              <h3 className="font-semibold">Document Preview</h3>
+            </div>
+            <div className="flex-1 p-4 overflow-auto">
+              <div className="h-full bg-white border rounded-lg shadow-sm">
+                <iframe
+                  srcDoc={htmlContent}
+                  className="w-full h-full border-0"
+                  title="Document Preview"
+                />
+              </div>
             </div>
           </div>
         </div>
