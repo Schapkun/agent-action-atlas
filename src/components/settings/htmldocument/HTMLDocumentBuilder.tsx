@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -182,38 +183,39 @@ export const HTMLDocumentBuilder = () => {
   ];
 
   return (
-    <div className="h-full flex flex-col space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="h-full flex flex-col space-y-3">
+      {/* Compact Header */}
+      <div className="flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          <h2 className="text-xl font-semibold">HTML Document Builder</h2>
+          <FileText className="h-4 w-4" />
+          <h3 className="text-lg font-semibold">HTML Document Builder</h3>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleSaveTemplate}>
-            <Save className="h-4 w-4 mr-2" />
+          <Button variant="outline" size="sm" onClick={handleSaveTemplate}>
+            <Save className="h-3 w-3 mr-1" />
             Opslaan
           </Button>
-          <Button onClick={handleExportHTML}>
-            <Download className="h-4 w-4 mr-2" />
+          <Button size="sm" onClick={handleExportHTML}>
+            <Download className="h-3 w-3 mr-1" />
             Export HTML
           </Button>
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-12 gap-4 min-h-0">
+      <div className="flex-1 grid grid-cols-12 gap-3 min-h-0">
         {/* Code Snippets */}
         <div className="col-span-2">
           <Card className="h-full">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">HTML Snippets</CardTitle>
+            <CardHeader className="pb-2 px-3 pt-3">
+              <CardTitle className="text-xs">HTML Snippets</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-1 px-3 pb-3">
               {snippets.map((snippet) => (
                 <Button
                   key={snippet.name}
                   variant="outline"
-                  className="w-full justify-start text-sm"
+                  size="sm"
+                  className="w-full justify-start text-xs h-7"
                   onClick={() => insertSnippet(snippet.code)}
                 >
                   {snippet.name}
@@ -226,19 +228,18 @@ export const HTMLDocumentBuilder = () => {
         {/* HTML Editor */}
         <div className="col-span-5">
           <Card className="h-full flex flex-col">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Code className="h-4 w-4" />
+            <CardHeader className="pb-2 px-3 pt-3">
+              <CardTitle className="text-xs flex items-center gap-2">
+                <Code className="h-3 w-3" />
                 HTML Code Editor
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 p-4">
+            <CardContent className="flex-1 p-3 min-h-0">
               <Textarea
                 value={htmlCode}
                 onChange={(e) => setHtmlCode(e.target.value)}
-                className="w-full h-full font-mono text-sm resize-none"
+                className="w-full h-full font-mono text-xs resize-none"
                 placeholder="Schrijf je HTML code hier..."
-                style={{ minHeight: '500px' }}
               />
             </CardContent>
           </Card>
@@ -247,13 +248,13 @@ export const HTMLDocumentBuilder = () => {
         {/* A4 Preview */}
         <div className="col-span-5">
           <Card className="h-full flex flex-col">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Eye className="h-4 w-4" />
+            <CardHeader className="pb-2 px-3 pt-3">
+              <CardTitle className="text-xs flex items-center gap-2">
+                <Eye className="h-3 w-3" />
                 A4 Document Preview
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 p-4 overflow-hidden bg-gray-100">
+            <CardContent className="flex-1 p-3 overflow-hidden bg-gray-100 min-h-0">
               <div className="w-full h-full flex items-center justify-center">
                 <div 
                   className="bg-white shadow-lg border border-gray-300"

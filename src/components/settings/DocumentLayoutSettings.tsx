@@ -1,12 +1,28 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { FileText, Plus } from 'lucide-react';
 import { HTMLDocumentBuilder } from './htmldocument/HTMLDocumentBuilder';
+import { DialogHeader } from './components/DialogHeader';
+import { DialogFooter } from './components/DialogFooter';
 
 export const DocumentLayoutSettings = () => {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = () => {
+    setSaving(true);
+    // Simulate save operation
+    setTimeout(() => {
+      setSaving(false);
+      setIsBuilderOpen(false);
+    }, 1000);
+  };
+
+  const handleCancel = () => {
+    setIsBuilderOpen(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -25,16 +41,11 @@ export const DocumentLayoutSettings = () => {
               Nieuw Document Template
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0">
-            <DialogHeader className="p-6 pb-0">
-              <DialogTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                HTML Document Builder
-              </DialogTitle>
-            </DialogHeader>
-            <div className="flex-1 p-6 pt-0 h-full">
+          <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 flex flex-col">
+            <div className="flex-1 p-6 min-h-0">
               <HTMLDocumentBuilder />
             </div>
+            <DialogFooter onCancel={handleCancel} onSave={handleSave} saving={saving} />
           </DialogContent>
         </Dialog>
       </div>
