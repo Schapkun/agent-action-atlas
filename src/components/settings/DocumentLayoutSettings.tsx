@@ -42,7 +42,7 @@ export const DocumentLayoutSettings = () => {
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 flex flex-col">
-            <div className="flex-1 p-6 min-h-0">
+            <div className="flex-1 p-2 min-h-0">
               <HTMLDocumentBuilder />
             </div>
             <DialogFooter onCancel={handleCancel} onSave={handleSave} saving={saving} />

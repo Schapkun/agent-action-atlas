@@ -28,7 +28,7 @@ export const HTMLDocumentBuilder = () => {
         }
         .document {
             width: 95%;
-            height: 95vh;
+            height: 100%;
             padding: 2cm;
             box-sizing: border-box;
             background: white;
@@ -185,12 +185,12 @@ export const HTMLDocumentBuilder = () => {
   return (
     <div className="h-full flex flex-col">
       {/* Simple Header without buttons */}
-      <div className="flex items-center gap-2 mb-3 flex-shrink-0">
+      <div className="flex items-center gap-2 mb-2 flex-shrink-0">
         <FileText className="h-4 w-4" />
         <h3 className="text-lg font-semibold">HTML Document Builder</h3>
       </div>
 
-      <div className="flex-1 grid grid-cols-12 gap-3 min-h-0">
+      <div className="flex-1 grid grid-cols-12 gap-2 min-h-0">
         {/* Code Snippets */}
         <div className="col-span-2">
           <Card className="h-full">
