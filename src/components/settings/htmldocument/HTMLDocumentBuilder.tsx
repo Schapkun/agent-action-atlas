@@ -437,7 +437,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
               <div className="bg-white border rounded-lg shadow-sm" style={{
                 width: '595px',
                 height: '842px',
-                transform: 'scale(0.6)',
+                transform: 'scale(0.8)',
                 transformOrigin: 'center center'
               }}>
                 <iframe
