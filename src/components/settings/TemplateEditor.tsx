@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
-import { DocumentTemplate } from './types/DocumentTemplate';
+import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 
 interface TemplateEditorProps {
   template: DocumentTemplate;
@@ -36,7 +36,7 @@ export const TemplateEditor = ({ template, onUpdateTemplate }: TemplateEditorPro
       <div>
         <label className="text-sm font-medium">Beschrijving</label>
         <Input
-          value={template.description}
+          value={template.description || ''}
           onChange={(e) => onUpdateTemplate({
             ...template,
             description: e.target.value

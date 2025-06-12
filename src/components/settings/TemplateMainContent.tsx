@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Save, Settings } from 'lucide-react';
-import { DocumentTemplate } from './types/DocumentTemplate';
+import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { TemplateEditor } from './TemplateEditor';
 import { TemplatePreview } from './TemplatePreview';
 

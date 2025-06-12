@@ -247,7 +247,8 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
         });
 
         if (onDocumentSaved) {
-          onDocumentSaved(updatedDoc);
+          // Type cast to ensure compatibility
+          onDocumentSaved(updatedDoc as any);
         }
       } else {
         // Create new document
@@ -269,7 +270,8 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
 
         // Call callback if provided
         if (onDocumentSaved) {
-          onDocumentSaved(newDoc);
+          // Type cast to ensure compatibility
+          onDocumentSaved(newDoc as any);
         }
       }
       

@@ -5,7 +5,23 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, FileText, Edit } from 'lucide-react';
-import { DocumentTemplate, getTypeColor } from './types/DocumentTemplate';
+import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
+
+const getTypeColor = (type: string) => {
+  switch (type) {
+    case 'legal':
+    case 'contract':
+      return 'bg-blue-100 text-blue-800';
+    case 'factuur':
+      return 'bg-green-100 text-green-800';
+    case 'brief':
+      return 'bg-purple-100 text-purple-800';
+    case 'custom':
+      return 'bg-orange-100 text-orange-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
 
 interface TemplateListProps {
   templates: DocumentTemplate[];
@@ -26,7 +42,7 @@ export const TemplateList = ({
     searchTerm === '' || 
     template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     template.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    template.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (template.description && template.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -55,7 +71,7 @@ export const TemplateList = ({
                 <div className="flex items-center gap-2 mb-1">
                   <FileText className="h-4 w-4" />
                   <span className="font-medium text-sm">{template.name}</span>
-                  {template.isDefault && (
+                  {template.is_default && (
                     <Badge variant="secondary" className="text-xs">Standaard</Badge>
                   )}
                 </div>
@@ -64,7 +80,7 @@ export const TemplateList = ({
                     {template.type}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
-                    {template.lastModified.toLocaleDateString('nl-NL')}
+                    {new Date(template.updated_at).toLocaleDateString('nl-NL')}
                   </span>
                 </div>
               </div>

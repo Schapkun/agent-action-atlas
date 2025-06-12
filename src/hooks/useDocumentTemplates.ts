@@ -41,7 +41,9 @@ export const useDocumentTemplates = () => {
       const { data, error } = await query;
 
       if (error) throw error;
-      setTemplates(data || []);
+      
+      // Type cast the data to ensure proper typing
+      setTemplates((data || []) as DocumentTemplate[]);
     } catch (error) {
       console.error('Error fetching templates:', error);
       toast({
@@ -56,25 +58,35 @@ export const useDocumentTemplates = () => {
 
   const createTemplate = async (templateData: Partial<DocumentTemplate>) => {
     try {
+      // Ensure required fields are present
+      const insertData = {
+        name: templateData.name || '',
+        type: templateData.type || 'custom',
+        description: templateData.description || null,
+        html_content: templateData.html_content || '',
+        organization_id: selectedOrganization?.id || null,
+        workspace_id: selectedWorkspace?.id || null,
+        is_default: templateData.is_default || false,
+        is_active: templateData.is_active !== false, // Default to true
+      };
+
       const { data, error } = await supabase
         .from('document_templates')
-        .insert({
-          ...templateData,
-          organization_id: selectedOrganization?.id || null,
-          workspace_id: selectedWorkspace?.id || null,
-        })
+        .insert(insertData)
         .select()
         .single();
 
       if (error) throw error;
 
-      setTemplates(prev => [data, ...prev]);
+      const newTemplate = data as DocumentTemplate;
+      setTemplates(prev => [newTemplate, ...prev]);
+      
       toast({
         title: "Succes",
         description: "Template succesvol aangemaakt"
       });
 
-      return data;
+      return newTemplate;
     } catch (error) {
       console.error('Error creating template:', error);
       toast({
@@ -97,13 +109,15 @@ export const useDocumentTemplates = () => {
 
       if (error) throw error;
 
-      setTemplates(prev => prev.map(t => t.id === id ? data : t));
+      const updatedTemplate = data as DocumentTemplate;
+      setTemplates(prev => prev.map(t => t.id === id ? updatedTemplate : t));
+      
       toast({
         title: "Succes",
         description: "Template succesvol bijgewerkt"
       });
 
-      return data;
+      return updatedTemplate;
     } catch (error) {
       console.error('Error updating template:', error);
       toast({

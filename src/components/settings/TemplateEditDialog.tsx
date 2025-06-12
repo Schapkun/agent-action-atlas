@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { DocumentTemplate } from './types/DocumentTemplate';
+import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { VisualTemplateEditor } from './VisualTemplateEditor';
 import { VisualTemplateData, DEFAULT_VARIABLES } from './types/VisualTemplate';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -77,8 +77,8 @@ export const TemplateEditDialog = ({
     // Try to parse existing htmlContent as JSON, otherwise use defaults
     let existingData = null;
     try {
-      if (template.htmlContent && template.htmlContent.startsWith('{')) {
-        existingData = JSON.parse(template.htmlContent);
+      if (template.html_content && template.html_content.startsWith('{')) {
+        existingData = JSON.parse(template.html_content);
       }
     } catch (e) {
       // No console.log needed for melding removal
@@ -129,8 +129,8 @@ export const TemplateEditDialog = ({
         ...template,
         name: data.name,
         type: mappedType,
-        // Store visual data as JSON in htmlContent field
-        htmlContent: JSON.stringify(data)
+        // Store visual data as JSON in html_content field
+        html_content: JSON.stringify(data)
       });
     }
   };
