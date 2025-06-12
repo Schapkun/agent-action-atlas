@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -105,28 +104,71 @@ export const useInvoices = () => {
 
   const generateInvoiceNumber = async () => {
     try {
-      const { data, error } = await supabase.rpc('generate_invoice_number', {
-        org_id: selectedOrganization?.id,
-        workspace_id: selectedWorkspace?.id || null
-      });
+      // Simple fallback invoice number generation since the RPC function has issues
+      const currentYear = new Date().getFullYear();
+      
+      // Get the count of invoices for this organization this year
+      const { data: existingInvoices, error } = await supabase
+        .from('invoices')
+        .select('invoice_number')
+        .eq('organization_id', selectedOrganization?.id)
+        .gte('created_at', `${currentYear}-01-01`)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+
+      const nextNumber = (existingInvoices?.length || 0) + 1;
+      const invoiceNumber = `${currentYear}-${String(nextNumber).padStart(3, '0')}`;
+      
+      console.log('Generated invoice number:', invoiceNumber);
+      return invoiceNumber;
     } catch (error) {
       console.error('Error generating invoice number:', error);
-      return `${new Date().getFullYear()}-001`;
+      const fallbackNumber = `${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+      console.log('Using fallback invoice number:', fallbackNumber);
+      return fallbackNumber;
+    }
+  };
+
+  const getDefaultTemplate = async () => {
+    try {
+      console.log('Looking for default template for organization:', selectedOrganization?.id);
+      
+      const { data: templates, error } = await supabase
+        .from('document_templates')
+        .select('id')
+        .eq('organization_id', selectedOrganization?.id)
+        .eq('type', 'factuur')
+        .eq('is_active', true)
+        .limit(1);
+
+      if (error) {
+        console.error('Error fetching default template:', error);
+        return null;
+      }
+
+      const templateId = templates?.[0]?.id || null;
+      console.log('Found default template:', templateId);
+      return templateId;
+    } catch (error) {
+      console.error('Error getting default template:', error);
+      return null;
     }
   };
 
   const createInvoice = async (invoiceData: Partial<Invoice>) => {
     try {
+      console.log('Creating invoice with data:', invoiceData);
+      
       const invoiceNumber = await generateInvoiceNumber();
+      const defaultTemplate = await getDefaultTemplate();
       
       // Ensure required fields are present and properly formatted
       const insertData = {
         invoice_number: invoiceNumber,
         organization_id: selectedOrganization?.id || '',
         workspace_id: selectedWorkspace?.id || null,
+        template_id: defaultTemplate,
         client_name: invoiceData.client_name || 'Nieuwe Klant',
         client_email: invoiceData.client_email || null,
         client_address: invoiceData.client_address || null,
@@ -142,9 +184,10 @@ export const useInvoices = () => {
         vat_amount: invoiceData.vat_amount || 0,
         total_amount: invoiceData.total_amount || 0,
         notes: invoiceData.notes || null,
-        template_id: invoiceData.template_id || null,
         created_by: invoiceData.created_by || null
       };
+
+      console.log('Insert data prepared:', insertData);
 
       const { data, error } = await supabase
         .from('invoices')
@@ -152,10 +195,16 @@ export const useInvoices = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error creating invoice:', error);
+        throw error;
+      }
+
+      console.log('Invoice created successfully:', data);
 
       const newInvoice = castToInvoice(data);
       setInvoices(prev => [newInvoice, ...prev]);
+      
       toast({
         title: "Succes",
         description: `Factuur ${invoiceNumber} succesvol aangemaakt`

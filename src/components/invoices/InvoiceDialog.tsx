@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2, Calendar } from 'lucide-react';
 import { useInvoices, Invoice } from '@/hooks/useInvoices';
 import { useInvoiceLines } from '@/hooks/useInvoiceLines';
-import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { format } from 'date-fns';
 
 interface InvoiceDialogProps {
@@ -28,7 +27,6 @@ interface InvoiceFormData {
   invoice_date: string;
   due_date: string;
   payment_terms: number;
-  template_id: string;
   notes: string;
   vat_percentage: number;
 }
@@ -44,7 +42,6 @@ interface LineItem {
 export const InvoiceDialog = ({ isOpen, onClose, invoice }: InvoiceDialogProps) => {
   const { createInvoice, updateInvoice } = useInvoices();
   const { addLine, updateLine, deleteLine } = useInvoiceLines(invoice?.id || null);
-  const { templates } = useDocumentTemplates();
   
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<InvoiceFormData>({
@@ -57,7 +54,6 @@ export const InvoiceDialog = ({ isOpen, onClose, invoice }: InvoiceDialogProps) 
     invoice_date: format(new Date(), 'yyyy-MM-dd'),
     due_date: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
     payment_terms: 30,
-    template_id: '',
     notes: '',
     vat_percentage: 21.00
   });
@@ -79,7 +75,6 @@ export const InvoiceDialog = ({ isOpen, onClose, invoice }: InvoiceDialogProps) 
         invoice_date: invoice.invoice_date,
         due_date: invoice.due_date,
         payment_terms: invoice.payment_terms || 30,
-        template_id: invoice.template_id || '',
         notes: invoice.notes || '',
         vat_percentage: invoice.vat_percentage
       });
@@ -95,13 +90,12 @@ export const InvoiceDialog = ({ isOpen, onClose, invoice }: InvoiceDialogProps) 
         invoice_date: format(new Date(), 'yyyy-MM-dd'),
         due_date: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
         payment_terms: 30,
-        template_id: templates.find(t => t.type === 'factuur')?.id || '',
         notes: '',
         vat_percentage: 21.00
       });
       setLineItems([{ description: '', quantity: 1, unit_price: 0, vat_rate: 21, line_total: 0 }]);
     }
-  }, [invoice, templates]);
+  }, [invoice]);
 
   const calculateLineTotal = (quantity: number, unitPrice: number) => {
     return quantity * unitPrice;
@@ -153,6 +147,7 @@ export const InvoiceDialog = ({ isOpen, onClose, invoice }: InvoiceDialogProps) 
     setLoading(true);
 
     try {
+      console.log('Submitting invoice form...');
       const { subtotal, vatAmount, total } = calculateTotals();
       
       const invoiceData = {
@@ -163,14 +158,20 @@ export const InvoiceDialog = ({ isOpen, onClose, invoice }: InvoiceDialogProps) 
         status: 'draft' as const
       };
 
+      console.log('Invoice data to submit:', invoiceData);
+
       if (invoice) {
+        console.log('Updating existing invoice...');
         await updateInvoice(invoice.id, invoiceData);
       } else {
+        console.log('Creating new invoice...');
         const newInvoice = await createInvoice(invoiceData);
+        console.log('New invoice created:', newInvoice);
         
         // Add line items
         for (const [index, item] of lineItems.entries()) {
           if (item.description.trim()) {
+            console.log('Adding line item:', item);
             await addLine({
               invoice_id: newInvoice.id,
               description: item.description,
@@ -184,6 +185,7 @@ export const InvoiceDialog = ({ isOpen, onClose, invoice }: InvoiceDialogProps) 
         }
       }
 
+      console.log('Invoice submission completed successfully');
       onClose();
     } catch (error) {
       console.error('Error saving invoice:', error);
@@ -303,25 +305,6 @@ export const InvoiceDialog = ({ isOpen, onClose, invoice }: InvoiceDialogProps) 
                     onChange={(e) => setFormData({...formData, payment_terms: parseInt(e.target.value)})}
                   />
                 </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="template_id">Template</Label>
-                <select
-                  id="template_id"
-                  value={formData.template_id}
-                  onChange={(e) => setFormData({...formData, template_id: e.target.value})}
-                  className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
-                >
-                  <option value="">Selecteer template</option>
-                  {templates
-                    .filter(t => t.type === 'factuur')
-                    .map(template => (
-                      <option key={template.id} value={template.id}>
-                        {template.name}
-                      </option>
-                    ))}
-                </select>
               </div>
             </CardContent>
           </Card>
