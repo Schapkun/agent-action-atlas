@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -251,14 +250,14 @@ export const HTMLDocumentBuilder = () => {
                 A4 Document Preview
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 p-2 overflow-hidden bg-gray-100">
-              <div className="w-full h-full flex items-start justify-center overflow-auto">
+            <CardContent className="flex-1 p-4 overflow-auto bg-gray-100">
+              <div className="w-full h-full flex items-center justify-center">
                 <div 
-                  className="bg-white shadow-lg border border-gray-300 mx-auto"
+                  className="bg-white shadow-lg border border-gray-300"
                   style={{ 
-                    width: 'calc(21cm * 0.45)',
-                    minHeight: 'calc(29.7cm * 0.45)',
+                    width: '100%',
                     maxWidth: '100%',
+                    height: 'calc(100% - 20px)',
                     aspectRatio: '21 / 29.7'
                   }}
                 >
@@ -266,13 +265,6 @@ export const HTMLDocumentBuilder = () => {
                     srcDoc={htmlCode}
                     className="w-full h-full border-0"
                     title="A4 Document Preview"
-                    style={{ 
-                      minHeight: 'calc(29.7cm * 0.45)',
-                      transform: 'scale(0.45)',
-                      transformOrigin: 'top left',
-                      width: 'calc(100% / 0.45)',
-                      height: 'calc(100% / 0.45)'
-                    }}
                   />
                 </div>
               </div>
