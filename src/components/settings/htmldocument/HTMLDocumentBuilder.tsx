@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -184,7 +185,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  const { createTemplate, updateTemplate } = useDocumentTemplates();
+  const { createTemplate, updateTemplate, fetchTemplates } = useDocumentTemplates();
   const { toast } = useToast();
 
   // Load editing document
@@ -277,6 +278,9 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
       }
       
       setHasUnsavedChanges(false);
+
+      // Refresh the templates list to show the new/updated document
+      await fetchTemplates();
 
       // Call callback if provided
       if (onDocumentSaved && savedDocument) {
