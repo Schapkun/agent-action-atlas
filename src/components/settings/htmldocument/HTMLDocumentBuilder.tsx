@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,13 +23,16 @@ export const HTMLDocumentBuilder = () => {
             padding: 0;
             line-height: 1.6;
             font-size: 12pt;
+            overflow: hidden;
         }
         .document {
-            width: 21cm;
-            min-height: 29.7cm;
+            width: 95%;
+            height: 95vh;
             padding: 2cm;
             box-sizing: border-box;
             background: white;
+            margin: 0 auto;
+            overflow: hidden;
         }
         .header {
             text-align: center;
@@ -256,8 +258,8 @@ export const HTMLDocumentBuilder = () => {
                 <div 
                   className="bg-white shadow-lg border border-gray-300"
                   style={{ 
-                    width: '90%',
-                    height: '90%',
+                    width: '95%',
+                    height: '95%',
                     aspectRatio: '21 / 29.7'
                   }}
                 >
