@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -181,6 +182,18 @@ export const HTMLDocumentBuilder = () => {
     }
   ];
 
+  // A4 verhoudingen: 210mm x 297mm = 21:29.7 ≈ 1:1.414
+  const calculateA4Dimensions = (containerHeight: number) => {
+    const A4_RATIO = 297 / 210; // hoogte / breedte
+    const maxHeight = containerHeight - 40; // ruimte voor padding
+    const maxWidth = maxHeight / A4_RATIO;
+    
+    return {
+      width: Math.min(maxWidth, 400), // max 400px breedte
+      height: Math.min(maxWidth * A4_RATIO, maxHeight)
+    };
+  };
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Simple Header without buttons */}
@@ -248,15 +261,19 @@ export const HTMLDocumentBuilder = () => {
                 <div 
                   className="bg-white shadow-lg border border-gray-300"
                   style={{ 
-                    width: '95%',
-                    height: '95%',
-                    aspectRatio: '21 / 29.7'
+                    width: '210px',
+                    height: '297px',
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    aspectRatio: '210 / 297',
+                    transform: 'scale(0.9)'
                   }}
                 >
                   <iframe
                     srcDoc={htmlCode}
                     className="w-full h-full border-0"
                     title="A4 Document Preview"
+                    style={{ transform: 'scale(1)' }}
                   />
                 </div>
               </div>

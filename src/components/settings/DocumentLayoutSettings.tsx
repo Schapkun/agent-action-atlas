@@ -41,7 +41,7 @@ export const DocumentLayoutSettings = () => {
               Nieuw Document Template
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 flex flex-col">
+          <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-2.5 flex flex-col">
             <div 
               className="p-2.5 min-h-0 overflow-hidden"
               style={{ height: 'calc(100% - 80px - 5px)' }}
