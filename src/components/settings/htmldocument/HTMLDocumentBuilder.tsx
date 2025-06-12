@@ -184,7 +184,6 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
   const [documentName, setDocumentName] = useState('');
   const [documentType, setDocumentType] = useState<'factuur' | 'contract' | 'brief' | 'custom'>('factuur');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
   
   const { saveDocument, updateDocument } = useDocumentContext();
   const { toast } = useToast();
@@ -325,7 +324,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     <div className="flex flex-col h-full">
       {/* Header with document controls */}
       <div className="flex-shrink-0 p-4 border-b bg-muted/30">
-        <div className="flex items-center justify-between gap-4 mb-4">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 flex-1">
             <Input
               placeholder="Document naam..."
@@ -365,99 +364,74 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
             </Button>
           </div>
         </div>
-
-        {/* Tab switcher */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant={activeTab === 'editor' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setActiveTab('editor')}
-          >
-            HTML Editor
-          </Button>
-          <Button
-            variant={activeTab === 'preview' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setActiveTab('preview')}
-          >
-            Preview
-          </Button>
-        </div>
       </div>
 
-      {/* Main content area */}
+      {/* Main content area - Editor en Preview naast elkaar */}
       <div className="flex-1 flex min-h-0">
-        {activeTab === 'editor' ? (
-          <>
-            {/* Left sidebar with snippets */}
-            <div className="w-80 border-r bg-muted/20 p-4 overflow-y-auto">
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <MousePointer className="h-4 w-4" />
-                Code Snippets
-              </h3>
-              
-              {SNIPPETS.map((category, categoryIndex) => (
-                <div key={categoryIndex} className="mb-6">
-                  <h4 className="text-sm font-medium text-muted-foreground mb-3">
-                    {category.category}
-                  </h4>
-                  <div className="space-y-2">
-                    {category.items.map((snippet, index) => (
-                      <button
-                        key={index}
-                        onClick={() => insertSnippet(snippet.code)}
-                        className="w-full p-3 text-left bg-background hover:bg-accent rounded-lg border transition-colors"
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          {snippet.icon}
-                          <span className="text-sm font-medium">{snippet.name}</span>
-                        </div>
-                        <pre className="text-xs text-muted-foreground bg-muted p-2 rounded mt-2 overflow-x-auto">
-                          {snippet.code.length > 50 ? `${snippet.code.substring(0, 50)}...` : snippet.code}
-                        </pre>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
+        {/* Left sidebar with snippets */}
+        <div className="w-80 border-r bg-muted/20 p-4 overflow-y-auto">
+          <h3 className="font-semibold mb-4 flex items-center gap-2">
+            <MousePointer className="h-4 w-4" />
+            Code Snippets
+          </h3>
+          
+          {SNIPPETS.map((category, categoryIndex) => (
+            <div key={categoryIndex} className="mb-6">
+              <h4 className="text-sm font-medium text-muted-foreground mb-3">
+                {category.category}
+              </h4>
+              <div className="space-y-2">
+                {category.items.map((snippet, index) => (
+                  <button
+                    key={index}
+                    onClick={() => insertSnippet(snippet.code)}
+                    className="w-full p-3 text-left bg-background hover:bg-accent rounded-lg border transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      {snippet.icon}
+                      <span className="text-sm font-medium">{snippet.name}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
+          ))}
+        </div>
 
-            {/* HTML Editor */}
-            <div className="flex-1 flex flex-col">
-              <div className="p-4 border-b">
-                <h3 className="font-semibold flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  HTML Editor
-                </h3>
-              </div>
-              <div className="flex-1 p-4">
-                <textarea
-                  id="html-editor"
-                  value={htmlContent}
-                  onChange={(e) => setHtmlContent(e.target.value)}
-                  className="w-full h-full font-mono text-sm border rounded-lg p-4 resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="HTML code hier..."
-                />
-              </div>
-            </div>
-          </>
-        ) : (
-          /* Preview */
-          <div className="flex-1 flex flex-col">
-            <div className="p-4 border-b">
-              <h3 className="font-semibold">Document Preview</h3>
-            </div>
-            <div className="flex-1 p-4 overflow-auto">
-              <div className="max-w-4xl mx-auto bg-white border rounded-lg shadow-sm">
-                <iframe
-                  srcDoc={htmlContent}
-                  className="w-full h-full min-h-[600px] border-0"
-                  title="Document Preview"
-                />
-              </div>
+        {/* HTML Editor */}
+        <div className="flex-1 flex flex-col">
+          <div className="p-4 border-b">
+            <h3 className="font-semibold flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              HTML Editor
+            </h3>
+          </div>
+          <div className="flex-1 p-4">
+            <textarea
+              id="html-editor"
+              value={htmlContent}
+              onChange={(e) => setHtmlContent(e.target.value)}
+              className="w-full h-full font-mono text-sm border rounded-lg p-4 resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="HTML code hier..."
+            />
+          </div>
+        </div>
+
+        {/* Preview */}
+        <div className="flex-1 flex flex-col border-l">
+          <div className="p-4 border-b">
+            <h3 className="font-semibold">Document Preview</h3>
+          </div>
+          <div className="flex-1 p-4 overflow-auto">
+            <div className="max-w-4xl mx-auto bg-white border rounded-lg shadow-sm">
+              <iframe
+                srcDoc={htmlContent}
+                className="w-full h-full min-h-[600px] border-0"
+                title="Document Preview"
+              />
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
