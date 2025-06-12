@@ -42,6 +42,33 @@ export interface InvoiceLine {
   created_at: string;
 }
 
+// Helper function to cast database results to Invoice type
+const castToInvoice = (dbInvoice: any): Invoice => ({
+  id: dbInvoice.id,
+  invoice_number: dbInvoice.invoice_number,
+  organization_id: dbInvoice.organization_id,
+  workspace_id: dbInvoice.workspace_id,
+  template_id: dbInvoice.template_id,
+  client_name: dbInvoice.client_name,
+  client_email: dbInvoice.client_email,
+  client_address: dbInvoice.client_address,
+  client_postal_code: dbInvoice.client_postal_code,
+  client_city: dbInvoice.client_city,
+  client_country: dbInvoice.client_country,
+  invoice_date: dbInvoice.invoice_date,
+  due_date: dbInvoice.due_date,
+  payment_terms: dbInvoice.payment_terms,
+  status: dbInvoice.status as 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled',
+  subtotal: dbInvoice.subtotal,
+  vat_percentage: dbInvoice.vat_percentage,
+  vat_amount: dbInvoice.vat_amount,
+  total_amount: dbInvoice.total_amount,
+  notes: dbInvoice.notes,
+  created_by: dbInvoice.created_by,
+  created_at: dbInvoice.created_at,
+  updated_at: dbInvoice.updated_at,
+});
+
 export const useInvoices = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +90,7 @@ export const useInvoices = () => {
       const { data, error } = await query;
 
       if (error) throw error;
-      setInvoices(data || []);
+      setInvoices((data || []).map(castToInvoice));
     } catch (error) {
       console.error('Error fetching invoices:', error);
       toast({
@@ -108,13 +135,14 @@ export const useInvoices = () => {
 
       if (error) throw error;
 
-      setInvoices(prev => [data, ...prev]);
+      const newInvoice = castToInvoice(data);
+      setInvoices(prev => [newInvoice, ...prev]);
       toast({
         title: "Succes",
         description: `Factuur ${invoiceNumber} succesvol aangemaakt`
       });
 
-      return data;
+      return newInvoice;
     } catch (error) {
       console.error('Error creating invoice:', error);
       toast({
@@ -137,13 +165,14 @@ export const useInvoices = () => {
 
       if (error) throw error;
 
-      setInvoices(prev => prev.map(inv => inv.id === id ? data : inv));
+      const updatedInvoice = castToInvoice(data);
+      setInvoices(prev => prev.map(inv => inv.id === id ? updatedInvoice : inv));
       toast({
         title: "Succes",
         description: "Factuur succesvol bijgewerkt"
       });
 
-      return data;
+      return updatedInvoice;
     } catch (error) {
       console.error('Error updating invoice:', error);
       toast({
