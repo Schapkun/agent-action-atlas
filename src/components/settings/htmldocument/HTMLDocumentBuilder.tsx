@@ -329,6 +329,36 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     }
   };
 
+  // Create scaled HTML content for iframe preview
+  const getScaledHtmlContent = (content: string) => {
+    // Extract the existing HTML content
+    const htmlMatch = content.match(/<html[^>]*>([\s\S]*)<\/html>/i);
+    if (!htmlMatch) return content;
+
+    // Add scaling CSS to the existing content
+    const scaledContent = content.replace(
+      /<style[^>]*>([\s\S]*?)<\/style>/i,
+      (match, styles) => {
+        return `<style>
+          ${styles}
+          
+          /* Scaling CSS to prevent scrollbars */
+          html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            transform-origin: top left;
+            transform: scale(0.85);
+            width: 117.65%; /* 100% / 0.85 to compensate for scaling */
+            height: 117.65%;
+          }
+        </style>`;
+      }
+    );
+
+    return scaledContent;
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header with document controls */}
@@ -445,7 +475,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
                   }}
                 >
                   <iframe
-                    srcDoc={htmlContent}
+                    srcDoc={getScaledHtmlContent(htmlContent)}
                     className="w-full h-full border-0 rounded-lg"
                     title="Document Preview"
                   />
