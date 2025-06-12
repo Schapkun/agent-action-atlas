@@ -10,8 +10,24 @@ import { DocumentNameDialog } from './components/DocumentNameDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { DocumentProvider, useDocumentContext } from './contexts/DocumentContext';
-import { DocumentTemplate, getTypeColor } from './types/DocumentTemplate';
+import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { useToast } from '@/hooks/use-toast';
+
+const getTypeColor = (type: string) => {
+  switch (type) {
+    case 'legal':
+    case 'contract':
+      return 'bg-blue-100 text-blue-800';
+    case 'factuur':
+      return 'bg-green-100 text-green-800';
+    case 'brief':
+      return 'bg-purple-100 text-purple-800';
+    case 'custom':
+      return 'bg-orange-100 text-orange-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
 
 const DocumentLayoutContent = () => {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
@@ -101,7 +117,7 @@ const DocumentLayoutContent = () => {
                       <Badge variant="outline" className={`text-xs ${getTypeColor(document.type)}`}>
                         {document.type}
                       </Badge>
-                      {document.isDefault && (
+                      {document.is_default && (
                         <Badge variant="secondary" className="text-xs">Standaard</Badge>
                       )}
                     </div>
@@ -109,7 +125,7 @@ const DocumentLayoutContent = () => {
                       <p className="text-sm text-muted-foreground mb-1">{document.description}</p>
                     )}
                     <p className="text-xs text-muted-foreground">
-                      Laatst bewerkt: {document.lastModified.toLocaleDateString('nl-NL')} om {document.lastModified.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
+                      Laatst bewerkt: {new Date(document.updated_at).toLocaleDateString('nl-NL')} om {new Date(document.updated_at).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                   

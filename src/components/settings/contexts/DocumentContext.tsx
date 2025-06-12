@@ -4,10 +4,12 @@ import { useDocumentTemplates, DocumentTemplate } from '@/hooks/useDocumentTempl
 
 interface DocumentContextType {
   templates: DocumentTemplate[];
+  documents: DocumentTemplate[]; // Alias for templates for backward compatibility
   loading: boolean;
   saveDocument: (documentData: Partial<DocumentTemplate>) => Promise<DocumentTemplate>;
   updateDocument: (id: string, updates: Partial<DocumentTemplate>) => Promise<DocumentTemplate>;
   deleteDocument: (id: string) => Promise<void>;
+  duplicateDocument: (id: string, newName: string) => Promise<DocumentTemplate>;
   refreshTemplates: () => Promise<void>;
 }
 
@@ -39,16 +41,36 @@ export const DocumentProvider = ({ children }: DocumentProviderProps) => {
     await deleteTemplate(id);
   };
 
+  const duplicateDocument = async (id: string, newName: string) => {
+    const template = templates.find(t => t.id === id);
+    if (!template) {
+      throw new Error('Template not found');
+    }
+
+    const duplicatedData = {
+      name: newName,
+      type: template.type,
+      description: template.description,
+      html_content: template.html_content,
+      is_default: false,
+      is_active: true
+    };
+
+    return await createTemplate(duplicatedData);
+  };
+
   const refreshTemplates = async () => {
     await fetchTemplates();
   };
 
   const value: DocumentContextType = {
     templates,
+    documents: templates, // Alias for backward compatibility
     loading,
     saveDocument,
     updateDocument,
     deleteDocument,
+    duplicateDocument,
     refreshTemplates
   };
 

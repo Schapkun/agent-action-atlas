@@ -23,7 +23,7 @@ export const useDocumentTemplates = () => {
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { currentOrganization, currentWorkspace } = useOrganization();
+  const { selectedOrganization, selectedWorkspace } = useOrganization();
 
   const fetchTemplates = async () => {
     try {
@@ -34,8 +34,8 @@ export const useDocumentTemplates = () => {
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
-      if (currentOrganization) {
-        query = query.eq('organization_id', currentOrganization.id);
+      if (selectedOrganization) {
+        query = query.eq('organization_id', selectedOrganization.id);
       }
 
       const { data, error } = await query;
@@ -60,8 +60,8 @@ export const useDocumentTemplates = () => {
         .from('document_templates')
         .insert({
           ...templateData,
-          organization_id: currentOrganization?.id || null,
-          workspace_id: currentWorkspace?.id || null,
+          organization_id: selectedOrganization?.id || null,
+          workspace_id: selectedWorkspace?.id || null,
         })
         .select()
         .single();
@@ -141,10 +141,10 @@ export const useDocumentTemplates = () => {
   };
 
   useEffect(() => {
-    if (currentOrganization) {
+    if (selectedOrganization) {
       fetchTemplates();
     }
-  }, [currentOrganization, currentWorkspace]);
+  }, [selectedOrganization, selectedWorkspace]);
 
   return {
     templates,

@@ -46,7 +46,7 @@ export const useInvoices = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { currentOrganization, currentWorkspace } = useOrganization();
+  const { selectedOrganization, selectedWorkspace } = useOrganization();
 
   const fetchInvoices = async () => {
     try {
@@ -56,8 +56,8 @@ export const useInvoices = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (currentOrganization) {
-        query = query.eq('organization_id', currentOrganization.id);
+      if (selectedOrganization) {
+        query = query.eq('organization_id', selectedOrganization.id);
       }
 
       const { data, error } = await query;
@@ -79,8 +79,8 @@ export const useInvoices = () => {
   const generateInvoiceNumber = async () => {
     try {
       const { data, error } = await supabase.rpc('generate_invoice_number', {
-        org_id: currentOrganization?.id,
-        workspace_id: currentWorkspace?.id || null
+        org_id: selectedOrganization?.id,
+        workspace_id: selectedWorkspace?.id || null
       });
 
       if (error) throw error;
@@ -100,8 +100,8 @@ export const useInvoices = () => {
         .insert({
           ...invoiceData,
           invoice_number: invoiceNumber,
-          organization_id: currentOrganization?.id || '',
-          workspace_id: currentWorkspace?.id || null,
+          organization_id: selectedOrganization?.id || '',
+          workspace_id: selectedWorkspace?.id || null,
         })
         .select()
         .single();
@@ -181,10 +181,10 @@ export const useInvoices = () => {
   };
 
   useEffect(() => {
-    if (currentOrganization) {
+    if (selectedOrganization) {
       fetchInvoices();
     }
-  }, [currentOrganization, currentWorkspace]);
+  }, [selectedOrganization, selectedWorkspace]);
 
   return {
     invoices,
