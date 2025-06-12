@@ -74,11 +74,11 @@ export const TemplateEditDialog = ({
       };
     }
 
-    // Try to parse existing content as JSON, otherwise use defaults
+    // Try to parse existing htmlContent as JSON, otherwise use defaults
     let existingData = null;
     try {
-      if (template.content && template.content.startsWith('{')) {
-        existingData = JSON.parse(template.content);
+      if (template.htmlContent && template.htmlContent.startsWith('{')) {
+        existingData = JSON.parse(template.htmlContent);
       }
     } catch (e) {
       // No console.log needed for melding removal
@@ -87,7 +87,7 @@ export const TemplateEditDialog = ({
     return existingData || {
       id: template.id,
       name: template.name,
-      documentType: template.type as any || 'invoice',
+      documentType: template.type === 'factuur' ? 'invoice' : template.type === 'brief' ? 'letter' : template.type === 'contract' ? 'contract' : 'invoice',
       layout: 'modern-blue',
       styling: {
         primaryColor: '#2563eb',
@@ -121,12 +121,16 @@ export const TemplateEditDialog = ({
     
     // Update the original template
     if (template) {
+      const mappedType = data.documentType === 'invoice' ? 'factuur' : 
+                        data.documentType === 'letter' ? 'brief' : 
+                        data.documentType === 'contract' ? 'contract' : 'custom';
+      
       onUpdateTemplate({
         ...template,
         name: data.name,
-        type: data.documentType,
-        // Store visual data as JSON in content field
-        content: JSON.stringify(data)
+        type: mappedType,
+        // Store visual data as JSON in htmlContent field
+        htmlContent: JSON.stringify(data)
       });
     }
   };
