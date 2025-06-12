@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -183,6 +182,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
   const [documentName, setDocumentName] = useState('');
   const [documentType, setDocumentType] = useState<'factuur' | 'contract' | 'brief' | 'custom'>('factuur');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const { createTemplate, updateTemplate } = useDocumentTemplates();
   const { toast } = useToast();
@@ -231,27 +231,33 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
       return;
     }
 
+    if (isSaving) {
+      return; // Prevent double saves
+    }
+
+    setIsSaving(true);
+
     try {
+      let savedDocument: DocumentTemplate;
+
       if (editingDocument) {
         // Update existing document
+        console.log('Updating document:', editingDocument.id);
         const updatedDoc = await updateTemplate(editingDocument.id, {
           name: documentName.trim(),
           type: documentType,
           html_content: htmlContent,
           description: `${documentType} document`
         });
+        savedDocument = updatedDoc;
         
         toast({
           title: "Opgeslagen",
           description: `Document "${documentName}" is bijgewerkt.`
         });
-
-        if (onDocumentSaved) {
-          // Type cast to ensure compatibility
-          onDocumentSaved(updatedDoc as any);
-        }
       } else {
         // Create new document
+        console.log('Creating new document');
         const newDocumentData = {
           name: documentName.trim(),
           type: documentType,
@@ -262,27 +268,29 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
         };
         
         const newDoc = await createTemplate(newDocumentData);
+        savedDocument = newDoc;
         
         toast({
           title: "Opgeslagen",
           description: `Nieuw document "${documentName}" is aangemaakt.`
         });
-
-        // Call callback if provided
-        if (onDocumentSaved) {
-          // Type cast to ensure compatibility
-          onDocumentSaved(newDoc as any);
-        }
       }
       
       setHasUnsavedChanges(false);
+
+      // Call callback if provided
+      if (onDocumentSaved && savedDocument) {
+        onDocumentSaved(savedDocument);
+      }
     } catch (error) {
       console.error('Save error:', error);
       toast({
         title: "Fout",
-        description: "Er is een fout opgetreden bij het opslaan.",
+        description: "Er is een fout opgetreden bij het opslaan. Probeer het opnieuw.",
         variant: "destructive"
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -389,9 +397,13 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
           </div>
           
           <div className="flex items-center gap-2">
-            <Button onClick={handleSave} size="sm" disabled={!documentName.trim()}>
+            <Button 
+              onClick={handleSave} 
+              size="sm" 
+              disabled={!documentName.trim() || isSaving}
+            >
               <Save className="h-4 w-4 mr-2" />
-              Opslaan
+              {isSaving ? 'Opslaan...' : 'Opslaan'}
             </Button>
             <Button onClick={handlePDFDownload} variant="outline" size="sm">
               <Download className="h-4 w-4 mr-2" />
