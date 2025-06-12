@@ -11,20 +11,14 @@ import {
   FileText,
   Calendar,
   Euro,
-  MoreVertical,
   Edit,
   Eye,
-  Trash2
+  Trash2,
+  Download
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { useInvoices, Invoice } from '@/hooks/useInvoices';
 import { InvoiceDialog } from './InvoiceDialog';
+import { InvoiceViewDialog } from './InvoiceViewDialog';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 
@@ -55,6 +49,7 @@ export const InvoiceOverview = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+  const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
   
   const { invoices, loading, deleteInvoice } = useInvoices();
 
@@ -73,6 +68,15 @@ export const InvoiceOverview = () => {
     setIsCreateDialogOpen(true);
   };
 
+  const handleView = (invoice: Invoice) => {
+    setViewingInvoice(invoice);
+  };
+
+  const handleDownload = (invoice: Invoice) => {
+    console.log('Downloading invoice:', invoice.invoice_number);
+    // TODO: Implement PDF download functionality
+  };
+
   const handleDelete = async (invoice: Invoice) => {
     if (confirm(`Weet je zeker dat je factuur ${invoice.invoice_number} wilt verwijderen?`)) {
       await deleteInvoice(invoice.id);
@@ -82,6 +86,10 @@ export const InvoiceOverview = () => {
   const handleCloseDialog = () => {
     setIsCreateDialogOpen(false);
     setEditingInvoice(null);
+  };
+
+  const handleCloseViewDialog = () => {
+    setViewingInvoice(null);
   };
 
   return (
@@ -188,31 +196,40 @@ export const InvoiceOverview = () => {
                       </div>
                     </div>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(invoice)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Bewerken
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Eye className="h-4 w-4 mr-2" />
-                          Bekijken
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                          className="text-red-600"
-                          onClick={() => handleDelete(invoice)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Verwijderen
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleView(invoice)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(invoice)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDownload(invoice)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(invoice)}
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -227,6 +244,15 @@ export const InvoiceOverview = () => {
         onClose={handleCloseDialog}
         invoice={editingInvoice}
       />
+
+      {/* View Dialog */}
+      {viewingInvoice && (
+        <InvoiceViewDialog
+          isOpen={!!viewingInvoice}
+          onClose={handleCloseViewDialog}
+          invoice={viewingInvoice}
+        />
+      )}
     </div>
   );
 };
