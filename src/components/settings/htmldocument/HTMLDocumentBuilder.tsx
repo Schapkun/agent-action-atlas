@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { FileText, Download, Save, Eye, Code } from 'lucide-react';
+import { FileText, Eye, Code } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export const HTMLDocumentBuilder = () => {
@@ -183,23 +183,11 @@ export const HTMLDocumentBuilder = () => {
   ];
 
   return (
-    <div className="h-full flex flex-col space-y-3">
-      {/* Compact Header */}
-      <div className="flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4" />
-          <h3 className="text-lg font-semibold">HTML Document Builder</h3>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleSaveTemplate}>
-            <Save className="h-3 w-3 mr-1" />
-            Opslaan
-          </Button>
-          <Button size="sm" onClick={handleExportHTML}>
-            <Download className="h-3 w-3 mr-1" />
-            Export HTML
-          </Button>
-        </div>
+    <div className="h-full flex flex-col">
+      {/* Simple Header without buttons */}
+      <div className="flex items-center gap-2 mb-3 flex-shrink-0">
+        <FileText className="h-4 w-4" />
+        <h3 className="text-lg font-semibold">HTML Document Builder</h3>
       </div>
 
       <div className="flex-1 grid grid-cols-12 gap-3 min-h-0">
