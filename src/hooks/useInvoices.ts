@@ -122,14 +122,33 @@ export const useInvoices = () => {
     try {
       const invoiceNumber = await generateInvoiceNumber();
       
+      // Ensure required fields are present and properly formatted
+      const insertData = {
+        invoice_number: invoiceNumber,
+        organization_id: selectedOrganization?.id || '',
+        workspace_id: selectedWorkspace?.id || null,
+        client_name: invoiceData.client_name || 'Nieuwe Klant',
+        client_email: invoiceData.client_email || null,
+        client_address: invoiceData.client_address || null,
+        client_postal_code: invoiceData.client_postal_code || null,
+        client_city: invoiceData.client_city || null,
+        client_country: invoiceData.client_country || 'Nederland',
+        invoice_date: invoiceData.invoice_date || new Date().toISOString().split('T')[0],
+        due_date: invoiceData.due_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        payment_terms: invoiceData.payment_terms || 30,
+        status: invoiceData.status || 'draft',
+        subtotal: invoiceData.subtotal || 0,
+        vat_percentage: invoiceData.vat_percentage || 21,
+        vat_amount: invoiceData.vat_amount || 0,
+        total_amount: invoiceData.total_amount || 0,
+        notes: invoiceData.notes || null,
+        template_id: invoiceData.template_id || null,
+        created_by: invoiceData.created_by || null
+      };
+
       const { data, error } = await supabase
         .from('invoices')
-        .insert({
-          ...invoiceData,
-          invoice_number: invoiceNumber,
-          organization_id: selectedOrganization?.id || '',
-          workspace_id: selectedWorkspace?.id || null,
-        })
+        .insert(insertData)
         .select()
         .single();
 
