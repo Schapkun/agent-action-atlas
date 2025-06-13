@@ -14,6 +14,7 @@ interface InvoiceEmailRequest {
     subject: string;
     message: string;
   };
+  email_type?: 'resend' | 'reminder';
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -45,7 +46,7 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { invoice_id, email_template }: InvoiceEmailRequest = await req.json();
+    const { invoice_id, email_template, email_type = 'resend' }: InvoiceEmailRequest = await req.json();
 
     // Fetch invoice details
     const { data: invoice, error: invoiceError } = await supabase
@@ -88,11 +89,38 @@ const handler = async (req: Request): Promise<Response> => {
     const finalSubject = replaceVariables(email_template.subject);
     const finalMessage = replaceVariables(email_template.message);
 
+    // Generate PDF content for attachment
+    const generateInvoicePDF = () => {
+      // Simple text-based PDF content (in a real implementation you'd use a proper PDF library)
+      const pdfContent = `
+FACTUUR ${invoice.invoice_number}
+
+Factuurdatum: ${new Date(invoice.invoice_date).toLocaleDateString('nl-NL')}
+Vervaldatum: ${new Date(invoice.due_date).toLocaleDateString('nl-NL')}
+
+FACTUURADRES:
+${invoice.client_name}
+${invoice.client_address || ''}
+${invoice.client_postal_code ? `${invoice.client_postal_code} ${invoice.client_city}` : ''}
+${invoice.client_country || ''}
+
+BEDRAGEN:
+Subtotaal: €${invoice.subtotal.toFixed(2)}
+BTW (${invoice.vat_percentage}%): €${invoice.vat_amount.toFixed(2)}
+Totaal: €${invoice.total_amount.toFixed(2)}
+
+${invoice.notes ? `\nOpmerkingen:\n${invoice.notes}` : ''}
+      `.trim();
+      
+      return Buffer.from(pdfContent, 'utf-8');
+    };
+
     const resend = new Resend(resendApiKey);
 
     console.log("Sending invoice email to:", invoice.client_email);
 
-    const emailResponse = await resend.emails.send({
+    // Prepare email with PDF attachment
+    const emailData = {
       from: "Facturen <facturen@meester.app>",
       to: [invoice.client_email],
       subject: finalSubject,
@@ -120,18 +148,28 @@ const handler = async (req: Request): Promise<Response> => {
           </p>
         </div>
       `,
-    });
+      attachments: [
+        {
+          filename: `factuur-${invoice.invoice_number}.txt`,
+          content: generateInvoicePDF(),
+        }
+      ]
+    };
+
+    const emailResponse = await resend.emails.send(emailData);
 
     console.log("Email sent successfully:", emailResponse);
 
-    // Update invoice status to sent
-    const { error: updateError } = await supabase
-      .from('invoices')
-      .update({ status: 'sent', updated_at: new Date().toISOString() })
-      .eq('id', invoice_id);
+    // Update invoice status to sent only for regular resend, not for reminders
+    if (email_type === 'resend') {
+      const { error: updateError } = await supabase
+        .from('invoices')
+        .update({ status: 'sent', updated_at: new Date().toISOString() })
+        .eq('id', invoice_id);
 
-    if (updateError) {
-      console.error('Error updating invoice status:', updateError);
+      if (updateError) {
+        console.error('Error updating invoice status:', updateError);
+      }
     }
 
     return new Response(JSON.stringify({ success: true, emailResponse }), {

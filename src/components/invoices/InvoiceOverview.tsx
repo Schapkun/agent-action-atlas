@@ -14,7 +14,8 @@ import {
   Eye,
   Trash2,
   Download,
-  Mail
+  Mail,
+  Clock
 } from 'lucide-react';
 import { useInvoices, Invoice } from '@/hooks/useInvoices';
 import { InvoiceDialog } from './InvoiceDialog';
@@ -145,10 +146,10 @@ export const InvoiceOverview = () => {
       console.log('Opnieuw versturen factuur:', invoice.invoice_number);
       
       const emailTemplate = {
-        subject: "Factuur {invoice_number} - Herinnering",
+        subject: "Factuur {invoice_number}",
         message: `Beste {client_name},
 
-Hierbij ontvangt u opnieuw factuur {invoice_number} van {invoice_date}.
+Hierbij ontvangt u factuur {invoice_number} van {invoice_date}.
 
 Het totaalbedrag van €{total_amount} dient betaald te worden voor {due_date}.
 
@@ -159,7 +160,8 @@ Uw administratie`
       const { data, error } = await supabase.functions.invoke('send-invoice-email', {
         body: {
           invoice_id: invoice.id,
-          email_template: emailTemplate
+          email_template: emailTemplate,
+          email_type: 'resend'
         }
       });
 
@@ -174,6 +176,57 @@ Uw administratie`
       toast({
         title: "Fout",
         description: "Er is een fout opgetreden bij het opnieuw versturen van de factuur.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleReminder = async (invoice: Invoice) => {
+    if (!invoice.client_email) {
+      toast({
+        title: "Fout",
+        description: "Geen email adres gevonden voor deze klant.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      console.log('Herinnering versturen factuur:', invoice.invoice_number);
+      
+      const emailTemplate = {
+        subject: "Herinnering factuur {invoice_number}",
+        message: `Beste {client_name},
+
+Dit is een vriendelijke herinnering voor factuur {invoice_number} van {invoice_date}.
+
+Het totaalbedrag van €{total_amount} dient betaald te worden voor {due_date}.
+
+Mocht u deze factuur al hebben betaald, dan kunt u deze herinnering negeren.
+
+Met vriendelijke groet,
+Uw administratie`
+      };
+
+      const { data, error } = await supabase.functions.invoke('send-invoice-email', {
+        body: {
+          invoice_id: invoice.id,
+          email_template: emailTemplate,
+          email_type: 'reminder'
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Herinnering Verzonden",
+        description: `Herinnering voor factuur ${invoice.invoice_number} is verzonden naar ${invoice.client_email}.`
+      });
+    } catch (error) {
+      console.error('Error sending reminder:', error);
+      toast({
+        title: "Fout",
+        description: "Er is een fout opgetreden bij het versturen van de herinnering.",
         variant: "destructive"
       });
     }
@@ -329,8 +382,19 @@ Uw administratie`
                         onClick={() => handleResend(invoice)}
                         className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
                         disabled={!invoice.client_email}
+                        title="Factuur opnieuw versturen"
                       >
                         <Mail className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleReminder(invoice)}
+                        className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
+                        disabled={!invoice.client_email}
+                        title="Herinnering versturen"
+                      >
+                        <Clock className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
