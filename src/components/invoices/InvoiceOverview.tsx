@@ -13,7 +13,8 @@ import {
   Edit,
   Eye,
   Trash2,
-  Download
+  Download,
+  Mail
 } from 'lucide-react';
 import { useInvoices, Invoice } from '@/hooks/useInvoices';
 import { InvoiceDialog } from './InvoiceDialog';
@@ -21,6 +22,7 @@ import { InvoiceViewDialog } from './InvoiceViewDialog';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -124,6 +126,54 @@ export const InvoiceOverview = () => {
       toast({
         title: "Fout",
         description: "Er is een fout opgetreden bij het downloaden van de PDF.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleResend = async (invoice: Invoice) => {
+    if (!invoice.client_email) {
+      toast({
+        title: "Fout",
+        description: "Geen email adres gevonden voor deze klant.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      console.log('Opnieuw versturen factuur:', invoice.invoice_number);
+      
+      const emailTemplate = {
+        subject: "Factuur {invoice_number} - Herinnering",
+        message: `Beste {client_name},
+
+Hierbij ontvangt u opnieuw factuur {invoice_number} van {invoice_date}.
+
+Het totaalbedrag van €{total_amount} dient betaald te worden voor {due_date}.
+
+Met vriendelijke groet,
+Uw administratie`
+      };
+
+      const { data, error } = await supabase.functions.invoke('send-invoice-email', {
+        body: {
+          invoice_id: invoice.id,
+          email_template: emailTemplate
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email Verzonden",
+        description: `Factuur ${invoice.invoice_number} is opnieuw verzonden naar ${invoice.client_email}.`
+      });
+    } catch (error) {
+      console.error('Error resending invoice:', error);
+      toast({
+        title: "Fout",
+        description: "Er is een fout opgetreden bij het opnieuw versturen van de factuur.",
         variant: "destructive"
       });
     }
@@ -272,6 +322,15 @@ export const InvoiceOverview = () => {
                         className="h-8 w-8 p-0"
                       >
                         <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleResend(invoice)}
+                        className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
+                        disabled={!invoice.client_email}
+                      >
+                        <Mail className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
