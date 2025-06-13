@@ -15,8 +15,15 @@ import {
   Trash2,
   Download,
   Mail,
-  Clock
+  Clock,
+  MoreVertical
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useInvoices, Invoice } from '@/hooks/useInvoices';
 import { InvoiceDialog } from './InvoiceDialog';
 import { InvoiceViewDialog } from './InvoiceViewDialog';
@@ -363,47 +370,55 @@ Uw administratie`
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEdit(invoice)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
                         onClick={() => handleDownload(invoice)}
                         className="h-8 w-8 p-0"
                       >
                         <Download className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleResend(invoice)}
-                        className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
-                        disabled={!invoice.client_email}
-                        title="Factuur opnieuw versturen"
-                      >
-                        <Mail className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleReminder(invoice)}
-                        className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
-                        disabled={!invoice.client_email}
-                        title="Herinnering versturen"
-                      >
-                        <Clock className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(invoice)}
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleResend(invoice)}
+                            disabled={!invoice.client_email}
+                            className="flex items-center gap-2"
+                          >
+                            <Mail className="h-4 w-4" />
+                            Email opnieuw versturen
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleReminder(invoice)}
+                            disabled={!invoice.client_email}
+                            className="flex items-center gap-2"
+                          >
+                            <Clock className="h-4 w-4" />
+                            Herinnering versturen
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleEdit(invoice)}
+                            className="flex items-center gap-2"
+                          >
+                            <Edit className="h-4 w-4" />
+                            Bewerken
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(invoice)}
+                            className="flex items-center gap-2 text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Verwijderen
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </div>
