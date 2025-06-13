@@ -217,7 +217,7 @@ export class InvoicePDFGenerator {
   }
 
   static async generatePreviewDataURL(data: InvoicePDFData): Promise<string> {
-    console.log('🔍 Starting improved preview generation for invoice:', data.invoice.invoice_number);
+    console.log('🔍 Starting size-aware PDF preview generation for invoice:', data.invoice.invoice_number);
     
     // Check canvas support first
     if (!this.checkCanvasSupport()) {
@@ -226,17 +226,42 @@ export class InvoicePDFGenerator {
     }
     
     try {
-      console.log('🖼️ Generating optimized canvas preview...');
-      return await this.generateOptimizedCanvasPreview(data);
+      console.log('📝 Attempting to generate full PDF preview...');
       
+      // First try to generate full PDF preview
+      const pdfBlob = await this.generatePDF(data, {
+        download: false,
+        returnBlob: true
+      });
+      
+      if (pdfBlob) {
+        const dataUrl = await this.blobToDataURL(pdfBlob);
+        const sizeInBytes = dataUrl.length * 0.75; // Approximate size
+        console.log('📊 PDF size:', Math.round(sizeInBytes / 1024), 'KB');
+        
+        if (sizeInBytes <= this.MAX_DATA_URI_SIZE) {
+          console.log('✅ PDF preview size acceptable, returning PDF data URI');
+          return dataUrl;
+        } else {
+          console.log('⚠️ PDF too large for preview (', Math.round(sizeInBytes / 1024), 'KB ), falling back to canvas preview');
+        }
+      }
+    } catch (error) {
+      console.log('⚠️ PDF generation failed, falling back to canvas preview:', error.message);
+    }
+    
+    // Fallback to canvas preview
+    try {
+      console.log('🖼️ Generating canvas preview...');
+      return await this.generateCanvasPreview(data);
     } catch (error) {
       console.error('❌ Canvas preview failed:', error);
       throw new Error(`Preview generation failed: ${error.message}`);
     }
   }
 
-  private static async generateOptimizedCanvasPreview(data: InvoicePDFData): Promise<string> {
-    console.log('🎨 Creating optimized canvas preview...');
+  private static async generateCanvasPreview(data: InvoicePDFData): Promise<string> {
+    console.log('🎨 Creating canvas preview...');
     
     const htmlTemplate = this.getMinimalTemplate();
     const processedHtml = this.replaceVariables(htmlTemplate, data);
@@ -246,7 +271,7 @@ export class InvoicePDFGenerator {
     try {
       container = await this.createHTMLContainer(processedHtml, true);
       
-      // Use minimal canvas configuration to avoid DOMException
+      // Use optimized canvas configuration
       const canvas = await html2canvas(container, {
         scale: this.PREVIEW_SCALE,
         backgroundColor: '#ffffff',
@@ -256,8 +281,6 @@ export class InvoicePDFGenerator {
         useCORS: false,
         allowTaint: false,
         removeContainer: false,
-        async: true,
-        foreignObjectRendering: false,
         imageTimeout: 0
       });
       
@@ -266,7 +289,7 @@ export class InvoicePDFGenerator {
       // Generate optimized image data
       const canvasDataUri = canvas.toDataURL('image/jpeg', this.JPEG_QUALITY);
       const sizeInBytes = canvasDataUri.length * 0.75;
-      console.log('📊 Preview size:', Math.round(sizeInBytes / 1024), 'KB');
+      console.log('📊 Canvas preview size:', Math.round(sizeInBytes / 1024), 'KB');
       
       return canvasDataUri;
       
@@ -279,6 +302,15 @@ export class InvoicePDFGenerator {
         console.log('✅ Container cleaned up');
       }
     }
+  }
+
+  private static async blobToDataURL(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   }
 
   // Unified template with consistent 794px width
