@@ -1,5 +1,6 @@
 
-import html2pdf from 'html2pdf.js';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { Invoice, InvoiceLine } from '@/hooks/useInvoices';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 
@@ -29,14 +30,14 @@ export class InvoicePDFGenerator {
     console.log('Replacing variables for invoice:', invoice.invoice_number);
     console.log('Invoice lines count:', lines.length);
     
-    // Generate invoice lines HTML
+    // Generate invoice lines HTML with table-based layout for PDF compatibility
     const invoiceLinesHtml = lines.map(line => `
-      <tr>
-        <td style="padding: 8px; border: 1px solid #ddd;">${line.description}</td>
-        <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${line.quantity}</td>
-        <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">€${line.unit_price.toFixed(2)}</td>
-        <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${line.vat_rate}%</td>
-        <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">€${line.line_total.toFixed(2)}</td>
+      <tr style="border-bottom: 1px solid #ddd;">
+        <td style="padding: 12px; border-right: 1px solid #ddd; text-align: left;">${line.description}</td>
+        <td style="padding: 12px; border-right: 1px solid #ddd; text-align: center;">${line.quantity}</td>
+        <td style="padding: 12px; border-right: 1px solid #ddd; text-align: right;">€${line.unit_price.toFixed(2)}</td>
+        <td style="padding: 12px; border-right: 1px solid #ddd; text-align: center;">${line.vat_rate}%</td>
+        <td style="padding: 12px; text-align: right;">€${line.line_total.toFixed(2)}</td>
       </tr>
     `).join('');
 
@@ -72,6 +73,25 @@ export class InvoicePDFGenerator {
     return processedHtml;
   }
 
+  private static async createHTMLContainer(htmlContent: string): Promise<HTMLElement> {
+    // Create a temporary container for rendering
+    const container = document.createElement('div');
+    container.innerHTML = htmlContent;
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.top = '-9999px';
+    container.style.width = '794px'; // A4 width in pixels at 96 DPI
+    container.style.backgroundColor = 'white';
+    container.style.fontFamily = 'Arial, sans-serif';
+    
+    document.body.appendChild(container);
+    
+    // Wait a bit for fonts and styles to load
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    return container;
+  }
+
   static async generatePDF(data: InvoicePDFData, options: {
     format?: 'a4' | 'letter';
     orientation?: 'portrait' | 'landscape';
@@ -96,43 +116,46 @@ export class InvoicePDFGenerator {
       
       // Replace variables with actual data
       const processedHtml = this.replaceVariables(htmlTemplate, data);
-
-      // Configure html2pdf options
-      const pdfOptions = {
-        margin: 10,
-        filename: filename,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          allowTaint: true,
-          backgroundColor: '#ffffff'
-        },
-        jsPDF: { 
-          unit: 'mm', 
-          format: format,
-          orientation: orientation
-        }
-      };
-
-      console.log('PDF options configured:', pdfOptions);
+      
+      // Create HTML container for rendering
+      const container = await this.createHTMLContainer(processedHtml);
+      
+      console.log('Rendering HTML to canvas...');
+      
+      // Generate canvas from HTML
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 794,
+        height: 1123, // A4 height in pixels
+      });
+      
+      // Remove the temporary container
+      document.body.removeChild(container);
+      
+      console.log('Canvas generated, creating PDF...');
+      
+      // Create PDF
+      const pdf = new jsPDF({
+        orientation: orientation,
+        unit: 'px',
+        format: [794, 1123] // A4 in pixels
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', 0, 0, 794, 1123);
+      
+      console.log('PDF created successfully');
 
       if (returnBlob) {
-        console.log('Generating PDF blob...');
-        const pdfBlob = await html2pdf()
-          .set(pdfOptions)
-          .from(processedHtml)
-          .output('blob');
-        console.log('PDF blob generated successfully');
+        console.log('Returning PDF as blob...');
+        const pdfBlob = pdf.output('blob');
         return pdfBlob;
       } else if (download) {
         console.log('Downloading PDF...');
-        await html2pdf()
-          .set(pdfOptions)
-          .from(processedHtml)
-          .save();
-        console.log('PDF downloaded successfully');
+        pdf.save(filename);
       }
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -146,23 +169,36 @@ export class InvoicePDFGenerator {
     try {
       const htmlTemplate = data.template?.html_content || this.getDefaultTemplate();
       const processedHtml = this.replaceVariables(htmlTemplate, data);
-
-      console.log('Generating preview PDF...');
-      const dataURL = await html2pdf()
-        .set({
-          margin: 10,
-          image: { type: 'jpeg', quality: 0.8 },
-          html2canvas: { 
-            scale: 1, 
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: '#ffffff'
-          },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        })
-        .from(processedHtml)
-        .output('datauristring');
       
+      // Create HTML container for rendering
+      const container = await this.createHTMLContainer(processedHtml);
+      
+      console.log('Rendering preview canvas...');
+      
+      // Generate canvas from HTML with lower quality for preview
+      const canvas = await html2canvas(container, {
+        scale: 1,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 794,
+        height: 1123,
+      });
+      
+      // Remove the temporary container
+      document.body.removeChild(container);
+      
+      // Create PDF and return as data URL
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [794, 1123]
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', 0, 0, 794, 1123);
+      
+      const dataURL = pdf.output('datauristring');
       console.log('Preview data URL generated successfully');
       return dataURL;
     } catch (error) {
@@ -181,27 +217,38 @@ export class InvoicePDFGenerator {
     <style>
         body { 
             font-family: Arial, sans-serif; 
-            margin: 20px; 
+            margin: 0; 
+            padding: 20px;
             background: white; 
             color: #333;
             line-height: 1.4;
+            width: 754px;
+            min-height: 1063px;
         }
         .header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: flex-start; 
+            width: 100%;
             margin-bottom: 40px; 
             border-bottom: 2px solid #3b82f6; 
             padding-bottom: 20px; 
         }
-        .company-info { flex: 1; }
+        .header table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .company-info { 
+            vertical-align: top;
+            text-align: left;
+        }
         .company-info h1 { 
             margin: 0 0 10px 0; 
             color: #3b82f6; 
             font-size: 24px; 
         }
         .company-info p { margin: 2px 0; }
-        .invoice-info { text-align: right; }
+        .invoice-info { 
+            vertical-align: top;
+            text-align: right; 
+        }
         .invoice-number { 
             font-size: 24px; 
             font-weight: bold; 
@@ -209,10 +256,17 @@ export class InvoicePDFGenerator {
             margin-bottom: 10px;
         }
         .customer-billing { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 40px; 
+            width: 100%;
             margin-bottom: 30px; 
+        }
+        .customer-billing table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .customer-billing td {
+            vertical-align: top;
+            width: 50%;
+            padding-right: 20px;
         }
         .section-title { 
             font-weight: bold; 
@@ -238,19 +292,25 @@ export class InvoicePDFGenerator {
         .invoice-table td { font-size: 11px; }
         .totals { 
             margin-top: 20px; 
-            text-align: right; 
-            max-width: 300px;
+            width: 100%;
+        }
+        .totals table {
+            width: 300px;
             margin-left: auto;
+            border-collapse: collapse;
         }
-        .total-row { 
-            display: flex; 
-            justify-content: space-between; 
-            margin-bottom: 8px; 
+        .totals td {
             padding: 4px 0;
+            text-align: right;
         }
-        .total-label { font-weight: normal; }
-        .total-amount { font-weight: bold; }
-        .final-total { 
+        .totals .label {
+            padding-right: 20px;
+            font-weight: normal;
+        }
+        .totals .amount {
+            font-weight: bold;
+        }
+        .final-total td { 
             font-size: 16px; 
             border-top: 2px solid #3b82f6; 
             padding-top: 8px; 
@@ -268,31 +328,39 @@ export class InvoicePDFGenerator {
 </head>
 <body>
     <div class="header">
-        <div class="company-info">
-            <h1>{{COMPANY_NAME}}</h1>
-            <p>{{COMPANY_ADDRESS}}</p>
-            <p>{{COMPANY_POSTAL_CODE}} {{COMPANY_CITY}}</p>
-            <p>Tel: {{COMPANY_PHONE}}</p>
-            <p>Email: {{COMPANY_EMAIL}}</p>
-        </div>
-        <div class="invoice-info">
-            <div class="invoice-number">Factuur {{INVOICE_NUMBER}}</div>
-            <p><strong>Factuurdatum:</strong> {{INVOICE_DATE}}</p>
-            <p><strong>Vervaldatum:</strong> {{DUE_DATE}}</p>
-        </div>
+        <table>
+            <tr>
+                <td class="company-info">
+                    <h1>{{COMPANY_NAME}}</h1>
+                    <p>{{COMPANY_ADDRESS}}</p>
+                    <p>{{COMPANY_POSTAL_CODE}} {{COMPANY_CITY}}</p>
+                    <p>Tel: {{COMPANY_PHONE}}</p>
+                    <p>Email: {{COMPANY_EMAIL}}</p>
+                </td>
+                <td class="invoice-info">
+                    <div class="invoice-number">Factuur {{INVOICE_NUMBER}}</div>
+                    <p><strong>Factuurdatum:</strong> {{INVOICE_DATE}}</p>
+                    <p><strong>Vervaldatum:</strong> {{DUE_DATE}}</p>
+                </td>
+            </tr>
+        </table>
     </div>
 
     <div class="customer-billing">
-        <div>
-            <div class="section-title">Factuuradres:</div>
-            <div>{{CUSTOMER_NAME}}</div>
-            <div>{{CUSTOMER_ADDRESS}}</div>
-            <div>{{CUSTOMER_POSTAL_CODE}} {{CUSTOMER_CITY}}</div>
-        </div>
-        <div>
-            <div class="section-title">Betreft:</div>
-            <div>{{INVOICE_SUBJECT}}</div>
-        </div>
+        <table>
+            <tr>
+                <td>
+                    <div class="section-title">Factuuradres:</div>
+                    <div>{{CUSTOMER_NAME}}</div>
+                    <div>{{CUSTOMER_ADDRESS}}</div>
+                    <div>{{CUSTOMER_POSTAL_CODE}} {{CUSTOMER_CITY}}</div>
+                </td>
+                <td>
+                    <div class="section-title">Betreft:</div>
+                    <div>{{INVOICE_SUBJECT}}</div>
+                </td>
+            </tr>
+        </table>
     </div>
 
     <table class="invoice-table">
@@ -311,18 +379,20 @@ export class InvoicePDFGenerator {
     </table>
 
     <div class="totals">
-        <div class="total-row">
-            <div class="total-label">Subtotaal:</div>
-            <div class="total-amount">€ {{SUBTOTAL}}</div>
-        </div>
-        <div class="total-row">
-            <div class="total-label">BTW ({{VAT_PERCENTAGE}}%):</div>
-            <div class="total-amount">€ {{VAT_AMOUNT}}</div>
-        </div>
-        <div class="total-row final-total">
-            <div class="total-label">Totaal:</div>
-            <div class="total-amount">€ {{TOTAL_AMOUNT}}</div>
-        </div>
+        <table>
+            <tr>
+                <td class="label">Subtotaal:</td>
+                <td class="amount">€ {{SUBTOTAL}}</td>
+            </tr>
+            <tr>
+                <td class="label">BTW ({{VAT_PERCENTAGE}}%):</td>
+                <td class="amount">€ {{VAT_AMOUNT}}</td>
+            </tr>
+            <tr class="final-total">
+                <td class="label">Totaal:</td>
+                <td class="amount">€ {{TOTAL_AMOUNT}}</td>
+            </tr>
+        </table>
     </div>
 
     <div class="footer">

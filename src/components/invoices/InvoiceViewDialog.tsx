@@ -46,11 +46,20 @@ export const InvoiceViewDialog = ({ isOpen, onClose, invoice }: InvoiceViewDialo
   const [isPDFPreviewOpen, setIsPDFPreviewOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
   
-  const { lines } = useInvoiceLines(invoice.id);
-  const { defaultTemplate } = useInvoiceTemplates();
+  const { lines, loading: linesLoading } = useInvoiceLines(invoice.id);
+  const { defaultTemplate, loading: templateLoading } = useInvoiceTemplates();
   const { toast } = useToast();
 
   const handleQuickDownload = async () => {
+    if (linesLoading || templateLoading) {
+      toast({
+        title: "Wachten",
+        description: "Data wordt nog geladen...",
+        variant: "destructive"
+      });
+      return;
+    }
+
     console.log('Quick download started');
     console.log('Template available:', !!defaultTemplate);
     console.log('Lines count:', lines.length);
@@ -75,13 +84,16 @@ export const InvoiceViewDialog = ({ isOpen, onClose, invoice }: InvoiceViewDialo
         }
       };
 
-      await InvoicePDFGenerator.generatePDF(pdfData);
+      await InvoicePDFGenerator.generatePDF(pdfData, {
+        filename: `factuur-${invoice.invoice_number}.pdf`,
+        download: true
+      });
       
       toast({
         title: "PDF Download",
         description: `Factuur ${invoice.invoice_number} is gedownload`
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('PDF download error:', error);
       toast({
         title: "Fout",
@@ -92,6 +104,8 @@ export const InvoiceViewDialog = ({ isOpen, onClose, invoice }: InvoiceViewDialo
       setDownloading(false);
     }
   };
+
+  const dataReady = !linesLoading && !templateLoading;
 
   return (
     <>
@@ -120,13 +134,14 @@ export const InvoiceViewDialog = ({ isOpen, onClose, invoice }: InvoiceViewDialo
                   }}
                   variant="outline"
                   className="flex items-center gap-2"
+                  disabled={!dataReady}
                 >
                   <Eye className="h-4 w-4" />
                   PDF Preview
                 </Button>
                 <Button
                   onClick={handleQuickDownload}
-                  disabled={downloading}
+                  disabled={downloading || !dataReady}
                   className="flex items-center gap-2"
                 >
                   {downloading ? (

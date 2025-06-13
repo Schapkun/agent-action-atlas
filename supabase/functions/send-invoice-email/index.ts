@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
@@ -115,24 +114,24 @@ const handler = async (req: Request): Promise<Response> => {
     const finalSubject = replaceVariables(email_template.subject);
     const finalMessage = replaceVariables(email_template.message);
 
-    // Generate proper PDF content using template
+    // Generate proper PDF content using improved template
     const generateInvoicePDF = () => {
       console.log("Generating PDF content for invoice:", invoice.invoice_number);
       
       const htmlTemplate = template?.html_content || getDefaultInvoiceTemplate();
       
-      // Generate invoice lines HTML
+      // Generate invoice lines HTML with table-based layout for better PDF compatibility
       const invoiceLinesHtml = (invoiceLines || []).map(line => `
-        <tr>
-          <td>${line.description}</td>
-          <td>${line.quantity}</td>
-          <td>€${line.unit_price.toFixed(2)}</td>
-          <td>${line.vat_rate}%</td>
-          <td>€${line.line_total.toFixed(2)}</td>
+        <tr style="border-bottom: 1px solid #ddd;">
+          <td style="padding: 12px; border-right: 1px solid #ddd; text-align: left;">${line.description}</td>
+          <td style="padding: 12px; border-right: 1px solid #ddd; text-align: center;">${line.quantity}</td>
+          <td style="padding: 12px; border-right: 1px solid #ddd; text-align: right;">€${line.unit_price.toFixed(2)}</td>
+          <td style="padding: 12px; border-right: 1px solid #ddd; text-align: center;">${line.vat_rate}%</td>
+          <td style="padding: 12px; text-align: right;">€${line.line_total.toFixed(2)}</td>
         </tr>
       `).join('');
 
-      // Replace variables in template
+      // Replace variables in template with improved styling
       const processedHtml = htmlTemplate
         .replace(/{{COMPANY_NAME}}/g, 'Uw Bedrijf')
         .replace(/{{COMPANY_ADDRESS}}/g, 'Bedrijfsadres')
@@ -163,7 +162,7 @@ const handler = async (req: Request): Promise<Response> => {
       return processedHtml;
     };
 
-    // Helper function for default template
+    // Helper function for default template with improved PDF-compatible styling
     const getDefaultInvoiceTemplate = () => {
       return `<!DOCTYPE html>
 <html lang="nl">
@@ -172,51 +171,152 @@ const handler = async (req: Request): Promise<Response> => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Factuur</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: white; line-height: 1.4; }
-        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 2px solid #3b82f6; padding-bottom: 20px; }
-        .company-info { flex: 1; }
-        .invoice-info { text-align: right; }
-        .invoice-number { font-size: 24px; font-weight: bold; color: #3b82f6; }
-        .customer-billing { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px; }
-        .section-title { font-weight: bold; margin-bottom: 10px; color: #374151; }
-        .invoice-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        .invoice-table th, .invoice-table td { border: 1px solid #d1d5db; padding: 12px; text-align: left; }
-        .invoice-table th { background-color: #f3f4f6; font-weight: bold; }
-        .totals { margin-top: 20px; text-align: right; }
-        .total-row { display: flex; justify-content: flex-end; margin-bottom: 8px; }
-        .total-label { width: 150px; text-align: right; margin-right: 20px; }
-        .total-amount { width: 100px; text-align: right; font-weight: bold; }
-        .final-total { font-size: 18px; border-top: 2px solid #3b82f6; padding-top: 8px; }
-        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; }
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px;
+            background: white; 
+            color: #333;
+            line-height: 1.4;
+            width: 754px;
+            min-height: 1063px;
+        }
+        .header { 
+            width: 100%;
+            margin-bottom: 40px; 
+            border-bottom: 2px solid #3b82f6; 
+            padding-bottom: 20px; 
+        }
+        .header table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .company-info { 
+            vertical-align: top;
+            text-align: left;
+        }
+        .company-info h1 { 
+            margin: 0 0 10px 0; 
+            color: #3b82f6; 
+            font-size: 24px; 
+        }
+        .company-info p { margin: 2px 0; }
+        .invoice-info { 
+            vertical-align: top;
+            text-align: right; 
+        }
+        .invoice-number { 
+            font-size: 24px; 
+            font-weight: bold; 
+            color: #3b82f6; 
+            margin-bottom: 10px;
+        }
+        .customer-billing { 
+            width: 100%;
+            margin-bottom: 30px; 
+        }
+        .customer-billing table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .customer-billing td {
+            vertical-align: top;
+            width: 50%;
+            padding-right: 20px;
+        }
+        .section-title { 
+            font-weight: bold; 
+            margin-bottom: 10px; 
+            color: #374151; 
+            font-size: 14px;
+        }
+        .invoice-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 20px 0; 
+        }
+        .invoice-table th, .invoice-table td { 
+            border: 1px solid #d1d5db; 
+            padding: 12px; 
+            text-align: left; 
+        }
+        .invoice-table th { 
+            background-color: #f3f4f6; 
+            font-weight: bold; 
+            font-size: 12px;
+        }
+        .invoice-table td { font-size: 11px; }
+        .totals { 
+            margin-top: 20px; 
+            width: 100%;
+        }
+        .totals table {
+            width: 300px;
+            margin-left: auto;
+            border-collapse: collapse;
+        }
+        .totals td {
+            padding: 4px 0;
+            text-align: right;
+        }
+        .totals .label {
+            padding-right: 20px;
+            font-weight: normal;
+        }
+        .totals .amount {
+            font-weight: bold;
+        }
+        .final-total td { 
+            font-size: 16px; 
+            border-top: 2px solid #3b82f6; 
+            padding-top: 8px; 
+            font-weight: bold;
+        }
+        .footer { 
+            margin-top: 40px; 
+            padding-top: 20px; 
+            border-top: 1px solid #e5e7eb; 
+            font-size: 11px; 
+            color: #6b7280; 
+        }
+        .footer p { margin: 4px 0; }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="company-info">
-            <h1>{{COMPANY_NAME}}</h1>
-            <p>{{COMPANY_ADDRESS}}</p>
-            <p>{{COMPANY_POSTAL_CODE}} {{COMPANY_CITY}}</p>
-            <p>Tel: {{COMPANY_PHONE}}</p>
-            <p>Email: {{COMPANY_EMAIL}}</p>
-        </div>
-        <div class="invoice-info">
-            <div class="invoice-number">Factuur {{INVOICE_NUMBER}}</div>
-            <p><strong>Factuurdatum:</strong> {{INVOICE_DATE}}</p>
-            <p><strong>Vervaldatum:</strong> {{DUE_DATE}}</p>
-        </div>
+        <table>
+            <tr>
+                <td class="company-info">
+                    <h1>{{COMPANY_NAME}}</h1>
+                    <p>{{COMPANY_ADDRESS}}</p>
+                    <p>{{COMPANY_POSTAL_CODE}} {{COMPANY_CITY}}</p>
+                    <p>Tel: {{COMPANY_PHONE}}</p>
+                    <p>Email: {{COMPANY_EMAIL}}</p>
+                </td>
+                <td class="invoice-info">
+                    <div class="invoice-number">Factuur {{INVOICE_NUMBER}}</div>
+                    <p><strong>Factuurdatum:</strong> {{INVOICE_DATE}}</p>
+                    <p><strong>Vervaldatum:</strong> {{DUE_DATE}}</p>
+                </td>
+            </tr>
+        </table>
     </div>
 
     <div class="customer-billing">
-        <div>
-            <div class="section-title">Factuuradres:</div>
-            <div>{{CUSTOMER_NAME}}</div>
-            <div>{{CUSTOMER_ADDRESS}}</div>
-            <div>{{CUSTOMER_POSTAL_CODE}} {{CUSTOMER_CITY}}</div>
-        </div>
-        <div>
-            <div class="section-title">Betreft:</div>
-            <div>{{INVOICE_SUBJECT}}</div>
-        </div>
+        <table>
+            <tr>
+                <td>
+                    <div class="section-title">Factuuradres:</div>
+                    <div>{{CUSTOMER_NAME}}</div>
+                    <div>{{CUSTOMER_ADDRESS}}</div>
+                    <div>{{CUSTOMER_POSTAL_CODE}} {{CUSTOMER_CITY}}</div>
+                </td>
+                <td>
+                    <div class="section-title">Betreft:</div>
+                    <div>{{INVOICE_SUBJECT}}</div>
+                </td>
+            </tr>
+        </table>
     </div>
 
     <table class="invoice-table">
@@ -235,18 +335,20 @@ const handler = async (req: Request): Promise<Response> => {
     </table>
 
     <div class="totals">
-        <div class="total-row">
-            <div class="total-label">Subtotaal:</div>
-            <div class="total-amount">€ {{SUBTOTAL}}</div>
-        </div>
-        <div class="total-row">
-            <div class="total-label">BTW ({{VAT_PERCENTAGE}}%):</div>
-            <div class="total-amount">€ {{VAT_AMOUNT}}</div>
-        </div>
-        <div class="total-row final-total">
-            <div class="total-label">Totaal:</div>
-            <div class="total-amount">€ {{TOTAL_AMOUNT}}</div>
-        </div>
+        <table>
+            <tr>
+                <td class="label">Subtotaal:</td>
+                <td class="amount">€ {{SUBTOTAL}}</td>
+            </tr>
+            <tr>
+                <td class="label">BTW ({{VAT_PERCENTAGE}}%):</td>
+                <td class="amount">€ {{VAT_AMOUNT}}</td>
+            </tr>
+            <tr class="final-total">
+                <td class="label">Totaal:</td>
+                <td class="amount">€ {{TOTAL_AMOUNT}}</td>
+            </tr>
+        </table>
     </div>
 
     <div class="footer">
