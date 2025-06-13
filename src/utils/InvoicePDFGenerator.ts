@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Invoice, InvoiceLine } from '@/hooks/useInvoices';
@@ -29,6 +28,7 @@ export class InvoicePDFGenerator {
     
     console.log('Replacing variables for invoice:', invoice.invoice_number);
     console.log('Invoice lines count:', lines.length);
+    console.log('Company info available:', !!companyInfo);
     
     // Generate invoice lines HTML with table-based layout for PDF compatibility
     const invoiceLinesHtml = lines.map(line => `
@@ -74,28 +74,52 @@ export class InvoicePDFGenerator {
   }
 
   private static async createHTMLContainer(htmlContent: string, isPreview: boolean = false): Promise<HTMLElement> {
-    // Create a temporary container for rendering
-    const container = document.createElement('div');
-    container.innerHTML = htmlContent;
-    container.style.position = 'absolute';
-    container.style.left = '-9999px';
-    container.style.top = '-9999px';
-    container.style.width = isPreview ? '595px' : '794px'; // Smaller width for preview
-    container.style.backgroundColor = 'white';
-    container.style.fontFamily = 'Arial, sans-serif';
+    console.log('Creating HTML container, isPreview:', isPreview);
+    console.log('HTML content length:', htmlContent.length);
     
-    // Apply preview-specific scaling
-    if (isPreview) {
-      container.style.transform = 'scale(0.75)';
-      container.style.transformOrigin = 'top left';
+    try {
+      // Create a temporary container for rendering
+      const container = document.createElement('div');
+      container.innerHTML = htmlContent;
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.top = '-9999px';
+      container.style.width = '794px'; // Consistent sizing - always use standard width
+      container.style.backgroundColor = 'white';
+      container.style.fontFamily = 'Arial, sans-serif';
+      container.style.fontSize = '12px';
+      container.style.lineHeight = '1.4';
+      
+      console.log('Container created with dimensions:', container.style.width);
+      
+      document.body.appendChild(container);
+      
+      // Wait longer for fonts and styles to load properly
+      console.log('Waiting for fonts and styles to load...');
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      console.log('HTML container ready for rendering');
+      return container;
+    } catch (error) {
+      console.error('Error creating HTML container:', error);
+      throw new Error(`Failed to create HTML container: ${error.message}`);
+    }
+  }
+
+  private static getValidTemplate(data: InvoicePDFData): string {
+    console.log('Getting valid template...');
+    console.log('Template provided:', !!data.template);
+    console.log('Template has content:', !!(data.template?.html_content));
+    
+    // First try to use the provided template
+    if (data.template?.html_content && data.template.html_content.trim().length > 0) {
+      console.log('Using provided template');
+      return data.template.html_content;
     }
     
-    document.body.appendChild(container);
-    
-    // Wait a bit for fonts and styles to load
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    return container;
+    // Fallback to default template
+    console.log('Using fallback default template');
+    return this.getDefaultTemplate();
   }
 
   static async generatePDF(data: InvoicePDFData, options: {
@@ -113,22 +137,24 @@ export class InvoicePDFGenerator {
       returnBlob = false
     } = options;
 
-    console.log('Generating PDF for invoice:', data.invoice.invoice_number);
+    console.log('🚀 Starting PDF generation for invoice:', data.invoice.invoice_number);
 
     try {
-      // Use template if provided, otherwise use default
-      const htmlTemplate = data.template?.html_content || this.getDefaultTemplate();
-      console.log('Using template with length:', htmlTemplate.length);
+      // Get valid template with null checks
+      const htmlTemplate = this.getValidTemplate(data);
+      console.log('✅ Template obtained, length:', htmlTemplate.length);
       
       // Replace variables with actual data
       const processedHtml = this.replaceVariables(htmlTemplate, data);
+      console.log('✅ Variables replaced');
       
       // Create HTML container for rendering
       const container = await this.createHTMLContainer(processedHtml, false);
+      console.log('✅ HTML container created');
       
-      console.log('Rendering HTML to canvas...');
+      console.log('🎨 Starting canvas rendering...');
       
-      // Generate canvas from HTML
+      // Generate canvas from HTML with improved settings
       const canvas = await html2canvas(container, {
         scale: 2,
         useCORS: true,
@@ -136,12 +162,26 @@ export class InvoicePDFGenerator {
         backgroundColor: '#ffffff',
         width: 794,
         height: 1123, // A4 height in pixels
+        logging: true,
+        onclone: (clonedDoc) => {
+          console.log('Canvas cloning document...');
+        }
       });
+      
+      console.log('✅ Canvas generated, dimensions:', canvas.width, 'x', canvas.height);
       
       // Remove the temporary container
       document.body.removeChild(container);
+      console.log('✅ Container cleaned up');
       
-      console.log('Canvas generated, creating PDF...');
+      // Validate canvas data
+      const imgData = canvas.toDataURL('image/png');
+      if (!imgData || imgData.length < 1000) {
+        throw new Error('Canvas generated invalid or empty image data');
+      }
+      console.log('✅ Canvas data validated, length:', imgData.length);
+      
+      console.log('📄 Creating PDF document...');
       
       // Create PDF
       const pdf = new jsPDF({
@@ -150,71 +190,85 @@ export class InvoicePDFGenerator {
         format: [794, 1123] // A4 in pixels
       });
       
-      const imgData = canvas.toDataURL('image/png');
       pdf.addImage(imgData, 'PNG', 0, 0, 794, 1123);
-      
-      console.log('PDF created successfully');
+      console.log('✅ PDF created successfully');
 
       if (returnBlob) {
-        console.log('Returning PDF as blob...');
+        console.log('📤 Returning PDF as blob...');
         const pdfBlob = pdf.output('blob');
         return pdfBlob;
       } else if (download) {
-        console.log('Downloading PDF...');
+        console.log('💾 Downloading PDF...');
         pdf.save(filename);
       }
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      console.error('❌ PDF generation failed:', error);
       throw new Error(`PDF generation failed: ${error.message}`);
     }
   }
 
   static async generatePreviewDataURL(data: InvoicePDFData): Promise<string> {
-    console.log('Generating preview data URL for invoice:', data.invoice.invoice_number);
+    console.log('🔍 Starting PDF preview generation for invoice:', data.invoice.invoice_number);
     
     try {
-      // Always use compact template for preview
-      const htmlTemplate = this.getCompactTemplate();
+      // Use same template as regular PDF generation for consistency
+      const htmlTemplate = this.getValidTemplate(data);
+      console.log('✅ Template obtained for preview, length:', htmlTemplate.length);
+      
       const processedHtml = this.replaceVariables(htmlTemplate, data);
+      console.log('✅ Variables replaced for preview');
       
-      console.log('Creating HTML container for preview...');
+      console.log('🏗️ Creating HTML container for preview...');
       
-      // Create HTML container for rendering with preview optimization
+      // Use same dimensions as regular PDF for consistency
       const container = await this.createHTMLContainer(processedHtml, true);
+      console.log('✅ HTML container created for preview');
       
-      console.log('Rendering preview canvas...');
+      console.log('🎨 Rendering preview canvas...');
       
-      // Generate canvas from HTML with optimized settings for preview
+      // Generate canvas from HTML with consistent settings
       const canvas = await html2canvas(container, {
-        scale: 1.5,
+        scale: 1.5, // Slightly lower scale for preview performance
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
-        width: 595,
-        height: 842, // A4 ratio but smaller
-        logging: true
+        width: 794,
+        height: 1123, // Same dimensions as regular PDF
+        logging: true,
+        onclone: (clonedDoc) => {
+          console.log('Preview canvas cloning document...');
+        }
       });
+      
+      console.log('✅ Preview canvas generated, dimensions:', canvas.width, 'x', canvas.height);
       
       // Remove the temporary container
       document.body.removeChild(container);
+      console.log('✅ Preview container cleaned up');
       
-      console.log('Canvas generated successfully, creating PDF data URL...');
+      // Validate canvas data
+      const imgData = canvas.toDataURL('image/png');
+      if (!imgData || imgData.length < 1000) {
+        throw new Error('Preview canvas generated invalid or empty image data');
+      }
+      console.log('✅ Preview canvas data validated, length:', imgData.length);
       
-      // Create PDF and return as data URL
+      console.log('📄 Creating preview PDF...');
+      
+      // Create PDF and return as data URL with consistent dimensions
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'px',
-        format: [595, 842]
+        format: [794, 1123] // Same format as regular PDF
       });
       
-      const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, 0, 595, 842);
+      pdf.addImage(imgData, 'PNG', 0, 0, 794, 1123);
       
       const dataURL = pdf.output('datauristring');
-      console.log('Preview data URL generated successfully');
+      console.log('✅ Preview data URL generated successfully, length:', dataURL.length);
       return dataURL;
     } catch (error) {
-      console.error('Error generating preview:', error);
+      console.error('❌ Preview generation failed:', error);
       throw new Error(`Preview generation failed: ${error.message}`);
     }
   }
