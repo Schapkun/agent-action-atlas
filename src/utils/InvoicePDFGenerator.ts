@@ -271,12 +271,12 @@ export class InvoicePDFGenerator {
     try {
       container = await this.createHTMLContainer(processedHtml, true);
       
-      // Use high-quality canvas configuration
+      // Use high-quality canvas configuration with increased dimensions
       const canvas = await html2canvas(container, {
         scale: this.PREVIEW_SCALE,
         backgroundColor: '#ffffff',
-        width: 1200,
-        height: 800,
+        width: 1200, // Increased from 600
+        height: 800, // Increased from 400
         logging: false,
         useCORS: false,
         allowTaint: false,
@@ -313,7 +313,7 @@ export class InvoicePDFGenerator {
     });
   }
 
-  // Unified template with consistent 794px width
+  // Improved default template with better readability
   private static getDefaultTemplate(): string {
     return `<!DOCTYPE html>
 <html lang="nl">
@@ -333,16 +333,16 @@ export class InvoicePDFGenerator {
             padding: 0;
             background: white; 
             color: #333;
-            line-height: 1.3;
+            line-height: 1.4;
             width: 744px;
             min-height: 1073px;
-            font-size: 11px;
+            font-size: 14px;
         }
         .header { 
             width: 100%;
-            margin-bottom: 25px; 
+            margin-bottom: 30px; 
             border-bottom: 2px solid #3b82f6; 
-            padding-bottom: 15px; 
+            padding-bottom: 20px; 
         }
         .header table {
             width: 100%;
@@ -353,24 +353,24 @@ export class InvoicePDFGenerator {
             text-align: left;
         }
         .company-info h1 { 
-            margin: 0 0 8px 0; 
+            margin: 0 0 10px 0; 
             color: #3b82f6; 
-            font-size: 18px; 
+            font-size: 22px; 
         }
-        .company-info p { margin: 1px 0; font-size: 10px; }
+        .company-info p { margin: 2px 0; font-size: 12px; }
         .invoice-info { 
             vertical-align: top;
             text-align: right; 
         }
         .invoice-number { 
-            font-size: 18px; 
+            font-size: 22px; 
             font-weight: bold; 
             color: #3b82f6; 
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
         .customer-billing { 
             width: 100%;
-            margin-bottom: 20px; 
+            margin-bottom: 25px; 
         }
         .customer-billing table {
             width: 100%;
@@ -379,65 +379,65 @@ export class InvoicePDFGenerator {
         .customer-billing td {
             vertical-align: top;
             width: 50%;
-            padding-right: 10px;
+            padding-right: 15px;
         }
         .section-title { 
             font-weight: bold; 
-            margin-bottom: 6px; 
+            margin-bottom: 8px; 
             color: #374151; 
-            font-size: 11px;
+            font-size: 14px;
         }
         .invoice-table { 
             width: 100%; 
             border-collapse: collapse; 
-            margin: 15px 0; 
+            margin: 20px 0; 
         }
         .invoice-table th, .invoice-table td { 
             border: 1px solid #d1d5db; 
-            padding: 6px; 
+            padding: 10px; 
             text-align: left; 
         }
         .invoice-table th { 
             background-color: #f3f4f6; 
             font-weight: bold; 
-            font-size: 10px;
+            font-size: 13px;
         }
-        .invoice-table td { font-size: 9px; }
+        .invoice-table td { font-size: 12px; }
         .totals { 
-            margin-top: 15px; 
+            margin-top: 20px; 
             width: 100%;
         }
         .totals table {
-            width: 200px;
+            width: 250px;
             margin-left: auto;
             border-collapse: collapse;
         }
         .totals td {
-            padding: 3px 0;
+            padding: 5px 0;
             text-align: right;
-            font-size: 10px;
+            font-size: 13px;
         }
         .totals .label {
-            padding-right: 10px;
+            padding-right: 15px;
             font-weight: normal;
         }
         .totals .amount {
             font-weight: bold;
         }
         .final-total td { 
-            font-size: 11px; 
+            font-size: 15px; 
             border-top: 2px solid #3b82f6; 
-            padding-top: 4px; 
+            padding-top: 8px; 
             font-weight: bold;
         }
         .footer { 
-            margin-top: 20px; 
-            padding-top: 10px; 
+            margin-top: 25px; 
+            padding-top: 15px; 
             border-top: 1px solid #e5e7eb; 
-            font-size: 9px; 
+            font-size: 11px; 
             color: #6b7280; 
         }
-        .footer p { margin: 2px 0; }
+        .footer p { margin: 3px 0; }
     </style>
 </head>
 <body>
@@ -539,13 +539,13 @@ export class InvoicePDFGenerator {
             margin-bottom: 24px; 
         }
         .title { 
-            font-size: 24px; 
+            font-size: 28px; 
             color: #3b82f6; 
             font-weight: bold; 
             margin-bottom: 8px; 
         }
         .content { 
-            font-size: 16px; 
+            font-size: 18px; 
             line-height: 1.5; 
         }
         .info-row { 
@@ -560,11 +560,11 @@ export class InvoicePDFGenerator {
             width: 100%;
             border-collapse: collapse;
             margin: 16px 0;
-            font-size: 14px;
+            font-size: 16px;
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 10px;
             text-align: left;
         }
         th {
@@ -575,14 +575,14 @@ export class InvoicePDFGenerator {
             text-align: right;
             margin-top: 16px;
             font-weight: bold;
-            font-size: 18px;
+            font-size: 20px;
         }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="title">Factuur {{INVOICE_NUMBER}}</div>
-        <div style="font-size: 16px;">{{COMPANY_NAME}}</div>
+        <div style="font-size: 18px;">{{COMPANY_NAME}}</div>
     </div>
     <div class="content">
         <div class="info-row">
