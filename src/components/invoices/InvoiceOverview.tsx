@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,7 @@ import { useInvoiceTemplates } from '@/hooks/useInvoiceTemplates';
 import { InvoiceDialog } from './InvoiceDialog';
 import { InvoiceViewDialog } from './InvoiceViewDialog';
 import { InvoicePDFGenerator } from '@/utils/InvoicePDFGenerator';
+import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -113,7 +115,11 @@ export const InvoiceOverview = () => {
 
       if (templateError) console.warn('Template fetch warning:', templateError);
 
-      const defaultTemplate = templates?.[0] || null;
+      // Properly type the template to match DocumentTemplate interface
+      const defaultTemplate: DocumentTemplate | null = templates?.[0] ? {
+        ...templates[0],
+        type: templates[0].type as 'factuur' | 'contract' | 'brief' | 'custom'
+      } : null;
       
       const pdfData = {
         invoice,
