@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -5,6 +6,7 @@ import { OrganizationWorkspaceView } from './OrganizationWorkspaceView';
 import { UserProfileSettings } from './UserProfileSettings';
 import { HistoryLogs } from './HistoryLogs';
 import { DocumentLayoutSettings } from './DocumentLayoutSettings';
+import { EmailTemplateSettings } from './EmailTemplateSettings';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -89,8 +91,8 @@ export const SettingsLayout = () => {
       <Tabs defaultValue="organizations" className="space-y-4">
         <TabsList className={`grid w-full gap-1 h-auto p-1 ${
           isMobile 
-            ? 'grid-cols-2 grid-rows-2' 
-            : 'grid-cols-4 grid-rows-1'
+            ? 'grid-cols-3 grid-rows-2' 
+            : 'grid-cols-5 grid-rows-1'
         }`}>
           <TabsTrigger 
             value="organizations" 
@@ -109,6 +111,12 @@ export const SettingsLayout = () => {
             className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
           >
             Documenten
+          </TabsTrigger>
+          <TabsTrigger 
+            value="email-templates" 
+            className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
+          >
+            Email Templates
           </TabsTrigger>
           <TabsTrigger 
             value="history" 
@@ -142,6 +150,19 @@ export const SettingsLayout = () => {
                 userRole={userRole}
               >
                 <DocumentLayoutSettings />
+              </RoleGuard>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="email-templates">
+          <Card>
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
+              <RoleGuard 
+                requiredRoles={['admin', 'eigenaar']} 
+                userRole={userRole}
+              >
+                <EmailTemplateSettings />
               </RoleGuard>
             </CardContent>
           </Card>
