@@ -89,7 +89,7 @@ const handler = async (req: Request): Promise<Response> => {
     const finalSubject = replaceVariables(email_template.subject);
     const finalMessage = replaceVariables(email_template.message);
 
-    // Generate PDF content for attachment
+    // Generate PDF content for attachment using Deno-compatible approach
     const generateInvoicePDF = () => {
       // Simple text-based PDF content (in a real implementation you'd use a proper PDF library)
       const pdfContent = `
@@ -112,7 +112,8 @@ Totaal: €${invoice.total_amount.toFixed(2)}
 ${invoice.notes ? `\nOpmerkingen:\n${invoice.notes}` : ''}
       `.trim();
       
-      return Buffer.from(pdfContent, 'utf-8');
+      // Use TextEncoder instead of Buffer for Deno compatibility
+      return new TextEncoder().encode(pdfContent);
     };
 
     const resend = new Resend(resendApiKey);
