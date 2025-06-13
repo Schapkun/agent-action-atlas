@@ -11,6 +11,7 @@ import { useInvoiceLines } from '@/hooks/useInvoiceLines';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { DialogFooter } from '@/components/settings/components/DialogFooter';
 
 interface InvoiceDialogProps {
   isOpen: boolean;
@@ -257,240 +258,252 @@ Uw administratie`
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>
             {invoice ? 'Factuur Bewerken' : 'Nieuwe Factuur'}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Client Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Klantgegevens</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex-1 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Client Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Klantgegevens</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="client_name">Naam *</Label>
+                    <Input
+                      id="client_name"
+                      value={formData.client_name}
+                      onChange={(e) => setFormData({...formData, client_name: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="client_email">E-mail</Label>
+                    <Input
+                      id="client_email"
+                      type="email"
+                      value={formData.client_email}
+                      onChange={(e) => setFormData({...formData, client_email: e.target.value})}
+                    />
+                  </div>
+                </div>
+                
                 <div>
-                  <Label htmlFor="client_name">Naam *</Label>
+                  <Label htmlFor="client_address">Adres</Label>
                   <Input
-                    id="client_name"
-                    value={formData.client_name}
-                    onChange={(e) => setFormData({...formData, client_name: e.target.value})}
-                    required
+                    id="client_address"
+                    value={formData.client_address}
+                    onChange={(e) => setFormData({...formData, client_address: e.target.value})}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="client_email">E-mail</Label>
-                  <Input
-                    id="client_email"
-                    type="email"
-                    value={formData.client_email}
-                    onChange={(e) => setFormData({...formData, client_email: e.target.value})}
-                  />
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="client_postal_code">Postcode</Label>
+                    <Input
+                      id="client_postal_code"
+                      value={formData.client_postal_code}
+                      onChange={(e) => setFormData({...formData, client_postal_code: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="client_city">Plaats</Label>
+                    <Input
+                      id="client_city"
+                      value={formData.client_city}
+                      onChange={(e) => setFormData({...formData, client_city: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="client_country">Land</Label>
+                    <Input
+                      id="client_country"
+                      value={formData.client_country}
+                      onChange={(e) => setFormData({...formData, client_country: e.target.value})}
+                    />
+                  </div>
                 </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="client_address">Adres</Label>
-                <Input
-                  id="client_address"
-                  value={formData.client_address}
-                  onChange={(e) => setFormData({...formData, client_address: e.target.value})}
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="client_postal_code">Postcode</Label>
-                  <Input
-                    id="client_postal_code"
-                    value={formData.client_postal_code}
-                    onChange={(e) => setFormData({...formData, client_postal_code: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="client_city">Plaats</Label>
-                  <Input
-                    id="client_city"
-                    value={formData.client_city}
-                    onChange={(e) => setFormData({...formData, client_city: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="client_country">Land</Label>
-                  <Input
-                    id="client_country"
-                    value={formData.client_country}
-                    onChange={(e) => setFormData({...formData, client_country: e.target.value})}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Invoice Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Factuurgegevens</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="invoice_date">Factuurdatum</Label>
-                  <Input
-                    id="invoice_date"
-                    type="date"
-                    value={formData.invoice_date}
-                    onChange={(e) => setFormData({...formData, invoice_date: e.target.value})}
-                  />
+            {/* Invoice Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Factuurgegevens</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="invoice_date">Factuurdatum</Label>
+                    <Input
+                      id="invoice_date"
+                      type="date"
+                      value={formData.invoice_date}
+                      onChange={(e) => setFormData({...formData, invoice_date: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="due_date">Vervaldatum</Label>
+                    <Input
+                      id="due_date"
+                      type="date"
+                      value={formData.due_date}
+                      onChange={(e) => setFormData({...formData, due_date: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="payment_terms">Betalingstermijn (dagen)</Label>
+                    <Input
+                      id="payment_terms"
+                      type="number"
+                      value={formData.payment_terms}
+                      onChange={(e) => setFormData({...formData, payment_terms: parseInt(e.target.value)})}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="due_date">Vervaldatum</Label>
-                  <Input
-                    id="due_date"
-                    type="date"
-                    value={formData.due_date}
-                    onChange={(e) => setFormData({...formData, due_date: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="payment_terms">Betalingstermijn (dagen)</Label>
-                  <Input
-                    id="payment_terms"
-                    type="number"
-                    value={formData.payment_terms}
-                    onChange={(e) => setFormData({...formData, payment_terms: parseInt(e.target.value)})}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Line Items */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Factuurregels</CardTitle>
-              <Button type="button" onClick={addLineItem} size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Regel toevoegen
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {lineItems.map((item, index) => (
-                <div key={index} className="grid grid-cols-12 gap-2 items-end">
-                  <div className="col-span-5">
-                    <Label>Omschrijving</Label>
-                    <Input
-                      value={item.description}
-                      onChange={(e) => updateLineItem(index, 'description', e.target.value)}
-                      placeholder="Beschrijving van het item"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Label>Aantal</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={item.quantity}
-                      onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Label>Prijs</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={item.unit_price}
-                      onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <Label>BTW%</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={item.vat_rate}
-                      onChange={(e) => updateLineItem(index, 'vat_rate', parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <Label>Totaal</Label>
-                    <div className="px-3 py-2 bg-gray-50 rounded text-sm">
-                      €{item.line_total.toFixed(2)}
+            {/* Line Items */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg">Factuurregels</CardTitle>
+                <Button type="button" onClick={addLineItem} size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Regel toevoegen
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {lineItems.map((item, index) => (
+                  <div key={index} className="grid grid-cols-12 gap-2 items-end">
+                    <div className="col-span-5">
+                      <Label>Omschrijving</Label>
+                      <Input
+                        value={item.description}
+                        onChange={(e) => updateLineItem(index, 'description', e.target.value)}
+                        placeholder="Beschrijving van het item"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Label>Aantal</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={item.quantity}
+                        onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Label>Prijs</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={item.unit_price}
+                        onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <Label>BTW%</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={item.vat_rate}
+                        onChange={(e) => updateLineItem(index, 'vat_rate', parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <Label>Totaal</Label>
+                      <div className="px-3 py-2 bg-gray-50 rounded text-sm">
+                        €{item.line_total.toFixed(2)}
+                      </div>
+                    </div>
+                    <div className="col-span-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeLineItem(index)}
+                        disabled={lineItems.length === 1}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="col-span-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeLineItem(index)}
-                      disabled={lineItems.length === 1}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Totals */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="space-y-2 max-w-md ml-auto">
+                  <div className="flex justify-between">
+                    <span>Subtotaal:</span>
+                    <span>€{subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>BTW:</span>
+                    <span>€{vatAmount.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-lg border-t pt-2">
+                    <span>Totaal:</span>
+                    <span>€{total.toFixed(2)}</span>
                   </div>
                 </div>
-              ))}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Totals */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-2 max-w-md ml-auto">
-                <div className="flex justify-between">
-                  <span>Subtotaal:</span>
-                  <span>€{subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>BTW:</span>
-                  <span>€{vatAmount.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between font-bold text-lg border-t pt-2">
-                  <span>Totaal:</span>
-                  <span>€{total.toFixed(2)}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            {/* Notes */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Notities</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                  placeholder="Extra opmerkingen voor deze factuur..."
+                  rows={3}
+                />
+              </CardContent>
+            </Card>
 
-          {/* Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Notities</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                value={formData.notes}
-                onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                placeholder="Extra opmerkingen voor deze factuur..."
-                rows={3}
-              />
-            </CardContent>
-          </Card>
+            {/* Actions */}
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Annuleren
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Opslaan...' : (invoice ? 'Bijwerken' : 'Opslaan')}
+              </Button>
+              <Button 
+                type="button" 
+                onClick={handleSaveAndSend}
+                disabled={sendLoading || !formData.client_email}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                {sendLoading ? 'Verzenden...' : 'Opslaan & Versturen'}
+              </Button>
+            </div>
+          </form>
+        </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Annuleren
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Opslaan...' : (invoice ? 'Bijwerken' : 'Opslaan')}
-            </Button>
-            <Button 
-              type="button" 
-              onClick={handleSaveAndSend}
-              disabled={sendLoading || !formData.client_email}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Send className="h-4 w-4 mr-2" />
-              {sendLoading ? 'Verzenden...' : 'Opslaan & Versturen'}
-            </Button>
-          </div>
-        </form>
+        <DialogFooter
+          onCancel={onClose}
+          onSave={handleSubmit}
+          saving={loading}
+          showSendButton={true}
+          onSend={handleSaveAndSend}
+          sending={sendLoading}
+          sendDisabled={!formData.client_email}
+        />
       </DialogContent>
     </Dialog>
   );
