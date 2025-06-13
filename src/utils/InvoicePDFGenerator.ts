@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Invoice, InvoiceLine } from '@/hooks/useInvoices';
@@ -172,8 +173,11 @@ export class InvoicePDFGenerator {
     console.log('Generating preview data URL for invoice:', data.invoice.invoice_number);
     
     try {
-      const htmlTemplate = data.template?.html_content || this.getCompactTemplate();
+      // Always use compact template for preview
+      const htmlTemplate = this.getCompactTemplate();
       const processedHtml = this.replaceVariables(htmlTemplate, data);
+      
+      console.log('Creating HTML container for preview...');
       
       // Create HTML container for rendering with preview optimization
       const container = await this.createHTMLContainer(processedHtml, true);
@@ -182,16 +186,19 @@ export class InvoicePDFGenerator {
       
       // Generate canvas from HTML with optimized settings for preview
       const canvas = await html2canvas(container, {
-        scale: 1.2,
+        scale: 1.5,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
         width: 595,
         height: 842, // A4 ratio but smaller
+        logging: true
       });
       
       // Remove the temporary container
       document.body.removeChild(container);
+      
+      console.log('Canvas generated successfully, creating PDF data URL...');
       
       // Create PDF and return as data URL
       const pdf = new jsPDF({
@@ -220,15 +227,18 @@ export class InvoicePDFGenerator {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Factuur</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body { 
             font-family: Arial, sans-serif; 
-            margin: 0; 
-            padding: 15px;
+            margin: 25px;
+            padding: 0;
             background: white; 
             color: #333;
             line-height: 1.3;
-            width: 565px;
-            min-height: 812px;
+            width: 545px;
+            min-height: 792px;
             font-size: 11px;
         }
         .header { 
@@ -419,14 +429,17 @@ export class InvoicePDFGenerator {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Factuur</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body { 
             font-family: Arial, sans-serif; 
-            margin: 0; 
-            padding: 20px;
+            margin: 30px;
+            padding: 0;
             background: white; 
             color: #333;
             line-height: 1.4;
-            width: 754px;
+            width: 734px;
             min-height: 1063px;
         }
         .header { 
