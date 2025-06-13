@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,7 @@ import { InvoiceDialog } from './InvoiceDialog';
 import { InvoiceViewDialog } from './InvoiceViewDialog';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
+import { useToast } from '@/hooks/useToast';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -52,6 +52,7 @@ export const InvoiceOverview = () => {
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
   
   const { invoices, loading, deleteInvoice } = useInvoices();
+  const { toast } = useToast();
 
   const filteredInvoices = invoices.filter(invoice => {
     const matchesSearch = searchTerm === '' || 
@@ -72,9 +73,60 @@ export const InvoiceOverview = () => {
     setViewingInvoice(invoice);
   };
 
-  const handleDownload = (invoice: Invoice) => {
-    console.log('Downloading invoice:', invoice.invoice_number);
-    // TODO: Implement PDF download functionality
+  const handleDownload = async (invoice: Invoice) => {
+    try {
+      console.log('Downloading invoice:', invoice.invoice_number);
+      
+      // Import jsPDF dynamically
+      const { default: jsPDF } = await import('jspdf');
+      
+      // Create PDF
+      const doc = new jsPDF();
+      
+      // Add content to PDF
+      doc.setFontSize(20);
+      doc.text('FACTUUR', 20, 30);
+      
+      doc.setFontSize(12);
+      doc.text(`Factuurnummer: ${invoice.invoice_number}`, 20, 50);
+      doc.text(`Datum: ${format(new Date(invoice.invoice_date), 'dd-MM-yyyy')}`, 20, 60);
+      doc.text(`Vervaldatum: ${format(new Date(invoice.due_date), 'dd-MM-yyyy')}`, 20, 70);
+      
+      doc.text('FACTUURADRES:', 20, 90);
+      doc.text(invoice.client_name, 20, 100);
+      if (invoice.client_address) doc.text(invoice.client_address, 20, 110);
+      if (invoice.client_postal_code && invoice.client_city) {
+        doc.text(`${invoice.client_postal_code} ${invoice.client_city}`, 20, 120);
+      }
+      if (invoice.client_country) doc.text(invoice.client_country, 20, 130);
+      
+      // Add totals
+      doc.text(`Subtotaal: €${invoice.subtotal.toFixed(2)}`, 20, 160);
+      doc.text(`BTW (${invoice.vat_percentage}%): €${invoice.vat_amount.toFixed(2)}`, 20, 170);
+      doc.setFontSize(14);
+      doc.text(`Totaal: €${invoice.total_amount.toFixed(2)}`, 20, 185);
+      
+      if (invoice.notes) {
+        doc.setFontSize(10);
+        doc.text('Opmerkingen:', 20, 205);
+        doc.text(invoice.notes, 20, 215);
+      }
+      
+      // Download the PDF
+      doc.save(`factuur-${invoice.invoice_number}.pdf`);
+      
+      toast({
+        title: "PDF Download",
+        description: `Factuur ${invoice.invoice_number} wordt gedownload.`
+      });
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        title: "Fout",
+        description: "Er is een fout opgetreden bij het downloaden van de PDF.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleDelete = async (invoice: Invoice) => {

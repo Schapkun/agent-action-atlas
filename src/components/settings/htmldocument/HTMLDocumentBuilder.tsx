@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,11 +14,13 @@ import {
   Table,
   List,
   DivideSquare,
-  MousePointer
+  MousePointer,
+  Eye
 } from 'lucide-react';
 import { useDocumentTemplates, DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { DocumentPDFGenerator } from '../utils/PDFGenerator';
 import { useToast } from '@/hooks/use-toast';
+import { PreviewDialog } from './components/PreviewDialog';
 
 interface HTMLDocumentBuilderProps {
   editingDocument?: DocumentTemplate | null;
@@ -184,6 +185,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
   const [documentType, setDocumentType] = useState<'factuur' | 'contract' | 'brief' | 'custom'>('factuur');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   
   const { createTemplate, updateTemplate, fetchTemplates } = useDocumentTemplates();
   const { toast } = useToast();
@@ -324,6 +326,10 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     });
   };
 
+  const handlePreview = () => {
+    setIsPreviewOpen(true);
+  };
+
   const insertSnippet = (code: string) => {
     const textarea = document.getElementById('html-editor') as HTMLTextAreaElement;
     if (textarea) {
@@ -401,6 +407,14 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
           </div>
           
           <div className="flex items-center gap-2">
+            <Button 
+              onClick={handlePreview} 
+              variant="outline" 
+              size="sm"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Preview
+            </Button>
             <Button 
               onClick={handleSave} 
               size="sm" 
@@ -501,6 +515,14 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
           </div>
         </div>
       </div>
+
+      {/* Preview Dialog */}
+      <PreviewDialog
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        htmlContent={htmlContent}
+        documentName={documentName}
+      />
     </div>
   );
 };
