@@ -14,7 +14,8 @@ interface InvoiceEmailRequest {
     subject: string;
     message: string;
   };
-  email_type?: 'resend' | 'reminder';
+  email_type?: 'resend' | 'reminder' | 'test';
+  mock_invoice?: any;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -46,24 +47,33 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { invoice_id, email_template, email_type = 'resend' }: InvoiceEmailRequest = await req.json();
+    const { invoice_id, email_template, email_type = 'resend', mock_invoice }: InvoiceEmailRequest = await req.json();
 
-    // Fetch invoice details
-    const { data: invoice, error: invoiceError } = await supabase
-      .from('invoices')
-      .select('*')
-      .eq('id', invoice_id)
-      .single();
+    let invoice;
 
-    if (invoiceError || !invoice) {
-      console.error('Error fetching invoice:', invoiceError);
-      return new Response(
-        JSON.stringify({ error: "Invoice not found" }),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
+    // For test emails, use the mock invoice data
+    if (email_type === 'test' && mock_invoice) {
+      console.log("Using mock invoice data for test email");
+      invoice = mock_invoice;
+    } else {
+      // Fetch invoice details for real emails
+      const { data: invoiceData, error: invoiceError } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('id', invoice_id)
+        .single();
+
+      if (invoiceError || !invoiceData) {
+        console.error('Error fetching invoice:', invoiceError);
+        return new Response(
+          JSON.stringify({ error: "Invoice not found" }),
+          {
+            status: 404,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+      invoice = invoiceData;
     }
 
     if (!invoice.client_email) {
@@ -124,9 +134,11 @@ ${invoice.notes ? `\nOpmerkingen:\n${invoice.notes}` : ''}
     const emailData = {
       from: "Facturen <facturen@meester.app>",
       to: [invoice.client_email],
-      subject: finalSubject,
+      subject: email_type === 'test' ? `[TEST] ${finalSubject}` : finalSubject,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          ${email_type === 'test' ? '<div style="background-color: #fef3cd; padding: 10px; margin-bottom: 20px; border: 1px solid #ffeaa7; border-radius: 4px;"><strong>Dit is een test email</strong></div>' : ''}
+          
           <h1 style="color: #333; margin-bottom: 20px;">Factuur ${invoice.invoice_number}</h1>
           
           <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -149,7 +161,7 @@ ${invoice.notes ? `\nOpmerkingen:\n${invoice.notes}` : ''}
           </p>
         </div>
       `,
-      attachments: [
+      attachments: email_type === 'test' ? [] : [
         {
           filename: `factuur-${invoice.invoice_number}.txt`,
           content: generateInvoicePDF(),
@@ -161,7 +173,7 @@ ${invoice.notes ? `\nOpmerkingen:\n${invoice.notes}` : ''}
 
     console.log("Email sent successfully:", emailResponse);
 
-    // Update invoice status to sent only for regular resend, not for reminders
+    // Update invoice status to sent only for regular resend, not for reminders or tests
     if (email_type === 'resend') {
       const { error: updateError } = await supabase
         .from('invoices')
