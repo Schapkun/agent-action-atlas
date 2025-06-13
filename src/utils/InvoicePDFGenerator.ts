@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Invoice, InvoiceLine } from '@/hooks/useInvoices';
@@ -23,8 +24,6 @@ interface InvoicePDFData {
 }
 
 export class InvoicePDFGenerator {
-  private static activeBlobUrls: Set<string> = new Set();
-
   private static replaceVariables(html: string, data: InvoicePDFData): string {
     const { invoice, lines, companyInfo } = data;
     
@@ -43,7 +42,7 @@ export class InvoicePDFGenerator {
       </tr>
     `).join('');
 
-    // Replace all variables in the HTML template
+    // Replace all variables in the HTML template - remove any image references
     const processedHtml = html
       .replace(/{{COMPANY_NAME}}/g, companyInfo?.name || 'Uw Bedrijf')
       .replace(/{{COMPANY_ADDRESS}}/g, companyInfo?.address || '')
@@ -55,7 +54,7 @@ export class InvoicePDFGenerator {
       .replace(/{{COMPANY_VAT}}/g, companyInfo?.vat || '')
       .replace(/{{COMPANY_IBAN}}/g, companyInfo?.iban || '')
       .replace(/{{COMPANY_BIC}}/g, companyInfo?.bic || '')
-      .replace(/{{COMPANY_LOGO}}/g, '') // Remove logo references to prevent image loading errors
+      .replace(/{{COMPANY_LOGO}}/g, '') // Remove logo to prevent loading issues
       .replace(/{{INVOICE_NUMBER}}/g, invoice.invoice_number)
       .replace(/{{INVOICE_DATE}}/g, new Date(invoice.invoice_date).toLocaleDateString('nl-NL'))
       .replace(/{{DUE_DATE}}/g, new Date(invoice.due_date).toLocaleDateString('nl-NL'))
@@ -75,18 +74,16 @@ export class InvoicePDFGenerator {
     return processedHtml;
   }
 
-  private static async createHTMLContainer(htmlContent: string, isPreview: boolean = false): Promise<HTMLElement> {
-    console.log('Creating HTML container, isPreview:', isPreview);
-    console.log('HTML content length:', htmlContent.length);
+  private static async createHTMLContainer(htmlContent: string): Promise<HTMLElement> {
+    console.log('Creating HTML container for rendering');
     
     try {
-      // Create a temporary container for rendering
       const container = document.createElement('div');
       container.innerHTML = htmlContent;
       container.style.position = 'absolute';
       container.style.left = '-9999px';
       container.style.top = '-9999px';
-      container.style.width = '794px'; // Unified A4 width in pixels
+      container.style.width = '794px'; // A4 width
       container.style.backgroundColor = 'white';
       container.style.fontFamily = 'Arial, sans-serif';
       container.style.fontSize = '12px';
@@ -94,15 +91,16 @@ export class InvoicePDFGenerator {
       container.style.boxSizing = 'border-box';
       container.style.overflow = 'hidden';
       
-      console.log('Container created with dimensions:', container.style.width);
+      // Remove any img elements to prevent loading errors
+      const images = container.querySelectorAll('img');
+      images.forEach(img => img.remove());
       
       document.body.appendChild(container);
       
-      // Wait for fonts and styles to load properly
-      console.log('Waiting for fonts and styles to load...');
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for fonts to load
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      console.log('HTML container ready for rendering');
+      console.log('HTML container ready');
       return container;
     } catch (error) {
       console.error('Error creating HTML container:', error);
@@ -111,19 +109,15 @@ export class InvoicePDFGenerator {
   }
 
   private static getValidTemplate(data: InvoicePDFData): string {
-    console.log('Getting valid template...');
-    console.log('Template provided:', !!data.template);
-    console.log('Template has content:', !!(data.template?.html_content));
+    console.log('Getting template...');
     
-    // First try to use the provided template
     if (data.template?.html_content && data.template.html_content.trim().length > 0) {
       console.log('Using provided template');
       return data.template.html_content;
     }
     
-    // Fallback to unified default template
-    console.log('Using unified default template');
-    return this.getUnifiedTemplate();
+    console.log('Using default template');
+    return this.getDefaultTemplate();
   }
 
   static async generatePDF(data: InvoicePDFData, options: {
@@ -144,58 +138,50 @@ export class InvoicePDFGenerator {
     console.log('🚀 Starting PDF generation for invoice:', data.invoice.invoice_number);
 
     try {
-      // Get valid template with null checks
       const htmlTemplate = this.getValidTemplate(data);
-      console.log('✅ Template obtained, length:', htmlTemplate.length);
+      console.log('✅ Template obtained');
       
-      // Replace variables with actual data
       const processedHtml = this.replaceVariables(htmlTemplate, data);
       console.log('✅ Variables replaced');
       
-      // Create HTML container for rendering
-      const container = await this.createHTMLContainer(processedHtml, false);
+      const container = await this.createHTMLContainer(processedHtml);
       console.log('✅ HTML container created');
       
       console.log('🎨 Starting canvas rendering...');
       
-      // Generate canvas from HTML with unified settings
       const canvas = await html2canvas(container, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
         width: 794,
-        height: 1123, // A4 height in pixels
-        logging: false, // Reduce console spam
-        imageTimeout: 0, // Skip image loading to prevent errors
+        height: 1123,
+        logging: false,
+        imageTimeout: 0,
         onclone: (clonedDoc) => {
-          console.log('Canvas cloning document...');
-          // Remove any problematic elements
+          // Remove any problematic elements in the cloned document
           const images = clonedDoc.querySelectorAll('img');
           images.forEach(img => img.remove());
         }
       });
       
-      console.log('✅ Canvas generated, dimensions:', canvas.width, 'x', canvas.height);
+      console.log('✅ Canvas generated');
       
-      // Remove the temporary container
       document.body.removeChild(container);
       console.log('✅ Container cleaned up');
       
-      // Validate canvas data
       const imgData = canvas.toDataURL('image/png');
       if (!imgData || imgData.length < 1000) {
-        throw new Error('Canvas generated invalid or empty image data');
+        throw new Error('Canvas generated invalid image data');
       }
-      console.log('✅ Canvas data validated, length:', imgData.length);
+      console.log('✅ Canvas data validated');
       
       console.log('📄 Creating PDF document...');
       
-      // Create PDF with unified dimensions
       const pdf = new jsPDF({
         orientation: orientation,
         unit: 'px',
-        format: [794, 1123] // Unified A4 in pixels
+        format: [794, 1123]
       });
       
       pdf.addImage(imgData, 'PNG', 0, 0, 794, 1123);
@@ -216,33 +202,56 @@ export class InvoicePDFGenerator {
   }
 
   static async generatePreviewDataURL(data: InvoicePDFData): Promise<string> {
-    console.log('🔍 Starting PDF preview generation for invoice:', data.invoice.invoice_number);
+    console.log('🔍 Starting PDF preview generation (Data URI) for invoice:', data.invoice.invoice_number);
     
     try {
-      // Clean up any existing blob URLs
-      this.cleanupBlobUrls();
+      const htmlTemplate = this.getValidTemplate(data);
+      const processedHtml = this.replaceVariables(htmlTemplate, data);
+      const container = await this.createHTMLContainer(processedHtml);
       
-      // Generate PDF as blob for better performance
-      const pdfBlob = await this.generatePDF(data, {
-        download: false,
-        returnBlob: true
+      console.log('🎨 Generating canvas for preview...');
+      
+      const canvas = await html2canvas(container, {
+        scale: 1.5, // Slightly lower scale for preview
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 794,
+        height: 1123,
+        logging: false,
+        imageTimeout: 0,
+        onclone: (clonedDoc) => {
+          const images = clonedDoc.querySelectorAll('img');
+          images.forEach(img => img.remove());
+        }
       });
       
-      if (!pdfBlob) {
-        throw new Error('Failed to generate PDF blob');
-      }
+      document.body.removeChild(container);
       
-      // Create blob URL instead of data URI for better performance
-      const blobUrl = URL.createObjectURL(pdfBlob);
-      this.activeBlobUrls.add(blobUrl);
+      const imgData = canvas.toDataURL('image/png');
       
-      console.log('✅ Preview blob URL generated successfully');
-      return blobUrl;
+      console.log('📄 Creating PDF for preview...');
+      
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [794, 1123]
+      });
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, 794, 1123);
+      
+      // Generate data URI instead of blob URL
+      const dataUri = pdf.output('datauristring');
+      
+      console.log('✅ Preview data URI generated successfully');
+      return dataUri;
+      
     } catch (error) {
       console.error('❌ Preview generation failed:', error);
-      // Fallback to simple error template
+      
+      // Fallback to simple preview
       try {
-        console.log('🔄 Attempting fallback preview generation...');
+        console.log('🔄 Attempting fallback preview...');
         return await this.generateFallbackPreview(data);
       } catch (fallbackError) {
         console.error('❌ Fallback preview also failed:', fallbackError);
@@ -252,21 +261,20 @@ export class InvoicePDFGenerator {
   }
 
   private static async generateFallbackPreview(data: InvoicePDFData): Promise<string> {
-    console.log('📄 Generating fallback preview with minimal template...');
+    console.log('📄 Generating minimal fallback preview...');
     
-    // Use minimal template to avoid rendering issues
     const fallbackTemplate = this.getMinimalTemplate();
     const processedHtml = this.replaceVariables(fallbackTemplate, data);
     
-    const container = await this.createHTMLContainer(processedHtml, true);
+    const container = await this.createHTMLContainer(processedHtml);
     
     const canvas = await html2canvas(container, {
-      scale: 1, // Lower scale for fallback
+      scale: 1,
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
       width: 794,
-      height: 400, // Smaller height for fallback
+      height: 400,
       logging: false,
       imageTimeout: 0
     });
@@ -282,24 +290,13 @@ export class InvoicePDFGenerator {
     const imgData = canvas.toDataURL('image/png');
     pdf.addImage(imgData, 'PNG', 0, 0, 794, 400);
     
-    const fallbackBlob = pdf.output('blob');
-    const blobUrl = URL.createObjectURL(fallbackBlob);
-    this.activeBlobUrls.add(blobUrl);
-    
+    const fallbackDataUri = pdf.output('datauristring');
     console.log('✅ Fallback preview generated');
-    return blobUrl;
-  }
-
-  private static cleanupBlobUrls(): void {
-    console.log('🧹 Cleaning up blob URLs...');
-    this.activeBlobUrls.forEach(url => {
-      URL.revokeObjectURL(url);
-    });
-    this.activeBlobUrls.clear();
+    return fallbackDataUri;
   }
 
   // Unified template with consistent 794px width
-  private static getUnifiedTemplate(): string {
+  private static getDefaultTemplate(): string {
     return `<!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -528,14 +525,5 @@ export class InvoicePDFGenerator {
     </div>
 </body>
 </html>`;
-  }
-
-  // Keep existing methods for backward compatibility
-  private static getCompactTemplate(): string {
-    return this.getUnifiedTemplate();
-  }
-
-  private static getDefaultTemplate(): string {
-    return this.getUnifiedTemplate();
   }
 }
