@@ -23,6 +23,8 @@ interface InvoicePDFData {
 }
 
 export class InvoicePDFGenerator {
+  private static activeBlobUrls: Set<string> = new Set();
+
   private static replaceVariables(html: string, data: InvoicePDFData): string {
     const { invoice, lines, companyInfo } = data;
     
@@ -53,7 +55,7 @@ export class InvoicePDFGenerator {
       .replace(/{{COMPANY_VAT}}/g, companyInfo?.vat || '')
       .replace(/{{COMPANY_IBAN}}/g, companyInfo?.iban || '')
       .replace(/{{COMPANY_BIC}}/g, companyInfo?.bic || '')
-      .replace(/{{COMPANY_LOGO}}/g, companyInfo?.logo || '')
+      .replace(/{{COMPANY_LOGO}}/g, '') // Remove logo references to prevent image loading errors
       .replace(/{{INVOICE_NUMBER}}/g, invoice.invoice_number)
       .replace(/{{INVOICE_DATE}}/g, new Date(invoice.invoice_date).toLocaleDateString('nl-NL'))
       .replace(/{{DUE_DATE}}/g, new Date(invoice.due_date).toLocaleDateString('nl-NL'))
@@ -84,19 +86,21 @@ export class InvoicePDFGenerator {
       container.style.position = 'absolute';
       container.style.left = '-9999px';
       container.style.top = '-9999px';
-      container.style.width = '794px'; // Consistent sizing - always use standard width
+      container.style.width = '794px'; // Unified A4 width in pixels
       container.style.backgroundColor = 'white';
       container.style.fontFamily = 'Arial, sans-serif';
       container.style.fontSize = '12px';
       container.style.lineHeight = '1.4';
+      container.style.boxSizing = 'border-box';
+      container.style.overflow = 'hidden';
       
       console.log('Container created with dimensions:', container.style.width);
       
       document.body.appendChild(container);
       
-      // Wait longer for fonts and styles to load properly
+      // Wait for fonts and styles to load properly
       console.log('Waiting for fonts and styles to load...');
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       console.log('HTML container ready for rendering');
       return container;
@@ -117,9 +121,9 @@ export class InvoicePDFGenerator {
       return data.template.html_content;
     }
     
-    // Fallback to default template
-    console.log('Using fallback default template');
-    return this.getDefaultTemplate();
+    // Fallback to unified default template
+    console.log('Using unified default template');
+    return this.getUnifiedTemplate();
   }
 
   static async generatePDF(data: InvoicePDFData, options: {
@@ -154,7 +158,7 @@ export class InvoicePDFGenerator {
       
       console.log('🎨 Starting canvas rendering...');
       
-      // Generate canvas from HTML with improved settings
+      // Generate canvas from HTML with unified settings
       const canvas = await html2canvas(container, {
         scale: 2,
         useCORS: true,
@@ -162,9 +166,13 @@ export class InvoicePDFGenerator {
         backgroundColor: '#ffffff',
         width: 794,
         height: 1123, // A4 height in pixels
-        logging: true,
+        logging: false, // Reduce console spam
+        imageTimeout: 0, // Skip image loading to prevent errors
         onclone: (clonedDoc) => {
           console.log('Canvas cloning document...');
+          // Remove any problematic elements
+          const images = clonedDoc.querySelectorAll('img');
+          images.forEach(img => img.remove());
         }
       });
       
@@ -183,11 +191,11 @@ export class InvoicePDFGenerator {
       
       console.log('📄 Creating PDF document...');
       
-      // Create PDF
+      // Create PDF with unified dimensions
       const pdf = new jsPDF({
         orientation: orientation,
         unit: 'px',
-        format: [794, 1123] // A4 in pixels
+        format: [794, 1123] // Unified A4 in pixels
       });
       
       pdf.addImage(imgData, 'PNG', 0, 0, 794, 1123);
@@ -211,69 +219,87 @@ export class InvoicePDFGenerator {
     console.log('🔍 Starting PDF preview generation for invoice:', data.invoice.invoice_number);
     
     try {
-      // Use same template as regular PDF generation for consistency
-      const htmlTemplate = this.getValidTemplate(data);
-      console.log('✅ Template obtained for preview, length:', htmlTemplate.length);
+      // Clean up any existing blob URLs
+      this.cleanupBlobUrls();
       
-      const processedHtml = this.replaceVariables(htmlTemplate, data);
-      console.log('✅ Variables replaced for preview');
-      
-      console.log('🏗️ Creating HTML container for preview...');
-      
-      // Use same dimensions as regular PDF for consistency
-      const container = await this.createHTMLContainer(processedHtml, true);
-      console.log('✅ HTML container created for preview');
-      
-      console.log('🎨 Rendering preview canvas...');
-      
-      // Generate canvas from HTML with consistent settings
-      const canvas = await html2canvas(container, {
-        scale: 1.5, // Slightly lower scale for preview performance
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        width: 794,
-        height: 1123, // Same dimensions as regular PDF
-        logging: true,
-        onclone: (clonedDoc) => {
-          console.log('Preview canvas cloning document...');
-        }
+      // Generate PDF as blob for better performance
+      const pdfBlob = await this.generatePDF(data, {
+        download: false,
+        returnBlob: true
       });
       
-      console.log('✅ Preview canvas generated, dimensions:', canvas.width, 'x', canvas.height);
-      
-      // Remove the temporary container
-      document.body.removeChild(container);
-      console.log('✅ Preview container cleaned up');
-      
-      // Validate canvas data
-      const imgData = canvas.toDataURL('image/png');
-      if (!imgData || imgData.length < 1000) {
-        throw new Error('Preview canvas generated invalid or empty image data');
+      if (!pdfBlob) {
+        throw new Error('Failed to generate PDF blob');
       }
-      console.log('✅ Preview canvas data validated, length:', imgData.length);
       
-      console.log('📄 Creating preview PDF...');
+      // Create blob URL instead of data URI for better performance
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      this.activeBlobUrls.add(blobUrl);
       
-      // Create PDF and return as data URL with consistent dimensions
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'px',
-        format: [794, 1123] // Same format as regular PDF
-      });
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, 794, 1123);
-      
-      const dataURL = pdf.output('datauristring');
-      console.log('✅ Preview data URL generated successfully, length:', dataURL.length);
-      return dataURL;
+      console.log('✅ Preview blob URL generated successfully');
+      return blobUrl;
     } catch (error) {
       console.error('❌ Preview generation failed:', error);
-      throw new Error(`Preview generation failed: ${error.message}`);
+      // Fallback to simple error template
+      try {
+        console.log('🔄 Attempting fallback preview generation...');
+        return await this.generateFallbackPreview(data);
+      } catch (fallbackError) {
+        console.error('❌ Fallback preview also failed:', fallbackError);
+        throw new Error(`Preview generation failed: ${error.message}`);
+      }
     }
   }
 
-  private static getCompactTemplate(): string {
+  private static async generateFallbackPreview(data: InvoicePDFData): Promise<string> {
+    console.log('📄 Generating fallback preview with minimal template...');
+    
+    // Use minimal template to avoid rendering issues
+    const fallbackTemplate = this.getMinimalTemplate();
+    const processedHtml = this.replaceVariables(fallbackTemplate, data);
+    
+    const container = await this.createHTMLContainer(processedHtml, true);
+    
+    const canvas = await html2canvas(container, {
+      scale: 1, // Lower scale for fallback
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      width: 794,
+      height: 400, // Smaller height for fallback
+      logging: false,
+      imageTimeout: 0
+    });
+    
+    document.body.removeChild(container);
+    
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'px',
+      format: [794, 400]
+    });
+    
+    const imgData = canvas.toDataURL('image/png');
+    pdf.addImage(imgData, 'PNG', 0, 0, 794, 400);
+    
+    const fallbackBlob = pdf.output('blob');
+    const blobUrl = URL.createObjectURL(fallbackBlob);
+    this.activeBlobUrls.add(blobUrl);
+    
+    console.log('✅ Fallback preview generated');
+    return blobUrl;
+  }
+
+  private static cleanupBlobUrls(): void {
+    console.log('🧹 Cleaning up blob URLs...');
+    this.activeBlobUrls.forEach(url => {
+      URL.revokeObjectURL(url);
+    });
+    this.activeBlobUrls.clear();
+  }
+
+  // Unified template with consistent 794px width
+  private static getUnifiedTemplate(): string {
     return `<!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -283,23 +309,25 @@ export class InvoicePDFGenerator {
     <style>
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
         body { 
             font-family: Arial, sans-serif; 
-            margin: 25px;
+            margin: 30px;
             padding: 0;
             background: white; 
             color: #333;
-            line-height: 1.3;
-            width: 545px;
-            min-height: 792px;
-            font-size: 11px;
+            line-height: 1.4;
+            width: 734px;
+            min-height: 1063px;
+            font-size: 12px;
         }
         .header { 
             width: 100%;
-            margin-bottom: 25px; 
+            margin-bottom: 30px; 
             border-bottom: 2px solid #3b82f6; 
-            padding-bottom: 15px; 
+            padding-bottom: 20px; 
         }
         .header table {
             width: 100%;
@@ -310,24 +338,24 @@ export class InvoicePDFGenerator {
             text-align: left;
         }
         .company-info h1 { 
-            margin: 0 0 8px 0; 
+            margin: 0 0 10px 0; 
             color: #3b82f6; 
-            font-size: 18px; 
+            font-size: 20px; 
         }
-        .company-info p { margin: 1px 0; font-size: 9px; }
+        .company-info p { margin: 2px 0; font-size: 11px; }
         .invoice-info { 
             vertical-align: top;
             text-align: right; 
         }
         .invoice-number { 
-            font-size: 18px; 
+            font-size: 20px; 
             font-weight: bold; 
             color: #3b82f6; 
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
         .customer-billing { 
             width: 100%;
-            margin-bottom: 20px; 
+            margin-bottom: 25px; 
         }
         .customer-billing table {
             width: 100%;
@@ -340,28 +368,28 @@ export class InvoicePDFGenerator {
         }
         .section-title { 
             font-weight: bold; 
-            margin-bottom: 6px; 
+            margin-bottom: 8px; 
             color: #374151; 
-            font-size: 11px;
+            font-size: 12px;
         }
         .invoice-table { 
             width: 100%; 
             border-collapse: collapse; 
-            margin: 15px 0; 
+            margin: 20px 0; 
         }
         .invoice-table th, .invoice-table td { 
             border: 1px solid #d1d5db; 
-            padding: 8px; 
+            padding: 10px; 
             text-align: left; 
         }
         .invoice-table th { 
             background-color: #f3f4f6; 
             font-weight: bold; 
-            font-size: 10px;
+            font-size: 11px;
         }
-        .invoice-table td { font-size: 9px; }
+        .invoice-table td { font-size: 10px; }
         .totals { 
-            margin-top: 15px; 
+            margin-top: 20px; 
             width: 100%;
         }
         .totals table {
@@ -370,9 +398,9 @@ export class InvoicePDFGenerator {
             border-collapse: collapse;
         }
         .totals td {
-            padding: 3px 0;
+            padding: 4px 0;
             text-align: right;
-            font-size: 10px;
+            font-size: 11px;
         }
         .totals .label {
             padding-right: 15px;
@@ -382,16 +410,16 @@ export class InvoicePDFGenerator {
             font-weight: bold;
         }
         .final-total td { 
-            font-size: 12px; 
+            font-size: 13px; 
             border-top: 2px solid #3b82f6; 
             padding-top: 6px; 
             font-weight: bold;
         }
         .footer { 
-            margin-top: 25px; 
+            margin-top: 30px; 
             padding-top: 15px; 
             border-top: 1px solid #e5e7eb; 
-            font-size: 9px; 
+            font-size: 10px; 
             color: #6b7280; 
         }
         .footer p { margin: 3px 0; }
@@ -475,203 +503,39 @@ export class InvoicePDFGenerator {
 </html>`;
   }
 
-  private static getDefaultTemplate(): string {
+  // Minimal template for fallback scenarios
+  private static getMinimalTemplate(): string {
     return `<!DOCTYPE html>
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Factuur</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
-        body { 
-            font-family: Arial, sans-serif; 
-            margin: 30px;
-            padding: 0;
-            background: white; 
-            color: #333;
-            line-height: 1.4;
-            width: 734px;
-            min-height: 1063px;
-        }
-        .header { 
-            width: 100%;
-            margin-bottom: 40px; 
-            border-bottom: 2px solid #3b82f6; 
-            padding-bottom: 20px; 
-        }
-        .header table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .company-info { 
-            vertical-align: top;
-            text-align: left;
-        }
-        .company-info h1 { 
-            margin: 0 0 10px 0; 
-            color: #3b82f6; 
-            font-size: 24px; 
-        }
-        .company-info p { margin: 2px 0; }
-        .invoice-info { 
-            vertical-align: top;
-            text-align: right; 
-        }
-        .invoice-number { 
-            font-size: 24px; 
-            font-weight: bold; 
-            color: #3b82f6; 
-            margin-bottom: 10px;
-        }
-        .customer-billing { 
-            width: 100%;
-            margin-bottom: 30px; 
-        }
-        .customer-billing table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .customer-billing td {
-            vertical-align: top;
-            width: 50%;
-            padding-right: 20px;
-        }
-        .section-title { 
-            font-weight: bold; 
-            margin-bottom: 10px; 
-            color: #374151; 
-            font-size: 14px;
-        }
-        .invoice-table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin: 20px 0; 
-        }
-        .invoice-table th, .invoice-table td { 
-            border: 1px solid #d1d5db; 
-            padding: 12px; 
-            text-align: left; 
-        }
-        .invoice-table th { 
-            background-color: #f3f4f6; 
-            font-weight: bold; 
-            font-size: 12px;
-        }
-        .invoice-table td { font-size: 11px; }
-        .totals { 
-            margin-top: 20px; 
-            width: 100%;
-        }
-        .totals table {
-            width: 300px;
-            margin-left: auto;
-            border-collapse: collapse;
-        }
-        .totals td {
-            padding: 4px 0;
-            text-align: right;
-        }
-        .totals .label {
-            padding-right: 20px;
-            font-weight: normal;
-        }
-        .totals .amount {
-            font-weight: bold;
-        }
-        .final-total td { 
-            font-size: 16px; 
-            border-top: 2px solid #3b82f6; 
-            padding-top: 8px; 
-            font-weight: bold;
-        }
-        .footer { 
-            margin-top: 40px; 
-            padding-top: 20px; 
-            border-top: 1px solid #e5e7eb; 
-            font-size: 11px; 
-            color: #6b7280; 
-        }
-        .footer p { margin: 4px 0; }
+        body { font-family: Arial, sans-serif; margin: 20px; width: 754px; background: white; }
+        .header { border-bottom: 2px solid #3b82f6; padding-bottom: 15px; margin-bottom: 20px; }
+        .title { font-size: 18px; color: #3b82f6; font-weight: bold; }
+        .content { font-size: 12px; line-height: 1.4; }
     </style>
 </head>
 <body>
     <div class="header">
-        <table>
-            <tr>
-                <td class="company-info">
-                    <h1>{{COMPANY_NAME}}</h1>
-                    <p>{{COMPANY_ADDRESS}}</p>
-                    <p>{{COMPANY_POSTAL_CODE}} {{COMPANY_CITY}}</p>
-                    <p>Tel: {{COMPANY_PHONE}}</p>
-                    <p>Email: {{COMPANY_EMAIL}}</p>
-                </td>
-                <td class="invoice-info">
-                    <div class="invoice-number">Factuur {{INVOICE_NUMBER}}</div>
-                    <p><strong>Factuurdatum:</strong> {{INVOICE_DATE}}</p>
-                    <p><strong>Vervaldatum:</strong> {{DUE_DATE}}</p>
-                </td>
-            </tr>
-        </table>
+        <div class="title">Factuur {{INVOICE_NUMBER}}</div>
+        <div>{{COMPANY_NAME}}</div>
     </div>
-
-    <div class="customer-billing">
-        <table>
-            <tr>
-                <td>
-                    <div class="section-title">Factuuradres:</div>
-                    <div>{{CUSTOMER_NAME}}</div>
-                    <div>{{CUSTOMER_ADDRESS}}</div>
-                    <div>{{CUSTOMER_POSTAL_CODE}} {{CUSTOMER_CITY}}</div>
-                </td>
-                <td>
-                    <div class="section-title">Betreft:</div>
-                    <div>{{INVOICE_SUBJECT}}</div>
-                </td>
-            </tr>
-        </table>
-    </div>
-
-    <table class="invoice-table">
-        <thead>
-            <tr>
-                <th>Omschrijving</th>
-                <th>Aantal</th>
-                <th>Prijs per stuk</th>
-                <th>BTW %</th>
-                <th>Totaal</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{INVOICE_LINES}}
-        </tbody>
-    </table>
-
-    <div class="totals">
-        <table>
-            <tr>
-                <td class="label">Subtotaal:</td>
-                <td class="amount">€ {{SUBTOTAL}}</td>
-            </tr>
-            <tr>
-                <td class="label">BTW ({{VAT_PERCENTAGE}}%):</td>
-                <td class="amount">€ {{VAT_AMOUNT}}</td>
-            </tr>
-            <tr class="final-total">
-                <td class="label">Totaal:</td>
-                <td class="amount">€ {{TOTAL_AMOUNT}}</td>
-            </tr>
-        </table>
-    </div>
-
-    <div class="footer">
-        <p>Betaling binnen {{PAYMENT_TERMS}} dagen na factuurdatum.</p>
-        <p>{{COMPANY_NAME}} | KvK: {{COMPANY_KVK}} | BTW-nr: {{COMPANY_VAT}}</p>
-        <p>IBAN: {{COMPANY_IBAN}} | BIC: {{COMPANY_BIC}}</p>
+    <div class="content">
+        <p><strong>Klant:</strong> {{CUSTOMER_NAME}}</p>
+        <p><strong>Datum:</strong> {{INVOICE_DATE}}</p>
+        <p><strong>Totaal:</strong> €{{TOTAL_AMOUNT}}</p>
     </div>
 </body>
 </html>`;
+  }
+
+  // Keep existing methods for backward compatibility
+  private static getCompactTemplate(): string {
+    return this.getUnifiedTemplate();
+  }
+
+  private static getDefaultTemplate(): string {
+    return this.getUnifiedTemplate();
   }
 }
