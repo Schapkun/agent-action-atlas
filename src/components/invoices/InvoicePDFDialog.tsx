@@ -19,43 +19,55 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState<string>('');
   
   const { lines } = useInvoiceLines(invoice.id);
   const { defaultTemplate } = useInvoiceTemplates();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (isOpen && defaultTemplate && lines.length >= 0) {
+    if (isOpen && lines.length >= 0) {
       generatePreview();
     }
-  }, [isOpen, defaultTemplate, lines]);
+  }, [isOpen, lines]);
 
   const generatePreview = async () => {
-    if (!defaultTemplate) return;
-    
     setLoading(true);
+    setError('');
+    
     try {
+      console.log('Starting PDF preview generation...');
+      console.log('Invoice:', invoice);
+      console.log('Lines:', lines);
+      console.log('Default template:', defaultTemplate);
+
       const pdfData = {
         invoice,
         lines,
         template: defaultTemplate,
         companyInfo: {
-          name: 'Uw Bedrijf',
-          address: 'Adres',
+          name: 'Uw Bedrijf B.V.',
+          address: 'Voorbeeldstraat 123',
           postalCode: '1234AB',
-          city: 'Stad',
-          phone: '+31 6 12345678',
-          email: 'info@uwbedrijf.nl'
+          city: 'Amsterdam',
+          phone: '+31 20 123 4567',
+          email: 'info@uwbedrijf.nl',
+          kvk: '12345678',
+          vat: 'NL123456789B01',
+          iban: 'NL91ABNA0417164300',
+          bic: 'ABNANL2A'
         }
       };
 
       const dataURL = await InvoicePDFGenerator.generatePreviewDataURL(pdfData);
       setPreviewUrl(dataURL);
+      console.log('Preview generated successfully');
     } catch (error) {
       console.error('PDF preview error:', error);
+      setError(`Kon PDF preview niet genereren: ${error.message}`);
       toast({
         title: "Fout",
-        description: "Kon PDF preview niet genereren",
+        description: `Kon PDF preview niet genereren: ${error.message}`,
         variant: "destructive"
       });
     } finally {
@@ -64,21 +76,27 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
   };
 
   const handleDownload = async () => {
-    if (!defaultTemplate) return;
-    
     setDownloading(true);
+    setError('');
+    
     try {
+      console.log('Starting PDF download...');
+
       const pdfData = {
         invoice,
         lines,
         template: defaultTemplate,
         companyInfo: {
-          name: 'Uw Bedrijf',
-          address: 'Adres',
+          name: 'Uw Bedrijf B.V.',
+          address: 'Voorbeeldstraat 123',
           postalCode: '1234AB',
-          city: 'Stad',
-          phone: '+31 6 12345678',
-          email: 'info@uwbedrijf.nl'
+          city: 'Amsterdam',
+          phone: '+31 20 123 4567',
+          email: 'info@uwbedrijf.nl',
+          kvk: '12345678',
+          vat: 'NL123456789B01',
+          iban: 'NL91ABNA0417164300',
+          bic: 'ABNANL2A'
         }
       };
 
@@ -93,9 +111,10 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
       });
     } catch (error) {
       console.error('PDF download error:', error);
+      setError(`Kon PDF niet downloaden: ${error.message}`);
       toast({
         title: "Fout",
-        description: "Kon PDF niet downloaden",
+        description: `Kon PDF niet downloaden: ${error.message}`,
         variant: "destructive"
       });
     } finally {
@@ -130,6 +149,13 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
               <Loader2 className="h-8 w-8 animate-spin" />
               <span className="ml-2">PDF wordt gegenereerd...</span>
             </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center h-full text-red-600 p-4">
+              <p className="text-center mb-4">{error}</p>
+              <Button onClick={generatePreview} variant="outline">
+                Opnieuw proberen
+              </Button>
+            </div>
           ) : previewUrl ? (
             <iframe
               src={previewUrl}
@@ -137,8 +163,11 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
               title="PDF Preview"
             />
           ) : (
-            <div className="flex items-center justify-center h-full text-gray-500">
-              Geen PDF preview beschikbaar
+            <div className="flex flex-col items-center justify-center h-full text-gray-500">
+              <p>Geen PDF preview beschikbaar</p>
+              <Button onClick={generatePreview} variant="outline" className="mt-2">
+                Preview genereren
+              </Button>
             </div>
           )}
         </div>

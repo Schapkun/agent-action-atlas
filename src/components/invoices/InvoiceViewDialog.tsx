@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Download, Eye } from 'lucide-react';
+import { Download, Eye, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { Invoice } from '@/hooks/useInvoices';
@@ -50,14 +51,9 @@ export const InvoiceViewDialog = ({ isOpen, onClose, invoice }: InvoiceViewDialo
   const { toast } = useToast();
 
   const handleQuickDownload = async () => {
-    if (!defaultTemplate) {
-      toast({
-        title: "Geen template",
-        description: "Er is geen factuur template gevonden. Maak eerst een factuur template aan.",
-        variant: "destructive"
-      });
-      return;
-    }
+    console.log('Quick download started');
+    console.log('Template available:', !!defaultTemplate);
+    console.log('Lines count:', lines.length);
     
     setDownloading(true);
     try {
@@ -66,12 +62,16 @@ export const InvoiceViewDialog = ({ isOpen, onClose, invoice }: InvoiceViewDialo
         lines,
         template: defaultTemplate,
         companyInfo: {
-          name: 'Uw Bedrijf',
-          address: 'Adres',
+          name: 'Uw Bedrijf B.V.',
+          address: 'Voorbeeldstraat 123',
           postalCode: '1234AB',
-          city: 'Stad',
-          phone: '+31 6 12345678',
-          email: 'info@uwbedrijf.nl'
+          city: 'Amsterdam',
+          phone: '+31 20 123 4567',
+          email: 'info@uwbedrijf.nl',
+          kvk: '12345678',
+          vat: 'NL123456789B01',
+          iban: 'NL91ABNA0417164300',
+          bic: 'ABNANL2A'
         }
       };
 
@@ -85,7 +85,7 @@ export const InvoiceViewDialog = ({ isOpen, onClose, invoice }: InvoiceViewDialo
       console.error('PDF download error:', error);
       toast({
         title: "Fout",
-        description: "Kon PDF niet downloaden",
+        description: `Kon PDF niet downloaden: ${error.message}`,
         variant: "destructive"
       });
     } finally {
@@ -114,7 +114,10 @@ export const InvoiceViewDialog = ({ isOpen, onClose, invoice }: InvoiceViewDialo
               </CardHeader>
               <CardContent className="flex gap-3">
                 <Button
-                  onClick={() => setIsPDFPreviewOpen(true)}
+                  onClick={() => {
+                    console.log('Opening PDF preview...');
+                    setIsPDFPreviewOpen(true);
+                  }}
                   variant="outline"
                   className="flex items-center gap-2"
                 >
@@ -126,7 +129,11 @@ export const InvoiceViewDialog = ({ isOpen, onClose, invoice }: InvoiceViewDialo
                   disabled={downloading}
                   className="flex items-center gap-2"
                 >
-                  <Download className="h-4 w-4" />
+                  {downloading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
                   {downloading ? 'Downloaden...' : 'Download PDF'}
                 </Button>
               </CardContent>
