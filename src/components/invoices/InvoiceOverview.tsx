@@ -20,7 +20,7 @@ import { InvoiceDialog } from './InvoiceDialog';
 import { InvoiceViewDialog } from './InvoiceViewDialog';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/use-toast';
 
 const getStatusColor = (status: string) => {
   switch (status) {
