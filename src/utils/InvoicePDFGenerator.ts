@@ -24,8 +24,8 @@ interface InvoicePDFData {
 
 export class InvoicePDFGenerator {
   private static readonly MAX_DATA_URI_SIZE = 1.5 * 1024 * 1024; // 1.5MB limit
-  private static readonly PREVIEW_SCALE = 0.6; // Lower scale for better compatibility
-  private static readonly JPEG_QUALITY = 0.6; // Lower quality for smaller size
+  private static readonly PREVIEW_SCALE = 1.0; // Full scale for better quality
+  private static readonly JPEG_QUALITY = 0.85; // Higher quality for better readability
 
   private static replaceVariables(html: string, data: InvoicePDFData): string {
     const { invoice, lines, companyInfo } = data;
@@ -95,10 +95,10 @@ export class InvoicePDFGenerator {
       container.style.position = 'absolute';
       container.style.left = '-9999px';
       container.style.top = '-9999px';
-      container.style.width = isPreview ? '600px' : '794px'; // Smaller for preview
+      container.style.width = isPreview ? '1200px' : '794px'; // Larger for preview
       container.style.backgroundColor = 'white';
       container.style.fontFamily = 'Arial, sans-serif';
-      container.style.fontSize = isPreview ? '9px' : '12px';
+      container.style.fontSize = isPreview ? '18px' : '12px'; // Larger for preview
       container.style.lineHeight = '1.3';
       container.style.boxSizing = 'border-box';
       container.style.overflow = 'hidden';
@@ -217,7 +217,7 @@ export class InvoicePDFGenerator {
   }
 
   static async generatePreviewDataURL(data: InvoicePDFData): Promise<string> {
-    console.log('🔍 Starting size-aware PDF preview generation for invoice:', data.invoice.invoice_number);
+    console.log('🔍 Starting definitive canvas preview generation for invoice:', data.invoice.invoice_number);
     
     // Check canvas support first
     if (!this.checkCanvasSupport()) {
@@ -250,9 +250,9 @@ export class InvoicePDFGenerator {
       console.log('⚠️ PDF generation failed, falling back to canvas preview:', error.message);
     }
     
-    // Fallback to canvas preview
+    // Fallback to high-quality canvas preview
     try {
-      console.log('🖼️ Generating canvas preview...');
+      console.log('🖼️ Generating high-quality canvas preview...');
       return await this.generateCanvasPreview(data);
     } catch (error) {
       console.error('❌ Canvas preview failed:', error);
@@ -261,7 +261,7 @@ export class InvoicePDFGenerator {
   }
 
   private static async generateCanvasPreview(data: InvoicePDFData): Promise<string> {
-    console.log('🎨 Creating canvas preview...');
+    console.log('🎨 Creating high-quality canvas preview...');
     
     const htmlTemplate = this.getMinimalTemplate();
     const processedHtml = this.replaceVariables(htmlTemplate, data);
@@ -271,12 +271,12 @@ export class InvoicePDFGenerator {
     try {
       container = await this.createHTMLContainer(processedHtml, true);
       
-      // Use optimized canvas configuration
+      // Use high-quality canvas configuration
       const canvas = await html2canvas(container, {
         scale: this.PREVIEW_SCALE,
         backgroundColor: '#ffffff',
-        width: 600,
-        height: 400,
+        width: 1200,
+        height: 800,
         logging: false,
         useCORS: false,
         allowTaint: false,
@@ -284,9 +284,9 @@ export class InvoicePDFGenerator {
         imageTimeout: 0
       });
       
-      console.log('✅ Canvas rendered successfully');
+      console.log('✅ High-quality canvas rendered successfully');
       
-      // Generate optimized image data
+      // Generate high-quality image data
       const canvasDataUri = canvas.toDataURL('image/jpeg', this.JPEG_QUALITY);
       const sizeInBytes = canvasDataUri.length * 0.75;
       console.log('📊 Canvas preview size:', Math.round(sizeInBytes / 1024), 'KB');
@@ -518,7 +518,7 @@ export class InvoicePDFGenerator {
 </html>`;
   }
 
-  // Minimal template for fallback scenarios
+  // Enhanced minimal template with larger fonts for better readability
   private static getMinimalTemplate(): string {
     return `<!DOCTYPE html>
 <html lang="nl">
@@ -527,31 +527,31 @@ export class InvoicePDFGenerator {
     <style>
         body { 
             font-family: Arial, sans-serif; 
-            margin: 10px; 
-            width: 580px; 
+            margin: 20px; 
+            width: 1160px; 
             background: white; 
-            font-size: 10px; 
-            line-height: 1.2;
+            font-size: 18px; 
+            line-height: 1.4;
         }
         .header { 
-            border-bottom: 2px solid #3b82f6; 
-            padding-bottom: 8px; 
-            margin-bottom: 12px; 
+            border-bottom: 3px solid #3b82f6; 
+            padding-bottom: 16px; 
+            margin-bottom: 24px; 
         }
         .title { 
-            font-size: 14px; 
+            font-size: 24px; 
             color: #3b82f6; 
             font-weight: bold; 
-            margin-bottom: 4px; 
+            margin-bottom: 8px; 
         }
         .content { 
-            font-size: 9px; 
-            line-height: 1.3; 
+            font-size: 16px; 
+            line-height: 1.5; 
         }
         .info-row { 
             display: flex; 
             justify-content: space-between; 
-            margin: 4px 0; 
+            margin: 8px 0; 
         }
         .info-col {
             width: 48%;
@@ -559,28 +559,30 @@ export class InvoicePDFGenerator {
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 8px 0;
-            font-size: 8px;
+            margin: 16px 0;
+            font-size: 14px;
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 4px;
+            padding: 8px;
             text-align: left;
         }
         th {
             background: #f5f5f5;
+            font-weight: bold;
         }
         .total {
             text-align: right;
-            margin-top: 8px;
+            margin-top: 16px;
             font-weight: bold;
+            font-size: 18px;
         }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="title">Factuur {{INVOICE_NUMBER}}</div>
-        <div>{{COMPANY_NAME}}</div>
+        <div style="font-size: 16px;">{{COMPANY_NAME}}</div>
     </div>
     <div class="content">
         <div class="info-row">
