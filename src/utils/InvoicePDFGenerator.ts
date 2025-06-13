@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Invoice, InvoiceLine } from '@/hooks/useInvoices';
@@ -24,6 +23,10 @@ interface InvoicePDFData {
 }
 
 export class InvoicePDFGenerator {
+  private static readonly MAX_DATA_URI_SIZE = 1.5 * 1024 * 1024; // 1.5MB limit
+  private static readonly PREVIEW_SCALE = 0.8;
+  private static readonly JPEG_QUALITY = 0.75;
+
   private static replaceVariables(html: string, data: InvoicePDFData): string {
     const { invoice, lines, companyInfo } = data;
     
@@ -31,18 +34,16 @@ export class InvoicePDFGenerator {
     console.log('Invoice lines count:', lines.length);
     console.log('Company info available:', !!companyInfo);
     
-    // Generate invoice lines HTML with table-based layout for PDF compatibility
     const invoiceLinesHtml = lines.map(line => `
       <tr style="border-bottom: 1px solid #ddd;">
-        <td style="padding: 12px; border-right: 1px solid #ddd; text-align: left;">${line.description}</td>
-        <td style="padding: 12px; border-right: 1px solid #ddd; text-align: center;">${line.quantity}</td>
-        <td style="padding: 12px; border-right: 1px solid #ddd; text-align: right;">€${line.unit_price.toFixed(2)}</td>
-        <td style="padding: 12px; border-right: 1px solid #ddd; text-align: center;">${line.vat_rate}%</td>
-        <td style="padding: 12px; text-align: right;">€${line.line_total.toFixed(2)}</td>
+        <td style="padding: 8px; border-right: 1px solid #ddd; text-align: left;">${line.description}</td>
+        <td style="padding: 8px; border-right: 1px solid #ddd; text-align: center;">${line.quantity}</td>
+        <td style="padding: 8px; border-right: 1px solid #ddd; text-align: right;">€${line.unit_price.toFixed(2)}</td>
+        <td style="padding: 8px; border-right: 1px solid #ddd; text-align: center;">${line.vat_rate}%</td>
+        <td style="padding: 8px; text-align: right;">€${line.line_total.toFixed(2)}</td>
       </tr>
     `).join('');
 
-    // Replace all variables in the HTML template - remove any image references
     const processedHtml = html
       .replace(/{{COMPANY_NAME}}/g, companyInfo?.name || 'Uw Bedrijf')
       .replace(/{{COMPANY_ADDRESS}}/g, companyInfo?.address || '')
@@ -54,7 +55,7 @@ export class InvoicePDFGenerator {
       .replace(/{{COMPANY_VAT}}/g, companyInfo?.vat || '')
       .replace(/{{COMPANY_IBAN}}/g, companyInfo?.iban || '')
       .replace(/{{COMPANY_BIC}}/g, companyInfo?.bic || '')
-      .replace(/{{COMPANY_LOGO}}/g, '') // Remove logo to prevent loading issues
+      .replace(/{{COMPANY_LOGO}}/g, '')
       .replace(/{{INVOICE_NUMBER}}/g, invoice.invoice_number)
       .replace(/{{INVOICE_DATE}}/g, new Date(invoice.invoice_date).toLocaleDateString('nl-NL'))
       .replace(/{{DUE_DATE}}/g, new Date(invoice.due_date).toLocaleDateString('nl-NL'))
@@ -74,8 +75,8 @@ export class InvoicePDFGenerator {
     return processedHtml;
   }
 
-  private static async createHTMLContainer(htmlContent: string): Promise<HTMLElement> {
-    console.log('Creating HTML container for rendering');
+  private static async createHTMLContainer(htmlContent: string, isPreview: boolean = false): Promise<HTMLElement> {
+    console.log('Creating HTML container for rendering (preview mode:', isPreview, ')');
     
     try {
       const container = document.createElement('div');
@@ -83,22 +84,22 @@ export class InvoicePDFGenerator {
       container.style.position = 'absolute';
       container.style.left = '-9999px';
       container.style.top = '-9999px';
-      container.style.width = '794px'; // A4 width
+      container.style.width = '794px';
       container.style.backgroundColor = 'white';
       container.style.fontFamily = 'Arial, sans-serif';
-      container.style.fontSize = '12px';
-      container.style.lineHeight = '1.4';
+      container.style.fontSize = isPreview ? '10px' : '12px';
+      container.style.lineHeight = '1.3';
       container.style.boxSizing = 'border-box';
       container.style.overflow = 'hidden';
       
-      // Remove any img elements to prevent loading errors
+      // Remove any img elements and external dependencies
       const images = container.querySelectorAll('img');
       images.forEach(img => img.remove());
       
       document.body.appendChild(container);
       
-      // Wait for fonts to load
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // DOM stabilization delay
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       console.log('HTML container ready');
       return container;
@@ -144,14 +145,14 @@ export class InvoicePDFGenerator {
       const processedHtml = this.replaceVariables(htmlTemplate, data);
       console.log('✅ Variables replaced');
       
-      const container = await this.createHTMLContainer(processedHtml);
+      const container = await this.createHTMLContainer(processedHtml, false);
       console.log('✅ HTML container created');
       
       console.log('🎨 Starting canvas rendering...');
       
       const canvas = await html2canvas(container, {
         scale: 2,
-        useCORS: true,
+        useCORS: false,
         allowTaint: true,
         backgroundColor: '#ffffff',
         width: 794,
@@ -159,7 +160,6 @@ export class InvoicePDFGenerator {
         logging: false,
         imageTimeout: 0,
         onclone: (clonedDoc) => {
-          // Remove any problematic elements in the cloned document
           const images = clonedDoc.querySelectorAll('img');
           images.forEach(img => img.remove());
         }
@@ -202,97 +202,104 @@ export class InvoicePDFGenerator {
   }
 
   static async generatePreviewDataURL(data: InvoicePDFData): Promise<string> {
-    console.log('🔍 Starting PDF preview generation (Data URI) for invoice:', data.invoice.invoice_number);
+    console.log('🔍 Starting size-aware PDF preview generation for invoice:', data.invoice.invoice_number);
     
     try {
-      const htmlTemplate = this.getValidTemplate(data);
-      const processedHtml = this.replaceVariables(htmlTemplate, data);
-      const container = await this.createHTMLContainer(processedHtml);
+      // Try primary approach: lightweight PDF
+      console.log('📄 Attempting lightweight PDF preview...');
+      const pdfDataUri = await this.generateLightweightPDFPreview(data);
       
-      console.log('🎨 Generating canvas for preview...');
+      // Check data URI size
+      const sizeInBytes = pdfDataUri.length * 0.75; // Base64 encoding overhead
+      console.log('📊 Data URI size:', Math.round(sizeInBytes / 1024), 'KB');
       
-      const canvas = await html2canvas(container, {
-        scale: 1.5, // Slightly lower scale for preview
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        width: 794,
-        height: 1123,
-        logging: false,
-        imageTimeout: 0,
-        onclone: (clonedDoc) => {
-          const images = clonedDoc.querySelectorAll('img');
-          images.forEach(img => img.remove());
-        }
-      });
-      
-      document.body.removeChild(container);
-      
-      const imgData = canvas.toDataURL('image/png');
-      
-      console.log('📄 Creating PDF for preview...');
-      
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'px',
-        format: [794, 1123]
-      });
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, 794, 1123);
-      
-      // Generate data URI instead of blob URL
-      const dataUri = pdf.output('datauristring');
-      
-      console.log('✅ Preview data URI generated successfully');
-      return dataUri;
+      if (sizeInBytes < this.MAX_DATA_URI_SIZE) {
+        console.log('✅ Lightweight PDF preview generated successfully');
+        return pdfDataUri;
+      } else {
+        console.log('⚠️ PDF too large, falling back to canvas preview...');
+        return await this.generateCanvasPreview(data);
+      }
       
     } catch (error) {
-      console.error('❌ Preview generation failed:', error);
+      console.error('❌ Primary preview failed:', error);
       
-      // Fallback to simple preview
       try {
-        console.log('🔄 Attempting fallback preview...');
-        return await this.generateFallbackPreview(data);
+        console.log('🔄 Attempting canvas fallback...');
+        return await this.generateCanvasPreview(data);
       } catch (fallbackError) {
-        console.error('❌ Fallback preview also failed:', fallbackError);
-        throw new Error(`Preview generation failed: ${error.message}`);
+        console.error('❌ Canvas fallback failed:', fallbackError);
+        throw new Error(`All preview methods failed: ${error.message}`);
       }
     }
   }
 
-  private static async generateFallbackPreview(data: InvoicePDFData): Promise<string> {
-    console.log('📄 Generating minimal fallback preview...');
+  private static async generateLightweightPDFPreview(data: InvoicePDFData): Promise<string> {
+    const htmlTemplate = this.getValidTemplate(data);
+    const processedHtml = this.replaceVariables(htmlTemplate, data);
+    const container = await this.createHTMLContainer(processedHtml, true);
     
-    const fallbackTemplate = this.getMinimalTemplate();
-    const processedHtml = this.replaceVariables(fallbackTemplate, data);
-    
-    const container = await this.createHTMLContainer(processedHtml);
+    console.log('🎨 Generating lightweight canvas...');
     
     const canvas = await html2canvas(container, {
-      scale: 1,
-      useCORS: true,
+      scale: this.PREVIEW_SCALE,
+      useCORS: false,
       allowTaint: true,
       backgroundColor: '#ffffff',
       width: 794,
-      height: 400,
+      height: 1123,
+      logging: false,
+      imageTimeout: 0,
+      onclone: (clonedDoc) => {
+        const images = clonedDoc.querySelectorAll('img');
+        images.forEach(img => img.remove());
+      }
+    });
+    
+    document.body.removeChild(container);
+    
+    // Use JPEG with compression for smaller size
+    const imgData = canvas.toDataURL('image/jpeg', this.JPEG_QUALITY);
+    
+    console.log('📄 Creating compressed PDF...');
+    
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'px',
+      format: [794, 1123]
+    });
+    
+    pdf.addImage(imgData, 'JPEG', 0, 0, 794, 1123);
+    
+    const dataUri = pdf.output('datauristring');
+    console.log('✅ Lightweight PDF preview generated');
+    return dataUri;
+  }
+
+  private static async generateCanvasPreview(data: InvoicePDFData): Promise<string> {
+    console.log('🖼️ Generating canvas-only preview...');
+    
+    const htmlTemplate = this.getMinimalTemplate();
+    const processedHtml = this.replaceVariables(htmlTemplate, data);
+    const container = await this.createHTMLContainer(processedHtml, true);
+    
+    const canvas = await html2canvas(container, {
+      scale: this.PREVIEW_SCALE,
+      useCORS: false,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      width: 794,
+      height: 600,
       logging: false,
       imageTimeout: 0
     });
     
     document.body.removeChild(container);
     
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'px',
-      format: [794, 400]
-    });
-    
-    const imgData = canvas.toDataURL('image/png');
-    pdf.addImage(imgData, 'PNG', 0, 0, 794, 400);
-    
-    const fallbackDataUri = pdf.output('datauristring');
-    console.log('✅ Fallback preview generated');
-    return fallbackDataUri;
+    // Return just the canvas image as data URI
+    const canvasDataUri = canvas.toDataURL('image/jpeg', this.JPEG_QUALITY);
+    console.log('✅ Canvas preview generated');
+    return canvasDataUri;
   }
 
   // Unified template with consistent 794px width
@@ -311,20 +318,20 @@ export class InvoicePDFGenerator {
         }
         body { 
             font-family: Arial, sans-serif; 
-            margin: 30px;
+            margin: 25px;
             padding: 0;
             background: white; 
             color: #333;
-            line-height: 1.4;
-            width: 734px;
-            min-height: 1063px;
-            font-size: 12px;
+            line-height: 1.3;
+            width: 744px;
+            min-height: 1073px;
+            font-size: 11px;
         }
         .header { 
             width: 100%;
-            margin-bottom: 30px; 
+            margin-bottom: 25px; 
             border-bottom: 2px solid #3b82f6; 
-            padding-bottom: 20px; 
+            padding-bottom: 15px; 
         }
         .header table {
             width: 100%;
@@ -335,24 +342,24 @@ export class InvoicePDFGenerator {
             text-align: left;
         }
         .company-info h1 { 
-            margin: 0 0 10px 0; 
+            margin: 0 0 8px 0; 
             color: #3b82f6; 
-            font-size: 20px; 
+            font-size: 18px; 
         }
-        .company-info p { margin: 2px 0; font-size: 11px; }
+        .company-info p { margin: 1px 0; font-size: 10px; }
         .invoice-info { 
             vertical-align: top;
             text-align: right; 
         }
         .invoice-number { 
-            font-size: 20px; 
+            font-size: 18px; 
             font-weight: bold; 
             color: #3b82f6; 
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         .customer-billing { 
             width: 100%;
-            margin-bottom: 25px; 
+            margin-bottom: 20px; 
         }
         .customer-billing table {
             width: 100%;
@@ -361,65 +368,65 @@ export class InvoicePDFGenerator {
         .customer-billing td {
             vertical-align: top;
             width: 50%;
-            padding-right: 15px;
+            padding-right: 10px;
         }
         .section-title { 
             font-weight: bold; 
-            margin-bottom: 8px; 
+            margin-bottom: 6px; 
             color: #374151; 
-            font-size: 12px;
+            font-size: 11px;
         }
         .invoice-table { 
             width: 100%; 
             border-collapse: collapse; 
-            margin: 20px 0; 
+            margin: 15px 0; 
         }
         .invoice-table th, .invoice-table td { 
             border: 1px solid #d1d5db; 
-            padding: 10px; 
+            padding: 6px; 
             text-align: left; 
         }
         .invoice-table th { 
             background-color: #f3f4f6; 
             font-weight: bold; 
-            font-size: 11px;
+            font-size: 10px;
         }
-        .invoice-table td { font-size: 10px; }
+        .invoice-table td { font-size: 9px; }
         .totals { 
-            margin-top: 20px; 
+            margin-top: 15px; 
             width: 100%;
         }
         .totals table {
-            width: 250px;
+            width: 200px;
             margin-left: auto;
             border-collapse: collapse;
         }
         .totals td {
-            padding: 4px 0;
+            padding: 3px 0;
             text-align: right;
-            font-size: 11px;
+            font-size: 10px;
         }
         .totals .label {
-            padding-right: 15px;
+            padding-right: 10px;
             font-weight: normal;
         }
         .totals .amount {
             font-weight: bold;
         }
         .final-total td { 
-            font-size: 13px; 
+            font-size: 11px; 
             border-top: 2px solid #3b82f6; 
-            padding-top: 6px; 
+            padding-top: 4px; 
             font-weight: bold;
         }
         .footer { 
-            margin-top: 30px; 
-            padding-top: 15px; 
+            margin-top: 20px; 
+            padding-top: 10px; 
             border-top: 1px solid #e5e7eb; 
-            font-size: 10px; 
+            font-size: 9px; 
             color: #6b7280; 
         }
-        .footer p { margin: 3px 0; }
+        .footer p { margin: 2px 0; }
     </style>
 </head>
 <body>
@@ -507,10 +514,11 @@ export class InvoicePDFGenerator {
 <head>
     <meta charset="UTF-8">
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; width: 754px; background: white; }
-        .header { border-bottom: 2px solid #3b82f6; padding-bottom: 15px; margin-bottom: 20px; }
-        .title { font-size: 18px; color: #3b82f6; font-weight: bold; }
-        .content { font-size: 12px; line-height: 1.4; }
+        body { font-family: Arial, sans-serif; margin: 15px; width: 764px; background: white; font-size: 11px; }
+        .header { border-bottom: 2px solid #3b82f6; padding-bottom: 10px; margin-bottom: 15px; }
+        .title { font-size: 16px; color: #3b82f6; font-weight: bold; margin-bottom: 5px; }
+        .content { font-size: 10px; line-height: 1.3; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -519,9 +527,16 @@ export class InvoicePDFGenerator {
         <div>{{COMPANY_NAME}}</div>
     </div>
     <div class="content">
-        <p><strong>Klant:</strong> {{CUSTOMER_NAME}}</p>
-        <p><strong>Datum:</strong> {{INVOICE_DATE}}</p>
-        <p><strong>Totaal:</strong> €{{TOTAL_AMOUNT}}</p>
+        <div class="info-grid">
+            <div>
+                <p><strong>Klant:</strong> {{CUSTOMER_NAME}}</p>
+                <p><strong>Datum:</strong> {{INVOICE_DATE}}</p>
+            </div>
+            <div>
+                <p><strong>Vervaldatum:</strong> {{DUE_DATE}}</p>
+                <p><strong>Totaal:</strong> €{{TOTAL_AMOUNT}}</p>
+            </div>
+        </div>
     </div>
 </body>
 </html>`;

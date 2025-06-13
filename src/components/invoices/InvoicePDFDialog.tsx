@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, RefreshCw, Loader2, X } from 'lucide-react';
+import { Download, RefreshCw, Loader2, X, FileText } from 'lucide-react';
 import { Invoice } from '@/hooks/useInvoices';
 import { useInvoiceLines } from '@/hooks/useInvoiceLines';
 import { useInvoiceTemplates } from '@/hooks/useInvoiceTemplates';
@@ -15,8 +15,11 @@ interface InvoicePDFDialogProps {
   invoice: Invoice;
 }
 
+type PreviewType = 'pdf' | 'image' | 'text' | 'error';
+
 export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogProps) => {
   const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [previewType, setPreviewType] = useState<PreviewType>('pdf');
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string>('');
@@ -49,9 +52,11 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
 
     setLoading(true);
     setError('');
+    setPreviewUrl('');
+    setPreviewType('pdf');
     
     try {
-      console.log('Starting PDF preview generation...');
+      console.log('Starting size-aware PDF preview generation...');
 
       const pdfData = {
         invoice,
@@ -71,16 +76,33 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
         }
       };
 
-      const dataURL = await InvoicePDFGenerator.generatePreviewDataURL(pdfData);
-      setPreviewUrl(dataURL);
-      console.log('Preview generated successfully');
+      const previewResult = await InvoicePDFGenerator.generatePreviewDataURL(pdfData);
+      
+      // Detect what type of preview we got back
+      if (previewResult.startsWith('data:application/pdf')) {
+        setPreviewType('pdf');
+        setPreviewUrl(previewResult);
+        console.log('✅ PDF preview generated successfully');
+      } else if (previewResult.startsWith('data:image')) {
+        setPreviewType('image');
+        setPreviewUrl(previewResult);
+        console.log('✅ Image preview generated as fallback');
+        toast({
+          title: "Preview Info",
+          description: "PDF te groot voor preview - afbeelding weergegeven",
+        });
+      } else {
+        throw new Error('Unknown preview format received');
+      }
+      
     } catch (error: any) {
-      console.error('PDF preview error:', error);
-      const errorMessage = `Kon PDF preview niet genereren: ${error.message}`;
-      setError(errorMessage);
+      console.error('Preview generation failed:', error);
+      setPreviewType('text');
+      setError(`Preview niet beschikbaar: ${error.message}`);
+      
       toast({
-        title: "Fout",
-        description: errorMessage,
+        title: "Preview Waarschuwing",
+        description: "Kon geen preview genereren - download is nog steeds beschikbaar",
         variant: "destructive"
       });
     } finally {
@@ -147,9 +169,78 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
 
   const handleRetry = () => {
     console.log('Retrying PDF generation...');
-    setError('');
-    setPreviewUrl('');
     generatePreview();
+  };
+
+  const renderPreviewContent = () => {
+    if (!dataReady) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Data wordt geladen...</span>
+        </div>
+      );
+    }
+
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Preview wordt gegenereerd...</span>
+        </div>
+      );
+    }
+
+    switch (previewType) {
+      case 'pdf':
+        return (
+          <iframe
+            src={previewUrl}
+            className="w-full h-full border-0"
+            title="PDF Preview"
+            style={{ minHeight: '600px' }}
+          />
+        );
+        
+      case 'image':
+        return (
+          <div className="flex items-center justify-center h-full bg-gray-50">
+            <img 
+              src={previewUrl} 
+              alt="Invoice Preview" 
+              className="max-w-full max-h-full object-contain border rounded"
+            />
+          </div>
+        );
+        
+      case 'text':
+        return (
+          <div className="flex flex-col items-center justify-center h-full text-gray-600 p-8">
+            <FileText className="h-16 w-16 mb-4 text-gray-400" />
+            <h3 className="text-lg font-semibold mb-2">Factuur {invoice.invoice_number}</h3>
+            <div className="space-y-2 text-center max-w-md">
+              <p><strong>Klant:</strong> {invoice.client_name}</p>
+              <p><strong>Datum:</strong> {new Date(invoice.invoice_date).toLocaleDateString('nl-NL')}</p>
+              <p><strong>Vervaldatum:</strong> {new Date(invoice.due_date).toLocaleDateString('nl-NL')}</p>
+              <p><strong>Totaal:</strong> €{invoice.total_amount.toFixed(2)}</p>
+            </div>
+            <p className="text-sm text-red-600 mt-4">{error}</p>
+            <Button onClick={handleRetry} variant="outline" className="mt-4">
+              Opnieuw proberen
+            </Button>
+          </div>
+        );
+        
+      default:
+        return (
+          <div className="flex flex-col items-center justify-center h-full text-gray-500">
+            <p>Geen preview beschikbaar</p>
+            <Button onClick={generatePreview} variant="outline" className="mt-2">
+              Preview genereren
+            </Button>
+          </div>
+        );
+    }
   };
 
   return (
@@ -171,48 +262,22 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
 
         {/* Main content area */}
         <div className="flex-1 bg-gray-100 relative overflow-hidden">
-          {!dataReady ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <span className="ml-2">Data wordt geladen...</span>
-            </div>
-          ) : loading ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <span className="ml-2">PDF wordt gegenereerd...</span>
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center h-full text-red-600 p-4">
-              <p className="text-center mb-4">{error}</p>
-              <Button onClick={handleRetry} variant="outline">
-                Opnieuw proberen
-              </Button>
-            </div>
-          ) : previewUrl ? (
-            <iframe
-              src={previewUrl}
-              className="w-full h-full border-0"
-              title="PDF Preview"
-              style={{ minHeight: '600px' }}
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full text-gray-500">
-              <p>Geen PDF preview beschikbaar</p>
-              <Button onClick={generatePreview} variant="outline" className="mt-2">
-                Preview genereren
-              </Button>
-            </div>
-          )}
+          {renderPreviewContent()}
         </div>
 
         {/* Sticky footer */}
         <div className="border-t bg-white px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {error && (
+            {(error || previewType === 'text') && (
               <Button onClick={handleRetry} variant="outline" size="sm">
                 <RefreshCw className="h-4 w-4 mr-1" />
                 Opnieuw
               </Button>
+            )}
+            {previewType === 'image' && (
+              <span className="text-sm text-amber-600">
+                Preview als afbeelding (PDF te groot)
+              </span>
             )}
           </div>
           
