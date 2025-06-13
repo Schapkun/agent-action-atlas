@@ -254,6 +254,17 @@ Uw administratie`
     }
   };
 
+  // Create wrapper functions for the DialogFooter component
+  const handleSave = () => {
+    const event = new Event('submit') as any;
+    handleSubmit(event);
+  };
+
+  const handleSend = () => {
+    const event = new Event('submit') as any;
+    handleSaveAndSend(event);
+  };
+
   const { subtotal, vatAmount, total } = calculateTotals();
 
   return (
@@ -497,10 +508,10 @@ Uw administratie`
 
         <DialogFooter
           onCancel={onClose}
-          onSave={handleSubmit}
+          onSave={handleSave}
           saving={loading}
           showSendButton={true}
-          onSend={handleSaveAndSend}
+          onSend={handleSend}
           sending={sendLoading}
           sendDisabled={!formData.client_email}
         />
