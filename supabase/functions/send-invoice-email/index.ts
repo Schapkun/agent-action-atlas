@@ -86,6 +86,22 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Fetch invoice lines
+    const { data: invoiceLines } = await supabase
+      .from('invoice_lines')
+      .select('*')
+      .eq('invoice_id', invoice.id)
+      .order('sort_order', { ascending: true });
+
+    // Fetch invoice template
+    const { data: template } = await supabase
+      .from('document_templates')
+      .select('*')
+      .eq('type', 'factuur')
+      .eq('is_active', true)
+      .limit(1)
+      .single();
+
     // Replace variables in email template
     const replaceVariables = (text: string) => {
       return text
@@ -99,34 +115,147 @@ const handler = async (req: Request): Promise<Response> => {
     const finalSubject = replaceVariables(email_template.subject);
     const finalMessage = replaceVariables(email_template.message);
 
-    // Generate PDF content for attachment - FIXED to return proper format
+    // Generate proper PDF content using template
     const generateInvoicePDF = () => {
       console.log("Generating PDF content for invoice:", invoice.invoice_number);
       
-      const pdfContent = `
-FACTUUR ${invoice.invoice_number}
-
-Factuurdatum: ${new Date(invoice.invoice_date).toLocaleDateString('nl-NL')}
-Vervaldatum: ${new Date(invoice.due_date).toLocaleDateString('nl-NL')}
-
-FACTUURADRES:
-${invoice.client_name}
-${invoice.client_address || ''}
-${invoice.client_postal_code ? `${invoice.client_postal_code} ${invoice.client_city}` : ''}
-${invoice.client_country || ''}
-
-BEDRAGEN:
-Subtotaal: €${invoice.subtotal.toFixed(2)}
-BTW (${invoice.vat_percentage}%): €${invoice.vat_amount.toFixed(2)}
-Totaal: €${invoice.total_amount.toFixed(2)}
-
-${invoice.notes ? `\nOpmerkingen:\n${invoice.notes}` : ''}
-      `.trim();
+      const htmlTemplate = template?.html_content || getDefaultInvoiceTemplate();
       
-      console.log("PDF content generated, length:", pdfContent.length);
+      // Generate invoice lines HTML
+      const invoiceLinesHtml = (invoiceLines || []).map(line => `
+        <tr>
+          <td>${line.description}</td>
+          <td>${line.quantity}</td>
+          <td>€${line.unit_price.toFixed(2)}</td>
+          <td>${line.vat_rate}%</td>
+          <td>€${line.line_total.toFixed(2)}</td>
+        </tr>
+      `).join('');
+
+      // Replace variables in template
+      const processedHtml = htmlTemplate
+        .replace(/{{COMPANY_NAME}}/g, 'Uw Bedrijf')
+        .replace(/{{COMPANY_ADDRESS}}/g, 'Bedrijfsadres')
+        .replace(/{{COMPANY_POSTAL_CODE}}/g, '1234AB')
+        .replace(/{{COMPANY_CITY}}/g, 'Stad')
+        .replace(/{{COMPANY_PHONE}}/g, '+31 6 12345678')
+        .replace(/{{COMPANY_EMAIL}}/g, 'info@uwbedrijf.nl')
+        .replace(/{{COMPANY_KVK}}/g, '12345678')
+        .replace(/{{COMPANY_VAT}}/g, 'NL123456789B01')
+        .replace(/{{COMPANY_IBAN}}/g, 'NL91ABNA0417164300')
+        .replace(/{{COMPANY_BIC}}/g, 'ABNANL2A')
+        .replace(/{{INVOICE_NUMBER}}/g, invoice.invoice_number)
+        .replace(/{{INVOICE_DATE}}/g, new Date(invoice.invoice_date).toLocaleDateString('nl-NL'))
+        .replace(/{{DUE_DATE}}/g, new Date(invoice.due_date).toLocaleDateString('nl-NL'))
+        .replace(/{{CUSTOMER_NAME}}/g, invoice.client_name)
+        .replace(/{{CUSTOMER_ADDRESS}}/g, invoice.client_address || '')
+        .replace(/{{CUSTOMER_POSTAL_CODE}}/g, invoice.client_postal_code || '')
+        .replace(/{{CUSTOMER_CITY}}/g, invoice.client_city || '')
+        .replace(/{{INVOICE_SUBJECT}}/g, invoice.notes || 'Factuur')
+        .replace(/{{INVOICE_LINES}}/g, invoiceLinesHtml)
+        .replace(/{{SUBTOTAL}}/g, invoice.subtotal.toFixed(2))
+        .replace(/{{VAT_PERCENTAGE}}/g, invoice.vat_percentage.toString())
+        .replace(/{{VAT_AMOUNT}}/g, invoice.vat_amount.toFixed(2))
+        .replace(/{{TOTAL_AMOUNT}}/g, invoice.total_amount.toFixed(2))
+        .replace(/{{PAYMENT_TERMS}}/g, (invoice.payment_terms || 30).toString());
       
-      // Return as string instead of Uint8Array - this is what was causing the error
-      return pdfContent;
+      console.log("HTML template processed, length:", processedHtml.length);
+      return processedHtml;
+    };
+
+    // Helper function for default template
+    const getDefaultInvoiceTemplate = () => {
+      return `<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factuur</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: white; line-height: 1.4; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 2px solid #3b82f6; padding-bottom: 20px; }
+        .company-info { flex: 1; }
+        .invoice-info { text-align: right; }
+        .invoice-number { font-size: 24px; font-weight: bold; color: #3b82f6; }
+        .customer-billing { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px; }
+        .section-title { font-weight: bold; margin-bottom: 10px; color: #374151; }
+        .invoice-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .invoice-table th, .invoice-table td { border: 1px solid #d1d5db; padding: 12px; text-align: left; }
+        .invoice-table th { background-color: #f3f4f6; font-weight: bold; }
+        .totals { margin-top: 20px; text-align: right; }
+        .total-row { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+        .total-label { width: 150px; text-align: right; margin-right: 20px; }
+        .total-amount { width: 100px; text-align: right; font-weight: bold; }
+        .final-total { font-size: 18px; border-top: 2px solid #3b82f6; padding-top: 8px; }
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-info">
+            <h1>{{COMPANY_NAME}}</h1>
+            <p>{{COMPANY_ADDRESS}}</p>
+            <p>{{COMPANY_POSTAL_CODE}} {{COMPANY_CITY}}</p>
+            <p>Tel: {{COMPANY_PHONE}}</p>
+            <p>Email: {{COMPANY_EMAIL}}</p>
+        </div>
+        <div class="invoice-info">
+            <div class="invoice-number">Factuur {{INVOICE_NUMBER}}</div>
+            <p><strong>Factuurdatum:</strong> {{INVOICE_DATE}}</p>
+            <p><strong>Vervaldatum:</strong> {{DUE_DATE}}</p>
+        </div>
+    </div>
+
+    <div class="customer-billing">
+        <div>
+            <div class="section-title">Factuuradres:</div>
+            <div>{{CUSTOMER_NAME}}</div>
+            <div>{{CUSTOMER_ADDRESS}}</div>
+            <div>{{CUSTOMER_POSTAL_CODE}} {{CUSTOMER_CITY}}</div>
+        </div>
+        <div>
+            <div class="section-title">Betreft:</div>
+            <div>{{INVOICE_SUBJECT}}</div>
+        </div>
+    </div>
+
+    <table class="invoice-table">
+        <thead>
+            <tr>
+                <th>Omschrijving</th>
+                <th>Aantal</th>
+                <th>Prijs per stuk</th>
+                <th>BTW %</th>
+                <th>Totaal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{INVOICE_LINES}}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div class="total-row">
+            <div class="total-label">Subtotaal:</div>
+            <div class="total-amount">€ {{SUBTOTAL}}</div>
+        </div>
+        <div class="total-row">
+            <div class="total-label">BTW ({{VAT_PERCENTAGE}}%):</div>
+            <div class="total-amount">€ {{VAT_AMOUNT}}</div>
+        </div>
+        <div class="total-row final-total">
+            <div class="total-label">Totaal:</div>
+            <div class="total-amount">€ {{TOTAL_AMOUNT}}</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Betaling binnen {{PAYMENT_TERMS}} dagen na factuurdatum.</p>
+        <p>{{COMPANY_NAME}} | KvK: {{COMPANY_KVK}} | BTW-nr: {{COMPANY_VAT}}</p>
+        <p>IBAN: {{COMPANY_IBAN}} | BIC: {{COMPANY_BIC}}</p>
+    </div>
+</body>
+</html>`;
     };
 
     const resend = new Resend(resendApiKey);
@@ -165,12 +294,12 @@ ${invoice.notes ? `\nOpmerkingen:\n${invoice.notes}` : ''}
           </p>
         </div>
       `,
-      // Only add attachments for non-test emails and use proper content format
+      // Only add HTML attachments for non-test emails
       ...(email_type !== 'test' && {
         attachments: [
           {
-            filename: `factuur-${invoice.invoice_number}.txt`,
-            content: generateInvoicePDF(), // Now returns string instead of Uint8Array
+            filename: `factuur-${invoice.invoice_number}.html`,
+            content: generateInvoicePDF(),
           }
         ]
       })
