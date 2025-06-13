@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Save, Plus, Edit, Trash2, Mail, Clock } from 'lucide-react';
+import { Save, Plus, Edit, Trash2, Mail, Clock, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EmailTemplate {
   id: string;
@@ -59,6 +60,8 @@ export const EmailTemplateSettings = () => {
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [activeTab, setActiveTab] = useState('list');
+  const [testEmail, setTestEmail] = useState('');
+  const [isSendingTest, setIsSendingTest] = useState(false);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -155,6 +158,100 @@ export const EmailTemplateSettings = () => {
     setIsCreating(false);
     setEditingTemplate(null);
     setActiveTab('list');
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!testEmail.trim()) {
+      toast({
+        title: "Email Adres Vereist",
+        description: "Voer een email adres in om de test email te verzenden.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!formData.subject.trim() || !formData.message.trim()) {
+      toast({
+        title: "Template Onvolledig",
+        description: "Vul eerst het onderwerp en bericht in.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSendingTest(true);
+
+    try {
+      // Replace variables with test data
+      const testData = {
+        invoice_number: 'TEST-001',
+        client_name: 'Test Klant',
+        total_amount: '125.00',
+        due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL'),
+        invoice_date: new Date().toLocaleDateString('nl-NL')
+      };
+
+      const replaceVariables = (text: string) => {
+        return text
+          .replace(/{invoice_number}/g, testData.invoice_number)
+          .replace(/{client_name}/g, testData.client_name)
+          .replace(/{total_amount}/g, testData.total_amount)
+          .replace(/{due_date}/g, testData.due_date)
+          .replace(/{invoice_date}/g, testData.invoice_date);
+      };
+
+      const testSubject = replaceVariables(formData.subject);
+      const testMessage = replaceVariables(formData.message);
+
+      // Create a mock invoice for the test email
+      const mockInvoice = {
+        id: 'test-invoice',
+        invoice_number: testData.invoice_number,
+        client_name: testData.client_name,
+        client_email: testEmail,
+        total_amount: parseFloat(testData.total_amount),
+        subtotal: 103.31,
+        vat_amount: 21.69,
+        vat_percentage: 21,
+        due_date: testData.due_date,
+        invoice_date: testData.invoice_date,
+        client_address: 'Teststraat 123',
+        client_postal_code: '1234 AB',
+        client_city: 'Amsterdam',
+        client_country: 'Nederland',
+        notes: 'Dit is een test email'
+      };
+
+      const { error } = await supabase.functions.invoke('send-invoice-email', {
+        body: {
+          invoice_id: 'test-invoice',
+          email_template: {
+            subject: testSubject,
+            message: testMessage
+          },
+          email_type: 'test',
+          mock_invoice: mockInvoice
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Test Email Verzonden",
+        description: `Test email is verzonden naar ${testEmail}`,
+      });
+    } catch (error) {
+      console.error('Error sending test email:', error);
+      toast({
+        title: "Fout",
+        description: "Er is een fout opgetreden bij het verzenden van de test email.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSendingTest(false);
+    }
   };
 
   const getTypeIcon = (type: 'invoice' | 'reminder') => {
@@ -310,6 +407,46 @@ export const EmailTemplateSettings = () => {
                   <li><code>{'{due_date}'}</code> - Vervaldatum</li>
                   <li><code>{'{invoice_date}'}</code> - Factuurdatum</li>
                 </ul>
+              </div>
+
+              {/* Test Email Section */}
+              <div className="border-t pt-4">
+                <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Send className="h-4 w-4 text-blue-600" />
+                    <h3 className="font-medium text-blue-900">Test Email Verzenden</h3>
+                  </div>
+                  <p className="text-sm text-blue-700">
+                    Test je template door een voorbeeldemail te verzenden met testgegevens
+                  </p>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="test@example.com"
+                      value={testEmail}
+                      onChange={(e) => setTestEmail(e.target.value)}
+                      type="email"
+                      className="flex-1"
+                    />
+                    <Button 
+                      variant="outline" 
+                      onClick={handleSendTestEmail}
+                      disabled={isSendingTest}
+                      className="shrink-0"
+                    >
+                      {isSendingTest ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                          Verzenden...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4 mr-2" />
+                          Test Verzenden
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-end gap-2">
