@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, Eye, Loader2, RefreshCw } from 'lucide-react';
+import { Download, RefreshCw, Loader2, X } from 'lucide-react';
 import { Invoice } from '@/hooks/useInvoices';
 import { useInvoiceLines } from '@/hooks/useInvoiceLines';
 import { useInvoiceTemplates } from '@/hooks/useInvoiceTemplates';
@@ -52,9 +52,6 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
     
     try {
       console.log('Starting PDF preview generation...');
-      console.log('Invoice:', invoice);
-      console.log('Lines:', lines);
-      console.log('Default template:', defaultTemplate);
 
       const pdfData = {
         invoice,
@@ -157,33 +154,23 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh]">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle className="flex items-center justify-between">
             <span>PDF Preview - Factuur {invoice.invoice_number}</span>
-            <div className="flex items-center gap-2">
-              <Button 
-                onClick={handleDownload}
-                disabled={downloading || loading || !dataReady}
-                className="flex items-center gap-2"
-              >
-                {downloading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4" />
-                )}
-                Download PDF
-              </Button>
-              {error && (
-                <Button onClick={handleRetry} variant="outline" size="sm">
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
+            <Button
+              onClick={onClose}
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 min-h-[600px] border rounded-lg bg-gray-100">
+        {/* Main content area */}
+        <div className="flex-1 bg-gray-100 relative overflow-hidden">
           {!dataReady ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -204,8 +191,9 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
           ) : previewUrl ? (
             <iframe
               src={previewUrl}
-              className="w-full h-full border-0 rounded-lg"
+              className="w-full h-full border-0"
               title="PDF Preview"
+              style={{ minHeight: '600px' }}
             />
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-gray-500">
@@ -215,6 +203,36 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
               </Button>
             </div>
           )}
+        </div>
+
+        {/* Sticky footer */}
+        <div className="border-t bg-white px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {error && (
+              <Button onClick={handleRetry} variant="outline" size="sm">
+                <RefreshCw className="h-4 w-4 mr-1" />
+                Opnieuw
+              </Button>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Button 
+              onClick={handleDownload}
+              disabled={downloading || loading || !dataReady}
+              className="flex items-center gap-2"
+            >
+              {downloading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              Download PDF
+            </Button>
+            <Button onClick={onClose} variant="outline">
+              Sluiten
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

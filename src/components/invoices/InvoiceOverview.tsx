@@ -16,7 +16,8 @@ import {
   Download,
   Mail,
   Clock,
-  MoreVertical
+  MoreVertical,
+  Loader2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -25,8 +26,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useInvoices, Invoice } from '@/hooks/useInvoices';
+import { useInvoiceLines } from '@/hooks/useInvoiceLines';
+import { useInvoiceTemplates } from '@/hooks/useInvoiceTemplates';
 import { InvoiceDialog } from './InvoiceDialog';
 import { InvoiceViewDialog } from './InvoiceViewDialog';
+import { InvoicePDFGenerator } from '@/utils/InvoicePDFGenerator';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -60,6 +64,7 @@ export const InvoiceOverview = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   
   const { invoices, loading, deleteInvoice } = useInvoices();
   const { toast } = useToast();
@@ -84,58 +89,68 @@ export const InvoiceOverview = () => {
   };
 
   const handleDownload = async (invoice: Invoice) => {
+    setDownloadingId(invoice.id);
+    
     try {
-      console.log('Downloading invoice:', invoice.invoice_number);
+      console.log('Quick download started for invoice:', invoice.invoice_number);
       
-      // Import jsPDF dynamically
-      const { default: jsPDF } = await import('jspdf');
+      // Fetch invoice lines and template data
+      const { data: lines, error: linesError } = await supabase
+        .from('invoice_lines')
+        .select('*')
+        .eq('invoice_id', invoice.id)
+        .order('sort_order', { ascending: true });
+
+      if (linesError) throw linesError;
+
+      const { data: templates, error: templateError } = await supabase
+        .from('document_templates')
+        .select('*')
+        .eq('organization_id', invoice.organization_id)
+        .eq('type', 'factuur')
+        .eq('is_active', true)
+        .limit(1);
+
+      if (templateError) console.warn('Template fetch warning:', templateError);
+
+      const defaultTemplate = templates?.[0] || null;
       
-      // Create PDF
-      const doc = new jsPDF();
-      
-      // Add content to PDF
-      doc.setFontSize(20);
-      doc.text('FACTUUR', 20, 30);
-      
-      doc.setFontSize(12);
-      doc.text(`Factuurnummer: ${invoice.invoice_number}`, 20, 50);
-      doc.text(`Datum: ${format(new Date(invoice.invoice_date), 'dd-MM-yyyy')}`, 20, 60);
-      doc.text(`Vervaldatum: ${format(new Date(invoice.due_date), 'dd-MM-yyyy')}`, 20, 70);
-      
-      doc.text('FACTUURADRES:', 20, 90);
-      doc.text(invoice.client_name, 20, 100);
-      if (invoice.client_address) doc.text(invoice.client_address, 20, 110);
-      if (invoice.client_postal_code && invoice.client_city) {
-        doc.text(`${invoice.client_postal_code} ${invoice.client_city}`, 20, 120);
-      }
-      if (invoice.client_country) doc.text(invoice.client_country, 20, 130);
-      
-      // Add totals
-      doc.text(`Subtotaal: €${invoice.subtotal.toFixed(2)}`, 20, 160);
-      doc.text(`BTW (${invoice.vat_percentage}%): €${invoice.vat_amount.toFixed(2)}`, 20, 170);
-      doc.setFontSize(14);
-      doc.text(`Totaal: €${invoice.total_amount.toFixed(2)}`, 20, 185);
-      
-      if (invoice.notes) {
-        doc.setFontSize(10);
-        doc.text('Opmerkingen:', 20, 205);
-        doc.text(invoice.notes, 20, 215);
-      }
-      
-      // Download the PDF
-      doc.save(`factuur-${invoice.invoice_number}.pdf`);
+      const pdfData = {
+        invoice,
+        lines: lines || [],
+        template: defaultTemplate,
+        companyInfo: {
+          name: 'Uw Bedrijf B.V.',
+          address: 'Voorbeeldstraat 123',
+          postalCode: '1234AB',
+          city: 'Amsterdam',
+          phone: '+31 20 123 4567',
+          email: 'info@uwbedrijf.nl',
+          kvk: '12345678',
+          vat: 'NL123456789B01',
+          iban: 'NL91ABNA0417164300',
+          bic: 'ABNANL2A'
+        }
+      };
+
+      await InvoicePDFGenerator.generatePDF(pdfData, {
+        filename: `factuur-${invoice.invoice_number}.pdf`,
+        download: true
+      });
       
       toast({
         title: "PDF Download",
-        description: `Factuur ${invoice.invoice_number} wordt gedownload.`
+        description: `Factuur ${invoice.invoice_number} is gedownload`
       });
-    } catch (error) {
-      console.error('Error downloading PDF:', error);
+    } catch (error: any) {
+      console.error('PDF download error:', error);
       toast({
         title: "Fout",
-        description: "Er is een fout opgetreden bij het downloaden van de PDF.",
+        description: `Kon PDF niet downloaden: ${error.message}`,
         variant: "destructive"
       });
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -371,9 +386,14 @@ Uw administratie`
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDownload(invoice)}
+                        disabled={downloadingId === invoice.id}
                         className="h-8 w-8 p-0"
                       >
-                        <Download className="h-4 w-4" />
+                        {downloadingId === invoice.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4" />
+                        )}
                       </Button>
                       
                       <DropdownMenu>

@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Invoice, InvoiceLine } from '@/hooks/useInvoices';
@@ -73,16 +72,22 @@ export class InvoicePDFGenerator {
     return processedHtml;
   }
 
-  private static async createHTMLContainer(htmlContent: string): Promise<HTMLElement> {
+  private static async createHTMLContainer(htmlContent: string, isPreview: boolean = false): Promise<HTMLElement> {
     // Create a temporary container for rendering
     const container = document.createElement('div');
     container.innerHTML = htmlContent;
     container.style.position = 'absolute';
     container.style.left = '-9999px';
     container.style.top = '-9999px';
-    container.style.width = '794px'; // A4 width in pixels at 96 DPI
+    container.style.width = isPreview ? '595px' : '794px'; // Smaller width for preview
     container.style.backgroundColor = 'white';
     container.style.fontFamily = 'Arial, sans-serif';
+    
+    // Apply preview-specific scaling
+    if (isPreview) {
+      container.style.transform = 'scale(0.75)';
+      container.style.transformOrigin = 'top left';
+    }
     
     document.body.appendChild(container);
     
@@ -118,7 +123,7 @@ export class InvoicePDFGenerator {
       const processedHtml = this.replaceVariables(htmlTemplate, data);
       
       // Create HTML container for rendering
-      const container = await this.createHTMLContainer(processedHtml);
+      const container = await this.createHTMLContainer(processedHtml, false);
       
       console.log('Rendering HTML to canvas...');
       
@@ -167,22 +172,22 @@ export class InvoicePDFGenerator {
     console.log('Generating preview data URL for invoice:', data.invoice.invoice_number);
     
     try {
-      const htmlTemplate = data.template?.html_content || this.getDefaultTemplate();
+      const htmlTemplate = data.template?.html_content || this.getCompactTemplate();
       const processedHtml = this.replaceVariables(htmlTemplate, data);
       
-      // Create HTML container for rendering
-      const container = await this.createHTMLContainer(processedHtml);
+      // Create HTML container for rendering with preview optimization
+      const container = await this.createHTMLContainer(processedHtml, true);
       
       console.log('Rendering preview canvas...');
       
-      // Generate canvas from HTML with lower quality for preview
+      // Generate canvas from HTML with optimized settings for preview
       const canvas = await html2canvas(container, {
-        scale: 1,
+        scale: 1.2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
-        width: 794,
-        height: 1123,
+        width: 595,
+        height: 842, // A4 ratio but smaller
       });
       
       // Remove the temporary container
@@ -192,11 +197,11 @@ export class InvoicePDFGenerator {
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'px',
-        format: [794, 1123]
+        format: [595, 842]
       });
       
       const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, 0, 794, 1123);
+      pdf.addImage(imgData, 'PNG', 0, 0, 595, 842);
       
       const dataURL = pdf.output('datauristring');
       console.log('Preview data URL generated successfully');
@@ -205,6 +210,205 @@ export class InvoicePDFGenerator {
       console.error('Error generating preview:', error);
       throw new Error(`Preview generation failed: ${error.message}`);
     }
+  }
+
+  private static getCompactTemplate(): string {
+    return `<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factuur</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 15px;
+            background: white; 
+            color: #333;
+            line-height: 1.3;
+            width: 565px;
+            min-height: 812px;
+            font-size: 11px;
+        }
+        .header { 
+            width: 100%;
+            margin-bottom: 25px; 
+            border-bottom: 2px solid #3b82f6; 
+            padding-bottom: 15px; 
+        }
+        .header table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .company-info { 
+            vertical-align: top;
+            text-align: left;
+        }
+        .company-info h1 { 
+            margin: 0 0 8px 0; 
+            color: #3b82f6; 
+            font-size: 18px; 
+        }
+        .company-info p { margin: 1px 0; font-size: 9px; }
+        .invoice-info { 
+            vertical-align: top;
+            text-align: right; 
+        }
+        .invoice-number { 
+            font-size: 18px; 
+            font-weight: bold; 
+            color: #3b82f6; 
+            margin-bottom: 8px;
+        }
+        .customer-billing { 
+            width: 100%;
+            margin-bottom: 20px; 
+        }
+        .customer-billing table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .customer-billing td {
+            vertical-align: top;
+            width: 50%;
+            padding-right: 15px;
+        }
+        .section-title { 
+            font-weight: bold; 
+            margin-bottom: 6px; 
+            color: #374151; 
+            font-size: 11px;
+        }
+        .invoice-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 15px 0; 
+        }
+        .invoice-table th, .invoice-table td { 
+            border: 1px solid #d1d5db; 
+            padding: 8px; 
+            text-align: left; 
+        }
+        .invoice-table th { 
+            background-color: #f3f4f6; 
+            font-weight: bold; 
+            font-size: 10px;
+        }
+        .invoice-table td { font-size: 9px; }
+        .totals { 
+            margin-top: 15px; 
+            width: 100%;
+        }
+        .totals table {
+            width: 250px;
+            margin-left: auto;
+            border-collapse: collapse;
+        }
+        .totals td {
+            padding: 3px 0;
+            text-align: right;
+            font-size: 10px;
+        }
+        .totals .label {
+            padding-right: 15px;
+            font-weight: normal;
+        }
+        .totals .amount {
+            font-weight: bold;
+        }
+        .final-total td { 
+            font-size: 12px; 
+            border-top: 2px solid #3b82f6; 
+            padding-top: 6px; 
+            font-weight: bold;
+        }
+        .footer { 
+            margin-top: 25px; 
+            padding-top: 15px; 
+            border-top: 1px solid #e5e7eb; 
+            font-size: 9px; 
+            color: #6b7280; 
+        }
+        .footer p { margin: 3px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <table>
+            <tr>
+                <td class="company-info">
+                    <h1>{{COMPANY_NAME}}</h1>
+                    <p>{{COMPANY_ADDRESS}}</p>
+                    <p>{{COMPANY_POSTAL_CODE}} {{COMPANY_CITY}}</p>
+                    <p>Tel: {{COMPANY_PHONE}}</p>
+                    <p>Email: {{COMPANY_EMAIL}}</p>
+                </td>
+                <td class="invoice-info">
+                    <div class="invoice-number">Factuur {{INVOICE_NUMBER}}</div>
+                    <p><strong>Factuurdatum:</strong> {{INVOICE_DATE}}</p>
+                    <p><strong>Vervaldatum:</strong> {{DUE_DATE}}</p>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="customer-billing">
+        <table>
+            <tr>
+                <td>
+                    <div class="section-title">Factuuradres:</div>
+                    <div>{{CUSTOMER_NAME}}</div>
+                    <div>{{CUSTOMER_ADDRESS}}</div>
+                    <div>{{CUSTOMER_POSTAL_CODE}} {{CUSTOMER_CITY}}</div>
+                </td>
+                <td>
+                    <div class="section-title">Betreft:</div>
+                    <div>{{INVOICE_SUBJECT}}</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <table class="invoice-table">
+        <thead>
+            <tr>
+                <th>Omschrijving</th>
+                <th>Aantal</th>
+                <th>Prijs per stuk</th>
+                <th>BTW %</th>
+                <th>Totaal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{INVOICE_LINES}}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <table>
+            <tr>
+                <td class="label">Subtotaal:</td>
+                <td class="amount">€ {{SUBTOTAL}}</td>
+            </tr>
+            <tr>
+                <td class="label">BTW ({{VAT_PERCENTAGE}}%):</td>
+                <td class="amount">€ {{VAT_AMOUNT}}</td>
+            </tr>
+            <tr class="final-total">
+                <td class="label">Totaal:</td>
+                <td class="amount">€ {{TOTAL_AMOUNT}}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="footer">
+        <p>Betaling binnen {{PAYMENT_TERMS}} dagen na factuurdatum.</p>
+        <p>{{COMPANY_NAME}} | KvK: {{COMPANY_KVK}} | BTW-nr: {{COMPANY_VAT}}</p>
+        <p>IBAN: {{COMPANY_IBAN}} | BIC: {{COMPANY_BIC}}</p>
+    </div>
+</body>
+</html>`;
   }
 
   private static getDefaultTemplate(): string {
