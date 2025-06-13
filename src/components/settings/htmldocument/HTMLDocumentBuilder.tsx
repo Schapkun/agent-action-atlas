@@ -21,6 +21,7 @@ import { useDocumentTemplates, DocumentTemplate } from '@/hooks/useDocumentTempl
 import { DocumentPDFGenerator } from '../utils/PDFGenerator';
 import { useToast } from '@/hooks/use-toast';
 import { PreviewDialog } from './components/PreviewDialog';
+import { DialogFooter } from '@/components/settings/components/DialogFooter';
 
 interface HTMLDocumentBuilderProps {
   editingDocument?: DocumentTemplate | null;
@@ -300,6 +301,12 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     }
   };
 
+  const handleCancel = () => {
+    if (onDocumentSaved) {
+      onDocumentSaved(null as any); // Go back to list view
+    }
+  };
+
   const handlePDFDownload = () => {
     const fileName = documentName.trim() || 'document';
     DocumentPDFGenerator.generateFromHTML(htmlContent, fileName);
@@ -379,7 +386,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header with document controls */}
+      {/* Header with document controls - removed save buttons */}
       <div className="flex-shrink-0 p-4 border-b bg-muted/30">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 flex-1">
@@ -414,14 +421,6 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
             >
               <Eye className="h-4 w-4 mr-2" />
               Preview
-            </Button>
-            <Button 
-              onClick={handleSave} 
-              size="sm" 
-              disabled={!documentName.trim() || isSaving}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {isSaving ? 'Opslaan...' : 'Opslaan'}
             </Button>
             <Button onClick={handlePDFDownload} variant="outline" size="sm">
               <Download className="h-4 w-4 mr-2" />
@@ -515,6 +514,14 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
           </div>
         </div>
       </div>
+
+      {/* Footer with save and cancel buttons */}
+      <DialogFooter
+        onCancel={handleCancel}
+        onSave={handleSave}
+        saving={isSaving}
+        saveText="Opslaan"
+      />
 
       {/* Preview Dialog */}
       <PreviewDialog
