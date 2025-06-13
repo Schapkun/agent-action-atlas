@@ -99,9 +99,10 @@ const handler = async (req: Request): Promise<Response> => {
     const finalSubject = replaceVariables(email_template.subject);
     const finalMessage = replaceVariables(email_template.message);
 
-    // Generate PDF content for attachment using Deno-compatible approach
+    // Generate PDF content for attachment - FIXED to return proper format
     const generateInvoicePDF = () => {
-      // Simple text-based PDF content (in a real implementation you'd use a proper PDF library)
+      console.log("Generating PDF content for invoice:", invoice.invoice_number);
+      
       const pdfContent = `
 FACTUUR ${invoice.invoice_number}
 
@@ -122,15 +123,18 @@ Totaal: €${invoice.total_amount.toFixed(2)}
 ${invoice.notes ? `\nOpmerkingen:\n${invoice.notes}` : ''}
       `.trim();
       
-      // Use TextEncoder instead of Buffer for Deno compatibility
-      return new TextEncoder().encode(pdfContent);
+      console.log("PDF content generated, length:", pdfContent.length);
+      
+      // Return as string instead of Uint8Array - this is what was causing the error
+      return pdfContent;
     };
 
     const resend = new Resend(resendApiKey);
 
     console.log("Sending invoice email to:", invoice.client_email);
+    console.log("Email type:", email_type);
 
-    // Prepare email with PDF attachment
+    // Prepare email data
     const emailData = {
       from: "Facturen <facturen@meester.app>",
       to: [invoice.client_email],
@@ -161,20 +165,40 @@ ${invoice.notes ? `\nOpmerkingen:\n${invoice.notes}` : ''}
           </p>
         </div>
       `,
-      attachments: email_type === 'test' ? [] : [
-        {
-          filename: `factuur-${invoice.invoice_number}.txt`,
-          content: generateInvoicePDF(),
-        }
-      ]
+      // Only add attachments for non-test emails and use proper content format
+      ...(email_type !== 'test' && {
+        attachments: [
+          {
+            filename: `factuur-${invoice.invoice_number}.txt`,
+            content: generateInvoicePDF(), // Now returns string instead of Uint8Array
+          }
+        ]
+      })
     };
+
+    console.log("Email data prepared, sending...");
 
     const emailResponse = await resend.emails.send(emailData);
 
-    console.log("Email sent successfully:", emailResponse);
+    console.log("Email response received:", emailResponse);
+
+    // Check for errors in the response
+    if (emailResponse.error) {
+      console.error("Resend API error:", emailResponse.error);
+      return new Response(
+        JSON.stringify({ error: `Email sending failed: ${emailResponse.error.message}` }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    console.log("Email sent successfully, ID:", emailResponse.data?.id);
 
     // Update invoice status to sent only for regular resend, not for reminders or tests
-    if (email_type === 'resend') {
+    if (email_type === 'resend' && invoice_id) {
+      console.log("Updating invoice status to sent");
       const { error: updateError } = await supabase
         .from('invoices')
         .update({ status: 'sent', updated_at: new Date().toISOString() })
@@ -182,10 +206,16 @@ ${invoice.notes ? `\nOpmerkingen:\n${invoice.notes}` : ''}
 
       if (updateError) {
         console.error('Error updating invoice status:', updateError);
+      } else {
+        console.log('Invoice status updated to sent');
       }
     }
 
-    return new Response(JSON.stringify({ success: true, emailResponse }), {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      emailId: emailResponse.data?.id,
+      message: "Email sent successfully" 
+    }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -194,8 +224,12 @@ ${invoice.notes ? `\nOpmerkingen:\n${invoice.notes}` : ''}
     });
   } catch (error: any) {
     console.error("Error in send-invoice-email function:", error);
+    console.error("Error stack:", error.stack);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: "Check function logs for more details"
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
