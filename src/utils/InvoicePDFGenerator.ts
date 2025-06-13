@@ -1,7 +1,5 @@
-
 import html2pdf from 'html2pdf.js';
-import { Invoice } from '@/hooks/useInvoices';
-import { InvoiceLine } from '@/hooks/useInvoiceLines';
+import { Invoice, InvoiceLine } from '@/hooks/useInvoices';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 
 interface InvoicePDFData {
