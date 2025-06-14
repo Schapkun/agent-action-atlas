@@ -268,10 +268,11 @@ const SNIPPETS = [
 ];
 
 // Voeg dit type toe:
-type DocumentTypeOption = 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun';
+type DocumentTypeUI = 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun';
+type DocumentTypeBackend = 'factuur' | 'contract' | 'brief' | 'custom';
 
-// Voeg schapkun als mogelijke type toe
-const DOCUMENT_TYPE_OPTIONS: { value: DocumentTypeOption; label: string }[] = [
+// Opties voor UI weergave
+const DOCUMENT_TYPE_OPTIONS: { value: DocumentTypeUI; label: string }[] = [
   { value: 'factuur', label: 'Factuur (standaard)' },
   { value: 'schapkun', label: 'Factuur (Schapkun)' },
   { value: 'contract', label: 'Contract' },
@@ -283,7 +284,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
   // BEGIN: aangepaste useState met schapkun support
   const [htmlContent, setHtmlContent] = useState(DEFAULT_INVOICE_TEMPLATE);
   const [documentName, setDocumentName] = useState('');
-  const [documentType, setDocumentType] = useState<DocumentTypeOption>('factuur');
+  const [documentType, setDocumentType] = useState<DocumentTypeUI>('factuur');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -325,7 +326,14 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
       if (editingDocument) {
         console.log('[Builder] Switch document: laden', editingDocument.name, editingDocument.id, editingDocument.updated_at, editingDocument);
         setDocumentName(editingDocument.name);
-        setDocumentType(editingDocument.type as DocumentTypeOption);
+        // Speciale mapping voor UI:
+        let uiType: DocumentTypeUI;
+        if (editingDocument.type === 'custom' && editingDocument.html_content?.trim() === schapkunTemplate.trim()) {
+          uiType = 'schapkun';
+        } else {
+          uiType = editingDocument.type as DocumentTypeUI;
+        }
+        setDocumentType(uiType);
         setHtmlContent(editingDocument.html_content || DEFAULT_INVOICE_TEMPLATE);
         const storageKey = getStorageKey(editingDocument.name);
         const fromStorage = localStorage.getItem(storageKey);
@@ -368,13 +376,15 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
 
     try {
       let savedDocument: DocumentTemplate;
+      const backendType = typeUiToBackend(documentType);
+
       if (editingDocument) {
         console.log('[Builder] Updaten document:', editingDocument.id, documentName, documentType);
         const updatedDoc = await updateTemplate(editingDocument.id, {
           name: documentName.trim(),
-          type: documentType,
+          type: backendType,
           html_content: htmlContent,
-          description: `${documentType} document`
+          description: `${backendType} document`
         });
         savedDocument = updatedDoc;
         toast({ title: "Opgeslagen", description: `Document "${documentName}" is bijgewerkt.` });
@@ -382,9 +392,9 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
         console.log('[Builder] Aanmaken nieuw document:', documentName, documentType);
         const newDocumentData = {
           name: documentName.trim(),
-          type: documentType,
+          type: backendType,
           html_content: htmlContent,
-          description: `${documentType} document`,
+          description: `${backendType} document`,
           is_default: false,
           is_active: true
         };
@@ -547,7 +557,10 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     localStorage.setItem(key, JSON.stringify(placeholderValues));
   }, [placeholderValues, documentName]);
 
-  // Pas de useEffect aan zodat als 'schapkun' gekozen wordt als type, het juiste template wordt geladen:
+  // Voor opslaan: UI-type moet backend-type worden
+  const typeUiToBackend = (t: DocumentTypeUI): DocumentTypeBackend => (t === 'schapkun' ? 'custom' : t);
+
+  // --- Direct na wisselen type "schapkun" het Schapkun-template laden ---
   useEffect(() => {
     if (documentType === 'schapkun' && htmlContent !== schapkunTemplate) {
       setHtmlContent(schapkunTemplate);
@@ -582,7 +595,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
             />
             <select
               value={documentType}
-              onChange={(e) => setDocumentType(e.target.value as DocumentTypeOption)}
+              onChange={(e) => setDocumentType(e.target.value as DocumentTypeUI)}
               className="px-3 py-2 border border-input bg-background rounded-md text-sm"
             >
               {DOCUMENT_TYPE_OPTIONS.map(opt => (
