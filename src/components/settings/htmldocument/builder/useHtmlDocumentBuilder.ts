@@ -118,6 +118,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
         }
         setDocumentType(uiType);
         previousDocumentTypeRef.current = uiType; // update last loaded docType
+        // CRUCIAL FIX: LAAD ALTIJD de opgeslagen HTML content uit het document!
         setHtmlContent(editingDocument.html_content || DEFAULT_INVOICE_TEMPLATE);
         const storageKey = getStorageKey(editingDocument.name);
         const fromStorage = localStorage.getItem(storageKey);
@@ -327,28 +328,10 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
 
   const typeUiToBackend = (t: DocumentTypeUI): DocumentTypeBackend => (t === 'schapkun' ? 'custom' : t);
 
+  // FIX: Alleen voor NIEUWE documenten mag een template-swap plaatsvinden bij wijzigen type
   useEffect(() => {
-    let newContent = "";
-    if (documentType === "schapkun") {
-      newContent = schapkunTemplate;
-    } else if (documentType === "factuur") {
-      newContent = DEFAULT_INVOICE_TEMPLATE;
-    } else if (documentType === "contract") {
-      newContent = '<html><body><h1>Contract</h1><p>[Contract inhoud]</p></body></html>';
-    } else if (documentType === "brief") {
-      newContent = '<html><body><h1>Brief</h1><p>[Brief inhoud]</p></body></html>';
-    } else if (documentType === "custom") {
-      newContent = '<html><body><h1>Custom template</h1></body></html>';
-    }
-    console.log('[TEMPLATE SWAP useEffect][ALTIJD] changing htmlContent! Nieuw documentType:', documentType, 'htmlContent:', newContent);    
-    setHtmlContent(newContent);
-    setHasUnsavedChanges(false);
-  }, [documentType, schapkunTemplate]);
-
-  useEffect(() => {
-    // Alleen wisselen van template als het documentType écht is gewijzigd via de dropdown 
-    // (niet bij laden/editen van bestaand document)
-    if (previousDocumentTypeRef.current !== null && previousDocumentTypeRef.current !== documentType) {
+    // Dus alleen als we géén editingDocument hebben (nieuw document), template aanpassen bij andere type
+    if (!editingDocument) {
       let newContent = "";
       if (documentType === "schapkun") {
         newContent = schapkunTemplate;
@@ -361,12 +344,32 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
       } else if (documentType === "custom") {
         newContent = '<html><body><h1>Custom template</h1></body></html>';
       }
-      console.log('[TEMPLATE SWAP useEffect][dropdown] changing htmlContent! Nieuw documentType:', documentType, 'htmlContent:', newContent);
+      setHtmlContent(newContent);
+      setHasUnsavedChanges(false);
+    }
+  }, [documentType, schapkunTemplate, editingDocument]);
+
+  // Gebruik deze useEffect alleen om te reageren op dropdown-wissel bij bestaand document,
+  // en alleen als type écht wijzigt en de gebruiker dus actief gekozen heeft voor een andere template
+  useEffect(() => {
+    if (editingDocument && previousDocumentTypeRef.current !== null && previousDocumentTypeRef.current !== documentType) {
+      let newContent = "";
+      if (documentType === "schapkun") {
+        newContent = schapkunTemplate;
+      } else if (documentType === "factuur") {
+        newContent = DEFAULT_INVOICE_TEMPLATE;
+      } else if (documentType === "contract") {
+        newContent = '<html><body><h1>Contract</h1><p>[Contract inhoud]</p></body></html>';
+      } else if (documentType === "brief") {
+        newContent = '<html><body><h1>Brief</h1><p>[Brief inhoud]</p></body></html>';
+      } else if (documentType === "custom") {
+        newContent = '<html><body><h1>Custom template</h1></body></html>';
+      }
       setHtmlContent(newContent);
       setHasUnsavedChanges(false);
     }
     previousDocumentTypeRef.current = documentType;
-  }, [documentType, schapkunTemplate]);
+  }, [documentType, schapkunTemplate, editingDocument]);
 
   return {
     htmlContent,
