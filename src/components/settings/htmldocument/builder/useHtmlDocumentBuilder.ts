@@ -73,13 +73,11 @@ export const SNIPPETS = [
   }
 ];
 
-export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: UseHtmlDocumentBuilderProps) {
+export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any) {
   const { saveDraft, getDraft, clearDraft } = useHtmlDraft();
 
-  // Bepaal draft key
   const getDraftKey = (docName: string) => `builder_draft_${docName}`;
 
-  // Laad initial html content; prioriteit: draft > editingDocument > default
   const loadInitialHtmlContent = () => {
     const draftKey = getDraftKey(editingDocument?.name || '');
     const draft = getDraft(draftKey);
@@ -87,13 +85,13 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
     return editingDocument?.html_content || DEFAULT_INVOICE_TEMPLATE;
   };
 
-  const [htmlContent, setHtmlContent] = useState(loadInitialHtmlContent());
-  const [documentName, setDocumentName] = useState(editingDocument?.name || '');
-  const [documentType, setDocumentType] = useState<DocumentTypeUI>('factuur');
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>(() => {
+  const [htmlContent, setHtmlContent] = React.useState(loadInitialHtmlContent());
+  const [documentName, setDocumentName] = React.useState(editingDocument?.name || '');
+  const [documentType, setDocumentType] = React.useState<any>('factuur');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
+  const [placeholderValues, setPlaceholderValues] = React.useState<Record<string, string>>(() => {
     const storageKey = getStorageKey(editingDocument?.name ?? "");
     const fromStorage = localStorage.getItem(storageKey);
     if (fromStorage) {
@@ -104,7 +102,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
 
   const previousEditingDocumentId = useRef<string | null>(null);
   const justSaved = useRef(false);
-  const previousDocumentTypeRef = useRef<DocumentTypeUI | null>(null);
+  const previousDocumentTypeRef = useRef<any | null>(null);
 
   // Nieuw: fix flag voor type-swap bij editingDocument
   const [justChangedType, setJustChangedType] = useState(false);
@@ -489,247 +487,6 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
     DEFAULT_INVOICE_TEMPLATE,
     setHasUnsavedChanges,
   });
-
-  // Bij succesvol opslaan: clear draft, zet content/name/type in state direct
-  const { createTemplate, updateTemplate, fetchTemplates } = useDocumentTemplates();
-  const { toast } = useToast();
-
-  const handleSave = async () => {
-    if (!documentName.trim()) {
-      toast({
-        title: "Fout",
-        description: "Document naam is verplicht.",
-        variant: "destructive"
-      });
-      return;
-    }
-    if (isSaving) return;
-    setIsSaving(true);
-
-    try {
-      let savedDocument: DocumentTemplate;
-      const backendType = typeUiToBackend(documentType);
-
-      if (editingDocument) {
-        const updatedDoc = await updateTemplate(editingDocument.id, {
-          name: documentName.trim(),
-          type: backendType,
-          html_content: htmlContent,
-          description: `${backendType} document`
-        });
-        savedDocument = updatedDoc;
-        toast({ title: "Opgeslagen", description: `Document "${documentName}" is bijgewerkt.` });
-      } else {
-        const newDocumentData = {
-          name: documentName.trim(),
-          type: backendType,
-          html_content: htmlContent,
-          description: `${backendType} document`,
-          is_default: false,
-          is_active: true
-        };
-        const newDoc = await createTemplate(newDocumentData);
-        savedDocument = newDoc;
-        toast({ title: "Opgeslagen", description: `Nieuw document "${documentName}" is aangemaakt.` });
-      }
-      setHasUnsavedChanges(false);
-      await fetchTemplates();
-      justSaved.current = true;
-      setJustChangedType(false);
-
-      // Zet state direct, wis draft!
-      if (savedDocument) {
-        setHtmlContent(savedDocument.html_content || DEFAULT_INVOICE_TEMPLATE);
-        setDocumentType(savedDocument.type as DocumentTypeUI);
-        setDocumentName(savedDocument.name);
-
-        const draftKey = getDraftKey(savedDocument.name);
-        clearDraft(draftKey);
-      }
-      if (onDocumentSaved && savedDocument) {
-        onDocumentSaved(savedDocument);
-      }
-    } catch (error) {
-      console.error('[Builder] Save error:', error);
-      toast({
-        title: "Fout",
-        description: "Er is een fout opgetreden bij het opslaan. Probeer het opnieuw.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCancel = () => {
-    if (!editingDocument) {
-      localStorage.removeItem(getStorageKey(documentName));
-    }
-    if (onDocumentSaved) {
-      onDocumentSaved(null);
-    }
-  };
-
-  const handlePDFDownload = () => {
-    const fileName = documentName.trim() || 'document';
-    DocumentPDFGenerator.generateFromHTML(htmlContent, fileName);
-    toast({
-      title: "PDF Download",
-      description: `PDF wordt gedownload als "${fileName}.pdf"`
-    });
-  };
-
-  const handleHTMLExport = () => {
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${documentName.trim() || 'document'}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: "HTML Export",
-      description: "HTML bestand is gedownload."
-    });
-  };
-
-  const handlePreview = () => {
-    setIsPreviewOpen(true);
-  };
-
-  const insertSnippet = (code: string) => {
-    const textarea = document.getElementById('html-editor') as HTMLTextAreaElement;
-    if (textarea) {
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const newContent = htmlContent.slice(0, start) + code + htmlContent.slice(end);
-      setHtmlContent(newContent);
-      setTimeout(() => {
-        textarea.focus();
-        textarea.setSelectionRange(start + code.length, start + code.length);
-      }, 0);
-    }
-  };
-
-  const replacePlaceholders = (content: string, forPreview = false) => {
-    let replaced = content;
-    PLACEHOLDER_FIELDS.forEach(({ id, type }) => {
-      const regex = new RegExp(`{{${id}}}`, "g");
-      if (forPreview && type === "image") {
-        const srcRegex = new RegExp(`src=[\\"']{{${id}}}[\\"']`, "g");
-        if (placeholderValues[id]) {
-          replaced = replaced.replace(
-            srcRegex,
-            `src="${placeholderValues[id]}"`
-          );
-          replaced = replaced.replace(
-            regex,
-            `<img src="${placeholderValues[id]}" alt="Bedrijfslogo" style="width:120px;max-height:75px;object-fit:contain;" />`
-          );
-        } else {
-          replaced = replaced.replace(
-            srcRegex,
-            `src="" style="background:#eee;border:1px dashed #ccc;width:120px;max-height:75px;object-fit:contain;"`
-          );
-          replaced = replaced.replace(
-            regex,
-            `<span style="color:#ddd;">[Logo]</span>`
-          );
-        }
-      } else {
-        replaced = replaced.replace(
-          regex,
-          forPreview ? (placeholderValues[id] || `<span style="color:#9ca3af;">[${id}]</span>`) : `{{${id}}}`
-        );
-      }
-    });
-    return replaced;
-  };
-
-  const getScaledHtmlContent = (content: string) => {
-    const withValues = replacePlaceholders(content, true);
-
-    const htmlMatch = withValues.match(/<html[^>]*>([\s\S]*)<\/html>/i);
-    if (!htmlMatch) return withValues;
-
-    const scaledContent = withValues.replace(
-      /<style[^>]*>([\s\S]*?)<\/style>/i,
-      (match, styles) => {
-        return `<style>
-          ${styles}
-          
-          html, body {
-            margin: 0;
-            padding: 25px;
-            overflow: hidden;
-            transform-origin: top left;
-            transform: scale(0.85);
-            width: 117.65%;
-            height: 117.65%;
-            box-sizing: border-box;
-          }
-        </style>`;
-      }
-    );
-    return scaledContent;
-  };
-
-  // Sla elke wijziging van htmlContent op als draft
-  useEffect(() => {
-    if (documentName) {
-      const draftKey = getDraftKey(documentName);
-      localStorage.setItem(draftKey, htmlContent);
-    }
-  }, [htmlContent, documentName]);
-
-  const typeUiToBackend = (t: DocumentTypeUI): DocumentTypeBackend => (t === 'schapkun' ? 'custom' : t);
-
-  // --- BELANGRIJK: type-switch logica (alleen voor nieuwe of bestaande documenten) ---
-  useEffect(() => {
-    if (!editingDocument) {
-      // NIEUW document: bij wissel zet default-content van type
-      let newContent = "";
-      if (documentType === "schapkun") {
-        newContent = schapkunTemplate;
-      } else if (documentType === "factuur") {
-        newContent = DEFAULT_INVOICE_TEMPLATE;
-      } else if (documentType === "contract") {
-        newContent = '<html><body><h1>Contract</h1><p>[Contract inhoud]</p></body></html>';
-      } else if (documentType === "brief") {
-        newContent = '<html><body><h1>Brief</h1><p>[Brief inhoud]</p></body></html>';
-      } else if (documentType === "custom") {
-        newContent = '<html><body><h1>Custom template</h1></body></html>';
-      }
-      setHtmlContent(newContent);
-      setHasUnsavedChanges(false);
-    }
-  }, [documentType, schapkunTemplate, editingDocument]);
-
-  // Bewaak type-switch bij bestaand document: alléén als gebruiker echt van type wisselt!
-  useEffect(() => {
-    if (editingDocument && previousDocumentTypeRef.current !== null && previousDocumentTypeRef.current !== documentType) {
-      // Alleen als gebruiker soort wisselt in dropdown!
-      let newContent = "";
-      if (documentType === "schapkun") {
-        newContent = schapkunTemplate;
-      } else if (documentType === "factuur") {
-        newContent = DEFAULT_INVOICE_TEMPLATE;
-      } else if (documentType === "contract") {
-        newContent = '<html><body><h1>Contract</h1><p>[Contract inhoud]</p></body></html>';
-      } else if (documentType === "brief") {
-        newContent = '<html><body><h1>Brief</h1><p>[Brief inhoud]</p></body></html>';
-      } else if (documentType === "custom") {
-        newContent = '<html><body><h1>Custom template</h1></body></html>';
-      }
-      setHtmlContent(newContent);
-      setHasUnsavedChanges(true); // Markeer altijd als veranderd zodat Save enabled is
-      setJustChangedType(true);   // Flag zetten: type is zojuist gewijzigd
-    }
-    previousDocumentTypeRef.current = documentType;
-  }, [documentType, schapkunTemplate, editingDocument]);
 
   return {
     htmlContent,
