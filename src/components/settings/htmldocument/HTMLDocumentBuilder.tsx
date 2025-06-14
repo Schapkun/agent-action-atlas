@@ -289,6 +289,21 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
   // Gebruik een aparte ref om bij te houden of er net gesaved is zodat na saven niet gehard reset wordt:
   const justSaved = useRef(false);
 
+  // --- Fix: implement handleLogoUpload ---
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setPlaceholderValues((prev) => ({
+        ...prev,
+        COMPANY_LOGO: ev.target?.result as string,
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Load document ONLY when switching to a new one (not every update, not after save)
   useEffect(() => {
     const currentId = editingDocument?.id ?? null;
