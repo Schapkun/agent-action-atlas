@@ -30,20 +30,15 @@ export function useHtmlContentManager({
   const { saveDraft, getDraft, clearDraft } = useHtmlDraft();
   const previousEditingDocumentId = useRef<string | undefined>(undefined);
   const previousDocumentType = useRef<DocumentTypeUI | null>(null);
-  const previousDocumentName = useRef<string>('');
-  const isInitializing = useRef(false);
   const hasInitialized = useRef(false);
-  const lastLoadedContent = useRef<string>('');
+  const lastSavedContent = useRef<string>('');
 
-  console.log('[HTML Manager] === RENDER START ===', {
+  console.log('[HTML Manager] Current state:', {
     editingDocumentId: editingDocument?.id,
-    editingDocumentName: editingDocument?.name,
     documentType,
     documentName,
     htmlContentLength: htmlContent.length,
-    hasInitialized: hasInitialized.current,
-    previousDocumentId: previousEditingDocumentId.current,
-    previousDocumentName: previousDocumentName.current
+    hasInitialized: hasInitialized.current
   });
 
   // Get template content based on type
@@ -65,120 +60,83 @@ export function useHtmlContentManager({
     }
   }, []);
 
-  // Initialize or update content when document changes
+  // Handle document loading (when switching between different documents)
   useEffect(() => {
     const currentId = editingDocument?.id;
-    const currentName = editingDocument?.name || '';
     const hasDocumentChanged = currentId !== previousEditingDocumentId.current;
-    const hasNameChanged = currentName !== previousDocumentName.current;
     
-    console.log('[HTML Manager] Document effect triggered:', {
+    console.log('[HTML Manager] Document change check:', {
       currentId,
-      currentName,
-      hasDocumentChanged,
-      hasNameChanged,
-      hasInitialized: hasInitialized.current,
-      isInitializing: isInitializing.current
+      previousId: previousEditingDocumentId.current,
+      hasDocumentChanged
     });
 
-    // Initialize content on first load or when document actually changes
-    if (!hasInitialized.current || hasDocumentChanged || hasNameChanged) {
-      console.log('[HTML Manager] *** DOCUMENT LOADING TRIGGERED ***');
-      isInitializing.current = true;
-      
-      const draftKey = getDraftKey(currentName);
-      const draft = getDraft(draftKey);
+    if (hasDocumentChanged || !hasInitialized.current) {
+      console.log('[HTML Manager] Loading document content');
       
       let newContent = '';
       
-      console.log('[HTML Manager] Content priority check:', {
-        hasSavedContent: !!editingDocument?.html_content,
-        hasDraft: !!draft,
-        draftKey
-      });
-
       // Priority: 1. Saved document content, 2. Draft, 3. Default template
       if (editingDocument?.html_content) {
-        console.log('[HTML Manager] ✅ Loading from saved document');
+        console.log('[HTML Manager] Using saved document content');
         newContent = editingDocument.html_content;
-        // Clear any existing draft since we have saved content
-        if (draft && currentName) {
-          console.log('[HTML Manager] Clearing outdated draft');
-          clearDraft(draftKey);
+      } else if (editingDocument && documentName) {
+        const draftKey = getDraftKey(documentName);
+        const draft = getDraft(draftKey);
+        if (draft) {
+          console.log('[HTML Manager] Using draft content');
+          newContent = draft;
+        } else {
+          console.log('[HTML Manager] Using default template');
+          newContent = getTemplateForType(documentType);
         }
-      } else if (draft && editingDocument) {
-        console.log('[HTML Manager] ✅ Loading from draft');
-        newContent = draft;
       } else {
-        console.log('[HTML Manager] ✅ Loading default template for type:', documentType);
+        console.log('[HTML Manager] Using default template for new document');
         newContent = getTemplateForType(documentType);
       }
       
-      console.log('[HTML Manager] *** SETTING NEW CONTENT ***', {
-        contentLength: newContent.length,
-        contentPreview: newContent.substring(0, 100),
-        currentHtmlLength: htmlContent.length
-      });
-
+      console.log('[HTML Manager] Setting content:', newContent.substring(0, 100) + '...');
       setHtmlContent(newContent);
-      lastLoadedContent.current = newContent;
+      lastSavedContent.current = newContent;
       setHasUnsavedChanges(false);
       
       previousEditingDocumentId.current = currentId;
-      previousDocumentName.current = currentName;
       hasInitialized.current = true;
-      isInitializing.current = false;
-      
-      console.log('[HTML Manager] *** DOCUMENT LOADING COMPLETE ***');
-    } else {
-      console.log('[HTML Manager] No document change detected, skipping load');
     }
-  }, [editingDocument?.id, editingDocument?.name, editingDocument?.html_content, documentType, setHtmlContent, setHasUnsavedChanges, getDraftKey, getDraft, getTemplateForType, clearDraft]);
+  }, [editingDocument?.id, editingDocument?.html_content, documentType, documentName, setHtmlContent, setHasUnsavedChanges, getDraftKey, getDraft, getTemplateForType]);
 
-  // Handle document type changes (only for user-initiated changes)
+  // Handle document type changes (template switching)
   useEffect(() => {
-    console.log('[HTML Manager] Document type effect triggered:', {
+    const hasTypeChanged = previousDocumentType.current !== null && 
+                          previousDocumentType.current !== documentType;
+    
+    console.log('[HTML Manager] Type change check:', {
       previousType: previousDocumentType.current,
       currentType: documentType,
-      isInitializing: isInitializing.current,
+      hasTypeChanged,
       hasInitialized: hasInitialized.current
     });
 
-    if (previousDocumentType.current !== null && 
-        previousDocumentType.current !== documentType && 
-        !isInitializing.current &&
-        hasInitialized.current) {
-      
-      console.log('[HTML Manager] *** DOCUMENT TYPE CHANGED BY USER ***:', previousDocumentType.current, '->', documentType);
+    if (hasTypeChanged && hasInitialized.current) {
+      console.log('[HTML Manager] *** TEMPLATE TYPE CHANGED ***:', previousDocumentType.current, '->', documentType);
       
       const newContent = getTemplateForType(documentType);
-      console.log('[HTML Manager] Setting new template content:', newContent.substring(0, 50));
+      console.log('[HTML Manager] Setting new template content');
       setHtmlContent(newContent);
-      lastLoadedContent.current = newContent;
+      lastSavedContent.current = newContent;
       setHasUnsavedChanges(true);
     }
     
     previousDocumentType.current = documentType;
   }, [documentType, getTemplateForType, setHtmlContent, setHasUnsavedChanges]);
 
-  // Save draft on content changes (but not during initialization)
+  // Save draft on content changes
   useEffect(() => {
-    console.log('[HTML Manager] Draft save effect triggered:', {
-      documentName,
-      isInitializing: isInitializing.current,
-      hasHtmlContent: !!htmlContent,
-      hasInitialized: hasInitialized.current,
-      contentIsDifferent: htmlContent !== lastLoadedContent.current,
-      lastLoadedLength: lastLoadedContent.current.length,
-      currentContentLength: htmlContent.length
-    });
-
     if (documentName && 
-        !isInitializing.current && 
+        hasInitialized.current && 
         htmlContent && 
-        hasInitialized.current &&
-        htmlContent !== lastLoadedContent.current) {
-      console.log('[HTML Manager] *** SAVING DRAFT ***:', documentName);
+        htmlContent !== lastSavedContent.current) {
+      console.log('[HTML Manager] Saving draft for:', documentName);
       const draftKey = getDraftKey(documentName);
       saveDraft(draftKey, htmlContent);
     }
@@ -189,12 +147,10 @@ export function useHtmlContentManager({
     if (documentName) {
       const draftKey = getDraftKey(documentName);
       clearDraft(draftKey);
-      lastLoadedContent.current = htmlContent; // Update the last loaded content reference
-      console.log('[HTML Manager] *** CLEARED DRAFT FOR ***:', documentName);
+      lastSavedContent.current = htmlContent;
+      console.log('[HTML Manager] Cleared draft for:', documentName);
     }
   }, [getDraftKey, clearDraft, htmlContent]);
-
-  console.log('[HTML Manager] === RENDER END ===');
 
   return {
     clearDraftForDocument
