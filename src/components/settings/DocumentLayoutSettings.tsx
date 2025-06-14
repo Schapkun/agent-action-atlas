@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
@@ -48,14 +47,20 @@ const DocumentLayoutContent = () => {
     setIsBuilderOpen(true);
   };
 
-  // === Aangepast: sla het bewaarde document direct op, zodat bij nieuwe open direct de goede content in de editor verschijnt ===
+  // <<< Belangrijk: Nu altijd de nieuwste versie van het document gebruiken (bijv. updated_at/databank object)
   const handleDocumentSaved = (document: DocumentTemplate) => {
-    setEditingDocument(document); // <--- VERSIE VANUIT SUPABASE
+    if (!document) {
+      setEditingDocument(null);
+      setIsBuilderOpen(false);
+      return;
+    }
+    setEditingDocument(document); // Save latest from Supabase!
     setIsBuilderOpen(false);
     toast({
       title: "Succes",
       description: `Document "${document.name}" is opgeslagen.`
     });
+    console.log('[Settings] Document opgeslagen + gezet als editing:', document.name, document.updated_at, document.id);
   };
 
   const handleDuplicateDocument = (document: DocumentTemplate) => {

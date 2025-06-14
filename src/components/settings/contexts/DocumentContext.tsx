@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { useDocumentTemplates, DocumentTemplate } from '@/hooks/useDocumentTemplates';
 
@@ -29,15 +28,17 @@ export const DocumentProvider = ({ children }: DocumentProviderProps) => {
     fetchTemplates
   } = useDocumentTemplates();
 
+  // Sla direct op in de templates lijst na save.
   const saveDocument = async (documentData: Partial<DocumentTemplate>): Promise<DocumentTemplate> => {
     const result = await createTemplate(documentData);
-    // Type cast the Supabase result to our DocumentTemplate interface
+    // Direct updaten
+    // Note: in de lib wordt setTemplates aangeroepen, dus de lijst is meteen vers
     return result as DocumentTemplate;
   };
 
   const updateDocument = async (id: string, updates: Partial<DocumentTemplate>): Promise<DocumentTemplate> => {
     const result = await updateTemplate(id, updates);
-    // Type cast the Supabase result to our DocumentTemplate interface
+    // Direct updaten in array door hook
     return result as DocumentTemplate;
   };
 
