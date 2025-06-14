@@ -78,14 +78,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any
 
   const getDraftKey = (docName: string) => `builder_draft_${docName}`;
 
-  const loadInitialHtmlContent = () => {
-    const draftKey = getDraftKey(editingDocument?.name || '');
-    const draft = getDraft(draftKey);
-    if (draft) return draft;
-    return editingDocument?.html_content || DEFAULT_INVOICE_TEMPLATE;
-  };
-
-  const [htmlContent, setHtmlContent] = React.useState(loadInitialHtmlContent());
+  // --- HOOFDSTATE ---  
   const [documentName, setDocumentName] = React.useState(editingDocument?.name || '');
   const [documentType, setDocumentType] = React.useState<any>('factuur');
   const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
@@ -103,104 +96,60 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any
   const previousEditingDocumentId = useRef<string | null>(null);
   const justSaved = useRef(false);
   const previousDocumentTypeRef = useRef<any | null>(null);
-
-  // Nieuw: fix flag voor type-swap bij editingDocument
   const [justChangedType, setJustChangedType] = useState(false);
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setPlaceholderValues((prev) => ({
-        ...prev,
-        COMPANY_LOGO: ev.target?.result as string,
-      }));
-    };
-    reader.readAsDataURL(file);
+  // Belangrijk: initialiseer HTML content correct bij open dialog!
+  const loadInitialHtmlContent = () => {
+    const draftKey = getDraftKey(editingDocument?.name || documentName || '');
+    const draft = getDraft(draftKey);
+    if (draft) return draft;
+    if (editingDocument?.html_content) return editingDocument.html_content;
+    return DEFAULT_INVOICE_TEMPLATE;
   };
 
+  const [htmlContent, setHtmlContent] = React.useState(loadInitialHtmlContent());
+
+  // Bij openen of document wissel (ID)
   useEffect(() => {
     const currentId = editingDocument?.id ?? null;
     if (currentId !== previousEditingDocumentId.current) {
-      if (editingDocument) {
-        setDocumentName(editingDocument.name);
+      const newName = editingDocument?.name || '';
+      setDocumentName(newName);
 
-        let uiType: DocumentTypeUI;
-        if (editingDocument.type === 'custom' && editingDocument.html_content?.trim() === schapkunTemplate.trim()) {
-          uiType = 'schapkun';
-        } else {
-          uiType = editingDocument.type as DocumentTypeUI;
-        }
-        setDocumentType(uiType);
-        previousDocumentTypeRef.current = uiType;
-
-        // ----- HIER: draft check -----
-        const draftKey = getDraftKey(editingDocument.name);
-        const draft = localStorage.getItem(draftKey);
-        setHtmlContent(draft || editingDocument.html_content || DEFAULT_INVOICE_TEMPLATE);
-
-        const storageKey = getStorageKey(editingDocument.name);
-        const fromStorage = localStorage.getItem(storageKey);
-        setPlaceholderValues(
-          fromStorage
-            ? { ...DEFAULT_PLACEHOLDER_VALUES, ...JSON.parse(fromStorage) }
-            : DEFAULT_PLACEHOLDER_VALUES
-        );
-        setHasUnsavedChanges(false);
+      let uiType: DocumentTypeUI;
+      if (editingDocument?.type === 'custom' && editingDocument?.html_content?.trim() === schapkunTemplate.trim()) {
+        uiType = 'schapkun';
       } else {
-        setDocumentName('');
-        setDocumentType('factuur');
-        previousDocumentTypeRef.current = 'factuur';
-
-        // --- Draft check bij lege docnaam ---
-        const draftKey = getDraftKey('');
-        const draft = localStorage.getItem(draftKey);
-        setHtmlContent(draft || DEFAULT_INVOICE_TEMPLATE);
-
-        setPlaceholderValues(DEFAULT_PLACEHOLDER_VALUES);
-        setHasUnsavedChanges(false);
+        uiType = (editingDocument?.type as DocumentTypeUI) || 'factuur';
       }
+      setDocumentType(uiType);
+      previousDocumentTypeRef.current = uiType;
+
+      // DRAFT/CONTENT-PRIORITEIT
+      const draftKey = getDraftKey(newName);
+      const draft = getDraft(draftKey);
+      setHtmlContent(draft || editingDocument?.html_content || DEFAULT_INVOICE_TEMPLATE);
+
+      const storageKey = getStorageKey(newName);
+      const fromStorage = localStorage.getItem(storageKey);
+      setPlaceholderValues(fromStorage ? { ...DEFAULT_PLACEHOLDER_VALUES, ...JSON.parse(fromStorage) } : DEFAULT_PLACEHOLDER_VALUES);
+      setHasUnsavedChanges(false);
+
       previousEditingDocumentId.current = currentId;
       justSaved.current = false;
       setJustChangedType(false);
     }
+    // eslint-disable-next-line
   }, [editingDocument?.id]);
 
+  // Draft altijd opslaan bij html-content wijziging (enkel als naam ingevuld)
   useEffect(() => {
-    console.log('[useHtmlDocumentBuilder] documentType changed:', documentType, 'editingDocument:', editingDocument);
-  }, [documentType, editingDocument]);
-
-  // CRUCIAAL: type-switch correct opslaan
-  useEffect(() => {
-    if (
-      editingDocument &&
-      previousDocumentTypeRef.current !== null &&
-      previousDocumentTypeRef.current !== documentType
-    ) {
-      // Alleen als gebruiker echt een ANDER type kiest!
-      let newContent = '';
-      if (documentType === 'schapkun') {
-        newContent = schapkunTemplate;
-      } else if (documentType === 'factuur') {
-        newContent = DEFAULT_INVOICE_TEMPLATE;
-      } else if (documentType === 'contract') {
-        newContent = '<html><body><h1>Contract</h1><p>[Contract inhoud]</p></body></html>';
-      } else if (documentType === 'brief') {
-        newContent = '<html><body><h1>Brief</h1><p>[Brief inhoud]</p></body></html>';
-      } else if (documentType === 'custom') {
-        newContent = '<html><body><h1>Custom template</h1></body></html>';
-      }
-      setHtmlContent(newContent);
-      setHasUnsavedChanges(true); // Markeer direct als gewijzigd!
-      setJustChangedType(true); // Zet expliciet flag
-      // << HIER ZEKER ZIJN DAT de state sync is!
+    if (documentName) {
+      saveDraft(getDraftKey(documentName), htmlContent);
     }
-    previousDocumentTypeRef.current = documentType;
-  }, [documentType, schapkunTemplate, editingDocument]);
+  }, [htmlContent, documentName, saveDraft]);
 
-  // --- SAVE LOGICA --- //
+  // Save logica
   const { createTemplate, updateTemplate, fetchTemplates } = useDocumentTemplates();
   const { toast } = useToast();
 
@@ -215,16 +164,6 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any
     }
     if (isSaving) return;
     setIsSaving(true);
-
-    console.log('[handleSave:DEBUG]', {
-      docId: editingDocument?.id,
-      UI: { documentName, documentType, htmlContent },
-      lastLoadedType: previousDocumentTypeRef.current,
-      justChangedType,
-      placeholderValues,
-      hasUnsavedChanges,
-      isSaving
-    });
 
     try {
       let savedDocument: DocumentTemplate;
@@ -257,18 +196,17 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any
       justSaved.current = true;
       setJustChangedType(false);
 
-      // -- Sync state na save! --
+      // BELANGRIJK: Draft wissen EN builder state synchroniseren na save!
       if (savedDocument) {
-        setHtmlContent(savedDocument.html_content || DEFAULT_INVOICE_TEMPLATE); // Direct updaten in editor!
+        const newName = savedDocument.name;
+        const draftKey = getDraftKey(newName);
+        clearDraft(draftKey); // Draft wissen na save
+        setHtmlContent(savedDocument.html_content || DEFAULT_INVOICE_TEMPLATE); // editor direct updaten!
         setDocumentType(savedDocument.type as DocumentTypeUI);
-        setDocumentName(savedDocument.name);
-
-        // Draft wissen, enkel bij save!
-        const draftKey = getDraftKey(savedDocument.name);
-        localStorage.removeItem(draftKey);
+        setDocumentName(newName);
       }
       if (onDocumentSaved && savedDocument) {
-        onDocumentSaved(savedDocument);
+        onDocumentSaved(savedDocument); // parent laten weten, zodat dialoog sluit, en hoofdlijst update.
       }
     } catch (error) {
       console.error('[Builder] Save error:', error);
@@ -319,6 +257,20 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any
 
   const handlePreview = () => {
     setIsPreviewOpen(true);
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setPlaceholderValues((prev) => ({
+        ...prev,
+        COMPANY_LOGO: ev.target?.result as string,
+      }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const insertSnippet = (code: string) => {
@@ -397,14 +349,6 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any
     );
     return scaledContent;
   };
-
-  // Sla elke wijziging van htmlContent op als draft
-  useEffect(() => {
-    if (documentName) {
-      const draftKey = getDraftKey(documentName);
-      localStorage.setItem(draftKey, htmlContent);
-    }
-  }, [htmlContent, documentName]);
 
   const typeUiToBackend = (t: DocumentTypeUI): DocumentTypeBackend => (t === 'schapkun' ? 'custom' : t);
 
