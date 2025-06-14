@@ -74,12 +74,19 @@ export function useHtmlContentManager({
       const draft = getDraft(draftKey);
       
       let newContent = '';
-      if (draft && editingDocument) {
-        console.log('[HTML Manager] Loading from draft');
-        newContent = draft;
-      } else if (editingDocument?.html_content) {
-        console.log('[HTML Manager] Loading from saved document');
+      
+      // Priority: 1. Saved document content, 2. Draft, 3. Default template
+      if (editingDocument?.html_content) {
+        console.log('[HTML Manager] Loading from saved document (priority over draft)');
         newContent = editingDocument.html_content;
+        // Clear any existing draft since we have saved content
+        if (draft && name) {
+          console.log('[HTML Manager] Clearing outdated draft, using saved content');
+          clearDraft(draftKey);
+        }
+      } else if (draft && editingDocument) {
+        console.log('[HTML Manager] Loading from draft (no saved content)');
+        newContent = draft;
       } else {
         console.log('[HTML Manager] Loading default template for type:', documentType);
         newContent = getTemplateForType(documentType);
@@ -95,7 +102,7 @@ export function useHtmlContentManager({
       hasInitialized.current = true;
       isInitializing.current = false;
     }
-  }, [editingDocument?.id, editingDocument?.name, editingDocument?.html_content, documentType, htmlContent, setHtmlContent, setHasUnsavedChanges, getDraftKey, getDraft, getTemplateForType]);
+  }, [editingDocument?.id, editingDocument?.name, editingDocument?.html_content, documentType, htmlContent, setHtmlContent, setHasUnsavedChanges, getDraftKey, getDraft, getTemplateForType, clearDraft]);
 
   // Handle document type changes (only for user-initiated changes)
   useEffect(() => {
