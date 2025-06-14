@@ -95,27 +95,38 @@ export class InvoicePDFGenerator {
       container.style.position = 'absolute';
       container.style.left = '-9999px';
       container.style.top = '-9999px';
-      container.style.width = isPreview ? '1200px' : '794px'; // Larger for preview
+
+      // Explicitly add margin/padding around the "PDF page"
+      // Assume the rendered template uses a fixed width for a "page" (A4: 794px wide at 96dpi)
+      // Add 36px (1.27cm) margin & 20px padding (or according to template) around, like browser preview
+      container.style.width = isPreview ? '1200px' : '834px'; // 794px + 2*20px padding
       container.style.backgroundColor = 'white';
       container.style.fontFamily = 'Arial, sans-serif';
-      container.style.fontSize = isPreview ? '18px' : '16px'; // Larger for preview
+      container.style.fontSize = isPreview ? '18px' : '16px';
       container.style.lineHeight = '1.4';
       container.style.boxSizing = 'border-box';
       container.style.overflow = 'hidden';
       container.style.zIndex = '-1000';
+      container.style.margin = '36px'; // ~1.27cm (A4 default)
+      container.style.padding = '20px'; // Mooie rand (past bij template)
+
+      // Zorg ook dat <body> in de template geen margin/padding overschrijft
+      const innerBody = container.querySelector('body');
+      if (innerBody) {
+        innerBody.style.margin = '0';
+        innerBody.style.padding = '0';
+      }
       
       // Remove any problematic elements
       const images = container.querySelectorAll('img');
       images.forEach(img => img.remove());
-      
+
       const scripts = container.querySelectorAll('script');
       scripts.forEach(script => script.remove());
-      
+
       document.body.appendChild(container);
-      
-      // DOM stabilization delay
       await new Promise(resolve => setTimeout(resolve, 300));
-      
+
       console.log('HTML container ready');
       return container;
     } catch (error) {
