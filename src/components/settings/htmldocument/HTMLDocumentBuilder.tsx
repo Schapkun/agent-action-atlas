@@ -602,7 +602,10 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
         documentName={documentName}
         setDocumentName={setDocumentName}
         documentType={documentType}
-        setDocumentType={(type) => setDocumentType(type as DocumentTypeUI)}
+        setDocumentType={(type) => {
+          console.log('[TOOLBAR] setDocumentType called:', type);
+          setDocumentType(type as DocumentTypeUI);
+        }}
         options={DOCUMENT_TYPE_OPTIONS}
         hasUnsavedChanges={hasUnsavedChanges}
         onPreview={handlePreview}
@@ -619,7 +622,10 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
           {/* HtmlEditor (textarea) */}
           <HtmlEditor
             htmlContent={htmlContent}
-            onChange={setHtmlContent}
+            onChange={value => {
+              console.log('[EDITOR] setHtmlContent:', value.slice(0, 40));
+              setHtmlContent(value);
+            }}
           />
 
           {/* Preview */}
