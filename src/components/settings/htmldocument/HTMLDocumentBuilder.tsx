@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -283,23 +283,30 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     return DEFAULT_PLACEHOLDER_VALUES;
   });
 
-  const { createTemplate, updateTemplate, fetchTemplates } = useDocumentTemplates();
-  const { toast } = useToast();
+  // ---- NEW: Track previous document id ----
+  const previousEditingDocumentId = useRef<string | null>(null);
 
-  // Load editing document
+  // Load editing document ONLY when the actual document changes
   useEffect(() => {
-    if (editingDocument) {
-      setDocumentName(editingDocument.name);
-      setDocumentType(editingDocument.type);
-      setHtmlContent(editingDocument.html_content || DEFAULT_INVOICE_TEMPLATE);
-      setHasUnsavedChanges(false);
-    } else {
-      // New document
-      setDocumentName('');
-      setDocumentType('factuur');
-      setHtmlContent(DEFAULT_INVOICE_TEMPLATE);
-      setHasUnsavedChanges(false);
+    const currentId = editingDocument?.id ?? null;
+    if (currentId !== previousEditingDocumentId.current) {
+      // New document loaded (or cleared to new)
+      if (editingDocument) {
+        setDocumentName(editingDocument.name);
+        setDocumentType(editingDocument.type);
+        setHtmlContent(editingDocument.html_content || DEFAULT_INVOICE_TEMPLATE);
+        setHasUnsavedChanges(false);
+      } else {
+        // New document
+        setDocumentName('');
+        setDocumentType('factuur');
+        setHtmlContent(DEFAULT_INVOICE_TEMPLATE);
+        setHasUnsavedChanges(false);
+      }
+      previousEditingDocumentId.current = currentId;
     }
+    // else, if same id: do not reset state (prevent overwriting local changes on save!)
+    // eslint-disable-next-line
   }, [editingDocument]);
 
   // Track unsaved changes
