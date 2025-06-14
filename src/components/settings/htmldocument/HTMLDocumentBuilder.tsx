@@ -40,6 +40,11 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     PLACEHOLDER_FIELDS,
   } = useHtmlDocumentBuilder({ editingDocument, onDocumentSaved });
 
+  // Fix: Create wrapper for setDocumentType to accept string and convert to correct type
+  const handleSetDocumentType = (type: string) => {
+    setDocumentType(type as any); // Allow string to DocumentTypeUI. Type safety is ensured by valid options in select.
+  };
+
   // Sidebar props (define once)
   const sidebarProps = {
     placeholderFields: PLACEHOLDER_FIELDS,
@@ -56,7 +61,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
         documentName={documentName}
         setDocumentName={setDocumentName}
         documentType={documentType}
-        setDocumentType={setDocumentType}
+        setDocumentType={handleSetDocumentType}
         options={DOCUMENT_TYPE_OPTIONS}
         hasUnsavedChanges={hasUnsavedChanges}
         onPreview={handlePreview}
