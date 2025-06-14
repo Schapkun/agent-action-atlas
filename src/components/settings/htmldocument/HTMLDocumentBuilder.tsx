@@ -72,8 +72,15 @@ const DEFAULT_PLACEHOLDER_VALUES: Record<string, string> = {
 };
 
 // --- VERBETERD: Voeg alle placeholders toe, inclusief alle bedrijfsinfo/velden ---
-const PLACEHOLDER_FIELDS = [
-  { label: "Bedrijfslogo", id: "COMPANY_LOGO", type: "image" as const, placeholder: "" },
+type PlaceholderField = {
+  label: string;
+  id: string;
+  placeholder?: string;
+  type?: "image";
+};
+
+const PLACEHOLDER_FIELDS: PlaceholderField[] = [
+  { label: "Bedrijfslogo", id: "COMPANY_LOGO", type: "image", placeholder: "" },
   { label: "Bedrijfsnaam", id: "COMPANY_NAME", placeholder: "Bijv. Jansen B.V." },
   { label: "Adres", id: "COMPANY_ADDRESS", placeholder: "Bijv. Straat 1" },
   { label: "Postcode", id: "COMPANY_POSTAL_CODE", placeholder: "Bijv. 1234 AB" },
