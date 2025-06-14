@@ -325,7 +325,6 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
   const typeUiToBackend = (t: DocumentTypeUI): DocumentTypeBackend => (t === 'schapkun' ? 'custom' : t);
 
   useEffect(() => {
-    if (editingDocument) return;
     let newContent = "";
     if (documentType === "schapkun") {
       newContent = schapkunTemplate;
@@ -338,10 +337,10 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
     } else if (documentType === "custom") {
       newContent = '<html><body><h1>Custom template</h1></body></html>';
     }
-    console.log('[TEMPLATE SWAP useEffect] changing htmlContent! Nieuw documentType:', documentType, 'htmlContent:', newContent);    
+    console.log('[TEMPLATE SWAP useEffect][ALTIJD] changing htmlContent! Nieuw documentType:', documentType, 'htmlContent:', newContent);    
     setHtmlContent(newContent);
     setHasUnsavedChanges(false);
-  }, [documentType, schapkunTemplate, editingDocument]);
+  }, [documentType, schapkunTemplate]);
 
   return {
     htmlContent,
