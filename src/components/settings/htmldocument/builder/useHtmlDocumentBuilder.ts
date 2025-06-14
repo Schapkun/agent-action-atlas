@@ -91,6 +91,9 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
   const justSaved = useRef(false);
   const previousDocumentTypeRef = useRef<DocumentTypeUI | null>(null);
 
+  // Nieuw: fix flag voor type-swap bij editingDocument
+  const [justChangedType, setJustChangedType] = useState(false);
+
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -138,6 +141,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
       }
       previousEditingDocumentId.current = currentId;
       justSaved.current = false;
+      setJustChangedType(false); // Reset flag als er een nieuw document wordt geladen
     }
   }, [editingDocument?.id]);
 
@@ -165,12 +169,21 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
       let savedDocument: DocumentTemplate;
       const backendType = typeUiToBackend(documentType);
 
-      // --- Belangrijk: altijd htmlContent en documentType uit state opslaan! ---
+      // Debug log welke waardes worden opgeslagen
+      console.log('[handleSave] Opslaan:', {
+        docId: editingDocument?.id,
+        name: documentName.trim(),
+        type: backendType,
+        html_content: htmlContent,
+        justChangedType
+      });
+
       if (editingDocument) {
+        // Bij bestaande: altijd expliciet huidige type + htmlContent opslaan!
         const updatedDoc = await updateTemplate(editingDocument.id, {
           name: documentName.trim(),
-          type: backendType,
-          html_content: htmlContent,
+          type: backendType, // gebruikte huidige UI type
+          html_content: htmlContent, // gebruikte huidige content (ook na type wissel!)
           description: `${backendType} document`
         });
         savedDocument = updatedDoc;
@@ -191,6 +204,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
       setHasUnsavedChanges(false);
       await fetchTemplates();
       justSaved.current = true;
+      setJustChangedType(false); // Reset direct na save
       if (onDocumentSaved && savedDocument) {
         onDocumentSaved(savedDocument);
       }
@@ -329,10 +343,10 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
 
   const typeUiToBackend = (t: DocumentTypeUI): DocumentTypeBackend => (t === 'schapkun' ? 'custom' : t);
 
-  // FIX: Alleen voor NIEUWE documenten mag een template-swap plaatsvinden bij wijzigen type
+  // --- Belangrijk: type-switch logica (alleen voor nieuwe of bestaande documenten) ---
   useEffect(() => {
-    // Dus alleen als we géén editingDocument hebben (nieuw document), template aanpassen bij andere type
     if (!editingDocument) {
+      // NIEUW document: bij wissel zet default-content van type
       let newContent = "";
       if (documentType === "schapkun") {
         newContent = schapkunTemplate;
@@ -350,10 +364,10 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
     }
   }, [documentType, schapkunTemplate, editingDocument]);
 
-  // Gebruik deze useEffect alleen om te reageren op dropdown-wissel bij bestaand document,
-  // en alleen als type écht wijzigt en de gebruiker dus actief gekozen heeft voor een andere template
+  // Bewaak type-switch bij bestaand document: alléén als gebruiker echt van type wisselt!
   useEffect(() => {
     if (editingDocument && previousDocumentTypeRef.current !== null && previousDocumentTypeRef.current !== documentType) {
+      // Alleen als gebruiker soort wisselt in dropdown!
       let newContent = "";
       if (documentType === "schapkun") {
         newContent = schapkunTemplate;
@@ -367,7 +381,8 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
         newContent = '<html><body><h1>Custom template</h1></body></html>';
       }
       setHtmlContent(newContent);
-      setHasUnsavedChanges(false);
+      setHasUnsavedChanges(true); // Markeer altijd als veranderd zodat Save enabled is
+      setJustChangedType(true);   // Flag zetten: type is zojuist gewijzigd
     }
     previousDocumentTypeRef.current = documentType;
   }, [documentType, schapkunTemplate, editingDocument]);
