@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useDocumentTemplates, DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { useToast } from '@/hooks/use-toast';
@@ -137,6 +136,10 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
       justSaved.current = false;
     }
   }, [editingDocument?.id]);
+
+  useEffect(() => {
+    console.log('[useHtmlDocumentBuilder] documentType changed:', documentType, 'editingDocument:', editingDocument);
+  }, [documentType, editingDocument]);
 
   const { createTemplate, updateTemplate, fetchTemplates } = useDocumentTemplates();
   const { toast } = useToast();
@@ -335,6 +338,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
     } else if (documentType === "custom") {
       newContent = '<html><body><h1>Custom template</h1></body></html>';
     }
+    console.log('[TEMPLATE SWAP useEffect] changing htmlContent! Nieuw documentType:', documentType, 'htmlContent:', newContent);    
     setHtmlContent(newContent);
     setHasUnsavedChanges(false);
   }, [documentType, schapkunTemplate, editingDocument]);

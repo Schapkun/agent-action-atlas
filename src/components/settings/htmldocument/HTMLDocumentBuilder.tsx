@@ -42,6 +42,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
 
   // Fix: Create wrapper for setDocumentType to accept string and convert to correct type
   const handleSetDocumentType = (type: string) => {
+    console.log('[TOOLBAR select] setDocumentType called with:', type);
     setDocumentType(type as any); // Allow string to DocumentTypeUI. Type safety is ensured by valid options in select.
   };
 
@@ -54,6 +55,8 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     snippets: SNIPPETS,
     insertSnippet,
   };
+
+  console.log('[RENDER] HTMLDocumentBuilder: documentType:', documentType, 'editingDocument:', editingDocument);
 
   return (
     <div className="flex flex-col h-full">
