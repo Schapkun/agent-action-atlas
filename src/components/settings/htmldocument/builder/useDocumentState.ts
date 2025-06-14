@@ -3,7 +3,6 @@ import React from 'react';
 import { 
   DEFAULT_PLACEHOLDER_VALUES, 
   getStorageKey, 
-  DEFAULT_INVOICE_TEMPLATE,
   DocumentTypeUI
 } from './htmlDocumentConstants';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
@@ -15,7 +14,7 @@ interface UseDocumentStateProps {
 export function useDocumentState({ editingDocument }: UseDocumentStateProps) {
   const getDraftKey = (docName: string) => `builder_draft_${docName}`;
 
-  // Initialize with simple defaults - content management is handled by useHtmlContentManager
+  // Initialize with simple defaults - HTML content is now managed by useHtmlContentManager
   const [documentName, setDocumentName] = React.useState(editingDocument?.name || '');
   const [documentType, setDocumentType] = React.useState<DocumentTypeUI>(() => {
     if (editingDocument?.type === 'custom' && editingDocument?.html_content?.includes('schapkun')) {
@@ -26,7 +25,10 @@ export function useDocumentState({ editingDocument }: UseDocumentStateProps) {
   const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
-  const [htmlContent, setHtmlContent] = React.useState(editingDocument?.html_content || DEFAULT_INVOICE_TEMPLATE);
+  
+  // HTML content state - will be managed by useHtmlContentManager
+  const [htmlContent, setHtmlContent] = React.useState('');
+  
   const [placeholderValues, setPlaceholderValues] = React.useState<Record<string, string>>(() => {
     const storageKey = getStorageKey(editingDocument?.name ?? "");
     const fromStorage = localStorage.getItem(storageKey);
