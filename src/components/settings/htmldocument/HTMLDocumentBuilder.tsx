@@ -28,6 +28,84 @@ interface HTMLDocumentBuilderProps {
   onDocumentSaved?: (document: DocumentTemplate) => void;
 }
 
+// --- AANGEPASTE DEFAULT PLACEHOLDER VALUES ---
+const DEFAULT_PLACEHOLDER_VALUES: Record<string, string> = {
+  COMPANY_LOGO: "", // base64 image url
+  COMPANY_NAME: "Jansen B.V.",
+  COMPANY_ADDRESS: "Straat 1",
+  COMPANY_POSTAL_CODE: "1234 AB",
+  COMPANY_CITY: "Amsterdam",
+  COMPANY_PHONE: "06-12345678",
+  COMPANY_EMAIL: "info@jansenbv.nl",
+  COMPANY_KVK: "12345678",
+  COMPANY_VAT: "NL001234567B01",
+  COMPANY_IBAN: "NL91ABNA0417164300",
+  COMPANY_BIC: "ABNANL2A",
+  INVOICE_NUMBER: "2024-001",
+  INVOICE_DATE: "14-06-2024",
+  DUE_DATE: "28-06-2024",
+  CUSTOMER_NAME: "Voorbeeld Klant B.V.",
+  CUSTOMER_ADDRESS: "Voorbeeldstraat 123",
+  CUSTOMER_POSTAL_CODE: "4321 BA",
+  CUSTOMER_CITY: "Rotterdam",
+  INVOICE_LINES:
+    `<tr>
+      <td>Consultancy diensten</td>
+      <td>10</td>
+      <td>€ 75,00</td>
+      <td>21%</td>
+      <td>€ 750,00</td>
+    </tr>
+    <tr>
+      <td>Reiskosten</td>
+      <td>1</td>
+      <td>€ 50,00</td>
+      <td>21%</td>
+      <td>€ 50,00</td>
+    </tr>`,
+  SUBTOTAL: "800.00",
+  VAT_PERCENTAGE: "21",
+  VAT_AMOUNT: "168.00",
+  TOTAL_AMOUNT: "968.00",
+  INVOICE_SUBJECT: "Diensten maart",
+  PAYMENT_TERMS: "30"
+};
+
+// --- VERBETERD: Voeg alle placeholders toe, inclusief alle bedrijfsinfo/velden ---
+const PLACEHOLDER_FIELDS = [
+  { label: "Bedrijfslogo", id: "COMPANY_LOGO", type: "image" as const, placeholder: "" },
+  { label: "Bedrijfsnaam", id: "COMPANY_NAME", placeholder: "Bijv. Jansen B.V." },
+  { label: "Adres", id: "COMPANY_ADDRESS", placeholder: "Bijv. Straat 1" },
+  { label: "Postcode", id: "COMPANY_POSTAL_CODE", placeholder: "Bijv. 1234 AB" },
+  { label: "Plaats", id: "COMPANY_CITY", placeholder: "Bijv. Amsterdam" },
+  { label: "Telefoon", id: "COMPANY_PHONE", placeholder: "Bijv. 06-12345678" },
+  { label: "E-mail", id: "COMPANY_EMAIL", placeholder: "Bijv. info@voorbeeld.nl" },
+  { label: "KvK", id: "COMPANY_KVK", placeholder: "Bijv. 12345678" },
+  { label: "BTW-nummer", id: "COMPANY_VAT", placeholder: "Bijv. NL001234567B01" },
+  { label: "IBAN", id: "COMPANY_IBAN", placeholder: "Bijv. NL91ABNA0417164300" },
+  { label: "BIC", id: "COMPANY_BIC", placeholder: "Bijv. ABNANL2A" },
+  // Factuur/specifiek
+  { label: "Factuurnummer", id: "INVOICE_NUMBER", placeholder: "Bijv. 2024-001" },
+  { label: "Factuurdatum", id: "INVOICE_DATE", placeholder: "Bijv. 14-06-2024" },
+  { label: "Vervaldatum", id: "DUE_DATE", placeholder: "Bijv. 28-06-2024" },
+  { label: "Klantnaam", id: "CUSTOMER_NAME", placeholder: "Bijv. Jansen B.V." },
+  { label: "Klantadres", id: "CUSTOMER_ADDRESS", placeholder: "Bijv. Straat 1" },
+  { label: "Postcode klant", id: "CUSTOMER_POSTAL_CODE", placeholder: "Bijv. 1234 AB" },
+  { label: "Plaats klant", id: "CUSTOMER_CITY", placeholder: "Bijv. Amsterdam" },
+  { label: "Factuurregels (HTML)", id: "INVOICE_LINES", placeholder: "Automatisch gegenereerd" },
+  { label: "Subtotaal", id: "SUBTOTAL", placeholder: "Bijv. 800.00" },
+  { label: "BTW-percentage", id: "VAT_PERCENTAGE", placeholder: "Bijv. 21" },
+  { label: "BTW-bedrag", id: "VAT_AMOUNT", placeholder: "Bijv. 168.00" },
+  { label: "Totaalbedrag", id: "TOTAL_AMOUNT", placeholder: "Bijv. 968.00" },
+  { label: "Orderomschrijving", id: "INVOICE_SUBJECT", placeholder: "Bijv. Diensten maart" },
+  { label: "Betaaltermijn", id: "PAYMENT_TERMS", placeholder: "Bijv. 30" },
+];
+
+// --- KEY voor localStorage op basis van documentName ---
+function getStorageKey(documentName: string) {
+  return "html_doc_preview_" + (documentName?.trim().toLowerCase().replace(/\s+/g, "_") || "untitled");
+}
+
 const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -180,79 +258,6 @@ const SNIPPETS = [
   }
 ];
 
-const PLACEHOLDER_FIELDS = [
-  {
-    label: "Factuurnummer",
-    id: "INVOICE_NUMBER",
-    placeholder: "Bijv. 2024-001"
-  },
-  {
-    label: "Factuurdatum",
-    id: "INVOICE_DATE",
-    placeholder: "Bijv. 14-06-2024"
-  },
-  {
-    label: "Vervaldatum",
-    id: "DUE_DATE",
-    placeholder: "Bijv. 28-06-2024"
-  },
-  {
-    label: "Klantnaam",
-    id: "CUSTOMER_NAME",
-    placeholder: "Bijv. Jansen B.V."
-  },
-  {
-    label: "Klantadres",
-    id: "CUSTOMER_ADDRESS",
-    placeholder: "Bijv. Straat 1"
-  },
-  {
-    label: "Postcode klant",
-    id: "CUSTOMER_POSTAL_CODE",
-    placeholder: "Bijv. 1234 AB"
-  },
-  {
-    label: "Plaats klant",
-    id: "CUSTOMER_CITY",
-    placeholder: "Bijv. Amsterdam"
-  },
-  {
-    label: "Factuurregels (HTML)",
-    id: "INVOICE_LINES",
-    placeholder: "Automatisch gegenereerd"
-  },
-  {
-    label: "Subtotaal",
-    id: "SUBTOTAL",
-    placeholder: "Bijv. 800.00"
-  },
-  {
-    label: "BTW-percentage",
-    id: "VAT_PERCENTAGE",
-    placeholder: "Bijv. 21"
-  },
-  {
-    label: "BTW-bedrag",
-    id: "VAT_AMOUNT",
-    placeholder: "Bijv. 168.00"
-  },
-  {
-    label: "Totaalbedrag",
-    id: "TOTAL_AMOUNT",
-    placeholder: "Bijv. 968.00"
-  },
-  {
-    label: "Orderomschrijving",
-    id: "INVOICE_SUBJECT",
-    placeholder: "Bijv. Diensten maart"
-  },
-  {
-    label: "Betaaltermijn",
-    id: "PAYMENT_TERMS",
-    placeholder: "Bijv. 30"
-  }
-];
-
 export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDocumentBuilderProps) => {
   const [htmlContent, setHtmlContent] = useState(DEFAULT_INVOICE_TEMPLATE);
   const [documentName, setDocumentName] = useState('');
@@ -260,12 +265,15 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [placeholderValues, setPlaceholderValues] = useState(() =>
-    PLACEHOLDER_FIELDS.reduce((acc, field) => {
-      acc[field.id] = "";
-      return acc;
-    }, {} as Record<string, string>)
-  );
+  const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>(() => {
+    // Probeer te laden uit localStorage, anders defaults
+    const storageKey = getStorageKey(editingDocument?.name ?? "");
+    const fromStorage = localStorage.getItem(storageKey);
+    if (fromStorage) {
+      return { ...DEFAULT_PLACEHOLDER_VALUES, ...JSON.parse(fromStorage) };
+    }
+    return DEFAULT_PLACEHOLDER_VALUES;
+  });
 
   const { createTemplate, updateTemplate, fetchTemplates } = useDocumentTemplates();
   const { toast } = useToast();
@@ -303,6 +311,17 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
       setHasUnsavedChanges(hasChanges);
     }
   }, [htmlContent, documentName, documentType, editingDocument]);
+
+  // --- LOGO upload veld voor preview data (base64 opslaan in placeholder) ---
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev: any) => {
+      setPlaceholderValues(old => ({ ...old, COMPANY_LOGO: ev.target.result as string }));
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSave = async () => {
     if (!documentName.trim()) {
@@ -381,6 +400,10 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
   };
 
   const handleCancel = () => {
+    if (!editingDocument) {
+      // Voor nieuwe document reset localStorage
+      localStorage.removeItem(getStorageKey(documentName));
+    }
     if (onDocumentSaved) {
       onDocumentSaved(null as any); // Go back to list view
     }
@@ -435,12 +458,23 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
   // Helper om placeholders te vervangen in de preview
   const replacePlaceholders = (content: string, forPreview = false) => {
     let replaced = content;
-    PLACEHOLDER_FIELDS.forEach(({ id }) => {
+    PLACEHOLDER_FIELDS.forEach(({ id, type }) => {
       const regex = new RegExp(`{{${id}}}`, "g");
-      replaced = replaced.replace(
-        regex,
-        forPreview ? (placeholderValues[id] || `<span style="color:#9ca3af;">[${id}]</span>`) : `{{${id}}}`
-      );
+      if (forPreview && type === "image") {
+        if (placeholderValues[id]) {
+          replaced = replaced.replace(
+            regex,
+            `<img src="${placeholderValues[id]}" alt="Bedrijfslogo" style="width:120px;max-height:75px;object-fit:contain;" />`
+          );
+        } else {
+          replaced = replaced.replace(regex, `<span style="color:#ddd;">[Logo]</span>`);
+        }
+      } else {
+        replaced = replaced.replace(
+          regex,
+          forPreview ? (placeholderValues[id] || `<span style="color:#9ca3af;">[${id}]</span>`) : `{{${id}}}`
+        );
+      }
     });
     return replaced;
   };
@@ -477,6 +511,12 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
 
     return scaledContent;
   };
+
+  // Sla placeholder waardes altijd meteen op (auto save elke wijziging)
+  useEffect(() => {
+    const key = getStorageKey(documentName);
+    localStorage.setItem(key, JSON.stringify(placeholderValues));
+  }, [placeholderValues, documentName]);
 
   return (
     <div className="flex flex-col h-full">
@@ -546,15 +586,33 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
               {PLACEHOLDER_FIELDS.map((field) => (
                 <div key={field.id} className="flex flex-col gap-1">
                   <label className="text-xs font-medium text-gray-700">{field.label}</label>
-                  <input
-                    type="text"
-                    className="px-2 py-1 border rounded text-xs"
-                    placeholder={field.placeholder}
-                    value={placeholderValues[field.id] ?? ""}
-                    onChange={e =>
-                      setPlaceholderValues({ ...placeholderValues, [field.id]: e.target.value })
-                    }
-                  />
+                  {field.type === "image" ? (
+                    <div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                      />
+                      {placeholderValues[field.id] && (
+                        <img
+                          src={placeholderValues[field.id]}
+                          alt="Logo preview"
+                          className="mt-2 h-12"
+                          style={{ objectFit: 'contain', background: "#f5f5f5", border: "1px solid #eee", borderRadius: 4, padding: 2 }}
+                        />
+                      )}
+                    </div>
+                  ) : (
+                    <input
+                      type="text"
+                      className="px-2 py-1 border rounded text-xs"
+                      placeholder={field.placeholder}
+                      value={placeholderValues[field.id] ?? ""}
+                      onChange={e =>
+                        setPlaceholderValues({ ...placeholderValues, [field.id]: e.target.value })
+                      }
+                    />
+                  )}
                 </div>
               ))}
             </div>
