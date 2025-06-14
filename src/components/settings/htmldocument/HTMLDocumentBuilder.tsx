@@ -338,6 +338,9 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     reader.readAsDataURL(file);
   };
 
+  const { createTemplate, updateTemplate, fetchTemplates } = useDocumentTemplates();
+  const { toast } = useToast();
+
   const handleSave = async () => {
     if (!documentName.trim()) {
       toast({
