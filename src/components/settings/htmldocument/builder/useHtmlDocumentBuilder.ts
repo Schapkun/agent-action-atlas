@@ -3,7 +3,9 @@ import React from 'react';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { 
   DOCUMENT_TYPE_OPTIONS, 
-  PLACEHOLDER_FIELDS
+  PLACEHOLDER_FIELDS,
+  schapkunTemplate,
+  DEFAULT_INVOICE_TEMPLATE
 } from './htmlDocumentConstants';
 import { useHtmlSyncState } from './useHtmlSyncState';
 import { useDocumentState } from './useDocumentState';
@@ -127,9 +129,9 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
   useHtmlSyncState({
     editingDocument,
     documentType: documentState.documentType,
-    schapkunTemplate: require('./htmlDocumentConstants').schapkunTemplate,
+    schapkunTemplate,
     setHtmlContent: documentState.setHtmlContent,
-    DEFAULT_INVOICE_TEMPLATE: require('./htmlDocumentConstants').DEFAULT_INVOICE_TEMPLATE,
+    DEFAULT_INVOICE_TEMPLATE,
     setHasUnsavedChanges: documentState.setHasUnsavedChanges,
   });
 
