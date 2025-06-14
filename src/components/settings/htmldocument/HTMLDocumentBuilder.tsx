@@ -563,44 +563,26 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
   // Voor opslaan: UI-type moet backend-type worden
   const typeUiToBackend = (t: DocumentTypeUI): DocumentTypeBackend => (t === 'schapkun' ? 'custom' : t);
 
-  // --- TEMPLATE SWITCHING FIXED: laad juiste template per documentType-wijziging ---
+  // --- TEMPLATE SWITCHING FIXED: elke wissel zet direct het corresponderende template ---
   useEffect(() => {
-    // Niet overschrijven als we een bestaand document aan het editen zijn (dan telt de echte content)
     if (editingDocument) return;
-    // New/unsaved document: laad template bij type-wissel
-    if (documentType === 'schapkun') {
-      if (htmlContent !== schapkunTemplate) {
-        setHtmlContent(schapkunTemplate);
-        setHasUnsavedChanges(true);
-      }
-    } else if (documentType === 'factuur') {
-      if (htmlContent !== DEFAULT_INVOICE_TEMPLATE) {
-        setHtmlContent(DEFAULT_INVOICE_TEMPLATE);
-        setHasUnsavedChanges(true);
-      }
-    } else if (documentType === 'contract') {
-      // Kies een basiscontract, later eventueel uitbreidbaar
-      const DEFAULT_CONTRACT_TEMPLATE = '<html><body><h1>Contract</h1><p>[Contract inhoud]</p></body></html>';
-      if (htmlContent !== DEFAULT_CONTRACT_TEMPLATE) {
-        setHtmlContent(DEFAULT_CONTRACT_TEMPLATE);
-        setHasUnsavedChanges(true);
-      }
-    } else if (documentType === 'brief') {
-      const DEFAULT_BRIEF_TEMPLATE = '<html><body><h1>Brief</h1><p>[Brief inhoud]</p></body></html>';
-      if (htmlContent !== DEFAULT_BRIEF_TEMPLATE) {
-        setHtmlContent(DEFAULT_BRIEF_TEMPLATE);
-        setHasUnsavedChanges(true);
-      }
-    } else if (documentType === 'custom') {
-      const DEFAULT_CUSTOM_TEMPLATE = '<html><body><h1>Custom template</h1></body></html>';
-      if (htmlContent !== DEFAULT_CUSTOM_TEMPLATE) {
-        setHtmlContent(DEFAULT_CUSTOM_TEMPLATE);
-        setHasUnsavedChanges(true);
-      }
+    let newContent = "";
+    if (documentType === "schapkun") {
+      newContent = schapkunTemplate;
+    } else if (documentType === "factuur") {
+      newContent = DEFAULT_INVOICE_TEMPLATE;
+    } else if (documentType === "contract") {
+      newContent = '<html><body><h1>Contract</h1><p>[Contract inhoud]</p></body></html>';
+    } else if (documentType === "brief") {
+      newContent = '<html><body><h1>Brief</h1><p>[Brief inhoud]</p></body></html>';
+    } else if (documentType === "custom") {
+      newContent = '<html><body><h1>Custom template</h1></body></html>';
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [documentType, schapkunTemplate]);
-  
+    setHtmlContent(newContent);
+    setHasUnsavedChanges(false);
+    // (optioneel debug) console.log("Switched documentType to", documentType);
+  }, [documentType, schapkunTemplate, editingDocument]);
+
   // Sidebar props (define once)
   const sidebarProps = {
     placeholderFields: PLACEHOLDER_FIELDS,
