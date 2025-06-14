@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -143,15 +142,33 @@ export const VisualTemplateEditor = ({
     setShowTemplateLibrary(true);
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     try {
       console.log('📄 PDF Download initiated');
       const pdfGenerator = new PDFGenerator();
-      const pdf = pdfGenerator.generateFromTemplate(templateData);
+      const generated = await pdfGenerator.generateFromTemplate(templateData);
       const filename = `${templateData.name || 'document'}_${new Date().toISOString().split('T')[0]}.pdf`;
-      pdf.save(filename);
-      
-      console.log(`✅ PDF "${filename}" downloaded successfully`);
+
+      // Check welke datatype er terugkomt:
+      if (generated instanceof jsPDF) {
+        // jsPDF instance: save direct
+        generated.save(filename);
+      } else if (generated instanceof Blob) {
+        // Blob (bij factuur template): download via blob-URL
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(generated);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(link.href);
+        }, 100);
+      } else {
+        console.error('PDF download error: Unexpected result type', generated);
+      }
+
+      console.log(`✅ PDF "${filename}" downloaded successfully.`);
     } catch (error) {
       console.error('❌ PDF generation error:', error);
     }
