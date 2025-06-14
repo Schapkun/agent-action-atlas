@@ -592,7 +592,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
         documentName={documentName}
         setDocumentName={setDocumentName}
         documentType={documentType}
-        setDocumentType={setDocumentType}
+        setDocumentType={(type) => setDocumentType(type as DocumentTypeUI)}
         options={DOCUMENT_TYPE_OPTIONS}
         hasUnsavedChanges={hasUnsavedChanges}
         onPreview={handlePreview}
