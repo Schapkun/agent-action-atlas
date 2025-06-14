@@ -165,6 +165,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
       let savedDocument: DocumentTemplate;
       const backendType = typeUiToBackend(documentType);
 
+      // --- Belangrijk: altijd htmlContent en documentType uit state opslaan! ---
       if (editingDocument) {
         const updatedDoc = await updateTemplate(editingDocument.id, {
           name: documentName.trim(),
