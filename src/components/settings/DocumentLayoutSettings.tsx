@@ -48,9 +48,10 @@ const DocumentLayoutContent = () => {
     setIsBuilderOpen(true);
   };
 
+  // === Aangepast: sla het bewaarde document direct op, zodat bij nieuwe open direct de goede content in de editor verschijnt ===
   const handleDocumentSaved = (document: DocumentTemplate) => {
+    setEditingDocument(document); // <--- VERSIE VANUIT SUPABASE
     setIsBuilderOpen(false);
-    setEditingDocument(null);
     toast({
       title: "Succes",
       description: `Document "${document.name}" is opgeslagen.`
