@@ -72,13 +72,13 @@ export const SNIPPETS = [
 ];
 
 export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: UseHtmlDocumentBuilderProps) {
-  // Use the new focused hooks
   const documentState = useDocumentState({ editingDocument });
   
   const documentActions = useDocumentActions({
     ...documentState,
     editingDocument,
-    onDocumentSaved
+    onDocumentSaved,
+    isSaving: documentState.isSaving // Add missing isSaving prop
   });
 
   const typeHandler = useDocumentTypeHandler({
@@ -125,7 +125,6 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
     documentState.setIsPreviewOpen(true);
   };
 
-  // Call sync hook voor type switch logic
   useHtmlSyncState({
     editingDocument,
     documentType: documentState.documentType,

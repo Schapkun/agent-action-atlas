@@ -1,4 +1,3 @@
-
 import { useDocumentTemplates, DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentPDFGenerator } from '../../utils/PDFGenerator';
@@ -22,6 +21,7 @@ interface UseDocumentActionsProps {
   onDocumentSaved?: (document: DocumentTemplate | null) => void;
   getDraftKey: (name: string) => string;
   placeholderValues: Record<string, string>;
+  isSaving: boolean;
 }
 
 export function useDocumentActions({
@@ -36,7 +36,8 @@ export function useDocumentActions({
   editingDocument,
   onDocumentSaved,
   getDraftKey,
-  placeholderValues
+  placeholderValues,
+  isSaving
 }: UseDocumentActionsProps) {
   const { createTemplate, updateTemplate, fetchTemplates } = useDocumentTemplates();
   const { toast } = useToast();
@@ -53,7 +54,9 @@ export function useDocumentActions({
       });
       return;
     }
-    if (setIsSaving) return;
+    
+    if (isSaving) return; // Fixed: was setIsSaving instead of isSaving
+    
     setIsSaving(true);
 
     try {
@@ -82,8 +85,8 @@ export function useDocumentActions({
         savedDocument = newDoc;
         toast({ title: "Opgeslagen", description: `Nieuw document "${documentName}" is aangemaakt.` });
       }
+      
       setHasUnsavedChanges(false);
-
       await fetchTemplates();
 
       if (savedDocument) {
@@ -94,6 +97,7 @@ export function useDocumentActions({
         setDocumentType(savedDocument.type as DocumentTypeUI);
         setDocumentName(newName);
       }
+      
       if (onDocumentSaved && savedDocument) {
         onDocumentSaved(savedDocument);
       }
