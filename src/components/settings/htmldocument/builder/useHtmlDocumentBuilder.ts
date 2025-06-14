@@ -98,7 +98,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any
   const previousDocumentTypeRef = useRef<any | null>(null);
   const [justChangedType, setJustChangedType] = useState(false);
 
-  // Belangrijk: initialiseer HTML content correct bij open dialog!
+  // Inladen van HTML (draft heeft altijd voorrang!)
   const loadInitialHtmlContent = () => {
     const draftKey = getDraftKey(editingDocument?.name || documentName || '');
     const draft = getDraft(draftKey);
@@ -107,9 +107,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any
     return DEFAULT_INVOICE_TEMPLATE;
   };
 
-  const [htmlContent, setHtmlContent] = React.useState(loadInitialHtmlContent());
-
-  // Bij openen of document wissel (ID)
+  // Altijd bij openen of wissel initialiseren
   useEffect(() => {
     const currentId = editingDocument?.id ?? null;
     if (currentId !== previousEditingDocumentId.current) {
@@ -125,7 +123,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any
       setDocumentType(uiType);
       previousDocumentTypeRef.current = uiType;
 
-      // DRAFT/CONTENT-PRIORITEIT
+      // DRAFT heeft hoogste prio!
       const draftKey = getDraftKey(newName);
       const draft = getDraft(draftKey);
       setHtmlContent(draft || editingDocument?.html_content || DEFAULT_INVOICE_TEMPLATE);
@@ -142,7 +140,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any
     // eslint-disable-next-line
   }, [editingDocument?.id]);
 
-  // Draft altijd opslaan bij html-content wijziging (enkel als naam ingevuld)
+  // Draft bewaren na wijziging HTML (alleen als naam!)
   useEffect(() => {
     if (documentName) {
       saveDraft(getDraftKey(documentName), htmlContent);
@@ -192,21 +190,24 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any
         toast({ title: "Opgeslagen", description: `Nieuw document "${documentName}" is aangemaakt.` });
       }
       setHasUnsavedChanges(false);
-      await fetchTemplates();
+
+      // --- Oplossing: ZORG voor directe syncing NA BEWAAR! ---
+      await fetchTemplates(); // forceer template lijst ophalen
+
       justSaved.current = true;
       setJustChangedType(false);
 
-      // BELANGRIJK: Draft wissen EN builder state synchroniseren na save!
+      // Draft wissen (belangrijk!)
       if (savedDocument) {
         const newName = savedDocument.name;
         const draftKey = getDraftKey(newName);
-        clearDraft(draftKey); // Draft wissen na save
-        setHtmlContent(savedDocument.html_content || DEFAULT_INVOICE_TEMPLATE); // editor direct updaten!
+        clearDraft(draftKey);
+        setHtmlContent(savedDocument.html_content || DEFAULT_INVOICE_TEMPLATE); // nieuwe inhoud direct zetten!
         setDocumentType(savedDocument.type as DocumentTypeUI);
         setDocumentName(newName);
       }
       if (onDocumentSaved && savedDocument) {
-        onDocumentSaved(savedDocument); // parent laten weten, zodat dialoog sluit, en hoofdlijst update.
+        onDocumentSaved(savedDocument); // ouder op de hoogte stellen
       }
     } catch (error) {
       console.error('[Builder] Save error:', error);
