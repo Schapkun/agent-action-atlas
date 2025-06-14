@@ -22,6 +22,7 @@ import { DocumentPDFGenerator } from '../utils/PDFGenerator';
 import { useToast } from '@/hooks/use-toast';
 import { PreviewDialog } from './components/PreviewDialog';
 import { DialogFooter } from '@/components/settings/components/DialogFooter';
+import { PlaceholderSidebar } from './components/PlaceholderSidebar';
 
 interface HTMLDocumentBuilderProps {
   editingDocument?: DocumentTemplate | null;
@@ -525,9 +526,19 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     localStorage.setItem(key, JSON.stringify(placeholderValues));
   }, [placeholderValues, documentName]);
 
+  // Sidebar props (define once)
+  const sidebarProps = {
+    placeholderFields: PLACEHOLDER_FIELDS,
+    placeholderValues,
+    setPlaceholderValues,
+    handleLogoUpload,
+    snippets: SNIPPETS,
+    insertSnippet,
+  };
+
   return (
     <div className="flex flex-col h-full">
-      {/* Header with document controls - removed save buttons */}
+      {/* Header with document controls */}
       <div className="flex-shrink-0 p-4 border-b bg-muted/30">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 flex-1">
@@ -577,81 +588,10 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
 
       {/* Main content area - Editor en Preview naast elkaar */}
       <div className="flex-1 flex min-h-0">
-        {/* Left sidebar with snippets */}
-        <div className="w-80 border-r bg-muted/20 p-4 overflow-y-auto">
-          <h3 className="font-semibold mb-4 flex items-center gap-2">
-            <MousePointer className="h-4 w-4" />
-            Code Snippets
-          </h3>
-          
-          {/* --- NIEUW: Invulvelden voor placeholders --- */}
-          <div className="mb-8">
-            <h4 className="text-sm font-medium text-muted-foreground mb-3">
-              Preview gegevens (voorbeeldwaarden)
-            </h4>
-            <div className="space-y-2">
-              {PLACEHOLDER_FIELDS.map((field) => (
-                <div key={field.id} className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-gray-700">{field.label}</label>
-                  {field.type === "image" ? (
-                    <div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleLogoUpload}
-                      />
-                      {placeholderValues[field.id] && (
-                        <img
-                          src={placeholderValues[field.id]}
-                          alt="Logo preview"
-                          className="mt-2 h-12"
-                          style={{ objectFit: 'contain', background: "#f5f5f5", border: "1px solid #eee", borderRadius: 4, padding: 2 }}
-                        />
-                      )}
-                    </div>
-                  ) : (
-                    <input
-                      type="text"
-                      className="px-2 py-1 border rounded text-xs"
-                      placeholder={field.placeholder}
-                      value={placeholderValues[field.id] ?? ""}
-                      onChange={e =>
-                        setPlaceholderValues({ ...placeholderValues, [field.id]: e.target.value })
-                      }
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="h-4" />
-          </div>
-          {/* --- EINDE: Invulvelden --- */}
+        {/* Left sidebar with placeholders and snippets */}
+        <PlaceholderSidebar {...sidebarProps} />
 
-          {/* ... keep existing code for snippets ... */}
-          {SNIPPETS.map((category, categoryIndex) => (
-            <div key={categoryIndex} className="mb-6">
-              <h4 className="text-sm font-medium text-muted-foreground mb-3">
-                {category.category}
-              </h4>
-              <div className="space-y-2">
-                {category.items.map((snippet, index) => (
-                  <button
-                    key={index}
-                    onClick={() => insertSnippet(snippet.code)}
-                    className="w-full p-3 text-left bg-background hover:bg-accent rounded-lg border transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      {snippet.icon}
-                      <span className="text-sm font-medium">{snippet.name}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* HTML Editor en Preview - beide gelijke hoogte */}
+        {/* HTML Editor en Preview */}
         <div className="flex-1 flex">
           {/* HTML Editor - 50% breedte */}
           <div className="w-1/2 flex flex-col border-r">
