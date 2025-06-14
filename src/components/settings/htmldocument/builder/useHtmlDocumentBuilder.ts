@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useDocumentTemplates, DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { useToast } from '@/hooks/use-toast';
@@ -73,17 +74,27 @@ export const SNIPPETS = [
   }
 ];
 
-export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any) {
+export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: UseHtmlDocumentBuilderProps) {
   const { saveDraft, getDraft, clearDraft } = useHtmlDraft();
 
   const getDraftKey = (docName: string) => `builder_draft_${docName}`;
 
+  // Inladen van HTML (draft heeft altijd voorrang!)
+  const loadInitialHtmlContent = () => {
+    const draftKey = getDraftKey(editingDocument?.name || '');
+    const draft = getDraft(draftKey);
+    if (draft) return draft;
+    if (editingDocument?.html_content) return editingDocument.html_content;
+    return DEFAULT_INVOICE_TEMPLATE;
+  };
+
   // --- HOOFDSTATE ---  
   const [documentName, setDocumentName] = React.useState(editingDocument?.name || '');
-  const [documentType, setDocumentType] = React.useState<any>('factuur');
+  const [documentType, setDocumentType] = React.useState<DocumentTypeUI>('factuur');
   const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
+  const [htmlContent, setHtmlContent] = React.useState(loadInitialHtmlContent());
   const [placeholderValues, setPlaceholderValues] = React.useState<Record<string, string>>(() => {
     const storageKey = getStorageKey(editingDocument?.name ?? "");
     const fromStorage = localStorage.getItem(storageKey);
@@ -95,19 +106,8 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any
 
   const previousEditingDocumentId = useRef<string | null>(null);
   const justSaved = useRef(false);
-  const previousDocumentTypeRef = useRef<any | null>(null);
+  const previousDocumentTypeRef = useRef<DocumentTypeUI | null>(null);
   const [justChangedType, setJustChangedType] = useState(false);
-
-  // Inladen van HTML (draft heeft altijd voorrang!)
-  const loadInitialHtmlContent = () => {
-    const draftKey = getDraftKey(editingDocument?.name || documentName || '');
-    const draft = getDraft(draftKey);
-    if (draft) return draft;
-    if (editingDocument?.html_content) return editingDocument.html_content;
-    return DEFAULT_INVOICE_TEMPLATE;
-  };
-
-  const [htmlContent, setHtmlContent] = React.useState(loadInitialHtmlContent());
 
   // Altijd bij openen of wissel initialiseren
   useEffect(() => {
@@ -374,7 +374,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any
       setHtmlContent(newContent);
       setHasUnsavedChanges(false);
     }
-  }, [documentType, schapkunTemplate, editingDocument]);
+  }, [documentType, editingDocument]);
 
   // Bewaak type-switch bij bestaand document: alléén als gebruiker echt van type wisselt!
   useEffect(() => {
@@ -397,7 +397,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any
       setJustChangedType(true);   // Flag zetten: type is zojuist gewijzigd
     }
     previousDocumentTypeRef.current = documentType;
-  }, [documentType, schapkunTemplate, editingDocument]);
+  }, [documentType, editingDocument]);
 
   // Sync draft in localStorage na elke wijziging in htmlContent
   useEffect(() => {
@@ -423,7 +423,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any
         : DEFAULT_PLACEHOLDER_VALUES
     );
     setHasUnsavedChanges(false);
-  }, [editingDocument?.id, documentName, getDraft]);
+  }, [editingDocument?.id, documentName, getDraft, htmlContent]);
 
   // Call sync hook voor type switch logic
   useHtmlSyncState({
