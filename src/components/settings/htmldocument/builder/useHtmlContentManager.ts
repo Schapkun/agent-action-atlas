@@ -93,13 +93,11 @@ export function useHtmlContentManager({
         newContent = getTemplateForType(documentType);
       }
       
-      // Only update if content is different from what's currently loaded
-      if (newContent !== lastLoadedContent.current) {
-        console.log('[HTML Manager] Updating content from:', lastLoadedContent.current.substring(0, 50), 'to:', newContent.substring(0, 50));
-        setHtmlContent(newContent);
-        lastLoadedContent.current = newContent;
-        setHasUnsavedChanges(false);
-      }
+      // Always update content when document changes, regardless of current content
+      console.log('[HTML Manager] Updating content for document change:', newContent.substring(0, 50));
+      setHtmlContent(newContent);
+      lastLoadedContent.current = newContent;
+      setHasUnsavedChanges(false);
       
       previousEditingDocumentId.current = currentId;
       hasInitialized.current = true;
