@@ -180,6 +180,79 @@ const SNIPPETS = [
   }
 ];
 
+const PLACEHOLDER_FIELDS = [
+  {
+    label: "Factuurnummer",
+    id: "INVOICE_NUMBER",
+    placeholder: "Bijv. 2024-001"
+  },
+  {
+    label: "Factuurdatum",
+    id: "INVOICE_DATE",
+    placeholder: "Bijv. 14-06-2024"
+  },
+  {
+    label: "Vervaldatum",
+    id: "DUE_DATE",
+    placeholder: "Bijv. 28-06-2024"
+  },
+  {
+    label: "Klantnaam",
+    id: "CUSTOMER_NAME",
+    placeholder: "Bijv. Jansen B.V."
+  },
+  {
+    label: "Klantadres",
+    id: "CUSTOMER_ADDRESS",
+    placeholder: "Bijv. Straat 1"
+  },
+  {
+    label: "Postcode klant",
+    id: "CUSTOMER_POSTAL_CODE",
+    placeholder: "Bijv. 1234 AB"
+  },
+  {
+    label: "Plaats klant",
+    id: "CUSTOMER_CITY",
+    placeholder: "Bijv. Amsterdam"
+  },
+  {
+    label: "Factuurregels (HTML)",
+    id: "INVOICE_LINES",
+    placeholder: "Automatisch gegenereerd"
+  },
+  {
+    label: "Subtotaal",
+    id: "SUBTOTAL",
+    placeholder: "Bijv. 800.00"
+  },
+  {
+    label: "BTW-percentage",
+    id: "VAT_PERCENTAGE",
+    placeholder: "Bijv. 21"
+  },
+  {
+    label: "BTW-bedrag",
+    id: "VAT_AMOUNT",
+    placeholder: "Bijv. 168.00"
+  },
+  {
+    label: "Totaalbedrag",
+    id: "TOTAL_AMOUNT",
+    placeholder: "Bijv. 968.00"
+  },
+  {
+    label: "Orderomschrijving",
+    id: "INVOICE_SUBJECT",
+    placeholder: "Bijv. Diensten maart"
+  },
+  {
+    label: "Betaaltermijn",
+    id: "PAYMENT_TERMS",
+    placeholder: "Bijv. 30"
+  }
+];
+
 export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDocumentBuilderProps) => {
   const [htmlContent, setHtmlContent] = useState(DEFAULT_INVOICE_TEMPLATE);
   const [documentName, setDocumentName] = useState('');
@@ -187,7 +260,13 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  
+  const [placeholderValues, setPlaceholderValues] = useState(() =>
+    PLACEHOLDER_FIELDS.reduce((acc, field) => {
+      acc[field.id] = "";
+      return acc;
+    }, {} as Record<string, string>)
+  );
+
   const { createTemplate, updateTemplate, fetchTemplates } = useDocumentTemplates();
   const { toast } = useToast();
 
@@ -353,14 +432,29 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     }
   };
 
-  // Create scaled HTML content for iframe preview
+  // Helper om placeholders te vervangen in de preview
+  const replacePlaceholders = (content: string, forPreview = false) => {
+    let replaced = content;
+    PLACEHOLDER_FIELDS.forEach(({ id }) => {
+      const regex = new RegExp(`{{${id}}}`, "g");
+      replaced = replaced.replace(
+        regex,
+        forPreview ? (placeholderValues[id] || `<span style="color:#9ca3af;">[${id}]</span>`) : `{{${id}}}`
+      );
+    });
+    return replaced;
+  };
+
+  // Pas de getScaledHtmlContent aan zodat hij met ingevulde waarden toont in de preview
   const getScaledHtmlContent = (content: string) => {
+    const withValues = replacePlaceholders(content, true);
+
     // Extract the existing HTML content
-    const htmlMatch = content.match(/<html[^>]*>([\s\S]*)<\/html>/i);
-    if (!htmlMatch) return content;
+    const htmlMatch = withValues.match(/<html[^>]*>([\s\S]*)<\/html>/i);
+    if (!htmlMatch) return withValues;
 
     // Add scaling CSS to the existing content
-    const scaledContent = content.replace(
+    const scaledContent = withValues.replace(
       /<style[^>]*>([\s\S]*?)<\/style>/i,
       (match, styles) => {
         return `<style>
@@ -443,6 +537,32 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
             Code Snippets
           </h3>
           
+          {/* --- NIEUW: Invulvelden voor placeholders --- */}
+          <div className="mb-8">
+            <h4 className="text-sm font-medium text-muted-foreground mb-3">
+              Preview gegevens (voorbeeldwaarden)
+            </h4>
+            <div className="space-y-2">
+              {PLACEHOLDER_FIELDS.map((field) => (
+                <div key={field.id} className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-700">{field.label}</label>
+                  <input
+                    type="text"
+                    className="px-2 py-1 border rounded text-xs"
+                    placeholder={field.placeholder}
+                    value={placeholderValues[field.id] ?? ""}
+                    onChange={e =>
+                      setPlaceholderValues({ ...placeholderValues, [field.id]: e.target.value })
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="h-4" />
+          </div>
+          {/* --- EINDE: Invulvelden --- */}
+
+          {/* ... keep existing code for snippets ... */}
           {SNIPPETS.map((category, categoryIndex) => (
             <div key={categoryIndex} className="mb-6">
               <h4 className="text-sm font-medium text-muted-foreground mb-3">
