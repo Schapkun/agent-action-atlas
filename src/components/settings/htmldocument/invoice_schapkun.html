@@ -3,7 +3,7 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8">
-  <title>Factuur 2024-184</title>
+  <title>Factuur {{INVOICE_NUMBER}}</title>
   <style>
     body {
       margin: 0;
@@ -127,10 +127,6 @@
       margin-top: 20px;
       font-size: 15px;
     }
-    .summary line {
-      display: block;
-      margin-bottom: 3px;
-    }
     .summary-label {
       min-width: 180px;
       display: inline-block;
@@ -159,7 +155,6 @@
       color: #444;
       text-align: right;
     }
-    /* Responsive (optioneel) */
     @media (max-width: 850px) {
       .container { width: 98vw; padding: 2vw; }
       .summary { width: 99%; float: none; }
@@ -172,32 +167,32 @@
     <div class="flex-row">
       <div>
         <div class="company-address">
-          Multispuiter B.V.<br>
-          Groningseweg 7<br>
-          2994LC  BARENDRECHT
+          {{COMPANY_NAME}}<br>
+          {{COMPANY_ADDRESS}}<br>
+          {{COMPANY_POSTAL_CODE}}  {{COMPANY_CITY}}
         </div>
       </div>
       <div class="company-info">
-        Schapkun B.V.<br>
-        2994 LC Barendrecht<br>
+        {{COMPANY_NAME}}<br>
+        {{COMPANY_POSTAL_CODE}} {{COMPANY_CITY}}<br>
         <br>
-        Telefoon: 088 - 766 2025<br>
-        Email: info@schapkun.com<br>
-        Website: www.schapkun.com<br>
+        Telefoon: {{COMPANY_PHONE}}<br>
+        Email: {{COMPANY_EMAIL}}<br>
+        Website: {{COMPANY_WEBSITE}}<br>
         <br>
-        KvK-nummer: 826 820 54<br>
-        Btw-nummer: NL 8625 6494 3B01<br>
-        Bank: NL31 BUNQ 2097 8940 70
+        KvK-nummer: {{COMPANY_KVK}}<br>
+        Btw-nummer: {{COMPANY_VAT}}<br>
+        Bank: {{COMPANY_IBAN}}
       </div>
     </div>
 
     <div class="factuurkop">
       <div>
-        <div class="invoice-title">Factuur 2024-184</div>
+        <div class="invoice-title">Factuur {{INVOICE_NUMBER}}</div>
       </div>
       <div class="dates">
-        <label>Factuurdatum:</label> 28-10-2024<br>
-        <label>Vervaldatum:</label> 28-10-2025
+        <label>Factuurdatum:</label> {{INVOICE_DATE}}<br>
+        <label>Vervaldatum:</label> {{DUE_DATE}}
       </div>
     </div>
 
@@ -214,51 +209,22 @@
         </thead>
         <tbody>
           <tr>
-            <td colspan="5" class="section-label">Kosten per 01-06-2024</td>
+            <td colspan="5" class="section-label">Kosten per {{PERIODE_START}}</td>
           </tr>
-          <tr>
-            <td class="right">1</td>
-            <td>
-              Voertuig: Ford Transit<br>
-              Kenteken: VRV-44-S
-            </td>
-            <td>21%</td>
-            <td class="right">€ 20.160,49</td>
-            <td class="right">€ 20.160,49</td>
-          </tr>
-          <tr class="gray-row">
-            <td class="right">12</td>
-            <td>
-              Wegenbelasting<br>
-              Periode: 06-2024 / 06-2025
-            </td>
-            <td>0%</td>
-            <td class="right">€ 58,00</td>
-            <td class="right">€ 696,00</td>
-          </tr>
-          <tr>
-            <td class="right">1</td>
-            <td>
-              Voertuig: Volkswagen Caddy<br>
-              Kenteken: VS-244-T
-            </td>
-            <td>21%</td>
-            <td class="right">€ 10.000,00</td>
-            <td class="right">€ 10.000,00</td>
-          </tr>
+          {{INVOICE_LINES}}
           <tr>
             <td colspan="5">
               Bedrag reeds voldaan<br>
-              2024: € 5.000,- voor VW Caddy
+              {{REEDS_BETAALD_INFO}}
             </td>
           </tr>
           <tr class="gray-row">
             <td colspan="5">
               Maandelijks te voldoen;<br>
-              - Voertuig Ford Transit € 516,91<br>
-              - Wegenbelasting € 58,00<br>
-              - Caddy € 225,09<br>
-              <b>Totaal € 800</b>
+              - Voertuig Ford Transit € {{TRANSIT_PER_MAAND}}<br>
+              - Wegenbelasting € {{WEGENBEL_PER_MAAND}}<br>
+              - Caddy € {{CADDY_PER_MAAND}}<br>
+              <b>Totaal € {{MAANDELIJKS_TOTAAL}}</b>
             </td>
           </tr>
         </tbody>
@@ -266,17 +232,17 @@
     </div>
 
     <div class="summary">
-      <div><span class="summary-label">Totaal excl. btw</span> € 30.856,49</div>
-      <div><span class="summary-label">21% btw over € 30.160,49</span> € 6.333,70</div>
-      <div><span class="summary-label">0% btw over € 696,00</span> € 0,00</div>
-      <div class="total"><span class="summary-label">Totaal incl. btw</span> € 37.190,19</div>
-      <div><span class="summary-label">Bedrag reeds voldaan</span> € 5.000,00</div>
-      <div class="outstanding">Openstaand bedrag € 32.190,19</div>
+      <div><span class="summary-label">Totaal excl. btw</span> € {{TOTAAL_EXCL_BTW}}</div>
+      <div><span class="summary-label">21% btw over € {{BTW21_BASIS}}</span> € {{BTW21_BEDRAG}}</div>
+      <div><span class="summary-label">0% btw over € {{BTW0_BASIS}}</span> € {{BTW0_BEDRAG}}</div>
+      <div class="total"><span class="summary-label">Totaal incl. btw</span> € {{TOTAAL_INCL_BTW}}</div>
+      <div><span class="summary-label">Bedrag reeds voldaan</span> € {{REEDS_BETAALD}}</div>
+      <div class="outstanding">Openstaand bedrag € {{OPENSTAAND_BEDRAG}}</div>
     </div>
     <div class="clear"></div>
 
     <div class="payment-info">
-      Betaal binnen 365 dagen op rekening NL08 ABNA 0570 3761 30 op naam van Schapkun met als omschrijving: 'afbetaling auto'
+      Betaal binnen {{BETAALTERMIJN}} dagen op rekening {{COMPANY_IBAN}} op naam van {{COMPANY_NAME}} met als omschrijving: '{{BETALINGSOMSCHRIJVING}}'
     </div>
     <div class="footer">
       Pagina 1 / 1
