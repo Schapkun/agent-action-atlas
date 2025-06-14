@@ -149,6 +149,35 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
     console.log('[useHtmlDocumentBuilder] documentType changed:', documentType, 'editingDocument:', editingDocument);
   }, [documentType, editingDocument]);
 
+  // CRUCIAAL: type-switch correct opslaan
+  useEffect(() => {
+    if (
+      editingDocument &&
+      previousDocumentTypeRef.current !== null &&
+      previousDocumentTypeRef.current !== documentType
+    ) {
+      // Alleen als gebruiker echt een ANDER type kiest!
+      let newContent = '';
+      if (documentType === 'schapkun') {
+        newContent = schapkunTemplate;
+      } else if (documentType === 'factuur') {
+        newContent = DEFAULT_INVOICE_TEMPLATE;
+      } else if (documentType === 'contract') {
+        newContent = '<html><body><h1>Contract</h1><p>[Contract inhoud]</p></body></html>';
+      } else if (documentType === 'brief') {
+        newContent = '<html><body><h1>Brief</h1><p>[Brief inhoud]</p></body></html>';
+      } else if (documentType === 'custom') {
+        newContent = '<html><body><h1>Custom template</h1></body></html>';
+      }
+      setHtmlContent(newContent);
+      setHasUnsavedChanges(true); // Markeer direct als gewijzigd!
+      setJustChangedType(true); // Zet expliciet flag
+      // << HIER ZEKER ZIJN DAT de state sync is!
+    }
+    previousDocumentTypeRef.current = documentType;
+  }, [documentType, schapkunTemplate, editingDocument]);
+
+  // --- SAVE LOGICA --- //
   const { createTemplate, updateTemplate, fetchTemplates } = useDocumentTemplates();
   const { toast } = useToast();
 
@@ -161,29 +190,30 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
       });
       return;
     }
-
     if (isSaving) return;
     setIsSaving(true);
+
+    // Debug EXTREEM duidelijk alle relevante velden voor save:
+    console.log('[handleSave:DEBUG]', {
+      docId: editingDocument?.id,
+      UI: { documentName, documentType, htmlContent },
+      lastLoadedType: previousDocumentTypeRef.current,
+      justChangedType,
+      placeholderValues,
+      hasUnsavedChanges,
+      isSaving
+    });
 
     try {
       let savedDocument: DocumentTemplate;
       const backendType = typeUiToBackend(documentType);
 
-      // Debug log welke waardes worden opgeslagen
-      console.log('[handleSave] Opslaan:', {
-        docId: editingDocument?.id,
-        name: documentName.trim(),
-        type: backendType,
-        html_content: htmlContent,
-        justChangedType
-      });
-
+      // Bewust: ALTIJD de HUIDIGE values uit state opslaan!
       if (editingDocument) {
-        // Bij bestaande: altijd expliciet huidige type + htmlContent opslaan!
         const updatedDoc = await updateTemplate(editingDocument.id, {
           name: documentName.trim(),
-          type: backendType, // gebruikte huidige UI type
-          html_content: htmlContent, // gebruikte huidige content (ook na type wissel!)
+          type: backendType,
+          html_content: htmlContent,
           description: `${backendType} document`
         });
         savedDocument = updatedDoc;
@@ -204,7 +234,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
       setHasUnsavedChanges(false);
       await fetchTemplates();
       justSaved.current = true;
-      setJustChangedType(false); // Reset direct na save
+      setJustChangedType(false); // Zet altijd terug!
       if (onDocumentSaved && savedDocument) {
         onDocumentSaved(savedDocument);
       }
@@ -343,7 +373,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
 
   const typeUiToBackend = (t: DocumentTypeUI): DocumentTypeBackend => (t === 'schapkun' ? 'custom' : t);
 
-  // --- Belangrijk: type-switch logica (alleen voor nieuwe of bestaande documenten) ---
+  // --- BELANGRIJK: type-switch logica (alleen voor nieuwe of bestaande documenten) ---
   useEffect(() => {
     if (!editingDocument) {
       // NIEUW document: bij wissel zet default-content van type
