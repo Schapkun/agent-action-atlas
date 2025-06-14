@@ -32,6 +32,7 @@ export function useHtmlContentManager({
   const previousDocumentType = useRef<DocumentTypeUI | null>(null);
   const isInitializing = useRef(false);
   const hasInitialized = useRef(false);
+  const lastLoadedContent = useRef<string>('');
 
   console.log('[HTML Manager] Render with:', {
     editingDocumentId: editingDocument?.id,
@@ -64,7 +65,7 @@ export function useHtmlContentManager({
     const currentId = editingDocument?.id;
     const hasDocumentChanged = currentId !== previousEditingDocumentId.current;
     
-    // Always initialize on first load, or when document actually changes
+    // Only initialize content on first load or when document actually changes
     if (!hasInitialized.current || hasDocumentChanged) {
       console.log('[HTML Manager] Document changed or first load, initializing content');
       isInitializing.current = true;
@@ -92,17 +93,19 @@ export function useHtmlContentManager({
         newContent = getTemplateForType(documentType);
       }
       
-      // Only update if content is different to prevent unnecessary re-renders
-      if (newContent !== htmlContent) {
+      // Only update if content is different from what's currently loaded
+      if (newContent !== lastLoadedContent.current) {
+        console.log('[HTML Manager] Updating content from:', lastLoadedContent.current.substring(0, 50), 'to:', newContent.substring(0, 50));
         setHtmlContent(newContent);
+        lastLoadedContent.current = newContent;
+        setHasUnsavedChanges(false);
       }
-      setHasUnsavedChanges(false);
       
       previousEditingDocumentId.current = currentId;
       hasInitialized.current = true;
       isInitializing.current = false;
     }
-  }, [editingDocument?.id, editingDocument?.name, editingDocument?.html_content, documentType, htmlContent, setHtmlContent, setHasUnsavedChanges, getDraftKey, getDraft, getTemplateForType, clearDraft]);
+  }, [editingDocument?.id, editingDocument?.name, editingDocument?.html_content, documentType, setHtmlContent, setHasUnsavedChanges, getDraftKey, getDraft, getTemplateForType, clearDraft]);
 
   // Handle document type changes (only for user-initiated changes)
   useEffect(() => {
@@ -115,6 +118,7 @@ export function useHtmlContentManager({
       
       const newContent = getTemplateForType(documentType);
       setHtmlContent(newContent);
+      lastLoadedContent.current = newContent;
       setHasUnsavedChanges(true);
     }
     
@@ -123,7 +127,11 @@ export function useHtmlContentManager({
 
   // Save draft on content changes (but not during initialization)
   useEffect(() => {
-    if (documentName && !isInitializing.current && htmlContent && hasInitialized.current) {
+    if (documentName && 
+        !isInitializing.current && 
+        htmlContent && 
+        hasInitialized.current &&
+        htmlContent !== lastLoadedContent.current) {
       console.log('[HTML Manager] Saving draft for:', documentName);
       const draftKey = getDraftKey(documentName);
       saveDraft(draftKey, htmlContent);
@@ -135,9 +143,10 @@ export function useHtmlContentManager({
     if (documentName) {
       const draftKey = getDraftKey(documentName);
       clearDraft(draftKey);
+      lastLoadedContent.current = htmlContent; // Update the last loaded content reference
       console.log('[HTML Manager] Cleared draft for:', documentName);
     }
-  }, [getDraftKey, clearDraft]);
+  }, [getDraftKey, clearDraft, htmlContent]);
 
   return {
     clearDraftForDocument
