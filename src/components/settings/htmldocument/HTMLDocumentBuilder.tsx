@@ -561,15 +561,16 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
   const typeUiToBackend = (t: DocumentTypeUI): DocumentTypeBackend => (t === 'schapkun' ? 'custom' : t);
 
   // --- Direct na wisselen type "schapkun" het Schapkun-template laden ---
+  // Let op: deze useEffect is nu ALLEEN afhankelijk van documentType
   useEffect(() => {
-    if (documentType === 'schapkun' && htmlContent !== schapkunTemplate) {
+    if (documentType === 'schapkun') {
       setHtmlContent(schapkunTemplate);
       setHasUnsavedChanges(true);
     }
-    // Let op: geen else, want handmatig wijziging in htmlContent mag niet overschreven worden
-    
-  }, [documentType, htmlContent, schapkunTemplate]);
-
+    // Let op: niet afhankelijk van htmlContent dus geen jump/verlies edits
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentType, schapkunTemplate]);
+  
   // Sidebar props (define once)
   const sidebarProps = {
     placeholderFields: PLACEHOLDER_FIELDS,
