@@ -1,7 +1,7 @@
-
 import jsPDF from 'jspdf';
 import { VisualTemplateData } from '../types/VisualTemplate';
 import { SharedStyleEngine } from './SharedStyleEngine';
+import { InvoicePDFGenerator } from '@/utils/InvoicePDFGenerator';
 
 export class PDFGenerator {
   private doc: jsPDF;
@@ -14,21 +14,35 @@ export class PDFGenerator {
     this.doc = new jsPDF('p', 'mm', 'a4');
   }
 
-  generateFromTemplate(templateData: VisualTemplateData): jsPDF {
+  async generateFromTemplate(templateData: VisualTemplateData): Promise<jsPDF | void> {
+    if (templateData.documentType === 'factuur') {
+      const pdfData = {
+        invoice: templateData.invoice, // Komt uit VisualTemplateData
+        lines: templateData.invoiceLines || [],
+        template: templateData.template || undefined,
+        companyInfo: templateData.companyInfo || undefined
+      };
+      const blob = await InvoicePDFGenerator.generatePDF(pdfData, {
+        download: false,
+        returnBlob: true
+      });
+      if (blob) {
+        const arrayBuffer = await blob.arrayBuffer();
+        const u8 = new Uint8Array(arrayBuffer);
+        this.doc.fromArrayBuffer(u8);
+        return;
+      }
+      return;
+    }
+
     console.log('📄 PDF Generator - Using SharedStyleEngine');
-    
     const styleEngine = new SharedStyleEngine(templateData);
     const pdfStyles = styleEngine.getPDFStyles();
-    
-    // Set base font
     this.doc.setFont('helvetica');
-    
-    // Generate sections using SharedStyleEngine
     this.generateHeader(templateData.companyInfo, templateData.styling, styleEngine, pdfStyles);
     this.generateContent(templateData, styleEngine, pdfStyles);
     this.generateTable(styleEngine, pdfStyles);
     this.generateFooter();
-
     console.log('✅ PDF generation completed with SharedStyleEngine');
     return this.doc;
   }
