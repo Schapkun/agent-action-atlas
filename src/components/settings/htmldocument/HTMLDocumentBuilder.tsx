@@ -23,6 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { PreviewDialog } from './components/PreviewDialog';
 import { DialogFooter } from '@/components/settings/components/DialogFooter';
 import { PlaceholderSidebar } from './components/PlaceholderSidebar';
+import schapkunTemplate from './invoice_schapkun.html?raw'; // Vite's raw import
 
 interface HTMLDocumentBuilderProps {
   editingDocument?: DocumentTemplate | null;
@@ -266,10 +267,23 @@ const SNIPPETS = [
   }
 ];
 
+// Voeg dit type toe:
+type DocumentTypeOption = 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun';
+
+// Voeg schapkun als mogelijke type toe
+const DOCUMENT_TYPE_OPTIONS: { value: DocumentTypeOption; label: string }[] = [
+  { value: 'factuur', label: 'Factuur (standaard)' },
+  { value: 'schapkun', label: 'Factuur (Schapkun)' },
+  { value: 'contract', label: 'Contract' },
+  { value: 'brief', label: 'Brief' },
+  { value: 'custom', label: 'Custom' }
+];
+
 export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDocumentBuilderProps) => {
+  // BEGIN: aangepaste useState met schapkun support
   const [htmlContent, setHtmlContent] = useState(DEFAULT_INVOICE_TEMPLATE);
   const [documentName, setDocumentName] = useState('');
-  const [documentType, setDocumentType] = useState<'factuur' | 'contract' | 'brief' | 'custom'>('factuur');
+  const [documentType, setDocumentType] = useState<DocumentTypeOption>('factuur');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -311,7 +325,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
       if (editingDocument) {
         console.log('[Builder] Switch document: laden', editingDocument.name, editingDocument.id, editingDocument.updated_at, editingDocument);
         setDocumentName(editingDocument.name);
-        setDocumentType(editingDocument.type);
+        setDocumentType(editingDocument.type as DocumentTypeOption);
         setHtmlContent(editingDocument.html_content || DEFAULT_INVOICE_TEMPLATE);
         const storageKey = getStorageKey(editingDocument.name);
         const fromStorage = localStorage.getItem(storageKey);
@@ -533,6 +547,16 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     localStorage.setItem(key, JSON.stringify(placeholderValues));
   }, [placeholderValues, documentName]);
 
+  // Pas de useEffect aan zodat als 'schapkun' gekozen wordt als type, het juiste template wordt geladen:
+  useEffect(() => {
+    if (documentType === 'schapkun' && htmlContent !== schapkunTemplate) {
+      setHtmlContent(schapkunTemplate);
+      setHasUnsavedChanges(true);
+    }
+    // Let op: geen else, want handmatig wijziging in htmlContent mag niet overschreven worden
+    
+  }, [documentType, htmlContent, schapkunTemplate]);
+
   // Sidebar props (define once)
   const sidebarProps = {
     placeholderFields: PLACEHOLDER_FIELDS,
@@ -543,6 +567,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     insertSnippet,
   };
 
+  // In de select dropdown hieronder zorgen dat type 'schapkun' gekozen kan worden
   return (
     <div className="flex flex-col h-full">
       {/* Header with document controls */}
@@ -557,13 +582,12 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
             />
             <select
               value={documentType}
-              onChange={(e) => setDocumentType(e.target.value as any)}
+              onChange={(e) => setDocumentType(e.target.value as DocumentTypeOption)}
               className="px-3 py-2 border border-input bg-background rounded-md text-sm"
             >
-              <option value="factuur">Factuur</option>
-              <option value="contract">Contract</option>
-              <option value="brief">Brief</option>
-              <option value="custom">Custom</option>
+              {DOCUMENT_TYPE_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
             </select>
             {hasUnsavedChanges && (
               <Badge variant="outline" className="text-orange-600 border-orange-200">
