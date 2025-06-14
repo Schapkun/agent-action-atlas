@@ -469,13 +469,29 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     PLACEHOLDER_FIELDS.forEach(({ id, type }) => {
       const regex = new RegExp(`{{${id}}}`, "g");
       if (forPreview && type === "image") {
+        // Los alleen de src op.
+        // Vervang: src="{{COMPANY_LOGO}}" -> src="data:image..."
+        const srcRegex = new RegExp(`src=[\\"']{{${id}}}[\\"']`, "g");
         if (placeholderValues[id]) {
+          replaced = replaced.replace(
+            srcRegex,
+            `src="${placeholderValues[id]}"`
+          );
+          // Als {{COMPANY_LOGO}} los voorkomt (zonder <img src=...), vervang hem door een plaatje
           replaced = replaced.replace(
             regex,
             `<img src="${placeholderValues[id]}" alt="Bedrijfslogo" style="width:120px;max-height:75px;object-fit:contain;" />`
           );
         } else {
-          replaced = replaced.replace(regex, `<span style="color:#ddd;">[Logo]</span>`);
+          // Indien leeg, geef aan dat het logo ontbreekt
+          replaced = replaced.replace(
+            srcRegex,
+            `src="" style="background:#eee;border:1px dashed #ccc;width:120px;max-height:75px;object-fit:contain;"`
+          );
+          replaced = replaced.replace(
+            regex,
+            `<span style="color:#ddd;">[Logo]</span>`
+          );
         }
       } else {
         replaced = replaced.replace(
