@@ -286,27 +286,33 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
   // ---- NEW: Track previous document id ----
   const previousEditingDocumentId = useRef<string | null>(null);
 
-  // Load editing document ONLY when the actual document changes
+  // Load editing document ONLY when the actual document changes (refresh placeholders also)
   useEffect(() => {
     const currentId = editingDocument?.id ?? null;
     if (currentId !== previousEditingDocumentId.current) {
-      // New document loaded (or cleared to new)
       if (editingDocument) {
         setDocumentName(editingDocument.name);
         setDocumentType(editingDocument.type);
         setHtmlContent(editingDocument.html_content || DEFAULT_INVOICE_TEMPLATE);
+        // <<< HIER: PlaceholderValues syncen met eventueel nieuwe template!
+        // Haal eventueel bestaande waarden op uit localStorage (per documentnaam key)
+        const storageKey = getStorageKey(editingDocument.name);
+        const fromStorage = localStorage.getItem(storageKey);
+        setPlaceholderValues(
+          fromStorage
+            ? { ...DEFAULT_PLACEHOLDER_VALUES, ...JSON.parse(fromStorage) }
+            : DEFAULT_PLACEHOLDER_VALUES
+        );
         setHasUnsavedChanges(false);
       } else {
-        // New document
         setDocumentName('');
         setDocumentType('factuur');
         setHtmlContent(DEFAULT_INVOICE_TEMPLATE);
+        setPlaceholderValues(DEFAULT_PLACEHOLDER_VALUES);
         setHasUnsavedChanges(false);
       }
       previousEditingDocumentId.current = currentId;
     }
-    // else, if same id: do not reset state (prevent overwriting local changes on save!)
-    // eslint-disable-next-line
   }, [editingDocument]);
 
   // Track unsaved changes
@@ -360,12 +366,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     try {
       let savedDocument: DocumentTemplate;
 
-      // Log huidige HTML-inhoud om te debuggen
-      console.log('[handleSave] Huidige htmlContent:', htmlContent);
-
       if (editingDocument) {
-        // Update existing document
-        console.log('Updating document:', editingDocument.id);
         const updatedDoc = await updateTemplate(editingDocument.id, {
           name: documentName.trim(),
           type: documentType,
@@ -373,14 +374,11 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
           description: `${documentType} document`
         });
         savedDocument = updatedDoc;
-        
         toast({
           title: "Opgeslagen",
           description: `Document "${documentName}" is bijgewerkt.`
         });
       } else {
-        // Create new document
-        console.log('Creating new document');
         const newDocumentData = {
           name: documentName.trim(),
           type: documentType,
@@ -389,24 +387,23 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
           is_default: false,
           is_active: true
         };
-        
         const newDoc = await createTemplate(newDocumentData);
         savedDocument = newDoc;
-        
         toast({
           title: "Opgeslagen",
           description: `Nieuw document "${documentName}" is aangemaakt.`
         });
       }
-      
+
       setHasUnsavedChanges(false);
 
       // Refresh the templates list to show the new/updated document
       await fetchTemplates();
 
-      // Call callback if provided
+      // --- Hier: Roep onDocumentSaved met het actuele document uit Supabase. 
+      // (Hierdoor ontvangt de parent het juiste document en wordt de builder direct gesynchroniseerd)
       if (onDocumentSaved && savedDocument) {
-        onDocumentSaved(savedDocument);
+        onDocumentSaved(savedDocument); // << belangrijk: juiste, nieuw opgeslagen versie
       }
     } catch (error) {
       console.error('Save error:', error);
