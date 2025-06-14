@@ -24,6 +24,9 @@ import { PreviewDialog } from './components/PreviewDialog';
 import { DialogFooter } from '@/components/settings/components/DialogFooter';
 import { PlaceholderSidebar } from './components/PlaceholderSidebar';
 import schapkunTemplate from './invoice_schapkun.html?raw'; // Vite's raw import
+import { HtmlEditor } from './builder/HtmlEditor';
+import { DocumentPreview } from './builder/DocumentPreview';
+import { DocumentToolbar } from './builder/DocumentToolbar';
 
 interface HTMLDocumentBuilderProps {
   editingDocument?: DocumentTemplate | null;
@@ -584,104 +587,36 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
   // In de select dropdown hieronder zorgen dat type 'schapkun' gekozen kan worden
   return (
     <div className="flex flex-col h-full">
-      {/* Header with document controls */}
-      <div className="flex-shrink-0 p-4 border-b bg-muted/30">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4 flex-1">
-            <Input
-              placeholder="Document naam..."
-              value={documentName}
-              onChange={(e) => setDocumentName(e.target.value)}
-              className="max-w-sm"
-            />
-            <select
-              value={documentType}
-              onChange={(e) => setDocumentType(e.target.value as DocumentTypeUI)}
-              className="px-3 py-2 border border-input bg-background rounded-md text-sm"
-            >
-              {DOCUMENT_TYPE_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-            {hasUnsavedChanges && (
-              <Badge variant="outline" className="text-orange-600 border-orange-200">
-                Niet opgeslagen
-              </Badge>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button 
-              onClick={handlePreview} 
-              variant="outline" 
-              size="sm"
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Preview
-            </Button>
-            <Button onClick={handlePDFDownload} variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              PDF
-            </Button>
-            <Button onClick={handleHTMLExport} variant="outline" size="sm">
-              <Upload className="h-4 w-4 mr-2" />
-              HTML
-            </Button>
-          </div>
-        </div>
-      </div>
+      {/* Refactored: Toolbar apart */}
+      <DocumentToolbar
+        documentName={documentName}
+        setDocumentName={setDocumentName}
+        documentType={documentType}
+        setDocumentType={setDocumentType}
+        options={DOCUMENT_TYPE_OPTIONS}
+        hasUnsavedChanges={hasUnsavedChanges}
+        onPreview={handlePreview}
+        onPDFDownload={handlePDFDownload}
+        onHTMLExport={handleHTMLExport}
+      />
 
       {/* Main content area - Editor en Preview naast elkaar */}
       <div className="flex-1 flex min-h-0">
         {/* Left sidebar with placeholders and snippets */}
         <PlaceholderSidebar {...sidebarProps} />
 
-        {/* HTML Editor en Preview */}
         <div className="flex-1 flex">
-          {/* HTML Editor - 50% breedte */}
-          <div className="w-1/2 flex flex-col border-r">
-            <div className="p-4 border-b">
-              <h3 className="font-semibold flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                HTML Editor
-              </h3>
-            </div>
-            <div className="flex-1 p-4">
-              <textarea
-                id="html-editor"
-                value={htmlContent}
-                onChange={(e) => setHtmlContent(e.target.value)}
-                className="w-full h-full font-mono text-sm border rounded-lg p-4 resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="HTML code hier..."
-              />
-            </div>
-          </div>
+          {/* HtmlEditor (textarea) */}
+          <HtmlEditor
+            htmlContent={htmlContent}
+            onChange={setHtmlContent}
+          />
 
-          {/* Preview - 50% breedte, responsive A4 preview */}
-          <div className="w-1/2 flex flex-col">
-            <div className="p-4 border-b">
-              <h3 className="font-semibold">Document Preview</h3>
-            </div>
-            <div className="flex-1 p-4 overflow-hidden flex items-center justify-center">
-              <div className="w-full h-full flex items-center justify-center">
-                <div 
-                  className="bg-white border rounded-lg shadow-sm"
-                  style={{
-                    aspectRatio: '210/297', // A4 aspect ratio
-                    width: '95%',
-                    maxHeight: '100%',
-                    maxWidth: 'min(95%, calc(100vh * 210/297))', // Prevent it from being wider than viewport allows
-                  }}
-                >
-                  <iframe
-                    srcDoc={getScaledHtmlContent(htmlContent)}
-                    className="w-full h-full border-0 rounded-lg"
-                    title="Document Preview"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Preview */}
+          <DocumentPreview
+            htmlContent={htmlContent}
+            getScaledHtmlContent={getScaledHtmlContent}
+          />
         </div>
       </div>
 
