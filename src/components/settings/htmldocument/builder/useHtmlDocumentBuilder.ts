@@ -89,6 +89,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
 
   const previousEditingDocumentId = useRef<string | null>(null);
   const justSaved = useRef(false);
+  const previousDocumentTypeRef = useRef<DocumentTypeUI | null>(null);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -116,6 +117,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
           uiType = editingDocument.type as DocumentTypeUI;
         }
         setDocumentType(uiType);
+        previousDocumentTypeRef.current = uiType; // update last loaded docType
         setHtmlContent(editingDocument.html_content || DEFAULT_INVOICE_TEMPLATE);
         const storageKey = getStorageKey(editingDocument.name);
         const fromStorage = localStorage.getItem(storageKey);
@@ -128,6 +130,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
       } else {
         setDocumentName('');
         setDocumentType('factuur');
+        previousDocumentTypeRef.current = 'factuur';
         setHtmlContent(DEFAULT_INVOICE_TEMPLATE);
         setPlaceholderValues(DEFAULT_PLACEHOLDER_VALUES);
         setHasUnsavedChanges(false);
@@ -340,6 +343,29 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
     console.log('[TEMPLATE SWAP useEffect][ALTIJD] changing htmlContent! Nieuw documentType:', documentType, 'htmlContent:', newContent);    
     setHtmlContent(newContent);
     setHasUnsavedChanges(false);
+  }, [documentType, schapkunTemplate]);
+
+  useEffect(() => {
+    // Alleen wisselen van template als het documentType écht is gewijzigd via de dropdown 
+    // (niet bij laden/editen van bestaand document)
+    if (previousDocumentTypeRef.current !== null && previousDocumentTypeRef.current !== documentType) {
+      let newContent = "";
+      if (documentType === "schapkun") {
+        newContent = schapkunTemplate;
+      } else if (documentType === "factuur") {
+        newContent = DEFAULT_INVOICE_TEMPLATE;
+      } else if (documentType === "contract") {
+        newContent = '<html><body><h1>Contract</h1><p>[Contract inhoud]</p></body></html>';
+      } else if (documentType === "brief") {
+        newContent = '<html><body><h1>Brief</h1><p>[Brief inhoud]</p></body></html>';
+      } else if (documentType === "custom") {
+        newContent = '<html><body><h1>Custom template</h1></body></html>';
+      }
+      console.log('[TEMPLATE SWAP useEffect][dropdown] changing htmlContent! Nieuw documentType:', documentType, 'htmlContent:', newContent);
+      setHtmlContent(newContent);
+      setHasUnsavedChanges(false);
+    }
+    previousDocumentTypeRef.current = documentType;
   }, [documentType, schapkunTemplate]);
 
   return {
