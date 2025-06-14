@@ -98,6 +98,8 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any
   const previousDocumentTypeRef = useRef<any | null>(null);
   const [justChangedType, setJustChangedType] = useState(false);
 
+  const [htmlContent, setHtmlContent] = React.useState(loadInitialHtmlContent());
+
   // Inladen van HTML (draft heeft altijd voorrang!)
   const loadInitialHtmlContent = () => {
     const draftKey = getDraftKey(editingDocument?.name || documentName || '');
