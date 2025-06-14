@@ -98,8 +98,6 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any
   const previousDocumentTypeRef = useRef<any | null>(null);
   const [justChangedType, setJustChangedType] = useState(false);
 
-  const [htmlContent, setHtmlContent] = React.useState(loadInitialHtmlContent());
-
   // Inladen van HTML (draft heeft altijd voorrang!)
   const loadInitialHtmlContent = () => {
     const draftKey = getDraftKey(editingDocument?.name || documentName || '');
@@ -108,6 +106,8 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: any
     if (editingDocument?.html_content) return editingDocument.html_content;
     return DEFAULT_INVOICE_TEMPLATE;
   };
+
+  const [htmlContent, setHtmlContent] = React.useState(loadInitialHtmlContent());
 
   // Altijd bij openen of wissel initialiseren
   useEffect(() => {
