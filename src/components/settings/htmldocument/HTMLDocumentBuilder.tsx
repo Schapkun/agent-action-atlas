@@ -350,6 +350,9 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     try {
       let savedDocument: DocumentTemplate;
 
+      // Log huidige HTML-inhoud om te debuggen
+      console.log('[handleSave] Huidige htmlContent:', htmlContent);
+
       if (editingDocument) {
         // Update existing document
         console.log('Updating document:', editingDocument.id);
