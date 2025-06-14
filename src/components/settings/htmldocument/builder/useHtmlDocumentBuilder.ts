@@ -72,8 +72,33 @@ export const SNIPPETS = [
 ];
 
 export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: UseHtmlDocumentBuilderProps) {
-  const [htmlContent, setHtmlContent] = useState(DEFAULT_INVOICE_TEMPLATE);
-  const [documentName, setDocumentName] = useState('');
+  // KEY voor draft recovery
+  const getDraftKey = (docName: string) => `builder_draft_${docName}`;
+
+  // Laad initial htmlContent, met prioriteit voor draft
+  const loadInitialHtmlContent = () => {
+    if (editingDocument) {
+      const draftKey = getDraftKey(editingDocument.name);
+      const draft = localStorage.getItem(draftKey);
+      if (draft && draft !== editingDocument.html_content) {
+        return draft;
+      } else {
+        return editingDocument.html_content || DEFAULT_INVOICE_TEMPLATE;
+      }
+    }
+    // Bij nieuw document: check draft voor tijdelijke naam (miss bij naam-wijzigingen)
+    if (documentName) {
+      const draftKey = getDraftKey(documentName);
+      const draft = localStorage.getItem(draftKey);
+      if (draft) {
+        return draft;
+      }
+    }
+    return DEFAULT_INVOICE_TEMPLATE;
+  };
+
+  const [htmlContent, setHtmlContent] = useState(loadInitialHtmlContent());
+  const [documentName, setDocumentName] = useState(editingDocument?.name || '');
   const [documentType, setDocumentType] = useState<DocumentTypeUI>('factuur');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -113,6 +138,7 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
     if (currentId !== previousEditingDocumentId.current) {
       if (editingDocument) {
         setDocumentName(editingDocument.name);
+
         let uiType: DocumentTypeUI;
         if (editingDocument.type === 'custom' && editingDocument.html_content?.trim() === schapkunTemplate.trim()) {
           uiType = 'schapkun';
@@ -120,9 +146,13 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
           uiType = editingDocument.type as DocumentTypeUI;
         }
         setDocumentType(uiType);
-        previousDocumentTypeRef.current = uiType; // update last loaded docType
-        // CRUCIAL FIX: LAAD ALTIJD de opgeslagen HTML content uit het document!
-        setHtmlContent(editingDocument.html_content || DEFAULT_INVOICE_TEMPLATE);
+        previousDocumentTypeRef.current = uiType;
+
+        // ----- HIER: draft check -----
+        const draftKey = getDraftKey(editingDocument.name);
+        const draft = localStorage.getItem(draftKey);
+        setHtmlContent(draft || editingDocument.html_content || DEFAULT_INVOICE_TEMPLATE);
+
         const storageKey = getStorageKey(editingDocument.name);
         const fromStorage = localStorage.getItem(storageKey);
         setPlaceholderValues(
@@ -135,13 +165,18 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
         setDocumentName('');
         setDocumentType('factuur');
         previousDocumentTypeRef.current = 'factuur';
-        setHtmlContent(DEFAULT_INVOICE_TEMPLATE);
+
+        // --- Draft check bij lege docnaam ---
+        const draftKey = getDraftKey('');
+        const draft = localStorage.getItem(draftKey);
+        setHtmlContent(draft || DEFAULT_INVOICE_TEMPLATE);
+
         setPlaceholderValues(DEFAULT_PLACEHOLDER_VALUES);
         setHasUnsavedChanges(false);
       }
       previousEditingDocumentId.current = currentId;
       justSaved.current = false;
-      setJustChangedType(false); // Reset flag als er een nieuw document wordt geladen
+      setJustChangedType(false);
     }
   }, [editingDocument?.id]);
 
@@ -193,7 +228,6 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
     if (isSaving) return;
     setIsSaving(true);
 
-    // Debug EXTREEM duidelijk alle relevante velden voor save:
     console.log('[handleSave:DEBUG]', {
       docId: editingDocument?.id,
       UI: { documentName, documentType, htmlContent },
@@ -208,7 +242,6 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
       let savedDocument: DocumentTemplate;
       const backendType = typeUiToBackend(documentType);
 
-      // Bewust: ALTIJD de HUIDIGE values uit state opslaan!
       if (editingDocument) {
         const updatedDoc = await updateTemplate(editingDocument.id, {
           name: documentName.trim(),
@@ -234,7 +267,18 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
       setHasUnsavedChanges(false);
       await fetchTemplates();
       justSaved.current = true;
-      setJustChangedType(false); // Zet altijd terug!
+      setJustChangedType(false);
+
+      // -- Sync state na save! --
+      if (savedDocument) {
+        setHtmlContent(savedDocument.html_content || DEFAULT_INVOICE_TEMPLATE); // Direct updaten in editor!
+        setDocumentType(savedDocument.type as DocumentTypeUI);
+        setDocumentName(savedDocument.name);
+
+        // Draft wissen, enkel bij save!
+        const draftKey = getDraftKey(savedDocument.name);
+        localStorage.removeItem(draftKey);
+      }
       if (onDocumentSaved && savedDocument) {
         onDocumentSaved(savedDocument);
       }
@@ -366,10 +410,13 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
     return scaledContent;
   };
 
+  // Sla elke wijziging van htmlContent op als draft
   useEffect(() => {
-    const key = getStorageKey(documentName);
-    localStorage.setItem(key, JSON.stringify(placeholderValues));
-  }, [placeholderValues, documentName]);
+    if (documentName) {
+      const draftKey = getDraftKey(documentName);
+      localStorage.setItem(draftKey, htmlContent);
+    }
+  }, [htmlContent, documentName]);
 
   const typeUiToBackend = (t: DocumentTypeUI): DocumentTypeBackend => (t === 'schapkun' ? 'custom' : t);
 
@@ -444,3 +491,5 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
     PLACEHOLDER_FIELDS,
   };
 }
+
+// ... keep existing code (einde bestand) ...
