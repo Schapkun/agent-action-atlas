@@ -7,33 +7,26 @@ import {
   DocumentTypeUI
 } from './htmlDocumentConstants';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
-import { useHtmlDraft } from './useHtmlDraft';
 
 interface UseDocumentStateProps {
   editingDocument?: DocumentTemplate | null;
 }
 
 export function useDocumentState({ editingDocument }: UseDocumentStateProps) {
-  const { getDraft } = useHtmlDraft();
-
   const getDraftKey = (docName: string) => `builder_draft_${docName}`;
 
-  // Inladen van HTML (draft heeft altijd voorrang!)
-  const loadInitialHtmlContent = () => {
-    const draftKey = getDraftKey(editingDocument?.name || '');
-    const draft = getDraft(draftKey);
-    if (draft) return draft;
-    if (editingDocument?.html_content) return editingDocument.html_content;
-    return DEFAULT_INVOICE_TEMPLATE;
-  };
-
-  // --- HOOFDSTATE ---  
+  // Initialize with simple defaults - content management is handled by useHtmlContentManager
   const [documentName, setDocumentName] = React.useState(editingDocument?.name || '');
-  const [documentType, setDocumentType] = React.useState<DocumentTypeUI>('factuur');
+  const [documentType, setDocumentType] = React.useState<DocumentTypeUI>(() => {
+    if (editingDocument?.type === 'custom' && editingDocument?.html_content?.includes('schapkun')) {
+      return 'schapkun';
+    }
+    return (editingDocument?.type as DocumentTypeUI) || 'factuur';
+  });
   const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
-  const [htmlContent, setHtmlContent] = React.useState(loadInitialHtmlContent());
+  const [htmlContent, setHtmlContent] = React.useState(editingDocument?.html_content || DEFAULT_INVOICE_TEMPLATE);
   const [placeholderValues, setPlaceholderValues] = React.useState<Record<string, string>>(() => {
     const storageKey = getStorageKey(editingDocument?.name ?? "");
     const fromStorage = localStorage.getItem(storageKey);
@@ -42,6 +35,28 @@ export function useDocumentState({ editingDocument }: UseDocumentStateProps) {
     }
     return DEFAULT_PLACEHOLDER_VALUES;
   });
+
+  // Update document name when editing document changes
+  React.useEffect(() => {
+    if (editingDocument?.name !== documentName) {
+      setDocumentName(editingDocument?.name || '');
+    }
+  }, [editingDocument?.name, documentName]);
+
+  // Update document type when editing document changes
+  React.useEffect(() => {
+    if (editingDocument) {
+      let newType: DocumentTypeUI;
+      if (editingDocument.type === 'custom' && editingDocument.html_content?.includes('schapkun')) {
+        newType = 'schapkun';
+      } else {
+        newType = (editingDocument.type as DocumentTypeUI) || 'factuur';
+      }
+      if (newType !== documentType) {
+        setDocumentType(newType);
+      }
+    }
+  }, [editingDocument?.type, editingDocument?.html_content, documentType]);
 
   return {
     documentName,
@@ -58,7 +73,6 @@ export function useDocumentState({ editingDocument }: UseDocumentStateProps) {
     setHtmlContent,
     placeholderValues,
     setPlaceholderValues,
-    getDraftKey,
-    loadInitialHtmlContent
+    getDraftKey
   };
 }

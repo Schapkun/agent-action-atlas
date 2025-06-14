@@ -1,3 +1,4 @@
+
 import { useDocumentTemplates, DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentPDFGenerator } from '../../utils/PDFGenerator';
@@ -6,7 +7,6 @@ import {
   DocumentTypeUI,
   DocumentTypeBackend
 } from './htmlDocumentConstants';
-import { useHtmlDraft } from './useHtmlDraft';
 
 interface UseDocumentActionsProps {
   documentName: string;
@@ -22,6 +22,7 @@ interface UseDocumentActionsProps {
   getDraftKey: (name: string) => string;
   placeholderValues: Record<string, string>;
   isSaving: boolean;
+  clearDraftForDocument: (documentName: string) => void;
 }
 
 export function useDocumentActions({
@@ -37,11 +38,11 @@ export function useDocumentActions({
   onDocumentSaved,
   getDraftKey,
   placeholderValues,
-  isSaving
+  isSaving,
+  clearDraftForDocument
 }: UseDocumentActionsProps) {
   const { createTemplate, updateTemplate, fetchTemplates } = useDocumentTemplates();
   const { toast } = useToast();
-  const { clearDraft } = useHtmlDraft();
 
   const typeUiToBackend = (t: DocumentTypeUI): DocumentTypeBackend => (t === 'schapkun' ? 'custom' : t);
 
@@ -55,15 +56,17 @@ export function useDocumentActions({
       return;
     }
     
-    if (isSaving) return; // Fixed: was setIsSaving instead of isSaving
+    if (isSaving) return;
     
     setIsSaving(true);
+    console.log('[Save] Starting save process for:', documentName);
 
     try {
       let savedDocument: DocumentTemplate;
       const backendType = typeUiToBackend(documentType);
 
       if (editingDocument) {
+        console.log('[Save] Updating existing document:', editingDocument.id);
         const updatedDoc = await updateTemplate(editingDocument.id, {
           name: documentName.trim(),
           type: backendType,
@@ -73,6 +76,7 @@ export function useDocumentActions({
         savedDocument = updatedDoc;
         toast({ title: "Opgeslagen", description: `Document "${documentName}" is bijgewerkt.` });
       } else {
+        console.log('[Save] Creating new document');
         const newDocumentData = {
           name: documentName.trim(),
           type: backendType,
@@ -86,23 +90,26 @@ export function useDocumentActions({
         toast({ title: "Opgeslagen", description: `Nieuw document "${documentName}" is aangemaakt.` });
       }
       
-      setHasUnsavedChanges(false);
-      await fetchTemplates();
-
-      if (savedDocument) {
-        const newName = savedDocument.name;
-        const draftKey = getDraftKey(newName);
-        clearDraft(draftKey);
-        setHtmlContent(savedDocument.html_content || '');
-        setDocumentType(savedDocument.type as DocumentTypeUI);
-        setDocumentName(newName);
-      }
+      console.log('[Save] Successfully saved document:', savedDocument);
       
+      // Clear the draft since we saved successfully
+      clearDraftForDocument(documentName);
+      
+      // Update state to reflect saved document
+      setHasUnsavedChanges(false);
+      setHtmlContent(savedDocument.html_content || '');
+      setDocumentType(savedDocument.type as DocumentTypeUI);
+      setDocumentName(savedDocument.name);
+      
+      // Refresh the templates list
+      await fetchTemplates();
+      
+      // Notify parent component
       if (onDocumentSaved && savedDocument) {
         onDocumentSaved(savedDocument);
       }
     } catch (error) {
-      console.error('[Builder] Save error:', error);
+      console.error('[Save] Error:', error);
       toast({
         title: "Fout",
         description: "Er is een fout opgetreden bij het opslaan. Probeer het opnieuw.",

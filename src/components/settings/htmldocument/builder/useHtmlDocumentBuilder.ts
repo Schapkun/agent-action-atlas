@@ -7,11 +7,9 @@ import {
   schapkunTemplate,
   DEFAULT_INVOICE_TEMPLATE
 } from './htmlDocumentConstants';
-import { useHtmlSyncState } from './useHtmlSyncState';
 import { useDocumentState } from './useDocumentState';
 import { useDocumentActions } from './useDocumentActions';
-import { useDocumentTypeHandler } from './useDocumentTypeHandler';
-import { useDocumentEffects } from './useDocumentEffects';
+import { useHtmlContentManager } from './useHtmlContentManager';
 
 interface UseHtmlDocumentBuilderProps {
   editingDocument?: DocumentTemplate | null;
@@ -74,23 +72,23 @@ export const SNIPPETS = [
 export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: UseHtmlDocumentBuilderProps) {
   const documentState = useDocumentState({ editingDocument });
   
+  // Use the new centralized HTML content manager
+  const { clearDraftForDocument } = useHtmlContentManager({
+    editingDocument,
+    documentType: documentState.documentType,
+    documentName: documentState.documentName,
+    htmlContent: documentState.htmlContent,
+    setHtmlContent: documentState.setHtmlContent,
+    setHasUnsavedChanges: documentState.setHasUnsavedChanges,
+    getDraftKey: documentState.getDraftKey
+  });
+  
   const documentActions = useDocumentActions({
     ...documentState,
     editingDocument,
     onDocumentSaved,
-    isSaving: documentState.isSaving // Add missing isSaving prop
-  });
-
-  const typeHandler = useDocumentTypeHandler({
-    documentType: documentState.documentType,
-    editingDocument,
-    setHtmlContent: documentState.setHtmlContent,
-    setHasUnsavedChanges: documentState.setHasUnsavedChanges
-  });
-
-  useDocumentEffects({
-    editingDocument,
-    ...documentState
+    isSaving: documentState.isSaving,
+    clearDraftForDocument
   });
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -124,15 +122,6 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
   const handlePreview = () => {
     documentState.setIsPreviewOpen(true);
   };
-
-  useHtmlSyncState({
-    editingDocument,
-    documentType: documentState.documentType,
-    schapkunTemplate,
-    setHtmlContent: documentState.setHtmlContent,
-    DEFAULT_INVOICE_TEMPLATE,
-    setHasUnsavedChanges: documentState.setHasUnsavedChanges,
-  });
 
   return {
     ...documentState,
