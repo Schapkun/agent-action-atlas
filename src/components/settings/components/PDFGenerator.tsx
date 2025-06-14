@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import { VisualTemplateData } from '../types/VisualTemplate';
 import { SharedStyleEngine } from './SharedStyleEngine';
 import { InvoicePDFGenerator } from '@/utils/InvoicePDFGenerator';
+import { v4 as uuidv4 } from 'uuid';
 
 export class PDFGenerator {
   private doc: jsPDF;
@@ -20,42 +21,57 @@ export class PDFGenerator {
    */
   async generateFromTemplate(templateData: VisualTemplateData): Promise<jsPDF | void | Blob> {
     if (templateData.documentType === 'invoice') {
-      // Gebruik een minimale dummy-invoice voor settings-preview.
-      // In Instellingen > Documenten bestaat géén invoice-object of regels!
-      // Genereer demonstratie-dummy met vaste waarden.
+      // Complete invoice mock with all required fields for InvoicePDFData type (see @/hooks/useInvoices)
+      const now = new Date();
+      const dummyInvoice = {
+        id: uuidv4(),
+        invoice_number: "2024-001",
+        invoice_date: now.toISOString(),
+        due_date: new Date(Date.now() + 30 * 864e5).toISOString(),
+        client_name: "Voorbeeld Klant B.V.",
+        client_address: "Voorbeeldstraat 123",
+        client_postal_code: "1234 AB",
+        client_city: "Amsterdam",
+        notes: "Voorbeeld factuur template",
+        subtotal: 800,
+        vat_percentage: 21,
+        vat_amount: 168,
+        total_amount: 968,
+        payment_terms: 30,
+        status: "concept",
+        organization_id: uuidv4(),
+        workspace_id: uuidv4(),
+        template_id: null,
+        created_by: uuidv4(),
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+        client_email: "test@example.com",
+        client_country: "Nederland"
+      };
       const pdfData = {
-        invoice: {
-          invoice_number: "2024-001",
-          invoice_date: new Date().toISOString(),
-          due_date: new Date(Date.now() + 30 * 864e5).toISOString(),
-          client_name: "Voorbeeld Klant B.V.",
-          client_address: "Voorbeeldstraat 123",
-          client_postal_code: "1234 AB",
-          client_city: "Amsterdam",
-          notes: "Voorbeeld factuur template",
-          subtotal: 800,
-          vat_percentage: 21,
-          vat_amount: 168,
-          total_amount: 968,
-          payment_terms: 30,
-          status: "concept"
-        },
+        invoice: dummyInvoice,
         lines: [
           {
+            id: uuidv4(),
             description: "Consultancy diensten",
             quantity: 10,
             unit_price: 75,
             vat_rate: 21,
             line_total: 750,
-            id: "1"
+            created_at: now.toISOString(),
+            invoice_id: dummyInvoice.id,
+            sort_order: 1
           },
           {
+            id: uuidv4(),
             description: "Reiskosten",
             quantity: 1,
             unit_price: 50,
             vat_rate: 21,
             line_total: 50,
-            id: "2"
+            created_at: now.toISOString(),
+            invoice_id: dummyInvoice.id,
+            sort_order: 2
           }
         ],
         template: undefined,
@@ -72,14 +88,12 @@ export class PDFGenerator {
           bic: ''
         }
       };
-      // Genereer pdf als blob (vooraf aan jsPDF nodig)
+      // Genereer pdf als blob
       const blob = await InvoicePDFGenerator.generatePDF(pdfData, {
         download: false,
         returnBlob: true
       });
       if (blob) {
-        // Je kunt een blob file laten downloaden of previewen, niet via jsPDF combineren!
-        // Voor de instellingen preview kun je de blob teruggeven, elders is meestal .save() gewenst.
         return blob;
       }
       return;

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import jsPDF from 'jspdf';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Palette, FileText, Settings, Building } from 'lucide-react';
@@ -149,10 +150,9 @@ export const VisualTemplateEditor = ({
       const generated = await pdfGenerator.generateFromTemplate(templateData);
       const filename = `${templateData.name || 'document'}_${new Date().toISOString().split('T')[0]}.pdf`;
 
-      // Check welke datatype er terugkomt:
-      if (generated instanceof jsPDF) {
-        // jsPDF instance: save direct
-        generated.save(filename);
+      if (generated && typeof (generated as any).save === 'function') {
+        // It's a jsPDF instance
+        (generated as jsPDF).save(filename);
       } else if (generated instanceof Blob) {
         // Blob (bij factuur template): download via blob-URL
         const link = document.createElement('a');
