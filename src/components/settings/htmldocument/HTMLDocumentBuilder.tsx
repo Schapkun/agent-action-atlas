@@ -565,7 +565,7 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
 
   // --- TEMPLATE SWITCHING FIXED: elke wissel zet direct het corresponderende template ---
   useEffect(() => {
-    if (editingDocument) return;
+    if (editingDocument) return; // Voor bestaande documenten: nooit template forceren!
     let newContent = "";
     if (documentType === "schapkun") {
       newContent = schapkunTemplate;
@@ -580,7 +580,8 @@ export const HTMLDocumentBuilder = ({ editingDocument, onDocumentSaved }: HTMLDo
     }
     setHtmlContent(newContent);
     setHasUnsavedChanges(false);
-    // (optioneel debug) console.log("Switched documentType to", documentType);
+    // Debug log om herladen zichtbaar te maken
+    console.log("[DocumentBuilder] Template gewisseld naar:", documentType, "Inhoud gestart met:", newContent.slice(0, 32));
   }, [documentType, schapkunTemplate, editingDocument]);
 
   // Sidebar props (define once)
