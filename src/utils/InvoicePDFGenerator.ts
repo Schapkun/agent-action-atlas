@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Invoice, InvoiceLine } from '@/hooks/useInvoices';
@@ -88,45 +87,42 @@ export class InvoicePDFGenerator {
 
   private static async createHTMLContainer(htmlContent: string, isPreview: boolean = false): Promise<HTMLElement> {
     console.log('Creating HTML container for rendering (preview mode:', isPreview, ')');
-    
     try {
+      // Standardize container to exact A4 size, no extra margin/padding outside template.
       const container = document.createElement('div');
       container.innerHTML = htmlContent;
       container.style.position = 'absolute';
       container.style.left = '-9999px';
       container.style.top = '-9999px';
-
-      // Explicitly add margin/padding around the "PDF page"
-      // Assume the rendered template uses a fixed width for a "page" (A4: 794px wide at 96dpi)
-      // Add 36px (1.27cm) margin & 20px padding (or according to template) around, like browser preview
-      container.style.width = isPreview ? '1200px' : '834px'; // 794px + 2*20px padding
+      container.style.width = '794px'; // A4 width
+      container.style.height = '1123px'; // A4 height
       container.style.backgroundColor = 'white';
       container.style.fontFamily = 'Arial, sans-serif';
-      container.style.fontSize = isPreview ? '18px' : '16px';
+      container.style.fontSize = '16px';
       container.style.lineHeight = '1.4';
       container.style.boxSizing = 'border-box';
       container.style.overflow = 'hidden';
       container.style.zIndex = '-1000';
-      container.style.margin = '36px'; // ~1.27cm (A4 default)
-      container.style.padding = '20px'; // Mooie rand (past bij template)
+      // No margin, no padding here—handled by template only
 
-      // Zorg ook dat <body> in de template geen margin/padding overschrijft
+      // Ensure template body style has no margin/padding override
       const innerBody = container.querySelector('body');
       if (innerBody) {
         innerBody.style.margin = '0';
         innerBody.style.padding = '0';
+        innerBody.style.background = 'none';
+        innerBody.style.width = '100%';
+        innerBody.style.height = '100%';
       }
-      
-      // Remove any problematic elements
+
+      // Remove any problematic external elements
       const images = container.querySelectorAll('img');
       images.forEach(img => img.remove());
-
       const scripts = container.querySelectorAll('script');
       scripts.forEach(script => script.remove());
 
       document.body.appendChild(container);
       await new Promise(resolve => setTimeout(resolve, 300));
-
       console.log('HTML container ready');
       return container;
     } catch (error) {
@@ -172,8 +168,9 @@ export class InvoicePDFGenerator {
       
       console.log('🎨 Starting canvas rendering...');
       
+      // Unified rendering: always use 794x1123px, scale 1.5
       const canvas = await html2canvas(container, {
-        scale: 2,
+        scale: 1.5,
         useCORS: false,
         allowTaint: true,
         backgroundColor: '#ffffff',
@@ -322,19 +319,32 @@ export class InvoicePDFGenerator {
 
   // UNIFIED template - used for BOTH preview and download to ensure consistency
   private static getUnifiedTemplate(): string {
+    // Main .page or .document content is centered with width 754px + 2x20px padding
+    // No margin or outer padding, all inside the .document
     return `<!DOCTYPE html>
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
     <style>
-        body { 
+        html, body { 
+            width: 794px; height: 1123px; 
+            margin: 0; padding: 0; 
+            background: #f5f5f5;
+        }
+        body {
+            box-sizing: border-box;
             font-family: Arial, sans-serif; 
-            margin: 20px; 
-            width: 1160px; 
-            background: white; 
-            font-size: 18px; 
-            line-height: 1.4;
-            color: #333;
+            color: #333; font-size: 16px;
+            width: 100%; height: 100%;
+        }
+        .document {
+            background: white;
+            width: 754px;   /* 794px - 2x20px visual padding for A4 */
+            min-height: 1083px;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 16px 0 rgba(0,0,0,0.07);
         }
         .header { 
             border-bottom: 3px solid #3b82f6; 
@@ -432,67 +442,69 @@ export class InvoicePDFGenerator {
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="title">Factuur {{INVOICE_NUMBER}}</div>
-        <div class="company-name">{{COMPANY_NAME}}</div>
-        <div class="company-details">
-            {{COMPANY_ADDRESS}}<br>
-            {{COMPANY_POSTAL_CODE}} {{COMPANY_CITY}}<br>
-            Tel: {{COMPANY_PHONE}} | Email: {{COMPANY_EMAIL}}
-        </div>
-    </div>
-    
-    <div class="content">
-        <div class="info-section">
-            <div class="info-col">
-                <div class="info-label">Klant:</div>
-                <div class="info-value">{{CUSTOMER_NAME}}</div>
-                <div class="info-value">{{CUSTOMER_ADDRESS}}</div>
-                <div class="info-value">{{CUSTOMER_POSTAL_CODE}} {{CUSTOMER_CITY}}</div>
-            </div>
-            <div class="info-col">
-                <div class="info-label">Factuurdatum:</div>
-                <div class="info-value">{{INVOICE_DATE}}</div>
-                <div class="info-label">Vervaldatum:</div>
-                <div class="info-value">{{DUE_DATE}}</div>
-                <div class="info-label">Betreft:</div>
-                <div class="info-value">{{INVOICE_SUBJECT}}</div>
+    <div class="document">
+        <div class="header">
+            <div class="title">Factuur {{INVOICE_NUMBER}}</div>
+            <div class="company-name">{{COMPANY_NAME}}</div>
+            <div class="company-details">
+                {{COMPANY_ADDRESS}}<br>
+                {{COMPANY_POSTAL_CODE}} {{COMPANY_CITY}}<br>
+                Tel: {{COMPANY_PHONE}} | Email: {{COMPANY_EMAIL}}
             </div>
         </div>
-        
-        <table>
-            <thead>
-                <tr>
-                    <th>Beschrijving</th>
-                    <th>Aantal</th>
-                    <th>Prijs</th>
-                    <th>Totaal</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{INVOICE_LINES}}
-            </tbody>
-        </table>
-        
-        <div class="totals">
-            <div class="total-row">
-                <div class="total-label">Subtotaal:</div>
-                <div class="total-amount">€{{SUBTOTAL}}</div>
+
+        <div class="content">
+            <div class="info-section">
+                <div class="info-col">
+                    <div class="info-label">Klant:</div>
+                    <div class="info-value">{{CUSTOMER_NAME}}</div>
+                    <div class="info-value">{{CUSTOMER_ADDRESS}}</div>
+                    <div class="info-value">{{CUSTOMER_POSTAL_CODE}} {{CUSTOMER_CITY}}</div>
+                </div>
+                <div class="info-col">
+                    <div class="info-label">Factuurdatum:</div>
+                    <div class="info-value">{{INVOICE_DATE}}</div>
+                    <div class="info-label">Vervaldatum:</div>
+                    <div class="info-value">{{DUE_DATE}}</div>
+                    <div class="info-label">Betreft:</div>
+                    <div class="info-value">{{INVOICE_SUBJECT}}</div>
+                </div>
             </div>
-            <div class="total-row">
-                <div class="total-label">BTW ({{VAT_PERCENTAGE}}%):</div>
-                <div class="total-amount">€{{VAT_AMOUNT}}</div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Beschrijving</th>
+                        <th>Aantal</th>
+                        <th>Prijs</th>
+                        <th>Totaal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{INVOICE_LINES}}
+                </tbody>
+            </table>
+
+            <div class="totals">
+                <div class="total-row">
+                    <div class="total-label">Subtotaal:</div>
+                    <div class="total-amount">€{{SUBTOTAL}}</div>
+                </div>
+                <div class="total-row">
+                    <div class="total-label">BTW ({{VAT_PERCENTAGE}}%):</div>
+                    <div class="total-amount">€{{VAT_AMOUNT}}</div>
+                </div>
+                <div class="total-row final-total">
+                    <div class="total-label">Totaal:</div>
+                    <div class="total-amount">€{{TOTAL_AMOUNT}}</div>
+                </div>
             </div>
-            <div class="total-row final-total">
-                <div class="total-label">Totaal:</div>
-                <div class="total-amount">€{{TOTAL_AMOUNT}}</div>
+
+            <div class="footer">
+                <p>Betaling binnen {{PAYMENT_TERMS}} dagen na factuurdatum.</p>
+                <p>{{COMPANY_NAME}} | KvK: {{COMPANY_KVK}} | BTW-nr: {{COMPANY_VAT}}</p>
+                <p>IBAN: {{COMPANY_IBAN}} | BIC: {{COMPANY_BIC}}</p>
             </div>
-        </div>
-        
-        <div class="footer">
-            <p>Betaling binnen {{PAYMENT_TERMS}} dagen na factuurdatum.</p>
-            <p>{{COMPANY_NAME}} | KvK: {{COMPANY_KVK}} | BTW-nr: {{COMPANY_VAT}}</p>
-            <p>IBAN: {{COMPANY_IBAN}} | BIC: {{COMPANY_BIC}}</p>
         </div>
     </div>
 </body>
