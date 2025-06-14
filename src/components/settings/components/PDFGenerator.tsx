@@ -38,7 +38,7 @@ export class PDFGenerator {
         vat_amount: 168,
         total_amount: 968,
         payment_terms: 30,
-        status: "concept",
+        status: "draft", // <-- FIXED: was "concept"
         organization_id: uuidv4(),
         workspace_id: uuidv4(),
         template_id: null,
