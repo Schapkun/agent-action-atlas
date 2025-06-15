@@ -111,10 +111,9 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
           className="bg-white shadow-xl border border-gray-200 overflow-hidden"
           style={{
             width: '210mm',
-            height: '297mm',
+            height: 'calc(100vh - 140px)', // Use available height minus header/footer space
             maxWidth: 'calc(100% - 10px)',
-            maxHeight: 'calc(100% - 10px)',
-            aspectRatio: '210 / 297',
+            aspectRatio: '210 / 297', // Correct A4 ratio
             transform: 'scale(1)',
             transformOrigin: 'center'
           }}
@@ -124,8 +123,8 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
             className="w-full h-full border-0"
             title="A4 Document Preview"
             style={{
-              width: '210mm',
-              height: '297mm'
+              width: '100%',
+              height: '100%'
             }}
           />
         </div>
