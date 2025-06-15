@@ -37,19 +37,39 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     });
   }, []);
 
-  // Map database types to UI types
+  // Map database types to UI types - FIXED VERSION
   const mapDatabaseTypeToUI = (dbType: string, htmlContent?: string): DocumentTypeUI => {
-    console.log('[Simple Builder] Mapping DB type:', dbType, 'with HTML check');
+    console.log('[Simple Builder] Mapping DB type:', dbType, 'with HTML content check');
     
-    if (dbType === 'schapkun') return 'schapkun';
-    if (htmlContent && htmlContent.includes('schapkun')) return 'schapkun';
+    // First check explicit database type
+    if (dbType === 'schapkun') {
+      console.log('[Simple Builder] Detected schapkun from DB type');
+      return 'schapkun';
+    }
     
+    // Then check HTML content for schapkun indicators
+    if (htmlContent && htmlContent.includes('SCHAPKUN')) {
+      console.log('[Simple Builder] Detected schapkun from HTML content');
+      return 'schapkun';
+    }
+    
+    // Map other standard types
     switch (dbType) {
-      case 'factuur': return 'factuur';
-      case 'contract': return 'contract';
-      case 'brief': return 'brief';
-      case 'custom': return 'custom';
-      default: return 'custom';
+      case 'factuur': 
+        console.log('[Simple Builder] Mapped to factuur');
+        return 'factuur';
+      case 'contract': 
+        console.log('[Simple Builder] Mapped to contract');
+        return 'contract';
+      case 'brief': 
+        console.log('[Simple Builder] Mapped to brief');
+        return 'brief';
+      case 'custom': 
+        console.log('[Simple Builder] Mapped to custom');
+        return 'custom';
+      default: 
+        console.log('[Simple Builder] Defaulted to custom for type:', dbType);
+        return 'custom';
     }
   };
 
@@ -84,9 +104,10 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     if (editingDocument) {
       // ALWAYS load from database, never from drafts
       newName = editingDocument.name;
-      newType = mapDatabaseTypeToUI(editingDocument.type, editingDocument.html_content);
       
-      console.log('[Simple Builder] Loading from database:', editingDocument.name, 'Type:', newType);
+      // FIXED: Proper type mapping with detailed logging
+      newType = mapDatabaseTypeToUI(editingDocument.type, editingDocument.html_content);
+      console.log('[Simple Builder] Final mapped type:', newType, 'from DB type:', editingDocument.type);
       
       // Load saved placeholder values if they exist
       if (editingDocument.placeholder_values) {
@@ -122,7 +143,9 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     setIsInitialized(true);
 
     previousEditingDocumentId.current = editingDocument?.id;
-  }, [editingDocument, getTemplateForType]);
+    
+    console.log('[Simple Builder] Document initialized with type:', newType, 'name:', newName);
+  }, [editingDocument, getTemplateForType, mapDatabaseTypeToUI]);
 
   // Handle template type changes
   const handleDocumentTypeChange = useCallback((newType: DocumentTypeUI) => {
