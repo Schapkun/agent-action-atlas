@@ -107,12 +107,12 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       </CardHeader>
       
       <CardContent className="flex-1 p-6 flex items-center justify-center bg-gray-50 overflow-hidden">
-        <div className="flex items-center justify-center w-full h-full">
+        <div className="flex items-center justify-center w-full h-full" style={{ padding: '5px 0' }}>
           <div 
             className="bg-white shadow-xl border border-gray-200 overflow-hidden"
             style={{
-              width: 'min(100%, calc(100vh - 200px) * 210 / 297)',
-              height: 'min(calc(100vw - 400px) * 297 / 210, calc(100vh - 200px))',
+              width: `min(calc(100% - 20px), calc((100vh - 220px) * 210 / 297))`,
+              height: `calc((min(calc(100% - 20px), calc((100vh - 220px) * 210 / 297))) * 297 / 210)`,
               aspectRatio: '210 / 297',
               maxWidth: '210mm',
               maxHeight: '297mm'
