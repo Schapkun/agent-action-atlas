@@ -20,8 +20,9 @@ export function useDocumentState({ editingDocument }: UseDocumentStateProps) {
   const [htmlContent, setHtmlContent] = React.useState('');
   const [placeholderValues, setPlaceholderValues] = React.useState<Record<string, string>>(DEFAULT_PLACEHOLDER_VALUES);
 
-  // Store last loaded document ID to prevent unnecessary reloads
+  // Track what was last loaded to force refreshes on database updates
   const [lastLoadedDocId, setLastLoadedDocId] = React.useState<string | null>(null);
+  const [lastLoadedUpdatedAt, setLastLoadedUpdatedAt] = React.useState<string | null>(null);
 
   // Clear localStorage drafts on mount
   React.useEffect(() => {
@@ -54,16 +55,21 @@ export function useDocumentState({ editingDocument }: UseDocumentStateProps) {
   // Simple draft key function (kept for compatibility, but not used)
   const getDraftKey = React.useCallback((docName: string) => `builder_draft_${docName}`, []);
 
-  // Initialize state from editing document - ALWAYS from database
+  // Initialize state from editing document - ALWAYS from database with proper change detection
   React.useEffect(() => {
-    // Only reload if document actually changed
-    if (editingDocument?.id === lastLoadedDocId) {
-      console.log('[useDocumentState] Same document, skipping reload');
+    const hasDocumentChanged = editingDocument?.id !== lastLoadedDocId;
+    const hasContentUpdated = editingDocument?.updated_at !== lastLoadedUpdatedAt;
+    
+    // Only reload if document actually changed OR if content was updated in database
+    if (!hasDocumentChanged && !hasContentUpdated) {
+      console.log('[useDocumentState] Same document and no updates, skipping reload');
       return;
     }
 
     if (editingDocument) {
       console.log('[useDocumentState] Loading document from database:', editingDocument.name, editingDocument.id);
+      console.log('[useDocumentState] Document changed:', hasDocumentChanged, 'Content updated:', hasContentUpdated);
+      console.log('[useDocumentState] Previous updated_at:', lastLoadedUpdatedAt, 'New updated_at:', editingDocument.updated_at);
       
       setDocumentName(editingDocument.name);
       
@@ -83,6 +89,7 @@ export function useDocumentState({ editingDocument }: UseDocumentStateProps) {
       // Reset unsaved changes when loading a fresh document
       setHasUnsavedChanges(false);
       setLastLoadedDocId(editingDocument.id);
+      setLastLoadedUpdatedAt(editingDocument.updated_at);
       
       console.log('[useDocumentState] Document loaded fresh from database');
     } else {
@@ -94,8 +101,9 @@ export function useDocumentState({ editingDocument }: UseDocumentStateProps) {
       setPlaceholderValues(DEFAULT_PLACEHOLDER_VALUES);
       setHasUnsavedChanges(false);
       setLastLoadedDocId(null);
+      setLastLoadedUpdatedAt(null);
     }
-  }, [editingDocument?.id, editingDocument?.updated_at]);
+  }, [editingDocument?.id, editingDocument?.updated_at, lastLoadedDocId, lastLoadedUpdatedAt]);
 
   return {
     documentName,
