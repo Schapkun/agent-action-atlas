@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from 'react';
-import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
+import { DocumentTemplate, useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { DocumentTypeUI } from './htmlDocumentConstants';
 import { usePlaceholderReplacement } from './usePlaceholderReplacement';
 
@@ -39,6 +39,7 @@ export function useDocumentActions({
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   
   const { getScaledHtmlContent } = usePlaceholderReplacement({ placeholderValues });
+  const { createTemplate, updateTemplate } = useDocumentTemplates();
 
   const handleSave = useCallback(async () => {
     if (!documentName.trim()) {
@@ -48,10 +49,6 @@ export function useDocumentActions({
 
     setIsSaving(true);
     try {
-      // Use the useDocumentTemplates hook directly
-      const { useDocumentTemplates } = await import('@/hooks/useDocumentTemplates');
-      const { createTemplate, updateTemplate } = useDocumentTemplates();
-      
       let savedDocument: DocumentTemplate;
       
       if (editingDocument) {
@@ -91,7 +88,9 @@ export function useDocumentActions({
     editingDocument,
     clearDraftForDocument,
     setHasUnsavedChanges,
-    onDocumentSaved
+    onDocumentSaved,
+    createTemplate,
+    updateTemplate
   ]);
 
   const handleCancel = useCallback(() => {
