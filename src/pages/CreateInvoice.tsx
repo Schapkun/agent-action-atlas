@@ -94,12 +94,14 @@ const CreateInvoice = () => {
     console.log('Available template types:', documentTemplates.map(t => ({ id: t.id, name: t.name, type: t.type })));
   }, [documentTemplates, templatesLoading]);
 
-  // Filter templates for factuur and schapkun types - fixed filtering
-  const availableTemplates = documentTemplates.filter(t => 
-    t.type === 'factuur' || t.type === 'schapkun'
-  );
+  // Filter templates for factuur and schapkun types - improved filtering with debugging
+  const availableTemplates = documentTemplates.filter(t => {
+    const isValid = t.type === 'factuur' || t.type === 'schapkun';
+    console.log(`Template ${t.name} (${t.type}): ${isValid ? 'included' : 'excluded'}`);
+    return isValid;
+  });
 
-  console.log('Filtered available templates:', availableTemplates);
+  console.log('Filtered available templates:', availableTemplates.length, availableTemplates);
 
   // Set default template and payment terms when loaded
   useEffect(() => {
@@ -199,7 +201,7 @@ const CreateInvoice = () => {
 
   // Contact creation handler - only update UI, don't create invoice
   const handleContactCreated = (contact: Contact) => {
-    console.log('Contact created, updating UI:', contact);
+    console.log('Contact created, only updating UI (not creating invoice):', contact);
     setSelectedContact(contact);
     handleContactSelect(contact);
     toast({
@@ -210,7 +212,7 @@ const CreateInvoice = () => {
 
   // Contact update handler - only update UI, don't create invoice
   const handleContactUpdated = (contact: Contact) => {
-    console.log('Contact updated, updating UI:', contact);
+    console.log('Contact updated, only updating UI (not creating invoice):', contact);
     setSelectedContact(contact);
     handleContactSelect(contact);
     toast({
@@ -261,6 +263,11 @@ const CreateInvoice = () => {
     const total = subtotal + vatAmount;
     
     return { subtotal, vatAmount, total };
+  };
+
+  // Rich text formatting functions
+  const applyFormatting = (command: string, value?: string) => {
+    document.execCommand(command, false, value);
   };
 
   // Fixed preview HTML generation with proper template handling
@@ -573,17 +580,19 @@ Uw administratie`
                   <Label className="text-xs font-medium">Layout</Label>
                   <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
                     <SelectTrigger className="h-8 text-xs">
-                      <SelectValue placeholder="Selecteer layout" />
+                      <SelectValue placeholder={availableTemplates.length > 0 ? "Selecteer layout" : "Geen layouts beschikbaar"} />
                     </SelectTrigger>
                     <SelectContent className="bg-white border shadow-lg z-50">
                       {availableTemplates.length > 0 ? (
                         availableTemplates.map((template) => (
                           <SelectItem key={template.id} value={template.id}>
-                            {template.name}
+                            {template.name} ({template.type})
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="no-templates" disabled>Geen templates beschikbaar</SelectItem>
+                        <SelectItem value="no-templates" disabled>
+                          {templatesLoading ? "Templates laden..." : "Geen templates beschikbaar"}
+                        </SelectItem>
                       )}
                     </SelectContent>
                   </Select>
@@ -661,7 +670,7 @@ Uw administratie`
             </CardContent>
           </Card>
 
-          {/* Products/Services table - Fixed column alignment */}
+          {/* Products/Services table - FIXED column alignment and totals position */}
           <Card>
             <CardHeader className="p-2">
               <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700">
@@ -687,19 +696,43 @@ Uw administratie`
                       />
                     </div>
                     <div className="col-span-6">
-                      {/* Rich text editor with formatting buttons */}
+                      {/* FIXED: Rich text editor with working formatting buttons */}
                       <div className="border rounded">
                         <div className="flex items-center gap-1 p-1 border-b bg-gray-50">
-                          <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 w-6 p-0"
+                            onClick={() => applyFormatting('bold')}
+                          >
                             <Bold className="h-3 w-3" />
                           </Button>
-                          <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 w-6 p-0"
+                            onClick={() => applyFormatting('italic')}
+                          >
                             <Italic className="h-3 w-3" />
                           </Button>
-                          <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 w-6 p-0"
+                            onClick={() => applyFormatting('underline')}
+                          >
                             <Underline className="h-3 w-3" />
                           </Button>
-                          <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 w-6 p-0"
+                            onClick={() => applyFormatting('insertUnorderedList')}
+                          >
                             <List className="h-3 w-3" />
                           </Button>
                         </div>
@@ -707,7 +740,8 @@ Uw administratie`
                           contentEditable
                           className="min-h-[32px] p-2 text-xs focus:outline-none"
                           style={{ direction: 'ltr', textAlign: 'left' }}
-                          onBlur={(e) => updateLineItem(index, 'description', e.currentTarget.textContent || '')}
+                          onBlur={(e) => updateLineItem(index, 'description', e.currentTarget.innerHTML || '')}
+                          dangerouslySetInnerHTML={{ __html: item.description }}
                           suppressContentEditableWarning
                         />
                       </div>
