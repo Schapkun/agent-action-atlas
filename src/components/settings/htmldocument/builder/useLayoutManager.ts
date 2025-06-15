@@ -15,37 +15,55 @@ export const useLayoutManager = () => {
   const [selectedLayoutId, setSelectedLayoutId] = useState<string>('modern-blue');
   const layoutDrafts = useRef<Map<string, LayoutDraft>>(new Map());
 
-  // Save current layout draft
-  const saveLayoutDraft = useCallback((layoutId: string, draft: LayoutDraft) => {
-    console.log('[LayoutManager] Saving draft for layout:', layoutId);
+  // Save current layout draft with all current state
+  const saveLayoutDraft = useCallback((layoutId: string, currentState: {
+    htmlContent: string;
+    placeholderValues: Record<string, string>;
+    name: string;
+    type: 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun';
+    hasChanges: boolean;
+  }) => {
+    console.log('[LayoutManager] Saving draft for layout:', layoutId, {
+      contentLength: currentState.htmlContent.length,
+      hasChanges: currentState.hasChanges,
+      name: currentState.name
+    });
+    
     layoutDrafts.current.set(layoutId, {
-      ...draft,
+      ...currentState,
       lastSaved: Date.now()
     });
   }, []);
 
   // Get layout draft
   const getLayoutDraft = useCallback((layoutId: string): LayoutDraft | null => {
-    return layoutDrafts.current.get(layoutId) || null;
-  }, []);
-
-  // Switch layout with draft preservation
-  const switchLayout = useCallback((newLayoutId: string, currentState: any) => {
-    console.log('[LayoutManager] Switching from', selectedLayoutId, 'to', newLayoutId);
-    
-    // Save current layout state first
-    if (currentState.hasChanges) {
-      saveLayoutDraft(selectedLayoutId, {
-        htmlContent: currentState.htmlContent,
-        placeholderValues: currentState.placeholderValues,
-        name: currentState.name,
-        type: currentState.type,
-        hasChanges: currentState.hasChanges,
-        lastSaved: Date.now()
+    const draft = layoutDrafts.current.get(layoutId);
+    if (draft) {
+      console.log('[LayoutManager] Retrieved draft for layout:', layoutId, {
+        contentLength: draft.htmlContent.length,
+        hasChanges: draft.hasChanges
       });
     }
+    return draft || null;
+  }, []);
 
+  // Switch layout with proper draft management
+  const switchLayout = useCallback((newLayoutId: string, currentState: {
+    htmlContent: string;
+    placeholderValues: Record<string, string>;
+    name: string;
+    type: 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun';
+    hasChanges: boolean;
+  }) => {
+    console.log('[LayoutManager] Switching from', selectedLayoutId, 'to', newLayoutId);
+    
+    // Always save current state before switching
+    saveLayoutDraft(selectedLayoutId, currentState);
+
+    // Update selected layout
     setSelectedLayoutId(newLayoutId);
+    
+    // Return the draft for the new layout (if any)
     return getLayoutDraft(newLayoutId);
   }, [selectedLayoutId, saveLayoutDraft, getLayoutDraft]);
 
@@ -111,6 +129,12 @@ export const useLayoutManager = () => {
     }
   }, []);
 
+  // Clear all layout drafts
+  const clearAllLayoutDrafts = useCallback(() => {
+    console.log('[LayoutManager] Clearing all layout drafts');
+    layoutDrafts.current.clear();
+  }, []);
+
   return {
     selectedLayoutId,
     layouts: UNIQUE_LAYOUT_TEMPLATES,
@@ -119,6 +143,8 @@ export const useLayoutManager = () => {
     saveLayoutDraft,
     getLayoutDraft,
     applyLayoutStyling,
-    hasLayoutDraft: (layoutId: string) => layoutDrafts.current.has(layoutId)
+    clearAllLayoutDrafts,
+    hasLayoutDraft: (layoutId: string) => layoutDrafts.current.has(layoutId),
+    getAllLayoutDrafts: () => Array.from(layoutDrafts.current.keys())
   };
 };

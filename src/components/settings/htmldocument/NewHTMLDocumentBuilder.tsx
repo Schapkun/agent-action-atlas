@@ -66,11 +66,21 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
     hasLayoutDraft
   } = useLayoutManager();
 
-  // Handle layout switching with draft preservation
+  // Handle layout switching with proper state preservation
   const handleLayoutChange = useCallback((layout: any) => {
     console.log('[UI] Switching to layout:', layout.name);
     
-    const layoutDraft = switchLayout(layout.id, state);
+    // Create current state snapshot
+    const currentStateSnapshot = {
+      htmlContent: state.htmlContent,
+      placeholderValues: state.placeholderValues,
+      name: state.name,
+      type: state.type,
+      hasChanges: state.hasChanges
+    };
+    
+    // Switch layout and get any existing draft
+    const layoutDraft = switchLayout(layout.id, currentStateSnapshot);
     
     if (layoutDraft) {
       // Restore draft for this layout
@@ -81,6 +91,7 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
       updatePlaceholderValues(layoutDraft.placeholderValues);
     } else {
       // Apply layout styling to current content
+      console.log('[UI] Applying layout styling to current content');
       const styledContent = applyLayoutStyling(state.htmlContent, layout.id);
       updateHtmlContent(styledContent);
     }
