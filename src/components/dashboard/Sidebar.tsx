@@ -1,7 +1,8 @@
+
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { 
   LayoutDashboard, 
@@ -21,12 +22,12 @@ import {
   ChevronRight,
   Plus,
   Send,
-  Eye,
   FileCheck,
-  Calculator
+  Calculator,
+  FileSpreadsheet
 } from 'lucide-react';
 
-export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
+export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'quotes' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
 
 interface SidebarProps {
   currentView: ViewType;
@@ -42,7 +43,8 @@ export const Sidebar = ({
   pendingTasksCount = 0 
 }: SidebarProps) => {
   const navigate = useNavigate();
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['invoices']);
+  const location = useLocation();
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['invoices', 'quotes']);
 
   const toggleSubmenu = (menuId: string) => {
     setExpandedMenus(prev => 
@@ -50,6 +52,20 @@ export const Sidebar = ({
         ? prev.filter(id => id !== menuId)
         : [...prev, menuId]
     );
+  };
+
+  const isActiveRoute = (path: string) => {
+    return location.pathname === path;
+  };
+
+  const isActiveSubmenu = (parentId: string) => {
+    if (parentId === 'invoices') {
+      return location.pathname.startsWith('/facturen');
+    }
+    if (parentId === 'quotes') {
+      return location.pathname.startsWith('/offertes');
+    }
+    return false;
   };
 
   const menuItems = [
@@ -67,9 +83,20 @@ export const Sidebar = ({
       hasSubmenu: true,
       submenu: [
         { id: 'new-invoice', label: 'Opstellen', icon: Plus, path: '/facturen/opstellen' },
-        { id: 'sent-invoices', label: 'Verzonden', icon: Send, path: '/facturen?status=sent' },
         { id: 'concept-invoices', label: 'Concepten', icon: FileCheck, path: '/facturen?status=draft' },
-        { id: 'paid-invoices', label: 'Betaald', icon: Calculator, path: '/facturen?status=paid' },
+        { id: 'sent-invoices', label: 'Verzonden', icon: Send, path: '/facturen?status=sent' },
+      ]
+    },
+    { 
+      id: 'quotes' as ViewType, 
+      label: 'Offertes', 
+      icon: FileSpreadsheet, 
+      path: '/offertes',
+      hasSubmenu: true,
+      submenu: [
+        { id: 'new-quote', label: 'Opstellen', icon: Plus, path: '/offertes/opstellen' },
+        { id: 'concept-quotes', label: 'Concepten', icon: FileCheck, path: '/offertes?status=draft' },
+        { id: 'sent-quotes', label: 'Verzonden', icon: Send, path: '/offertes?status=sent' },
       ]
     },
     { id: 'phone-calls' as ViewType, label: 'Telefoongesprekken', icon: Phone, path: '/telefoongesprekken' },
@@ -123,10 +150,11 @@ export const Sidebar = ({
             <li key={item.id}>
               {/* Main menu item */}
               <Button
-                variant={currentView === item.id ? "secondary" : "ghost"}
+                variant={isActiveRoute(item.path) || isActiveSubmenu(item.id) ? "secondary" : "ghost"}
                 className={cn(
                   "w-full justify-start relative",
-                  collapsed && "px-3"
+                  collapsed && "px-3",
+                  (isActiveRoute(item.path) || isActiveSubmenu(item.id)) && "bg-primary/10 text-primary font-medium"
                 )}
                 onClick={() => handleMenuClick(item)}
               >
@@ -165,9 +193,12 @@ export const Sidebar = ({
                   {item.submenu?.map((submenuItem) => (
                     <li key={submenuItem.id}>
                       <Button
-                        variant="ghost"
+                        variant={isActiveRoute(submenuItem.path) ? "secondary" : "ghost"}
                         size="sm"
-                        className="w-full justify-start text-sm"
+                        className={cn(
+                          "w-full justify-start text-sm",
+                          isActiveRoute(submenuItem.path) && "bg-primary/10 text-primary font-medium"
+                        )}
                         onClick={() => handleMenuClick(item, submenuItem)}
                       >
                         <submenuItem.icon className="h-3 w-3" />

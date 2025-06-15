@@ -432,6 +432,125 @@ export type Database = {
         }
         Relationships: []
       }
+      quote_lines: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          line_total: number
+          quantity: number
+          quote_id: string
+          sort_order: number | null
+          unit_price: number
+          vat_rate: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          line_total: number
+          quantity?: number
+          quote_id: string
+          sort_order?: number | null
+          unit_price: number
+          vat_rate?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          line_total?: number
+          quantity?: number
+          quote_id?: string
+          sort_order?: number | null
+          unit_price?: number
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_lines_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          client_address: string | null
+          client_city: string | null
+          client_country: string | null
+          client_email: string | null
+          client_name: string
+          client_postal_code: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          organization_id: string
+          quote_date: string
+          quote_number: string
+          status: string
+          subtotal: number
+          template_id: string | null
+          total_amount: number
+          updated_at: string
+          valid_until: string
+          vat_amount: number
+          vat_percentage: number
+          workspace_id: string | null
+        }
+        Insert: {
+          client_address?: string | null
+          client_city?: string | null
+          client_country?: string | null
+          client_email?: string | null
+          client_name: string
+          client_postal_code?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+          quote_date?: string
+          quote_number: string
+          status?: string
+          subtotal?: number
+          template_id?: string | null
+          total_amount?: number
+          updated_at?: string
+          valid_until: string
+          vat_amount?: number
+          vat_percentage?: number
+          workspace_id?: string | null
+        }
+        Update: {
+          client_address?: string | null
+          client_city?: string | null
+          client_country?: string | null
+          client_email?: string | null
+          client_name?: string
+          client_postal_code?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          quote_date?: string
+          quote_number?: string
+          status?: string
+          subtotal?: number
+          template_id?: string | null
+          total_amount?: number
+          updated_at?: string
+          valid_until?: string
+          vat_amount?: number
+          vat_percentage?: number
+          workspace_id?: string | null
+        }
+        Relationships: []
+      }
       user_invitations: {
         Row: {
           accepted_at: string | null
@@ -663,6 +782,10 @@ export type Database = {
     }
     Functions: {
       generate_invoice_number: {
+        Args: { org_id: string; workspace_id?: string }
+        Returns: string
+      }
+      generate_quote_number: {
         Args: { org_id: string; workspace_id?: string }
         Returns: string
       }

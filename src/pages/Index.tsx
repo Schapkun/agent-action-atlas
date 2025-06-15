@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Sidebar } from '@/components/dashboard/Sidebar';
@@ -24,7 +25,8 @@ const Index = ({ children }: IndexProps) => {
     if (path === '/documenten') return 'documents';
     if (path === '/actieve-dossiers') return 'active-dossiers';
     if (path === '/gesloten-dossiers') return 'closed-dossiers';
-    if (path === '/facturen') return 'invoices';
+    if (path === '/facturen' || path.startsWith('/facturen/')) return 'invoices';
+    if (path === '/offertes' || path.startsWith('/offertes/')) return 'quotes';
     if (path === '/telefoongesprekken') return 'phone-calls';
     if (path === '/e-mails') return 'emails';
     if (path === '/contacten') return 'contacts';

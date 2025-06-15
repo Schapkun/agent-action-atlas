@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Send, Bold, Italic, Underline, List } from 'lucide-react';
+import { Plus, Trash2, Send, Bold, Italic, Underline, List, FileText, Settings, RotateCcw, RotateCw, Eye, Save } from 'lucide-react';
 import { useInvoices, Invoice } from '@/hooks/useInvoices';
+import { useQuotes } from '@/hooks/useQuotes';
 import { useInvoiceLines } from '@/hooks/useInvoiceLines';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,6 +39,7 @@ interface LineItem {
 const CreateInvoice = () => {
   const navigate = useNavigate();
   const { createInvoice } = useInvoices();
+  const { createQuote } = useQuotes();
   const [loading, setLoading] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState('debuitendeur.nl');
@@ -104,6 +106,110 @@ const CreateInvoice = () => {
     const total = subtotal + vatAmount;
     
     return { subtotal, vatAmount, total };
+  };
+
+  const handleCopy = () => {
+    // Copy invoice data to clipboard
+    const invoiceData = JSON.stringify({ formData, lineItems });
+    navigator.clipboard.writeText(invoiceData);
+    toast({
+      title: "Gekopieerd",
+      description: "Factuurgegevens zijn gekopieerd naar het klembord"
+    });
+  };
+
+  const handleUndo = () => {
+    // Simple undo functionality - reset to initial state
+    setFormData({
+      client_name: '',
+      client_email: '',
+      client_address: '',
+      client_postal_code: '',
+      client_city: '',
+      client_country: 'Nederland',
+      invoice_date: format(new Date(), 'yyyy-MM-dd'),
+      due_date: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+      payment_terms: 30,
+      notes: '',
+      vat_percentage: 21.00
+    });
+    setLineItems([{ description: '', quantity: 1, unit_price: 0, vat_rate: 21, line_total: 0 }]);
+    toast({
+      title: "Ongedaan gemaakt",
+      description: "Wijzigingen zijn ongedaan gemaakt"
+    });
+  };
+
+  const handleRedo = () => {
+    toast({
+      title: "Opnieuw",
+      description: "Redo functionaliteit wordt binnenkort toegevoegd"
+    });
+  };
+
+  const handlePreview = () => {
+    // Open preview in new window/modal
+    toast({
+      title: "Voorbeeld",
+      description: "Voorbeeld functionaliteit wordt binnenkort toegevoegd"
+    });
+  };
+
+  const handleSettings = () => {
+    navigate('/instellingen');
+  };
+
+  const handleNewContact = () => {
+    navigate('/contacten?action=new');
+  };
+
+  const handleEditContact = () => {
+    if (!formData.client_name) {
+      toast({
+        title: "Geen contact geselecteerd",
+        description: "Selecteer eerst een contact om te bewerken",
+        variant: "destructive"
+      });
+      return;
+    }
+    navigate('/contacten?action=edit');
+  };
+
+  const handleConvertToQuote = async () => {
+    try {
+      const { subtotal, vatAmount, total } = calculateTotals();
+      
+      const quoteData = {
+        client_name: formData.client_name,
+        client_email: formData.client_email,
+        client_address: formData.client_address,
+        client_postal_code: formData.client_postal_code,
+        client_city: formData.client_city,
+        client_country: formData.client_country,
+        quote_date: formData.invoice_date,
+        valid_until: formData.due_date,
+        notes: formData.notes,
+        vat_percentage: formData.vat_percentage,
+        subtotal,
+        vat_amount: vatAmount,
+        total_amount: total,
+        status: 'draft' as const
+      };
+
+      await createQuote(quoteData);
+      toast({
+        title: "Omgezet naar offerte",
+        description: "Factuur is succesvol omgezet naar een offerte"
+      });
+      navigate('/offertes');
+    } catch (error) {
+      console.error('Error converting to quote:', error);
+      toast({
+        title: "Fout",
+        description: "Kon factuur niet omzetten naar offerte",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -200,21 +306,21 @@ Uw administratie`
           </div>
           
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="bg-blue-500 text-white hover:bg-blue-600 border-blue-500 text-xs px-2 py-1">
-              Verstuur
+            <Button variant="outline" size="sm" onClick={handleCopy} className="text-xs px-2 py-1">
+              <FileText className="h-3 w-3" />
             </Button>
-            <Button variant="outline" size="sm" className="text-xs px-2 py-1">📋</Button>
-            <Button variant="outline" size="sm" className="text-xs px-2 py-1">❌</Button>
-            <Button variant="outline" size="sm" className="text-xs px-2 py-1">↶</Button>
-            <Button variant="outline" size="sm" className="text-xs px-2 py-1">↷</Button>
+            <Button variant="outline" size="sm" onClick={handleUndo} className="text-xs px-2 py-1">
+              <RotateCcw className="h-3 w-3" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleRedo} className="text-xs px-2 py-1">
+              <RotateCw className="h-3 w-3" />
+            </Button>
             <div className="flex items-center gap-1 ml-2">
-              <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs px-2 py-1">
-                👁️ Voorbeeld
+              <Button variant="outline" size="sm" onClick={handlePreview} className="flex items-center gap-1 text-xs px-2 py-1">
+                <Eye className="h-3 w-3" />
+                Voorbeeld
               </Button>
-              <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs px-2 py-1">
-                💾 Opslaan als concept
-              </Button>
-              <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs px-2 py-1">
+              <Button variant="outline" size="sm" onClick={handleConvertToQuote} className="flex items-center gap-1 text-xs px-2 py-1">
                 ⚙️ Naar offerte
               </Button>
             </div>
@@ -225,7 +331,7 @@ Uw administratie`
       {/* Main content - Much more compact */}
       <div className="max-w-6xl mx-auto p-3">
         <form onSubmit={handleSubmit} className="space-y-3">
-          {/* Client selection - Compact */}
+          {/* Contact selection - Compact */}
           <Card>
             <CardContent className="p-3">
               <div className="flex items-center gap-3 mb-2">
@@ -233,13 +339,13 @@ Uw administratie`
                   <Label htmlFor="client_select" className="text-xs font-medium">Aan</Label>
                   <div className="flex gap-2 mt-1">
                     <Input 
-                      placeholder="Selecteer klant - zoek op naam, klantnummer, plaats, adres, e-mailadres of postcode"
+                      placeholder="Selecteer contact - zoek op naam, contactnummer, plaats, adres, e-mailadres of postcode"
                       className="flex-1 text-xs h-8"
                       value={formData.client_name}
                       onChange={(e) => setFormData({...formData, client_name: e.target.value})}
                     />
-                    <Button type="button" variant="outline" size="sm" className="text-blue-500 text-xs px-2 h-8">Nieuw</Button>
-                    <Button type="button" variant="outline" size="sm" className="text-blue-500 text-xs px-2 h-8">Bewerken</Button>
+                    <Button type="button" variant="outline" size="sm" onClick={handleNewContact} className="text-blue-500 text-xs px-2 h-8">Nieuw</Button>
+                    <Button type="button" variant="outline" size="sm" onClick={handleEditContact} className="text-blue-500 text-xs px-2 h-8">Bewerken</Button>
                   </div>
                 </div>
                 <div className="w-48">
@@ -253,7 +359,9 @@ Uw administratie`
                     </SelectContent>
                   </Select>
                 </div>
-                <Button type="button" variant="outline" size="sm" className="mt-4 h-8 w-8 p-0">⚙️</Button>
+                <Button type="button" variant="outline" size="sm" onClick={handleSettings} className="mt-4 h-8 w-8 p-0">
+                  <Settings className="h-3 w-3" />
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -421,14 +529,15 @@ Uw administratie`
             </CardContent>
           </Card>
 
-          {/* Add line button - Compact */}
-          <div>
+          {/* Add line button moved to the right */}
+          <div className="flex justify-end">
             <Button 
               type="button" 
               onClick={addLineItem}
               size="sm"
               className="bg-blue-500 text-white hover:bg-blue-600 text-xs"
             >
+              <Plus className="h-3 w-3 mr-1" />
               Voeg regel toe
             </Button>
           </div>
@@ -481,7 +590,8 @@ Uw administratie`
               size="sm"
               className="bg-gray-800 hover:bg-gray-900 text-xs"
             >
-              {loading ? 'Opslaan...' : 'Opslaan als concept'}
+              <Save className="h-3 w-3 mr-1" />
+              {loading ? 'Opslaan...' : 'Opslaan'}
             </Button>
             <Button 
               type="button" 

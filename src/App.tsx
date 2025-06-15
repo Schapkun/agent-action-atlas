@@ -17,6 +17,8 @@ import ActiveDossiers from "./pages/ActiveDossiers";
 import ClosedDossiers from "./pages/ClosedDossiers";
 import Invoices from "./pages/Invoices";
 import CreateInvoice from "./pages/CreateInvoice";
+import Quotes from "./pages/Quotes";
+import CreateQuote from "./pages/CreateQuote";
 import PhoneCalls from "./pages/PhoneCalls";
 import Emails from "./pages/Emails";
 import Contacts from "./pages/Contacts";
@@ -44,6 +46,8 @@ const App = () => (
               <Route path="/gesloten-dossiers" element={<Index><ClosedDossiers /></Index>} />
               <Route path="/facturen" element={<Index><Invoices /></Index>} />
               <Route path="/facturen/opstellen" element={<Index><CreateInvoice /></Index>} />
+              <Route path="/offertes" element={<Index><Quotes /></Index>} />
+              <Route path="/offertes/opstellen" element={<Index><CreateQuote /></Index>} />
               <Route path="/telefoongesprekken" element={<Index><PhoneCalls /></Index>} />
               <Route path="/e-mails" element={<Index><Emails /></Index>} />
               <Route path="/contacten" element={<Index><Contacts /></Index>} />
