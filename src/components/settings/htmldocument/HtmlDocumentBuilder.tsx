@@ -86,7 +86,7 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
           htmlContent: currentContent,
           lastModified: Date.now()
         });
-        console.log('[Builder] Saved content for profile before switch:', selectedProfileId);
+        console.log('[Builder] Auto-saved content for profile before switch:', selectedProfileId);
       }
       
       setSelectedProfileId(newProfileId);
@@ -123,6 +123,7 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
             htmlContent: content,
             lastModified: Date.now()
           }, true); // Force save
+          console.log('[Builder] Saved profile:', profileId, 'with content length:', content.length);
         }
       }
       
