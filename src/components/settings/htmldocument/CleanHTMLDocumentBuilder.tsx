@@ -208,6 +208,7 @@ export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> =
           const styledContent = applyLayoutStyling(baseContent, selectedLayoutId);
           setHtmlContent(styledContent);
           
+          // Fix: Properly merge placeholder values with defaults
           if (template.placeholder_values && typeof template.placeholder_values === 'object') {
             setPlaceholders({ ...DEFAULT_PLACEHOLDERS, ...template.placeholder_values });
           }
@@ -262,7 +263,8 @@ export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> =
     if (newLayoutDraft) {
       console.log('[Builder] Loading existing content for layout:', layout.id);
       setHtmlContent(newLayoutDraft.htmlContent);
-      setPlaceholders(newLayoutDraft.placeholderValues);
+      // Fix: Properly merge placeholder values with defaults
+      setPlaceholders({ ...DEFAULT_PLACEHOLDERS, ...newLayoutDraft.placeholderValues });
     } else {
       console.log('[Builder] Applying new layout styling to current content');
       // Apply new layout styling to current content
