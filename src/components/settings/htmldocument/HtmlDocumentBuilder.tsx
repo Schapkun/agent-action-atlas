@@ -40,19 +40,26 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
   
   const { toast } = useToast();
   const { saveData, hasUnsavedChanges } = useDirectSave(documentId);
-  const { templates } = useDocumentTemplates();
+  const { templates, loading: templatesLoading } = useDocumentTemplates();
 
   // Stable reference to prevent unnecessary re-renders
   const loadDataStable = useCallback(async (profileId: string) => {
+    // Critical: Wait for templates to be loaded before attempting to load content
+    if (templatesLoading) {
+      console.log('[Builder] Templates still loading, waiting...');
+      return null;
+    }
+
     if (!documentId) return '<h1>Document Titel</h1>\n<p>Begin hier met typen...</p>';
 
     try {
+      console.log('[Builder] Loading content for profile:', profileId, 'Templates available:', templates.length);
       const template = templates.find(t => t.id === documentId);
       if (template?.placeholder_values) {
         const profileSpecificContent = template.placeholder_values[`profile_${profileId}_content`];
         
         if (profileSpecificContent) {
-          console.log('[Builder] Found saved content for profile:', profileId);
+          console.log('[Builder] Found saved content for profile:', profileId, 'Length:', String(profileSpecificContent).length);
           return profileSpecificContent as string;
         }
       }
@@ -63,11 +70,15 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
       console.error('[Builder] Error loading profile content:', error);
       return '<h1>Document Titel</h1>\n<p>Begin hier met typen...</p>';
     }
-  }, [documentId, templates]);
+  }, [documentId, templates, templatesLoading]);
 
-  // Load content for all profiles only on initial mount
+  // Load content for all profiles only on initial mount and when templates are ready
   useEffect(() => {
-    if (!isInitialLoad) return;
+    // Critical: Don't load content if templates are still loading
+    if (!isInitialLoad || templatesLoading) {
+      console.log('[Builder] Skipping load - Initial load:', isInitialLoad, 'Templates loading:', templatesLoading);
+      return;
+    }
     
     const loadAllProfileContent = async () => {
       if (!documentId) {
@@ -78,15 +89,21 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
 
       try {
         setIsLoading(true);
+        console.log('[Builder] Starting initial load with templates available:', templates.length);
         const newProfileContents: ProfileContent = {};
         
         for (const profile of DEFAULT_PROFILES) {
           const content = await loadDataStable(profile.id);
-          newProfileContents[profile.id] = content;
+          if (content !== null) {
+            newProfileContents[profile.id] = content;
+          }
         }
         
-        setProfileContents(newProfileContents);
-        console.log('[Builder] Initial load completed for all profiles');
+        // Only update state if we actually loaded content
+        if (Object.keys(newProfileContents).length > 0) {
+          setProfileContents(newProfileContents);
+          console.log('[Builder] Initial load completed for all profiles:', Object.keys(newProfileContents));
+        }
       } catch (error) {
         console.error('[Builder] Error during initial load:', error);
       } finally {
@@ -96,7 +113,7 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
     };
     
     loadAllProfileContent();
-  }, [documentId, loadDataStable, isInitialLoad]);
+  }, [documentId, loadDataStable, isInitialLoad, templatesLoading]);
 
   // Save current profile content when switching profiles
   const handleProfileSwitch = async (newProfileId: string) => {
@@ -194,12 +211,15 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
     return styledHtml;
   };
 
-  if (isLoading) {
+  // Show loading state while templates are loading
+  if (isLoading || templatesLoading) {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-          <p className="text-sm text-gray-600">Document laden...</p>
+          <p className="text-sm text-gray-600">
+            {templatesLoading ? 'Templates laden...' : 'Document laden...'}
+          </p>
         </div>
       </div>
     );
