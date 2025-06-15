@@ -14,6 +14,7 @@ interface Contact {
   phone?: string;
   mobile?: string;
   type?: string;
+  payment_terms?: number;
 }
 
 interface ContactDialogProps {
@@ -85,7 +86,7 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
         shippingMethod: 'E-mail',
         standardEmailText: 'geen',
         reminderEmail: '',
-        paymentTerms: 14,
+        paymentTerms: contact.payment_terms || 14,
         iban: '',
         bic: '',
         automaticCollection: false
@@ -95,7 +96,15 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
       const randomNumber = Math.floor(Math.random() * 9000 + 1000).toString();
       setFormData(prev => ({
         ...prev,
-        number: randomNumber
+        number: randomNumber,
+        name: '',
+        email: '',
+        address: '',
+        postalCode: '',
+        city: '',
+        phone: '',
+        mobile: '',
+        paymentTerms: 14
       }));
     }
   }, [contact, mode, isOpen]);
@@ -113,10 +122,12 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
       country: formData.country,
       phone: formData.phone,
       mobile: formData.mobile,
-      type: formData.type
+      type: formData.type,
+      payment_terms: formData.paymentTerms
     };
 
     onSave(contactData);
+    onClose();
   };
 
   const handleCancel = () => {
@@ -126,7 +137,7 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="fixed max-w-4xl w-[90vw] h-[85vh] flex flex-col p-0">
-        <DialogHeader className="px-4 py-3 border-b">
+        <DialogHeader className="px-4 py-3 border-b flex-shrink-0">
           <DialogTitle className="text-white bg-blue-500 p-2 -mx-4 -mt-3 mb-3 text-sm">
             Contacten
           </DialogTitle>

@@ -48,6 +48,7 @@ interface Contact {
   postal_code?: string;
   city?: string;
   country?: string;
+  payment_terms?: number;
 }
 
 const CreateInvoice = () => {
@@ -156,7 +157,7 @@ const CreateInvoice = () => {
     setSelectedContact(contact);
     if (contact) {
       // Use contact's payment terms if available, otherwise use default
-      const contactPaymentTerms = (contact as any).payment_terms || invoiceSettings.default_payment_terms || 30;
+      const contactPaymentTerms = contact.payment_terms || invoiceSettings.default_payment_terms || 30;
       
       setFormData(prev => ({
         ...prev,
@@ -309,6 +310,9 @@ const CreateInvoice = () => {
                 padding: 20px; 
                 background: white;
                 color: #333;
+                width: 210mm;
+                height: 297mm;
+                box-sizing: border-box;
               }
               .header { text-align: center; margin-bottom: 30px; color: #333; }
               .invoice-details { margin-bottom: 30px; }
@@ -348,7 +352,7 @@ const CreateInvoice = () => {
               <tbody>
                 ${lineItems.map(item => `
                   <tr>
-                    <td>${item.description}</td>
+                    <td>${item.description || ''}</td>
                     <td>${item.quantity}</td>
                     <td>€ ${item.unit_price.toFixed(2)}</td>
                     <td>${item.vat_rate}%</td>
@@ -381,12 +385,14 @@ const CreateInvoice = () => {
       .replace(/\{client_country\}/g, formData.client_country)
       .replace(/\{subtotal\}/g, subtotal.toFixed(2))
       .replace(/\{vat_amount\}/g, vatAmount.toFixed(2))
-      .replace(/\{total\}/g, total.toFixed(2));
+      .replace(/\{total\}/g, total.toFixed(2))
+      .replace(/\{payment_terms\}/g, formData.payment_terms.toString())
+      .replace(/\{client_email\}/g, formData.client_email);
 
     // Generate line items HTML
     const lineItemsHTML = lineItems.map(item => `
       <tr>
-        <td>${item.description}</td>
+        <td>${item.description || ''}</td>
         <td>${item.quantity}</td>
         <td>€ ${item.unit_price.toFixed(2)}</td>
         <td>${item.vat_rate}%</td>
@@ -581,27 +587,12 @@ Uw administratie`
             <CardContent className="p-3">
               <div className="flex items-end gap-3 mb-2">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1">
-                      <ContactSelector
-                        selectedContact={selectedContact}
-                        onContactSelect={handleContactSelect}
-                        onContactCreated={handleContactCreated}
-                        onContactUpdated={handleContactUpdated}
-                      />
-                    </div>
-                    {selectedContact && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleContactClear}
-                        className="h-8 w-8 p-0 hover:bg-red-100"
-                      >
-                        <X className="h-4 w-4 text-red-500" />
-                      </Button>
-                    )}
-                  </div>
+                  <ContactSelector
+                    selectedContact={selectedContact}
+                    onContactSelect={handleContactSelect}
+                    onContactCreated={handleContactCreated}
+                    onContactUpdated={handleContactUpdated}
+                  />
                 </div>
                 <div className="w-48">
                   <Label className="text-xs font-medium">Layout</Label>
@@ -725,7 +716,7 @@ Uw administratie`
                           dangerouslySetInnerHTML={{ __html: item.description }}
                           onInput={(e) => handleDescriptionChange(index, e.currentTarget.innerHTML)}
                           onBlur={(e) => handleDescriptionChange(index, e.currentTarget.innerHTML)}
-                          style={{ minHeight: '32px', direction: 'ltr' }}
+                          style={{ minHeight: '32px', direction: 'ltr', textAlign: 'left' }}
                         />
                         <div className="flex items-center gap-1">
                           <Button 
@@ -768,23 +759,19 @@ Uw administratie`
                       </div>
                     </div>
                     <div className="col-span-2">
-                      <div className="text-center">
-                        <Label className="text-xs font-medium block mb-1">Prijs</Label>
-                        <div className="flex items-center justify-center gap-1">
-                          <span className="text-xs">€</span>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={item.unit_price}
-                            onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                            className="text-center text-xs h-8 w-20"
-                          />
-                        </div>
+                      <div className="flex items-center justify-center gap-1">
+                        <span className="text-xs">€</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={item.unit_price}
+                          onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                          className="text-center text-xs h-8 w-20"
+                        />
                       </div>
                     </div>
                     <div className="col-span-1">
                       <div className="text-center">
-                        <Label className="text-xs font-medium block mb-1">btw</Label>
                         <VatSelector
                           value={item.vat_rate}
                           onValueChange={(value) => updateLineItem(index, 'vat_rate', value)}
@@ -792,9 +779,8 @@ Uw administratie`
                         />
                       </div>
                     </div>
-                    <div className="col-span-2 flex items-end justify-between">
+                    <div className="col-span-2 flex items-center justify-between">
                       <div className="text-center flex-1">
-                        <Label className="text-xs font-medium block mb-1">Totaal</Label>
                         <div className="flex items-center justify-center gap-1">
                           <span className="text-xs">€</span>
                           <span className="font-medium text-xs">{item.line_total.toFixed(2)}</span>
@@ -870,7 +856,7 @@ Uw administratie`
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-medium">Klantinstellingen</h3>
               <Button variant="ghost" size="sm" onClick={() => setShowSettings(false)}>
-                ×
+                <X className="h-4 w-4" />
               </Button>
             </div>
             <div className="space-y-4">
@@ -898,15 +884,16 @@ Uw administratie`
 
       {/* Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-4xl max-h-[90vh] w-[90vw] p-0">
+        <DialogContent className="max-w-5xl max-h-[90vh] w-[90vw] p-0">
           <DialogHeader className="p-6 pb-0">
             <DialogTitle>Factuur Voorbeeld</DialogTitle>
           </DialogHeader>
-          <div className="p-6 pt-4">
-            <div className="bg-white mx-auto border" style={{ width: '210mm', height: '297mm', transform: 'scale(0.7)', transformOrigin: 'top center' }}>
+          <div className="p-6 pt-4 overflow-auto">
+            <div className="bg-white mx-auto border shadow-lg" style={{ width: '210mm', minHeight: '297mm' }}>
               <iframe
                 srcDoc={generatePreviewHTML()}
-                className="w-full h-full border-0"
+                className="w-full border-0"
+                style={{ height: '297mm' }}
                 title="Invoice Preview"
               />
             </div>

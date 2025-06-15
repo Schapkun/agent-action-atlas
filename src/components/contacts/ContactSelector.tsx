@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ContactDialog } from './ContactDialog';
+import { X } from 'lucide-react';
 
 interface Contact {
   id: string;
@@ -14,6 +14,7 @@ interface Contact {
   postal_code?: string;
   city?: string;
   country?: string;
+  payment_terms?: number;
 }
 
 interface ContactSelectorProps {
@@ -43,7 +44,8 @@ export const ContactSelector = ({
       address: 'Hoofdstraat 123',
       postal_code: '1234AB',
       city: 'Amsterdam',
-      country: 'Nederland'
+      country: 'Nederland',
+      payment_terms: 14
     },
     {
       id: '2',
@@ -52,7 +54,8 @@ export const ContactSelector = ({
       address: 'Kerkstraat 45',
       postal_code: '5678CD',
       city: 'Rotterdam',
-      country: 'Nederland'
+      country: 'Nederland',
+      payment_terms: 30
     }
   ];
 
@@ -68,6 +71,11 @@ export const ContactSelector = ({
     onContactSelect(contact);
     setSearchTerm(contact.name);
     setIsDropdownOpen(false);
+  };
+
+  const handleContactClear = () => {
+    onContactSelect(null);
+    setSearchTerm('');
   };
 
   const handleNewContact = () => {
@@ -102,7 +110,7 @@ export const ContactSelector = ({
             <div className="flex-1 relative">
               <Input 
                 placeholder="Selecteer contact - zoek op naam, contactnummer, plaats, adres, e-mailadres of postcode"
-                className="flex-1 text-xs h-8"
+                className="flex-1 text-xs h-8 pr-8"
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -110,6 +118,19 @@ export const ContactSelector = ({
                 }}
                 onFocus={() => setIsDropdownOpen(true)}
               />
+              
+              {/* Clear button inside input field */}
+              {selectedContact && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleContactClear}
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-red-100"
+                >
+                  <X className="h-3 w-3 text-red-500" />
+                </Button>
+              )}
               
               {/* Dropdown */}
               {isDropdownOpen && (
