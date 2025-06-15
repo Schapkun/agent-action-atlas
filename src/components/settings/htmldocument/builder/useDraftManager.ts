@@ -11,24 +11,31 @@ interface DocumentDraft {
 
 export const useDraftManager = () => {
   const drafts = useRef<Map<string, DocumentDraft>>(new Map());
+  const maxDrafts = 10; // Limit number of drafts to prevent memory issues
 
   const saveDraft = useCallback((documentId: string | undefined, draft: DocumentDraft) => {
     const key = documentId || 'new-document';
+    
+    // Prevent memory leaks by limiting drafts
+    if (drafts.current.size >= maxDrafts && !drafts.current.has(key)) {
+      // Remove oldest draft
+      const firstKey = drafts.current.keys().next().value;
+      if (firstKey) {
+        drafts.current.delete(firstKey);
+      }
+    }
+    
     drafts.current.set(key, { ...draft });
-    console.log('[DraftManager] Saved draft for:', key, draft.hasChanges);
   }, []);
 
   const getDraft = useCallback((documentId: string | undefined): DocumentDraft | null => {
     const key = documentId || 'new-document';
-    const draft = drafts.current.get(key);
-    console.log('[DraftManager] Retrieved draft for:', key, draft?.hasChanges);
-    return draft || null;
+    return drafts.current.get(key) || null;
   }, []);
 
   const clearDraft = useCallback((documentId: string | undefined) => {
     const key = documentId || 'new-document';
     drafts.current.delete(key);
-    console.log('[DraftManager] Cleared draft for:', key);
   }, []);
 
   const hasDraft = useCallback((documentId: string | undefined): boolean => {
@@ -36,10 +43,15 @@ export const useDraftManager = () => {
     return drafts.current.has(key);
   }, []);
 
+  const clearAllDrafts = useCallback(() => {
+    drafts.current.clear();
+  }, []);
+
   return {
     saveDraft,
     getDraft,
     clearDraft,
-    hasDraft
+    hasDraft,
+    clearAllDrafts
   };
 };

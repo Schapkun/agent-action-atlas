@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -55,50 +55,46 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
     selectedWorkspace
   } = useNewDocumentBuilder(documentId);
 
-  const handleSave = async () => {
-    const success = await saveDocument();
-    if (success) {
-      onComplete?.(true);
-    }
-  };
-
-  const handleCancel = () => {
-    if (state.hasChanges) {
-      const confirmed = window.confirm('Er zijn niet-opgeslagen wijzigingen. Weet je zeker dat je wilt annuleren?');
-      if (!confirmed) return;
-    }
-    onComplete?.(false);
-  };
-
-  const handleSaveChanges = () => {
-    saveDocument();
-  };
-
-  const handleDiscardChanges = () => {
-    // Reset to initial state or reload current document
-    if (documentId) {
-      window.location.reload(); // Simple approach to discard changes
-    }
-  };
-
-  const processedHtmlContent = () => {
+  // Memoize processed HTML to prevent unnecessary calculations
+  const processedHtmlContent = useMemo(() => {
     let content = state.htmlContent;
     Object.entries(state.placeholderValues).forEach(([key, value]) => {
       content = content.replace(new RegExp(`{{${key}}}`, 'g'), value);
     });
     return content;
-  };
+  }, [state.htmlContent, state.placeholderValues]);
 
-  const handleExport = () => {
-    const processedContent = processedHtmlContent();
-    const blob = new Blob([processedContent], { type: 'text/html' });
+  const handleSave = useCallback(async () => {
+    const success = await saveDocument();
+    if (success) {
+      onComplete?.(true);
+    }
+  }, [saveDocument, onComplete]);
+
+  const handleCancel = useCallback(() => {
+    if (state.hasChanges) {
+      const confirmed = window.confirm('Er zijn niet-opgeslagen wijzigingen. Weet je zeker dat je wilt annuleren?');
+      if (!confirmed) return;
+    }
+    onComplete?.(false);
+  }, [state.hasChanges, onComplete]);
+
+  const handleExport = useCallback(() => {
+    const blob = new Blob([processedHtmlContent], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `${state.name}.html`;
     a.click();
     URL.revokeObjectURL(url);
-  };
+  }, [processedHtmlContent, state.name]);
+
+  const handlePlaceholderChange = useCallback((fieldId: string, value: string) => {
+    updatePlaceholderValues({
+      ...state.placeholderValues,
+      [fieldId]: value
+    });
+  }, [state.placeholderValues, updatePlaceholderValues]);
 
   if (state.isLoading) {
     return (
@@ -129,11 +125,10 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
         </div>
         
         <div className="flex items-center gap-2">
-          {/* Workspace/Organization Switcher */}
           <WorkspaceOrgSwitcher
             hasUnsavedChanges={state.hasChanges}
-            onSaveChanges={handleSaveChanges}
-            onDiscardChanges={handleDiscardChanges}
+            onSaveChanges={handleSave}
+            onDiscardChanges={() => window.location.reload()}
           />
           
           <Separator orientation="vertical" className="h-6" />
@@ -224,10 +219,7 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
                   <Label className="text-xs">{field.label}</Label>
                   <Input
                     value={state.placeholderValues[field.id] || ''}
-                    onChange={(e) => updatePlaceholderValues({
-                      ...state.placeholderValues,
-                      [field.id]: e.target.value
-                    })}
+                    onChange={(e) => handlePlaceholderChange(field.id, e.target.value)}
                     placeholder={field.placeholder}
                     className="h-8"
                   />
@@ -261,7 +253,7 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
             <div className="flex-1 p-4 bg-gray-50">
               <div className="w-full h-full bg-white rounded border overflow-auto">
                 <iframe
-                  srcDoc={processedHtmlContent()}
+                  srcDoc={processedHtmlContent}
                   className="w-full h-full border-0"
                   title="Document Preview"
                 />
@@ -300,7 +292,7 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
             </div>
             <div className="flex-1 p-4">
               <iframe
-                srcDoc={processedHtmlContent()}
+                srcDoc={processedHtmlContent}
                 className="w-full h-full border rounded"
                 title="Full Preview"
               />
