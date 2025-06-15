@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { useDraftManager } from './useDraftManager';
 
 export interface SimpleDocumentState {
   id?: string;
@@ -94,21 +95,61 @@ export const useSimpleDocumentBuilder = (documentId?: string) => {
 
   const { createTemplate, updateTemplate, templates, loading: templatesLoading } = useDocumentTemplates();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
+  const { saveDraft, saveImmediately, getDraft, clearDraft, hasDraft, setCurrentDocument } = useDraftManager();
+  
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout>();
+  const isInitialized = useRef(false);
+  const lastSavedContentRef = useRef<string>('');
 
-  // Auto-save functionality
-  const debouncedSave = useCallback(() => {
+  // Set current working document in draft manager
+  useEffect(() => {
+    setCurrentDocument(documentId, state.layoutId);
+  }, [documentId, state.layoutId, setCurrentDocument]);
+
+  // Save current state with layout info
+  const saveCurrentStateWithLayout = useCallback(async (currentState: SimpleDocumentState) => {
+    if (currentState.hasChanges && documentId !== undefined) {
+      console.log('[SimpleDocumentBuilder] Saving current state for layout:', currentState.layoutId);
+      
+      const success = saveImmediately(documentId, {
+        htmlContent: currentState.htmlContent,
+        placeholderValues: currentState.placeholderValues,
+        name: currentState.name,
+        type: currentState.type,
+        hasChanges: currentState.hasChanges,
+        lastSaved: Date.now(),
+        documentId: documentId,
+        layoutId: currentState.layoutId
+      }, currentState.layoutId);
+      
+      if (success) {
+        console.log('[SimpleDocumentBuilder] Successfully saved current state');
+      }
+    }
+  }, [saveImmediately, documentId]);
+
+  // Auto-save functionality with draft management
+  const debouncedSave = useCallback((currentState: SimpleDocumentState) => {
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
     }
     
     autoSaveTimeoutRef.current = setTimeout(() => {
-      // Simple auto-save logic could go here
-      console.log('[SimpleDocumentBuilder] Auto-save triggered');
-    }, 2000);
-  }, []);
+      console.log('[SimpleDocumentBuilder] Auto-save triggered for layout:', currentState.layoutId);
+      saveDraft(documentId, {
+        htmlContent: currentState.htmlContent,
+        placeholderValues: currentState.placeholderValues,
+        name: currentState.name,
+        type: currentState.type,
+        hasChanges: currentState.hasChanges,
+        lastSaved: Date.now(),
+        documentId: documentId,
+        layoutId: currentState.layoutId
+      }, currentState.layoutId);
+    }, 1000);
+  }, [saveDraft, documentId]);
 
-  // Load document
+  // Load document with draft awareness
   const loadDocument = useCallback(async (id: string) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     
@@ -124,19 +165,39 @@ export const useSimpleDocumentBuilder = (documentId?: string) => {
       if (!data) throw new Error('Document niet gevonden');
 
       const placeholders = parseJsonToStringRecord(data.placeholder_values);
-      const content = data.html_content || TEMPLATES[data.type as keyof typeof TEMPLATES] || DEFAULT_TEMPLATE;
       
-      setState(prev => ({
-        ...prev,
-        id: data.id,
-        name: data.name,
-        type: data.type as SimpleDocumentState['type'],
-        htmlContent: content,
-        placeholderValues: placeholders,
-        isLoading: false,
-        hasChanges: false,
-        error: null
-      }));
+      // Check for draft for current layout
+      const draft = getDraft(id, state.layoutId);
+      
+      if (draft && draft.hasChanges) {
+        console.log('[SimpleDocumentBuilder] Loading draft for layout:', state.layoutId);
+        setState(prev => ({
+          ...prev,
+          id: data.id,
+          name: draft.name,
+          type: draft.type,
+          htmlContent: draft.htmlContent,
+          placeholderValues: draft.placeholderValues,
+          isLoading: false,
+          hasChanges: draft.hasChanges,
+          error: null
+        }));
+        lastSavedContentRef.current = draft.htmlContent;
+      } else {
+        const content = data.html_content || TEMPLATES[data.type as keyof typeof TEMPLATES] || DEFAULT_TEMPLATE;
+        setState(prev => ({
+          ...prev,
+          id: data.id,
+          name: data.name,
+          type: data.type as SimpleDocumentState['type'],
+          htmlContent: content,
+          placeholderValues: placeholders,
+          isLoading: false,
+          hasChanges: false,
+          error: null
+        }));
+        lastSavedContentRef.current = content;
+      }
     } catch (error) {
       setState(prev => ({
         ...prev,
@@ -144,9 +205,9 @@ export const useSimpleDocumentBuilder = (documentId?: string) => {
         error: error instanceof Error ? error.message : 'Fout bij laden document'
       }));
     }
-  }, []);
+  }, [getDraft, state.layoutId]);
 
-  // Load template
+  // Load template with draft awareness
   const loadTemplate = useCallback((templateId: string) => {
     const template = templates.find(t => t.id === templateId);
     if (!template) {
@@ -155,31 +216,73 @@ export const useSimpleDocumentBuilder = (documentId?: string) => {
     }
 
     const placeholders = parseJsonToStringRecord(template.placeholder_values);
-    const content = template.html_content || TEMPLATES[template.type as keyof typeof TEMPLATES] || DEFAULT_TEMPLATE;
     
-    setState(prev => ({
-      ...prev,
-      id: template.id,
-      name: template.name,
-      type: template.type,
-      htmlContent: content,
-      placeholderValues: placeholders,
-      hasChanges: false,
-      error: null
-    }));
-  }, [templates]);
-
-  // Initialize
-  useEffect(() => {
-    if (documentId && !templatesLoading) {
-      loadDocument(documentId);
+    // Check for draft for current layout
+    const draft = getDraft(templateId, state.layoutId);
+    
+    if (draft && draft.hasChanges) {
+      console.log('[SimpleDocumentBuilder] Loading template draft for layout:', state.layoutId);
+      setState(prev => ({
+        ...prev,
+        id: template.id,
+        name: draft.name,
+        type: draft.type,
+        htmlContent: draft.htmlContent,
+        placeholderValues: draft.placeholderValues,
+        hasChanges: draft.hasChanges,
+        error: null
+      }));
+      lastSavedContentRef.current = draft.htmlContent;
+    } else {
+      const content = template.html_content || TEMPLATES[template.type as keyof typeof TEMPLATES] || DEFAULT_TEMPLATE;
+      setState(prev => ({
+        ...prev,
+        id: template.id,
+        name: template.name,
+        type: template.type,
+        htmlContent: content,
+        placeholderValues: placeholders,
+        hasChanges: false,
+        error: null
+      }));
+      lastSavedContentRef.current = content;
     }
-  }, [documentId, templatesLoading, loadDocument]);
+  }, [templates, getDraft, state.layoutId]);
 
-  // Update functions
+  // Initialize with draft awareness
+  useEffect(() => {
+    if (isInitialized.current || templatesLoading) return;
+    
+    isInitialized.current = true;
+
+    if (documentId) {
+      loadDocument(documentId);
+    } else {
+      // Check for draft for new document with current layout
+      const draft = getDraft(undefined, state.layoutId);
+      if (draft && draft.hasChanges) {
+        console.log('[SimpleDocumentBuilder] Loading new document draft for layout:', state.layoutId);
+        setState(prev => ({
+          ...prev,
+          name: draft.name,
+          type: draft.type,
+          htmlContent: draft.htmlContent,
+          placeholderValues: draft.placeholderValues,
+          hasChanges: draft.hasChanges,
+          error: null
+        }));
+        lastSavedContentRef.current = draft.htmlContent;
+      }
+    }
+  }, [documentId, templatesLoading, loadDocument, getDraft, state.layoutId]);
+
+  // Update functions with draft management
   const updateName = useCallback((name: string) => {
-    setState(prev => ({ ...prev, name, hasChanges: true }));
-    debouncedSave();
+    setState(prev => {
+      const newState = { ...prev, name, hasChanges: true };
+      debouncedSave(newState);
+      return newState;
+    });
   }, [debouncedSave]);
 
   const updateType = useCallback((type: SimpleDocumentState['type']) => {
@@ -187,32 +290,72 @@ export const useSimpleDocumentBuilder = (documentId?: string) => {
       if (type === prev.type) return prev;
       
       const newContent = TEMPLATES[type];
-      return {
+      const newState = {
         ...prev,
         type,
         htmlContent: newContent,
         hasChanges: true
       };
+      
+      lastSavedContentRef.current = newContent;
+      debouncedSave(newState);
+      return newState;
     });
-    debouncedSave();
   }, [debouncedSave]);
 
   const updateHtmlContent = useCallback((htmlContent: string) => {
-    setState(prev => ({ ...prev, htmlContent, hasChanges: true }));
-    debouncedSave();
+    setState(prev => {
+      const hasChanges = htmlContent !== lastSavedContentRef.current;
+      const newState = { ...prev, htmlContent, hasChanges };
+      
+      if (hasChanges) {
+        debouncedSave(newState);
+      }
+      
+      return newState;
+    });
   }, [debouncedSave]);
 
   const updatePlaceholderValues = useCallback((placeholderValues: Record<string, string>) => {
-    setState(prev => ({ ...prev, placeholderValues, hasChanges: true }));
-    debouncedSave();
+    setState(prev => {
+      const newState = { ...prev, placeholderValues, hasChanges: true };
+      debouncedSave(newState);
+      return newState;
+    });
   }, [debouncedSave]);
 
-  const updateLayoutId = useCallback((layoutId: string) => {
-    setState(prev => ({ ...prev, layoutId, hasChanges: true }));
-    debouncedSave();
-  }, [debouncedSave]);
+  const updateLayoutId = useCallback(async (layoutId: string) => {
+    console.log('[SimpleDocumentBuilder] Switching layout from', state.layoutId, 'to', layoutId);
+    
+    // Save current state with current layout before switching
+    await saveCurrentStateWithLayout(state);
+    
+    // Check if we have a draft for the new layout
+    const layoutDraft = getDraft(documentId, layoutId);
+    
+    if (layoutDraft && layoutDraft.hasChanges) {
+      console.log('[SimpleDocumentBuilder] Restoring draft for layout:', layoutId);
+      setState(prev => ({
+        ...prev,
+        htmlContent: layoutDraft.htmlContent,
+        placeholderValues: layoutDraft.placeholderValues,
+        name: layoutDraft.name,
+        type: layoutDraft.type,
+        layoutId: layoutId,
+        hasChanges: layoutDraft.hasChanges
+      }));
+      lastSavedContentRef.current = layoutDraft.htmlContent;
+    } else {
+      console.log('[SimpleDocumentBuilder] No draft found for layout, keeping current content with new layout');
+      setState(prev => ({
+        ...prev,
+        layoutId: layoutId,
+        hasChanges: true // Mark as changed since layout switched
+      }));
+    }
+  }, [state, saveCurrentStateWithLayout, getDraft, documentId]);
 
-  // Save document
+  // Save document with draft cleanup
   const saveDocument = useCallback(async () => {
     if (!state.name.trim()) {
       setState(prev => ({ ...prev, error: 'Documentnaam is verplicht' }));
@@ -239,6 +382,9 @@ export const useSimpleDocumentBuilder = (documentId?: string) => {
         setState(prev => ({ ...prev, id: newTemplate.id }));
       }
 
+      // Clear draft for current layout after successful save
+      clearDraft(documentId, state.layoutId);
+      lastSavedContentRef.current = state.htmlContent;
       setState(prev => ({ ...prev, isSaving: false, hasChanges: false }));
       return true;
     } catch (error) {
@@ -249,7 +395,7 @@ export const useSimpleDocumentBuilder = (documentId?: string) => {
       }));
       return false;
     }
-  }, [state, createTemplate, updateTemplate]);
+  }, [state, createTemplate, updateTemplate, clearDraft, documentId]);
 
   // Cleanup
   useEffect(() => {
