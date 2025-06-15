@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -168,6 +167,22 @@ const DEFAULT_PLACEHOLDERS = {
   LINE_TOTAL: '100.00'
 };
 
+// Helper function to safely merge placeholder values
+const mergePlaceholders = (templateValues: Record<string, string> | null | undefined) => {
+  const result = { ...DEFAULT_PLACEHOLDERS };
+  
+  if (templateValues && typeof templateValues === 'object') {
+    // Only merge values that exist in DEFAULT_PLACEHOLDERS to maintain type safety
+    Object.keys(DEFAULT_PLACEHOLDERS).forEach(key => {
+      if (key in templateValues && typeof templateValues[key] === 'string') {
+        (result as any)[key] = templateValues[key];
+      }
+    });
+  }
+  
+  return result;
+};
+
 export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> = ({
   documentId,
   onComplete
@@ -201,17 +216,15 @@ export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> =
         if (existingDraft) {
           console.log('[Builder] Loading existing draft for layout:', selectedLayoutId);
           setHtmlContent(existingDraft.htmlContent);
-          setPlaceholders(existingDraft.placeholderValues);
+          setPlaceholders(mergePlaceholders(existingDraft.placeholderValues));
         } else {
           // Use template content with layout styling
           const baseContent = template.html_content || DEFAULT_TEMPLATES[template.type as keyof typeof DEFAULT_TEMPLATES];
           const styledContent = applyLayoutStyling(baseContent, selectedLayoutId);
           setHtmlContent(styledContent);
           
-          // Fix: Properly merge placeholder values with defaults
-          if (template.placeholder_values && typeof template.placeholder_values === 'object') {
-            setPlaceholders({ ...DEFAULT_PLACEHOLDERS, ...template.placeholder_values });
-          }
+          // Safely merge placeholder values with defaults
+          setPlaceholders(mergePlaceholders(template.placeholder_values));
         }
       }
       setCurrentDocument(documentId, selectedLayoutId);
@@ -263,8 +276,8 @@ export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> =
     if (newLayoutDraft) {
       console.log('[Builder] Loading existing content for layout:', layout.id);
       setHtmlContent(newLayoutDraft.htmlContent);
-      // Fix: Properly merge placeholder values with defaults
-      setPlaceholders({ ...DEFAULT_PLACEHOLDERS, ...newLayoutDraft.placeholderValues });
+      // Safely merge placeholder values with defaults
+      setPlaceholders(mergePlaceholders(newLayoutDraft.placeholderValues));
     } else {
       console.log('[Builder] Applying new layout styling to current content');
       // Apply new layout styling to current content
