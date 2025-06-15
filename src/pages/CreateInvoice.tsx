@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Plus, Trash2, Send, Bold, Italic, Underline, List, Settings, RotateCcw, RotateCw, Eye, Save } from 'lucide-react';
+import { Plus, Trash2, Send, Bold, Italic, Underline, List, Settings, RotateCcw, RotateCw, Eye, Save, X } from 'lucide-react';
 import { useInvoices, Invoice } from '@/hooks/useInvoices';
 import { useQuotes } from '@/hooks/useQuotes';
 import { useInvoiceSettings } from '@/hooks/useInvoiceSettings';
@@ -155,6 +155,9 @@ const CreateInvoice = () => {
   const handleContactSelect = (contact: Contact | null) => {
     setSelectedContact(contact);
     if (contact) {
+      // Use contact's payment terms if available, otherwise use default
+      const contactPaymentTerms = (contact as any).payment_terms || invoiceSettings.default_payment_terms || 30;
+      
       setFormData(prev => ({
         ...prev,
         client_name: contact.name,
@@ -162,20 +165,44 @@ const CreateInvoice = () => {
         client_address: contact.address || '',
         client_postal_code: contact.postal_code || '',
         client_city: contact.city || '',
-        client_country: contact.country || 'Nederland'
+        client_country: contact.country || 'Nederland',
+        payment_terms: contactPaymentTerms
       }));
     }
   };
 
+  const handleContactClear = () => {
+    setSelectedContact(null);
+    setFormData(prev => ({
+      ...prev,
+      client_name: '',
+      client_email: '',
+      client_address: '',
+      client_postal_code: '',
+      client_city: '',
+      client_country: 'Nederland',
+      payment_terms: invoiceSettings.default_payment_terms || 30
+    }));
+  };
+
   const handleContactCreated = (contact: Contact) => {
     console.log('Contact created:', contact);
-    // Contact would be added to the contacts list automatically
+    setSelectedContact(contact);
+    handleContactSelect(contact);
+    toast({
+      title: "Contact opgeslagen",
+      description: "Het contact is succesvol aangemaakt en geselecteerd."
+    });
   };
 
   const handleContactUpdated = (contact: Contact) => {
     console.log('Contact updated:', contact);
     setSelectedContact(contact);
     handleContactSelect(contact);
+    toast({
+      title: "Contact bijgewerkt",
+      description: "Het contact is succesvol bijgewerkt."
+    });
   };
 
   const calculateLineTotal = (quantity: number, unitPrice: number) => {
@@ -271,76 +298,90 @@ const CreateInvoice = () => {
     const selectedTemplateData = documentTemplates.find(t => t.id === selectedTemplate);
     const { subtotal, vatAmount, total } = calculateTotals();
     
-    let templateHTML = selectedTemplateData?.html_content || `
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 40px; }
-            .header { text-align: center; margin-bottom: 30px; }
-            .invoice-details { margin-bottom: 30px; }
-            .client-info { margin-bottom: 30px; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-            th { background-color: #f5f5f5; }
-            .totals { text-align: right; margin-top: 20px; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>FACTUUR</h1>
-          </div>
-          
-          <div class="invoice-details">
-            <p><strong>Factuurnummer:</strong> {invoice_number}</p>
-            <p><strong>Factuurdatum:</strong> {invoice_date}</p>
-            <p><strong>Vervaldatum:</strong> {due_date}</p>
-          </div>
-          
-          <div class="client-info">
-            <h3>Factuuradres:</h3>
-            <p>{client_name}</p>
-            <p>{client_address}</p>
-            <p>{client_postal_code} {client_city}</p>
-            <p>{client_country}</p>
-          </div>
-          
-          <table>
-            <thead>
-              <tr>
-                <th>Omschrijving</th>
-                <th>Aantal</th>
-                <th>Prijs</th>
-                <th>BTW</th>
-                <th>Totaal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {line_items}
-            </tbody>
-          </table>
-          
-          <div class="totals">
-            <p>Subtotaal: € {subtotal}</p>
-            <p>BTW: € {vat_amount}</p>
-            <p><strong>Totaal: € {total}</strong></p>
-          </div>
-        </body>
-      </html>
-    `;
+    if (!selectedTemplateData) {
+      return `
+        <html>
+          <head>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                margin: 0; 
+                padding: 20px; 
+                background: white;
+                color: #333;
+              }
+              .header { text-align: center; margin-bottom: 30px; color: #333; }
+              .invoice-details { margin-bottom: 30px; }
+              .client-info { margin-bottom: 30px; }
+              table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+              th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+              th { background-color: #f5f5f5; }
+              .totals { text-align: right; margin-top: 20px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>FACTUUR</h1>
+            </div>
+            <div class="invoice-details">
+              <p><strong>Factuurnummer:</strong> ${invoiceNumber || getDefaultInvoiceNumber()}</p>
+              <p><strong>Factuurdatum:</strong> ${formData.invoice_date}</p>
+              <p><strong>Vervaldatum:</strong> ${formData.due_date}</p>
+            </div>
+            <div class="client-info">
+              <h3>Factuuradres:</h3>
+              <p>${formData.client_name}</p>
+              <p>${formData.client_address}</p>
+              <p>${formData.client_postal_code} ${formData.client_city}</p>
+              <p>${formData.client_country}</p>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Omschrijving</th>
+                  <th>Aantal</th>
+                  <th>Prijs</th>
+                  <th>BTW</th>
+                  <th>Totaal</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${lineItems.map(item => `
+                  <tr>
+                    <td>${item.description}</td>
+                    <td>${item.quantity}</td>
+                    <td>€ ${item.unit_price.toFixed(2)}</td>
+                    <td>${item.vat_rate}%</td>
+                    <td>€ ${item.line_total.toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            <div class="totals">
+              <p>Subtotaal: € ${subtotal.toFixed(2)}</p>
+              <p>BTW: € ${vatAmount.toFixed(2)}</p>
+              <p><strong>Totaal: € ${total.toFixed(2)}</strong></p>
+            </div>
+          </body>
+        </html>
+      `;
+    }
 
-    // Replace placeholders
+    let templateHTML = selectedTemplateData.html_content;
+
+    // Replace placeholders with actual data
     templateHTML = templateHTML
-      .replace(/{invoice_number}/g, invoiceNumber || getDefaultInvoiceNumber())
-      .replace(/{invoice_date}/g, formData.invoice_date)
-      .replace(/{due_date}/g, formData.due_date)
-      .replace(/{client_name}/g, formData.client_name)
-      .replace(/{client_address}/g, formData.client_address)
-      .replace(/{client_postal_code}/g, formData.client_postal_code)
-      .replace(/{client_city}/g, formData.client_city)
-      .replace(/{client_country}/g, formData.client_country)
-      .replace(/{subtotal}/g, subtotal.toFixed(2))
-      .replace(/{vat_amount}/g, vatAmount.toFixed(2))
-      .replace(/{total}/g, total.toFixed(2));
+      .replace(/\{invoice_number\}/g, invoiceNumber || getDefaultInvoiceNumber())
+      .replace(/\{invoice_date\}/g, formData.invoice_date)
+      .replace(/\{due_date\}/g, formData.due_date)
+      .replace(/\{client_name\}/g, formData.client_name)
+      .replace(/\{client_address\}/g, formData.client_address)
+      .replace(/\{client_postal_code\}/g, formData.client_postal_code)
+      .replace(/\{client_city\}/g, formData.client_city)
+      .replace(/\{client_country\}/g, formData.client_country)
+      .replace(/\{subtotal\}/g, subtotal.toFixed(2))
+      .replace(/\{vat_amount\}/g, vatAmount.toFixed(2))
+      .replace(/\{total\}/g, total.toFixed(2));
 
     // Generate line items HTML
     const lineItemsHTML = lineItems.map(item => `
@@ -353,7 +394,7 @@ const CreateInvoice = () => {
       </tr>
     `).join('');
 
-    templateHTML = templateHTML.replace('{line_items}', lineItemsHTML);
+    templateHTML = templateHTML.replace(/\{line_items\}/g, lineItemsHTML);
 
     return templateHTML;
   };
@@ -538,19 +579,34 @@ Uw administratie`
           {/* Contact selection */}
           <Card>
             <CardContent className="p-3">
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-end gap-3 mb-2">
                 <div className="flex-1">
-                  <ContactSelector
-                    selectedContact={selectedContact}
-                    onContactSelect={handleContactSelect}
-                    onContactCreated={handleContactCreated}
-                    onContactUpdated={handleContactUpdated}
-                  />
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <ContactSelector
+                        selectedContact={selectedContact}
+                        onContactSelect={handleContactSelect}
+                        onContactCreated={handleContactCreated}
+                        onContactUpdated={handleContactUpdated}
+                      />
+                    </div>
+                    {selectedContact && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleContactClear}
+                        className="h-8 w-8 p-0 hover:bg-red-100"
+                      >
+                        <X className="h-4 w-4 text-red-500" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <div className="w-48">
                   <Label className="text-xs font-medium">Layout</Label>
                   <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                    <SelectTrigger className="mt-1 h-8 text-xs">
+                    <SelectTrigger className="h-8 text-xs">
                       <SelectValue placeholder="Selecteer layout" />
                     </SelectTrigger>
                     <SelectContent className="bg-white border shadow-lg z-50">
@@ -562,7 +618,7 @@ Uw administratie`
                     </SelectContent>
                   </Select>
                 </div>
-                <Button type="button" variant="outline" size="sm" onClick={() => setShowSettings(true)} className="mt-4 h-8 w-8 p-0">
+                <Button type="button" variant="outline" size="sm" onClick={() => setShowSettings(true)} className="h-8 w-8 p-0">
                   <Settings className="h-3 w-3" />
                 </Button>
               </div>
@@ -614,10 +670,10 @@ Uw administratie`
                   <div className="flex items-center mt-1 gap-1">
                     <Input 
                       type="number"
-                      value={formData.payment_terms}
-                      onChange={(e) => setFormData({...formData, payment_terms: parseInt(e.target.value) || 0})}
-                      className="text-xs h-8 w-16"
+                      value={formData.payment_terms || ''}
                       placeholder={invoiceSettings.default_payment_terms?.toString() || '30'}
+                      onChange={(e) => setFormData({...formData, payment_terms: parseInt(e.target.value) || invoiceSettings.default_payment_terms || 30})}
+                      className="text-xs h-8 w-16"
                     />
                     <span className="text-xs">dagen</span>
                   </div>
@@ -669,7 +725,7 @@ Uw administratie`
                           dangerouslySetInnerHTML={{ __html: item.description }}
                           onInput={(e) => handleDescriptionChange(index, e.currentTarget.innerHTML)}
                           onBlur={(e) => handleDescriptionChange(index, e.currentTarget.innerHTML)}
-                          style={{ minHeight: '32px' }}
+                          style={{ minHeight: '32px', direction: 'ltr' }}
                         />
                         <div className="flex items-center gap-1">
                           <Button 
@@ -711,28 +767,35 @@ Uw administratie`
                         </div>
                       </div>
                     </div>
-                    <div className="col-span-2 flex justify-center">
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs">€</span>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={item.unit_price}
-                          onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                          className="text-right text-xs h-8 w-16"
+                    <div className="col-span-2">
+                      <div className="text-center">
+                        <Label className="text-xs font-medium block mb-1">Prijs</Label>
+                        <div className="flex items-center justify-center gap-1">
+                          <span className="text-xs">€</span>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={item.unit_price}
+                            onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                            className="text-center text-xs h-8 w-20"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-span-1">
+                      <div className="text-center">
+                        <Label className="text-xs font-medium block mb-1">btw</Label>
+                        <VatSelector
+                          value={item.vat_rate}
+                          onValueChange={(value) => updateLineItem(index, 'vat_rate', value)}
+                          className="text-xs h-8 w-16"
                         />
                       </div>
                     </div>
-                    <div className="col-span-1 flex justify-center">
-                      <VatSelector
-                        value={item.vat_rate}
-                        onValueChange={(value) => updateLineItem(index, 'vat_rate', value)}
-                        className="text-xs h-8 w-12"
-                      />
-                    </div>
-                    <div className="col-span-2 flex items-center justify-between">
-                      <div className="flex flex-col items-center">
-                        <div className="flex items-center gap-1">
+                    <div className="col-span-2 flex items-end justify-between">
+                      <div className="text-center flex-1">
+                        <Label className="text-xs font-medium block mb-1">Totaal</Label>
+                        <div className="flex items-center justify-center gap-1">
                           <span className="text-xs">€</span>
                           <span className="font-medium text-xs">{item.line_total.toFixed(2)}</span>
                         </div>
@@ -743,7 +806,7 @@ Uw administratie`
                         size="sm"
                         onClick={() => removeLineItem(index)}
                         disabled={lineItems.length === 1}
-                        className="text-red-500 hover:text-red-700 h-6 w-6 p-0"
+                        className="text-red-500 hover:text-red-700 h-6 w-6 p-0 ml-2"
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -835,16 +898,15 @@ Uw administratie`
 
       {/* Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-4xl max-h-[90vh] w-[90vw]">
-          <DialogHeader>
+        <DialogContent className="max-w-4xl max-h-[90vh] w-[90vw] p-0">
+          <DialogHeader className="p-6 pb-0">
             <DialogTitle>Factuur Voorbeeld</DialogTitle>
           </DialogHeader>
-          <div className="overflow-auto" style={{ height: '80vh' }}>
-            <div className="bg-white mx-auto" style={{ width: '210mm', minHeight: '297mm', padding: '20mm', boxShadow: '0 0 10px rgba(0,0,0,0.1)' }}>
+          <div className="p-6 pt-4">
+            <div className="bg-white mx-auto border" style={{ width: '210mm', height: '297mm', transform: 'scale(0.7)', transformOrigin: 'top center' }}>
               <iframe
                 srcDoc={generatePreviewHTML()}
                 className="w-full h-full border-0"
-                style={{ minHeight: '800px' }}
                 title="Invoice Preview"
               />
             </div>
