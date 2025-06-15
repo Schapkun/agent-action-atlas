@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Save, Eye, Download, FileText, Loader2, Building, Users } from 'lucide-react';
+import { Save, Eye, Download, FileText, Loader2, Building, Users, Clock, CheckCircle2 } from 'lucide-react';
 import { useNewDocumentBuilder } from './builder/useNewDocumentBuilder';
 import { WorkspaceOrgSwitcher } from '../components/WorkspaceOrgSwitcher';
 
@@ -42,6 +42,8 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
   onComplete
 }) => {
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [lastSaveTime, setLastSaveTime] = useState<Date | null>(null);
+  
   const {
     state,
     updateName,
@@ -55,7 +57,7 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
     selectedWorkspace
   } = useNewDocumentBuilder(documentId);
 
-  // Memoize processed HTML to prevent unnecessary calculations
+  // Memoize processed HTML
   const processedHtmlContent = useMemo(() => {
     let content = state.htmlContent;
     Object.entries(state.placeholderValues).forEach(([key, value]) => {
@@ -67,6 +69,7 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
   const handleSave = useCallback(async () => {
     const success = await saveDocument();
     if (success) {
+      setLastSaveTime(new Date());
       onComplete?.(true);
     }
   }, [saveDocument, onComplete]);
@@ -96,6 +99,34 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
     });
   }, [state.placeholderValues, updatePlaceholderValues]);
 
+  const handleTemplateLoad = useCallback((templateId: string) => {
+    console.log('[UI] Loading template:', templateId);
+    loadTemplate(templateId);
+  }, [loadTemplate]);
+
+  // Draft status indicator
+  const getDraftStatusBadge = () => {
+    if (state.hasChanges) {
+      return (
+        <Badge variant="secondary" className="flex items-center gap-1">
+          <Clock className="h-3 w-3" />
+          Niet opgeslagen
+        </Badge>
+      );
+    }
+    
+    if (lastSaveTime) {
+      return (
+        <Badge variant="default" className="flex items-center gap-1">
+          <CheckCircle2 className="h-3 w-3" />
+          Opgeslagen {lastSaveTime.toLocaleTimeString()}
+        </Badge>
+      );
+    }
+    
+    return null;
+  };
+
   if (state.isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -121,7 +152,7 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
               placeholder="Document naam"
             />
           </div>
-          {state.hasChanges && <Badge variant="secondary">Niet opgeslagen</Badge>}
+          {getDraftStatusBadge()}
         </div>
         
         <div className="flex items-center gap-2">
@@ -171,6 +202,12 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
               <span>Workspace: {selectedWorkspace.name}</span>
             </div>
           )}
+          {state.currentWorkingDocumentId && (
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              <span>Document ID: {state.currentWorkingDocumentId}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -190,7 +227,7 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
               <CardTitle className="text-sm">Template Laden</CardTitle>
             </CardHeader>
             <CardContent>
-              <Select onValueChange={loadTemplate}>
+              <Select onValueChange={handleTemplateLoad}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecteer template..." />
                 </SelectTrigger>
@@ -205,6 +242,11 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
                   ))}
                 </SelectContent>
               </Select>
+              {state.hasChanges && (
+                <p className="text-xs text-amber-600 mt-2">
+                  Huidige wijzigingen worden automatisch opgeslagen
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -266,7 +308,17 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
       {/* Footer */}
       <div className="flex items-center justify-between p-4 border-t bg-background">
         <div className="text-sm text-muted-foreground">
-          {state.hasChanges ? 'Er zijn niet-opgeslagen wijzigingen' : 'Alle wijzigingen zijn opgeslagen'}
+          {state.hasChanges ? (
+            <span className="flex items-center gap-1">
+              <Clock className="h-4 w-4" />
+              Er zijn niet-opgeslagen wijzigingen
+            </span>
+          ) : (
+            <span className="flex items-center gap-1">
+              <CheckCircle2 className="h-4 w-4" />
+              Alle wijzigingen zijn opgeslagen
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={handleCancel}>

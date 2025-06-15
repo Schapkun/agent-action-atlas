@@ -15,6 +15,8 @@ export interface DocumentBuilderState {
   isSaving: boolean;
   hasChanges: boolean;
   error: string | null;
+  currentWorkingDocumentId?: string;
+  lastTemplateLoaded?: string;
 }
 
 const DEFAULT_TEMPLATE = '<html><body><h1>{{DOCUMENT_TITLE}}</h1><p>Document inhoud...</p></body></html>';
@@ -84,33 +86,49 @@ export const useNewDocumentBuilder = (documentId?: string) => {
     isLoading: false,
     isSaving: false,
     hasChanges: false,
-    error: null
+    error: null,
+    currentWorkingDocumentId: documentId
   });
 
   const { createTemplate, updateTemplate, templates, loading: templatesLoading } = useDocumentTemplates();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
-  const { saveDraft, getDraft, clearDraft, hasDraft } = useDraftManager();
+  const { saveDraft, saveImmediately, getDraft, clearDraft, hasDraft, setCurrentDocument } = useDraftManager();
   
-  // Use refs to prevent unnecessary re-renders
   const isInitialized = useRef(false);
-  const currentDocumentId = useRef<string | undefined>(documentId);
-
-  // Debounced auto-save to prevent excessive operations
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout>();
+  const lastSavedContentRef = useRef<string>('');
 
-  const debouncedSaveDraft = useCallback((id: string | undefined, data: any) => {
-    if (autoSaveTimeoutRef.current) {
-      clearTimeout(autoSaveTimeoutRef.current);
+  // Set current working document in draft manager
+  useEffect(() => {
+    setCurrentDocument(documentId);
+    setState(prev => ({ ...prev, currentWorkingDocumentId: documentId }));
+  }, [documentId, setCurrentDocument]);
+
+  // Save current state before loading template
+  const saveCurrentStateBeforeSwitch = useCallback(async (currentState: DocumentBuilderState) => {
+    if (currentState.hasChanges && currentState.currentWorkingDocumentId !== undefined) {
+      console.log('[DocumentBuilder] Saving current state before template switch');
+      
+      const success = saveImmediately(currentState.currentWorkingDocumentId, {
+        htmlContent: currentState.htmlContent,
+        placeholderValues: currentState.placeholderValues,
+        name: currentState.name,
+        type: currentState.type,
+        hasChanges: currentState.hasChanges
+      });
+      
+      if (success) {
+        console.log('[DocumentBuilder] Successfully saved current state');
+      }
     }
-    
-    autoSaveTimeoutRef.current = setTimeout(() => {
-      saveDraft(id, data);
-    }, 2000); // Save after 2 seconds of inactivity
-  }, [saveDraft]);
+  }, [saveImmediately]);
 
-  // Load document with performance optimization
+  // Load document with proper state management
   const loadDocument = useCallback(async (id: string) => {
-    if (state.isLoading) return; // Prevent multiple simultaneous loads
+    if (state.isLoading) return;
+    
+    // Save current state first
+    await saveCurrentStateBeforeSwitch(state);
     
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     
@@ -128,6 +146,8 @@ export const useNewDocumentBuilder = (documentId?: string) => {
       const placeholders = parseJsonToStringRecord(data.placeholder_values);
       const draft = getDraft(id);
       
+      console.log('[DocumentBuilder] Loading document:', data.name, 'Draft found:', !!draft);
+      
       if (draft && draft.hasChanges) {
         setState(prev => ({
           ...prev,
@@ -138,20 +158,27 @@ export const useNewDocumentBuilder = (documentId?: string) => {
           placeholderValues: draft.placeholderValues,
           isLoading: false,
           hasChanges: draft.hasChanges,
-          error: null
+          error: null,
+          currentWorkingDocumentId: id,
+          lastTemplateLoaded: id
         }));
+        lastSavedContentRef.current = draft.htmlContent;
       } else {
+        const content = data.html_content || TEMPLATES[data.type as keyof typeof TEMPLATES] || DEFAULT_TEMPLATE;
         setState(prev => ({
           ...prev,
           id: data.id,
           name: data.name,
           type: data.type as DocumentBuilderState['type'],
-          htmlContent: data.html_content || TEMPLATES[data.type as keyof typeof TEMPLATES] || DEFAULT_TEMPLATE,
+          htmlContent: content,
           placeholderValues: placeholders,
           isLoading: false,
           hasChanges: false,
-          error: null
+          error: null,
+          currentWorkingDocumentId: id,
+          lastTemplateLoaded: id
         }));
+        lastSavedContentRef.current = content;
       }
     } catch (error) {
       setState(prev => ({
@@ -160,18 +187,37 @@ export const useNewDocumentBuilder = (documentId?: string) => {
         error: error instanceof Error ? error.message : 'Fout bij laden document'
       }));
     }
-  }, [getDraft, state.isLoading]);
+  }, [getDraft, state, saveCurrentStateBeforeSwitch]);
 
-  // Load template with performance optimization
-  const loadTemplate = useCallback((templateId: string) => {
+  // Load template with immediate save of current state
+  const loadTemplate = useCallback(async (templateId: string) => {
     const template = templates.find(t => t.id === templateId);
     if (!template) {
       setState(prev => ({ ...prev, error: 'Template niet gevonden' }));
       return;
     }
 
+    console.log('[DocumentBuilder] Loading template:', template.name);
+    
+    // Check if we have unsaved changes and confirm with user
+    if (state.hasChanges && state.currentWorkingDocumentId !== templateId) {
+      const confirmed = window.confirm(
+        `Je hebt niet-opgeslagen wijzigingen. Wil je deze eerst opslaan voordat je een andere template laadt?`
+      );
+      
+      if (confirmed) {
+        // Save current state immediately
+        await saveCurrentStateBeforeSwitch(state);
+      }
+    } else if (state.hasChanges) {
+      // Always save current state before switching
+      await saveCurrentStateBeforeSwitch(state);
+    }
+
     const placeholders = parseJsonToStringRecord(template.placeholder_values);
     const draft = getDraft(templateId);
+
+    console.log('[DocumentBuilder] Template draft found:', !!draft);
 
     if (draft && draft.hasChanges) {
       setState(prev => ({
@@ -182,28 +228,34 @@ export const useNewDocumentBuilder = (documentId?: string) => {
         htmlContent: draft.htmlContent,
         placeholderValues: draft.placeholderValues,
         hasChanges: draft.hasChanges,
-        error: null
+        error: null,
+        currentWorkingDocumentId: templateId,
+        lastTemplateLoaded: templateId
       }));
+      lastSavedContentRef.current = draft.htmlContent;
     } else {
+      const content = template.html_content || TEMPLATES[template.type as keyof typeof TEMPLATES] || DEFAULT_TEMPLATE;
       setState(prev => ({
         ...prev,
         id: template.id,
         name: template.name,
         type: template.type,
-        htmlContent: template.html_content || TEMPLATES[template.type as keyof typeof TEMPLATES] || DEFAULT_TEMPLATE,
+        htmlContent: content,
         placeholderValues: placeholders,
         hasChanges: false,
-        error: null
+        error: null,
+        currentWorkingDocumentId: templateId,
+        lastTemplateLoaded: templateId
       }));
+      lastSavedContentRef.current = content;
     }
-  }, [templates, getDraft]);
+  }, [templates, getDraft, state, saveCurrentStateBeforeSwitch]);
 
-  // Initialize only once
+  // Initialize
   useEffect(() => {
     if (isInitialized.current || templatesLoading) return;
     
     isInitialized.current = true;
-    currentDocumentId.current = documentId;
 
     if (documentId) {
       loadDocument(documentId);
@@ -219,50 +271,75 @@ export const useNewDocumentBuilder = (documentId?: string) => {
           hasChanges: draft.hasChanges,
           error: null
         }));
+        lastSavedContentRef.current = draft.htmlContent;
       }
     }
   }, [documentId, templatesLoading, loadDocument, getDraft]);
 
-  // Optimized update functions
+  // Debounced auto-save
+  const debouncedSaveDraft = useCallback((currentState: DocumentBuilderState) => {
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      saveDraft(currentState.currentWorkingDocumentId, {
+        htmlContent: currentState.htmlContent,
+        placeholderValues: currentState.placeholderValues,
+        name: currentState.name,
+        type: currentState.type,
+        hasChanges: currentState.hasChanges
+      });
+    }, 1000);
+  }, [saveDraft]);
+
+  // Update functions with proper change tracking
   const updateName = useCallback((name: string) => {
-    setState(prev => ({ ...prev, name, hasChanges: true }));
-  }, []);
+    setState(prev => {
+      const newState = { ...prev, name, hasChanges: true };
+      debouncedSaveDraft(newState);
+      return newState;
+    });
+  }, [debouncedSaveDraft]);
 
   const updateType = useCallback((type: DocumentBuilderState['type']) => {
-    setState(prev => ({
-      ...prev,
-      type,
-      htmlContent: TEMPLATES[type],
-      hasChanges: true
-    }));
-  }, []);
+    setState(prev => {
+      if (type === prev.type) return prev;
+      
+      const newContent = TEMPLATES[type];
+      const newState = {
+        ...prev,
+        type,
+        htmlContent: newContent,
+        hasChanges: true
+      };
+      
+      lastSavedContentRef.current = newContent;
+      debouncedSaveDraft(newState);
+      return newState;
+    });
+  }, [debouncedSaveDraft]);
 
   const updateHtmlContent = useCallback((htmlContent: string) => {
-    setState(prev => ({ ...prev, htmlContent, hasChanges: true }));
-  }, []);
+    setState(prev => {
+      const hasChanges = htmlContent !== lastSavedContentRef.current;
+      const newState = { ...prev, htmlContent, hasChanges };
+      
+      if (hasChanges) {
+        debouncedSaveDraft(newState);
+      }
+      
+      return newState;
+    });
+  }, [debouncedSaveDraft]);
 
   const updatePlaceholderValues = useCallback((placeholderValues: Record<string, string>) => {
-    setState(prev => ({ ...prev, placeholderValues, hasChanges: true }));
-  }, []);
-
-  // Debounced auto-save effect
-  useEffect(() => {
-    if (state.hasChanges) {
-      debouncedSaveDraft(state.id, {
-        htmlContent: state.htmlContent,
-        placeholderValues: state.placeholderValues,
-        name: state.name,
-        type: state.type,
-        hasChanges: state.hasChanges
-      });
-    }
-
-    return () => {
-      if (autoSaveTimeoutRef.current) {
-        clearTimeout(autoSaveTimeoutRef.current);
-      }
-    };
-  }, [state, debouncedSaveDraft]);
+    setState(prev => {
+      const newState = { ...prev, placeholderValues, hasChanges: true };
+      debouncedSaveDraft(newState);
+      return newState;
+    });
+  }, [debouncedSaveDraft]);
 
   // Save document
   const saveDocument = useCallback(async () => {
@@ -291,7 +368,8 @@ export const useNewDocumentBuilder = (documentId?: string) => {
         setState(prev => ({ ...prev, id: newTemplate.id }));
       }
 
-      clearDraft(state.id);
+      clearDraft(state.currentWorkingDocumentId);
+      lastSavedContentRef.current = state.htmlContent;
       setState(prev => ({ ...prev, isSaving: false, hasChanges: false }));
       return true;
     } catch (error) {
@@ -302,9 +380,9 @@ export const useNewDocumentBuilder = (documentId?: string) => {
       }));
       return false;
     }
-  }, [state.name, state.type, state.htmlContent, state.placeholderValues, state.id, createTemplate, updateTemplate, clearDraft]);
+  }, [state, createTemplate, updateTemplate, clearDraft]);
 
-  // Cleanup on unmount
+  // Cleanup
   useEffect(() => {
     return () => {
       if (autoSaveTimeoutRef.current) {
@@ -325,7 +403,7 @@ export const useNewDocumentBuilder = (documentId?: string) => {
     availableTemplates: templates,
     selectedOrganization,
     selectedWorkspace,
-    clearDraft: () => clearDraft(state.id),
-    hasDraft: () => hasDraft(state.id)
+    clearDraft: () => clearDraft(state.currentWorkingDocumentId),
+    hasDraft: () => hasDraft(state.currentWorkingDocumentId)
   };
 };
