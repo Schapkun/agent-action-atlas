@@ -41,49 +41,53 @@ export const ContactSelectionCard = ({
     <>
       <Card>
         <CardContent className="p-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 flex-1">
-              {/* Nieuw and Bewerken buttons */}
-              <div className="flex gap-2">
-                <Button 
-                  type="button" 
-                  variant="default" 
-                  size="sm"
-                  className="bg-blue-500 text-white hover:bg-blue-600 text-xs h-8"
-                >
-                  Nieuw
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm"
-                  className="text-xs h-8"
-                >
-                  Bewerken
-                </Button>
-              </div>
+          {/* Top row - all controls on one line */}
+          <div className="flex items-center gap-3">
+            {/* + Nieuw button */}
+            <Button 
+              type="button"
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowContactDialog(true)}
+              className="text-xs h-8 flex items-center gap-1"
+            >
+              <Plus className="h-3 w-3" />
+              Nieuw
+            </Button>
 
-              {/* Layout dropdown - aligned with buttons */}
-              <div className="flex-1 max-w-xs">
-                <Select value={selectedTemplate} onValueChange={onTemplateChange}>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Selecteer template">
-                      {selectedTemplate && availableTemplates.find(t => t.id === selectedTemplate)?.name}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border shadow-lg z-50">
-                    {availableTemplates.map((template) => (
-                      <SelectItem 
-                        key={template.id} 
-                        value={template.id}
-                        className="cursor-pointer hover:bg-gray-100"
-                      >
-                        <span className="text-sm font-medium">{template.name}</span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Bewerken button */}
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm"
+              className="text-xs h-8"
+            >
+              Bewerken
+            </Button>
+
+            {/* Vertical separator */}
+            <div className="h-6 w-px bg-gray-300"></div>
+
+            {/* Layout dropdown */}
+            <div className="flex-1 max-w-xs">
+              <Select value={selectedTemplate} onValueChange={onTemplateChange}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder="Selecteer template">
+                    {selectedTemplate && availableTemplates.find(t => t.id === selectedTemplate)?.name}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="bg-white border shadow-lg z-50">
+                  {availableTemplates.map((template) => (
+                    <SelectItem 
+                      key={template.id} 
+                      value={template.id}
+                      className="cursor-pointer hover:bg-gray-100"
+                    >
+                      <span className="text-sm font-medium">{template.name}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Settings button */}
@@ -126,16 +130,6 @@ export const ContactSelectionCard = ({
                   </SelectContent>
                 </Select>
               </div>
-              <Button 
-                type="button"
-                variant="outline" 
-                size="sm"
-                onClick={() => setShowContactDialog(true)}
-                className="h-8 text-xs"
-              >
-                <Plus className="h-3 w-3 mr-1" />
-                Nieuw
-              </Button>
             </div>
           </div>
         </CardContent>
