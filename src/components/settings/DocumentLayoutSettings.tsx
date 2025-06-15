@@ -1,5 +1,7 @@
 
 import React, { useState } from 'react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { HtmlDocumentBuilder } from './htmldocument/HtmlDocumentBuilder';
 import { DocumentNameDialog } from './components/DocumentNameDialog';
 import { DocumentProvider, useDocumentContext } from './contexts/DocumentContext';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
@@ -8,24 +10,38 @@ import { DocumentActions } from './components/DocumentActions';
 import { DocumentList } from './components/DocumentList';
 
 const DocumentLayoutContent = () => {
+  const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
+  const [editingDocumentId, setEditingDocumentId] = useState<string | undefined>(undefined);
   const [duplicatingDocument, setDuplicatingDocument] = useState<DocumentTemplate | null>(null);
   
   const { documents, deleteDocument, duplicateDocument, refreshTemplates } = useDocumentContext();
   const { toast } = useToast();
 
   const handleNewDocument = () => {
-    toast({
-      title: "Info",
-      description: "Document builder is tijdelijk uitgeschakeld."
-    });
+    setEditingDocumentId(undefined);
+    setIsBuilderOpen(true);
   };
 
   const handleEditDocument = (document: DocumentTemplate) => {
-    toast({
-      title: "Info",
-      description: "Document editor is tijdelijk uitgeschakeld."
-    });
+    console.log('[Settings] Opening document for editing:', document.name, document.id);
+    setEditingDocumentId(document.id);
+    setIsBuilderOpen(true);
+  };
+
+  const handleBuilderComplete = async (success: boolean) => {
+    console.log('[Settings] Builder completed, success:', success);
+    
+    setIsBuilderOpen(false);
+    setEditingDocumentId(undefined);
+    
+    if (success) {
+      await refreshTemplates();
+      toast({
+        title: "Succes",
+        description: "Document is opgeslagen."
+      });
+    }
   };
 
   const handleDuplicateDocument = (document: DocumentTemplate) => {
@@ -46,6 +62,9 @@ const DocumentLayoutContent = () => {
 
   const handleDeleteDocument = (document: DocumentTemplate) => {
     deleteDocument(document.id);
+    if (editingDocumentId === document.id) {
+      setEditingDocumentId(undefined);
+    }
     toast({
       title: "Document verwijderd",
       description: `"${document.name}" is verwijderd.`
@@ -57,7 +76,7 @@ const DocumentLayoutContent = () => {
       <div>
         <h3 className="text-lg font-medium">Document Templates</h3>
         <p className="text-sm text-muted-foreground">
-          Bekijk en beheer document templates.
+          Beheer en creëer document templates met realtime HTML editor.
         </p>
       </div>
 
@@ -69,6 +88,16 @@ const DocumentLayoutContent = () => {
         onDuplicateDocument={handleDuplicateDocument}
         onDeleteDocument={handleDeleteDocument}
       />
+
+      {/* HTML Document Builder Dialog */}
+      <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 flex flex-col">
+          <HtmlDocumentBuilder 
+            documentId={editingDocumentId}
+            onComplete={handleBuilderComplete}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Duplicate Name Dialog */}
       <DocumentNameDialog
