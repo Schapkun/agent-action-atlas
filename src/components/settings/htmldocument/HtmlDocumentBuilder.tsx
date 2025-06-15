@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,7 +36,6 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
   const [profileContents, setProfileContents] = useState<ProfileContent>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [lastSaveTime, setLastSaveTime] = useState<{[key: string]: number}>({});
   
   const { toast } = useToast();
   const { saveData, loadData, hasUnsavedChanges } = useDirectSave(documentId);
@@ -70,38 +70,32 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
     loadAllProfileContent();
   }, [documentId, loadData]);
 
-  // Auto-save when content changes
-  useEffect(() => {
-    if (isLoading || !documentId) return;
-    
-    const saveChanges = async () => {
-      for (const [profileId, content] of Object.entries(profileContents)) {
-        const lastSave = lastSaveTime[profileId] || 0;
-        const contentKey = `${profileId}_${content}`;
-        
-        // Only save if content actually changed
-        if (content && Date.now() - lastSave > 1000) {
-          try {
-            await saveData({
-              layoutId: profileId,
-              htmlContent: content,
-              lastModified: Date.now()
-            });
-            
-            setLastSaveTime(prev => ({
-              ...prev,
-              [profileId]: Date.now()
-            }));
-          } catch (error) {
-            console.error('[Builder] Auto-save failed for profile:', profileId, error);
-          }
-        }
-      }
-    };
+  // Save current profile content when switching profiles
+  const handleProfileSwitch = async (newProfileId: string) => {
+    if (!documentId || selectedProfileId === newProfileId) {
+      setSelectedProfileId(newProfileId);
+      return;
+    }
 
-    const debounceTimer = setTimeout(saveChanges, 2000);
-    return () => clearTimeout(debounceTimer);
-  }, [profileContents, documentId, saveData, isLoading, lastSaveTime]);
+    try {
+      // Save current profile content before switching
+      const currentContent = profileContents[selectedProfileId];
+      if (currentContent) {
+        await saveData({
+          layoutId: selectedProfileId,
+          htmlContent: currentContent,
+          lastModified: Date.now()
+        });
+        console.log('[Builder] Saved content for profile before switch:', selectedProfileId);
+      }
+      
+      setSelectedProfileId(newProfileId);
+    } catch (error) {
+      console.error('[Builder] Error saving before profile switch:', error);
+      // Still switch profiles even if save fails
+      setSelectedProfileId(newProfileId);
+    }
+  };
 
   const handleHtmlChange = (profileId: string, newHtml: string) => {
     setProfileContents(prev => ({
@@ -198,7 +192,7 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
           <h2 className="text-lg font-semibold">HTML Document Builder - Profielen</h2>
           {hasUnsavedChanges && (
             <span className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded">
-              Automatisch opslaan actief
+              Niet-opgeslagen wijzigingen
             </span>
           )}
         </div>
@@ -226,7 +220,7 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
       <div className="flex-1 flex">
         {/* Left Panel - Profile Tabs & Editors */}
         <div className="w-1/2 flex flex-col border-r">
-          <Tabs value={selectedProfileId} onValueChange={setSelectedProfileId} className="flex-1 flex flex-col">
+          <Tabs value={selectedProfileId} onValueChange={handleProfileSwitch} className="flex-1 flex flex-col">
             <TabsList className="grid w-full grid-cols-3 bg-white border-b">
               {DEFAULT_PROFILES.map((profile) => (
                 <TabsTrigger 

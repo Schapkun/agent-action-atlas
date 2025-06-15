@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef } from 'react';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 
@@ -38,7 +39,7 @@ export const useDirectSave = (documentId?: string) => {
       const currentTemplate = templates.find(t => t.id === documentId);
       const currentPlaceholders = currentTemplate?.placeholder_values || {};
       
-      // Create profile-specific placeholder values - convert number to string
+      // Create profile-specific placeholder values
       const updatedPlaceholders = {
         ...currentPlaceholders,
         [`profile_${data.layoutId}_content`]: data.htmlContent,
@@ -46,14 +47,21 @@ export const useDirectSave = (documentId?: string) => {
         profileId: data.layoutId
       };
       
-      // Save to database
+      console.log('[DirectSave] Saving to database:', {
+        documentId,
+        profileId: data.layoutId,
+        contentLength: data.htmlContent.length,
+        placeholders: updatedPlaceholders
+      });
+      
+      // Save to database with both html_content and placeholder_values
       await updateTemplate(documentId, {
         html_content: data.htmlContent,
         placeholder_values: updatedPlaceholders
       });
       
       setHasUnsavedChanges(false);
-      console.log('[DirectSave] Content saved for profile:', data.layoutId);
+      console.log('[DirectSave] Content successfully saved for profile:', data.layoutId);
     } catch (error) {
       console.error('[DirectSave] Save failed:', error);
       setHasUnsavedChanges(true);
@@ -71,17 +79,18 @@ export const useDirectSave = (documentId?: string) => {
       const profileId = specificProfileId || 'profiel-1';
       const cacheKey = `${documentId}:${profileId}`;
       
-      // Check cache first
-      const cachedData = dataCache.current.get(cacheKey);
-      if (cachedData) {
-        return cachedData;
-      }
+      console.log('[DirectSave] Loading data for profile:', profileId);
       
-      // Load from database
+      // Load from database first (don't use cache for loading)
       const template = templates.find(t => t.id === documentId);
       if (template?.placeholder_values) {
         const profileSpecificContent = template.placeholder_values[`profile_${profileId}_content`];
         const profileLastModified = template.placeholder_values[`profile_${profileId}_lastModified`];
+        
+        console.log('[DirectSave] Found saved content for profile:', profileId, {
+          hasContent: !!profileSpecificContent,
+          contentLength: profileSpecificContent ? String(profileSpecificContent).length : 0
+        });
         
         if (profileSpecificContent) {
           const loadedData: SaveData = {
@@ -97,6 +106,8 @@ export const useDirectSave = (documentId?: string) => {
           return loadedData;
         }
       }
+      
+      console.log('[DirectSave] No saved content found, using default for profile:', profileId);
       
       // Default content for new profiles
       const defaultData: SaveData = {
