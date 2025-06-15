@@ -33,6 +33,10 @@ export const ContactSelectionCard = ({
 }: ContactSelectionCardProps) => {
   const [showContactDialog, setShowContactDialog] = useState(false);
 
+  const handleContactSave = (contact: Contact) => {
+    onContactCreated(contact);
+  };
+
   return (
     <>
       <Card>
@@ -62,7 +66,7 @@ export const ContactSelectionCard = ({
               {/* Layout dropdown - aligned with buttons */}
               <div className="flex-1 max-w-xs">
                 <Select value={selectedTemplate} onValueChange={onTemplateChange}>
-                  <SelectTrigger className="h-8 text-xs cursor-pointer">
+                  <SelectTrigger className="h-8 text-xs">
                     <SelectValue placeholder="Selecteer template">
                       {selectedTemplate && availableTemplates.find(t => t.id === selectedTemplate)?.name}
                     </SelectValue>
@@ -108,7 +112,7 @@ export const ContactSelectionCard = ({
                     console.log('Selected contact:', value);
                   }}
                 >
-                  <SelectTrigger className="h-8 text-xs cursor-pointer">
+                  <SelectTrigger className="h-8 text-xs">
                     <SelectValue placeholder="Selecteer klant">
                       {selectedContact?.name}
                     </SelectValue>
@@ -140,10 +144,10 @@ export const ContactSelectionCard = ({
       </Card>
 
       <ContactDialog
-        open={showContactDialog}
-        onOpenChange={setShowContactDialog}
-        onContactCreated={onContactCreated}
-        onContactUpdated={onContactUpdated}
+        isOpen={showContactDialog}
+        onClose={() => setShowContactDialog(false)}
+        onSave={handleContactSave}
+        mode="create"
       />
     </>
   );
