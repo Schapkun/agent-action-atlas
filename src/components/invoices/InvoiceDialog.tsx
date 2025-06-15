@@ -270,29 +270,29 @@ Uw administratie`
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl max-h-[95vh] flex flex-col overflow-hidden p-0">
-        {/* Header like in screenshot */}
-        <div className="bg-white border-b px-6 py-4 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-4">
-            <h2 className="text-xl font-semibold text-green-600">📄 Factuur</h2>
+      <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col overflow-hidden p-0">
+        {/* Compact header */}
+        <div className="bg-white border-b px-4 py-3 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-medium text-green-600">📄 Factuur</h2>
           </div>
           
           <div className="flex items-center gap-2">
-            <Button variant="outline" className="bg-blue-500 text-white hover:bg-blue-600 border-blue-500">
+            <Button variant="outline" size="sm" className="bg-blue-500 text-white hover:bg-blue-600 border-blue-500">
               Verstuur
             </Button>
-            <Button variant="outline">📋</Button>
-            <Button variant="outline">❌</Button>
-            <Button variant="outline">↶</Button>
-            <Button variant="outline">↷</Button>
-            <div className="flex items-center gap-2 ml-4">
-              <Button variant="outline" className="flex items-center gap-2">
+            <Button variant="outline" size="sm">📋</Button>
+            <Button variant="outline" size="sm">❌</Button>
+            <Button variant="outline" size="sm">↶</Button>
+            <Button variant="outline" size="sm">↷</Button>
+            <div className="flex items-center gap-2 ml-2">
+              <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs">
                 👁️ Voorbeeld
               </Button>
-              <Button variant="outline" className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs">
                 💾 Opslaan als concept
               </Button>
-              <Button variant="outline" className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs">
                 ⚙️ Naar offerte
               </Button>
             </div>
@@ -300,29 +300,29 @@ Uw administratie`
         </div>
 
         <div className="flex-1 flex overflow-hidden">
-          {/* Main content area */}
-          <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Client selection section like in screenshot */}
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <div className="flex items-center gap-4 mb-4">
+          {/* Main content area - more compact */}
+          <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Client selection - more compact */}
+              <div className="bg-white rounded p-4 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
                   <div className="flex-1">
                     <Label htmlFor="client_select" className="text-sm font-medium">Aan</Label>
                     <div className="flex gap-2 mt-1">
                       <Input 
                         placeholder="Selecteer klant - zoek op naam, klantnummer, plaats, adres, e-mailadres of postcode"
-                        className="flex-1"
+                        className="flex-1 h-8 text-sm"
                         value={formData.client_name}
                         onChange={(e) => setFormData({...formData, client_name: e.target.value})}
                       />
-                      <Button type="button" variant="outline" className="text-blue-500">Nieuw</Button>
-                      <Button type="button" variant="outline" className="text-blue-500">Bewerken</Button>
+                      <Button type="button" variant="outline" size="sm" className="text-blue-500 h-8 px-3 text-xs">Nieuw</Button>
+                      <Button type="button" variant="outline" size="sm" className="text-blue-500 h-8 px-3 text-xs">Bewerken</Button>
                     </div>
                   </div>
-                  <div className="w-64">
+                  <div className="w-48">
                     <Label className="text-sm font-medium">Profiel</Label>
                     <Select value={selectedProfile} onValueChange={setSelectedProfile}>
-                      <SelectTrigger className="mt-1">
+                      <SelectTrigger className="mt-1 h-8 text-sm">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -330,27 +330,27 @@ Uw administratie`
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button type="button" variant="outline" size="icon">⚙️</Button>
+                  <Button type="button" variant="outline" size="sm" className="mt-5">⚙️</Button>
                 </div>
               </div>
 
-              {/* References section */}
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
+              {/* References section - compact */}
+              <div className="bg-white rounded p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
                   <Label className="text-sm font-medium">Referenties</Label>
-                  <Button type="button" variant="link" className="text-blue-500 text-sm">Bewerk introductie</Button>
+                  <Button type="button" variant="link" className="text-blue-500 text-xs p-0 h-auto">Bewerk introductie</Button>
                 </div>
-                <Input placeholder="Voer hier een factuurreferentie in van maximaal 3 regels." className="text-sm" />
+                <Input placeholder="Voer hier een factuurreferentie in van maximaal 3 regels." className="text-sm h-8" />
               </div>
 
-              {/* Invoice details section */}
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <div className="grid grid-cols-6 gap-4 mb-4">
+              {/* Invoice details - more compact */}
+              <div className="bg-white rounded p-4 shadow-sm">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <Label className="text-sm font-medium">Factuur</Label>
                     <div className="flex mt-1">
-                      <span className="text-sm bg-gray-100 px-2 py-1 rounded-l border">2025-</span>
-                      <Input className="rounded-l-none border-l-0" placeholder="185" />
+                      <span className="text-sm bg-gray-100 px-2 py-1 rounded-l border h-8 flex items-center">2025-</span>
+                      <Input className="rounded-l-none border-l-0 h-8" placeholder="185" />
                     </div>
                   </div>
                   <div>
@@ -359,7 +359,7 @@ Uw administratie`
                       type="date"
                       value={formData.invoice_date}
                       onChange={(e) => setFormData({...formData, invoice_date: e.target.value})}
-                      className="mt-1"
+                      className="mt-1 h-8"
                     />
                   </div>
                   <div>
@@ -368,34 +368,33 @@ Uw administratie`
                       type="date"
                       value={formData.due_date}
                       onChange={(e) => setFormData({...formData, due_date: e.target.value})}
-                      className="mt-1"
+                      className="mt-1 h-8"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Products/Services table */}
-              <div className="bg-white rounded-lg shadow-sm">
-                <div className="p-4 border-b">
-                  <div className="flex justify-between items-center">
-                    <div className="grid grid-cols-6 gap-4 text-sm font-medium text-gray-700 flex-1">
-                      <div>Aantal</div>
-                      <div className="col-span-2">Omschrijving</div>
-                      <div>Prijs</div>
-                      <div>btw</div>
-                      <div>Prijs incl. btw</div>
-                    </div>
+              {/* Products/Services table - compact */}
+              <div className="bg-white rounded shadow-sm">
+                <div className="p-3 border-b">
+                  <div className="grid grid-cols-6 gap-3 text-sm font-medium text-gray-700">
+                    <div>Aantal</div>
+                    <div className="col-span-2">Omschrijving</div>
+                    <div>Prijs</div>
+                    <div>btw</div>
+                    <div>Prijs incl. btw</div>
                   </div>
                 </div>
 
-                <div className="p-4">
+                <div className="p-3">
                   {lineItems.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <p>Er zijn geen productregels</p>
+                    <div className="text-center py-6 text-gray-500">
+                      <p className="text-sm">Er zijn geen productregels</p>
                       <Button 
                         type="button" 
                         onClick={addLineItem}
-                        className="mt-4 bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        size="sm"
+                        className="mt-3 bg-gray-100 text-gray-700 hover:bg-gray-200"
                       >
                         Voeg regel toe
                       </Button>
@@ -403,77 +402,48 @@ Uw administratie`
                   ) : (
                     <div className="space-y-2">
                       {lineItems.map((item, index) => (
-                        <div key={index} className="grid grid-cols-6 gap-4 items-center">
+                        <div key={index} className="grid grid-cols-6 gap-3 items-start">
                           <div>
                             <Input
                               type="number"
                               step="0.01"
                               value={item.quantity}
                               onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                              className="text-center"
+                              className="text-center h-8"
                             />
                           </div>
                           <div className="col-span-2">
-                            <div className="relative">
-                              <Textarea
-                                value={item.description}
-                                onChange={(e) => updateLineItem(index, 'description', e.target.value)}
-                                placeholder=""
-                                className="min-h-[40px] resize-none"
-                                rows={1}
-                              />
-                              {/* Rich text editor toolbar */}
-                              <div className="flex items-center gap-1 mt-1 text-gray-500">
-                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                  <Bold className="h-3 w-3" />
-                                </Button>
-                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                  <Italic className="h-3 w-3" />
-                                </Button>
-                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                  <Underline className="h-3 w-3" />
-                                </Button>
-                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                  <List className="h-3 w-3" />
-                                </Button>
-                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                  <AlignLeft className="h-3 w-3" />
-                                </Button>
-                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                  <AlignCenter className="h-3 w-3" />
-                                </Button>
-                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                  <AlignRight className="h-3 w-3" />
-                                </Button>
-                                <Select defaultValue="9pt">
-                                  <SelectTrigger className="h-6 w-16 text-xs">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="9pt">9pt</SelectItem>
-                                    <SelectItem value="10pt">10pt</SelectItem>
-                                    <SelectItem value="12pt">12pt</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                  📋
-                                </Button>
-                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                  ❓
-                                </Button>
-                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                  <Link className="h-3 w-3" />
-                                </Button>
-                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                  <Paperclip className="h-3 w-3" />
-                                </Button>
-                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                  <MoreHorizontal className="h-3 w-3" />
-                                </Button>
-                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                  <MessageSquare className="h-3 w-3" />
-                                </Button>
-                              </div>
+                            <Textarea
+                              value={item.description}
+                              onChange={(e) => updateLineItem(index, 'description', e.target.value)}
+                              placeholder=""
+                              className="min-h-[32px] resize-none text-sm"
+                              rows={1}
+                            />
+                            {/* Compact toolbar */}
+                            <div className="flex items-center gap-1 mt-1">
+                              <Button type="button" variant="ghost" size="sm" className="h-5 w-5 p-0">
+                                <Bold className="h-2.5 w-2.5" />
+                              </Button>
+                              <Button type="button" variant="ghost" size="sm" className="h-5 w-5 p-0">
+                                <Italic className="h-2.5 w-2.5" />
+                              </Button>
+                              <Button type="button" variant="ghost" size="sm" className="h-5 w-5 p-0">
+                                <Underline className="h-2.5 w-2.5" />
+                              </Button>
+                              <Button type="button" variant="ghost" size="sm" className="h-5 w-5 p-0">
+                                <List className="h-2.5 w-2.5" />
+                              </Button>
+                              <Select defaultValue="9pt">
+                                <SelectTrigger className="h-5 w-12 text-xs border-0">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="9pt">9pt</SelectItem>
+                                  <SelectItem value="10pt">10pt</SelectItem>
+                                  <SelectItem value="12pt">12pt</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </div>
                           </div>
                           <div>
@@ -484,7 +454,7 @@ Uw administratie`
                                 step="0.01"
                                 value={item.unit_price}
                                 onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                                className="text-right"
+                                className="text-right h-8"
                               />
                             </div>
                           </div>
@@ -495,7 +465,7 @@ Uw administratie`
                                 step="0.01"
                                 value={item.vat_rate}
                                 onChange={(e) => updateLineItem(index, 'vat_rate', parseFloat(e.target.value) || 0)}
-                                className="text-right w-16"
+                                className="text-right w-12 h-8"
                               />
                               <span className="text-sm ml-1">%</span>
                             </div>
@@ -511,7 +481,7 @@ Uw administratie`
                               size="sm"
                               onClick={() => removeLineItem(index)}
                               disabled={lineItems.length === 1}
-                              className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                              className="h-5 w-5 p-0 text-red-500 hover:text-red-700"
                             >
                               <Trash2 className="h-3 w-3" />
                             </Button>
@@ -523,71 +493,49 @@ Uw administratie`
                 </div>
               </div>
 
-              {/* Add line and rich text toolbar */}
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <div className="flex items-center gap-2">
-                  <Button 
-                    type="button" 
-                    onClick={addLineItem}
-                    className="bg-blue-500 text-white hover:bg-blue-600"
-                  >
-                    Voeg regel toe
-                  </Button>
-                  {/* Toolbar buttons as in screenshot */}
-                  <div className="flex items-center gap-1 ml-4">
-                    <Button type="button" variant="ghost" size="sm">
-                      <Bold className="h-4 w-4" />
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm">
-                      <Italic className="h-4 w-4" />
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm">
-                      <Underline className="h-4 w-4" />
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm">
-                      <List className="h-4 w-4" />
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm">
-                      📋
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm">
-                      ❓
-                    </Button>
-                  </div>
-                </div>
+              {/* Add line button */}
+              <div className="bg-white rounded p-3 shadow-sm">
+                <Button 
+                  type="button" 
+                  onClick={addLineItem}
+                  size="sm"
+                  className="bg-blue-500 text-white hover:bg-blue-600"
+                >
+                  Voeg regel toe
+                </Button>
               </div>
 
               {/* Footer with payment info */}
-              <div className="bg-white rounded-lg p-4 shadow-sm">
+              <div className="bg-white rounded p-3 shadow-sm">
                 <Textarea 
                   value="Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendeur.nl met omschrijving: %INVOICE_NUMBER%"
-                  className="text-sm"
+                  className="text-sm h-16 resize-none"
                   rows={2}
                 />
               </div>
             </form>
           </div>
 
-          {/* Right sidebar with total */}
-          <div className="w-80 bg-white border-l p-6 flex flex-col">
+          {/* Compact right sidebar */}
+          <div className="w-64 bg-white border-l p-4 flex flex-col">
             <div className="flex-1">
               {/* Total section */}
-              <div className="bg-blue-50 rounded-lg p-4 mb-6">
+              <div className="bg-blue-50 rounded p-3 mb-4">
                 <div className="text-right">
-                  <div className="text-2xl font-bold">Totaal</div>
-                  <div className="text-3xl font-bold text-blue-600">€ {total.toFixed(2)}</div>
+                  <div className="text-lg font-bold">Totaal</div>
+                  <div className="text-2xl font-bold text-blue-600">€ {total.toFixed(2)}</div>
+                  <div className="text-xs text-gray-500 mt-1">Alle statussen</div>
                 </div>
               </div>
-
-              {/* Additional options could go here */}
             </div>
 
             {/* Action buttons */}
-            <div className="space-y-2 pt-4 border-t">
+            <div className="space-y-2 pt-3 border-t">
               <Button 
                 type="button" 
                 onClick={onClose}
                 variant="outline" 
+                size="sm"
                 className="w-full"
               >
                 Annuleren
@@ -595,18 +543,20 @@ Uw administratie`
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="w-full"
+                size="sm"
+                className="w-full bg-gray-800 hover:bg-gray-900"
                 onClick={handleSubmit}
               >
-                {loading ? 'Opslaan...' : (invoice ? 'Bijwerken' : 'Opslaan')}
+                {loading ? 'Opslaan...' : 'Opslaan'}
               </Button>
               <Button 
                 type="button" 
                 onClick={handleSaveAndSend}
                 disabled={sendLoading || !formData.client_email}
+                size="sm"
                 className="w-full bg-blue-600 hover:bg-blue-700"
               >
-                <Send className="h-4 w-4 mr-2" />
+                <Send className="h-3 w-3 mr-1" />
                 {sendLoading ? 'Verzenden...' : 'Opslaan & Versturen'}
               </Button>
             </div>
