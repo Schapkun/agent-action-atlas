@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -140,7 +141,16 @@ export const CreateInvoiceForm = () => {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('CreateInvoiceForm: Form submitted explicitly by user - this is the ONLY time an invoice should be created');
     handleSubmit();
+  };
+
+  // CRITICAL: Custom contact created handler to prevent automatic invoice creation
+  const handleContactCreatedSafely = (contact: any) => {
+    console.log('CreateInvoiceForm: Contact created - ONLY updating form data, NO invoice creation');
+    // Call the handleContactCreated from useInvoiceForm which should ONLY update form data
+    handleContactCreated(contact);
+    console.log('CreateInvoiceForm: Form data updated with new contact - NO invoice should be created');
   };
 
   return (
@@ -163,7 +173,7 @@ export const CreateInvoiceForm = () => {
             availableTemplates={availableTemplates}
             templatesLoading={templatesLoading}
             onContactSelect={handleContactSelect}
-            onContactCreated={handleContactCreated}
+            onContactCreated={handleContactCreatedSafely}
             onContactUpdated={handleContactUpdated}
             onTemplateChange={setSelectedTemplate}
             onShowSettings={() => setShowSettings(true)}

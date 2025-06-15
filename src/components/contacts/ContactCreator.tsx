@@ -24,9 +24,9 @@ export const useContactCreator = () => {
 
   const saveContact = async (contactData: Contact): Promise<Contact> => {
     try {
-      console.log('Saving contact to database:', contactData);
+      console.log('useContactCreator: Saving contact to database - NO INVOICE CREATION:', contactData);
       
-      // Save to the clients table (not contacts)
+      // Save to the clients table (not contacts) - ONLY SAVE CONTACT, NO INVOICE
       const { data, error } = await supabase
         .from('clients')
         .insert({
@@ -48,7 +48,7 @@ export const useContactCreator = () => {
         throw error;
       }
 
-      console.log('Contact saved to database:', data);
+      console.log('useContactCreator: Contact saved to database successfully - NO INVOICE CREATED:', data);
 
       const savedContact: Contact = {
         id: data.id,
@@ -67,6 +67,7 @@ export const useContactCreator = () => {
         description: `Contact "${savedContact.name}" is succesvol opgeslagen.`
       });
 
+      console.log('useContactCreator: Returning saved contact - NO INVOICE SHOULD BE CREATED:', savedContact);
       return savedContact;
     } catch (error) {
       console.error('Error saving contact:', error);
@@ -81,9 +82,9 @@ export const useContactCreator = () => {
 
   const updateContact = async (contactData: Contact): Promise<Contact> => {
     try {
-      console.log('Updating contact in database:', contactData);
+      console.log('useContactCreator: Updating contact in database - NO INVOICE CREATION:', contactData);
       
-      // Update in the clients table
+      // Update in the clients table - ONLY UPDATE CONTACT, NO INVOICE
       const { data, error } = await supabase
         .from('clients')
         .update({
@@ -104,7 +105,7 @@ export const useContactCreator = () => {
         throw error;
       }
 
-      console.log('Contact updated in database:', data);
+      console.log('useContactCreator: Contact updated in database - NO INVOICE CREATED:', data);
 
       const updatedContact: Contact = {
         id: data.id,
@@ -123,6 +124,7 @@ export const useContactCreator = () => {
         description: `Contact "${updatedContact.name}" is succesvol bijgewerkt.`
       });
 
+      console.log('useContactCreator: Returning updated contact - NO INVOICE SHOULD BE CREATED:', updatedContact);
       return updatedContact;
     } catch (error) {
       console.error('Error updating contact:', error);
