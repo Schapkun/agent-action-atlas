@@ -1,12 +1,11 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Save, ArrowLeft, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { HtmlEditor } from './builder/HtmlEditor';
+import { DocumentNameHeader } from './components/DocumentNameHeader';
+import { VariablesPanel } from './components/VariablesPanel';
+import { EnhancedHtmlEditor } from './components/EnhancedHtmlEditor';
 import { A4Preview } from './components/A4Preview';
-import { PlaceholderPanel } from './components/PlaceholderPanel';
+import { DocumentFooter } from './components/DocumentFooter';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 
 interface SimpleHtmlDocumentBuilderProps {
@@ -14,18 +13,87 @@ interface SimpleHtmlDocumentBuilderProps {
   onComplete: (success: boolean) => void;
 }
 
-interface PlaceholderValues {
-  [key: string]: string;
-}
+const DEFAULT_HTML = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>{{onderwerp}}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20mm;
+      background: white;
+      color: #333;
+      line-height: 1.6;
+    }
+    .header {
+      text-align: right;
+      margin-bottom: 40px;
+    }
+    .logo {
+      max-width: 150px;
+      height: auto;
+    }
+    .document-info {
+      margin-bottom: 30px;
+    }
+    .content {
+      margin-bottom: 30px;
+    }
+    .footer {
+      margin-top: 50px;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="{{logo}}" alt="{{bedrijfsnaam}}" class="logo" />
+    <h1>{{bedrijfsnaam}}</h1>
+    <p>{{adres}}<br>{{postcode}} {{plaats}}<br>{{telefoon}} | {{email}}</p>
+  </div>
+  
+  <div class="document-info">
+    <p><strong>Datum:</strong> {{datum}}</p>
+    <p><strong>Referentie:</strong> {{referentie}}</p>
+    <p><strong>Onderwerp:</strong> {{onderwerp}}</p>
+  </div>
+  
+  <div class="recipient">
+    <p>{{klant_naam}}<br>{{klant_bedrijf}}<br>{{klant_adres}}<br>{{klant_postcode}} {{klant_plaats}}</p>
+  </div>
+  
+  <div class="content">
+    <p>{{aanhef}}</p>
+    <p>{{tekst}}</p>
+    <p>{{afsluiting}}</p>
+  </div>
+  
+  <div class="footer">
+    <p>{{footer_tekst}}</p>
+    <p>{{footer_contact}}</p>
+  </div>
+</body>
+</html>`;
 
 export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtmlDocumentBuilderProps) => {
-  const [htmlContent, setHtmlContent] = useState('');
-  const [placeholderValues, setPlaceholderValues] = useState<PlaceholderValues>({});
+  const [documentName, setDocumentName] = useState('Nieuw Document');
+  const [htmlContent, setHtmlContent] = useState(DEFAULT_HTML);
+  const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>({
+    datum: new Date().toLocaleDateString('nl-NL'),
+    bedrijfsnaam: 'Uw Bedrijf B.V.',
+    aanhef: 'Geachte heer/mevrouw,',
+    afsluiting: 'Met vriendelijke groet,',
+    footer_tekst: 'Dit document is automatisch gegenereerd.',
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
   const { toast } = useToast();
-  const { templates, loading: templatesLoading, updateTemplate } = useDocumentTemplates();
+  const { templates, loading: templatesLoading, updateTemplate, createTemplate } = useDocumentTemplates();
 
   // Load document data
   useEffect(() => {
@@ -38,12 +106,9 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       try {
         const template = templates.find(t => t.id === documentId);
         if (template) {
-          setHtmlContent(template.html_content || '');
-          setPlaceholderValues(template.placeholder_values || {});
-        } else {
-          // New document - set default content
-          setHtmlContent('<h1>Document Titel</h1>\n<p>Begin hier met typen...</p>');
-          setPlaceholderValues({});
+          setDocumentName(template.name);
+          setHtmlContent(template.html_content || DEFAULT_HTML);
+          setPlaceholderValues(template.placeholder_values || placeholderValues);
         }
       } catch (error) {
         console.error('Error loading document:', error);
@@ -60,26 +125,55 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
     loadDocument();
   }, [documentId, templates, templatesLoading]);
 
+  // Track changes
+  useEffect(() => {
+    setHasUnsavedChanges(true);
+  }, [documentName, htmlContent, placeholderValues]);
+
+  const handlePlaceholderChange = (key: string, value: string) => {
+    setPlaceholderValues(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
   const handleSave = async () => {
-    if (!documentId) {
+    if (!documentName.trim()) {
       toast({
         title: "Fout",
-        description: "Geen document ID beschikbaar"
+        description: "Voer een documentnaam in"
       });
       return;
     }
     
     setIsSaving(true);
     try {
-      await updateTemplate(documentId, {
-        html_content: htmlContent,
-        placeholder_values: placeholderValues
-      });
+      if (documentId) {
+        // Update existing
+        await updateTemplate(documentId, {
+          name: documentName,
+          html_content: htmlContent,
+          placeholder_values: placeholderValues
+        });
+      } else {
+        // Create new
+        await createTemplate({
+          name: documentName,
+          type: 'custom',
+          html_content: htmlContent,
+          description: 'Custom document',
+          is_default: false,
+          is_active: true,
+          placeholder_values: placeholderValues
+        });
+      }
       
+      setHasUnsavedChanges(false);
       toast({
         title: "Opgeslagen",
         description: "Document succesvol opgeslagen"
       });
+      onComplete(true);
     } catch (error) {
       console.error('Save failed:', error);
       toast({
@@ -92,15 +186,12 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
     }
   };
 
-  const handleClose = () => {
+  const handleCancel = () => {
+    if (hasUnsavedChanges) {
+      const confirmed = window.confirm('Er zijn niet-opgeslagen wijzigingen. Weet je zeker dat je wilt annuleren?');
+      if (!confirmed) return;
+    }
     onComplete(false);
-  };
-
-  const handlePlaceholderChange = (key: string, value: string) => {
-    setPlaceholderValues(prev => ({
-      ...prev,
-      [key]: value
-    }));
   };
 
   if (isLoading) {
@@ -116,68 +207,45 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClose}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Terug
-          </Button>
-          <h2 className="text-lg font-semibold">HTML Document Editor</h2>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={handleSave}
-            disabled={isSaving || !documentId}
-            size="sm"
-            variant="outline"
-          >
-            <Save className="h-4 w-4 mr-2" />
-            {isSaving ? 'Opslaan...' : 'Opslaan'}
-          </Button>
-          <Button
-            onClick={handleClose}
-            size="sm"
-          >
-            Sluiten
-          </Button>
-        </div>
-      </div>
+      <DocumentNameHeader
+        documentName={documentName}
+        onDocumentNameChange={setDocumentName}
+        hasUnsavedChanges={hasUnsavedChanges}
+        onClose={handleCancel}
+      />
 
-      {/* Main Content */}
-      <div className="flex-1 flex">
-        {/* Left Panel - HTML Editor */}
-        <div className="w-1/2 flex flex-col border-r">
-          <HtmlEditor
+      <div className="flex-1 flex" style={{ minHeight: 0 }}>
+        {/* Variables Panel - 10% */}
+        <div style={{ width: '10%', minWidth: '200px' }}>
+          <VariablesPanel
+            placeholderValues={placeholderValues}
+            onPlaceholderChange={handlePlaceholderChange}
+          />
+        </div>
+
+        {/* HTML Editor - 45% */}
+        <div style={{ width: '45%' }}>
+          <EnhancedHtmlEditor
             htmlContent={htmlContent}
             onChange={setHtmlContent}
           />
         </div>
 
-        {/* Right Panel - Preview and Placeholders */}
-        <div className="w-1/2 flex flex-col">
-          {/* Placeholder Panel */}
-          <div className="h-1/3 border-b">
-            <PlaceholderPanel
-              placeholderValues={placeholderValues}
-              onPlaceholderChange={handlePlaceholderChange}
-            />
-          </div>
-          
-          {/* A4 Preview */}
-          <div className="flex-1">
-            <A4Preview
-              htmlContent={htmlContent}
-              placeholderValues={placeholderValues}
-            />
-          </div>
+        {/* A4 Preview - 45% */}
+        <div style={{ width: '45%' }}>
+          <A4Preview
+            htmlContent={htmlContent}
+            placeholderValues={placeholderValues}
+          />
         </div>
       </div>
+
+      <DocumentFooter
+        onSave={handleSave}
+        onCancel={handleCancel}
+        isSaving={isSaving}
+        disabled={!documentName.trim()}
+      />
     </div>
   );
 };
