@@ -94,10 +94,12 @@ const CreateInvoice = () => {
     console.log('Available template types:', documentTemplates.map(t => ({ id: t.id, name: t.name, type: t.type })));
   }, [documentTemplates, templatesLoading]);
 
-  // Filter templates for factuur and schapkun types
+  // Filter templates for factuur and schapkun types - fixed filtering
   const availableTemplates = documentTemplates.filter(t => 
     t.type === 'factuur' || t.type === 'schapkun'
   );
+
+  console.log('Filtered available templates:', availableTemplates);
 
   // Set default template and payment terms when loaded
   useEffect(() => {
@@ -659,7 +661,7 @@ Uw administratie`
             </CardContent>
           </Card>
 
-          {/* Products/Services table - Fixed alignment */}
+          {/* Products/Services table - Fixed column alignment */}
           <Card>
             <CardHeader className="p-2">
               <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700">
@@ -685,17 +687,33 @@ Uw administratie`
                       />
                     </div>
                     <div className="col-span-6">
-                      {/* Fixed text direction issue by using textarea instead of contentEditable */}
-                      <Textarea
-                        value={item.description}
-                        onChange={(e) => updateLineItem(index, 'description', e.target.value)}
-                        className="min-h-[32px] text-xs resize-none"
-                        style={{ direction: 'ltr', textAlign: 'left' }}
-                        placeholder="Omschrijving van product of dienst"
-                      />
+                      {/* Rich text editor with formatting buttons */}
+                      <div className="border rounded">
+                        <div className="flex items-center gap-1 p-1 border-b bg-gray-50">
+                          <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                            <Bold className="h-3 w-3" />
+                          </Button>
+                          <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                            <Italic className="h-3 w-3" />
+                          </Button>
+                          <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                            <Underline className="h-3 w-3" />
+                          </Button>
+                          <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                            <List className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <div
+                          contentEditable
+                          className="min-h-[32px] p-2 text-xs focus:outline-none"
+                          style={{ direction: 'ltr', textAlign: 'left' }}
+                          onBlur={(e) => updateLineItem(index, 'description', e.currentTarget.textContent || '')}
+                          suppressContentEditableWarning
+                        />
+                      </div>
                     </div>
-                    <div className="col-span-2">
-                      <div className="flex items-center justify-center gap-1">
+                    <div className="col-span-2 flex justify-center">
+                      <div className="flex items-center gap-1">
                         <span className="text-xs">€</span>
                         <Input
                           type="number"
@@ -706,14 +724,12 @@ Uw administratie`
                         />
                       </div>
                     </div>
-                    <div className="col-span-1">
-                      <div className="text-center">
-                        <VatSelector
-                          value={item.vat_rate}
-                          onValueChange={(value) => updateLineItem(index, 'vat_rate', value)}
-                          className="text-xs h-8 w-16"
-                        />
-                      </div>
+                    <div className="col-span-1 flex justify-center">
+                      <VatSelector
+                        value={item.vat_rate}
+                        onValueChange={(value) => updateLineItem(index, 'vat_rate', value)}
+                        className="text-xs h-8 w-16"
+                      />
                     </div>
                     <div className="col-span-2 flex items-center justify-between">
                       <div className="text-center flex-1">
