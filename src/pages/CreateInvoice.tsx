@@ -1,18 +1,22 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Send, Bold, Italic, Underline, List, FileText, Settings, RotateCcw, RotateCw, Eye, Save } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Plus, Trash2, Send, Bold, Italic, Underline, List, Settings, RotateCcw, RotateCw, Eye, Save } from 'lucide-react';
 import { useInvoices, Invoice } from '@/hooks/useInvoices';
 import { useQuotes } from '@/hooks/useQuotes';
-import { useInvoiceLines } from '@/hooks/useInvoiceLines';
+import { useInvoiceSettings } from '@/hooks/useInvoiceSettings';
+import { useInvoiceTemplates } from '@/hooks/useInvoiceTemplates';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ContactSelector } from '@/components/contacts/ContactSelector';
+import { VatSelector } from '@/components/ui/vat-selector';
 
 interface InvoiceFormData {
   client_name: string;
@@ -36,13 +40,27 @@ interface LineItem {
   line_total: number;
 }
 
+interface Contact {
+  id: string;
+  name: string;
+  email?: string;
+  address?: string;
+  postal_code?: string;
+  city?: string;
+  country?: string;
+}
+
 const CreateInvoice = () => {
   const navigate = useNavigate();
   const { createInvoice } = useInvoices();
   const { createQuote } = useQuotes();
+  const { settings: invoiceSettings } = useInvoiceSettings();
+  const { invoiceTemplates, defaultTemplate } = useInvoiceTemplates();
   const [loading, setLoading] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState('debuitendeur.nl');
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   
   const [formData, setFormData] = useState<InvoiceFormData>({
     client_name: '',
@@ -63,6 +81,39 @@ const CreateInvoice = () => {
   ]);
 
   const { toast } = useToast();
+
+  // Set default template when templates are loaded
+  useEffect(() => {
+    if (defaultTemplate && !selectedTemplate) {
+      setSelectedTemplate(defaultTemplate.id);
+    }
+  }, [defaultTemplate, selectedTemplate]);
+
+  const handleContactSelect = (contact: Contact | null) => {
+    setSelectedContact(contact);
+    if (contact) {
+      setFormData(prev => ({
+        ...prev,
+        client_name: contact.name,
+        client_email: contact.email || '',
+        client_address: contact.address || '',
+        client_postal_code: contact.postal_code || '',
+        client_city: contact.city || '',
+        client_country: contact.country || 'Nederland'
+      }));
+    }
+  };
+
+  const handleContactCreated = (contact: Contact) => {
+    console.log('Contact created:', contact);
+    // Contact would be added to the contacts list automatically
+  };
+
+  const handleContactUpdated = (contact: Contact) => {
+    console.log('Contact updated:', contact);
+    setSelectedContact(contact);
+    handleContactSelect(contact);
+  };
 
   const calculateLineTotal = (quantity: number, unitPrice: number) => {
     return quantity * unitPrice;
@@ -108,73 +159,6 @@ const CreateInvoice = () => {
     return { subtotal, vatAmount, total };
   };
 
-  const handleCopy = () => {
-    // Copy invoice data to clipboard
-    const invoiceData = JSON.stringify({ formData, lineItems });
-    navigator.clipboard.writeText(invoiceData);
-    toast({
-      title: "Gekopieerd",
-      description: "Factuurgegevens zijn gekopieerd naar het klembord"
-    });
-  };
-
-  const handleUndo = () => {
-    // Simple undo functionality - reset to initial state
-    setFormData({
-      client_name: '',
-      client_email: '',
-      client_address: '',
-      client_postal_code: '',
-      client_city: '',
-      client_country: 'Nederland',
-      invoice_date: format(new Date(), 'yyyy-MM-dd'),
-      due_date: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-      payment_terms: 30,
-      notes: '',
-      vat_percentage: 21.00
-    });
-    setLineItems([{ description: '', quantity: 1, unit_price: 0, vat_rate: 21, line_total: 0 }]);
-    toast({
-      title: "Ongedaan gemaakt",
-      description: "Wijzigingen zijn ongedaan gemaakt"
-    });
-  };
-
-  const handleRedo = () => {
-    toast({
-      title: "Opnieuw",
-      description: "Redo functionaliteit wordt binnenkort toegevoegd"
-    });
-  };
-
-  const handlePreview = () => {
-    // Open preview in new window/modal
-    toast({
-      title: "Voorbeeld",
-      description: "Voorbeeld functionaliteit wordt binnenkort toegevoegd"
-    });
-  };
-
-  const handleSettings = () => {
-    navigate('/instellingen');
-  };
-
-  const handleNewContact = () => {
-    navigate('/contacten?action=new');
-  };
-
-  const handleEditContact = () => {
-    if (!formData.client_name) {
-      toast({
-        title: "Geen contact geselecteerd",
-        description: "Selecteer eerst een contact om te bewerken",
-        variant: "destructive"
-      });
-      return;
-    }
-    navigate('/contacten?action=edit');
-  };
-
   const handleConvertToQuote = async () => {
     try {
       const { subtotal, vatAmount, total } = calculateTotals();
@@ -197,11 +181,7 @@ const CreateInvoice = () => {
       };
 
       await createQuote(quoteData);
-      toast({
-        title: "Omgezet naar offerte",
-        description: "Factuur is succesvol omgezet naar een offerte"
-      });
-      navigate('/offertes');
+      navigate('/offertes/opstellen');
     } catch (error) {
       console.error('Error converting to quote:', error);
       toast({
@@ -252,9 +232,10 @@ const CreateInvoice = () => {
 
       const newInvoice = await createInvoice(invoiceData);
       
-      const emailTemplate = {
-        subject: "Factuur {invoice_number}",
-        message: `Beste {client_name},
+      if (formData.client_email) {
+        const emailTemplate = {
+          subject: "Factuur {invoice_number}",
+          message: `Beste {client_name},
 
 Hierbij ontvangt u factuur {invoice_number} van {invoice_date}.
 
@@ -262,9 +243,8 @@ Het totaalbedrag van €{total_amount} dient betaald te worden voor {due_date}.
 
 Met vriendelijke groet,
 Uw administratie`
-      };
+        };
 
-      if (formData.client_email) {
         const { error } = await supabase.functions.invoke('send-invoice-email', {
           body: {
             invoice_id: newInvoice.id,
@@ -298,7 +278,7 @@ Uw administratie`
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Compact Header */}
+      {/* Compact Header with action buttons */}
       <div className="bg-white border-b px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -306,67 +286,92 @@ Uw administratie`
           </div>
           
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleCopy} className="text-xs px-2 py-1">
-              <FileText className="h-3 w-3" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleUndo} className="text-xs px-2 py-1">
+            <Button variant="outline" size="sm" className="text-xs px-2 py-1">
               <RotateCcw className="h-3 w-3" />
             </Button>
-            <Button variant="outline" size="sm" onClick={handleRedo} className="text-xs px-2 py-1">
+            <Button variant="outline" size="sm" className="text-xs px-2 py-1">
               <RotateCw className="h-3 w-3" />
             </Button>
-            <div className="flex items-center gap-1 ml-2">
-              <Button variant="outline" size="sm" onClick={handlePreview} className="flex items-center gap-1 text-xs px-2 py-1">
-                <Eye className="h-3 w-3" />
-                Voorbeeld
+            <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs px-2 py-1">
+              <Eye className="h-3 w-3" />
+              Voorbeeld
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleConvertToQuote} className="flex items-center gap-1 text-xs px-2 py-1">
+              ⚙️ Naar offerte
+            </Button>
+            
+            {/* Action buttons moved to header */}
+            <div className="flex items-center gap-2 ml-4 border-l pl-4">
+              <Button 
+                type="button" 
+                onClick={() => navigate('/facturen')}
+                variant="outline"
+                size="sm"
+                className="text-xs"
+              >
+                Annuleren
               </Button>
-              <Button variant="outline" size="sm" onClick={handleConvertToQuote} className="flex items-center gap-1 text-xs px-2 py-1">
-                ⚙️ Naar offerte
+              <Button 
+                onClick={handleSubmit} 
+                disabled={loading}
+                size="sm"
+                className="bg-gray-800 hover:bg-gray-900 text-xs"
+              >
+                <Save className="h-3 w-3 mr-1" />
+                {loading ? 'Opslaan...' : 'Opslaan'}
+              </Button>
+              <Button 
+                onClick={handleSaveAndSend}
+                disabled={sendLoading || !formData.client_email}
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 text-xs"
+              >
+                <Send className="h-3 w-3 mr-1" />
+                {sendLoading ? 'Verzenden...' : 'Opslaan & Versturen'}
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main content - Much more compact */}
+      {/* Main content */}
       <div className="max-w-6xl mx-auto p-3">
         <form onSubmit={handleSubmit} className="space-y-3">
-          {/* Contact selection - Compact */}
+          {/* Contact selection with new ContactSelector */}
           <Card>
             <CardContent className="p-3">
               <div className="flex items-center gap-3 mb-2">
                 <div className="flex-1">
-                  <Label htmlFor="client_select" className="text-xs font-medium">Aan</Label>
-                  <div className="flex gap-2 mt-1">
-                    <Input 
-                      placeholder="Selecteer contact - zoek op naam, contactnummer, plaats, adres, e-mailadres of postcode"
-                      className="flex-1 text-xs h-8"
-                      value={formData.client_name}
-                      onChange={(e) => setFormData({...formData, client_name: e.target.value})}
-                    />
-                    <Button type="button" variant="outline" size="sm" onClick={handleNewContact} className="text-blue-500 text-xs px-2 h-8">Nieuw</Button>
-                    <Button type="button" variant="outline" size="sm" onClick={handleEditContact} className="text-blue-500 text-xs px-2 h-8">Bewerken</Button>
-                  </div>
+                  <ContactSelector
+                    selectedContact={selectedContact}
+                    onContactSelect={handleContactSelect}
+                    onContactCreated={handleContactCreated}
+                    onContactUpdated={handleContactUpdated}
+                  />
                 </div>
                 <div className="w-48">
-                  <Label className="text-xs font-medium">Profiel</Label>
-                  <Select value={selectedProfile} onValueChange={setSelectedProfile}>
+                  <Label className="text-xs font-medium">Layout</Label>
+                  <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
                     <SelectTrigger className="mt-1 h-8 text-xs">
-                      <SelectValue />
+                      <SelectValue placeholder="Selecteer layout" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="debuitendeur.nl">debuitendeur.nl</SelectItem>
+                      {invoiceTemplates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <Button type="button" variant="outline" size="sm" onClick={handleSettings} className="mt-4 h-8 w-8 p-0">
+                <Button type="button" variant="outline" size="sm" onClick={() => navigate('/instellingen')} className="mt-4 h-8 w-8 p-0">
                   <Settings className="h-3 w-3" />
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* References section - Compact */}
+          {/* References section */}
           <Card>
             <CardContent className="p-3">
               <div className="flex items-center justify-between mb-2">
@@ -377,15 +382,21 @@ Uw administratie`
             </CardContent>
           </Card>
 
-          {/* Invoice details - Compact */}
+          {/* Invoice details with proper numbering */}
           <Card>
             <CardContent className="p-3">
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label className="text-xs font-medium">Factuur</Label>
                   <div className="flex mt-1">
-                    <span className="bg-gray-100 px-2 py-1 rounded-l border text-xs h-8 flex items-center">2025-</span>
-                    <Input className="rounded-l-none border-l-0 text-xs h-8" placeholder="185" />
+                    <span className="bg-gray-100 px-2 py-1 rounded-l border text-xs h-8 flex items-center">
+                      {invoiceSettings.invoice_prefix}
+                    </span>
+                    <Input 
+                      className="rounded-l-none border-l-0 text-xs h-8" 
+                      placeholder={invoiceSettings.invoice_start_number.toString().padStart(3, '0')}
+                      readOnly
+                    />
                   </div>
                 </div>
                 <div>
@@ -410,126 +421,96 @@ Uw administratie`
             </CardContent>
           </Card>
 
-          {/* Products/Services table - Compact */}
+          {/* Products/Services table with improved layout */}
           <Card>
             <CardHeader className="p-2">
-              <div className="grid grid-cols-6 gap-3 text-xs font-medium text-gray-700">
-                <div>Aantal</div>
-                <div className="col-span-2">Omschrijving</div>
-                <div>Prijs</div>
-                <div>btw</div>
-                <div>Prijs incl. btw</div>
+              <div className="grid grid-cols-12 gap-3 text-xs font-medium text-gray-700">
+                <div className="col-span-1">Aantal</div>
+                <div className="col-span-6">Omschrijving</div>
+                <div className="col-span-2">Prijs</div>
+                <div className="col-span-2">btw</div>
+                <div className="col-span-1">Totaal</div>
               </div>
             </CardHeader>
 
             <CardContent className="p-2">
-              {lineItems.length === 0 ? (
-                <div className="text-center py-4 text-gray-500">
-                  <p className="text-xs">Er zijn geen productregels</p>
-                  <Button 
-                    type="button" 
-                    onClick={addLineItem}
-                    size="sm"
-                    className="mt-2 bg-gray-100 text-gray-700 hover:bg-gray-200 text-xs"
-                  >
-                    Voeg regel toe
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {lineItems.map((item, index) => (
-                    <div key={index} className="grid grid-cols-6 gap-3 items-start">
-                      <div>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={item.quantity}
-                          onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                          className="text-center text-xs h-8"
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <Textarea
-                          value={item.description}
-                          onChange={(e) => updateLineItem(index, 'description', e.target.value)}
-                          placeholder=""
-                          className="min-h-[40px] resize-none text-xs"
-                          rows={2}
-                        />
-                        {/* Compact Toolbar */}
-                        <div className="flex items-center gap-1 mt-1">
-                          <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
-                            <Bold className="h-3 w-3" />
-                          </Button>
-                          <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
-                            <Italic className="h-3 w-3" />
-                          </Button>
-                          <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
-                            <Underline className="h-3 w-3" />
-                          </Button>
-                          <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
-                            <List className="h-3 w-3" />
-                          </Button>
-                          <Select defaultValue="9pt">
-                            <SelectTrigger className="w-14 text-xs h-6">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="9pt">9pt</SelectItem>
-                              <SelectItem value="10pt">10pt</SelectItem>
-                              <SelectItem value="12pt">12pt</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex items-center">
-                          <span className="mr-1 text-xs">€</span>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={item.unit_price}
-                            onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                            className="text-right text-xs h-8"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex items-center">
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={item.vat_rate}
-                            onChange={(e) => updateLineItem(index, 'vat_rate', parseFloat(e.target.value) || 0)}
-                            className="text-right w-12 text-xs h-8"
-                          />
-                          <span className="ml-1 text-xs">%</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <span className="mr-1 text-xs">€</span>
-                          <span className="font-medium text-xs">{item.line_total.toFixed(2)}</span>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeLineItem(index)}
-                          disabled={lineItems.length === 1}
-                          className="text-red-500 hover:text-red-700 h-6 w-6 p-0"
-                        >
-                          <Trash2 className="h-3 w-3" />
+              <div className="space-y-2">
+                {lineItems.map((item, index) => (
+                  <div key={index} className="grid grid-cols-12 gap-3 items-start">
+                    <div className="col-span-1">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={item.quantity}
+                        onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                        className="text-center text-xs h-8"
+                      />
+                    </div>
+                    <div className="col-span-6">
+                      <Textarea
+                        value={item.description}
+                        onChange={(e) => updateLineItem(index, 'description', e.target.value)}
+                        placeholder=""
+                        className="min-h-[32px] resize-none text-xs h-8"
+                        rows={1}
+                      />
+                      <div className="flex items-center gap-1 mt-1">
+                        <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                          <Bold className="h-3 w-3" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                          <Italic className="h-3 w-3" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                          <Underline className="h-3 w-3" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                          <List className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div className="col-span-2">
+                      <div className="flex items-center">
+                        <span className="mr-1 text-xs">€</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={item.unit_price}
+                          onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                          className="text-right text-xs h-8"
+                        />
+                      </div>
+                    </div>
+                    <div className="col-span-2">
+                      <VatSelector
+                        value={item.vat_rate}
+                        onValueChange={(value) => updateLineItem(index, 'vat_rate', value)}
+                        className="text-xs h-8"
+                      />
+                    </div>
+                    <div className="col-span-1 flex items-center justify-between">
+                      <div className="flex items-center">
+                        <span className="mr-1 text-xs">€</span>
+                        <span className="font-medium text-xs">{item.line_total.toFixed(2)}</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeLineItem(index)}
+                        disabled={lineItems.length === 1}
+                        className="text-red-500 hover:text-red-700 h-6 w-6 p-0 ml-2"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
-          {/* Add line button moved to the right */}
+          {/* Add line button */}
           <div className="flex justify-end">
             <Button 
               type="button" 
@@ -542,7 +523,7 @@ Uw administratie`
             </Button>
           </div>
 
-          {/* Footer with payment info - Compact */}
+          {/* Footer with payment info */}
           <Card>
             <CardContent className="p-3">
               <Textarea 
@@ -553,7 +534,7 @@ Uw administratie`
             </CardContent>
           </Card>
 
-          {/* Totals section - Compact */}
+          {/* Totals section */}
           <Card className="bg-blue-50">
             <CardContent className="p-3">
               <div className="space-y-1 text-right">
@@ -572,38 +553,6 @@ Uw administratie`
               </div>
             </CardContent>
           </Card>
-
-          {/* Action buttons - Compact */}
-          <div className="flex justify-end gap-2 pt-3">
-            <Button 
-              type="button" 
-              onClick={() => navigate('/facturen')}
-              variant="outline"
-              size="sm"
-              className="text-xs"
-            >
-              Annuleren
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={loading}
-              size="sm"
-              className="bg-gray-800 hover:bg-gray-900 text-xs"
-            >
-              <Save className="h-3 w-3 mr-1" />
-              {loading ? 'Opslaan...' : 'Opslaan'}
-            </Button>
-            <Button 
-              type="button" 
-              onClick={handleSaveAndSend}
-              disabled={sendLoading || !formData.client_email}
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-xs"
-            >
-              <Send className="h-3 w-3 mr-1" />
-              {sendLoading ? 'Verzenden...' : 'Opslaan & Versturen'}
-            </Button>
-          </div>
         </form>
       </div>
     </div>

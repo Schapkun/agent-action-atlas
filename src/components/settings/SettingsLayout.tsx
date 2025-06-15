@@ -7,6 +7,7 @@ import { UserProfileSettings } from './UserProfileSettings';
 import { HistoryLogs } from './HistoryLogs';
 import { DocumentLayoutSettings } from './DocumentLayoutSettings';
 import { EmailTemplateSettings } from './EmailTemplateSettings';
+import { InvoiceSettings } from './InvoiceSettings';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -92,7 +93,7 @@ export const SettingsLayout = () => {
         <TabsList className={`grid w-full gap-1 h-auto p-1 ${
           isMobile 
             ? 'grid-cols-3 grid-rows-2' 
-            : 'grid-cols-5 grid-rows-1'
+            : 'grid-cols-6 grid-rows-1'
         }`}>
           <TabsTrigger 
             value="organizations" 
@@ -105,6 +106,12 @@ export const SettingsLayout = () => {
             className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
           >
             Gebruikers
+          </TabsTrigger>
+          <TabsTrigger 
+            value="invoicing" 
+            className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
+          >
+            Facturatie
           </TabsTrigger>
           <TabsTrigger 
             value="documents" 
@@ -138,6 +145,14 @@ export const SettingsLayout = () => {
           <Card>
             <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
               <UserProfileSettings />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="invoicing">
+          <Card>
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
+              <InvoiceSettings />
             </CardContent>
           </Card>
         </TabsContent>
