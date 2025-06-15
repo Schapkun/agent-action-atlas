@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -111,9 +110,12 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
     }));
   };
 
-  const handleSaveAllAndClose = async () => {
+  const handleSaveAll = async () => {
     if (!documentId) {
-      onComplete(true);
+      toast({
+        title: "Fout",
+        description: "Geen document ID beschikbaar"
+      });
       return;
     }
     
@@ -134,9 +136,6 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
         title: "Opgeslagen",
         description: "Alle profielen succesvol opgeslagen"
       });
-      
-      // Close the window
-      onComplete(true);
     } catch (error) {
       console.error('[Builder] Save all failed:', error);
       toast({
@@ -147,6 +146,10 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleClose = () => {
+    onComplete(false);
   };
 
   const renderStyledContent = (profileId: string) => {
@@ -187,7 +190,7 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onComplete(false)}
+            onClick={handleClose}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Terug
@@ -202,12 +205,19 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
         
         <div className="flex items-center gap-2">
           <Button
-            onClick={handleSaveAllAndClose}
+            onClick={handleSaveAll}
             disabled={isSaving || !documentId}
             size="sm"
+            variant="outline"
           >
             <Save className="h-4 w-4 mr-2" />
-            {isSaving ? 'Opslaan...' : 'Alles Opslaan & Sluiten'}
+            {isSaving ? 'Opslaan...' : 'Opslaan'}
+          </Button>
+          <Button
+            onClick={handleClose}
+            size="sm"
+          >
+            Sluiten
           </Button>
         </div>
       </div>
