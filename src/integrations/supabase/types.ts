@@ -86,6 +86,7 @@ export type Database = {
           is_default: boolean
           name: string
           organization_id: string | null
+          placeholder_values: Json | null
           type: string
           updated_at: string
           workspace_id: string | null
@@ -100,6 +101,7 @@ export type Database = {
           is_default?: boolean
           name: string
           organization_id?: string | null
+          placeholder_values?: Json | null
           type: string
           updated_at?: string
           workspace_id?: string | null
@@ -114,6 +116,7 @@ export type Database = {
           is_default?: boolean
           name?: string
           organization_id?: string | null
+          placeholder_values?: Json | null
           type?: string
           updated_at?: string
           workspace_id?: string | null

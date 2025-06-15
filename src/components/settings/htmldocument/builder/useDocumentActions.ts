@@ -42,6 +42,24 @@ export function useDocumentActions({
   const { createTemplate, updateTemplate } = useDocumentTemplates();
   const { refreshTemplates } = useDocumentContext();
 
+  // Map UI types to database types
+  const mapTypeToDatabase = (type: DocumentTypeUI): string => {
+    switch (type) {
+      case 'schapkun':
+        return 'schapkun'; // Keep schapkun as schapkun, don't convert to custom
+      case 'factuur':
+        return 'factuur';
+      case 'contract':
+        return 'contract';
+      case 'brief':
+        return 'brief';
+      case 'custom':
+        return 'custom';
+      default:
+        return 'custom';
+    }
+  };
+
   const handleSave = useCallback(async () => {
     if (!documentName.trim()) {
       alert('Voer een documentnaam in');
@@ -51,11 +69,12 @@ export function useDocumentActions({
     setIsSaving(true);
     try {
       let savedDocument: DocumentTemplate;
+      const dbType = mapTypeToDatabase(documentType);
       
       if (editingDocument) {
         savedDocument = await updateTemplate(editingDocument.id, {
           name: documentName,
-          type: documentType === 'schapkun' ? 'custom' : documentType,
+          type: dbType,
           html_content: htmlContent,
           description: editingDocument.description,
           placeholder_values: placeholderValues
@@ -63,7 +82,7 @@ export function useDocumentActions({
       } else {
         savedDocument = await createTemplate({
           name: documentName,
-          type: documentType === 'schapkun' ? 'custom' : documentType,
+          type: dbType,
           html_content: htmlContent,
           description: `${documentType} document`,
           is_default: false,

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -7,7 +6,7 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 export interface DocumentTemplate {
   id: string;
   name: string;
-  type: 'factuur' | 'contract' | 'brief' | 'custom';
+  type: 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun';
   description: string | null;
   html_content: string;
   organization_id: string | null;
@@ -69,6 +68,7 @@ export const useDocumentTemplates = () => {
         workspace_id: selectedWorkspace?.id || null,
         is_default: templateData.is_default || false,
         is_active: templateData.is_active !== false, // Default to true
+        placeholder_values: templateData.placeholder_values || null,
       };
 
       const { data, error } = await supabase
@@ -101,9 +101,15 @@ export const useDocumentTemplates = () => {
 
   const updateTemplate = async (id: string, updates: Partial<DocumentTemplate>) => {
     try {
+      const updateData = {
+        ...updates,
+        updated_at: new Date().toISOString(),
+        placeholder_values: updates.placeholder_values || null,
+      };
+
       const { data, error } = await supabase
         .from('document_templates')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();

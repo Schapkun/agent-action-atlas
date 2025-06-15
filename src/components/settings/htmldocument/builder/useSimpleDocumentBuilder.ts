@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { 
@@ -25,6 +24,24 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
   const previousDocumentType = useRef<DocumentTypeUI>('factuur');
   const previousEditingDocumentId = useRef<string | undefined>(undefined);
   const lastSavedContent = useRef('');
+
+  // Map database types to UI types
+  const mapDatabaseTypeToUI = (dbType: string): DocumentTypeUI => {
+    switch (dbType) {
+      case 'schapkun':
+        return 'schapkun';
+      case 'factuur':
+        return 'factuur';
+      case 'contract':
+        return 'contract';
+      case 'brief':
+        return 'brief';
+      case 'custom':
+        return 'custom';
+      default:
+        return 'custom';
+    }
+  };
 
   // Get template for document type
   const getTemplateForType = useCallback((type: DocumentTypeUI): string => {
@@ -88,7 +105,7 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     if (editingDocument) {
       // Load existing document
       newName = editingDocument.name;
-      newType = editingDocument.type as DocumentTypeUI;
+      newType = mapDatabaseTypeToUI(editingDocument.type); // Use mapping function
       
       // Load saved placeholder values if they exist
       if (editingDocument.placeholder_values) {
