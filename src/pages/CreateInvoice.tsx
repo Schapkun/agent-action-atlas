@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ContactSelector } from '@/components/contacts/ContactSelector';
 import { VatSelector } from '@/components/ui/vat-selector';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface InvoiceFormData {
   client_name: string;
@@ -60,6 +61,10 @@ const CreateInvoice = () => {
   const [selectedProfile, setSelectedProfile] = useState('debuitendeur.nl');
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+  const [showSettings, setShowSettings] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [customInvoiceNumber, setCustomInvoiceNumber] = useState('');
+  const [useCustomInvoiceNumber, setUseCustomInvoiceNumber] = useState(false);
   
   const [formData, setFormData] = useState<InvoiceFormData>({
     client_name: '',
@@ -177,8 +182,38 @@ const CreateInvoice = () => {
   };
 
   const applyTextFormatting = (index: number, type: 'bold' | 'italic' | 'underline' | 'list') => {
-    // This function can be implemented to apply formatting to the description field
-    console.log(`Applying ${type} formatting to line item ${index}`);
+    const textarea = document.querySelector(`#description-${index}`) as HTMLTextAreaElement;
+    if (!textarea) return;
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    
+    let formattedText = '';
+    
+    switch (type) {
+      case 'bold':
+        formattedText = `<strong>${selectedText}</strong>`;
+        break;
+      case 'italic':
+        formattedText = `<em>${selectedText}</em>`;
+        break;
+      case 'underline':
+        formattedText = `<u>${selectedText}</u>`;
+        break;
+      case 'list':
+        const lines = selectedText.split('\n');
+        formattedText = lines.map(line => `• ${line}`).join('\n');
+        break;
+    }
+    
+    const newText = textarea.value.substring(0, start) + formattedText + textarea.value.substring(end);
+    updateLineItem(index, 'description', newText);
+    
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + formattedText.length, start + formattedText.length);
+    }, 0);
   };
 
   const handleConvertToQuote = async () => {
@@ -314,7 +349,7 @@ Uw administratie`
             <Button variant="outline" size="sm" className="text-xs px-2 py-1">
               <RotateCw className="h-3 w-3" />
             </Button>
-            <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs px-2 py-1">
+            <Button variant="outline" size="sm" onClick={() => setShowPreview(true)} className="flex items-center gap-1 text-xs px-2 py-1">
               <Eye className="h-3 w-3" />
               Voorbeeld
             </Button>
@@ -386,7 +421,7 @@ Uw administratie`
                     </SelectContent>
                   </Select>
                 </div>
-                <Button type="button" variant="outline" size="sm" onClick={() => navigate('/instellingen')} className="mt-4 h-8 w-8 p-0">
+                <Button type="button" variant="outline" size="sm" onClick={() => setShowSettings(true)} className="mt-4 h-8 w-8 p-0">
                   <Settings className="h-3 w-3" />
                 </Button>
               </div>
@@ -416,8 +451,12 @@ Uw administratie`
                     </span>
                     <Input 
                       className="rounded-l-none border-l-0 text-xs h-8 w-16" 
-                      placeholder={invoiceSettings.invoice_start_number.toString().padStart(3, '0')}
-                      readOnly
+                      value={useCustomInvoiceNumber ? customInvoiceNumber : invoiceSettings.invoice_start_number.toString().padStart(3, '0')}
+                      onChange={(e) => {
+                        setCustomInvoiceNumber(e.target.value);
+                        setUseCustomInvoiceNumber(true);
+                      }}
+                      onFocus={() => setUseCustomInvoiceNumber(true)}
                     />
                   </div>
                 </div>
@@ -432,21 +471,15 @@ Uw administratie`
                 </div>
                 <div>
                   <Label className="text-xs font-medium">Betalingstermijn</Label>
-                  <Select 
-                    value={formData.payment_terms.toString()} 
-                    onValueChange={(value) => setFormData({...formData, payment_terms: parseInt(value)})}
-                  >
-                    <SelectTrigger className="mt-1 text-xs h-8 w-24">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="7">7 dagen</SelectItem>
-                      <SelectItem value="14">14 dagen</SelectItem>
-                      <SelectItem value="21">21 dagen</SelectItem>
-                      <SelectItem value="30">30 dagen</SelectItem>
-                      <SelectItem value="60">60 dagen</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center mt-1">
+                    <Input 
+                      type="number"
+                      value={formData.payment_terms}
+                      onChange={(e) => setFormData({...formData, payment_terms: parseInt(e.target.value) || 0})}
+                      className="text-xs h-8 w-16"
+                    />
+                    <span className="text-xs ml-2">dagen</span>
+                  </div>
                 </div>
                 <div>
                   <Label className="text-xs font-medium">Vervaldatum</Label>
@@ -464,19 +497,19 @@ Uw administratie`
           {/* Products/Services table with improved layout */}
           <Card>
             <CardHeader className="p-2">
-              <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700">
+              <div className="grid grid-cols-12 gap-1 text-xs font-medium text-gray-700">
                 <div className="col-span-1">Aantal</div>
                 <div className="col-span-6">Omschrijving</div>
-                <div className="col-span-2">Prijs</div>
-                <div className="col-span-1">btw</div>
-                <div className="col-span-2">Totaal</div>
+                <div className="col-span-2 text-center">Prijs</div>
+                <div className="col-span-1 text-center">btw</div>
+                <div className="col-span-2 text-center">Totaal</div>
               </div>
             </CardHeader>
 
             <CardContent className="p-2">
               <div className="space-y-2">
                 {lineItems.map((item, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-2 items-start">
+                  <div key={index} className="grid grid-cols-12 gap-1 items-start">
                     <div className="col-span-1">
                       <Input
                         type="number"
@@ -488,6 +521,7 @@ Uw administratie`
                     </div>
                     <div className="col-span-6">
                       <Textarea
+                        id={`description-${index}`}
                         value={item.description}
                         onChange={(e) => updateLineItem(index, 'description', e.target.value)}
                         placeholder=""
@@ -534,27 +568,27 @@ Uw administratie`
                       </div>
                     </div>
                     <div className="col-span-2">
-                      <div className="flex items-center">
-                        <span className="mr-1 text-xs">€</span>
+                      <div className="flex items-center justify-center gap-1">
+                        <span className="text-xs">€</span>
                         <Input
                           type="number"
                           step="0.01"
                           value={item.unit_price}
                           onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                          className="text-right text-xs h-8 w-16"
+                          className="text-right text-xs h-8 w-20"
                         />
                       </div>
                     </div>
-                    <div className="col-span-1">
+                    <div className="col-span-1 flex justify-center">
                       <VatSelector
                         value={item.vat_rate}
                         onValueChange={(value) => updateLineItem(index, 'vat_rate', value)}
-                        className="text-xs h-8 w-12"
+                        className="text-xs h-8 w-14"
                       />
                     </div>
                     <div className="col-span-2 flex items-center justify-between">
-                      <div className="flex items-center">
-                        <span className="mr-1 text-xs">€</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs">€</span>
                         <span className="font-medium text-xs">{item.line_total.toFixed(2)}</span>
                       </div>
                       <Button
@@ -619,6 +653,97 @@ Uw administratie`
           </Card>
         </form>
       </div>
+
+      {/* Settings Dialog */}
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Klantinstellingen</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm">Btw verlegd</Label>
+              <div className="flex gap-2 mt-1">
+                <Button variant="outline" size="sm" className="text-xs">Ja</Button>
+                <Button variant="outline" size="sm" className="text-xs bg-green-100">Nee</Button>
+              </div>
+            </div>
+            <div>
+              <Label className="text-sm">Producten btw</Label>
+              <div className="flex gap-2 mt-1">
+                <Button variant="outline" size="sm" className="text-xs bg-green-100">incl.</Button>
+                <Button variant="outline" size="sm" className="text-xs">excl.</Button>
+              </div>
+            </div>
+            <div className="text-xs text-gray-600">
+              Deze opties passen de klant instelling aan. Ingevulde periodieke facturen voor deze klant zullen ook aangepast worden.
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-4xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Factuur Voorbeeld</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto">
+            <div className="bg-white p-8 text-sm">
+              <div className="flex justify-between mb-8">
+                <div>
+                  <h1 className="text-2xl font-bold">FACTUUR</h1>
+                  <p>Factuurnummer: {useCustomInvoiceNumber ? customInvoiceNumber : invoiceSettings.invoice_prefix + invoiceSettings.invoice_start_number.toString().padStart(3, '0')}</p>
+                  <p>Factuurdatum: {formData.invoice_date}</p>
+                  <p>Vervaldatum: {formData.due_date}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold">{selectedProfile}</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-8 mb-8">
+                <div>
+                  <h3 className="font-bold mb-2">Factuuradres:</h3>
+                  <p>{formData.client_name}</p>
+                  <p>{formData.client_address}</p>
+                  <p>{formData.client_postal_code} {formData.client_city}</p>
+                  <p>{formData.client_country}</p>
+                </div>
+              </div>
+
+              <table className="w-full border-collapse border border-gray-300 mb-8">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border border-gray-300 p-2 text-left">Omschrijving</th>
+                    <th className="border border-gray-300 p-2 text-right">Aantal</th>
+                    <th className="border border-gray-300 p-2 text-right">Prijs</th>
+                    <th className="border border-gray-300 p-2 text-right">BTW</th>
+                    <th className="border border-gray-300 p-2 text-right">Totaal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lineItems.map((item, index) => (
+                    <tr key={index}>
+                      <td className="border border-gray-300 p-2" dangerouslySetInnerHTML={{ __html: item.description }}></td>
+                      <td className="border border-gray-300 p-2 text-right">{item.quantity}</td>
+                      <td className="border border-gray-300 p-2 text-right">€ {item.unit_price.toFixed(2)}</td>
+                      <td className="border border-gray-300 p-2 text-right">{item.vat_rate}%</td>
+                      <td className="border border-gray-300 p-2 text-right">€ {item.line_total.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="text-right">
+                <p>Subtotaal: € {subtotal.toFixed(2)}</p>
+                <p>BTW: € {vatAmount.toFixed(2)}</p>
+                <p className="font-bold text-lg">Totaal: € {total.toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

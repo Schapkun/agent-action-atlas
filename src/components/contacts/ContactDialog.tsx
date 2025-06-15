@@ -40,7 +40,23 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
     mobile: '',
     notes: '',
     active: true,
-    contactNameOnInvoice: true
+    contactNameOnInvoice: true,
+    // Document tab fields
+    standardDiscount: 0,
+    documentLanguage: 'Standaardinstelling',
+    currency: 'Euro',
+    products: 'Inclusief btw',
+    standardCategory: 'geen',
+    referenceText: '',
+    hideNoticesOnNewInvoice: false,
+    // Shipping tab fields
+    shippingMethod: 'E-mail',
+    standardEmailText: 'geen',
+    reminderEmail: '',
+    paymentTerms: 14,
+    iban: '',
+    bic: '',
+    automaticCollection: false
   });
 
   useEffect(() => {
@@ -60,7 +76,21 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
         mobile: contact.mobile || '',
         notes: '',
         active: true,
-        contactNameOnInvoice: true
+        contactNameOnInvoice: true,
+        standardDiscount: 0,
+        documentLanguage: 'Standaardinstelling',
+        currency: 'Euro',
+        products: 'Inclusief btw',
+        standardCategory: 'geen',
+        referenceText: '',
+        hideNoticesOnNewInvoice: false,
+        shippingMethod: 'E-mail',
+        standardEmailText: 'geen',
+        reminderEmail: '',
+        paymentTerms: 14,
+        iban: '',
+        bic: '',
+        automaticCollection: false
       });
     } else {
       // Generate random number for new contact
@@ -97,9 +127,9 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col p-6">
+      <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col p-4">
         <DialogHeader>
-          <DialogTitle className="text-white bg-blue-500 p-3 -m-6 mb-6">
+          <DialogTitle className="text-white bg-blue-500 p-2 -m-4 mb-4 text-sm">
             Contacten
           </DialogTitle>
         </DialogHeader>
