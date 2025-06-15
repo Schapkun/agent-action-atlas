@@ -6,10 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Save, Eye, Download, FileText, Loader2 } from 'lucide-react';
+import { Save, Eye, Download, FileText, Loader2, Palette } from 'lucide-react';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useToast } from '@/hooks/use-toast';
+import { useLayoutManager } from './builder/useLayoutManager';
+import { useDraftManager } from './builder/useDraftManager';
+import { UniqueLayoutSelector } from '../components/UniqueLayoutSelector';
 
 interface CleanHTMLDocumentBuilderProps {
   documentId?: string;
@@ -175,10 +178,15 @@ export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> =
   const [placeholders, setPlaceholders] = useState(DEFAULT_PLACEHOLDERS);
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [showLayoutSelector, setShowLayoutSelector] = useState(false);
   
   const { createTemplate, updateTemplate, templates } = useDocumentTemplates();
   const { selectedOrganization } = useOrganization();
   const { toast } = useToast();
+  
+  // Layout and draft management
+  const { selectedLayoutId, layouts, switchLayout, applyLayoutStyling } = useLayoutManager();
+  const { saveDraft, saveImmediately, getDraft, setCurrentDocument } = useDraftManager();
 
   // Load document if editing
   useEffect(() => {
@@ -187,20 +195,100 @@ export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> =
       if (template) {
         setName(template.name);
         setType(template.type as any);
-        setHtmlContent(template.html_content || DEFAULT_TEMPLATES[template.type as keyof typeof DEFAULT_TEMPLATES]);
         
-        if (template.placeholder_values && typeof template.placeholder_values === 'object') {
-          setPlaceholders({ ...DEFAULT_PLACEHOLDERS, ...template.placeholder_values });
+        // Check if there's a draft for current layout
+        const existingDraft = getDraft(documentId, selectedLayoutId);
+        if (existingDraft) {
+          console.log('[Builder] Loading existing draft for layout:', selectedLayoutId);
+          setHtmlContent(existingDraft.htmlContent);
+          setPlaceholders(existingDraft.placeholderValues);
+        } else {
+          // Use template content with layout styling
+          const baseContent = template.html_content || DEFAULT_TEMPLATES[template.type as keyof typeof DEFAULT_TEMPLATES];
+          const styledContent = applyLayoutStyling(baseContent, selectedLayoutId);
+          setHtmlContent(styledContent);
+          
+          if (template.placeholder_values && typeof template.placeholder_values === 'object') {
+            setPlaceholders({ ...DEFAULT_PLACEHOLDERS, ...template.placeholder_values });
+          }
         }
       }
+      setCurrentDocument(documentId, selectedLayoutId);
     }
-  }, [documentId, templates]);
+  }, [documentId, templates, selectedLayoutId, getDraft, applyLayoutStyling, setCurrentDocument]);
+
+  // Auto-save draft when content changes
+  useEffect(() => {
+    if (name && htmlContent && type) {
+      const draft = {
+        name,
+        type,
+        htmlContent,
+        placeholderValues: placeholders,
+        hasChanges: true,
+        lastSaved: Date.now(),
+        documentId,
+        layoutId: selectedLayoutId
+      };
+      
+      // Save draft with current layout
+      saveDraft(documentId, draft, selectedLayoutId);
+    }
+  }, [htmlContent, placeholders, name, type, documentId, selectedLayoutId, saveDraft]);
+
+  // Handle layout switch
+  const handleLayoutSwitch = useCallback((layout: any) => {
+    console.log('[Builder] Switching to layout:', layout.id);
+    
+    // Save current state immediately before switching
+    const currentDraft = {
+      name,
+      type,
+      htmlContent,
+      placeholderValues: placeholders,
+      hasChanges: true,
+      lastSaved: Date.now(),
+      documentId,
+      layoutId: selectedLayoutId
+    };
+    
+    saveImmediately(documentId, currentDraft, selectedLayoutId);
+    
+    // Switch layout
+    switchLayout(layout.id);
+    
+    // Load content for new layout or apply new styling
+    const newLayoutDraft = getDraft(documentId, layout.id);
+    if (newLayoutDraft) {
+      console.log('[Builder] Loading existing content for layout:', layout.id);
+      setHtmlContent(newLayoutDraft.htmlContent);
+      setPlaceholders(newLayoutDraft.placeholderValues);
+    } else {
+      console.log('[Builder] Applying new layout styling to current content');
+      // Apply new layout styling to current content
+      const baseContent = htmlContent.replace(/<style>[\s\S]*?<\/style>/gi, '');
+      const styledContent = applyLayoutStyling(baseContent, layout.id);
+      setHtmlContent(styledContent);
+    }
+    
+    setCurrentDocument(documentId, layout.id);
+    setShowLayoutSelector(false);
+    
+    toast({
+      title: "Layout gewijzigd",
+      description: `Layout "${layout.name}" is toegepast.`
+    });
+  }, [name, type, htmlContent, placeholders, documentId, selectedLayoutId, saveImmediately, switchLayout, getDraft, applyLayoutStyling, setCurrentDocument, toast]);
 
   // Handle type change
   const handleTypeChange = useCallback((newType: string) => {
     setType(newType as any);
-    setHtmlContent(DEFAULT_TEMPLATES[newType as keyof typeof DEFAULT_TEMPLATES]);
-  }, []);
+    
+    // Apply layout styling to new template
+    const baseTemplate = DEFAULT_TEMPLATES[newType as keyof typeof DEFAULT_TEMPLATES];
+    const styledContent = applyLayoutStyling(baseTemplate, selectedLayoutId);
+    setHtmlContent(styledContent);
+  }, [selectedLayoutId, applyLayoutStyling]);
 
   // Handle placeholder change
   const handlePlaceholderChange = useCallback((key: string, value: string) => {
@@ -308,6 +396,15 @@ export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> =
             </SelectContent>
           </Select>
           
+          <Button 
+            variant="outline" 
+            onClick={() => setShowLayoutSelector(!showLayoutSelector)}
+            className="flex items-center gap-2"
+          >
+            <Palette className="h-4 w-4" />
+            Layout
+          </Button>
+          
           <Button variant="outline" onClick={() => setIsPreviewOpen(true)}>
             <Eye className="h-4 w-4 mr-1" />
             Preview
@@ -319,6 +416,17 @@ export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> =
           </Button>
         </div>
       </div>
+
+      {/* Layout Selector */}
+      {showLayoutSelector && (
+        <div className="border-b bg-muted/20 p-4">
+          <UniqueLayoutSelector
+            layouts={layouts}
+            selectedLayoutId={selectedLayoutId}
+            onSelectLayout={handleLayoutSwitch}
+          />
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="flex-1 flex min-h-0">
@@ -348,6 +456,9 @@ export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> =
           <div className="w-1/2 flex flex-col border-r">
             <div className="p-4 border-b">
               <h3 className="font-semibold">HTML Editor</h3>
+              <p className="text-xs text-muted-foreground">
+                Layout: {layouts.find(l => l.id === selectedLayoutId)?.name || 'Onbekend'}
+              </p>
             </div>
             <div className="flex-1 p-4">
               <Textarea
