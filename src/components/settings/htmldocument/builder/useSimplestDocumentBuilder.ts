@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { DocumentTemplate, useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { supabase } from '@/integrations/supabase/client';
@@ -102,7 +101,7 @@ export function useSimplestDocumentBuilder({
           const doc: DocumentTemplate = {
             ...data,
             type: data.type as DocumentTypeUI,
-            placeholder_values: data.placeholder_values || null
+            placeholder_values: parsePlaceholderValues(data.placeholder_values)
           };
 
           const content = data.html_content || getTemplateForType(data.type as DocumentTypeUI);
