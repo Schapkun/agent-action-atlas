@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -255,11 +256,11 @@ export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> =
     return () => clearTimeout(timeoutId);
   }, [htmlContent, placeholders, name, type, documentId, selectedLayoutId, saveDraft]);
 
-  // Handle layout switch - IMPROVED to preserve content
+  // Handle layout switch - COMPLETELY RESTRUCTURED to eliminate race conditions
   const handleLayoutSwitch = useCallback((layout: any) => {
-    console.log('[Builder] Switching to layout:', layout.id);
+    console.log('[Builder] Starting layout switch to:', layout.id);
     
-    // Save current state immediately before switching
+    // STEP 1: Save current state immediately and get the saved content back
     const currentDraft = {
       name,
       type,
@@ -271,26 +272,44 @@ export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> =
       layoutId: selectedLayoutId
     };
     
+    // Save immediately
     saveImmediately(documentId, currentDraft, selectedLayoutId);
+    console.log('[Builder] Saved current content to draft');
     
-    // Switch layout
+    // STEP 2: Get the JUST SAVED content back to ensure we have the correct data
+    const savedCurrentDraft = getDraft(documentId, selectedLayoutId);
+    const currentContentToUse = savedCurrentDraft?.htmlContent || htmlContent;
+    const currentPlaceholdersToUse = savedCurrentDraft?.placeholderValues || placeholders;
+    
+    // STEP 3: Switch layout first
     switchLayout(layout.id);
+    console.log('[Builder] Layout switched to:', layout.id);
     
-    // Load content for new layout or apply new styling to CURRENT content
+    // STEP 4: Check if we have existing content for the new layout
     const newLayoutDraft = getDraft(documentId, layout.id);
+    
+    let finalContent: string;
+    let finalPlaceholders: Record<string, string>;
+    
     if (newLayoutDraft) {
-      console.log('[Builder] Loading existing content for layout:', layout.id);
-      setHtmlContent(newLayoutDraft.htmlContent);
-      setPlaceholders(mergePlaceholders(newLayoutDraft.placeholderValues));
+      // Use existing content for this layout
+      console.log('[Builder] Using existing content for layout:', layout.id);
+      finalContent = newLayoutDraft.htmlContent;
+      finalPlaceholders = mergePlaceholders(newLayoutDraft.placeholderValues);
     } else {
-      console.log('[Builder] Applying new layout styling to CURRENT content');
-      // CRITICAL: Apply new layout styling to current content WITHOUT changing the content
-      const styledContent = applyLayoutStyling(htmlContent, layout.id);
-      setHtmlContent(styledContent);
+      // Apply new layout styling to the CURRENT content (not state)
+      console.log('[Builder] Applying new layout styling to current content');
+      finalContent = applyLayoutStyling(currentContentToUse, layout.id);
+      finalPlaceholders = mergePlaceholders(currentPlaceholdersToUse);
     }
     
+    // STEP 5: Update state atomically
+    setHtmlContent(finalContent);
+    setPlaceholders(finalPlaceholders);
     setCurrentDocument(documentId, layout.id);
     setShowLayoutSelector(false);
+    
+    console.log('[Builder] Layout switch completed successfully');
     
     toast({
       title: "Layout gewijzigd",
