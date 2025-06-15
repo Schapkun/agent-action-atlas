@@ -211,7 +211,7 @@ export const VariablesPanel = ({ placeholderValues, onPlaceholderChange }: Varia
               {group.title}
             </h4>
             <div className="space-y-3">
-              {group.fields.map(renderField)}
+              {group.fields.map((field) => renderField(field, false))}
             </div>
           </div>
         ))}
