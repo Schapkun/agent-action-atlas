@@ -143,9 +143,9 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
     SNIPPETS,
     handlePreview,
     insertSnippet,
-    getScaledHtmlContent: (scale: number = 0.5) => {
-      // Simple scaling implementation
-      return documentBuilder.state.htmlContent;
+    getScaledHtmlContent: (content: string) => {
+      // Return the content as-is since scaling is handled by CSS
+      return content;
     },
     DOCUMENT_TYPE_OPTIONS,
     PLACEHOLDER_FIELDS,
