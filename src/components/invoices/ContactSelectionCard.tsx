@@ -3,9 +3,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Settings } from 'lucide-react';
-import { ContactSelector } from '@/components/contacts/ContactSelector';
+import { Settings, Plus } from 'lucide-react';
 import { Contact } from '@/hooks/useInvoiceForm';
+import { ContactDialog } from '@/components/contacts/ContactDialog';
+import { useState } from 'react';
 
 interface ContactSelectionCardProps {
   selectedContact: Contact | null;
@@ -15,7 +16,7 @@ interface ContactSelectionCardProps {
   onContactSelect: (contact: Contact | null) => void;
   onContactCreated: (contact: Contact) => void;
   onContactUpdated: (contact: Contact) => void;
-  onTemplateChange: (value: string) => void;
+  onTemplateChange: (templateId: string) => void;
   onShowSettings: () => void;
 }
 
@@ -30,50 +31,120 @@ export const ContactSelectionCard = ({
   onTemplateChange,
   onShowSettings
 }: ContactSelectionCardProps) => {
+  const [showContactDialog, setShowContactDialog] = useState(false);
+
   return (
-    <Card>
-      <CardContent className="p-3">
-        <div className="flex items-end gap-3 mb-2">
-          <div className="flex-1">
-            <ContactSelector
-              selectedContact={selectedContact}
-              onContactSelect={onContactSelect}
-              onContactCreated={onContactCreated}
-              onContactUpdated={onContactUpdated}
-            />
+    <>
+      <Card>
+        <CardContent className="p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 flex-1">
+              {/* Nieuw and Bewerken buttons */}
+              <div className="flex gap-2">
+                <Button 
+                  type="button" 
+                  variant="default" 
+                  size="sm"
+                  className="bg-blue-500 text-white hover:bg-blue-600 text-xs h-8"
+                >
+                  Nieuw
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  className="text-xs h-8"
+                >
+                  Bewerken
+                </Button>
+              </div>
+
+              {/* Layout dropdown - aligned with buttons */}
+              <div className="flex-1 max-w-xs">
+                <Select value={selectedTemplate} onValueChange={onTemplateChange}>
+                  <SelectTrigger className="h-8 text-xs cursor-pointer">
+                    <SelectValue placeholder="Selecteer template">
+                      {selectedTemplate && availableTemplates.find(t => t.id === selectedTemplate)?.name}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border shadow-lg z-50">
+                    {availableTemplates.map((template) => (
+                      <SelectItem 
+                        key={template.id} 
+                        value={template.id}
+                        className="cursor-pointer hover:bg-gray-100"
+                      >
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">{template.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Settings button */}
+            <Button 
+              type="button"
+              variant="ghost" 
+              size="sm"
+              onClick={onShowSettings}
+              className="h-8 w-8 p-0"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
           </div>
-          <div className="w-48">
-            <Label className="text-xs font-medium">Layout</Label>
-            <Select value={selectedTemplate} onValueChange={(value) => {
-              console.log('Template selected:', value);
-              onTemplateChange(value);
-            }}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder={availableTemplates.length > 0 ? "Selecteer layout" : "Geen layouts beschikbaar"} />
-              </SelectTrigger>
-              <SelectContent className="bg-white border shadow-lg z-50 max-h-60 overflow-y-auto">
-                {availableTemplates.length > 0 ? (
-                  availableTemplates.map((template) => (
-                    <SelectItem key={template.id} value={template.id} className="cursor-pointer hover:bg-gray-100">
-                      <div className="flex flex-col">
-                        <span className="font-medium">{template.name}</span>
-                        <span className="text-xs text-gray-500 capitalize">{template.type}</span>
+
+          {/* Contact selection row */}
+          <div className="mt-3 space-y-2">
+            <Label className="text-xs font-medium">Klant</Label>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Select 
+                  value={selectedContact?.id || ""} 
+                  onValueChange={(value) => {
+                    // Handle contact selection logic here
+                    console.log('Selected contact:', value);
+                  }}
+                >
+                  <SelectTrigger className="h-8 text-xs cursor-pointer">
+                    <SelectValue placeholder="Selecteer klant">
+                      {selectedContact?.name}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border shadow-lg z-50">
+                    <SelectItem value="new" className="cursor-pointer hover:bg-gray-100">
+                      <div className="flex items-center gap-2">
+                        <Plus className="h-3 w-3" />
+                        Nieuwe klant
                       </div>
                     </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no-templates" disabled>
-                    {templatesLoading ? "Templates laden..." : "Geen templates beschikbaar"}
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+                    {/* Add existing contacts here */}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button 
+                type="button"
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowContactDialog(true)}
+                className="h-8 text-xs"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Nieuw
+              </Button>
+            </div>
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={onShowSettings} className="h-8 w-8 p-0">
-            <Settings className="h-3 w-3" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <ContactDialog
+        open={showContactDialog}
+        onOpenChange={setShowContactDialog}
+        onContactCreated={onContactCreated}
+        onContactUpdated={onContactUpdated}
+      />
+    </>
   );
 };

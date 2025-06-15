@@ -50,8 +50,16 @@ export const generatePreviewHTML = (
     }
   };
 
+  // Use actual form data instead of hardcoded values
+  const companyName = 'Uw Bedrijf'; // This should come from settings
+  const companyAddress = 'Uw Adres';
+  const companyPostal = '0000 XX';
+  const companyCity = 'Uw Plaats';
+  const companyEmail = 'info@uwbedrijf.nl';
+
   const placeholderReplacements = {
-    'bedrijfsnaam': 'De Buitendeur',
+    'bedrijfsnaam': companyName,
+    'company_name': companyName,
     'onderwerp': 'Factuur',
     'factuurnummer': invoiceNumber || getDefaultInvoiceNumber(),
     'invoice_number': invoiceNumber || getDefaultInvoiceNumber(),
@@ -143,9 +151,20 @@ export const generateDefaultPreviewHTML = (
     `;
   }).join('');
 
+  const formatDisplayDate = (dateString: string) => {
+    if (!dateString) return format(new Date(), 'dd-MM-yyyy');
+    try {
+      return format(new Date(dateString), 'dd-MM-yyyy');
+    } catch {
+      return dateString;
+    }
+  };
+
   return `
+    <!DOCTYPE html>
     <html>
       <head>
+        <meta charset="utf-8">
         <style>
           body { 
             font-family: Arial, sans-serif; 
@@ -154,54 +173,136 @@ export const generateDefaultPreviewHTML = (
             background: white;
             color: #333;
             width: 210mm;
-            height: 297mm;
+            min-height: 297mm;
             box-sizing: border-box;
           }
-          .header { text-align: center; margin-bottom: 30px; color: #333; }
-          .invoice-details { margin-bottom: 30px; }
-          .client-info { margin-bottom: 30px; }
-          table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-          th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-          th { background-color: #f5f5f5; }
-          .totals { text-align: right; margin-top: 20px; }
+          .header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            color: #333;
+            border-bottom: 2px solid #1e40af;
+            padding-bottom: 20px;
+          }
+          .company-info {
+            text-align: center;
+            margin-bottom: 20px;
+          }
+          .invoice-details { 
+            margin-bottom: 30px; 
+            display: flex;
+            justify-content: space-between;
+          }
+          .client-info { 
+            margin-bottom: 30px; 
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+          }
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-bottom: 20px; 
+          }
+          th, td { 
+            border: 1px solid #ccc; 
+            padding: 12px 8px; 
+            text-align: left; 
+          }
+          th { 
+            background-color: #1e40af; 
+            color: white;
+            font-weight: bold;
+          }
+          .totals { 
+            text-align: right; 
+            margin-top: 20px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+          }
+          .total-line {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+          }
+          .final-total {
+            font-weight: bold;
+            font-size: 1.1em;
+            border-top: 2px solid #1e40af;
+            padding-top: 10px;
+            margin-top: 10px;
+          }
         </style>
       </head>
       <body>
         <div class="header">
-          <h1>FACTUUR</h1>
+          <h1 style="color: #1e40af; margin: 0;">FACTUUR</h1>
         </div>
+        
+        <div class="company-info">
+          <h2 style="margin: 0; color: #1e40af;">Uw Bedrijf</h2>
+          <p style="margin: 5px 0;">Uw Adres<br>0000 XX Uw Plaats<br>info@uwbedrijf.nl</p>
+        </div>
+
         <div class="invoice-details">
-          <p><strong>Factuurnummer:</strong> ${invoiceNumber || getDefaultInvoiceNumber()}</p>
-          <p><strong>Factuurdatum:</strong> ${format(new Date(formData.invoice_date), 'dd-MM-yyyy')}</p>
-          <p><strong>Vervaldatum:</strong> ${format(new Date(formData.due_date), 'dd-MM-yyyy')}</p>
+          <div>
+            <p><strong>Factuurnummer:</strong> ${invoiceNumber || getDefaultInvoiceNumber()}</p>
+            <p><strong>Factuurdatum:</strong> ${formatDisplayDate(formData.invoice_date)}</p>
+            <p><strong>Vervaldatum:</strong> ${formatDisplayDate(formData.due_date)}</p>
+          </div>
         </div>
+
         <div class="client-info">
-          <h3>Factuuradres:</h3>
-          <p>${formData.client_name || 'Naam klant'}</p>
-          <p>${formData.client_address || 'Adres'}</p>
-          <p>${formData.client_postal_code || '0000 XX'} ${formData.client_city || 'Plaats'}</p>
-          <p>${formData.client_country || 'Nederland'}</p>
+          <h3 style="margin: 0 0 10px 0; color: #1e40af;">Factuuradres:</h3>
+          <p style="margin: 0;">
+            ${formData.client_name || 'Naam klant'}<br>
+            ${formData.client_address || 'Adres'}<br>
+            ${formData.client_postal_code || '0000 XX'} ${formData.client_city || 'Plaats'}<br>
+            ${formData.client_country || 'Nederland'}
+            ${formData.client_email ? `<br>E-mail: ${formData.client_email}` : ''}
+          </p>
         </div>
+
         <table>
           <thead>
             <tr>
               <th>Omschrijving</th>
-              <th>Aantal</th>
-              <th>Prijs</th>
-              <th>BTW</th>
-              <th>Totaal</th>
+              <th style="width: 80px;">Aantal</th>
+              <th style="width: 100px;">Prijs</th>
+              <th style="width: 60px;">BTW</th>
+              <th style="width: 100px;">Totaal</th>
             </tr>
           </thead>
           <tbody>
             ${lineItemsHTML}
           </tbody>
         </table>
+
         <div class="totals">
-          <p>Subtotaal: € ${subtotal.toFixed(2)}</p>
-          <p>BTW: € ${vatAmount.toFixed(2)}</p>
-          <p><strong>Totaal: € ${total.toFixed(2)}</strong></p>
+          <div class="total-line">
+            <span>Subtotaal:</span>
+            <span>€ ${subtotal.toFixed(2)}</span>
+          </div>
+          <div class="total-line">
+            <span>BTW (21%):</span>
+            <span>€ ${vatAmount.toFixed(2)}</span>
+          </div>
+          <div class="total-line final-total">
+            <span>Totaal:</span>
+            <span>€ ${total.toFixed(2)}</span>
+          </div>
         </div>
-        ${formData.notes ? `<div style="margin-top: 20px;"><p><strong>Opmerkingen:</strong><br>${formData.notes}</p></div>` : ''}
+
+        ${formData.notes ? `
+          <div style="margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+            <h4 style="margin: 0 0 10px 0; color: #1e40af;">Opmerkingen:</h4>
+            <p style="margin: 0;">${formData.notes}</p>
+          </div>
+        ` : ''}
+
+        <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #666;">
+          <p>Betaling binnen ${formData.payment_terms || 30} dagen op rekening</p>
+        </div>
       </body>
     </html>
   `;
