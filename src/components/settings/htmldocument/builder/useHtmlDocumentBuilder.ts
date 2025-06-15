@@ -3,13 +3,10 @@ import React from 'react';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { 
   DOCUMENT_TYPE_OPTIONS, 
-  PLACEHOLDER_FIELDS,
-  schapkunTemplate,
-  DEFAULT_INVOICE_TEMPLATE
+  PLACEHOLDER_FIELDS
 } from './htmlDocumentConstants';
-import { useDocumentState } from './useDocumentState';
+import { useSimpleDocumentBuilder } from './useSimpleDocumentBuilder';
 import { useDocumentActions } from './useDocumentActions';
-import { useHtmlContentManager } from './useHtmlContentManager';
 
 interface UseHtmlDocumentBuilderProps {
   editingDocument?: DocumentTemplate | null;
@@ -70,34 +67,26 @@ export const SNIPPETS = [
 ];
 
 export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: UseHtmlDocumentBuilderProps) {
-  const documentState = useDocumentState({ editingDocument });
+  // Use the simplified document builder
+  const documentBuilder = useSimpleDocumentBuilder({ editingDocument });
   
-  // Use the new centralized HTML content manager
-  const { clearDraftForDocument } = useHtmlContentManager({
-    editingDocument,
-    documentType: documentState.documentType,
-    documentName: documentState.documentName,
-    htmlContent: documentState.htmlContent,
-    setHtmlContent: documentState.setHtmlContent,
-    setHasUnsavedChanges: documentState.setHasUnsavedChanges,
-    getDraftKey: documentState.getDraftKey
-  });
-  
+  // Document actions (save, export, etc.)
   const documentActions = useDocumentActions({
-    ...documentState,
+    ...documentBuilder,
     editingDocument,
     onDocumentSaved,
-    isSaving: documentState.isSaving,
-    clearDraftForDocument
+    isSaving: false, // Will be managed in useDocumentActions
+    clearDraftForDocument: documentBuilder.clearDraftForDocument
   });
 
+  // UI handlers
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = (ev) => {
-      documentState.setPlaceholderValues((prev) => ({
+      documentBuilder.setPlaceholderValues((prev) => ({
         ...prev,
         COMPANY_LOGO: ev.target?.result as string,
       }));
@@ -110,8 +99,8 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
     if (textarea) {
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
-      const newContent = documentState.htmlContent.slice(0, start) + code + documentState.htmlContent.slice(end);
-      documentState.setHtmlContent(newContent);
+      const newContent = documentBuilder.htmlContent.slice(0, start) + code + documentBuilder.htmlContent.slice(end);
+      documentBuilder.setHtmlContent(newContent);
       setTimeout(() => {
         textarea.focus();
         textarea.setSelectionRange(start + code.length, start + code.length);
@@ -120,11 +109,11 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
   };
 
   const handlePreview = () => {
-    documentState.setIsPreviewOpen(true);
+    documentActions.setIsPreviewOpen(true);
   };
 
   return {
-    ...documentState,
+    ...documentBuilder,
     ...documentActions,
     handleLogoUpload,
     SNIPPETS,

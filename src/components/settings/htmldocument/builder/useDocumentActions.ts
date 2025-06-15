@@ -1,54 +1,121 @@
 
+import { useState, useCallback } from 'react';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { DocumentTypeUI } from './htmlDocumentConstants';
+import { useDocumentContext } from '../../contexts/DocumentContext';
 import { useSaveOperations } from './useSaveOperations';
 import { useExportOperations } from './useExportOperations';
 import { usePlaceholderReplacement } from './usePlaceholderReplacement';
 
 interface UseDocumentActionsProps {
-  documentName: string;
-  documentType: DocumentTypeUI;
   htmlContent: string;
-  setHasUnsavedChanges: (value: boolean) => void;
-  setIsSaving: (value: boolean) => void;
-  setDocumentName: (name: string) => void;
-  setDocumentType: (type: DocumentTypeUI) => void;
   setHtmlContent: (content: string) => void;
+  documentName: string;
+  setDocumentName: (name: string) => void;
+  documentType: DocumentTypeUI;
+  setDocumentType: (type: DocumentTypeUI) => void;
+  hasUnsavedChanges: boolean;
+  setHasUnsavedChanges: (value: boolean) => void;
+  placeholderValues: Record<string, string>;
+  setPlaceholderValues: (values: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => void;
   editingDocument?: DocumentTemplate | null;
   onDocumentSaved?: (document: DocumentTemplate | null) => void;
-  getDraftKey: (name: string) => string;
-  placeholderValues: Record<string, string>;
-  isSaving: boolean;
-  clearDraftForDocument: (documentName: string) => void;
+  clearDraftForDocument: (docName: string) => void;
 }
 
-export function useDocumentActions(props: UseDocumentActionsProps) {
+export function useDocumentActions({
+  htmlContent,
+  setHtmlContent,
+  documentName,
+  setDocumentName,
+  documentType,
+  setDocumentType,
+  hasUnsavedChanges,
+  setHasUnsavedChanges,
+  placeholderValues,
+  setPlaceholderValues,
+  editingDocument,
+  onDocumentSaved,
+  clearDraftForDocument
+}: UseDocumentActionsProps) {
+  const [isSaving, setIsSaving] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  
+  const { selectedOrganization, selectedWorkspace } = useDocumentContext();
+  
   const saveOperations = useSaveOperations({
-    documentName: props.documentName,
-    documentType: props.documentType,
-    htmlContent: props.htmlContent,
-    setHasUnsavedChanges: props.setHasUnsavedChanges,
-    setIsSaving: props.setIsSaving,
-    setDocumentName: props.setDocumentName,
-    setDocumentType: props.setDocumentType,
-    setHtmlContent: props.setHtmlContent,
-    editingDocument: props.editingDocument,
-    onDocumentSaved: props.onDocumentSaved,
-    clearDraftForDocument: props.clearDraftForDocument
+    selectedOrganization,
+    selectedWorkspace
   });
+  
+  const exportOperations = useExportOperations();
+  const { getScaledHtmlContent } = usePlaceholderReplacement({ placeholderValues });
 
-  const exportOperations = useExportOperations({
-    documentName: props.documentName,
-    htmlContent: props.htmlContent
-  });
+  const handleSave = useCallback(async () => {
+    if (!documentName.trim()) {
+      alert('Voer een documentnaam in');
+      return;
+    }
 
-  const placeholderOperations = usePlaceholderReplacement({
-    placeholderValues: props.placeholderValues
-  });
+    setIsSaving(true);
+    try {
+      const savedDocument = await saveOperations.saveDocument({
+        id: editingDocument?.id,
+        name: documentName,
+        type: documentType,
+        htmlContent,
+        description: editingDocument?.description
+      });
+
+      if (savedDocument) {
+        clearDraftForDocument(documentName);
+        setHasUnsavedChanges(false);
+        console.log('[Document Actions] Document saved successfully');
+        onDocumentSaved?.(savedDocument);
+      }
+    } catch (error) {
+      console.error('[Document Actions] Save failed:', error);
+      alert('Fout bij opslaan van document');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [
+    documentName,
+    documentType,
+    htmlContent,
+    editingDocument,
+    saveOperations,
+    clearDraftForDocument,
+    setHasUnsavedChanges,
+    onDocumentSaved
+  ]);
+
+  const handleCancel = useCallback(() => {
+    if (hasUnsavedChanges) {
+      const confirmed = window.confirm('Er zijn niet-opgeslagen wijzigingen. Weet je zeker dat je wilt annuleren?');
+      if (!confirmed) return;
+    }
+    onDocumentSaved?.(null);
+  }, [hasUnsavedChanges, onDocumentSaved]);
+
+  const handlePDFDownload = useCallback(() => {
+    const processedContent = getScaledHtmlContent(htmlContent);
+    exportOperations.downloadPDF(processedContent, documentName);
+  }, [htmlContent, documentName, getScaledHtmlContent, exportOperations]);
+
+  const handleHTMLExport = useCallback(() => {
+    const processedContent = getScaledHtmlContent(htmlContent);
+    exportOperations.exportHTML(processedContent, documentName);
+  }, [htmlContent, documentName, getScaledHtmlContent, exportOperations]);
 
   return {
-    ...saveOperations,
-    ...exportOperations,
-    ...placeholderOperations
+    isSaving,
+    isPreviewOpen,
+    setIsPreviewOpen,
+    handleSave,
+    handleCancel,
+    handlePDFDownload,
+    handleHTMLExport,
+    getScaledHtmlContent
   };
 }
