@@ -5,9 +5,10 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface UseDocumentDataProps {
   documentId?: string;
+  forceRefreshKey?: string; // Add force refresh capability
 }
 
-export function useDocumentData({ documentId }: UseDocumentDataProps) {
+export function useDocumentData({ documentId, forceRefreshKey }: UseDocumentDataProps) {
   const [document, setDocument] = useState<DocumentTemplate | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -17,7 +18,7 @@ export function useDocumentData({ documentId }: UseDocumentDataProps) {
       setLoading(true);
       setError(null);
       
-      console.log('[useDocumentData] Fetching document:', id);
+      console.log('[useDocumentData] Fetching document with force refresh:', id, forceRefreshKey);
       
       const { data, error } = await supabase
         .from('document_templates')
@@ -46,7 +47,7 @@ export function useDocumentData({ documentId }: UseDocumentDataProps) {
             data.placeholder_values as Record<string, string> : null) : null
       };
 
-      console.log('[useDocumentData] Document loaded:', transformedDocument.name, 'updated_at:', transformedDocument.updated_at);
+      console.log('[useDocumentData] Document loaded with force refresh:', transformedDocument.name, 'updated_at:', transformedDocument.updated_at);
       setDocument(transformedDocument);
       return transformedDocument;
     } catch (err) {
@@ -64,14 +65,16 @@ export function useDocumentData({ documentId }: UseDocumentDataProps) {
     }
   };
 
+  // Force refresh when forceRefreshKey changes
   useEffect(() => {
     if (documentId) {
+      console.log('[useDocumentData] Force refreshing due to key change:', forceRefreshKey);
       fetchDocument(documentId);
     } else {
       setDocument(null);
       setError(null);
     }
-  }, [documentId]);
+  }, [documentId, forceRefreshKey]); // Include forceRefreshKey in dependency
 
   return {
     document,

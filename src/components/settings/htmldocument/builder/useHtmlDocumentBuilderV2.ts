@@ -10,6 +10,7 @@ import { useDocumentActions } from './useDocumentActions';
 
 interface UseHtmlDocumentBuilderV2Props {
   documentId?: string;
+  forceRefreshKey?: string; // Add force refresh key
   onDocumentSaved?: (document: DocumentTemplate | null) => void;
 }
 
@@ -66,9 +67,16 @@ export const SNIPPETS = [
   }
 ];
 
-export function useHtmlDocumentBuilderV2({ documentId, onDocumentSaved }: UseHtmlDocumentBuilderV2Props) {
-  // Use the new simplified document builder
-  const documentBuilder = useSimpleDocumentBuilderV2({ documentId });
+export function useHtmlDocumentBuilderV2({ 
+  documentId, 
+  forceRefreshKey, 
+  onDocumentSaved 
+}: UseHtmlDocumentBuilderV2Props) {
+  // Use the new simplified document builder with force refresh
+  const documentBuilder = useSimpleDocumentBuilderV2({ 
+    documentId, 
+    forceRefreshKey 
+  });
   
   // Document actions (save, export, etc.)
   const documentActions = useDocumentActions({

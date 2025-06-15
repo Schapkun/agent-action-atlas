@@ -10,10 +10,15 @@ import { useHtmlDocumentBuilderV2 } from './builder/useHtmlDocumentBuilderV2';
 
 interface HTMLDocumentBuilderV2Props {
   documentId?: string;
+  forceRefreshKey?: string; // Add force refresh key
   onDocumentSaved?: (document: any) => void;
 }
 
-export const HTMLDocumentBuilderV2 = ({ documentId, onDocumentSaved }: HTMLDocumentBuilderV2Props) => {
+export const HTMLDocumentBuilderV2 = ({ 
+  documentId, 
+  forceRefreshKey, 
+  onDocumentSaved 
+}: HTMLDocumentBuilderV2Props) => {
   const {
     document,
     loading,
@@ -40,7 +45,11 @@ export const HTMLDocumentBuilderV2 = ({ documentId, onDocumentSaved }: HTMLDocum
     getScaledHtmlContent,
     DOCUMENT_TYPE_OPTIONS,
     PLACEHOLDER_FIELDS,
-  } = useHtmlDocumentBuilderV2({ documentId, onDocumentSaved });
+  } = useHtmlDocumentBuilderV2({ 
+    documentId, 
+    forceRefreshKey, // Pass force refresh key
+    onDocumentSaved 
+  });
 
   // Handle type change (ensure string to DocumentTypeUI conversion)
   const handleSetDocumentType = (type: string) => {

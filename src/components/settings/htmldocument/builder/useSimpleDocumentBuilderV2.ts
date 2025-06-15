@@ -11,11 +11,18 @@ import {
 
 interface UseSimpleDocumentBuilderV2Props {
   documentId?: string;
+  forceRefreshKey?: string; // Add force refresh key
 }
 
-export function useSimpleDocumentBuilderV2({ documentId }: UseSimpleDocumentBuilderV2Props) {
-  // Document data fetching
-  const { document, loading, refreshDocument } = useDocumentData({ documentId });
+export function useSimpleDocumentBuilderV2({ 
+  documentId, 
+  forceRefreshKey 
+}: UseSimpleDocumentBuilderV2Props) {
+  // Document data fetching with force refresh capability
+  const { document, loading, refreshDocument } = useDocumentData({ 
+    documentId, 
+    forceRefreshKey // Pass force refresh key
+  });
   
   // Builder state
   const [htmlContent, setHtmlContent] = useState('');
@@ -51,10 +58,10 @@ export function useSimpleDocumentBuilderV2({ documentId }: UseSimpleDocumentBuil
     }
   }, []);
 
-  // Initialize from document data
+  // Initialize from document data - ALWAYS fresh due to force refresh
   useEffect(() => {
     if (document) {
-      console.log('[Builder V2] Initializing from fresh document data');
+      console.log('[Builder V2] Initializing from FORCE REFRESHED document data:', forceRefreshKey);
       
       const newType = mapDatabaseTypeToUI(document.type);
       const newPlaceholderValues = {
@@ -77,10 +84,10 @@ export function useSimpleDocumentBuilderV2({ documentId }: UseSimpleDocumentBuil
       setHasUnsavedChanges(false);
       setIsInitialized(true);
       
-      console.log('[Builder V2] Initialized with type:', newType, 'content length:', newContent.length);
+      console.log('[Builder V2] FORCE REFRESH Initialized with type:', newType, 'content length:', newContent.length);
     } else if (!documentId) {
       // New document
-      console.log('[Builder V2] Initializing new document');
+      console.log('[Builder V2] Initializing new document with force refresh key:', forceRefreshKey);
       
       const newContent = getTemplateForType('factuur');
       setDocumentName('Nieuw Document');
@@ -91,7 +98,7 @@ export function useSimpleDocumentBuilderV2({ documentId }: UseSimpleDocumentBuil
       setHasUnsavedChanges(false);
       setIsInitialized(true);
     }
-  }, [document, documentId, getTemplateForType]);
+  }, [document, documentId, forceRefreshKey, getTemplateForType]); // Include forceRefreshKey
 
   // Handle template type changes
   const handleDocumentTypeChange = useCallback((newType: DocumentTypeUI) => {

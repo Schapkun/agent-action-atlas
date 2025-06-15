@@ -13,6 +13,7 @@ const DocumentLayoutContent = () => {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
   const [editingDocumentId, setEditingDocumentId] = useState<string | undefined>(undefined);
+  const [forceRefreshKey, setForceRefreshKey] = useState<string>(''); // Add force refresh key
   const [duplicatingDocument, setDuplicatingDocument] = useState<DocumentTemplate | null>(null);
   
   const { documents, deleteDocument, duplicateDocument, refreshTemplates } = useDocumentContext();
@@ -20,12 +21,15 @@ const DocumentLayoutContent = () => {
 
   const handleNewDocument = () => {
     setEditingDocumentId(undefined);
+    setForceRefreshKey(''); // Clear for new document
     setIsBuilderOpen(true);
   };
 
   const handleEditDocument = (document: DocumentTemplate) => {
     console.log('[Settings V2] Opening document for editing:', document.name, document.id);
     setEditingDocumentId(document.id);
+    // Create unique force refresh key to ensure fresh data
+    setForceRefreshKey(`edit-${document.id}-${Date.now()}`);
     setIsBuilderOpen(true);
   };
 
@@ -35,8 +39,9 @@ const DocumentLayoutContent = () => {
     // Refresh the context to update the list
     await refreshTemplates();
     
-    // Close the builder
+    // Close the builder and clear states
     setEditingDocumentId(undefined);
+    setForceRefreshKey('');
     setIsBuilderOpen(false);
     
     if (document) {
@@ -68,6 +73,7 @@ const DocumentLayoutContent = () => {
     // If we're currently editing the deleted document, clear the state
     if (editingDocumentId === document.id) {
       setEditingDocumentId(undefined);
+      setForceRefreshKey('');
     }
     toast({
       title: "Document verwijderd",
@@ -93,7 +99,7 @@ const DocumentLayoutContent = () => {
         onDeleteDocument={handleDeleteDocument}
       />
 
-      {/* HTML Builder Dialog */}
+      {/* HTML Builder Dialog with force refresh key */}
       <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-2.5 flex flex-col">
           <div 
@@ -101,7 +107,9 @@ const DocumentLayoutContent = () => {
             style={{ height: 'calc(100% - 5px)' }}
           >
             <HTMLDocumentBuilderV2 
+              key={`builder-${editingDocumentId}-${forceRefreshKey}`} // Force complete re-mount
               documentId={editingDocumentId}
+              forceRefreshKey={forceRefreshKey} // Pass force refresh key
               onDocumentSaved={handleDocumentSaved}
             />
           </div>
