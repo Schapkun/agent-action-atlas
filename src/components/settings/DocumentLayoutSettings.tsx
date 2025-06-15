@@ -15,7 +15,7 @@ const DocumentLayoutContent = () => {
   const [editingDocument, setEditingDocument] = useState<DocumentTemplate | null>(null);
   const [duplicatingDocument, setDuplicatingDocument] = useState<DocumentTemplate | null>(null);
   
-  const { documents, deleteDocument, duplicateDocument } = useDocumentContext();
+  const { documents, deleteDocument, duplicateDocument, refreshTemplates } = useDocumentContext();
   const { toast } = useToast();
 
   const handleNewDocument = () => {
@@ -28,19 +28,28 @@ const DocumentLayoutContent = () => {
     setIsBuilderOpen(true);
   };
 
-  const handleDocumentSaved = (document: DocumentTemplate) => {
+  const handleDocumentSaved = async (document: DocumentTemplate | null) => {
     if (!document) {
       setEditingDocument(null);
       setIsBuilderOpen(false);
       return;
     }
-    setEditingDocument(document);
+
+    // Refresh templates from database to get latest version
+    await refreshTemplates();
+    
+    // Find the updated document from the refreshed list
+    const updatedDocument = documents.find(d => d.id === document.id);
+    
+    // Update the editing document with the latest version
+    setEditingDocument(updatedDocument || document);
     setIsBuilderOpen(false);
+    
     toast({
       title: "Succes",
       description: `Document "${document.name}" is opgeslagen.`
     });
-    console.log('[Settings] Document opgeslagen + gezet als editing:', document.name, document.updated_at, document.id);
+    console.log('[Settings] Document opgeslagen + state bijgewerkt:', document.name, document.updated_at, document.id);
   };
 
   const handleDuplicateDocument = (document: DocumentTemplate) => {
@@ -61,6 +70,10 @@ const DocumentLayoutContent = () => {
 
   const handleDeleteDocument = (document: DocumentTemplate) => {
     deleteDocument(document.id);
+    // If we're currently editing the deleted document, clear the state
+    if (editingDocument?.id === document.id) {
+      setEditingDocument(null);
+    }
     toast({
       title: "Document verwijderd",
       description: `"${document.name}" is verwijderd.`
