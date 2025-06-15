@@ -56,7 +56,7 @@ const CreateInvoice = () => {
   const { createInvoice } = useInvoices();
   const { createQuote } = useQuotes();
   const { settings: invoiceSettings } = useInvoiceSettings();
-  const { templates: documentTemplates } = useDocumentTemplates();
+  const { templates: documentTemplates, loading: templatesLoading } = useDocumentTemplates();
   const [loading, setLoading] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState('debuitendeur.nl');
@@ -87,6 +87,13 @@ const CreateInvoice = () => {
 
   const { toast } = useToast();
 
+  // Debug logging for templates
+  useEffect(() => {
+    console.log('Document templates loaded:', documentTemplates);
+    console.log('Templates loading:', templatesLoading);
+    console.log('Available template types:', documentTemplates.map(t => ({ id: t.id, name: t.name, type: t.type })));
+  }, [documentTemplates, templatesLoading]);
+
   // Filter templates for factuur and schapkun types
   const availableTemplates = documentTemplates.filter(t => 
     t.type === 'factuur' || t.type === 'schapkun'
@@ -95,7 +102,7 @@ const CreateInvoice = () => {
   // Set default template and payment terms when loaded
   useEffect(() => {
     if (availableTemplates.length > 0 && !selectedTemplate) {
-      console.log('Available templates:', availableTemplates);
+      console.log('Setting default template:', availableTemplates[0]);
       setSelectedTemplate(availableTemplates[0].id);
     }
     if (invoiceSettings.default_payment_terms) {
@@ -192,9 +199,9 @@ const CreateInvoice = () => {
     }));
   };
 
-  // Fix contact creation - only save contact, don't create invoice
+  // Contact creation handler - only update UI, don't create invoice
   const handleContactCreated = (contact: Contact) => {
-    console.log('Contact created:', contact);
+    console.log('Contact created, updating UI:', contact);
     setSelectedContact(contact);
     handleContactSelect(contact);
     toast({
@@ -203,9 +210,9 @@ const CreateInvoice = () => {
     });
   };
 
-  // Fix contact update - only save contact, don't create invoice
+  // Contact update handler - only update UI, don't create invoice
   const handleContactUpdated = (contact: Contact) => {
-    console.log('Contact updated:', contact);
+    console.log('Contact updated, updating UI:', contact);
     setSelectedContact(contact);
     handleContactSelect(contact);
     toast({
@@ -258,53 +265,7 @@ const CreateInvoice = () => {
     return { subtotal, vatAmount, total };
   };
 
-  const applyTextFormatting = (index: number, type: 'bold' | 'italic' | 'underline' | 'list') => {
-    const element = document.querySelector(`#description-${index}`) as HTMLDivElement;
-    if (!element) return;
-    
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
-    
-    const range = selection.getRangeAt(0);
-    const selectedText = range.toString();
-    
-    if (!selectedText) return;
-    
-    let formattedHTML = '';
-    
-    switch (type) {
-      case 'bold':
-        formattedHTML = `<strong>${selectedText}</strong>`;
-        break;
-      case 'italic':
-        formattedHTML = `<em>${selectedText}</em>`;
-        break;
-      case 'underline':
-        formattedHTML = `<u>${selectedText}</u>`;
-        break;
-      case 'list':
-        const lines = selectedText.split('\n');
-        formattedHTML = '<ul>' + lines.map(line => `<li>${line}</li>`).join('') + '</ul>';
-        break;
-    }
-    
-    range.deleteContents();
-    const fragment = range.createContextualFragment(formattedHTML);
-    range.insertNode(fragment);
-    
-    // Update the line item description
-    updateLineItem(index, 'description', element.innerHTML);
-    
-    // Clear selection
-    selection.removeAllRanges();
-  };
-
-  const handleDescriptionChange = (index: number, event: React.FormEvent<HTMLDivElement>) => {
-    const content = event.currentTarget.innerHTML;
-    updateLineItem(index, 'description', content);
-  };
-
-  // Fixed preview HTML generation
+  // Fixed preview HTML generation with proper template handling
   const generatePreviewHTML = () => {
     const selectedTemplateData = availableTemplates.find(t => t.id === selectedTemplate);
     const { subtotal, vatAmount, total } = calculateTotals();
@@ -617,11 +578,15 @@ Uw administratie`
                       <SelectValue placeholder="Selecteer layout" />
                     </SelectTrigger>
                     <SelectContent className="bg-white border shadow-lg z-50">
-                      {availableTemplates.map((template) => (
-                        <SelectItem key={template.id} value={template.id}>
-                          {template.name}
-                        </SelectItem>
-                      ))}
+                      {availableTemplates.length > 0 ? (
+                        availableTemplates.map((template) => (
+                          <SelectItem key={template.id} value={template.id}>
+                            {template.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>Geen templates beschikbaar</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -698,7 +663,7 @@ Uw administratie`
             </CardContent>
           </Card>
 
-          {/* Products/Services table */}
+          {/* Products/Services table - Fixed alignment */}
           <Card>
             <CardHeader className="p-2">
               <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700">
@@ -724,61 +689,14 @@ Uw administratie`
                       />
                     </div>
                     <div className="col-span-6">
-                      <div className="space-y-1">
-                        <div
-                          id={`description-${index}`}
-                          contentEditable
-                          className="min-h-[32px] border rounded p-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary bg-white"
-                          dangerouslySetInnerHTML={{ __html: item.description }}
-                          onInput={(e) => handleDescriptionChange(index, e)}
-                          onBlur={(e) => handleDescriptionChange(index, e)}
-                          style={{ 
-                            minHeight: '32px', 
-                            direction: 'ltr', 
-                            textAlign: 'left',
-                            unicodeBidi: 'normal',
-                            writingMode: 'horizontal-tb'
-                          }}
-                        />
-                        <div className="flex items-center gap-1">
-                          <Button 
-                            type="button" 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-5 w-5 p-0"
-                            onClick={() => applyTextFormatting(index, 'bold')}
-                          >
-                            <Bold className="h-3 w-3" />
-                          </Button>
-                          <Button 
-                            type="button" 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-5 w-5 p-0"
-                            onClick={() => applyTextFormatting(index, 'italic')}
-                          >
-                            <Italic className="h-3 w-3" />
-                          </Button>
-                          <Button 
-                            type="button" 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-5 w-5 p-0"
-                            onClick={() => applyTextFormatting(index, 'underline')}
-                          >
-                            <Underline className="h-3 w-3" />
-                          </Button>
-                          <Button 
-                            type="button" 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-5 w-5 p-0"
-                            onClick={() => applyTextFormatting(index, 'list')}
-                          >
-                            <List className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
+                      {/* Fixed text direction issue by using textarea instead of contentEditable */}
+                      <Textarea
+                        value={item.description}
+                        onChange={(e) => updateLineItem(index, 'description', e.target.value)}
+                        className="min-h-[32px] text-xs resize-none"
+                        style={{ direction: 'ltr', textAlign: 'left' }}
+                        placeholder="Omschrijving van product of dienst"
+                      />
                     </div>
                     <div className="col-span-2">
                       <div className="flex items-center justify-center gap-1">

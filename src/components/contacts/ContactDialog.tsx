@@ -115,6 +115,8 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
     e.preventDefault();
     
     try {
+      console.log('ContactDialog: Starting contact save process');
+      
       const contactData: Contact = {
         id: formData.number,
         name: formData.name,
@@ -129,20 +131,26 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
         payment_terms: formData.paymentTerms
       };
 
+      console.log('ContactDialog: Contact data prepared:', contactData);
+
       let savedContact: Contact;
       
       if (mode === 'edit') {
+        console.log('ContactDialog: Updating existing contact');
         savedContact = await updateContact(contactData);
       } else {
+        console.log('ContactDialog: Creating new contact');
         savedContact = await saveContact(contactData);
       }
 
-      // Call the parent's onSave with the saved contact
+      console.log('ContactDialog: Contact saved successfully:', savedContact);
+
+      // Only call onSave to update the UI - no invoice creation here
       onSave(savedContact);
       onClose();
     } catch (error) {
-      console.error('Error saving contact:', error);
-      // Don't close dialog on error
+      console.error('ContactDialog: Error saving contact:', error);
+      // Don't close dialog on error so user can retry
     }
   };
 
