@@ -15,15 +15,30 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
     Object.entries(placeholderValues).forEach(([key, value]) => {
       const regex = new RegExp(`{{${key}}}`, 'g');
       
-      // Special handling for logo - create img tag if it's a data URL
-      if (key === 'logo' && value && value.startsWith('data:')) {
-        replaced = replaced.replace(regex, `<img src="${value}" alt="Logo" style="max-width: 150px; height: auto;" />`);
+      // Special handling for logo - create img tag if it's a data URL or valid image URL
+      if (key === 'logo' && value) {
+        if (value.startsWith('data:') || value.startsWith('http') || value.startsWith('/')) {
+          replaced = replaced.replace(regex, `<img src="${value}" alt="Logo" style="max-width: 150px; height: auto;" />`);
+        } else {
+          // If it's not a valid image URL, show placeholder
+          replaced = replaced.replace(regex, `<span style="color:#9ca3af; border: 1px dashed #ccc; padding: 10px; display: inline-block;">[Logo]</span>`);
+        }
       } else if (value) {
         replaced = replaced.replace(regex, value);
       } else {
         replaced = replaced.replace(regex, `<span style="color:#9ca3af;">[${key}]</span>`);
       }
     });
+    
+    // Also handle any img tags with logo src placeholders
+    replaced = replaced.replace(/src=["']{{logo}}["']/g, (match) => {
+      const logoValue = placeholderValues.logo;
+      if (logoValue && (logoValue.startsWith('data:') || logoValue.startsWith('http') || logoValue.startsWith('/'))) {
+        return `src="${logoValue}"`;
+      }
+      return `src="" style="display: none;"`;
+    });
+    
     return replaced;
   };
 
@@ -143,6 +158,8 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
           .logo {
             max-width: 150px;
             height: auto;
+            display: block;
+            margin: 0 auto 10px auto;
           }
           
           .document-info {
@@ -180,6 +197,12 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
           .content p, .document-info p, .recipient p {
             word-break: break-all;
             overflow-wrap: anywhere;
+          }
+          
+          /* Image handling */
+          img {
+            max-width: 100%;
+            height: auto;
           }
         </style>
       </head>
