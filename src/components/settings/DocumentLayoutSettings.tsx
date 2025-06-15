@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { NewHTMLDocumentBuilder } from './htmldocument/NewHTMLDocumentBuilder';
+import { SimpleDocumentBuilder } from './htmldocument/SimpleDocumentBuilder';
 import { DocumentNameDialog } from './components/DocumentNameDialog';
 import { DocumentProvider, useDocumentContext } from './contexts/DocumentContext';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
@@ -32,14 +32,11 @@ const DocumentLayoutContent = () => {
   const handleBuilderComplete = async (success: boolean) => {
     console.log('[Settings] Builder completed, success:', success);
     
-    // Close builder
     setIsBuilderOpen(false);
     setEditingDocumentId(undefined);
     
     if (success) {
-      // Refresh list
       await refreshTemplates();
-      
       toast({
         title: "Succes",
         description: "Document is opgeslagen."
@@ -92,10 +89,10 @@ const DocumentLayoutContent = () => {
         onDeleteDocument={handleDeleteDocument}
       />
 
-      {/* New HTML Builder Dialog */}
+      {/* Simple Document Builder Dialog */}
       <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 flex flex-col">
-          <NewHTMLDocumentBuilder 
+          <SimpleDocumentBuilder 
             documentId={editingDocumentId}
             onComplete={handleBuilderComplete}
           />
