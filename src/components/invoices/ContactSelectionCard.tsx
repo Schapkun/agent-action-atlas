@@ -78,9 +78,7 @@ export const ContactSelectionCard = ({
                         value={template.id}
                         className="cursor-pointer hover:bg-gray-100"
                       >
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium">{template.name}</span>
-                        </div>
+                        <span className="text-sm font-medium">{template.name}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>

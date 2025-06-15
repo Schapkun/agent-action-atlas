@@ -110,7 +110,10 @@ export const Sidebar = ({
 
   const handleMenuClick = (item: any, submenuItem?: any) => {    
     if (item.hasSubmenu && !submenuItem) {
-      return; // Only expand submenu, don't navigate
+      // For submenu items, toggle the submenu instead of navigating
+      const event = new MouseEvent('click');
+      toggleSubmenu(item.id, event as any);
+      return;
     }
     
     // Close all submenus when navigating to a different section
@@ -170,15 +173,10 @@ export const Sidebar = ({
                   <>
                     <span className="ml-3 flex-1 text-left">{item.label}</span>
                     {item.hasSubmenu && (
-                      <button
-                        onClick={(e) => toggleSubmenu(item.id, e)}
-                        className="p-1"
-                      >
-                        {expandedMenus.includes(item.id) ? 
-                          <ChevronDown className="h-4 w-4" /> : 
-                          <ChevronRight className="h-4 w-4" />
-                        }
-                      </button>
+                      {expandedMenus.includes(item.id) ? 
+                        <ChevronDown className="h-4 w-4" /> : 
+                        <ChevronRight className="h-4 w-4" />
+                      }
                     )}
                     {item.badge && item.badge > 0 && (
                       <Badge 

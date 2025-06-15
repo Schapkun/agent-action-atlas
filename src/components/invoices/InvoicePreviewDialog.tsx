@@ -15,34 +15,16 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
           <DialogTitle>Factuur Voorbeeld</DialogTitle>
         </DialogHeader>
         <div className="flex-1 overflow-hidden bg-gray-100 p-4 rounded-lg">
-          <div className="bg-white mx-auto shadow-lg" style={{ width: '210mm', minHeight: '297mm', transform: 'scale(0.7)', transformOrigin: 'top center' }}>
-            <iframe
-              srcDoc={previewHTML}
-              className="w-full h-full border-0"
-              style={{ width: '210mm', height: '297mm' }}
-              title="Invoice Preview"
-              sandbox="allow-same-origin"
-              onLoad={(e) => {
-                const iframe = e.target as HTMLIFrameElement;
-                try {
-                  const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-                  if (iframeDoc) {
-                    // Ensure the iframe content is properly styled
-                    const style = iframeDoc.createElement('style');
-                    style.textContent = `
-                      html, body {
-                        margin: 0;
-                        padding: 0;
-                        width: 100%;
-                        height: 100%;
-                        font-family: Arial, sans-serif;
-                      }
-                    `;
-                    iframeDoc.head.appendChild(style);
-                  }
-                } catch (error) {
-                  console.log('Could not access iframe content:', error);
-                }
+          <div className="bg-white mx-auto shadow-lg overflow-auto" style={{ width: '210mm', height: '297mm', transform: 'scale(0.7)', transformOrigin: 'top center' }}>
+            <div 
+              dangerouslySetInnerHTML={{ __html: previewHTML }}
+              className="w-full h-full"
+              style={{ 
+                width: '210mm', 
+                height: '297mm',
+                fontFamily: 'Arial, sans-serif',
+                padding: '20mm',
+                boxSizing: 'border-box'
               }}
             />
           </div>
