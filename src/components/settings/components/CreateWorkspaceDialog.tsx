@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus } from 'lucide-react';
+import { Plus, Save } from 'lucide-react';
 import type { Organization } from '../types/workspace';
 
 interface CreateWorkspaceDialogProps {
@@ -34,6 +34,12 @@ export const CreateWorkspaceDialog: React.FC<CreateWorkspaceDialogProps> = ({
     }
   };
 
+  const handleCancel = () => {
+    setNewWorkspaceName('');
+    setSelectedOrganization('');
+    setIsOpen(false);
+  };
+
   // STRICTLY do not render anything if user cannot create workspaces
   if (!canCreateWorkspace) {
     console.log('CreateWorkspaceDialog - Not rendering, canCreateWorkspace is false');
@@ -51,8 +57,21 @@ export const CreateWorkspaceDialog: React.FC<CreateWorkspaceDialogProps> = ({
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="text-lg">Nieuwe Werkruimte</DialogTitle>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleCancel}>
+              Annuleren
+            </Button>
+            <Button 
+              size="sm" 
+              onClick={handleCreate}
+              disabled={!newWorkspaceName.trim() || !selectedOrganization}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Aanmaken
+            </Button>
+          </div>
         </DialogHeader>
         <div className="space-y-3">
           <div>
@@ -79,18 +98,6 @@ export const CreateWorkspaceDialog: React.FC<CreateWorkspaceDialogProps> = ({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <div className="flex justify-end space-x-2 pt-2">
-            <Button variant="outline" size="sm" onClick={() => setIsOpen(false)}>
-              Annuleren
-            </Button>
-            <Button 
-              size="sm" 
-              onClick={handleCreate}
-              disabled={!newWorkspaceName.trim() || !selectedOrganization}
-            >
-              Aanmaken
-            </Button>
           </div>
         </div>
       </DialogContent>

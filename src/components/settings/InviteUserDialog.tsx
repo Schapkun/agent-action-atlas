@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { Send } from 'lucide-react';
 
 interface InviteUserDialogProps {
   isOpen: boolean;
@@ -207,11 +208,28 @@ export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserD
     }
   };
 
+  const handleCancel = () => {
+    setInviteEmail('');
+    setSelectedRole('member');
+    setSelectedOrganization('');
+    setSelectedWorkspace('');
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="text-lg">Gebruiker Uitnodigen</DialogTitle>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleCancel} disabled={isLoading}>
+              Annuleren
+            </Button>
+            <Button size="sm" onClick={handleInvite} disabled={isLoading}>
+              <Send className="h-4 w-4 mr-2" />
+              {isLoading ? 'Bezig...' : 'Uitnodigen'}
+            </Button>
+          </div>
         </DialogHeader>
         <div className="space-y-4">
           <div>
@@ -272,15 +290,6 @@ export const InviteUserDialog = ({ isOpen, onOpenChange, onInvite }: InviteUserD
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={isLoading}>
-              Annuleren
-            </Button>
-            <Button size="sm" onClick={handleInvite} disabled={isLoading}>
-              {isLoading ? 'Bezig...' : 'Uitnodigen'}
-            </Button>
           </div>
         </div>
       </DialogContent>

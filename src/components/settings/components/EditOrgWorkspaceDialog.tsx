@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { Save } from 'lucide-react';
 
 interface User {
   id: string;
@@ -258,13 +258,26 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
     }
   };
 
+  const handleCancel = () => {
+    onClose();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="text-lg">
             {type === 'organization' ? 'Organisatie' : 'Werkruimte'} Bewerken
           </DialogTitle>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleCancel}>
+              Annuleren
+            </Button>
+            <Button size="sm" onClick={handleSave} disabled={loading}>
+              <Save className="h-4 w-4 mr-2" />
+              {loading ? 'Opslaan...' : 'Opslaan'}
+            </Button>
+          </div>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -307,15 +320,6 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
                 ))
               )}
             </div>
-          </div>
-
-          <div className="flex justify-end space-x-2 pt-2">
-            <Button variant="outline" size="sm" onClick={onClose}>
-              Annuleren
-            </Button>
-            <Button size="sm" onClick={handleSave} disabled={loading}>
-              {loading ? 'Opslaan...' : 'Opslaan'}
-            </Button>
           </div>
         </div>
       </DialogContent>

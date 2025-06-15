@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Edit, Copy, Trash2 } from 'lucide-react';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 
 interface DocumentListItemProps {
@@ -42,22 +42,27 @@ export const DocumentListItem = ({
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Document verwijderen</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Weet je zeker dat je "{document.name}" wilt verwijderen? 
-                  Deze actie kan niet ongedaan worden gemaakt.
-                </AlertDialogDescription>
+              <AlertDialogHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <AlertDialogTitle>Document verwijderen</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Weet je zeker dat je "{document.name}" wilt verwijderen? 
+                    Deze actie kan niet ongedaan worden gemaakt.
+                  </AlertDialogDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <AlertDialogCancel asChild>
+                    <Button variant="outline" size="sm">Annuleren</Button>
+                  </AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={() => onDelete(document)}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    asChild
+                  >
+                    <Button size="sm">Verwijderen</Button>
+                  </AlertDialogAction>
+                </div>
               </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Annuleren</AlertDialogCancel>
-                <AlertDialogAction 
-                  onClick={() => onDelete(document)}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Verwijderen
-                </AlertDialogAction>
-              </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
           

@@ -5,7 +5,6 @@ import { useManageOrgWorkspaceDialog } from '../hooks/useManageOrgWorkspaceDialo
 import { useOrganizationOperations } from './OrganizationOperations';
 import { useWorkspaceOperations } from './WorkspaceOperations';
 import { DialogHeader } from './DialogHeader';
-import { DialogFooter } from './DialogFooter';
 import { TabsContainer } from './TabsContainer';
 
 interface Organization {
@@ -86,6 +85,10 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
     onSaved();
   };
 
+  const handleCancel = () => {
+    setOpen(false);
+  };
+
   if (!item) return null;
 
   return (
@@ -94,7 +97,13 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
         {trigger}
       </DialogTrigger>
       <DialogContent className="max-w-5xl h-[90vh] flex flex-col">
-        <DialogHeader title="Organisatie Beheren" />
+        <DialogHeader 
+          title="Organisatie Beheren"
+          showActions={true}
+          onCancel={handleCancel}
+          onSave={handleSave}
+          saving={saving}
+        />
 
         <TabsContainer
           organization={item}
@@ -108,12 +117,6 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
           onEditWorkspace={(workspaceId, newName) => handleEditWorkspace(workspaceId, newName, setWorkspaces, toast)}
           onDeleteWorkspace={(workspaceId, workspaceName) => handleDeleteWorkspace(workspaceId, workspaceName, setWorkspaces, setUsers, toast)}
           onWorkspaceUserToggle={handleWorkspaceUserToggle}
-        />
-
-        <DialogFooter
-          onCancel={() => setOpen(false)}
-          onSave={handleSave}
-          saving={saving}
         />
       </DialogContent>
     </Dialog>

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Save } from 'lucide-react';
 
 interface DocumentNameDialogProps {
   open: boolean;
@@ -56,10 +57,19 @@ export const DocumentNameDialog = ({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle>
             {initialName ? 'Document Bewerken' : 'Nieuw Document'}
           </DialogTitle>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={handleClose}>
+              Annuleren
+            </Button>
+            <Button onClick={handleSave}>
+              <Save className="h-4 w-4 mr-2" />
+              {initialName ? 'Bijwerken' : 'Aanmaken'}
+            </Button>
+          </div>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -102,15 +112,6 @@ export const DocumentNameDialog = ({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optionele beschrijving..."
             />
-          </div>
-
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" onClick={handleClose}>
-              Annuleren
-            </Button>
-            <Button onClick={handleSave}>
-              {initialName ? 'Bijwerken' : 'Aanmaken'}
-            </Button>
           </div>
         </div>
       </DialogContent>

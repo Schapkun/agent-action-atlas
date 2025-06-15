@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Download, Upload } from 'lucide-react';
+import { Eye, Download, Upload, Save } from 'lucide-react';
 
 type Option = {
   label: string;
@@ -20,6 +20,9 @@ interface DocumentToolbarProps {
   onPreview: () => void;
   onPDFDownload: () => void;
   onHTMLExport: () => void;
+  onSave?: () => void;
+  onCancel?: () => void;
+  isSaving?: boolean;
 }
 
 export const DocumentToolbar: React.FC<DocumentToolbarProps> = ({
@@ -32,6 +35,9 @@ export const DocumentToolbar: React.FC<DocumentToolbarProps> = ({
   onPreview,
   onPDFDownload,
   onHTMLExport,
+  onSave,
+  onCancel,
+  isSaving = false,
 }) => (
   <div className="flex-shrink-0 p-4 border-b bg-muted/30">
     <div className="flex items-center justify-between gap-4">
@@ -59,6 +65,28 @@ export const DocumentToolbar: React.FC<DocumentToolbarProps> = ({
       </div>
       
       <div className="flex items-center gap-2">
+        {onCancel && (
+          <Button
+            variant="outline"
+            onClick={onCancel}
+            size="sm"
+            disabled={isSaving}
+          >
+            Annuleren
+          </Button>
+        )}
+        
+        {onSave && (
+          <Button
+            onClick={onSave}
+            disabled={isSaving}
+            size="sm"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {isSaving ? 'Opslaan...' : 'Opslaan'}
+          </Button>
+        )}
+        
         <Button 
           onClick={onPreview} 
           variant="outline" 
@@ -79,4 +107,3 @@ export const DocumentToolbar: React.FC<DocumentToolbarProps> = ({
     </div>
   </div>
 );
-

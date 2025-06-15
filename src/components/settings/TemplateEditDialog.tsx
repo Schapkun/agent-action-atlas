@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { VisualTemplateEditor } from './VisualTemplateEditor';
 import { VisualTemplateData, DEFAULT_VARIABLES } from './types/VisualTemplate';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { Save } from 'lucide-react';
 
 interface TemplateEditDialogProps {
   open: boolean;
@@ -155,7 +155,21 @@ export const TemplateEditDialog = ({
         padding: 0
       }}
     >
-      {/* Main content - volledige viewport hoogte minus footer */}
+      {/* Header with actions */}
+      <div className="flex-shrink-0 flex justify-between items-center p-4 border-b bg-background">
+        <h2 className="text-lg font-semibold">Template bewerken</h2>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleCancel}>
+            Annuleren
+          </Button>
+          <Button size="sm" onClick={onSaveTemplate} disabled={saving}>
+            <Save className="h-4 w-4 mr-2" />
+            {saving ? 'Opslaan...' : 'Opslaan'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Main content - volledige viewport hoogte minus header */}
       <div className="flex-1 overflow-hidden">
         <VisualTemplateEditor
           templateData={visualTemplateData}
@@ -165,16 +179,6 @@ export const TemplateEditDialog = ({
           workspaceName={selectedWorkspace?.name}
           organizationName={selectedOrganization?.name}
         />
-      </div>
-
-      {/* Footer buttons */}
-      <div className="flex-shrink-0 flex justify-end space-x-2 p-4 border-t bg-background h-20">
-        <Button variant="outline" size="sm" onClick={handleCancel}>
-          Annuleren
-        </Button>
-        <Button size="sm" onClick={onSaveTemplate} disabled={saving}>
-          {saving ? 'Opslaan...' : 'Opslaan'}
-        </Button>
       </div>
     </div>
   );

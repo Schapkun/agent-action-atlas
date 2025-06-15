@@ -1,7 +1,5 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Save } from 'lucide-react';
 
 interface DocumentFooterProps {
   onSave: () => void;
@@ -11,26 +9,10 @@ interface DocumentFooterProps {
 }
 
 export const DocumentFooter = ({ onSave, onCancel, isSaving, disabled }: DocumentFooterProps) => {
+  // Footer is now empty as buttons are moved to header
   return (
-    <div className="bg-white border-t px-6 py-4 flex items-center justify-end">
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          onClick={onCancel}
-          disabled={isSaving}
-        >
-          Annuleren
-        </Button>
-        
-        <Button
-          onClick={onSave}
-          disabled={isSaving || disabled}
-          className="min-w-24"
-        >
-          <Save className="h-4 w-4 mr-2" />
-          {isSaving ? 'Opslaan...' : 'Opslaan'}
-        </Button>
-      </div>
+    <div className="bg-white border-t px-6 py-4">
+      {/* Actions moved to header */}
     </div>
   );
 };

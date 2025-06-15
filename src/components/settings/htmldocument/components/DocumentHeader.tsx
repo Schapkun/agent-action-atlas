@@ -39,19 +39,19 @@ export const DocumentHeader = ({
       
       <div className="flex items-center gap-2">
         <Button
-          onClick={onSave}
-          disabled={isSaving || !documentId}
-          size="sm"
           variant="outline"
-        >
-          <Save className="h-4 w-4 mr-2" />
-          {isSaving ? 'Opslaan...' : 'Opslaan'}
-        </Button>
-        <Button
           onClick={onClose}
           size="sm"
         >
-          Sluiten
+          Annuleren
+        </Button>
+        <Button
+          onClick={onSave}
+          disabled={isSaving || !documentId}
+          size="sm"
+        >
+          <Save className="h-4 w-4 mr-2" />
+          {isSaving ? 'Opslaan...' : 'Opslaan'}
         </Button>
       </div>
     </div>

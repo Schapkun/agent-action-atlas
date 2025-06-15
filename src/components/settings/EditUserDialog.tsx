@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Save } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -27,8 +28,17 @@ export const EditUserDialog = ({ editingUser, onClose, onSave, onUpdateUser }: E
   return (
     <Dialog open={!!editingUser} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="text-lg">Gebruiker Bewerken</DialogTitle>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={onClose}>
+              Annuleren
+            </Button>
+            <Button size="sm" onClick={onSave}>
+              <Save className="h-4 w-4 mr-2" />
+              Opslaan
+            </Button>
+          </div>
         </DialogHeader>
         <div className="space-y-3">
           <div>
@@ -50,14 +60,6 @@ export const EditUserDialog = ({ editingUser, onClose, onSave, onUpdateUser }: E
               placeholder="Voer volledige naam in"
               className="mt-1"
             />
-          </div>
-          <div className="flex justify-end space-x-2 pt-2">
-            <Button variant="outline" size="sm" onClick={onClose}>
-              Annuleren
-            </Button>
-            <Button size="sm" onClick={onSave}>
-              Opslaan
-            </Button>
           </div>
         </div>
       </DialogContent>
