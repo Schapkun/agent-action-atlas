@@ -43,6 +43,7 @@ export const useDirectSave = (documentId?: string) => {
       const updatedPlaceholders = {
         ...currentPlaceholders,
         [`profile_${data.layoutId}_content`]: data.htmlContent,
+        [`profile_${data.layoutId}_lastModified`]: data.lastModified,
         profileId: data.layoutId
       };
       
@@ -57,6 +58,7 @@ export const useDirectSave = (documentId?: string) => {
     } catch (error) {
       console.error('[DirectSave] Save failed:', error);
       setHasUnsavedChanges(true);
+      throw error;
     }
   }, [documentId, updateTemplate, templates]);
 
@@ -80,12 +82,13 @@ export const useDirectSave = (documentId?: string) => {
       const template = templates.find(t => t.id === documentId);
       if (template?.placeholder_values) {
         const profileSpecificContent = template.placeholder_values[`profile_${profileId}_content`];
+        const profileLastModified = template.placeholder_values[`profile_${profileId}_lastModified`];
         
         if (profileSpecificContent) {
           const loadedData: SaveData = {
             layoutId: profileId,
             htmlContent: profileSpecificContent as string,
-            lastModified: new Date(template.updated_at).getTime()
+            lastModified: profileLastModified ? Number(profileLastModified) : new Date(template.updated_at).getTime()
           };
           
           // Cache the loaded data

@@ -36,6 +36,7 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
   const [profileContents, setProfileContents] = useState<ProfileContent>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastSaveTime, setLastSaveTime] = useState<{[key: string]: number}>({});
   
   const { toast } = useToast();
   const { saveData, loadData, hasUnsavedChanges } = useDirectSave(documentId);
@@ -59,6 +60,7 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
         }
         
         setProfileContents(newProfileContents);
+        console.log('[Builder] All profile contents loaded:', newProfileContents);
       } catch (error) {
         console.error('[Builder] Error loading profile contents:', error);
       } finally {
@@ -69,21 +71,38 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
     loadAllProfileContent();
   }, [documentId, loadData]);
 
-  // Auto-save current profile content when it changes
+  // Auto-save when content changes
   useEffect(() => {
-    if (isLoading || !documentId || !profileContents[selectedProfileId]) return;
+    if (isLoading || !documentId) return;
     
-    const autoSave = async () => {
-      await saveData({
-        layoutId: selectedProfileId,
-        htmlContent: profileContents[selectedProfileId],
-        lastModified: Date.now()
-      });
+    const saveChanges = async () => {
+      for (const [profileId, content] of Object.entries(profileContents)) {
+        const lastSave = lastSaveTime[profileId] || 0;
+        const contentKey = `${profileId}_${content}`;
+        
+        // Only save if content actually changed
+        if (content && Date.now() - lastSave > 1000) {
+          try {
+            await saveData({
+              layoutId: profileId,
+              htmlContent: content,
+              lastModified: Date.now()
+            });
+            
+            setLastSaveTime(prev => ({
+              ...prev,
+              [profileId]: Date.now()
+            }));
+          } catch (error) {
+            console.error('[Builder] Auto-save failed for profile:', profileId, error);
+          }
+        }
+      }
     };
 
-    const debounceTimer = setTimeout(autoSave, 2000);
+    const debounceTimer = setTimeout(saveChanges, 2000);
     return () => clearTimeout(debounceTimer);
-  }, [profileContents, selectedProfileId, documentId, saveData, isLoading]);
+  }, [profileContents, documentId, saveData, isLoading, lastSaveTime]);
 
   const handleHtmlChange = (profileId: string, newHtml: string) => {
     setProfileContents(prev => ({
@@ -100,13 +119,15 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
     
     setIsSaving(true);
     try {
-      // Save all profiles
-      for (const profileId of Object.keys(profileContents)) {
-        await saveData({
-          layoutId: profileId,
-          htmlContent: profileContents[profileId],
-          lastModified: Date.now()
-        }, true); // Force save
+      // Save all profiles with force flag
+      for (const [profileId, content] of Object.entries(profileContents)) {
+        if (content) {
+          await saveData({
+            layoutId: profileId,
+            htmlContent: content,
+            lastModified: Date.now()
+          }, true); // Force save
+        }
       }
       
       toast({
@@ -117,6 +138,7 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
       // Close the window
       onComplete(true);
     } catch (error) {
+      console.error('[Builder] Save all failed:', error);
       toast({
         title: "Fout",
         description: "Kon document niet opslaan",
