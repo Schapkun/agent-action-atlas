@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { HTMLDocumentBuilder } from './htmldocument/HTMLDocumentBuilder';
@@ -14,7 +15,7 @@ const DocumentLayoutContent = () => {
   const [editingDocument, setEditingDocument] = useState<DocumentTemplate | null>(null);
   const [duplicatingDocument, setDuplicatingDocument] = useState<DocumentTemplate | null>(null);
   
-  const { documents, deleteDocument, duplicateDocument, refreshTemplates } = useDocumentContext();
+  const { documents, deleteDocument, duplicateDocument, refreshTemplates, getLatestDocument } = useDocumentContext();
   const { toast } = useToast();
 
   const handleNewDocument = () => {
@@ -25,29 +26,29 @@ const DocumentLayoutContent = () => {
   const handleEditDocument = async (document: DocumentTemplate) => {
     console.log('[Settings] Opening document for editing:', document.name, document.id);
     
-    // CRITICAL: Force complete refresh and wait for it to complete
-    await refreshTemplates();
+    // CRITICAL: Get the latest document directly from database
+    const latestDocument = await getLatestDocument(document.id);
     
-    // Wait for context to update with fresh data
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    // Find the fresh document from the context after refresh
-    const freshDocument = documents.find(d => d.id === document.id);
-    if (!freshDocument) {
-      console.error('[Settings] Could not find fresh document after refresh');
+    if (!latestDocument) {
+      console.error('[Settings] Could not fetch latest document from database');
+      toast({
+        title: "Fout",
+        description: "Kon het document niet laden uit de database.",
+        variant: "destructive"
+      });
       return;
     }
     
     // Force a brand new object with timestamp to ensure complete re-initialization
     const documentToEdit = {
-      ...freshDocument, // Use fresh data from context
+      ...latestDocument, // Always use fresh database data
       // Force refresh timestamp to trigger complete reload
       _forceRefresh: Date.now().toString(),
       // Also add a unique key to force React to see this as completely new
-      _uniqueKey: `${freshDocument.id}-${Date.now()}`
+      _uniqueKey: `${latestDocument.id}-${Date.now()}`
     } as DocumentTemplate & { _forceRefresh: string; _uniqueKey: string };
     
-    console.log('[Settings] Setting editing document with fresh data and force refresh:', documentToEdit._forceRefresh);
+    console.log('[Settings] Setting editing document with fresh database data and force refresh:', documentToEdit._forceRefresh);
     
     setEditingDocument(documentToEdit);
     setIsBuilderOpen(true);

@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { useDocumentTemplates, DocumentTemplate } from '@/hooks/useDocumentTemplates';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DocumentContextType {
   templates: DocumentTemplate[];
@@ -11,6 +12,8 @@ interface DocumentContextType {
   deleteDocument: (id: string) => Promise<void>;
   duplicateDocument: (id: string, newName: string) => Promise<DocumentTemplate>;
   refreshTemplates: () => Promise<void>;
+  getLatestDocument: (id: string) => Promise<DocumentTemplate | null>;
+  refreshAndWait: () => Promise<void>;
 }
 
 const DocumentContext = createContext<DocumentContextType | undefined>(undefined);
@@ -28,6 +31,76 @@ export const DocumentProvider = ({ children }: DocumentProviderProps) => {
     deleteTemplate,
     fetchTemplates
   } = useDocumentTemplates();
+
+  const getLatestDocument = async (id: string): Promise<DocumentTemplate | null> => {
+    console.log('[DocumentContext] Fetching latest document directly from database:', id);
+    
+    try {
+      const { data, error } = await supabase
+        .from('document_templates')
+        .select('*')
+        .eq('id', id)
+        .eq('is_active', true)
+        .single();
+
+      if (error) {
+        console.error('[DocumentContext] Error fetching latest document:', error);
+        return null;
+      }
+
+      if (!data) {
+        console.log('[DocumentContext] No document found with id:', id);
+        return null;
+      }
+
+      // Transform the data to ensure proper typing
+      const transformedDocument: DocumentTemplate = {
+        ...data,
+        type: data.type as 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun',
+        placeholder_values: data.placeholder_values ? 
+          (typeof data.placeholder_values === 'object' && data.placeholder_values !== null ? 
+            data.placeholder_values as Record<string, string> : null) : null
+      };
+
+      console.log('[DocumentContext] Latest document fetched successfully:', transformedDocument.name, 'updated_at:', transformedDocument.updated_at);
+      return transformedDocument;
+    } catch (error) {
+      console.error('[DocumentContext] Exception while fetching latest document:', error);
+      return null;
+    }
+  };
+
+  const refreshAndWait = async (): Promise<void> => {
+    console.log('[DocumentContext] Starting refreshAndWait...');
+    
+    // Store current template count
+    const initialCount = templates.length;
+    const initialTimestamp = templates.length > 0 ? templates[0].updated_at : null;
+    
+    // Trigger refresh
+    await fetchTemplates();
+    
+    // Wait for actual state update by polling
+    let attempts = 0;
+    const maxAttempts = 20; // 2 seconds max
+    
+    while (attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Check if state has actually updated
+      const hasCountChanged = templates.length !== initialCount;
+      const hasTimestampChanged = templates.length > 0 && templates[0].updated_at !== initialTimestamp;
+      
+      if (hasCountChanged || hasTimestampChanged) {
+        console.log('[DocumentContext] State successfully updated after', (attempts + 1) * 100, 'ms');
+        return;
+      }
+      
+      attempts++;
+    }
+    
+    console.log('[DocumentContext] Warning: State may not have updated after refresh');
+  };
 
   const saveDocument = async (documentData: Partial<DocumentTemplate>): Promise<DocumentTemplate> => {
     const result = await createTemplate(documentData);
@@ -80,7 +153,9 @@ export const DocumentProvider = ({ children }: DocumentProviderProps) => {
     updateDocument,
     deleteDocument,
     duplicateDocument,
-    refreshTemplates
+    refreshTemplates,
+    getLatestDocument,
+    refreshAndWait
   };
 
   return (

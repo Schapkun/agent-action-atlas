@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   DocumentTypeUI,
   DEFAULT_INVOICE_TEMPLATE,
@@ -40,11 +41,49 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     });
   }, []);
 
-  // FIXED: Simple database type to UI type mapping - don't auto-detect from content
+  // Validate document freshness against database
+  const validateDocumentFreshness = async (documentId: string, currentUpdatedAt: string): Promise<DocumentTemplate | null> => {
+    try {
+      console.log('[Simple Builder] Validating document freshness for:', documentId);
+      
+      const { data, error } = await supabase
+        .from('document_templates')
+        .select('*')
+        .eq('id', documentId)
+        .eq('is_active', true)
+        .single();
+
+      if (error || !data) {
+        console.error('[Simple Builder] Could not fetch document for validation:', error);
+        return null;
+      }
+
+      const dbDocument: DocumentTemplate = {
+        ...data,
+        type: data.type as 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun',
+        placeholder_values: data.placeholder_values ? 
+          (typeof data.placeholder_values === 'object' && data.placeholder_values !== null ? 
+            data.placeholder_values as Record<string, string> : null) : null
+      };
+
+      // Compare timestamps
+      if (dbDocument.updated_at !== currentUpdatedAt) {
+        console.log('[Simple Builder] Database has newer version:', dbDocument.updated_at, 'vs', currentUpdatedAt);
+        return dbDocument;
+      }
+
+      console.log('[Simple Builder] Document is up to date');
+      return null;
+    } catch (error) {
+      console.error('[Simple Builder] Error validating document freshness:', error);
+      return null;
+    }
+  };
+
+  // Simple database type to UI type mapping
   const mapDatabaseTypeToUI = (dbType: string): DocumentTypeUI => {
     console.log('[Simple Builder] Mapping DB type:', dbType);
     
-    // Direct mapping without content analysis
     switch (dbType) {
       case 'schapkun':
         console.log('[Simple Builder] Mapped to schapkun');
@@ -86,34 +125,41 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     }
   }, []);
 
-  // FIXED: Initialize document content - ALWAYS preserve database content
-  const initializeDocument = useCallback(() => {
-    console.log('[Simple Builder] FORCE INITIALIZING document from database - completely fresh start');
+  // Initialize document content - ALWAYS preserve database content
+  const initializeDocument = useCallback(async () => {
+    console.log('[Simple Builder] INITIALIZING document from database - completely fresh start');
+    
+    let finalDocument = editingDocument;
+
+    // If editing existing document, validate freshness
+    if (editingDocument && editingDocument.id && editingDocument.updated_at) {
+      const newerDocument = await validateDocumentFreshness(editingDocument.id, editingDocument.updated_at);
+      if (newerDocument) {
+        console.log('[Simple Builder] Using newer document from database validation');
+        finalDocument = newerDocument;
+      }
+    }
     
     let newContent = '';
     let newName = '';
     let newType: DocumentTypeUI = 'factuur';
     let newPlaceholderValues = DEFAULT_PLACEHOLDER_VALUES;
 
-    if (editingDocument) {
-      // ALWAYS load from database, never from drafts or cache
-      newName = editingDocument.name;
-      
-      // Simple type mapping without content detection
-      newType = mapDatabaseTypeToUI(editingDocument.type);
-      console.log('[Simple Builder] Final mapped type:', newType, 'from DB type:', editingDocument.type);
+    if (finalDocument) {
+      newName = finalDocument.name;
+      newType = mapDatabaseTypeToUI(finalDocument.type);
       
       // Load saved placeholder values if they exist
-      if (editingDocument.placeholder_values) {
+      if (finalDocument.placeholder_values) {
         newPlaceholderValues = {
           ...DEFAULT_PLACEHOLDER_VALUES,
-          ...editingDocument.placeholder_values
+          ...finalDocument.placeholder_values
         };
       }
       
       // CRITICAL: ALWAYS preserve database content, never replace with template
-      if (editingDocument.html_content && editingDocument.html_content.trim()) {
-        newContent = editingDocument.html_content;
+      if (finalDocument.html_content && finalDocument.html_content.trim()) {
+        newContent = finalDocument.html_content;
         console.log('[Simple Builder] Using database content, length:', newContent.length, 'type:', newType);
       } else {
         newContent = getTemplateForType(newType);
@@ -137,16 +183,16 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     setIsInitialized(true);
 
     // Update all tracking refs
-    previousEditingDocumentId.current = editingDocument?.id;
-    previousUpdatedAt.current = editingDocument?.updated_at;
-    previousForceRefresh.current = (editingDocument as any)?._forceRefresh;
-    previousUniqueKey.current = (editingDocument as any)?._uniqueKey;
+    previousEditingDocumentId.current = finalDocument?.id;
+    previousUpdatedAt.current = finalDocument?.updated_at;
+    previousForceRefresh.current = (finalDocument as any)?._forceRefresh;
+    previousUniqueKey.current = (finalDocument as any)?._uniqueKey;
     
-    console.log('[Simple Builder] Document FORCE initialized with type:', newType, 'name:', newName, 'content length:', newContent.length);
+    console.log('[Simple Builder] Document initialized with type:', newType, 'name:', newName, 'content length:', newContent.length);
     console.log('[Simple Builder] Force refresh key:', previousForceRefresh.current, 'Unique key:', previousUniqueKey.current);
   }, [editingDocument, getTemplateForType, mapDatabaseTypeToUI]);
 
-  // FIXED: Handle template type changes - preserve content when possible
+  // Handle template type changes - preserve content when possible
   const handleDocumentTypeChange = useCallback((newType: DocumentTypeUI) => {
     console.log('[Simple Builder] Document type changed to:', newType, 'from:', documentType);
     
@@ -155,7 +201,7 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
       return;
     }
 
-    // CRITICAL: When editing existing document, warn about content replacement
+    // When editing existing document, warn about content replacement
     if (editingDocument && htmlContent !== lastSavedContent.current) {
       const confirmed = window.confirm(
         `Het wijzigen van het documenttype zal de huidige inhoud vervangen met een nieuw template. ` +
@@ -176,7 +222,7 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     console.log('[Simple Builder] Template switched to:', newType, 'new content length:', newContent.length);
   }, [documentType, editingDocument, htmlContent, getTemplateForType]);
 
-  // FIXED: Initialize on mount or when editing document changes OR any tracking value changes
+  // Initialize on mount or when editing document changes OR any tracking value changes
   useEffect(() => {
     const hasDocumentChanged = editingDocument?.id !== previousEditingDocumentId.current;
     const hasContentUpdated = editingDocument?.updated_at !== previousUpdatedAt.current;
@@ -186,9 +232,6 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     if (!isInitialized || hasDocumentChanged || hasContentUpdated || hasForceRefresh || hasUniqueKeyChanged) {
       console.log('[Simple Builder] COMPLETE REFRESH TRIGGERED - reinitializing from database');
       console.log('[Simple Builder] Document changed:', hasDocumentChanged, 'Content updated:', hasContentUpdated, 'Force refresh:', hasForceRefresh, 'Unique key changed:', hasUniqueKeyChanged);
-      console.log('[Simple Builder] Previous updated_at:', previousUpdatedAt.current, 'New updated_at:', editingDocument?.updated_at);
-      console.log('[Simple Builder] Previous force refresh:', previousForceRefresh.current, 'New force refresh:', (editingDocument as any)?._forceRefresh);
-      console.log('[Simple Builder] Previous unique key:', previousUniqueKey.current, 'New unique key:', (editingDocument as any)?._uniqueKey);
       initializeDocument();
     }
   }, [editingDocument?.id, editingDocument?.updated_at, (editingDocument as any)?._forceRefresh, (editingDocument as any)?._uniqueKey, isInitialized, initializeDocument]);
