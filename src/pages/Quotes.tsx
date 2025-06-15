@@ -2,7 +2,7 @@
 import { InvoiceManager } from '@/components/dashboard/InvoiceManager';
 
 const Quotes = () => {
-  return <InvoiceManager isQuotes={true} />;
+  return <InvoiceManager />;
 };
 
 export default Quotes;

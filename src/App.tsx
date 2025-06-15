@@ -23,6 +23,7 @@ import PhoneCalls from "./pages/PhoneCalls";
 import Emails from "./pages/Emails";
 import Contacts from "./pages/Contacts";
 import Settings from "./pages/Settings";
+import FactuurSturen from "./pages/FactuurSturen";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
               <Route path="/facturen/opstellen" element={<Index><CreateInvoice /></Index>} />
               <Route path="/offertes" element={<Index><Quotes /></Index>} />
               <Route path="/offertes/opstellen" element={<Index><CreateQuote /></Index>} />
+              <Route path="/factuursturen" element={<Index><FactuurSturen /></Index>} />
               <Route path="/telefoongesprekken" element={<Index><PhoneCalls /></Index>} />
               <Route path="/e-mails" element={<Index><Emails /></Index>} />
               <Route path="/contacten" element={<Index><Contacts /></Index>} />

@@ -23,11 +23,11 @@ import {
   Plus,
   Send,
   FileCheck,
-  Calculator,
-  FileSpreadsheet
+  FileSpreadsheet,
+  ExternalLink
 } from 'lucide-react';
 
-export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'quotes' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
+export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'quotes' | 'factuursturen' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
 
 interface SidebarProps {
   currentView: ViewType;
@@ -99,6 +99,7 @@ export const Sidebar = ({
         { id: 'sent-quotes', label: 'Verzonden', icon: Send, path: '/offertes?status=sent' },
       ]
     },
+    { id: 'factuursturen' as ViewType, label: 'factuursturen.nl', icon: ExternalLink, path: '/factuursturen' },
     { id: 'phone-calls' as ViewType, label: 'Telefoongesprekken', icon: Phone, path: '/telefoongesprekken' },
     { id: 'emails' as ViewType, label: 'E-mails', icon: Mail, path: '/e-mails' },
     { id: 'contacts' as ViewType, label: 'Contacten', icon: Users, path: '/contacten' },

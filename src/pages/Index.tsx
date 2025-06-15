@@ -27,6 +27,7 @@ const Index = ({ children }: IndexProps) => {
     if (path === '/gesloten-dossiers') return 'closed-dossiers';
     if (path === '/facturen' || path.startsWith('/facturen/')) return 'invoices';
     if (path === '/offertes' || path.startsWith('/offertes/')) return 'quotes';
+    if (path === '/factuursturen') return 'factuursturen';
     if (path === '/telefoongesprekken') return 'phone-calls';
     if (path === '/e-mails') return 'emails';
     if (path === '/contacten') return 'contacts';
@@ -50,7 +51,10 @@ const Index = ({ children }: IndexProps) => {
             currentView={currentView}
             onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
           />
-          <main className="flex-1 overflow-auto p-6">
+          <main className={cn(
+            "flex-1 overflow-auto",
+            currentView === 'factuursturen' ? "" : "p-6"
+          )}>
             {children}
           </main>
         </div>

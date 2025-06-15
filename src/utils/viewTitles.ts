@@ -11,6 +11,7 @@ export const getViewTitle = (view: ViewType): string => {
     'closed-dossiers': 'Gesloten Dossiers',
     invoices: 'Facturen',
     quotes: 'Offertes',
+    factuursturen: 'factuursturen.nl',
     'phone-calls': 'Telefoongesprekken',
     emails: 'E-mails',
     contacts: 'Contacten',
@@ -31,6 +32,7 @@ export const getViewTitleFromPath = (path: string): string => {
   if (path === '/gesloten-dossiers') return 'Gesloten Dossiers';
   if (path === '/facturen') return 'Facturen';
   if (path === '/offertes') return 'Offertes';
+  if (path === '/factuursturen') return 'factuursturen.nl';
   if (path === '/telefoongesprekken') return 'Telefoongesprekken';
   if (path === '/e-mails') return 'E-mails';
   if (path === '/contacten') return 'Contacten';
