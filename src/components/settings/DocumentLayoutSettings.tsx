@@ -23,9 +23,18 @@ const DocumentLayoutContent = () => {
     setIsBuilderOpen(true);
   };
 
-  const handleEditDocument = (document: DocumentTemplate) => {
+  const handleEditDocument = async (document: DocumentTemplate) => {
     console.log('[Settings] Opening document for editing:', document.name, document.id);
-    setEditingDocument(document);
+    
+    // Always refresh templates before editing to ensure we have the latest data
+    await refreshTemplates();
+    
+    // Get the fresh version of the document from the refreshed list
+    const freshDocument = documents.find(d => d.id === document.id);
+    const documentToEdit = freshDocument || document;
+    
+    console.log('[Settings] Setting editing document to fresh version:', documentToEdit.name, documentToEdit.updated_at);
+    setEditingDocument(documentToEdit);
     setIsBuilderOpen(true);
   };
 
@@ -41,23 +50,18 @@ const DocumentLayoutContent = () => {
     // Force refresh templates from database
     await refreshTemplates();
     
-    // Wait a bit for the refresh to complete
-    setTimeout(() => {
-      // Find the updated document from the refreshed list
-      const updatedDocument = documents.find(d => d.id === document.id);
-      console.log('[Settings] Found updated document:', updatedDocument?.name, updatedDocument?.updated_at);
-      
-      // Update the editing document with the latest version
-      setEditingDocument(updatedDocument || document);
-      setIsBuilderOpen(false);
-      
-      toast({
-        title: "Succes",
-        description: `Document "${document.name}" is opgeslagen.`
-      });
-    }, 100);
+    // Close the builder immediately after save
+    setIsBuilderOpen(false);
     
-    console.log('[Settings] Document opgeslagen + state bijgewerkt:', document.name, document.updated_at, document.id);
+    // Clear the editing document to force fresh load next time
+    setEditingDocument(null);
+    
+    toast({
+      title: "Succes",
+      description: `Document "${document.name}" is opgeslagen.`
+    });
+    
+    console.log('[Settings] Document saved and state cleared for fresh reload');
   };
 
   const handleDuplicateDocument = (document: DocumentTemplate) => {
