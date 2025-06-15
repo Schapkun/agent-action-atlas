@@ -56,6 +56,24 @@ const TEMPLATES = {
   custom: DEFAULT_TEMPLATE
 };
 
+// Type guard function to safely convert database JSON to Record<string, string>
+const parseJsonToStringRecord = (value: any): Record<string, string> => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return { ...DEFAULT_PLACEHOLDERS };
+  }
+  
+  const result: Record<string, string> = {};
+  for (const [key, val] of Object.entries(value)) {
+    if (typeof val === 'string') {
+      result[key] = val;
+    } else {
+      result[key] = String(val || '');
+    }
+  }
+  
+  return { ...DEFAULT_PLACEHOLDERS, ...result };
+};
+
 export const useNewDocumentBuilder = (documentId?: string) => {
   const [state, setState] = useState<DocumentBuilderState>({
     name: 'Nieuw Document',
@@ -84,15 +102,13 @@ export const useNewDocumentBuilder = (documentId?: string) => {
 
       if (error) throw error;
 
-      const placeholders = data.placeholder_values && typeof data.placeholder_values === 'object' 
-        ? { ...DEFAULT_PLACEHOLDERS, ...data.placeholder_values }
-        : { ...DEFAULT_PLACEHOLDERS };
+      const placeholders = parseJsonToStringRecord(data.placeholder_values);
 
       setState(prev => ({
         ...prev,
         id: data.id,
         name: data.name,
-        type: data.type as any,
+        type: data.type as DocumentBuilderState['type'],
         htmlContent: data.html_content || TEMPLATES[data.type as keyof typeof TEMPLATES] || DEFAULT_TEMPLATE,
         placeholderValues: placeholders,
         isLoading: false,
