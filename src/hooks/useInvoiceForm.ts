@@ -110,6 +110,9 @@ export const useInvoiceForm = () => {
   };
 
   const handleContactCreated = (contact: Contact) => {
+    console.log('Contact created, updating form data only - no invoice creation');
+    
+    // Only update the form data with the new contact, don't create an invoice
     setSelectedContact(contact);
     setFormData(prev => ({
       ...prev,
@@ -121,6 +124,11 @@ export const useInvoiceForm = () => {
       client_country: contact.country || 'Nederland',
       payment_terms: contact.payment_terms || invoiceSettings.default_payment_terms || 30
     }));
+
+    toast({
+      title: "Contact toegevoegd",
+      description: `Contact "${contact.name}" is toegevoegd aan de factuur.`
+    });
   };
 
   const handleContactUpdated = (contact: Contact) => {
