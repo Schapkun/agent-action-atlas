@@ -29,7 +29,7 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
 
   const processedHtml = replacePlaceholders(htmlContent);
 
-  // Create styled HTML with strict A4 constraints
+  // Create styled HTML with strict A4 constraints and proper text wrapping
   const styledHtml = `
     <!DOCTYPE html>
     <html>
@@ -59,35 +59,127 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
             margin: 0;
             overflow: hidden;
             position: relative;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
           }
           
-          h1 { font-size: 18px; margin-bottom: 12px; }
-          h2 { font-size: 16px; margin-bottom: 10px; }
-          h3 { font-size: 14px; margin-bottom: 8px; }
-          p { margin-bottom: 8px; }
-          ul, ol { margin-bottom: 8px; padding-left: 20px; }
-          table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-          th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
-          th { background-color: #f5f5f5; font-weight: bold; }
+          h1, h2, h3, h4, h5, h6 { 
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+          }
+          
+          p, div, span {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+            white-space: normal;
+          }
+          
+          h1 { 
+            font-size: 18px; 
+            margin-bottom: 12px;
+            word-wrap: break-word;
+          }
+          
+          h2 { 
+            font-size: 16px; 
+            margin-bottom: 10px;
+            word-wrap: break-word;
+          }
+          
+          h3 { 
+            font-size: 14px; 
+            margin-bottom: 8px;
+            word-wrap: break-word;
+          }
+          
+          p { 
+            margin-bottom: 8px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+          }
+          
+          ul, ol { 
+            margin-bottom: 8px; 
+            padding-left: 20px;
+            word-wrap: break-word;
+          }
+          
+          li {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+          }
+          
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-bottom: 12px;
+            table-layout: fixed;
+          }
+          
+          th, td { 
+            border: 1px solid #ddd; 
+            padding: 6px; 
+            text-align: left;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+          }
+          
+          th { 
+            background-color: #f5f5f5; 
+            font-weight: bold;
+          }
           
           .header {
             text-align: right;
             margin-bottom: 40px;
+            word-wrap: break-word;
           }
+          
           .logo {
             max-width: 150px;
             height: auto;
           }
+          
           .document-info {
             margin-bottom: 30px;
+            word-wrap: break-word;
           }
+          
           .content {
             margin-bottom: 30px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
           }
+          
           .footer {
             margin-top: 50px;
             font-size: 12px;
             color: #666;
+            word-wrap: break-word;
+          }
+          
+          .recipient {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            margin-bottom: 20px;
+          }
+          
+          /* Ensure no text overflows horizontally */
+          * {
+            max-width: 100%;
+            overflow-wrap: break-word;
+            word-break: break-word;
+          }
+          
+          /* Special handling for very long words without spaces */
+          .content p, .document-info p, .recipient p {
+            word-break: break-all;
+            overflow-wrap: anywhere;
           }
         </style>
       </head>
