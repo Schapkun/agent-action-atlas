@@ -285,9 +285,10 @@ export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> =
       setPlaceholders(mergePlaceholders(newLayoutDraft.placeholderValues));
     } else {
       console.log('[Builder] Applying new layout styling to current content');
-      // Apply new layout styling to current content
-      const baseContent = htmlContent.replace(/<style>[\s\S]*?<\/style>/gi, '');
-      const styledContent = applyLayoutStyling(baseContent, layout.id);
+      // Apply new layout styling to current content - PRESERVE the current HTML content
+      // Remove existing style tags and apply new layout styling
+      const contentWithoutStyles = htmlContent.replace(/<style>[\s\S]*?<\/style>/gi, '');
+      const styledContent = applyLayoutStyling(contentWithoutStyles, layout.id);
       setHtmlContent(styledContent);
     }
     
