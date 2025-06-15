@@ -67,7 +67,7 @@ export const SNIPPETS = [
 ];
 
 export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: UseHtmlDocumentBuilderProps) {
-  // Use the simplified document builder
+  // Use ONLY the simplified document builder - remove duplicate useDocumentState
   const documentBuilder = useSimpleDocumentBuilder({ editingDocument });
   
   // Document actions (save, export, etc.)
