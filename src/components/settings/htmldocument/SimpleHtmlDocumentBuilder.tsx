@@ -1,10 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { DocumentNameHeader } from './components/DocumentNameHeader';
+import { DocumentHeader } from './components/DocumentHeader';
 import { VariablesPanel } from './components/VariablesPanel';
 import { EnhancedHtmlEditor } from './components/EnhancedHtmlEditor';
 import { A4Preview } from './components/A4Preview';
-import { DocumentFooter } from './components/DocumentFooter';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 
 interface SimpleHtmlDocumentBuilderProps {
@@ -206,10 +206,13 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
-      <DocumentNameHeader
+      <DocumentHeader
+        hasUnsavedChanges={hasUnsavedChanges}
+        isSaving={isSaving}
+        documentId={documentId}
         documentName={documentName}
         onDocumentNameChange={setDocumentName}
-        hasUnsavedChanges={hasUnsavedChanges}
+        onSave={handleSave}
         onClose={handleCancel}
       />
 
@@ -238,13 +241,6 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
           />
         </div>
       </div>
-
-      <DocumentFooter
-        onSave={handleSave}
-        onCancel={handleCancel}
-        isSaving={isSaving}
-        disabled={!documentName.trim()}
-      />
     </div>
   );
 };
