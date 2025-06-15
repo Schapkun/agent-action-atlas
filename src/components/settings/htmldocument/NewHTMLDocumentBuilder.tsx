@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,9 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Save, Eye, Download, FileText, Loader2, Building, Users, Clock, CheckCircle2 } from 'lucide-react';
+import { Save, Eye, Download, FileText, Loader2, Building, Users, Clock, CheckCircle2, Palette } from 'lucide-react';
 import { useNewDocumentBuilder } from './builder/useNewDocumentBuilder';
+import { useLayoutManager } from './builder/useLayoutManager';
 import { WorkspaceOrgSwitcher } from '../components/WorkspaceOrgSwitcher';
+import { UniqueLayoutSelector } from '../components/UniqueLayoutSelector';
 
 interface NewHTMLDocumentBuilderProps {
   documentId?: string;
@@ -57,14 +58,42 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
     selectedWorkspace
   } = useNewDocumentBuilder(documentId);
 
-  // Memoize processed HTML
+  const {
+    selectedLayoutId,
+    layouts,
+    switchLayout,
+    applyLayoutStyling,
+    hasLayoutDraft
+  } = useLayoutManager();
+
+  // Handle layout switching with draft preservation
+  const handleLayoutChange = useCallback((layout: any) => {
+    console.log('[UI] Switching to layout:', layout.name);
+    
+    const layoutDraft = switchLayout(layout.id, state);
+    
+    if (layoutDraft) {
+      // Restore draft for this layout
+      console.log('[UI] Restoring layout draft');
+      updateName(layoutDraft.name);
+      updateType(layoutDraft.type);
+      updateHtmlContent(layoutDraft.htmlContent);
+      updatePlaceholderValues(layoutDraft.placeholderValues);
+    } else {
+      // Apply layout styling to current content
+      const styledContent = applyLayoutStyling(state.htmlContent, layout.id);
+      updateHtmlContent(styledContent);
+    }
+  }, [state, switchLayout, applyLayoutStyling, updateName, updateType, updateHtmlContent, updatePlaceholderValues]);
+
+  // Memoize processed HTML with layout styling
   const processedHtmlContent = useMemo(() => {
     let content = state.htmlContent;
     Object.entries(state.placeholderValues).forEach(([key, value]) => {
       content = content.replace(new RegExp(`{{${key}}}`, 'g'), value);
     });
-    return content;
-  }, [state.htmlContent, state.placeholderValues]);
+    return applyLayoutStyling(content, selectedLayoutId);
+  }, [state.htmlContent, state.placeholderValues, applyLayoutStyling, selectedLayoutId]);
 
   const handleSave = useCallback(async () => {
     const success = await saveDocument();
@@ -153,6 +182,12 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
             />
           </div>
           {getDraftStatusBadge()}
+          {hasLayoutDraft(selectedLayoutId) && (
+            <Badge variant="outline" className="flex items-center gap-1">
+              <Palette className="h-3 w-3" />
+              Layout draft
+            </Badge>
+          )}
         </div>
         
         <div className="flex items-center gap-2">
@@ -221,10 +256,27 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
       <div className="flex-1 flex min-h-0">
         {/* Sidebar */}
         <div className="w-80 border-r bg-muted/20 p-4 overflow-y-auto">
+          {/* Layout Selector */}
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Palette className="h-4 w-4" />
+                Layout Versie
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <UniqueLayoutSelector
+                layouts={layouts}
+                selectedLayoutId={selectedLayoutId}
+                onSelectLayout={handleLayoutChange}
+              />
+            </CardContent>
+          </Card>
+
           {/* Template Selector */}
           <Card className="mb-4">
             <CardHeader>
-              <CardTitle className="text-sm">Template Laden</CardTitle>
+              <CardTitle className="text-sm">Document Template</CardTitle>
             </CardHeader>
             <CardContent>
               <Select onValueChange={handleTemplateLoad}>
@@ -242,11 +294,6 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
                   ))}
                 </SelectContent>
               </Select>
-              {state.hasChanges && (
-                <p className="text-xs text-amber-600 mt-2">
-                  Huidige wijzigingen worden automatisch opgeslagen
-                </p>
-              )}
             </CardContent>
           </Card>
 
