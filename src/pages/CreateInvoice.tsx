@@ -87,7 +87,7 @@ const CreateInvoice = () => {
 
   const { toast } = useToast();
 
-  // FIXED: Better template filtering - allow all template types and debug properly
+  // Debug template loading
   useEffect(() => {
     console.log('Document templates loaded:', documentTemplates);
     console.log('Templates loading:', templatesLoading);
@@ -99,19 +99,18 @@ const CreateInvoice = () => {
     })));
   }, [documentTemplates, templatesLoading]);
 
-  // FIXED: Include ALL active templates, not just specific types
+  // Include ALL active templates
   const availableTemplates = documentTemplates.filter(t => {
-    const isValid = t.is_active === true; // Only check if template is active
+    const isValid = t.is_active === true;
     console.log(`Template ${t.name} (${t.type}): ${isValid ? 'included' : 'excluded'} - active: ${t.is_active}`);
     return isValid;
   });
 
   console.log('Filtered available templates:', availableTemplates.length, availableTemplates);
 
-  // FIXED: Better template initialization with more robust selection
+  // Better template initialization
   useEffect(() => {
     if (availableTemplates.length > 0 && !selectedTemplate) {
-      // First try to find a factuur template, then any default, then just the first one
       const factuurTemplate = availableTemplates.find(t => t.type === 'factuur');
       const defaultTemplate = availableTemplates.find(t => t.is_default);
       const templateToSelect = factuurTemplate || defaultTemplate || availableTemplates[0];
@@ -173,7 +172,6 @@ const CreateInvoice = () => {
   const handleContactSelect = (contact: Contact | null) => {
     setSelectedContact(contact);
     if (contact) {
-      // Use contact's payment terms if available, otherwise use default
       const contactPaymentTerms = contact.payment_terms || invoiceSettings.default_payment_terms || 30;
       
       setFormData(prev => ({
@@ -203,7 +201,6 @@ const CreateInvoice = () => {
     }));
   };
 
-  // Contact creation handler - only update UI, don't create invoice
   const handleContactCreated = (contact: Contact) => {
     console.log('Contact created, only updating UI (not creating invoice):', contact);
     setSelectedContact(contact);
@@ -214,7 +211,6 @@ const CreateInvoice = () => {
     });
   };
 
-  // Contact update handler - only update UI, don't create invoice
   const handleContactUpdated = (contact: Contact) => {
     console.log('Contact updated, only updating UI (not creating invoice):', contact);
     setSelectedContact(contact);
@@ -274,7 +270,7 @@ const CreateInvoice = () => {
     document.execCommand(command, false, value);
   };
 
-  // FIXED: Completely rewritten preview HTML generation with proper placeholder handling
+  // FIXED: Completely rewritten preview HTML generation with correct placeholder mapping
   const generatePreviewHTML = () => {
     const selectedTemplateData = availableTemplates.find(t => t.id === selectedTemplate);
     const { subtotal, vatAmount, total } = calculateTotals();
@@ -290,14 +286,13 @@ const CreateInvoice = () => {
     }
 
     console.log('Using custom template:', selectedTemplateData.name);
-    console.log('Template HTML content length:', selectedTemplateData.html_content.length);
+    console.log('Template HTML content:', selectedTemplateData.html_content);
     
-    // Use selected template and replace ALL placeholders
+    // Use selected template and replace ALL placeholders correctly
     let templateHTML = selectedTemplateData.html_content;
 
-    // FIXED: Generate proper line items HTML with clean descriptions
+    // Generate proper line items HTML
     const lineItemsHTML = lineItems.map((item, index) => {
-      // Clean HTML from description for table display - remove all HTML tags
       const cleanDescription = item.description.replace(/<[^>]*>/g, '').trim() || `Product ${index + 1}`;
       
       return `
@@ -311,7 +306,7 @@ const CreateInvoice = () => {
       `;
     }).join('');
 
-    // FIXED: Format dates properly for display
+    // Format dates properly for display
     const formatDisplayDate = (dateString: string) => {
       if (!dateString) return format(new Date(), 'dd-MM-yyyy');
       try {
@@ -321,56 +316,85 @@ const CreateInvoice = () => {
       }
     };
 
-    // FIXED: Replace ALL possible placeholders with both old and new syntax
+    // FIXED: Map form data to template placeholders correctly - covering all possible placeholder variations
     const placeholderReplacements = {
+      // Company/Business info
+      'bedrijfsnaam': 'De Buitendeur',
+      'onderwerp': 'Factuur',
+      
       // Invoice data
+      'factuurnummer': invoiceNumber || getDefaultInvoiceNumber(),
       'invoice_number': invoiceNumber || getDefaultInvoiceNumber(),
+      'factuurdatum': formatDisplayDate(formData.invoice_date),
       'invoice_date': formatDisplayDate(formData.invoice_date),
+      'vervaldatum': formatDisplayDate(formData.due_date),
       'due_date': formatDisplayDate(formData.due_date),
+      'datum': formatDisplayDate(formData.invoice_date),
       
       // Client data  
+      'klantnaam': formData.client_name || 'Naam klant',
       'client_name': formData.client_name || 'Naam klant',
+      'customer_name': formData.client_name || 'Naam klant',
+      'klantadres': formData.client_address || 'Adres',
       'client_address': formData.client_address || 'Adres',
+      'customer_address': formData.client_address || 'Adres',
+      'postcode': formData.client_postal_code || '0000 XX',
       'client_postal_code': formData.client_postal_code || '0000 XX',
+      'customer_postal_code': formData.client_postal_code || '0000 XX',
+      'plaats': formData.client_city || 'Plaats',
       'client_city': formData.client_city || 'Plaats',
+      'customer_city': formData.client_city || 'Plaats',
+      'land': formData.client_country || 'Nederland',
       'client_country': formData.client_country || 'Nederland',
+      'email': formData.client_email || 'email@voorbeeld.nl',
       'client_email': formData.client_email || 'email@voorbeeld.nl',
       
       // Financial data
+      'subtotaal': `€ ${subtotal.toFixed(2)}`,
       'subtotal': `€ ${subtotal.toFixed(2)}`,
+      'btw': `€ ${vatAmount.toFixed(2)}`,
       'vat_amount': `€ ${vatAmount.toFixed(2)}`,
+      'totaal': `€ ${total.toFixed(2)}`,
       'total': `€ ${total.toFixed(2)}`,
       'total_amount': `€ ${total.toFixed(2)}`,
+      'betalingstermijn': formData.payment_terms?.toString() || '30',
       'payment_terms': formData.payment_terms?.toString() || '30',
       
-      // Line items
+      // Line items - this creates a full table
+      'productregels': lineItemsHTML,
       'line_items': lineItemsHTML,
+      'regels': lineItemsHTML,
       
       // Notes
+      'opmerkingen': formData.notes || '',
       'notes': formData.notes || '',
       
-      // Alternative naming conventions
-      'customer_name': formData.client_name || 'Naam klant',
-      'customer_address': formData.client_address || 'Adres',
-      'customer_postal_code': formData.client_postal_code || '0000 XX',
-      'customer_city': formData.client_city || 'Plaats',
-      'factuurnummer': invoiceNumber || getDefaultInvoiceNumber(),
-      'factuurdatum': formatDisplayDate(formData.invoice_date),
-      'vervaldatum': formatDisplayDate(formData.due_date)
+      // Additional common placeholders
+      'referentie': invoiceNumber || getDefaultInvoiceNumber(),
+      'reference': invoiceNumber || getDefaultInvoiceNumber()
     };
 
-    // Replace placeholders with multiple syntaxes: {placeholder}, {{placeholder}}, %PLACEHOLDER%
+    console.log('Available placeholders for replacement:', Object.keys(placeholderReplacements));
+
+    // Replace placeholders with multiple syntaxes and case variations
     Object.entries(placeholderReplacements).forEach(([key, value]) => {
-      // Single curly braces
-      templateHTML = templateHTML.replace(new RegExp(`\\{${key}\\}`, 'gi'), value);
-      // Double curly braces  
-      templateHTML = templateHTML.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'gi'), value);
-      // Percentage signs
-      templateHTML = templateHTML.replace(new RegExp(`%${key.toUpperCase()}%`, 'gi'), value);
-      // With underscores replaced by spaces
-      const keyWithSpaces = key.replace(/_/g, ' ');
-      templateHTML = templateHTML.replace(new RegExp(`\\{${keyWithSpaces}\\}`, 'gi'), value);
-      templateHTML = templateHTML.replace(new RegExp(`\\{\\{${keyWithSpaces}\\}\\}`, 'gi'), value);
+      // Try different bracket syntaxes and case variations
+      const variations = [
+        `{{${key}}}`,           // {{placeholder}}
+        `{{${key.toUpperCase()}}}`, // {{PLACEHOLDER}}
+        `{{${key.toLowerCase()}}}`, // {{placeholder}}
+        `{${key}}`,             // {placeholder}
+        `{${key.toUpperCase()}}`,   // {PLACEHOLDER}
+        `{${key.toLowerCase()}}`,   // {placeholder}
+        `%${key}%`,             // %placeholder%
+        `%${key.toUpperCase()}%`,   // %PLACEHOLDER%
+        `%${key.toLowerCase()}%`    // %placeholder%
+      ];
+      
+      variations.forEach(pattern => {
+        const regex = new RegExp(pattern.replace(/[{}%]/g, '\\$&'), 'gi');
+        templateHTML = templateHTML.replace(regex, value);
+      });
     });
 
     console.log('Template HTML after placeholder replacement (first 500 chars):', templateHTML.substring(0, 500));
@@ -747,7 +771,7 @@ Uw administratie`
             </CardContent>
           </Card>
 
-          {/* Products/Services table - FIXED column alignment and totals position */}
+          {/* Products/Services table */}
           <Card>
             <CardHeader className="p-2">
               <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700">
@@ -773,7 +797,6 @@ Uw administratie`
                       />
                     </div>
                     <div className="col-span-6">
-                      {/* FIXED: Rich text editor with working formatting buttons */}
                       <div className="border rounded">
                         <div className="flex items-center gap-1 p-1 border-b bg-gray-50">
                           <Button 
@@ -965,7 +988,7 @@ Uw administratie`
         </div>
       )}
 
-      {/* Preview Dialog - FIXED with proper key and error handling */}
+      {/* Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="max-w-4xl max-h-[90vh] w-[80vw] flex flex-col">
           <DialogHeader>
