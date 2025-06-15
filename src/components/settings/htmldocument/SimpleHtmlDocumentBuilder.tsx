@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { DocumentHeader } from './components/DocumentHeader';
+import { SimpleDocumentHeader } from './components/SimpleDocumentHeader';
 import { VariablesPanel } from './components/VariablesPanel';
 import { EnhancedHtmlEditor } from './components/EnhancedHtmlEditor';
 import { A4Preview } from './components/A4Preview';
@@ -206,7 +206,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
-      <DocumentHeader
+      <SimpleDocumentHeader
         hasUnsavedChanges={hasUnsavedChanges}
         isSaving={isSaving}
         documentId={documentId}
