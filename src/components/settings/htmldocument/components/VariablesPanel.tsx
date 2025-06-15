@@ -96,13 +96,46 @@ export const VariablesPanel = ({ placeholderValues, onPlaceholderChange }: Varia
     setCustomVariables(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
+  const insertVariableIntoEditor = (variableCode: string) => {
+    const htmlEditor = document.querySelector('.w-full.h-full.font-mono') as HTMLTextAreaElement;
+    if (htmlEditor) {
+      const start = htmlEditor.selectionStart;
+      const end = htmlEditor.selectionEnd;
+      const currentValue = htmlEditor.value;
+      const newValue = currentValue.slice(0, start) + variableCode + currentValue.slice(end);
+      
+      // Create a synthetic event to trigger onChange
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+      nativeInputValueSetter?.call(htmlEditor, newValue);
+      
+      const event = new Event('input', { bubbles: true });
+      htmlEditor.dispatchEvent(event);
+      
+      // Set cursor position after the inserted text
+      setTimeout(() => {
+        htmlEditor.focus();
+        htmlEditor.setSelectionRange(start + variableCode.length, start + variableCode.length);
+      }, 0);
+    }
+  };
+
   const renderField = (field: any, isCustom = false, customIndex?: number) => {
     if (field.type === 'file') {
       return (
         <div key={field.key} className="space-y-2">
-          <Label htmlFor={field.key} className="text-xs text-gray-600">
-            {field.label}
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor={field.key} className="text-xs text-gray-600">
+              {field.label}
+            </Label>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-4 w-4 p-0 text-blue-500 hover:text-blue-700"
+              onClick={() => insertVariableIntoEditor(field.label)}
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          </div>
           <div className="space-y-2">
             <Button
               variant="outline"
@@ -145,16 +178,26 @@ export const VariablesPanel = ({ placeholderValues, onPlaceholderChange }: Varia
             <Label htmlFor={field.key} className="text-xs text-gray-600">
               {field.label}
             </Label>
-            {isCustom && (
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-4 w-4 p-0 text-red-500 hover:text-red-700"
-                onClick={() => handleRemoveCustomVariable(customIndex!)}
+                className="h-4 w-4 p-0 text-blue-500 hover:text-blue-700"
+                onClick={() => insertVariableIntoEditor(field.label)}
               >
-                <X className="h-3 w-3" />
+                <Plus className="h-3 w-3" />
               </Button>
-            )}
+              {isCustom && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-4 w-4 p-0 text-red-500 hover:text-red-700"
+                  onClick={() => handleRemoveCustomVariable(customIndex!)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
           </div>
           <textarea
             id={field.key}
@@ -173,16 +216,26 @@ export const VariablesPanel = ({ placeholderValues, onPlaceholderChange }: Varia
           <Label htmlFor={field.key} className="text-xs text-gray-600">
             {field.label}
           </Label>
-          {isCustom && (
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="sm"
-              className="h-4 w-4 p-0 text-red-500 hover:text-red-700"
-              onClick={() => handleRemoveCustomVariable(customIndex!)}
+              className="h-4 w-4 p-0 text-blue-500 hover:text-blue-700"
+              onClick={() => insertVariableIntoEditor(field.label)}
             >
-              <X className="h-3 w-3" />
+              <Plus className="h-3 w-3" />
             </Button>
-          )}
+            {isCustom && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-4 w-4 p-0 text-red-500 hover:text-red-700"
+                onClick={() => handleRemoveCustomVariable(customIndex!)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
         </div>
         <Input
           id={field.key}
