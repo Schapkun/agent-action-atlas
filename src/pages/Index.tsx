@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { Header } from '@/components/dashboard/Header';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
