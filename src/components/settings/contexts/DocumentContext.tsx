@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { useDocumentTemplates, DocumentTemplate } from '@/hooks/useDocumentTemplates';
 
@@ -28,21 +29,21 @@ export const DocumentProvider = ({ children }: DocumentProviderProps) => {
     fetchTemplates
   } = useDocumentTemplates();
 
-  // Sla direct op in de templates lijst na save.
   const saveDocument = async (documentData: Partial<DocumentTemplate>): Promise<DocumentTemplate> => {
     const result = await createTemplate(documentData);
-    // Direct updaten
-    // Note: in de lib wordt setTemplates aangeroepen, dus de lijst is meteen vers
+    console.log('[DocumentContext] Document saved:', result);
     return result as DocumentTemplate;
   };
 
   const updateDocument = async (id: string, updates: Partial<DocumentTemplate>): Promise<DocumentTemplate> => {
+    console.log('[DocumentContext] Updating document:', id, updates);
     const result = await updateTemplate(id, updates);
-    // Direct updaten in array door hook
+    console.log('[DocumentContext] Document updated in context:', result);
     return result as DocumentTemplate;
   };
 
   const deleteDocument = async (id: string) => {
+    console.log('[DocumentContext] Deleting document:', id);
     await deleteTemplate(id);
   };
 
@@ -62,12 +63,13 @@ export const DocumentProvider = ({ children }: DocumentProviderProps) => {
     };
 
     const result = await createTemplate(duplicatedData);
-    // Type cast the Supabase result to our DocumentTemplate interface
     return result as DocumentTemplate;
   };
 
   const refreshTemplates = async () => {
+    console.log('[DocumentContext] Refreshing templates...');
     await fetchTemplates();
+    console.log('[DocumentContext] Templates refreshed, count:', templates.length);
   };
 
   const value: DocumentContextType = {

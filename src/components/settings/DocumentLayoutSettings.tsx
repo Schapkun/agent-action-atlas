@@ -24,6 +24,7 @@ const DocumentLayoutContent = () => {
   };
 
   const handleEditDocument = (document: DocumentTemplate) => {
+    console.log('[Settings] Opening document for editing:', document.name, document.id);
     setEditingDocument(document);
     setIsBuilderOpen(true);
   };
@@ -35,20 +36,27 @@ const DocumentLayoutContent = () => {
       return;
     }
 
-    // Refresh templates from database to get latest version
+    console.log('[Settings] Document saved, refreshing templates...');
+    
+    // Force refresh templates from database
     await refreshTemplates();
     
-    // Find the updated document from the refreshed list
-    const updatedDocument = documents.find(d => d.id === document.id);
+    // Wait a bit for the refresh to complete
+    setTimeout(() => {
+      // Find the updated document from the refreshed list
+      const updatedDocument = documents.find(d => d.id === document.id);
+      console.log('[Settings] Found updated document:', updatedDocument?.name, updatedDocument?.updated_at);
+      
+      // Update the editing document with the latest version
+      setEditingDocument(updatedDocument || document);
+      setIsBuilderOpen(false);
+      
+      toast({
+        title: "Succes",
+        description: `Document "${document.name}" is opgeslagen.`
+      });
+    }, 100);
     
-    // Update the editing document with the latest version
-    setEditingDocument(updatedDocument || document);
-    setIsBuilderOpen(false);
-    
-    toast({
-      title: "Succes",
-      description: `Document "${document.name}" is opgeslagen.`
-    });
     console.log('[Settings] Document opgeslagen + state bijgewerkt:', document.name, document.updated_at, document.id);
   };
 
