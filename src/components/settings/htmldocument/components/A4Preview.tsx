@@ -106,26 +106,20 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
         </div>
       </CardHeader>
       
-      <CardContent className="flex-1 flex items-center justify-center bg-gray-50" style={{ padding: '5px', minHeight: 0 }}>
+      <CardContent className="flex-1 flex items-center justify-center bg-gray-50 p-0" style={{ margin: '5px 0' }}>
         <div 
-          className="bg-white shadow-xl border border-gray-200 overflow-hidden"
+          className="bg-white shadow-xl border border-gray-200 overflow-hidden mx-auto"
           style={{
-            width: '210mm',
-            height: 'calc(100vh - 140px)', // Use available height minus header/footer space
-            maxWidth: 'calc(100% - 10px)',
-            aspectRatio: '210 / 297', // Correct A4 ratio
-            transform: 'scale(1)',
-            transformOrigin: 'center'
+            width: 'auto',
+            height: 'calc(100vh - 150px)', // Available height minus header and margins
+            aspectRatio: '210 / 297', // A4 ratio
+            maxWidth: 'calc(100% - 20px)', // Ensure some horizontal margin
           }}
         >
           <iframe
             srcDoc={styledHtml}
             className="w-full h-full border-0"
             title="A4 Document Preview"
-            style={{
-              width: '100%',
-              height: '100%'
-            }}
           />
         </div>
       </CardContent>
