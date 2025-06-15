@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -36,16 +36,43 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
   const [profileContents, setProfileContents] = useState<ProfileContent>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   const { toast } = useToast();
-  const { saveData, loadData, hasUnsavedChanges } = useDirectSave(documentId);
+  const { saveData, hasUnsavedChanges } = useDirectSave(documentId);
   const { templates } = useDocumentTemplates();
 
-  // Load content for all profiles
+  // Stable reference to prevent unnecessary re-renders
+  const loadDataStable = useCallback(async (profileId: string) => {
+    if (!documentId) return '<h1>Document Titel</h1>\n<p>Begin hier met typen...</p>';
+
+    try {
+      const template = templates.find(t => t.id === documentId);
+      if (template?.placeholder_values) {
+        const profileSpecificContent = template.placeholder_values[`profile_${profileId}_content`];
+        
+        if (profileSpecificContent) {
+          console.log('[Builder] Found saved content for profile:', profileId);
+          return profileSpecificContent as string;
+        }
+      }
+      
+      console.log('[Builder] No saved content found, using default for profile:', profileId);
+      return '<h1>Document Titel</h1>\n<p>Begin hier met typen...</p>';
+    } catch (error) {
+      console.error('[Builder] Error loading profile content:', error);
+      return '<h1>Document Titel</h1>\n<p>Begin hier met typen...</p>';
+    }
+  }, [documentId, templates]);
+
+  // Load content for all profiles only on initial mount
   useEffect(() => {
+    if (!isInitialLoad) return;
+    
     const loadAllProfileContent = async () => {
       if (!documentId) {
         setIsLoading(false);
+        setIsInitialLoad(false);
         return;
       }
 
@@ -54,21 +81,22 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
         const newProfileContents: ProfileContent = {};
         
         for (const profile of DEFAULT_PROFILES) {
-          const savedData = await loadData(profile.id);
-          newProfileContents[profile.id] = savedData?.htmlContent || '<h1>Document Titel</h1>\n<p>Begin hier met typen...</p>';
+          const content = await loadDataStable(profile.id);
+          newProfileContents[profile.id] = content;
         }
         
         setProfileContents(newProfileContents);
-        console.log('[Builder] All profile contents loaded:', newProfileContents);
+        console.log('[Builder] Initial load completed for all profiles');
       } catch (error) {
-        console.error('[Builder] Error loading profile contents:', error);
+        console.error('[Builder] Error during initial load:', error);
       } finally {
         setIsLoading(false);
+        setIsInitialLoad(false);
       }
     };
     
     loadAllProfileContent();
-  }, [documentId, loadData]);
+  }, [documentId, loadDataStable, isInitialLoad]);
 
   // Save current profile content when switching profiles
   const handleProfileSwitch = async (newProfileId: string) => {
