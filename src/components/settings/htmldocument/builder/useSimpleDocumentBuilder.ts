@@ -22,36 +22,34 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
   
   // Control flags
   const [isInitialized, setIsInitialized] = useState(false);
-  const previousDocumentType = useRef<DocumentTypeUI>('factuur');
   const previousEditingDocumentId = useRef<string | undefined>(undefined);
   const lastSavedContent = useRef('');
 
-  // Map database types to UI types with better schapkun detection
+  // Clear any existing localStorage drafts on mount
+  useEffect(() => {
+    console.log('[Simple Builder] Clearing localStorage drafts...');
+    const keys = Object.keys(localStorage);
+    keys.forEach(key => {
+      if (key.startsWith('html_draft_') || key.startsWith('builder_draft_')) {
+        localStorage.removeItem(key);
+        console.log('[Simple Builder] Cleared draft:', key);
+      }
+    });
+  }, []);
+
+  // Map database types to UI types
   const mapDatabaseTypeToUI = (dbType: string, htmlContent?: string): DocumentTypeUI => {
     console.log('[Simple Builder] Mapping DB type:', dbType, 'with HTML check');
     
-    // First check if it's explicitly schapkun type
-    if (dbType === 'schapkun') {
-      return 'schapkun';
-    }
+    if (dbType === 'schapkun') return 'schapkun';
+    if (htmlContent && htmlContent.includes('schapkun')) return 'schapkun';
     
-    // Check if HTML content suggests it's a schapkun template
-    if (htmlContent && htmlContent.includes('schapkun')) {
-      return 'schapkun';
-    }
-    
-    // Standard mapping for other types
     switch (dbType) {
-      case 'factuur':
-        return 'factuur';
-      case 'contract':
-        return 'contract';
-      case 'brief':
-        return 'brief';
-      case 'custom':
-        return 'custom';
-      default:
-        return 'custom';
+      case 'factuur': return 'factuur';
+      case 'contract': return 'contract';
+      case 'brief': return 'brief';
+      case 'custom': return 'custom';
+      default: return 'custom';
     }
   };
 
@@ -74,39 +72,9 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     }
   }, []);
 
-  // Draft key generation
-  const getDraftKey = useCallback((name: string) => `html_draft_${name}`, []);
-
-  const saveDraft = useCallback((key: string, content: string) => {
-    try {
-      localStorage.setItem(key, content);
-      console.log('[Simple Builder] Draft saved for key:', key);
-    } catch (error) {
-      console.error('[Simple Builder] Failed to save draft:', error);
-    }
-  }, []);
-
-  const getDraft = useCallback((key: string): string | null => {
-    try {
-      return localStorage.getItem(key);
-    } catch (error) {
-      console.error('[Simple Builder] Failed to get draft:', error);
-      return null;
-    }
-  }, []);
-
-  const clearDraft = useCallback((key: string) => {
-    try {
-      localStorage.removeItem(key);
-      console.log('[Simple Builder] Draft cleared for key:', key);
-    } catch (error) {
-      console.error('[Simple Builder] Failed to clear draft:', error);
-    }
-  }, []);
-
-  // Initialize document content
+  // Initialize document content - ALWAYS from database, never from localStorage
   const initializeDocument = useCallback(() => {
-    console.log('[Simple Builder] Initializing document');
+    console.log('[Simple Builder] Initializing document from database only');
     
     let newContent = '';
     let newName = '';
@@ -114,11 +82,11 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     let newPlaceholderValues = DEFAULT_PLACEHOLDER_VALUES;
 
     if (editingDocument) {
-      // Load existing document
+      // ALWAYS load from database, never from drafts
       newName = editingDocument.name;
       newType = mapDatabaseTypeToUI(editingDocument.type, editingDocument.html_content);
       
-      console.log('[Simple Builder] Mapped type from DB:', editingDocument.type, 'to UI:', newType);
+      console.log('[Simple Builder] Loading from database:', editingDocument.name, 'Type:', newType);
       
       // Load saved placeholder values if they exist
       if (editingDocument.placeholder_values) {
@@ -128,28 +96,21 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
         };
       }
       
+      // ALWAYS use database content, never drafts
       if (editingDocument.html_content) {
         newContent = editingDocument.html_content;
-        console.log('[Simple Builder] Using saved document content');
+        console.log('[Simple Builder] Using database content, length:', newContent.length);
       } else {
-        // Check for draft
-        const draftKey = getDraftKey(newName);
-        const draft = getDraft(draftKey);
-        if (draft) {
-          newContent = draft;
-          console.log('[Simple Builder] Using draft content');
-        } else {
-          newContent = getTemplateForType(newType);
-          console.log('[Simple Builder] Using default template');
-        }
+        newContent = getTemplateForType(newType);
+        console.log('[Simple Builder] Using default template for type:', newType);
       }
     } else {
-      // New document - initialize with example values
+      // New document
       newName = 'Nieuw Document';
       newType = 'factuur';
       newContent = getTemplateForType(newType);
       newPlaceholderValues = DEFAULT_PLACEHOLDER_VALUES;
-      console.log('[Simple Builder] Creating new document with example data');
+      console.log('[Simple Builder] Creating new document');
     }
 
     setDocumentName(newName);
@@ -160,9 +121,8 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     setHasUnsavedChanges(false);
     setIsInitialized(true);
 
-    previousDocumentType.current = newType;
     previousEditingDocumentId.current = editingDocument?.id;
-  }, [editingDocument, getDraftKey, getDraft, getTemplateForType]);
+  }, [editingDocument, getTemplateForType]);
 
   // Handle template type changes
   const handleDocumentTypeChange = useCallback((newType: DocumentTypeUI) => {
@@ -187,34 +147,27 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     const hasDocumentChanged = editingDocument?.id !== previousEditingDocumentId.current;
     
     if (!isInitialized || hasDocumentChanged) {
-      console.log('[Simple Builder] Document changed, reinitializing');
+      console.log('[Simple Builder] Document changed, reinitializing from database');
       initializeDocument();
     }
-  }, [editingDocument?.id, isInitialized, initializeDocument]);
+  }, [editingDocument?.id, editingDocument?.updated_at, isInitialized, initializeDocument]);
 
-  // Save drafts on content change
+  // Track content changes for unsaved state
   useEffect(() => {
     if (isInitialized && 
-        documentName && 
         htmlContent && 
         htmlContent !== lastSavedContent.current) {
-      
-      const draftKey = getDraftKey(documentName);
-      saveDraft(draftKey, htmlContent);
       setHasUnsavedChanges(true);
+      console.log('[Simple Builder] Content changed, marking as unsaved');
     }
-  }, [htmlContent, documentName, isInitialized, getDraftKey, saveDraft]);
+  }, [htmlContent, isInitialized]);
 
-  // Clear draft for document
+  // Simple clear function that just resets the unsaved state
   const clearDraftForDocument = useCallback((docName: string) => {
-    if (docName) {
-      const draftKey = getDraftKey(docName);
-      clearDraft(draftKey);
-      lastSavedContent.current = htmlContent;
-      setHasUnsavedChanges(false);
-      console.log('[Simple Builder] Cleared draft for:', docName);
-    }
-  }, [getDraftKey, clearDraft, htmlContent]);
+    console.log('[Simple Builder] Clearing unsaved changes for:', docName);
+    lastSavedContent.current = htmlContent;
+    setHasUnsavedChanges(false);
+  }, [htmlContent]);
 
   return {
     // State
