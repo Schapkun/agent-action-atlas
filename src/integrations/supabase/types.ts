@@ -375,6 +375,47 @@ export type Database = {
           },
         ]
       }
+      organization_settings: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_prefix: string | null
+          invoice_start_number: number | null
+          organization_id: string
+          quote_prefix: string | null
+          quote_start_number: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_prefix?: string | null
+          invoice_start_number?: number | null
+          organization_id: string
+          quote_prefix?: string | null
+          quote_start_number?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_prefix?: string | null
+          invoice_start_number?: number | null
+          organization_id?: string
+          quote_prefix?: string | null
+          quote_start_number?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string

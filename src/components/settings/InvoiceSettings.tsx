@@ -30,7 +30,8 @@ export const InvoiceSettings = () => {
     if (!selectedOrganization) return;
 
     try {
-      const { data, error } = await supabase
+      // Use type assertion for the new table until types are refreshed
+      const { data, error } = await (supabase as any)
         .from('organization_settings')
         .select('invoice_prefix, invoice_start_number, quote_prefix, quote_start_number')
         .eq('organization_id', selectedOrganization.id)
@@ -58,7 +59,8 @@ export const InvoiceSettings = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      // Use type assertion for the new table until types are refreshed
+      const { error } = await (supabase as any)
         .from('organization_settings')
         .upsert({
           organization_id: selectedOrganization.id,
