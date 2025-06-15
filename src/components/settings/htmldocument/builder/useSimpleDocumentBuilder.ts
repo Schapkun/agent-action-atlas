@@ -4,6 +4,7 @@ import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { 
   DocumentTypeUI,
   DEFAULT_INVOICE_TEMPLATE,
+  DEFAULT_PLACEHOLDER_VALUES,
   schapkunTemplate
 } from './htmlDocumentConstants';
 
@@ -17,7 +18,7 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
   const [documentName, setDocumentName] = useState('');
   const [documentType, setDocumentType] = useState<DocumentTypeUI>('factuur');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>({});
+  const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>(DEFAULT_PLACEHOLDER_VALUES);
   
   // Control flags
   const [isInitialized, setIsInitialized] = useState(false);
@@ -104,11 +105,12 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
         }
       }
     } else {
-      // New document
+      // New document - initialize with example values
       newName = 'Nieuw Document';
       newType = 'factuur';
       newContent = getTemplateForType(newType);
-      console.log('[Simple Builder] Creating new document');
+      setPlaceholderValues(DEFAULT_PLACEHOLDER_VALUES);
+      console.log('[Simple Builder] Creating new document with example data');
     }
 
     setDocumentName(newName);
