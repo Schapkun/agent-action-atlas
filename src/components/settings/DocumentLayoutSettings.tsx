@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { HTMLDocumentBuilder } from './htmldocument/HTMLDocumentBuilder';
@@ -26,15 +25,17 @@ const DocumentLayoutContent = () => {
   const handleEditDocument = async (document: DocumentTemplate) => {
     console.log('[Settings] Opening document for editing:', document.name, document.id);
     
-    // Force refresh templates to get latest from database
+    // ALWAYS force refresh to get the absolute latest from database
     await refreshTemplates();
     
-    // Get the absolutely fresh version from database
+    // Get the fresh version from database after refresh
     const freshDocument = documents.find(d => d.id === document.id);
     const documentToEdit = freshDocument || document;
     
-    console.log('[Settings] Setting editing document to fresh DB version:', documentToEdit.name, documentToEdit.updated_at);
-    setEditingDocument(documentToEdit);
+    console.log('[Settings] Using fresh document from DB:', documentToEdit.name, 'updated_at:', documentToEdit.updated_at);
+    
+    // Force new object reference to trigger re-initialization
+    setEditingDocument({ ...documentToEdit });
     setIsBuilderOpen(true);
   };
 
@@ -45,7 +46,7 @@ const DocumentLayoutContent = () => {
       return;
     }
 
-    console.log('[Settings] Document saved, refreshing all templates from database...');
+    console.log('[Settings] Document saved, forcing complete refresh...');
     
     // Force complete refresh from database
     await refreshTemplates();
