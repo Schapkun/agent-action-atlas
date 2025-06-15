@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -193,29 +192,29 @@ Uw administratie`
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b px-6 py-4">
+      {/* Compact Header */}
+      <div className="bg-white border-b px-4 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-medium text-green-600">📄 Nieuwe Factuur</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-medium text-green-600">📄 Nieuwe Factuur</h1>
           </div>
           
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="bg-blue-500 text-white hover:bg-blue-600 border-blue-500">
+            <Button variant="outline" size="sm" className="bg-blue-500 text-white hover:bg-blue-600 border-blue-500 text-xs px-2 py-1">
               Verstuur
             </Button>
-            <Button variant="outline" size="sm">📋</Button>
-            <Button variant="outline" size="sm">❌</Button>
-            <Button variant="outline" size="sm">↶</Button>
-            <Button variant="outline" size="sm">↷</Button>
-            <div className="flex items-center gap-2 ml-2">
-              <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs">
+            <Button variant="outline" size="sm" className="text-xs px-2 py-1">📋</Button>
+            <Button variant="outline" size="sm" className="text-xs px-2 py-1">❌</Button>
+            <Button variant="outline" size="sm" className="text-xs px-2 py-1">↶</Button>
+            <Button variant="outline" size="sm" className="text-xs px-2 py-1">↷</Button>
+            <div className="flex items-center gap-1 ml-2">
+              <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs px-2 py-1">
                 👁️ Voorbeeld
               </Button>
-              <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs">
+              <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs px-2 py-1">
                 💾 Opslaan als concept
               </Button>
-              <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs">
+              <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs px-2 py-1">
                 ⚙️ Naar offerte
               </Button>
             </div>
@@ -223,30 +222,30 @@ Uw administratie`
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="max-w-6xl mx-auto p-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Client selection */}
+      {/* Main content - Much more compact */}
+      <div className="max-w-6xl mx-auto p-3">
+        <form onSubmit={handleSubmit} className="space-y-3">
+          {/* Client selection - Compact */}
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4 mb-4">
+            <CardContent className="p-3">
+              <div className="flex items-center gap-3 mb-2">
                 <div className="flex-1">
-                  <Label htmlFor="client_select" className="text-sm font-medium">Aan</Label>
-                  <div className="flex gap-2 mt-2">
+                  <Label htmlFor="client_select" className="text-xs font-medium">Aan</Label>
+                  <div className="flex gap-2 mt-1">
                     <Input 
                       placeholder="Selecteer klant - zoek op naam, klantnummer, plaats, adres, e-mailadres of postcode"
-                      className="flex-1"
+                      className="flex-1 text-xs h-8"
                       value={formData.client_name}
                       onChange={(e) => setFormData({...formData, client_name: e.target.value})}
                     />
-                    <Button type="button" variant="outline" className="text-blue-500">Nieuw</Button>
-                    <Button type="button" variant="outline" className="text-blue-500">Bewerken</Button>
+                    <Button type="button" variant="outline" size="sm" className="text-blue-500 text-xs px-2 h-8">Nieuw</Button>
+                    <Button type="button" variant="outline" size="sm" className="text-blue-500 text-xs px-2 h-8">Bewerken</Button>
                   </div>
                 </div>
-                <div className="w-64">
-                  <Label className="text-sm font-medium">Profiel</Label>
+                <div className="w-48">
+                  <Label className="text-xs font-medium">Profiel</Label>
                   <Select value={selectedProfile} onValueChange={setSelectedProfile}>
-                    <SelectTrigger className="mt-2">
+                    <SelectTrigger className="mt-1 h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -254,59 +253,59 @@ Uw administratie`
                     </SelectContent>
                   </Select>
                 </div>
-                <Button type="button" variant="outline" className="mt-6">⚙️</Button>
+                <Button type="button" variant="outline" size="sm" className="mt-4 h-8 w-8 p-0">⚙️</Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* References section */}
+          {/* References section - Compact */}
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <Label className="text-sm font-medium">Referenties</Label>
-                <Button type="button" variant="link" className="text-blue-500 text-sm p-0 h-auto">Bewerk introductie</Button>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-xs font-medium">Referenties</Label>
+                <Button type="button" variant="link" className="text-blue-500 text-xs p-0 h-auto">Bewerk introductie</Button>
               </div>
-              <Input placeholder="Voer hier een factuurreferentie in van maximaal 3 regels." />
+              <Input placeholder="Voer hier een factuurreferentie in van maximaal 3 regels." className="text-xs h-8" />
             </CardContent>
           </Card>
 
-          {/* Invoice details */}
+          {/* Invoice details - Compact */}
           <Card>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-3 gap-6">
+            <CardContent className="p-3">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label className="text-sm font-medium">Factuur</Label>
-                  <div className="flex mt-2">
-                    <span className="bg-gray-100 px-3 py-2 rounded-l border">2025-</span>
-                    <Input className="rounded-l-none border-l-0" placeholder="185" />
+                  <Label className="text-xs font-medium">Factuur</Label>
+                  <div className="flex mt-1">
+                    <span className="bg-gray-100 px-2 py-1 rounded-l border text-xs h-8 flex items-center">2025-</span>
+                    <Input className="rounded-l-none border-l-0 text-xs h-8" placeholder="185" />
                   </div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Datum</Label>
+                  <Label className="text-xs font-medium">Datum</Label>
                   <Input 
                     type="date"
                     value={formData.invoice_date}
                     onChange={(e) => setFormData({...formData, invoice_date: e.target.value})}
-                    className="mt-2"
+                    className="mt-1 text-xs h-8"
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Vervaldatum</Label>
+                  <Label className="text-xs font-medium">Vervaldatum</Label>
                   <Input 
                     type="date"
                     value={formData.due_date}
                     onChange={(e) => setFormData({...formData, due_date: e.target.value})}
-                    className="mt-2"
+                    className="mt-1 text-xs h-8"
                   />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Products/Services table */}
+          {/* Products/Services table - Compact */}
           <Card>
-            <CardHeader>
-              <div className="grid grid-cols-6 gap-4 text-sm font-medium text-gray-700">
+            <CardHeader className="p-2">
+              <div className="grid grid-cols-6 gap-3 text-xs font-medium text-gray-700">
                 <div>Aantal</div>
                 <div className="col-span-2">Omschrijving</div>
                 <div>Prijs</div>
@@ -315,29 +314,30 @@ Uw administratie`
               </div>
             </CardHeader>
 
-            <CardContent>
+            <CardContent className="p-2">
               {lineItems.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <p>Er zijn geen productregels</p>
+                <div className="text-center py-4 text-gray-500">
+                  <p className="text-xs">Er zijn geen productregels</p>
                   <Button 
                     type="button" 
                     onClick={addLineItem}
-                    className="mt-4 bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    size="sm"
+                    className="mt-2 bg-gray-100 text-gray-700 hover:bg-gray-200 text-xs"
                   >
                     Voeg regel toe
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-2">
                   {lineItems.map((item, index) => (
-                    <div key={index} className="grid grid-cols-6 gap-4 items-start">
+                    <div key={index} className="grid grid-cols-6 gap-3 items-start">
                       <div>
                         <Input
                           type="number"
                           step="0.01"
                           value={item.quantity}
                           onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                          className="text-center"
+                          className="text-center text-xs h-8"
                         />
                       </div>
                       <div className="col-span-2">
@@ -345,25 +345,25 @@ Uw administratie`
                           value={item.description}
                           onChange={(e) => updateLineItem(index, 'description', e.target.value)}
                           placeholder=""
-                          className="min-h-[60px] resize-none"
+                          className="min-h-[40px] resize-none text-xs"
                           rows={2}
                         />
-                        {/* Toolbar */}
-                        <div className="flex items-center gap-2 mt-2">
-                          <Button type="button" variant="ghost" size="sm">
-                            <Bold className="h-4 w-4" />
+                        {/* Compact Toolbar */}
+                        <div className="flex items-center gap-1 mt-1">
+                          <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                            <Bold className="h-3 w-3" />
                           </Button>
-                          <Button type="button" variant="ghost" size="sm">
-                            <Italic className="h-4 w-4" />
+                          <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                            <Italic className="h-3 w-3" />
                           </Button>
-                          <Button type="button" variant="ghost" size="sm">
-                            <Underline className="h-4 w-4" />
+                          <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                            <Underline className="h-3 w-3" />
                           </Button>
-                          <Button type="button" variant="ghost" size="sm">
-                            <List className="h-4 w-4" />
+                          <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                            <List className="h-3 w-3" />
                           </Button>
                           <Select defaultValue="9pt">
-                            <SelectTrigger className="w-20 text-xs">
+                            <SelectTrigger className="w-14 text-xs h-6">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -376,13 +376,13 @@ Uw administratie`
                       </div>
                       <div>
                         <div className="flex items-center">
-                          <span className="mr-2">€</span>
+                          <span className="mr-1 text-xs">€</span>
                           <Input
                             type="number"
                             step="0.01"
                             value={item.unit_price}
                             onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                            className="text-right"
+                            className="text-right text-xs h-8"
                           />
                         </div>
                       </div>
@@ -393,15 +393,15 @@ Uw administratie`
                             step="0.01"
                             value={item.vat_rate}
                             onChange={(e) => updateLineItem(index, 'vat_rate', parseFloat(e.target.value) || 0)}
-                            className="text-right w-16"
+                            className="text-right w-12 text-xs h-8"
                           />
-                          <span className="ml-2">%</span>
+                          <span className="ml-1 text-xs">%</span>
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                          <span className="mr-2">€</span>
-                          <span className="font-medium">{item.line_total.toFixed(2)}</span>
+                          <span className="mr-1 text-xs">€</span>
+                          <span className="font-medium text-xs">{item.line_total.toFixed(2)}</span>
                         </div>
                         <Button
                           type="button"
@@ -409,9 +409,9 @@ Uw administratie`
                           size="sm"
                           onClick={() => removeLineItem(index)}
                           disabled={lineItems.length === 1}
-                          className="text-red-500 hover:text-red-700"
+                          className="text-red-500 hover:text-red-700 h-6 w-6 p-0"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
@@ -421,41 +421,42 @@ Uw administratie`
             </CardContent>
           </Card>
 
-          {/* Add line button */}
+          {/* Add line button - Compact */}
           <div>
             <Button 
               type="button" 
               onClick={addLineItem}
-              className="bg-blue-500 text-white hover:bg-blue-600"
+              size="sm"
+              className="bg-blue-500 text-white hover:bg-blue-600 text-xs"
             >
               Voeg regel toe
             </Button>
           </div>
 
-          {/* Footer with payment info */}
+          {/* Footer with payment info - Compact */}
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-3">
               <Textarea 
                 value="Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendeur.nl met omschrijving: %INVOICE_NUMBER%"
-                className="h-20 resize-none"
-                rows={3}
+                className="h-12 resize-none text-xs"
+                rows={2}
               />
             </CardContent>
           </Card>
 
-          {/* Totals section */}
+          {/* Totals section - Compact */}
           <Card className="bg-blue-50">
-            <CardContent className="p-6">
-              <div className="space-y-2 text-right">
-                <div className="flex justify-between">
+            <CardContent className="p-3">
+              <div className="space-y-1 text-right">
+                <div className="flex justify-between text-xs">
                   <span>Subtotaal:</span>
                   <span>€ {subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between text-xs">
                   <span>BTW:</span>
                   <span>€ {vatAmount.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-xl font-bold text-blue-600 border-t pt-2">
+                <div className="flex justify-between text-sm font-bold text-blue-600 border-t pt-1">
                   <span>Totaal:</span>
                   <span>€ {total.toFixed(2)}</span>
                 </div>
@@ -463,19 +464,22 @@ Uw administratie`
             </CardContent>
           </Card>
 
-          {/* Action buttons */}
-          <div className="flex justify-end gap-4 pt-6">
+          {/* Action buttons - Compact */}
+          <div className="flex justify-end gap-2 pt-3">
             <Button 
               type="button" 
               onClick={() => navigate('/facturen')}
               variant="outline"
+              size="sm"
+              className="text-xs"
             >
               Annuleren
             </Button>
             <Button 
               type="submit" 
               disabled={loading}
-              className="bg-gray-800 hover:bg-gray-900"
+              size="sm"
+              className="bg-gray-800 hover:bg-gray-900 text-xs"
             >
               {loading ? 'Opslaan...' : 'Opslaan als concept'}
             </Button>
@@ -483,9 +487,10 @@ Uw administratie`
               type="button" 
               onClick={handleSaveAndSend}
               disabled={sendLoading || !formData.client_email}
-              className="bg-blue-600 hover:bg-blue-700"
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-xs"
             >
-              <Send className="h-4 w-4 mr-2" />
+              <Send className="h-3 w-3 mr-1" />
               {sendLoading ? 'Verzenden...' : 'Opslaan & Versturen'}
             </Button>
           </div>
