@@ -26,14 +26,14 @@ const DocumentLayoutContent = () => {
   const handleEditDocument = async (document: DocumentTemplate) => {
     console.log('[Settings] Opening document for editing:', document.name, document.id);
     
-    // Always refresh templates before editing to ensure we have the latest data
+    // Force refresh templates to get latest from database
     await refreshTemplates();
     
-    // Get the fresh version of the document from the refreshed list
+    // Get the absolutely fresh version from database
     const freshDocument = documents.find(d => d.id === document.id);
     const documentToEdit = freshDocument || document;
     
-    console.log('[Settings] Setting editing document to fresh version:', documentToEdit.name, documentToEdit.updated_at);
+    console.log('[Settings] Setting editing document to fresh DB version:', documentToEdit.name, documentToEdit.updated_at);
     setEditingDocument(documentToEdit);
     setIsBuilderOpen(true);
   };
@@ -45,23 +45,21 @@ const DocumentLayoutContent = () => {
       return;
     }
 
-    console.log('[Settings] Document saved, refreshing templates...');
+    console.log('[Settings] Document saved, refreshing all templates from database...');
     
-    // Force refresh templates from database
+    // Force complete refresh from database
     await refreshTemplates();
     
-    // Close the builder immediately after save
-    setIsBuilderOpen(false);
-    
-    // Clear the editing document to force fresh load next time
+    // Clear editing state completely to force fresh load next time
     setEditingDocument(null);
+    setIsBuilderOpen(false);
     
     toast({
       title: "Succes",
       description: `Document "${document.name}" is opgeslagen.`
     });
     
-    console.log('[Settings] Document saved and state cleared for fresh reload');
+    console.log('[Settings] Document saved, state cleared, templates refreshed');
   };
 
   const handleDuplicateDocument = (document: DocumentTemplate) => {
