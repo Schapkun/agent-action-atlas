@@ -94,7 +94,7 @@ const CreateInvoice = () => {
     console.log('Available template types:', documentTemplates.map(t => ({ id: t.id, name: t.name, type: t.type })));
   }, [documentTemplates, templatesLoading]);
 
-  // Filter templates for factuur and schapkun types - improved filtering with debugging
+  // Improved template filtering with better debugging
   const availableTemplates = documentTemplates.filter(t => {
     const isValid = t.type === 'factuur' || t.type === 'schapkun';
     console.log(`Template ${t.name} (${t.type}): ${isValid ? 'included' : 'excluded'}`);
@@ -103,19 +103,14 @@ const CreateInvoice = () => {
 
   console.log('Filtered available templates:', availableTemplates.length, availableTemplates);
 
-  // Set default template and payment terms when loaded
+  // Improved template initialization
   useEffect(() => {
     if (availableTemplates.length > 0 && !selectedTemplate) {
-      console.log('Setting default template:', availableTemplates[0]);
-      setSelectedTemplate(availableTemplates[0].id);
+      const defaultTemplate = availableTemplates.find(t => t.is_default) || availableTemplates[0];
+      console.log('Setting default template:', defaultTemplate);
+      setSelectedTemplate(defaultTemplate.id);
     }
-    if (invoiceSettings.default_payment_terms) {
-      setFormData(prev => ({
-        ...prev,
-        payment_terms: invoiceSettings.default_payment_terms
-      }));
-    }
-  }, [availableTemplates, selectedTemplate, invoiceSettings]);
+  }, [availableTemplates, selectedTemplate]);
 
   const calculateDueDate = (invoiceDate: string, paymentTerms: number) => {
     const date = new Date(invoiceDate);
@@ -270,7 +265,7 @@ const CreateInvoice = () => {
     document.execCommand(command, false, value);
   };
 
-  // Fixed preview HTML generation with proper template handling
+  // Fixed preview HTML generation with proper template handling and placeholder replacement
   const generatePreviewHTML = () => {
     const selectedTemplateData = availableTemplates.find(t => t.id === selectedTemplate);
     const { subtotal, vatAmount, total } = calculateTotals();
@@ -280,111 +275,128 @@ const CreateInvoice = () => {
     
     // Default template when no custom template is selected
     if (!selectedTemplateData) {
-      return `
-        <html>
-          <head>
-            <style>
-              body { 
-                font-family: Arial, sans-serif; 
-                margin: 0; 
-                padding: 20px; 
-                background: white;
-                color: #333;
-                width: 210mm;
-                height: 297mm;
-                box-sizing: border-box;
-              }
-              .header { text-align: center; margin-bottom: 30px; color: #333; }
-              .invoice-details { margin-bottom: 30px; }
-              .client-info { margin-bottom: 30px; }
-              table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-              th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-              th { background-color: #f5f5f5; }
-              .totals { text-align: right; margin-top: 20px; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>FACTUUR</h1>
-            </div>
-            <div class="invoice-details">
-              <p><strong>Factuurnummer:</strong> ${invoiceNumber || getDefaultInvoiceNumber()}</p>
-              <p><strong>Factuurdatum:</strong> ${formData.invoice_date}</p>
-              <p><strong>Vervaldatum:</strong> ${formData.due_date}</p>
-            </div>
-            <div class="client-info">
-              <h3>Factuuradres:</h3>
-              <p>${formData.client_name}</p>
-              <p>${formData.client_address}</p>
-              <p>${formData.client_postal_code} ${formData.client_city}</p>
-              <p>${formData.client_country}</p>
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Omschrijving</th>
-                  <th>Aantal</th>
-                  <th>Prijs</th>
-                  <th>BTW</th>
-                  <th>Totaal</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${lineItems.map(item => `
-                  <tr>
-                    <td>${item.description || ''}</td>
-                    <td>${item.quantity}</td>
-                    <td>€ ${item.unit_price.toFixed(2)}</td>
-                    <td>${item.vat_rate}%</td>
-                    <td>€ ${item.line_total.toFixed(2)}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-            <div class="totals">
-              <p>Subtotaal: € ${subtotal.toFixed(2)}</p>
-              <p>BTW: € ${vatAmount.toFixed(2)}</p>
-              <p><strong>Totaal: € ${total.toFixed(2)}</strong></p>
-            </div>
-          </body>
-        </html>
-      `;
+      console.log('No template selected, using default layout');
+      return generateDefaultPreviewHTML(subtotal, vatAmount, total);
     }
 
+    console.log('Using custom template:', selectedTemplateData.name);
+    
     // Use selected template and replace ALL placeholders
     let templateHTML = selectedTemplateData.html_content;
 
     // Generate line items HTML for template replacement
-    const lineItemsHTML = lineItems.map(item => `
-      <tr>
-        <td>${item.description || ''}</td>
-        <td>${item.quantity}</td>
-        <td>€ ${item.unit_price.toFixed(2)}</td>
-        <td>${item.vat_rate}%</td>
-        <td>€ ${item.line_total.toFixed(2)}</td>
-      </tr>
-    `).join('');
+    const lineItemsHTML = lineItems.map(item => {
+      // Clean HTML from description for table display
+      const cleanDescription = item.description.replace(/<[^>]*>/g, '') || '';
+      return `
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 8px;">${cleanDescription}</td>
+          <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.quantity}</td>
+          <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">€ ${item.unit_price.toFixed(2)}</td>
+          <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.vat_rate}%</td>
+          <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">€ ${item.line_total.toFixed(2)}</td>
+        </tr>
+      `;
+    }).join('');
 
-    // Replace ALL placeholders in the template
+    // Replace ALL placeholders in the template with proper fallbacks
     templateHTML = templateHTML
       .replace(/\{invoice_number\}/g, invoiceNumber || getDefaultInvoiceNumber())
-      .replace(/\{invoice_date\}/g, formData.invoice_date)
-      .replace(/\{due_date\}/g, formData.due_date)
-      .replace(/\{client_name\}/g, formData.client_name)
-      .replace(/\{client_address\}/g, formData.client_address)
-      .replace(/\{client_postal_code\}/g, formData.client_postal_code)
-      .replace(/\{client_city\}/g, formData.client_city)
-      .replace(/\{client_country\}/g, formData.client_country)
-      .replace(/\{client_email\}/g, formData.client_email)
+      .replace(/\{invoice_date\}/g, formData.invoice_date || format(new Date(), 'dd-MM-yyyy'))
+      .replace(/\{due_date\}/g, formData.due_date || format(new Date(), 'dd-MM-yyyy'))
+      .replace(/\{client_name\}/g, formData.client_name || 'Klant naam')
+      .replace(/\{client_address\}/g, formData.client_address || 'Adres')
+      .replace(/\{client_postal_code\}/g, formData.client_postal_code || 'Postcode')
+      .replace(/\{client_city\}/g, formData.client_city || 'Stad')
+      .replace(/\{client_country\}/g, formData.client_country || 'Nederland')
+      .replace(/\{client_email\}/g, formData.client_email || 'email@example.com')
       .replace(/\{subtotal\}/g, subtotal.toFixed(2))
       .replace(/\{vat_amount\}/g, vatAmount.toFixed(2))
       .replace(/\{total\}/g, total.toFixed(2))
-      .replace(/\{payment_terms\}/g, formData.payment_terms.toString())
+      .replace(/\{payment_terms\}/g, formData.payment_terms?.toString() || '30')
       .replace(/\{line_items\}/g, lineItemsHTML)
-      .replace(/\{notes\}/g, formData.notes);
+      .replace(/\{notes\}/g, formData.notes || '');
 
-    console.log('Template HTML generated successfully');
+    console.log('Template HTML generated successfully with placeholders replaced');
     return templateHTML;
+  };
+
+  // Helper function for default preview when no template is selected
+  const generateDefaultPreviewHTML = (subtotal: number, vatAmount: number, total: number) => {
+    const lineItemsHTML = lineItems.map(item => {
+      const cleanDescription = item.description.replace(/<[^>]*>/g, '') || '';
+      return `
+        <tr>
+          <td style="border: 1px solid #ccc; padding: 8px;">${cleanDescription}</td>
+          <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${item.quantity}</td>
+          <td style="border: 1px solid #ccc; padding: 8px; text-align: right;">€ ${item.unit_price.toFixed(2)}</td>
+          <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">${item.vat_rate}%</td>
+          <td style="border: 1px solid #ccc; padding: 8px; text-align: right;">€ ${item.line_total.toFixed(2)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    return `
+      <html>
+        <head>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 0; 
+              padding: 20px; 
+              background: white;
+              color: #333;
+              width: 210mm;
+              height: 297mm;
+              box-sizing: border-box;
+            }
+            .header { text-align: center; margin-bottom: 30px; color: #333; }
+            .invoice-details { margin-bottom: 30px; }
+            .client-info { margin-bottom: 30px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+            th { background-color: #f5f5f5; }
+            .totals { text-align: right; margin-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>FACTUUR</h1>
+          </div>
+          <div class="invoice-details">
+            <p><strong>Factuurnummer:</strong> ${invoiceNumber || getDefaultInvoiceNumber()}</p>
+            <p><strong>Factuurdatum:</strong> ${formData.invoice_date}</p>
+            <p><strong>Vervaldatum:</strong> ${formData.due_date}</p>
+          </div>
+          <div class="client-info">
+            <h3>Factuuradres:</h3>
+            <p>${formData.client_name || 'Klant naam'}</p>
+            <p>${formData.client_address || 'Adres'}</p>
+            <p>${formData.client_postal_code || 'Postcode'} ${formData.client_city || 'Stad'}</p>
+            <p>${formData.client_country || 'Nederland'}</p>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Omschrijving</th>
+                <th>Aantal</th>
+                <th>Prijs</th>
+                <th>BTW</th>
+                <th>Totaal</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${lineItemsHTML}
+            </tbody>
+          </table>
+          <div class="totals">
+            <p>Subtotaal: € ${subtotal.toFixed(2)}</p>
+            <p>BTW: € ${vatAmount.toFixed(2)}</p>
+            <p><strong>Totaal: € ${total.toFixed(2)}</strong></p>
+          </div>
+        </body>
+      </html>
+    `;
   };
 
   const handleConvertToQuote = async () => {
@@ -704,7 +716,12 @@ Uw administratie`
                             variant="ghost" 
                             size="sm" 
                             className="h-6 w-6 p-0"
-                            onClick={() => applyFormatting('bold')}
+                            onClick={() => {
+                              const selection = window.getSelection();
+                              if (selection && selection.rangeCount > 0) {
+                                document.execCommand('bold', false);
+                              }
+                            }}
                           >
                             <Bold className="h-3 w-3" />
                           </Button>
@@ -713,7 +730,12 @@ Uw administratie`
                             variant="ghost" 
                             size="sm" 
                             className="h-6 w-6 p-0"
-                            onClick={() => applyFormatting('italic')}
+                            onClick={() => {
+                              const selection = window.getSelection();
+                              if (selection && selection.rangeCount > 0) {
+                                document.execCommand('italic', false);
+                              }
+                            }}
                           >
                             <Italic className="h-3 w-3" />
                           </Button>
@@ -722,7 +744,12 @@ Uw administratie`
                             variant="ghost" 
                             size="sm" 
                             className="h-6 w-6 p-0"
-                            onClick={() => applyFormatting('underline')}
+                            onClick={() => {
+                              const selection = window.getSelection();
+                              if (selection && selection.rangeCount > 0) {
+                                document.execCommand('underline', false);
+                              }
+                            }}
                           >
                             <Underline className="h-3 w-3" />
                           </Button>
@@ -731,7 +758,12 @@ Uw administratie`
                             variant="ghost" 
                             size="sm" 
                             className="h-6 w-6 p-0"
-                            onClick={() => applyFormatting('insertUnorderedList')}
+                            onClick={() => {
+                              const selection = window.getSelection();
+                              if (selection && selection.rangeCount > 0) {
+                                document.execCommand('insertUnorderedList', false);
+                              }
+                            }}
                           >
                             <List className="h-3 w-3" />
                           </Button>
@@ -868,7 +900,7 @@ Uw administratie`
         </div>
       )}
 
-      {/* Preview Dialog */}
+      {/* Preview Dialog - FIXED to show actual template preview */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="max-w-4xl max-h-[90vh] w-[80vw] flex flex-col">
           <DialogHeader>
@@ -880,6 +912,7 @@ Uw administratie`
                 srcDoc={generatePreviewHTML()}
                 className="w-full h-full border-0"
                 title="Invoice Preview"
+                key={`preview-${selectedTemplate}-${Date.now()}`}
               />
             </div>
           </div>
