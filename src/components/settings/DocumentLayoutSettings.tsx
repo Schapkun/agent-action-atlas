@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { HTMLDocumentBuilderV3 } from './htmldocument/HTMLDocumentBuilderV3';
+import { HTMLDocumentBuilderSimplest } from './htmldocument/HTMLDocumentBuilderSimplest';
 import { DocumentNameDialog } from './components/DocumentNameDialog';
 import { DocumentProvider, useDocumentContext } from './contexts/DocumentContext';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
@@ -24,25 +24,25 @@ const DocumentLayoutContent = () => {
   };
 
   const handleEditDocument = (document: DocumentTemplate) => {
-    console.log('[Settings V3] Opening document for editing:', document.name, document.id);
+    console.log('[Settings] Opening document for editing:', document.name, document.id);
     setEditingDocumentId(document.id);
     setIsBuilderOpen(true);
   };
 
-  const handleDocumentSaved = async (document: DocumentTemplate | null) => {
-    console.log('[Settings V3] Document saved, refreshing context...');
+  const handleBuilderComplete = async (success: boolean) => {
+    console.log('[Settings] Builder completed, success:', success);
     
-    // Refresh the context to update the list
-    await refreshTemplates();
-    
-    // Close the builder and clear states
-    setEditingDocumentId(undefined);
+    // Close builder
     setIsBuilderOpen(false);
+    setEditingDocumentId(undefined);
     
-    if (document) {
+    if (success) {
+      // Refresh list
+      await refreshTemplates();
+      
       toast({
         title: "Succes",
-        description: `Document "${document.name}" is opgeslagen.`
+        description: "Document is opgeslagen."
       });
     }
   };
@@ -65,7 +65,6 @@ const DocumentLayoutContent = () => {
 
   const handleDeleteDocument = (document: DocumentTemplate) => {
     deleteDocument(document.id);
-    // If we're currently editing the deleted document, clear the state
     if (editingDocumentId === document.id) {
       setEditingDocumentId(undefined);
     }
@@ -93,17 +92,17 @@ const DocumentLayoutContent = () => {
         onDeleteDocument={handleDeleteDocument}
       />
 
-      {/* Atomic HTML Builder Dialog */}
+      {/* Simplest HTML Builder Dialog */}
       <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-2.5 flex flex-col">
           <div 
             className="p-2.5 min-h-0 overflow-hidden"
             style={{ height: 'calc(100% - 5px)' }}
           >
-            <HTMLDocumentBuilderV3 
-              key={`atomic-builder-${editingDocumentId || 'new'}`}
+            <HTMLDocumentBuilderSimplest 
+              key={`simplest-builder-${editingDocumentId || 'new'}-${Date.now()}`}
               documentId={editingDocumentId}
-              onDocumentSaved={handleDocumentSaved}
+              onComplete={handleBuilderComplete}
             />
           </div>
         </DialogContent>
