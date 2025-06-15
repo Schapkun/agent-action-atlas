@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { HtmlDocumentBuilder } from './htmldocument/HtmlDocumentBuilder';
+import { SimpleHtmlDocumentBuilder } from './htmldocument/SimpleHtmlDocumentBuilder';
 import { DocumentNameDialog } from './components/DocumentNameDialog';
 import { DocumentProvider, useDocumentContext } from './contexts/DocumentContext';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
@@ -76,7 +76,7 @@ const DocumentLayoutContent = () => {
       <div>
         <h3 className="text-lg font-medium">Document Templates</h3>
         <p className="text-sm text-muted-foreground">
-          Beheer en creëer document templates met realtime HTML editor.
+          Beheer en creëer document templates met HTML editor en A4 preview.
         </p>
       </div>
 
@@ -89,10 +89,10 @@ const DocumentLayoutContent = () => {
         onDeleteDocument={handleDeleteDocument}
       />
 
-      {/* HTML Document Builder Dialog */}
+      {/* Simple HTML Document Builder Dialog */}
       <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 flex flex-col">
-          <HtmlDocumentBuilder 
+          <SimpleHtmlDocumentBuilder 
             documentId={editingDocumentId}
             onComplete={handleBuilderComplete}
           />
