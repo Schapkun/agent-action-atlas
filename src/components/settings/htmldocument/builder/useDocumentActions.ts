@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { DocumentTemplate, useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { DocumentTypeUI } from './htmlDocumentConstants';
@@ -72,6 +71,8 @@ export function useDocumentActions({
       let savedDocument: DocumentTemplate;
       const dbType = mapTypeToDatabase(documentType);
       
+      console.log('[Document Actions] Saving with type:', documentType, '-> DB type:', dbType);
+      
       if (editingDocument) {
         savedDocument = await updateTemplate(editingDocument.id, {
           name: documentName,
@@ -104,7 +105,7 @@ export function useDocumentActions({
       }
     } catch (error) {
       console.error('[Document Actions] Save failed:', error);
-      alert('Fout bij opslaan van document');
+      alert('Fout bij opslaan van document: ' + (error as Error).message);
     } finally {
       setIsSaving(false);
     }

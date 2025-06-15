@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { 
@@ -25,11 +26,22 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
   const previousEditingDocumentId = useRef<string | undefined>(undefined);
   const lastSavedContent = useRef('');
 
-  // Map database types to UI types
-  const mapDatabaseTypeToUI = (dbType: string): DocumentTypeUI => {
+  // Map database types to UI types with better schapkun detection
+  const mapDatabaseTypeToUI = (dbType: string, htmlContent?: string): DocumentTypeUI => {
+    console.log('[Simple Builder] Mapping DB type:', dbType, 'with HTML check');
+    
+    // First check if it's explicitly schapkun type
+    if (dbType === 'schapkun') {
+      return 'schapkun';
+    }
+    
+    // Check if HTML content suggests it's a schapkun template
+    if (htmlContent && htmlContent.includes('schapkun')) {
+      return 'schapkun';
+    }
+    
+    // Standard mapping for other types
     switch (dbType) {
-      case 'schapkun':
-        return 'schapkun';
       case 'factuur':
         return 'factuur';
       case 'contract':
@@ -65,7 +77,6 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
   // Draft key generation
   const getDraftKey = useCallback((name: string) => `html_draft_${name}`, []);
 
-  // Draft operations
   const saveDraft = useCallback((key: string, content: string) => {
     try {
       localStorage.setItem(key, content);
@@ -105,7 +116,9 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     if (editingDocument) {
       // Load existing document
       newName = editingDocument.name;
-      newType = mapDatabaseTypeToUI(editingDocument.type); // Use mapping function
+      newType = mapDatabaseTypeToUI(editingDocument.type, editingDocument.html_content);
+      
+      console.log('[Simple Builder] Mapped type from DB:', editingDocument.type, 'to UI:', newType);
       
       // Load saved placeholder values if they exist
       if (editingDocument.placeholder_values) {
