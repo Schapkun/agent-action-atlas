@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { useDraftManager } from './useDraftManager';
 
 export interface DocumentBuilderState {
   id?: string;
@@ -89,9 +90,26 @@ export const useNewDocumentBuilder = (documentId?: string) => {
 
   const { createTemplate, updateTemplate, templates } = useDocumentTemplates();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
+  const { saveDraft, getDraft, clearDraft, hasDraft } = useDraftManager();
+
+  // Save current state as draft when switching
+  const saveCurrentAsDraft = useCallback(() => {
+    if (state.hasChanges) {
+      saveDraft(state.id, {
+        htmlContent: state.htmlContent,
+        placeholderValues: state.placeholderValues,
+        name: state.name,
+        type: state.type,
+        hasChanges: state.hasChanges
+      });
+    }
+  }, [state, saveDraft]);
 
   // Load document from database
   const loadDocument = useCallback(async (id: string) => {
+    // Save current draft before switching
+    saveCurrentAsDraft();
+
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     
     try {
@@ -106,16 +124,34 @@ export const useNewDocumentBuilder = (documentId?: string) => {
 
       const placeholders = parseJsonToStringRecord(data.placeholder_values);
 
-      setState(prev => ({
-        ...prev,
-        id: data.id,
-        name: data.name,
-        type: data.type as DocumentBuilderState['type'],
-        htmlContent: data.html_content || TEMPLATES[data.type as keyof typeof TEMPLATES] || DEFAULT_TEMPLATE,
-        placeholderValues: placeholders,
-        isLoading: false,
-        hasChanges: false
-      }));
+      // Check if we have a draft for this document
+      const draft = getDraft(id);
+      
+      if (draft && draft.hasChanges) {
+        // Use draft data
+        setState(prev => ({
+          ...prev,
+          id: data.id,
+          name: draft.name,
+          type: draft.type,
+          htmlContent: draft.htmlContent,
+          placeholderValues: draft.placeholderValues,
+          isLoading: false,
+          hasChanges: draft.hasChanges
+        }));
+      } else {
+        // Use database data
+        setState(prev => ({
+          ...prev,
+          id: data.id,
+          name: data.name,
+          type: data.type as DocumentBuilderState['type'],
+          htmlContent: data.html_content || TEMPLATES[data.type as keyof typeof TEMPLATES] || DEFAULT_TEMPLATE,
+          placeholderValues: placeholders,
+          isLoading: false,
+          hasChanges: false
+        }));
+      }
     } catch (error) {
       setState(prev => ({
         ...prev,
@@ -123,46 +159,81 @@ export const useNewDocumentBuilder = (documentId?: string) => {
         error: error instanceof Error ? error.message : 'Fout bij laden document'
       }));
     }
-  }, []);
+  }, [saveCurrentAsDraft, getDraft]);
 
   // Load template from existing templates
   const loadTemplate = useCallback((templateId: string) => {
+    // Save current draft before switching
+    saveCurrentAsDraft();
+
     const template = templates.find(t => t.id === templateId);
     if (!template) return;
 
     const placeholders = parseJsonToStringRecord(template.placeholder_values);
 
-    setState(prev => ({
-      ...prev,
-      id: template.id,
-      name: template.name,
-      type: template.type,
-      htmlContent: template.html_content || TEMPLATES[template.type as keyof typeof TEMPLATES] || DEFAULT_TEMPLATE,
-      placeholderValues: placeholders,
-      hasChanges: false,
-      error: null
-    }));
-  }, [templates]);
+    // Check if we have a draft for this template
+    const draft = getDraft(templateId);
+
+    if (draft && draft.hasChanges) {
+      // Use draft data
+      setState(prev => ({
+        ...prev,
+        id: template.id,
+        name: draft.name,
+        type: draft.type,
+        htmlContent: draft.htmlContent,
+        placeholderValues: draft.placeholderValues,
+        hasChanges: draft.hasChanges,
+        error: null
+      }));
+    } else {
+      // Use template data
+      setState(prev => ({
+        ...prev,
+        id: template.id,
+        name: template.name,
+        type: template.type,
+        htmlContent: template.html_content || TEMPLATES[template.type as keyof typeof TEMPLATES] || DEFAULT_TEMPLATE,
+        placeholderValues: placeholders,
+        hasChanges: false,
+        error: null
+      }));
+    }
+  }, [templates, saveCurrentAsDraft, getDraft]);
 
   // Initialize document
   useEffect(() => {
     if (documentId) {
       loadDocument(documentId);
     } else {
-      // New document
-      setState(prev => ({
-        ...prev,
-        id: undefined,
-        name: 'Nieuw Document',
-        type: 'factuur',
-        htmlContent: TEMPLATES.factuur,
-        placeholderValues: { ...DEFAULT_PLACEHOLDERS },
-        hasChanges: false
-      }));
+      // Check for new document draft
+      const draft = getDraft(undefined);
+      if (draft && draft.hasChanges) {
+        setState(prev => ({
+          ...prev,
+          id: undefined,
+          name: draft.name,
+          type: draft.type,
+          htmlContent: draft.htmlContent,
+          placeholderValues: draft.placeholderValues,
+          hasChanges: draft.hasChanges
+        }));
+      } else {
+        // New document - default state
+        setState(prev => ({
+          ...prev,
+          id: undefined,
+          name: 'Nieuw Document',
+          type: 'factuur',
+          htmlContent: TEMPLATES.factuur,
+          placeholderValues: { ...DEFAULT_PLACEHOLDERS },
+          hasChanges: false
+        }));
+      }
     }
-  }, [documentId, loadDocument]);
+  }, [documentId, loadDocument, getDraft]);
 
-  // Update functions
+  // Update functions with draft saving
   const updateName = useCallback((name: string) => {
     setState(prev => ({ ...prev, name, hasChanges: true }));
   }, []);
@@ -183,6 +254,23 @@ export const useNewDocumentBuilder = (documentId?: string) => {
   const updatePlaceholderValues = useCallback((placeholderValues: Record<string, string>) => {
     setState(prev => ({ ...prev, placeholderValues, hasChanges: true }));
   }, []);
+
+  // Auto-save draft when state changes
+  useEffect(() => {
+    if (state.hasChanges) {
+      const timeoutId = setTimeout(() => {
+        saveDraft(state.id, {
+          htmlContent: state.htmlContent,
+          placeholderValues: state.placeholderValues,
+          name: state.name,
+          type: state.type,
+          hasChanges: state.hasChanges
+        });
+      }, 1000); // Auto-save after 1 second of inactivity
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [state, saveDraft]);
 
   // Save document
   const saveDocument = useCallback(async () => {
@@ -213,6 +301,9 @@ export const useNewDocumentBuilder = (documentId?: string) => {
         setState(prev => ({ ...prev, id: newTemplate.id }));
       }
 
+      // Clear draft after successful save
+      clearDraft(state.id);
+
       setState(prev => ({ ...prev, isSaving: false, hasChanges: false }));
       return true;
     } catch (error) {
@@ -223,7 +314,7 @@ export const useNewDocumentBuilder = (documentId?: string) => {
       }));
       return false;
     }
-  }, [state.name, state.type, state.htmlContent, state.placeholderValues, state.id, createTemplate, updateTemplate]);
+  }, [state.name, state.type, state.htmlContent, state.placeholderValues, state.id, createTemplate, updateTemplate, clearDraft]);
 
   return {
     state,
@@ -236,6 +327,9 @@ export const useNewDocumentBuilder = (documentId?: string) => {
     loadTemplate,
     availableTemplates: templates,
     selectedOrganization,
-    selectedWorkspace
+    selectedWorkspace,
+    saveCurrentAsDraft,
+    clearDraft: () => clearDraft(state.id),
+    hasDraft: () => hasDraft(state.id)
   };
 };
