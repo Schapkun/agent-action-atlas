@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { HTMLDocumentBuilder } from './htmldocument/HTMLDocumentBuilder';
@@ -31,9 +30,6 @@ const DocumentLayoutContent = () => {
     
     // Small delay to ensure state is updated
     await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Get the absolutely fresh version from database - refetch from hook
-    const { templates } = await import('@/hooks/useDocumentTemplates');
     
     // Force a brand new object with timestamp to ensure complete re-initialization
     const documentToEdit = {
