@@ -68,7 +68,7 @@ const DocumentLayoutContent = () => {
     setIsNameDialogOpen(true);
   };
 
-  const handleDuplicateSave = (name: string, type: 'factuur' | 'contract' | 'brief' | 'custom', description: string) => {
+  const handleDuplicateSave = (name: string, type: 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun', description: string) => {
     if (duplicatingDocument) {
       duplicateDocument(duplicatingDocument.id, name);
       setDuplicatingDocument(null);

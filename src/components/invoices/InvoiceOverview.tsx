@@ -118,7 +118,10 @@ export const InvoiceOverview = () => {
       // Properly type the template to match DocumentTemplate interface
       const defaultTemplate: DocumentTemplate | null = templates?.[0] ? {
         ...templates[0],
-        type: templates[0].type as 'factuur' | 'contract' | 'brief' | 'custom'
+        type: templates[0].type as 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun',
+        placeholder_values: templates[0].placeholder_values ? 
+          (typeof templates[0].placeholder_values === 'object' && templates[0].placeholder_values !== null ? 
+            templates[0].placeholder_values as Record<string, string> : null) : null
       } : null;
       
       const pdfData = {

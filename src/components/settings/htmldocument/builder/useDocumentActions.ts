@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { DocumentTemplate, useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { DocumentTypeUI } from './htmlDocumentConstants';
@@ -43,10 +44,10 @@ export function useDocumentActions({
   const { refreshTemplates } = useDocumentContext();
 
   // Map UI types to database types
-  const mapTypeToDatabase = (type: DocumentTypeUI): string => {
+  const mapTypeToDatabase = (type: DocumentTypeUI): 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun' => {
     switch (type) {
       case 'schapkun':
-        return 'schapkun'; // Keep schapkun as schapkun, don't convert to custom
+        return 'schapkun';
       case 'factuur':
         return 'factuur';
       case 'contract':

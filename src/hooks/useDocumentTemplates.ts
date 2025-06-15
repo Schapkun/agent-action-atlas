@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -16,7 +17,7 @@ export interface DocumentTemplate {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  placeholder_values?: Record<string, string>;
+  placeholder_values?: Record<string, string> | null;
 }
 
 export const useDocumentTemplates = () => {
@@ -42,8 +43,16 @@ export const useDocumentTemplates = () => {
 
       if (error) throw error;
       
-      // Type cast the data to ensure proper typing
-      setTemplates((data || []) as DocumentTemplate[]);
+      // Transform the data to ensure proper typing
+      const transformedData = (data || []).map(item => ({
+        ...item,
+        type: item.type as 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun',
+        placeholder_values: item.placeholder_values ? 
+          (typeof item.placeholder_values === 'object' && item.placeholder_values !== null ? 
+            item.placeholder_values as Record<string, string> : null) : null
+      }));
+      
+      setTemplates(transformedData);
     } catch (error) {
       console.error('Error fetching templates:', error);
       toast({
@@ -79,7 +88,14 @@ export const useDocumentTemplates = () => {
 
       if (error) throw error;
 
-      const newTemplate = data as DocumentTemplate;
+      const newTemplate: DocumentTemplate = {
+        ...data,
+        type: data.type as 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun',
+        placeholder_values: data.placeholder_values ? 
+          (typeof data.placeholder_values === 'object' && data.placeholder_values !== null ? 
+            data.placeholder_values as Record<string, string> : null) : null
+      };
+      
       setTemplates(prev => [newTemplate, ...prev]);
       
       toast({
@@ -116,7 +132,14 @@ export const useDocumentTemplates = () => {
 
       if (error) throw error;
 
-      const updatedTemplate = data as DocumentTemplate;
+      const updatedTemplate: DocumentTemplate = {
+        ...data,
+        type: data.type as 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun',
+        placeholder_values: data.placeholder_values ? 
+          (typeof data.placeholder_values === 'object' && data.placeholder_values !== null ? 
+            data.placeholder_values as Record<string, string> : null) : null
+      };
+      
       setTemplates(prev => prev.map(t => t.id === id ? updatedTemplate : t));
       
       toast({
