@@ -114,7 +114,9 @@ export const useNewDocumentBuilder = (documentId?: string) => {
         placeholderValues: currentState.placeholderValues,
         name: currentState.name,
         type: currentState.type,
-        hasChanges: currentState.hasChanges
+        hasChanges: currentState.hasChanges,
+        lastSaved: Date.now(),
+        documentId: currentState.currentWorkingDocumentId
       });
       
       if (success) {
@@ -288,7 +290,9 @@ export const useNewDocumentBuilder = (documentId?: string) => {
         placeholderValues: currentState.placeholderValues,
         name: currentState.name,
         type: currentState.type,
-        hasChanges: currentState.hasChanges
+        hasChanges: currentState.hasChanges,
+        lastSaved: Date.now(),
+        documentId: currentState.currentWorkingDocumentId
       });
     }, 1000);
   }, [saveDraft]);
