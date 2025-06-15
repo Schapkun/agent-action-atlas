@@ -28,19 +28,26 @@ const DocumentLayoutContent = () => {
     // CRITICAL: Force complete refresh and wait for it to complete
     await refreshTemplates();
     
-    // Small delay to ensure state is updated
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Wait for context to update with fresh data
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // Find the fresh document from the context after refresh
+    const freshDocument = documents.find(d => d.id === document.id);
+    if (!freshDocument) {
+      console.error('[Settings] Could not find fresh document after refresh');
+      return;
+    }
     
     // Force a brand new object with timestamp to ensure complete re-initialization
     const documentToEdit = {
-      ...document,
+      ...freshDocument, // Use fresh data from context
       // Force refresh timestamp to trigger complete reload
       _forceRefresh: Date.now().toString(),
       // Also add a unique key to force React to see this as completely new
-      _uniqueKey: `${document.id}-${Date.now()}`
+      _uniqueKey: `${freshDocument.id}-${Date.now()}`
     } as DocumentTemplate & { _forceRefresh: string; _uniqueKey: string };
     
-    console.log('[Settings] Setting editing document with force refresh:', documentToEdit._forceRefresh);
+    console.log('[Settings] Setting editing document with fresh data and force refresh:', documentToEdit._forceRefresh);
     
     setEditingDocument(documentToEdit);
     setIsBuilderOpen(true);
