@@ -1,4 +1,3 @@
-
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -67,7 +66,7 @@ export const Sidebar = ({
       path: '/facturen',
       hasSubmenu: true,
       submenu: [
-        { id: 'new-invoice', label: 'Opstellen', icon: Plus, action: 'new-invoice' },
+        { id: 'new-invoice', label: 'Opstellen', icon: Plus, path: '/facturen/opstellen' },
         { id: 'sent-invoices', label: 'Verzonden', icon: Send, path: '/facturen?status=sent' },
         { id: 'concept-invoices', label: 'Concepten', icon: FileCheck, path: '/facturen?status=draft' },
         { id: 'paid-invoices', label: 'Betaald', icon: Calculator, path: '/facturen?status=paid' },
@@ -79,14 +78,7 @@ export const Sidebar = ({
     { id: 'settings' as ViewType, label: 'Instellingen', icon: Settings, path: '/instellingen' },
   ];
 
-  const handleMenuClick = (item: any, submenuItem?: any) => {
-    if (submenuItem?.action === 'new-invoice') {
-      // Trigger new invoice dialog - we'll implement this in the parent
-      const event = new CustomEvent('openNewInvoiceDialog');
-      window.dispatchEvent(event);
-      return;
-    }
-    
+  const handleMenuClick = (item: any, submenuItem?: any) => {    
     if (item.hasSubmenu && !submenuItem) {
       toggleSubmenu(item.id);
       return;
