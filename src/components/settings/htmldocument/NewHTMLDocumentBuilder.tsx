@@ -8,8 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Save, Eye, Download, FileText, Loader2 } from 'lucide-react';
+import { Save, Eye, Download, FileText, Loader2, Building, Users } from 'lucide-react';
 import { useNewDocumentBuilder } from './builder/useNewDocumentBuilder';
+import { WorkspaceOrgSwitcher } from '../components/WorkspaceOrgSwitcher';
 
 interface NewHTMLDocumentBuilderProps {
   documentId?: string;
@@ -47,7 +48,11 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
     updateType,
     updateHtmlContent,
     updatePlaceholderValues,
-    saveDocument
+    saveDocument,
+    loadTemplate,
+    availableTemplates,
+    selectedOrganization,
+    selectedWorkspace
   } = useNewDocumentBuilder(documentId);
 
   const handleSave = async () => {
@@ -63,6 +68,17 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
       if (!confirmed) return;
     }
     onComplete?.(false);
+  };
+
+  const handleSaveChanges = () => {
+    saveDocument();
+  };
+
+  const handleDiscardChanges = () => {
+    // Reset to initial state or reload current document
+    if (documentId) {
+      window.location.reload(); // Simple approach to discard changes
+    }
   };
 
   const processedHtmlContent = () => {
@@ -113,6 +129,15 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Workspace/Organization Switcher */}
+          <WorkspaceOrgSwitcher
+            hasUnsavedChanges={state.hasChanges}
+            onSaveChanges={handleSaveChanges}
+            onDiscardChanges={handleDiscardChanges}
+          />
+          
+          <Separator orientation="vertical" className="h-6" />
+          
           <Select value={state.type} onValueChange={updateType}>
             <SelectTrigger className="w-40">
               <SelectValue />
@@ -138,6 +163,22 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
         </div>
       </div>
 
+      {/* Context Info Bar */}
+      <div className="px-4 py-2 bg-muted/30 border-b text-sm text-muted-foreground">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Building className="h-4 w-4" />
+            <span>Organisatie: {selectedOrganization?.name || 'Geen selectie'}</span>
+          </div>
+          {selectedWorkspace && (
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              <span>Workspace: {selectedWorkspace.name}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
       {state.error && (
         <div className="mx-4 mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
           {state.error}
@@ -148,6 +189,31 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
       <div className="flex-1 flex min-h-0">
         {/* Sidebar */}
         <div className="w-80 border-r bg-muted/20 p-4 overflow-y-auto">
+          {/* Template Selector */}
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="text-sm">Template Laden</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Select onValueChange={loadTemplate}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecteer template..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableTemplates.map(template => (
+                    <SelectItem key={template.id} value={template.id}>
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        <span className="truncate">{template.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+
+          {/* Preview Data */}
           <Card>
             <CardHeader>
               <CardTitle className="text-sm">Preview Gegevens</CardTitle>

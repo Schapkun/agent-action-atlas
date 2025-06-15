@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 export interface DocumentBuilderState {
   id?: string;
@@ -86,7 +87,8 @@ export const useNewDocumentBuilder = (documentId?: string) => {
     error: null
   });
 
-  const { createTemplate, updateTemplate } = useDocumentTemplates();
+  const { createTemplate, updateTemplate, templates } = useDocumentTemplates();
+  const { selectedOrganization, selectedWorkspace } = useOrganization();
 
   // Load document from database
   const loadDocument = useCallback(async (id: string) => {
@@ -122,6 +124,25 @@ export const useNewDocumentBuilder = (documentId?: string) => {
       }));
     }
   }, []);
+
+  // Load template from existing templates
+  const loadTemplate = useCallback((templateId: string) => {
+    const template = templates.find(t => t.id === templateId);
+    if (!template) return;
+
+    const placeholders = parseJsonToStringRecord(template.placeholder_values);
+
+    setState(prev => ({
+      ...prev,
+      id: template.id,
+      name: template.name,
+      type: template.type,
+      htmlContent: template.html_content || TEMPLATES[template.type as keyof typeof TEMPLATES] || DEFAULT_TEMPLATE,
+      placeholderValues: placeholders,
+      hasChanges: false,
+      error: null
+    }));
+  }, [templates]);
 
   // Initialize document
   useEffect(() => {
@@ -211,6 +232,10 @@ export const useNewDocumentBuilder = (documentId?: string) => {
     updateHtmlContent,
     updatePlaceholderValues,
     saveDocument,
-    loadDocument
+    loadDocument,
+    loadTemplate,
+    availableTemplates: templates,
+    selectedOrganization,
+    selectedWorkspace
   };
 };
