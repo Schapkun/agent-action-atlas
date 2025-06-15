@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -256,7 +255,7 @@ export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> =
     return () => clearTimeout(timeoutId);
   }, [htmlContent, placeholders, name, type, documentId, selectedLayoutId, saveDraft]);
 
-  // Handle layout switch
+  // Handle layout switch - IMPROVED to preserve content
   const handleLayoutSwitch = useCallback((layout: any) => {
     console.log('[Builder] Switching to layout:', layout.id);
     
@@ -277,18 +276,16 @@ export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> =
     // Switch layout
     switchLayout(layout.id);
     
-    // Load content for new layout or apply new styling
+    // Load content for new layout or apply new styling to CURRENT content
     const newLayoutDraft = getDraft(documentId, layout.id);
     if (newLayoutDraft) {
       console.log('[Builder] Loading existing content for layout:', layout.id);
       setHtmlContent(newLayoutDraft.htmlContent);
       setPlaceholders(mergePlaceholders(newLayoutDraft.placeholderValues));
     } else {
-      console.log('[Builder] Applying new layout styling to current content');
-      // Apply new layout styling to current content - PRESERVE the current HTML content
-      // Remove existing style tags and apply new layout styling
-      const contentWithoutStyles = htmlContent.replace(/<style>[\s\S]*?<\/style>/gi, '');
-      const styledContent = applyLayoutStyling(contentWithoutStyles, layout.id);
+      console.log('[Builder] Applying new layout styling to CURRENT content');
+      // CRITICAL: Apply new layout styling to current content WITHOUT changing the content
+      const styledContent = applyLayoutStyling(htmlContent, layout.id);
       setHtmlContent(styledContent);
     }
     

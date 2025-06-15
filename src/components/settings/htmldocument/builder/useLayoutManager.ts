@@ -10,7 +10,7 @@ export const useLayoutManager = () => {
     return UNIQUE_LAYOUT_TEMPLATES.find(layout => layout.id === selectedLayoutId) || null;
   }, [selectedLayoutId]);
 
-  // Apply layout styling to HTML content
+  // Apply layout styling to HTML content - IMPROVED to preserve HTML content
   const applyLayoutStyling = useCallback((baseHtml: string, layoutId: string): string => {
     const layout = UNIQUE_LAYOUT_TEMPLATES.find(l => l.id === layoutId);
     if (!layout) return baseHtml;
@@ -57,13 +57,19 @@ export const useLayoutManager = () => {
       </style>
     `;
 
-    // Insert CSS into HTML
-    if (baseHtml.includes('<head>')) {
-      return baseHtml.replace('<head>', `<head>${layoutCSS}`);
-    } else if (baseHtml.includes('<html>')) {
-      return baseHtml.replace('<html>', `<html><head>${layoutCSS}</head>`);
+    // Remove existing style tags from the HTML
+    const htmlWithoutStyles = baseHtml.replace(/<style>[\s\S]*?<\/style>/gi, '');
+    
+    // Check if we have a proper HTML structure
+    if (htmlWithoutStyles.includes('<head>')) {
+      // Insert new CSS after <head> tag
+      return htmlWithoutStyles.replace('<head>', `<head>${layoutCSS}`);
+    } else if (htmlWithoutStyles.includes('<html>')) {
+      // Insert new CSS after <html> tag by creating a head section
+      return htmlWithoutStyles.replace('<html>', `<html><head>${layoutCSS}</head>`);
     } else {
-      return `<html><head>${layoutCSS}</head><body>${baseHtml}</body></html>`;
+      // For HTML fragments without proper structure, wrap in html/head/body but preserve the content
+      return `<html><head>${layoutCSS}</head><body>${htmlWithoutStyles}</body></html>`;
     }
   }, []);
 
