@@ -9,7 +9,7 @@ import { Plus, Trash2, Send, Bold, Italic, Underline, List, Settings, RotateCcw,
 import { useInvoices, Invoice } from '@/hooks/useInvoices';
 import { useQuotes } from '@/hooks/useQuotes';
 import { useInvoiceSettings } from '@/hooks/useInvoiceSettings';
-import { useInvoiceTemplates } from '@/hooks/useInvoiceTemplates';
+import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -55,7 +55,7 @@ const CreateInvoice = () => {
   const { createInvoice } = useInvoices();
   const { createQuote } = useQuotes();
   const { settings: invoiceSettings } = useInvoiceSettings();
-  const { invoiceTemplates, defaultTemplate } = useInvoiceTemplates();
+  const { templates: documentTemplates } = useDocumentTemplates();
   const [loading, setLoading] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState('debuitendeur.nl');
@@ -88,8 +88,8 @@ const CreateInvoice = () => {
 
   // Set default template and payment terms when loaded
   useEffect(() => {
-    if (defaultTemplate && !selectedTemplate) {
-      setSelectedTemplate(defaultTemplate.id);
+    if (documentTemplates.length > 0 && !selectedTemplate) {
+      setSelectedTemplate(documentTemplates[0].id);
     }
     if (invoiceSettings.default_payment_terms) {
       setFormData(prev => ({
@@ -97,7 +97,7 @@ const CreateInvoice = () => {
         payment_terms: invoiceSettings.default_payment_terms
       }));
     }
-  }, [defaultTemplate, selectedTemplate, invoiceSettings]);
+  }, [documentTemplates, selectedTemplate, invoiceSettings]);
 
   // Calculate due date based on payment terms and invoice date
   const calculateDueDate = (invoiceDate: string, paymentTerms: number) => {
@@ -139,14 +139,14 @@ const CreateInvoice = () => {
   };
 
   const getDisplayInvoiceNumber = () => {
-    if (isInvoiceNumberFocused || invoiceNumber) {
+    if (invoiceNumber) {
       return invoiceNumber;
     }
     return '';
   };
 
   const getPlaceholderInvoiceNumber = () => {
-    if (!isInvoiceNumberFocused && !invoiceNumber) {
+    if (!invoiceNumber) {
       return getDefaultInvoiceNumber();
     }
     return '';
@@ -223,38 +223,139 @@ const CreateInvoice = () => {
   };
 
   const applyTextFormatting = (index: number, type: 'bold' | 'italic' | 'underline' | 'list') => {
-    const textarea = document.querySelector(`#description-${index}`) as HTMLTextAreaElement;
-    if (!textarea) return;
+    const element = document.querySelector(`#description-${index}`) as HTMLDivElement;
+    if (!element) return;
     
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = textarea.value.substring(start, end);
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
     
-    let formattedText = '';
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+    
+    if (!selectedText) return;
+    
+    let formattedHTML = '';
     
     switch (type) {
       case 'bold':
-        formattedText = `<strong>${selectedText}</strong>`;
+        formattedHTML = `<strong>${selectedText}</strong>`;
         break;
       case 'italic':
-        formattedText = `<em>${selectedText}</em>`;
+        formattedHTML = `<em>${selectedText}</em>`;
         break;
       case 'underline':
-        formattedText = `<u>${selectedText}</u>`;
+        formattedHTML = `<u>${selectedText}</u>`;
         break;
       case 'list':
         const lines = selectedText.split('\n');
-        formattedText = lines.map(line => `<li>${line}</li>`).join('\n');
+        formattedHTML = '<ul>' + lines.map(line => `<li>${line}</li>`).join('') + '</ul>';
         break;
     }
     
-    const newText = textarea.value.substring(0, start) + formattedText + textarea.value.substring(end);
-    updateLineItem(index, 'description', newText);
+    range.deleteContents();
+    const fragment = range.createContextualFragment(formattedHTML);
+    range.insertNode(fragment);
     
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + formattedText.length, start + formattedText.length);
-    }, 0);
+    // Update the line item description
+    updateLineItem(index, 'description', element.innerHTML);
+    
+    // Clear selection
+    selection.removeAllRanges();
+  };
+
+  const handleDescriptionChange = (index: number, content: string) => {
+    updateLineItem(index, 'description', content);
+  };
+
+  const generatePreviewHTML = () => {
+    const selectedTemplateData = documentTemplates.find(t => t.id === selectedTemplate);
+    const { subtotal, vatAmount, total } = calculateTotals();
+    
+    let templateHTML = selectedTemplateData?.html_content || `
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .invoice-details { margin-bottom: 30px; }
+            .client-info { margin-bottom: 30px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+            th { background-color: #f5f5f5; }
+            .totals { text-align: right; margin-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>FACTUUR</h1>
+          </div>
+          
+          <div class="invoice-details">
+            <p><strong>Factuurnummer:</strong> {invoice_number}</p>
+            <p><strong>Factuurdatum:</strong> {invoice_date}</p>
+            <p><strong>Vervaldatum:</strong> {due_date}</p>
+          </div>
+          
+          <div class="client-info">
+            <h3>Factuuradres:</h3>
+            <p>{client_name}</p>
+            <p>{client_address}</p>
+            <p>{client_postal_code} {client_city}</p>
+            <p>{client_country}</p>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Omschrijving</th>
+                <th>Aantal</th>
+                <th>Prijs</th>
+                <th>BTW</th>
+                <th>Totaal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {line_items}
+            </tbody>
+          </table>
+          
+          <div class="totals">
+            <p>Subtotaal: € {subtotal}</p>
+            <p>BTW: € {vat_amount}</p>
+            <p><strong>Totaal: € {total}</strong></p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Replace placeholders
+    templateHTML = templateHTML
+      .replace(/{invoice_number}/g, invoiceNumber || getDefaultInvoiceNumber())
+      .replace(/{invoice_date}/g, formData.invoice_date)
+      .replace(/{due_date}/g, formData.due_date)
+      .replace(/{client_name}/g, formData.client_name)
+      .replace(/{client_address}/g, formData.client_address)
+      .replace(/{client_postal_code}/g, formData.client_postal_code)
+      .replace(/{client_city}/g, formData.client_city)
+      .replace(/{client_country}/g, formData.client_country)
+      .replace(/{subtotal}/g, subtotal.toFixed(2))
+      .replace(/{vat_amount}/g, vatAmount.toFixed(2))
+      .replace(/{total}/g, total.toFixed(2));
+
+    // Generate line items HTML
+    const lineItemsHTML = lineItems.map(item => `
+      <tr>
+        <td>${item.description}</td>
+        <td>${item.quantity}</td>
+        <td>€ ${item.unit_price.toFixed(2)}</td>
+        <td>${item.vat_rate}%</td>
+        <td>€ ${item.line_total.toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    templateHTML = templateHTML.replace('{line_items}', lineItemsHTML);
+
+    return templateHTML;
   };
 
   const handleConvertToQuote = async () => {
@@ -452,8 +553,8 @@ Uw administratie`
                     <SelectTrigger className="mt-1 h-8 text-xs">
                       <SelectValue placeholder="Selecteer layout" />
                     </SelectTrigger>
-                    <SelectContent>
-                      {invoiceTemplates.map((template) => (
+                    <SelectContent className="bg-white border shadow-lg z-50">
+                      {documentTemplates.map((template) => (
                         <SelectItem key={template.id} value={template.id}>
                           {template.name}
                         </SelectItem>
@@ -482,7 +583,7 @@ Uw administratie`
           {/* Invoice details */}
           <Card>
             <CardContent className="p-3">
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-4 gap-3 items-end">
                 <div>
                   <Label className="text-xs font-medium">Factuur</Label>
                   <div className="flex mt-1">
@@ -490,7 +591,7 @@ Uw administratie`
                       {invoiceSettings.invoice_prefix}
                     </span>
                     <Input 
-                      className="rounded-l-none border-l-0 text-xs h-8 w-20" 
+                      className="rounded-l-none border-l-0 text-xs h-8 w-16" 
                       value={getDisplayInvoiceNumber().replace(invoiceSettings.invoice_prefix, '')}
                       placeholder={getPlaceholderInvoiceNumber().replace(invoiceSettings.invoice_prefix, '')}
                       onChange={(e) => handleInvoiceNumberChange(invoiceSettings.invoice_prefix + e.target.value)}
@@ -505,7 +606,7 @@ Uw administratie`
                     type="date"
                     value={formData.invoice_date}
                     onChange={(e) => setFormData({...formData, invoice_date: e.target.value})}
-                    className="mt-1 text-xs h-8 w-36"
+                    className="mt-1 text-xs h-8 w-32"
                   />
                 </div>
                 <div>
@@ -527,7 +628,7 @@ Uw administratie`
                     type="date"
                     value={formData.due_date}
                     readOnly
-                    className="mt-1 text-xs h-8 w-36 bg-gray-100"
+                    className="mt-1 text-xs h-8 w-32 bg-gray-100"
                   />
                 </div>
               </div>
@@ -537,7 +638,7 @@ Uw administratie`
           {/* Products/Services table */}
           <Card>
             <CardHeader className="p-2">
-              <div className="grid grid-cols-12 gap-1 text-xs font-medium text-gray-700">
+              <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700">
                 <div className="col-span-1 text-center">Aantal</div>
                 <div className="col-span-6">Omschrijving</div>
                 <div className="col-span-2 text-center">Prijs</div>
@@ -549,7 +650,7 @@ Uw administratie`
             <CardContent className="p-2">
               <div className="space-y-2">
                 {lineItems.map((item, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-1 items-start">
+                  <div key={index} className="grid grid-cols-12 gap-2 items-start">
                     <div className="col-span-1 flex justify-center">
                       <Input
                         type="number"
@@ -561,21 +662,15 @@ Uw administratie`
                     </div>
                     <div className="col-span-6">
                       <div className="space-y-1">
-                        <Textarea
+                        <div
                           id={`description-${index}`}
-                          value={item.description}
-                          onChange={(e) => updateLineItem(index, 'description', e.target.value)}
-                          placeholder="Omschrijving"
-                          className="min-h-[32px] resize-none text-xs"
-                          rows={1}
+                          contentEditable
+                          className="min-h-[32px] border rounded p-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+                          dangerouslySetInnerHTML={{ __html: item.description }}
+                          onInput={(e) => handleDescriptionChange(index, e.currentTarget.innerHTML)}
+                          onBlur={(e) => handleDescriptionChange(index, e.currentTarget.innerHTML)}
+                          style={{ minHeight: '32px' }}
                         />
-                        {/* HTML Preview */}
-                        {item.description && (
-                          <div 
-                            className="text-xs p-1 border rounded bg-gray-50 min-h-[20px]"
-                            dangerouslySetInnerHTML={{ __html: item.description }}
-                          />
-                        )}
                         <div className="flex items-center gap-1">
                           <Button 
                             type="button" 
@@ -624,7 +719,7 @@ Uw administratie`
                           step="0.01"
                           value={item.unit_price}
                           onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                          className="text-right text-xs h-8 w-20"
+                          className="text-right text-xs h-8 w-16"
                         />
                       </div>
                     </div>
@@ -632,13 +727,15 @@ Uw administratie`
                       <VatSelector
                         value={item.vat_rate}
                         onValueChange={(value) => updateLineItem(index, 'vat_rate', value)}
-                        className="text-xs h-8 w-16"
+                        className="text-xs h-8 w-12"
                       />
                     </div>
                     <div className="col-span-2 flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs">€</span>
-                        <span className="font-medium text-xs">{item.line_total.toFixed(2)}</span>
+                      <div className="flex flex-col items-center">
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs">€</span>
+                          <span className="font-medium text-xs">{item.line_total.toFixed(2)}</span>
+                        </div>
                       </div>
                       <Button
                         type="button"
@@ -738,62 +835,18 @@ Uw administratie`
 
       {/* Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-4xl max-h-[80vh]">
+        <DialogContent className="max-w-4xl max-h-[90vh] w-[90vw]">
           <DialogHeader>
             <DialogTitle>Factuur Voorbeeld</DialogTitle>
           </DialogHeader>
-          <div className="overflow-auto">
-            <div className="bg-white p-8 text-sm">
-              <div className="flex justify-between mb-8">
-                <div>
-                  <h1 className="text-2xl font-bold">FACTUUR</h1>
-                  <p>Factuurnummer: {invoiceNumber || getDefaultInvoiceNumber()}</p>
-                  <p>Factuurdatum: {formData.invoice_date}</p>
-                  <p>Vervaldatum: {formData.due_date}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold">{selectedProfile}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-8 mb-8">
-                <div>
-                  <h3 className="font-bold mb-2">Factuuradres:</h3>
-                  <p>{formData.client_name}</p>
-                  <p>{formData.client_address}</p>
-                  <p>{formData.client_postal_code} {formData.client_city}</p>
-                  <p>{formData.client_country}</p>
-                </div>
-              </div>
-
-              <table className="w-full border-collapse border border-gray-300 mb-8">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-gray-300 p-2 text-left">Omschrijving</th>
-                    <th className="border border-gray-300 p-2 text-right">Aantal</th>
-                    <th className="border border-gray-300 p-2 text-right">Prijs</th>
-                    <th className="border border-gray-300 p-2 text-right">BTW</th>
-                    <th className="border border-gray-300 p-2 text-right">Totaal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lineItems.map((item, index) => (
-                    <tr key={index}>
-                      <td className="border border-gray-300 p-2" dangerouslySetInnerHTML={{ __html: item.description }}></td>
-                      <td className="border border-gray-300 p-2 text-right">{item.quantity}</td>
-                      <td className="border border-gray-300 p-2 text-right">€ {item.unit_price.toFixed(2)}</td>
-                      <td className="border border-gray-300 p-2 text-right">{item.vat_rate}%</td>
-                      <td className="border border-gray-300 p-2 text-right">€ {item.line_total.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              <div className="text-right">
-                <p>Subtotaal: € {subtotal.toFixed(2)}</p>
-                <p>BTW: € {vatAmount.toFixed(2)}</p>
-                <p className="font-bold text-lg">Totaal: € {total.toFixed(2)}</p>
-              </div>
+          <div className="overflow-auto" style={{ height: '80vh' }}>
+            <div className="bg-white mx-auto" style={{ width: '210mm', minHeight: '297mm', padding: '20mm', boxShadow: '0 0 10px rgba(0,0,0,0.1)' }}>
+              <iframe
+                srcDoc={generatePreviewHTML()}
+                className="w-full h-full border-0"
+                style={{ minHeight: '800px' }}
+                title="Invoice Preview"
+              />
             </div>
           </div>
         </DialogContent>
