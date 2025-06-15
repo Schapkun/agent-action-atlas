@@ -44,9 +44,11 @@ export const Sidebar = ({
 }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['invoices', 'quotes']);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
 
-  const toggleSubmenu = (menuId: string) => {
+  const toggleSubmenu = (menuId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
     setExpandedMenus(prev => 
       prev.includes(menuId) 
         ? prev.filter(id => id !== menuId)
@@ -108,8 +110,12 @@ export const Sidebar = ({
 
   const handleMenuClick = (item: any, submenuItem?: any) => {    
     if (item.hasSubmenu && !submenuItem) {
-      toggleSubmenu(item.id);
-      return;
+      return; // Only expand submenu, don't navigate
+    }
+    
+    // Close all submenus when navigating to a different section
+    if (!item.hasSubmenu) {
+      setExpandedMenus([]);
     }
     
     const path = submenuItem?.path || item.path;
@@ -164,9 +170,15 @@ export const Sidebar = ({
                   <>
                     <span className="ml-3 flex-1 text-left">{item.label}</span>
                     {item.hasSubmenu && (
-                      expandedMenus.includes(item.id) ? 
-                        <ChevronDown className="h-4 w-4" /> : 
-                        <ChevronRight className="h-4 w-4" />
+                      <button
+                        onClick={(e) => toggleSubmenu(item.id, e)}
+                        className="p-1"
+                      >
+                        {expandedMenus.includes(item.id) ? 
+                          <ChevronDown className="h-4 w-4" /> : 
+                          <ChevronRight className="h-4 w-4" />
+                        }
+                      </button>
                     )}
                     {item.badge && item.badge > 0 && (
                       <Badge 
