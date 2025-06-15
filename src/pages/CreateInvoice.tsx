@@ -113,14 +113,12 @@ const CreateInvoice = () => {
     }
   }, [availableTemplates, selectedTemplate, invoiceSettings]);
 
-  // Calculate due date based on payment terms and invoice date
   const calculateDueDate = (invoiceDate: string, paymentTerms: number) => {
     const date = new Date(invoiceDate);
     date.setDate(date.getDate() + paymentTerms);
     return date.toISOString().split('T')[0];
   };
 
-  // Update due date when invoice date or payment terms change
   useEffect(() => {
     if (formData.invoice_date && formData.payment_terms) {
       const newDueDate = calculateDueDate(formData.invoice_date, formData.payment_terms);
@@ -131,12 +129,10 @@ const CreateInvoice = () => {
     }
   }, [formData.invoice_date, formData.payment_terms]);
 
-  // Generate default invoice number
   const getDefaultInvoiceNumber = () => {
     return invoiceSettings.invoice_prefix + invoiceSettings.invoice_start_number.toString().padStart(3, '0');
   };
 
-  // Handle invoice number changes
   const handleInvoiceNumberChange = (value: string) => {
     setInvoiceNumber(value);
   };
@@ -585,7 +581,7 @@ Uw administratie`
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="" disabled>Geen templates beschikbaar</SelectItem>
+                        <SelectItem value="no-templates" disabled>Geen templates beschikbaar</SelectItem>
                       )}
                     </SelectContent>
                   </Select>
