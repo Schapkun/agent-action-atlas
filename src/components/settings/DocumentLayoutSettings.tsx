@@ -1,32 +1,13 @@
+
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { FileText, Plus, Edit, Copy, Trash2 } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { HTMLDocumentBuilder } from './htmldocument/HTMLDocumentBuilder';
-import { DialogHeader } from './components/DialogHeader';
-import { DialogFooter } from './components/DialogFooter';
 import { DocumentNameDialog } from './components/DocumentNameDialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
 import { DocumentProvider, useDocumentContext } from './contexts/DocumentContext';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { useToast } from '@/hooks/use-toast';
-
-const getTypeColor = (type: string) => {
-  switch (type) {
-    case 'legal':
-    case 'contract':
-      return 'bg-blue-100 text-blue-800';
-    case 'factuur':
-      return 'bg-green-100 text-green-800';
-    case 'brief':
-      return 'bg-purple-100 text-purple-800';
-    case 'custom':
-      return 'bg-orange-100 text-orange-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
+import { DocumentActions } from './components/DocumentActions';
+import { DocumentList } from './components/DocumentList';
 
 const DocumentLayoutContent = () => {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
@@ -47,14 +28,13 @@ const DocumentLayoutContent = () => {
     setIsBuilderOpen(true);
   };
 
-  // <<< Belangrijk: Nu altijd de nieuwste versie van het document gebruiken (bijv. updated_at/databank object)
   const handleDocumentSaved = (document: DocumentTemplate) => {
     if (!document) {
       setEditingDocument(null);
       setIsBuilderOpen(false);
       return;
     }
-    setEditingDocument(document); // Save latest from Supabase!
+    setEditingDocument(document);
     setIsBuilderOpen(false);
     toast({
       title: "Succes",
@@ -96,98 +76,14 @@ const DocumentLayoutContent = () => {
         </p>
       </div>
 
-      <div className="flex items-center gap-4">
-        <Button onClick={handleNewDocument} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Nieuw Document Template
-        </Button>
-      </div>
+      <DocumentActions onNewDocument={handleNewDocument} />
 
-      {/* Documents List */}
-      <div className="rounded-lg border">
-        {documents.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Geen templates gevonden</p>
-            <p className="text-sm">Klik op "Nieuw Document Template" om te beginnen</p>
-          </div>
-        ) : (
-          <div className="divide-y">
-            {documents.map((document) => (
-              <div key={document.id} className="p-4 hover:bg-muted/50">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <FileText className="h-4 w-4" />
-                      <span className="font-medium">{document.name}</span>
-                      <Badge variant="outline" className={`text-xs ${getTypeColor(document.type)}`}>
-                        {document.type}
-                      </Badge>
-                      {document.is_default && (
-                        <Badge variant="secondary" className="text-xs">Standaard</Badge>
-                      )}
-                    </div>
-                    {document.description && (
-                      <p className="text-sm text-muted-foreground mb-1">{document.description}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Laatst bewerkt: {new Date(document.updated_at).toLocaleDateString('nl-NL')} om {new Date(document.updated_at).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditDocument(document)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDuplicateDocument(document)}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                    
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Document verwijderen</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Weet je zeker dat je "{document.name}" wilt verwijderen? 
-                            Deze actie kan niet ongedaan worden gemaakt.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Annuleren</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={() => handleDeleteDocument(document)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Verwijderen
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <DocumentList
+        documents={documents}
+        onEditDocument={handleEditDocument}
+        onDuplicateDocument={handleDuplicateDocument}
+        onDeleteDocument={handleDeleteDocument}
+      />
 
       {/* HTML Builder Dialog */}
       <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen}>
