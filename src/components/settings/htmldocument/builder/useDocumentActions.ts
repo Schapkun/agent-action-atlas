@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { DocumentTemplate, useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { DocumentTypeUI } from './htmlDocumentConstants';
@@ -39,7 +38,7 @@ export function useDocumentActions({
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   
   const { getScaledHtmlContent } = usePlaceholderReplacement({ placeholderValues });
-  const { createTemplate, updateTemplate } = useDocumentTemplates();
+  const { createTemplate, updateTemplate, fetchTemplates } = useDocumentTemplates();
 
   const handleSave = useCallback(async () => {
     if (!documentName.trim()) {
@@ -72,7 +71,11 @@ export function useDocumentActions({
       if (savedDocument) {
         clearDraftForDocument(documentName);
         setHasUnsavedChanges(false);
-        console.log('[Document Actions] Document saved successfully');
+        
+        // Refresh the templates list to show updated data
+        await fetchTemplates();
+        
+        console.log('[Document Actions] Document saved successfully and list refreshed');
         onDocumentSaved?.(savedDocument);
       }
     } catch (error) {
@@ -90,7 +93,8 @@ export function useDocumentActions({
     setHasUnsavedChanges,
     onDocumentSaved,
     createTemplate,
-    updateTemplate
+    updateTemplate,
+    fetchTemplates
   ]);
 
   const handleCancel = useCallback(() => {
