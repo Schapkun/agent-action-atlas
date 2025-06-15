@@ -12,16 +12,16 @@ interface DocumentFooterProps {
 
 export const DocumentFooter = ({ onSave, onCancel, isSaving, disabled }: DocumentFooterProps) => {
   return (
-    <div className="bg-white border-t px-6 py-4 flex items-center justify-between">
-      <Button
-        variant="outline"
-        onClick={onCancel}
-        disabled={isSaving}
-      >
-        Annuleren
-      </Button>
-      
+    <div className="bg-white border-t px-6 py-4 flex items-center justify-end">
       <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          onClick={onCancel}
+          disabled={isSaving}
+        >
+          Annuleren
+        </Button>
+        
         <Button
           onClick={onSave}
           disabled={isSaving || disabled}

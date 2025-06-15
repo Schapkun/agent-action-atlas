@@ -21,7 +21,7 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
 
   const processedHtml = replacePlaceholders(htmlContent);
 
-  // Create styled HTML with A4 constraints and auto-scaling
+  // Create styled HTML with strict A4 constraints
   const styledHtml = `
     <!DOCTYPE html>
     <html>
@@ -34,17 +34,23 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
             box-sizing: border-box;
           }
           
+          @page {
+            size: A4;
+            margin: 0;
+          }
+          
           body {
             font-family: 'Inter', Arial, sans-serif;
             font-size: 12px;
             line-height: 1.4;
             color: #333;
             background: white;
-            padding: 20mm;
             width: 210mm;
-            min-height: 297mm;
+            height: 297mm;
+            padding: 20mm;
             margin: 0;
             overflow: hidden;
+            position: relative;
           }
           
           h1 { font-size: 18px; margin-bottom: 12px; }
@@ -94,18 +100,29 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       
       <CardContent className="flex-1 p-4 flex items-center justify-center bg-gray-100 overflow-hidden">
         <div className="w-full h-full flex items-center justify-center">
-          <iframe
-            srcDoc={styledHtml}
-            className="border-0 rounded-lg shadow-sm bg-white"
+          <div 
+            className="bg-white shadow-lg"
             style={{
-              width: '100%',
-              height: '100%',
-              maxWidth: 'calc(100vh * 210 / 297)',
-              maxHeight: 'calc(100vw * 297 / 210)',
-              aspectRatio: '210 / 297'
+              width: '210mm',
+              height: '297mm',
+              maxWidth: '100%',
+              maxHeight: '100%',
+              aspectRatio: '210 / 297',
+              transform: 'scale(0.8)',
+              transformOrigin: 'center',
+              border: '1px solid #e5e7eb'
             }}
-            title="A4 Document Preview"
-          />
+          >
+            <iframe
+              srcDoc={styledHtml}
+              className="w-full h-full border-0"
+              style={{
+                width: '210mm',
+                height: '297mm'
+              }}
+              title="A4 Document Preview"
+            />
+          </div>
         </div>
       </CardContent>
     </div>
