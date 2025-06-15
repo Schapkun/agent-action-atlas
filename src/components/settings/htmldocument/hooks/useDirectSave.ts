@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef } from 'react';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 
@@ -39,11 +38,11 @@ export const useDirectSave = (documentId?: string) => {
       const currentTemplate = templates.find(t => t.id === documentId);
       const currentPlaceholders = currentTemplate?.placeholder_values || {};
       
-      // Create profile-specific placeholder values
+      // Create profile-specific placeholder values - convert number to string
       const updatedPlaceholders = {
         ...currentPlaceholders,
         [`profile_${data.layoutId}_content`]: data.htmlContent,
-        [`profile_${data.layoutId}_lastModified`]: data.lastModified,
+        [`profile_${data.layoutId}_lastModified`]: data.lastModified.toString(),
         profileId: data.layoutId
       };
       
@@ -88,7 +87,7 @@ export const useDirectSave = (documentId?: string) => {
           const loadedData: SaveData = {
             layoutId: profileId,
             htmlContent: profileSpecificContent as string,
-            lastModified: profileLastModified ? Number(profileLastModified) : new Date(template.updated_at).getTime()
+            lastModified: profileLastModified ? parseInt(profileLastModified as string) : new Date(template.updated_at).getTime()
           };
           
           // Cache the loaded data
