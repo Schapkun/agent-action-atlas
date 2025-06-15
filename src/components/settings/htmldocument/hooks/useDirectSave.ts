@@ -31,7 +31,7 @@ export const useDirectSave = (documentId?: string) => {
     }
 
     try {
-      // Cache the data with layout-specific key
+      // Cache the data with profile-specific key
       dataCache.current.set(cacheKey, data);
       lastSavedContent.current.set(cacheKey, data.htmlContent);
       
@@ -39,11 +39,11 @@ export const useDirectSave = (documentId?: string) => {
       const currentTemplate = templates.find(t => t.id === documentId);
       const currentPlaceholders = currentTemplate?.placeholder_values || {};
       
-      // Create layout-specific placeholder values
+      // Create profile-specific placeholder values
       const updatedPlaceholders = {
         ...currentPlaceholders,
-        [`layout_${data.layoutId}_content`]: data.htmlContent,
-        layoutId: data.layoutId
+        [`profile_${data.layoutId}_content`]: data.htmlContent,
+        profileId: data.layoutId
       };
       
       // Save to database
@@ -53,22 +53,22 @@ export const useDirectSave = (documentId?: string) => {
       });
       
       setHasUnsavedChanges(false);
-      console.log('[DirectSave] Content saved for layout:', data.layoutId);
+      console.log('[DirectSave] Content saved for profile:', data.layoutId);
     } catch (error) {
       console.error('[DirectSave] Save failed:', error);
       setHasUnsavedChanges(true);
     }
   }, [documentId, updateTemplate, templates]);
 
-  const loadData = useCallback(async (specificLayoutId?: string): Promise<SaveData | null> => {
+  const loadData = useCallback(async (specificProfileId?: string): Promise<SaveData | null> => {
     if (!documentId) {
       const tempData = dataCache.current.get('temp');
       return tempData || null;
     }
 
     try {
-      const layoutId = specificLayoutId || 'modern-blue';
-      const cacheKey = `${documentId}:${layoutId}`;
+      const profileId = specificProfileId || 'profiel-1';
+      const cacheKey = `${documentId}:${profileId}`;
       
       // Check cache first
       const cachedData = dataCache.current.get(cacheKey);
@@ -79,12 +79,12 @@ export const useDirectSave = (documentId?: string) => {
       // Load from database
       const template = templates.find(t => t.id === documentId);
       if (template?.placeholder_values) {
-        const layoutSpecificContent = template.placeholder_values[`layout_${layoutId}_content`];
+        const profileSpecificContent = template.placeholder_values[`profile_${profileId}_content`];
         
-        if (layoutSpecificContent) {
+        if (profileSpecificContent) {
           const loadedData: SaveData = {
-            layoutId,
-            htmlContent: layoutSpecificContent as string,
+            layoutId: profileId,
+            htmlContent: profileSpecificContent as string,
             lastModified: new Date(template.updated_at).getTime()
           };
           
@@ -96,10 +96,10 @@ export const useDirectSave = (documentId?: string) => {
         }
       }
       
-      // Default content for new layouts
+      // Default content for new profiles
       const defaultData: SaveData = {
-        layoutId,
-        htmlContent: '<h1>Document Title</h1>\n<p>Start typing your content here...</p>',
+        layoutId: profileId,
+        htmlContent: '<h1>Document Titel</h1>\n<p>Begin hier met typen...</p>',
         lastModified: Date.now()
       };
       

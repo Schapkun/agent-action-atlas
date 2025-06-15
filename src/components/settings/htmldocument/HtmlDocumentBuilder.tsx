@@ -3,12 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Save, ArrowLeft } from 'lucide-react';
+import { Save, ArrowLeft, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { HtmlEditor } from './builder/HtmlEditor';
 import { LivePreview } from './components/LivePreview';
 import { useDirectSave } from './hooks/useDirectSave';
-import { UNIQUE_LAYOUT_TEMPLATES } from '../types/LayoutTemplates';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 
 interface HtmlDocumentBuilderProps {
@@ -16,13 +15,25 @@ interface HtmlDocumentBuilderProps {
   onComplete: (success: boolean) => void;
 }
 
-interface LayoutContent {
-  [layoutId: string]: string;
+interface ProfileContent {
+  [profileId: string]: string;
 }
 
+interface Profile {
+  id: string;
+  name: string;
+  description: string;
+}
+
+const DEFAULT_PROFILES: Profile[] = [
+  { id: 'profiel-1', name: 'Profiel 1', description: 'Standaard profiel' },
+  { id: 'profiel-2', name: 'Profiel 2', description: 'Alternatief profiel' },
+  { id: 'profiel-3', name: 'Profiel 3', description: 'Extra profiel' },
+];
+
 export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuilderProps) => {
-  const [selectedLayoutId, setSelectedLayoutId] = useState('modern-blue');
-  const [layoutContents, setLayoutContents] = useState<LayoutContent>({});
+  const [selectedProfileId, setSelectedProfileId] = useState('profiel-1');
+  const [profileContents, setProfileContents] = useState<ProfileContent>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -30,9 +41,9 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
   const { saveData, loadData, hasUnsavedChanges } = useDirectSave(documentId);
   const { templates } = useDocumentTemplates();
 
-  // Load content for all layouts
+  // Load content for all profiles
   useEffect(() => {
-    const loadAllLayoutContent = async () => {
+    const loadAllProfileContent = async () => {
       if (!documentId) {
         setIsLoading(false);
         return;
@@ -40,65 +51,71 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
 
       try {
         setIsLoading(true);
-        const newLayoutContents: LayoutContent = {};
+        const newProfileContents: ProfileContent = {};
         
-        for (const layout of UNIQUE_LAYOUT_TEMPLATES) {
-          const savedData = await loadData(layout.id);
-          newLayoutContents[layout.id] = savedData?.htmlContent || '<h1>Document Title</h1>\n<p>Start typing your content here...</p>';
+        for (const profile of DEFAULT_PROFILES) {
+          const savedData = await loadData(profile.id);
+          newProfileContents[profile.id] = savedData?.htmlContent || '<h1>Document Titel</h1>\n<p>Begin hier met typen...</p>';
         }
         
-        setLayoutContents(newLayoutContents);
+        setProfileContents(newProfileContents);
       } catch (error) {
-        console.error('[Builder] Error loading layout contents:', error);
+        console.error('[Builder] Error loading profile contents:', error);
       } finally {
         setIsLoading(false);
       }
     };
     
-    loadAllLayoutContent();
+    loadAllProfileContent();
   }, [documentId, loadData]);
 
-  // Auto-save current layout content when it changes
+  // Auto-save current profile content when it changes
   useEffect(() => {
-    if (isLoading || !documentId || !layoutContents[selectedLayoutId]) return;
+    if (isLoading || !documentId || !profileContents[selectedProfileId]) return;
     
     const autoSave = async () => {
       await saveData({
-        layoutId: selectedLayoutId,
-        htmlContent: layoutContents[selectedLayoutId],
+        layoutId: selectedProfileId,
+        htmlContent: profileContents[selectedProfileId],
         lastModified: Date.now()
       });
     };
 
-    const debounceTimer = setTimeout(autoSave, 2000); // Increased to 2 seconds
+    const debounceTimer = setTimeout(autoSave, 2000);
     return () => clearTimeout(debounceTimer);
-  }, [layoutContents, selectedLayoutId, documentId, saveData, isLoading]);
+  }, [profileContents, selectedProfileId, documentId, saveData, isLoading]);
 
-  const handleHtmlChange = (layoutId: string, newHtml: string) => {
-    setLayoutContents(prev => ({
+  const handleHtmlChange = (profileId: string, newHtml: string) => {
+    setProfileContents(prev => ({
       ...prev,
-      [layoutId]: newHtml
+      [profileId]: newHtml
     }));
   };
 
-  const handleManualSave = async () => {
-    if (!documentId) return;
+  const handleSaveAllAndClose = async () => {
+    if (!documentId) {
+      onComplete(true);
+      return;
+    }
     
     setIsSaving(true);
     try {
-      // Save all layouts
-      for (const layoutId of Object.keys(layoutContents)) {
+      // Save all profiles
+      for (const profileId of Object.keys(profileContents)) {
         await saveData({
-          layoutId,
-          htmlContent: layoutContents[layoutId],
+          layoutId: profileId,
+          htmlContent: profileContents[profileId],
           lastModified: Date.now()
         }, true); // Force save
       }
       
       toast({
         title: "Opgeslagen",
-        description: "Alle layouts succesvol opgeslagen"
+        description: "Alle profielen succesvol opgeslagen"
       });
+      
+      // Close the window
+      onComplete(true);
     } catch (error) {
       toast({
         title: "Fout",
@@ -110,19 +127,17 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
     }
   };
 
-  const renderStyledContent = (layoutId: string) => {
-    const layout = UNIQUE_LAYOUT_TEMPLATES.find(l => l.id === layoutId);
-    const content = layoutContents[layoutId] || '';
+  const renderStyledContent = (profileId: string) => {
+    const content = profileContents[profileId] || '';
     
-    if (!layout) return content;
-
     const styledHtml = `
       <div style="
-        font-family: ${layout.styling.font}, sans-serif;
-        color: ${layout.styling.primaryColor};
+        font-family: 'Inter', sans-serif;
+        color: #1f2937;
         padding: 20px;
         background: white;
         min-height: 400px;
+        line-height: 1.6;
       ">
         ${content}
       </div>
@@ -150,12 +165,12 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onComplete(true)}
+            onClick={() => onComplete(false)}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Terug
           </Button>
-          <h2 className="text-lg font-semibold">HTML Document Builder</h2>
+          <h2 className="text-lg font-semibold">HTML Document Builder - Profielen</h2>
           {hasUnsavedChanges && (
             <span className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded">
               Automatisch opslaan actief
@@ -165,52 +180,48 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
         
         <div className="flex items-center gap-2">
           <Button
-            onClick={handleManualSave}
+            onClick={handleSaveAllAndClose}
             disabled={isSaving || !documentId}
             size="sm"
           >
             <Save className="h-4 w-4 mr-2" />
-            {isSaving ? 'Opslaan...' : 'Alles Opslaan'}
+            {isSaving ? 'Opslaan...' : 'Alles Opslaan & Sluiten'}
           </Button>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 flex">
-        {/* Left Panel - Layout Tabs & Editors */}
+        {/* Left Panel - Profile Tabs & Editors */}
         <div className="w-1/2 flex flex-col border-r">
-          <Tabs value={selectedLayoutId} onValueChange={setSelectedLayoutId} className="flex-1 flex flex-col">
+          <Tabs value={selectedProfileId} onValueChange={setSelectedProfileId} className="flex-1 flex flex-col">
             <TabsList className="grid w-full grid-cols-3 bg-white border-b">
-              {UNIQUE_LAYOUT_TEMPLATES.slice(0, 6).map((layout) => (
+              {DEFAULT_PROFILES.map((profile) => (
                 <TabsTrigger 
-                  key={layout.id} 
-                  value={layout.id}
-                  className="text-xs"
+                  key={profile.id} 
+                  value={profile.id}
+                  className="text-sm"
                 >
-                  {layout.name}
+                  {profile.name}
                 </TabsTrigger>
               ))}
             </TabsList>
             
-            {UNIQUE_LAYOUT_TEMPLATES.map((layout) => (
-              <TabsContent key={layout.id} value={layout.id} className="flex-1 m-0">
+            {DEFAULT_PROFILES.map((profile) => (
+              <TabsContent key={profile.id} value={profile.id} className="flex-1 m-0">
                 <div className="h-full flex flex-col">
                   <div className="p-3 bg-white border-b">
                     <div className="flex items-center gap-2">
-                      <div 
-                        className="w-4 h-4 rounded border"
-                        style={{ backgroundColor: layout.styling.primaryColor }}
-                      />
-                      <h3 className="font-medium text-sm">{layout.name}</h3>
-                      <span className="text-xs text-muted-foreground">({layout.category})</span>
+                      <div className="w-4 h-4 rounded border bg-blue-500"/>
+                      <h3 className="font-medium text-sm">{profile.name}</h3>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">{layout.description}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{profile.description}</p>
                   </div>
                   
                   <div className="flex-1">
                     <HtmlEditor
-                      htmlContent={layoutContents[layout.id] || ''}
-                      onChange={(newHtml) => handleHtmlChange(layout.id, newHtml)}
+                      htmlContent={profileContents[profile.id] || ''}
+                      onChange={(newHtml) => handleHtmlChange(profile.id, newHtml)}
                     />
                   </div>
                 </div>
@@ -222,8 +233,8 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
         {/* Right Panel - Preview */}
         <div className="w-1/2">
           <LivePreview
-            htmlContent={renderStyledContent(selectedLayoutId)}
-            layoutId={selectedLayoutId}
+            htmlContent={renderStyledContent(selectedProfileId)}
+            layoutId={selectedProfileId}
           />
         </div>
       </div>
