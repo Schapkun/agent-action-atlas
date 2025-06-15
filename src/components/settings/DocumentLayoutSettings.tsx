@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { CleanHTMLDocumentBuilder } from './htmldocument/CleanHTMLDocumentBuilder';
+import { SimpleDocumentBuilder } from './htmldocument/SimpleDocumentBuilder';
 import { DocumentNameDialog } from './components/DocumentNameDialog';
 import { DocumentProvider, useDocumentContext } from './contexts/DocumentContext';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
@@ -89,10 +89,10 @@ const DocumentLayoutContent = () => {
         onDeleteDocument={handleDeleteDocument}
       />
 
-      {/* Clean HTML Document Builder Dialog */}
+      {/* Simple Document Builder Dialog */}
       <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 flex flex-col">
-          <CleanHTMLDocumentBuilder 
+          <SimpleDocumentBuilder 
             documentId={editingDocumentId}
             onComplete={handleBuilderComplete}
           />
