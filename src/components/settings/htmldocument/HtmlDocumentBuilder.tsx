@@ -2,10 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Save, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { HtmlEditor } from './builder/HtmlEditor';
-import { LayoutSwitcher } from './components/LayoutSwitcher';
 import { LivePreview } from './components/LivePreview';
 import { useDirectSave } from './hooks/useDirectSave';
 import { UNIQUE_LAYOUT_TEMPLATES } from '../types/LayoutTemplates';
@@ -16,9 +16,13 @@ interface HtmlDocumentBuilderProps {
   onComplete: (success: boolean) => void;
 }
 
+interface LayoutContent {
+  [layoutId: string]: string;
+}
+
 export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuilderProps) => {
   const [selectedLayoutId, setSelectedLayoutId] = useState('modern-blue');
-  const [htmlContent, setHtmlContent] = useState('<h1>Document Title</h1>\n<p>Start typing your content here...</p>');
+  const [layoutContents, setLayoutContents] = useState<LayoutContent>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -26,9 +30,9 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
   const { saveData, loadData, hasUnsavedChanges } = useDirectSave(documentId);
   const { templates } = useDocumentTemplates();
 
-  // Load initial data when component mounts or document changes
+  // Load content for all layouts
   useEffect(() => {
-    const loadInitialData = async () => {
+    const loadAllLayoutContent = async () => {
       if (!documentId) {
         setIsLoading(false);
         return;
@@ -36,93 +40,45 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
 
       try {
         setIsLoading(true);
-        console.log('[Builder] Loading initial data for document:', documentId);
+        const newLayoutContents: LayoutContent = {};
         
-        // First, try to load data for the current layout
-        const savedData = await loadData(selectedLayoutId);
-        
-        if (savedData) {
-          console.log('[Builder] Found saved data:', savedData);
-          setSelectedLayoutId(savedData.layoutId);
-          setHtmlContent(savedData.htmlContent);
-        } else {
-          // If no saved data, check if we have a template with basic content
-          const template = templates.find(t => t.id === documentId);
-          if (template) {
-            console.log('[Builder] Using template data:', template);
-            
-            // Get the current layout ID from placeholder_values if available
-            const savedLayoutId = template.placeholder_values?.layoutId as string;
-            if (savedLayoutId) {
-              setSelectedLayoutId(savedLayoutId);
-            }
-            
-            // Use html_content if available
-            if (template.html_content) {
-              setHtmlContent(template.html_content);
-            }
-          }
+        for (const layout of UNIQUE_LAYOUT_TEMPLATES) {
+          const savedData = await loadData(layout.id);
+          newLayoutContents[layout.id] = savedData?.htmlContent || '<h1>Document Title</h1>\n<p>Start typing your content here...</p>';
         }
+        
+        setLayoutContents(newLayoutContents);
       } catch (error) {
-        console.error('[Builder] Error loading initial data:', error);
+        console.error('[Builder] Error loading layout contents:', error);
       } finally {
         setIsLoading(false);
       }
     };
     
-    loadInitialData();
-  }, [documentId, loadData, templates]);
+    loadAllLayoutContent();
+  }, [documentId, loadData]);
 
-  // Auto-save when content changes (with debounce)
+  // Auto-save current layout content when it changes
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || !documentId || !layoutContents[selectedLayoutId]) return;
     
     const autoSave = async () => {
-      if (documentId) {
-        console.log('[Builder] Auto-saving content for layout:', selectedLayoutId);
-        await saveData({
-          layoutId: selectedLayoutId,
-          htmlContent: htmlContent,
-          lastModified: Date.now()
-        });
-      }
-    };
-
-    const debounceTimer = setTimeout(autoSave, 1000);
-    return () => clearTimeout(debounceTimer);
-  }, [selectedLayoutId, htmlContent, documentId, saveData, isLoading]);
-
-  const handleLayoutChange = async (newLayoutId: string) => {
-    console.log('[Builder] Switching layout from', selectedLayoutId, 'to', newLayoutId);
-    
-    // Save current content with current layout before switching
-    if (documentId && !isLoading) {
       await saveData({
         layoutId: selectedLayoutId,
-        htmlContent: htmlContent,
+        htmlContent: layoutContents[selectedLayoutId],
         lastModified: Date.now()
       });
-    }
-    
-    // Load content for new layout
-    const savedData = await loadData(newLayoutId);
-    if (savedData && savedData.htmlContent) {
-      console.log('[Builder] Loading saved content for layout:', newLayoutId);
-      setHtmlContent(savedData.htmlContent);
-    } else {
-      console.log('[Builder] No saved content for layout:', newLayoutId, 'keeping current content');
-    }
-    
-    setSelectedLayoutId(newLayoutId);
-    
-    toast({
-      title: "Layout gewijzigd",
-      description: `Geswitcht naar ${UNIQUE_LAYOUT_TEMPLATES.find(l => l.id === newLayoutId)?.name}`
-    });
-  };
+    };
 
-  const handleHtmlChange = (newHtml: string) => {
-    setHtmlContent(newHtml);
+    const debounceTimer = setTimeout(autoSave, 2000); // Increased to 2 seconds
+    return () => clearTimeout(debounceTimer);
+  }, [layoutContents, selectedLayoutId, documentId, saveData, isLoading]);
+
+  const handleHtmlChange = (layoutId: string, newHtml: string) => {
+    setLayoutContents(prev => ({
+      ...prev,
+      [layoutId]: newHtml
+    }));
   };
 
   const handleManualSave = async () => {
@@ -130,15 +86,18 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
     
     setIsSaving(true);
     try {
-      await saveData({
-        layoutId: selectedLayoutId,
-        htmlContent: htmlContent,
-        lastModified: Date.now()
-      });
+      // Save all layouts
+      for (const layoutId of Object.keys(layoutContents)) {
+        await saveData({
+          layoutId,
+          htmlContent: layoutContents[layoutId],
+          lastModified: Date.now()
+        }, true); // Force save
+      }
       
       toast({
         title: "Opgeslagen",
-        description: "Document succesvol opgeslagen"
+        description: "Alle layouts succesvol opgeslagen"
       });
     } catch (error) {
       toast({
@@ -151,9 +110,11 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
     }
   };
 
-  const renderStyledContent = () => {
-    const layout = UNIQUE_LAYOUT_TEMPLATES.find(l => l.id === selectedLayoutId);
-    if (!layout) return htmlContent;
+  const renderStyledContent = (layoutId: string) => {
+    const layout = UNIQUE_LAYOUT_TEMPLATES.find(l => l.id === layoutId);
+    const content = layoutContents[layoutId] || '';
+    
+    if (!layout) return content;
 
     const styledHtml = `
       <div style="
@@ -163,7 +124,7 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
         background: white;
         min-height: 400px;
       ">
-        ${htmlContent}
+        ${content}
       </div>
     `;
 
@@ -197,7 +158,7 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
           <h2 className="text-lg font-semibold">HTML Document Builder</h2>
           {hasUnsavedChanges && (
             <span className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded">
-              Wijzigingen worden automatisch opgeslagen
+              Automatisch opslaan actief
             </span>
           )}
         </div>
@@ -209,37 +170,59 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
             size="sm"
           >
             <Save className="h-4 w-4 mr-2" />
-            {isSaving ? 'Opslaan...' : 'Opslaan'}
+            {isSaving ? 'Opslaan...' : 'Alles Opslaan'}
           </Button>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 flex">
-        {/* Left Panel - Editor & Layout */}
+        {/* Left Panel - Layout Tabs & Editors */}
         <div className="w-1/2 flex flex-col border-r">
-          {/* Layout Switcher */}
-          <div className="border-b bg-white">
-            <LayoutSwitcher
-              layouts={UNIQUE_LAYOUT_TEMPLATES}
-              selectedLayoutId={selectedLayoutId}
-              onLayoutChange={handleLayoutChange}
-            />
-          </div>
-          
-          {/* HTML Editor */}
-          <div className="flex-1">
-            <HtmlEditor
-              htmlContent={htmlContent}
-              onChange={handleHtmlChange}
-            />
-          </div>
+          <Tabs value={selectedLayoutId} onValueChange={setSelectedLayoutId} className="flex-1 flex flex-col">
+            <TabsList className="grid w-full grid-cols-3 bg-white border-b">
+              {UNIQUE_LAYOUT_TEMPLATES.slice(0, 6).map((layout) => (
+                <TabsTrigger 
+                  key={layout.id} 
+                  value={layout.id}
+                  className="text-xs"
+                >
+                  {layout.name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            
+            {UNIQUE_LAYOUT_TEMPLATES.map((layout) => (
+              <TabsContent key={layout.id} value={layout.id} className="flex-1 m-0">
+                <div className="h-full flex flex-col">
+                  <div className="p-3 bg-white border-b">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-4 h-4 rounded border"
+                        style={{ backgroundColor: layout.styling.primaryColor }}
+                      />
+                      <h3 className="font-medium text-sm">{layout.name}</h3>
+                      <span className="text-xs text-muted-foreground">({layout.category})</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{layout.description}</p>
+                  </div>
+                  
+                  <div className="flex-1">
+                    <HtmlEditor
+                      htmlContent={layoutContents[layout.id] || ''}
+                      onChange={(newHtml) => handleHtmlChange(layout.id, newHtml)}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
         </div>
 
         {/* Right Panel - Preview */}
         <div className="w-1/2">
           <LivePreview
-            htmlContent={renderStyledContent()}
+            htmlContent={renderStyledContent(selectedLayoutId)}
             layoutId={selectedLayoutId}
           />
         </div>
