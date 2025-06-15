@@ -111,13 +111,11 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
           <div 
             className="bg-white shadow-xl border border-gray-200 overflow-hidden"
             style={{
-              width: '210mm',
-              height: '297mm',
+              width: 'min(100%, calc(100vh - 200px) * 210 / 297)',
+              height: 'min(calc(100vw - 400px) * 297 / 210, calc(100vh - 200px))',
               aspectRatio: '210 / 297',
-              transform: 'scale(0.7)',
-              transformOrigin: 'center',
-              minWidth: '210mm',
-              minHeight: '297mm'
+              maxWidth: '210mm',
+              maxHeight: '297mm'
             }}
           >
             <iframe
@@ -125,8 +123,8 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
               className="w-full h-full border-0"
               title="A4 Document Preview"
               style={{
-                width: '210mm',
-                height: '297mm'
+                width: '100%',
+                height: '100%'
               }}
             />
           </div>
