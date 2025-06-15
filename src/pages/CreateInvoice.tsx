@@ -87,28 +87,37 @@ const CreateInvoice = () => {
 
   const { toast } = useToast();
 
-  // Debug logging for templates
+  // FIXED: Better template filtering - allow all template types and debug properly
   useEffect(() => {
     console.log('Document templates loaded:', documentTemplates);
     console.log('Templates loading:', templatesLoading);
-    console.log('Available template types:', documentTemplates.map(t => ({ id: t.id, name: t.name, type: t.type })));
+    console.log('All available templates:', documentTemplates.map(t => ({ 
+      id: t.id, 
+      name: t.name, 
+      type: t.type,
+      is_active: t.is_active 
+    })));
   }, [documentTemplates, templatesLoading]);
 
-  // Improved template filtering with better debugging
+  // FIXED: Include ALL active templates, not just specific types
   const availableTemplates = documentTemplates.filter(t => {
-    const isValid = t.type === 'factuur' || t.type === 'schapkun';
-    console.log(`Template ${t.name} (${t.type}): ${isValid ? 'included' : 'excluded'}`);
+    const isValid = t.is_active === true; // Only check if template is active
+    console.log(`Template ${t.name} (${t.type}): ${isValid ? 'included' : 'excluded'} - active: ${t.is_active}`);
     return isValid;
   });
 
   console.log('Filtered available templates:', availableTemplates.length, availableTemplates);
 
-  // Improved template initialization
+  // FIXED: Better template initialization with more robust selection
   useEffect(() => {
     if (availableTemplates.length > 0 && !selectedTemplate) {
-      const defaultTemplate = availableTemplates.find(t => t.is_default) || availableTemplates[0];
-      console.log('Setting default template:', defaultTemplate);
-      setSelectedTemplate(defaultTemplate.id);
+      // First try to find a factuur template, then any default, then just the first one
+      const factuurTemplate = availableTemplates.find(t => t.type === 'factuur');
+      const defaultTemplate = availableTemplates.find(t => t.is_default);
+      const templateToSelect = factuurTemplate || defaultTemplate || availableTemplates[0];
+      
+      console.log('Setting template:', templateToSelect);
+      setSelectedTemplate(templateToSelect.id);
     }
   }, [availableTemplates, selectedTemplate]);
 
@@ -265,12 +274,13 @@ const CreateInvoice = () => {
     document.execCommand(command, false, value);
   };
 
-  // Fixed preview HTML generation with proper template handling and placeholder replacement
+  // FIXED: Completely rewritten preview HTML generation with proper placeholder handling
   const generatePreviewHTML = () => {
     const selectedTemplateData = availableTemplates.find(t => t.id === selectedTemplate);
     const { subtotal, vatAmount, total } = calculateTotals();
     
     console.log('Generating preview with template:', selectedTemplateData?.name);
+    console.log('Current form data:', formData);
     console.log('Line items for preview:', lineItems);
     
     // Default template when no custom template is selected
@@ -280,14 +290,16 @@ const CreateInvoice = () => {
     }
 
     console.log('Using custom template:', selectedTemplateData.name);
+    console.log('Template HTML content length:', selectedTemplateData.html_content.length);
     
     // Use selected template and replace ALL placeholders
     let templateHTML = selectedTemplateData.html_content;
 
-    // Generate line items HTML for template replacement
-    const lineItemsHTML = lineItems.map(item => {
-      // Clean HTML from description for table display
-      const cleanDescription = item.description.replace(/<[^>]*>/g, '') || '';
+    // FIXED: Generate proper line items HTML with clean descriptions
+    const lineItemsHTML = lineItems.map((item, index) => {
+      // Clean HTML from description for table display - remove all HTML tags
+      const cleanDescription = item.description.replace(/<[^>]*>/g, '').trim() || `Product ${index + 1}`;
+      
       return `
         <tr>
           <td style="border: 1px solid #ddd; padding: 8px;">${cleanDescription}</td>
@@ -299,32 +311,78 @@ const CreateInvoice = () => {
       `;
     }).join('');
 
-    // Replace ALL placeholders in the template with proper fallbacks
-    templateHTML = templateHTML
-      .replace(/\{invoice_number\}/g, invoiceNumber || getDefaultInvoiceNumber())
-      .replace(/\{invoice_date\}/g, formData.invoice_date || format(new Date(), 'dd-MM-yyyy'))
-      .replace(/\{due_date\}/g, formData.due_date || format(new Date(), 'dd-MM-yyyy'))
-      .replace(/\{client_name\}/g, formData.client_name || 'Klant naam')
-      .replace(/\{client_address\}/g, formData.client_address || 'Adres')
-      .replace(/\{client_postal_code\}/g, formData.client_postal_code || 'Postcode')
-      .replace(/\{client_city\}/g, formData.client_city || 'Stad')
-      .replace(/\{client_country\}/g, formData.client_country || 'Nederland')
-      .replace(/\{client_email\}/g, formData.client_email || 'email@example.com')
-      .replace(/\{subtotal\}/g, subtotal.toFixed(2))
-      .replace(/\{vat_amount\}/g, vatAmount.toFixed(2))
-      .replace(/\{total\}/g, total.toFixed(2))
-      .replace(/\{payment_terms\}/g, formData.payment_terms?.toString() || '30')
-      .replace(/\{line_items\}/g, lineItemsHTML)
-      .replace(/\{notes\}/g, formData.notes || '');
+    // FIXED: Format dates properly for display
+    const formatDisplayDate = (dateString: string) => {
+      if (!dateString) return format(new Date(), 'dd-MM-yyyy');
+      try {
+        return format(new Date(dateString), 'dd-MM-yyyy');
+      } catch {
+        return dateString;
+      }
+    };
 
-    console.log('Template HTML generated successfully with placeholders replaced');
+    // FIXED: Replace ALL possible placeholders with both old and new syntax
+    const placeholderReplacements = {
+      // Invoice data
+      'invoice_number': invoiceNumber || getDefaultInvoiceNumber(),
+      'invoice_date': formatDisplayDate(formData.invoice_date),
+      'due_date': formatDisplayDate(formData.due_date),
+      
+      // Client data  
+      'client_name': formData.client_name || 'Naam klant',
+      'client_address': formData.client_address || 'Adres',
+      'client_postal_code': formData.client_postal_code || '0000 XX',
+      'client_city': formData.client_city || 'Plaats',
+      'client_country': formData.client_country || 'Nederland',
+      'client_email': formData.client_email || 'email@voorbeeld.nl',
+      
+      // Financial data
+      'subtotal': `€ ${subtotal.toFixed(2)}`,
+      'vat_amount': `€ ${vatAmount.toFixed(2)}`,
+      'total': `€ ${total.toFixed(2)}`,
+      'total_amount': `€ ${total.toFixed(2)}`,
+      'payment_terms': formData.payment_terms?.toString() || '30',
+      
+      // Line items
+      'line_items': lineItemsHTML,
+      
+      // Notes
+      'notes': formData.notes || '',
+      
+      // Alternative naming conventions
+      'customer_name': formData.client_name || 'Naam klant',
+      'customer_address': formData.client_address || 'Adres',
+      'customer_postal_code': formData.client_postal_code || '0000 XX',
+      'customer_city': formData.client_city || 'Plaats',
+      'factuurnummer': invoiceNumber || getDefaultInvoiceNumber(),
+      'factuurdatum': formatDisplayDate(formData.invoice_date),
+      'vervaldatum': formatDisplayDate(formData.due_date)
+    };
+
+    // Replace placeholders with multiple syntaxes: {placeholder}, {{placeholder}}, %PLACEHOLDER%
+    Object.entries(placeholderReplacements).forEach(([key, value]) => {
+      // Single curly braces
+      templateHTML = templateHTML.replace(new RegExp(`\\{${key}\\}`, 'gi'), value);
+      // Double curly braces  
+      templateHTML = templateHTML.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'gi'), value);
+      // Percentage signs
+      templateHTML = templateHTML.replace(new RegExp(`%${key.toUpperCase()}%`, 'gi'), value);
+      // With underscores replaced by spaces
+      const keyWithSpaces = key.replace(/_/g, ' ');
+      templateHTML = templateHTML.replace(new RegExp(`\\{${keyWithSpaces}\\}`, 'gi'), value);
+      templateHTML = templateHTML.replace(new RegExp(`\\{\\{${keyWithSpaces}\\}\\}`, 'gi'), value);
+    });
+
+    console.log('Template HTML after placeholder replacement (first 500 chars):', templateHTML.substring(0, 500));
+    console.log('Placeholders replaced:', Object.keys(placeholderReplacements));
+    
     return templateHTML;
   };
 
-  // Helper function for default preview when no template is selected
+  // FIXED: Improved default preview template
   const generateDefaultPreviewHTML = (subtotal: number, vatAmount: number, total: number) => {
-    const lineItemsHTML = lineItems.map(item => {
-      const cleanDescription = item.description.replace(/<[^>]*>/g, '') || '';
+    const lineItemsHTML = lineItems.map((item, index) => {
+      const cleanDescription = item.description.replace(/<[^>]*>/g, '').trim() || `Product ${index + 1}`;
       return `
         <tr>
           <td style="border: 1px solid #ccc; padding: 8px;">${cleanDescription}</td>
@@ -365,14 +423,14 @@ const CreateInvoice = () => {
           </div>
           <div class="invoice-details">
             <p><strong>Factuurnummer:</strong> ${invoiceNumber || getDefaultInvoiceNumber()}</p>
-            <p><strong>Factuurdatum:</strong> ${formData.invoice_date}</p>
-            <p><strong>Vervaldatum:</strong> ${formData.due_date}</p>
+            <p><strong>Factuurdatum:</strong> ${format(new Date(formData.invoice_date), 'dd-MM-yyyy')}</p>
+            <p><strong>Vervaldatum:</strong> ${format(new Date(formData.due_date), 'dd-MM-yyyy')}</p>
           </div>
           <div class="client-info">
             <h3>Factuuradres:</h3>
-            <p>${formData.client_name || 'Klant naam'}</p>
+            <p>${formData.client_name || 'Naam klant'}</p>
             <p>${formData.client_address || 'Adres'}</p>
-            <p>${formData.client_postal_code || 'Postcode'} ${formData.client_city || 'Stad'}</p>
+            <p>${formData.client_postal_code || '0000 XX'} ${formData.client_city || 'Plaats'}</p>
             <p>${formData.client_country || 'Nederland'}</p>
           </div>
           <table>
@@ -394,6 +452,7 @@ const CreateInvoice = () => {
             <p>BTW: € ${vatAmount.toFixed(2)}</p>
             <p><strong>Totaal: € ${total.toFixed(2)}</strong></p>
           </div>
+          ${formData.notes ? `<div style="margin-top: 20px;"><p><strong>Opmerkingen:</strong><br>${formData.notes}</p></div>` : ''}
         </body>
       </html>
     `;
@@ -590,15 +649,21 @@ Uw administratie`
                 </div>
                 <div className="w-48">
                   <Label className="text-xs font-medium">Layout</Label>
-                  <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                  <Select value={selectedTemplate} onValueChange={(value) => {
+                    console.log('Template selected:', value);
+                    setSelectedTemplate(value);
+                  }}>
                     <SelectTrigger className="h-8 text-xs">
                       <SelectValue placeholder={availableTemplates.length > 0 ? "Selecteer layout" : "Geen layouts beschikbaar"} />
                     </SelectTrigger>
-                    <SelectContent className="bg-white border shadow-lg z-50">
+                    <SelectContent className="bg-white border shadow-lg z-50 max-h-60 overflow-y-auto">
                       {availableTemplates.length > 0 ? (
                         availableTemplates.map((template) => (
-                          <SelectItem key={template.id} value={template.id}>
-                            {template.name} ({template.type})
+                          <SelectItem key={template.id} value={template.id} className="cursor-pointer hover:bg-gray-100">
+                            <div className="flex flex-col">
+                              <span className="font-medium">{template.name}</span>
+                              <span className="text-xs text-gray-500 capitalize">{template.type}</span>
+                            </div>
                           </SelectItem>
                         ))
                       ) : (
@@ -900,7 +965,7 @@ Uw administratie`
         </div>
       )}
 
-      {/* Preview Dialog - FIXED to show actual template preview */}
+      {/* Preview Dialog - FIXED with proper key and error handling */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="max-w-4xl max-h-[90vh] w-[80vw] flex flex-col">
           <DialogHeader>
@@ -912,7 +977,8 @@ Uw administratie`
                 srcDoc={generatePreviewHTML()}
                 className="w-full h-full border-0"
                 title="Invoice Preview"
-                key={`preview-${selectedTemplate}-${Date.now()}`}
+                key={`preview-${selectedTemplate}-${lineItems.length}-${Date.now()}`}
+                onError={(e) => console.error('Preview iframe error:', e)}
               />
             </div>
           </div>
