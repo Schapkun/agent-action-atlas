@@ -26,21 +26,27 @@ const DocumentLayoutContent = () => {
   const handleEditDocument = async (document: DocumentTemplate) => {
     console.log('[Settings] Opening document for editing:', document.name, document.id);
     
-    // CRITICAL: ALWAYS force refresh to get the absolute latest from database
+    // CRITICAL: Force complete refresh and wait for it to complete
     await refreshTemplates();
     
-    // Get the fresh version from database after refresh with a timestamp to force re-render
-    const freshDocument = documents.find(d => d.id === document.id);
-    const documentToEdit = freshDocument || document;
+    // Small delay to ensure state is updated
+    await new Promise(resolve => setTimeout(resolve, 100));
     
-    console.log('[Settings] Using fresh document from DB:', documentToEdit.name, 'updated_at:', documentToEdit.updated_at);
+    // Get the absolutely fresh version from database - refetch from hook
+    const { templates } = await import('@/hooks/useDocumentTemplates');
     
-    // Force new object reference with timestamp to ensure re-initialization
-    setEditingDocument({ 
-      ...documentToEdit,
-      // Add a timestamp to force the useEffect to recognize this as a "new" document
-      _forceRefresh: Date.now().toString()
-    } as DocumentTemplate & { _forceRefresh: string });
+    // Force a brand new object with timestamp to ensure complete re-initialization
+    const documentToEdit = {
+      ...document,
+      // Force refresh timestamp to trigger complete reload
+      _forceRefresh: Date.now().toString(),
+      // Also add a unique key to force React to see this as completely new
+      _uniqueKey: `${document.id}-${Date.now()}`
+    } as DocumentTemplate & { _forceRefresh: string; _uniqueKey: string };
+    
+    console.log('[Settings] Setting editing document with force refresh:', documentToEdit._forceRefresh);
+    
+    setEditingDocument(documentToEdit);
     setIsBuilderOpen(true);
   };
 

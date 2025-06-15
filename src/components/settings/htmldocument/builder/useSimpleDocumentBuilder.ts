@@ -25,6 +25,7 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
   const previousEditingDocumentId = useRef<string | undefined>(undefined);
   const previousUpdatedAt = useRef<string | undefined>(undefined);
   const previousForceRefresh = useRef<string | undefined>(undefined);
+  const previousUniqueKey = useRef<string | undefined>(undefined);
   const lastSavedContent = useRef('');
 
   // Clear any existing localStorage drafts on mount
@@ -87,7 +88,7 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
 
   // FIXED: Initialize document content - ALWAYS preserve database content
   const initializeDocument = useCallback(() => {
-    console.log('[Simple Builder] Initializing document from database only');
+    console.log('[Simple Builder] FORCE INITIALIZING document from database - completely fresh start');
     
     let newContent = '';
     let newName = '';
@@ -95,7 +96,7 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     let newPlaceholderValues = DEFAULT_PLACEHOLDER_VALUES;
 
     if (editingDocument) {
-      // ALWAYS load from database, never from drafts
+      // ALWAYS load from database, never from drafts or cache
       newName = editingDocument.name;
       
       // Simple type mapping without content detection
@@ -135,11 +136,14 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     setHasUnsavedChanges(false);
     setIsInitialized(true);
 
+    // Update all tracking refs
     previousEditingDocumentId.current = editingDocument?.id;
     previousUpdatedAt.current = editingDocument?.updated_at;
     previousForceRefresh.current = (editingDocument as any)?._forceRefresh;
+    previousUniqueKey.current = (editingDocument as any)?._uniqueKey;
     
-    console.log('[Simple Builder] Document initialized with type:', newType, 'name:', newName, 'content length:', newContent.length);
+    console.log('[Simple Builder] Document FORCE initialized with type:', newType, 'name:', newName, 'content length:', newContent.length);
+    console.log('[Simple Builder] Force refresh key:', previousForceRefresh.current, 'Unique key:', previousUniqueKey.current);
   }, [editingDocument, getTemplateForType, mapDatabaseTypeToUI]);
 
   // FIXED: Handle template type changes - preserve content when possible
@@ -172,20 +176,22 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     console.log('[Simple Builder] Template switched to:', newType, 'new content length:', newContent.length);
   }, [documentType, editingDocument, htmlContent, getTemplateForType]);
 
-  // FIXED: Initialize on mount or when editing document changes OR when content is updated in database OR force refresh
+  // FIXED: Initialize on mount or when editing document changes OR any tracking value changes
   useEffect(() => {
     const hasDocumentChanged = editingDocument?.id !== previousEditingDocumentId.current;
     const hasContentUpdated = editingDocument?.updated_at !== previousUpdatedAt.current;
     const hasForceRefresh = (editingDocument as any)?._forceRefresh !== previousForceRefresh.current;
+    const hasUniqueKeyChanged = (editingDocument as any)?._uniqueKey !== previousUniqueKey.current;
     
-    if (!isInitialized || hasDocumentChanged || hasContentUpdated || hasForceRefresh) {
-      console.log('[Simple Builder] Document changed, content updated, or force refresh triggered - reinitializing from database');
-      console.log('[Simple Builder] Document changed:', hasDocumentChanged, 'Content updated:', hasContentUpdated, 'Force refresh:', hasForceRefresh);
+    if (!isInitialized || hasDocumentChanged || hasContentUpdated || hasForceRefresh || hasUniqueKeyChanged) {
+      console.log('[Simple Builder] COMPLETE REFRESH TRIGGERED - reinitializing from database');
+      console.log('[Simple Builder] Document changed:', hasDocumentChanged, 'Content updated:', hasContentUpdated, 'Force refresh:', hasForceRefresh, 'Unique key changed:', hasUniqueKeyChanged);
       console.log('[Simple Builder] Previous updated_at:', previousUpdatedAt.current, 'New updated_at:', editingDocument?.updated_at);
       console.log('[Simple Builder] Previous force refresh:', previousForceRefresh.current, 'New force refresh:', (editingDocument as any)?._forceRefresh);
+      console.log('[Simple Builder] Previous unique key:', previousUniqueKey.current, 'New unique key:', (editingDocument as any)?._uniqueKey);
       initializeDocument();
     }
-  }, [editingDocument?.id, editingDocument?.updated_at, (editingDocument as any)?._forceRefresh, isInitialized, initializeDocument]);
+  }, [editingDocument?.id, editingDocument?.updated_at, (editingDocument as any)?._forceRefresh, (editingDocument as any)?._uniqueKey, isInitialized, initializeDocument]);
 
   // Track content changes for unsaved state
   useEffect(() => {
