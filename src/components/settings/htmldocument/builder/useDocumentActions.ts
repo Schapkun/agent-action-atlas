@@ -2,9 +2,6 @@
 import { useState, useCallback } from 'react';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { DocumentTypeUI } from './htmlDocumentConstants';
-import { useDocumentContext } from '../../contexts/DocumentContext';
-import { useSaveOperations } from './useSaveOperations';
-import { useExportOperations } from './useExportOperations';
 import { usePlaceholderReplacement } from './usePlaceholderReplacement';
 
 interface UseDocumentActionsProps {
@@ -41,14 +38,6 @@ export function useDocumentActions({
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   
-  const { selectedOrganization, selectedWorkspace } = useDocumentContext();
-  
-  const saveOperations = useSaveOperations({
-    selectedOrganization,
-    selectedWorkspace
-  });
-  
-  const exportOperations = useExportOperations();
   const { getScaledHtmlContent } = usePlaceholderReplacement({ placeholderValues });
 
   const handleSave = useCallback(async () => {
@@ -59,13 +48,29 @@ export function useDocumentActions({
 
     setIsSaving(true);
     try {
-      const savedDocument = await saveOperations.saveDocument({
-        id: editingDocument?.id,
-        name: documentName,
-        type: documentType,
-        htmlContent,
-        description: editingDocument?.description
-      });
+      // Import here to avoid circular dependencies
+      const { useDocumentContext } = await import('../../contexts/DocumentContext');
+      const documentContext = useDocumentContext();
+      
+      let savedDocument: DocumentTemplate;
+      
+      if (editingDocument) {
+        savedDocument = await documentContext.updateDocument(editingDocument.id, {
+          name: documentName,
+          type: documentType === 'schapkun' ? 'custom' : documentType,
+          html_content: htmlContent,
+          description: editingDocument.description
+        });
+      } else {
+        savedDocument = await documentContext.saveDocument({
+          name: documentName,
+          type: documentType === 'schapkun' ? 'custom' : documentType,
+          html_content: htmlContent,
+          description: `${documentType} document`,
+          is_default: false,
+          is_active: true
+        });
+      }
 
       if (savedDocument) {
         clearDraftForDocument(documentName);
@@ -84,7 +89,6 @@ export function useDocumentActions({
     documentType,
     htmlContent,
     editingDocument,
-    saveOperations,
     clearDraftForDocument,
     setHasUnsavedChanges,
     onDocumentSaved
@@ -100,13 +104,30 @@ export function useDocumentActions({
 
   const handlePDFDownload = useCallback(() => {
     const processedContent = getScaledHtmlContent(htmlContent);
-    exportOperations.downloadPDF(processedContent, documentName);
-  }, [htmlContent, documentName, getScaledHtmlContent, exportOperations]);
+    // Simple PDF download implementation
+    const blob = new Blob([processedContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${documentName}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [htmlContent, documentName, getScaledHtmlContent]);
 
   const handleHTMLExport = useCallback(() => {
     const processedContent = getScaledHtmlContent(htmlContent);
-    exportOperations.exportHTML(processedContent, documentName);
-  }, [htmlContent, documentName, getScaledHtmlContent, exportOperations]);
+    const blob = new Blob([processedContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${documentName}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [htmlContent, documentName, getScaledHtmlContent]);
 
   return {
     isSaving,

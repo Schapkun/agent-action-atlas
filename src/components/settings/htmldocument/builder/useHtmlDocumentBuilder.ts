@@ -75,7 +75,6 @@ export function useHtmlDocumentBuilder({ editingDocument, onDocumentSaved }: Use
     ...documentBuilder,
     editingDocument,
     onDocumentSaved,
-    isSaving: false, // Will be managed in useDocumentActions
     clearDraftForDocument: documentBuilder.clearDraftForDocument
   });
 
