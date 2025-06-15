@@ -173,10 +173,9 @@ export const Sidebar = ({
                   <>
                     <span className="ml-3 flex-1 text-left">{item.label}</span>
                     {item.hasSubmenu && (
-                      {expandedMenus.includes(item.id) ? 
+                      expandedMenus.includes(item.id) ? 
                         <ChevronDown className="h-4 w-4" /> : 
                         <ChevronRight className="h-4 w-4" />
-                      }
                     )}
                     {item.badge && item.badge > 0 && (
                       <Badge 
