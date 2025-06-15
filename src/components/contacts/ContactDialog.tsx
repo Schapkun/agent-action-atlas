@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ContactDialogTabs } from './ContactDialogTabs';
+import { useContactCreator } from './ContactCreator';
 
 interface Contact {
   id: string;
@@ -26,6 +27,7 @@ interface ContactDialogProps {
 }
 
 export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: ContactDialogProps) => {
+  const { saveContact, updateContact } = useContactCreator();
   const [formData, setFormData] = useState({
     number: '',
     type: 'Privé',
@@ -109,25 +111,39 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
     }
   }, [contact, mode, isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const contactData: Contact = {
-      id: formData.number,
-      name: formData.name,
-      email: formData.email,
-      address: formData.address,
-      postal_code: formData.postalCode,
-      city: formData.city,
-      country: formData.country,
-      phone: formData.phone,
-      mobile: formData.mobile,
-      type: formData.type,
-      payment_terms: formData.paymentTerms
-    };
+    try {
+      const contactData: Contact = {
+        id: formData.number,
+        name: formData.name,
+        email: formData.email,
+        address: formData.address,
+        postal_code: formData.postalCode,
+        city: formData.city,
+        country: formData.country,
+        phone: formData.phone,
+        mobile: formData.mobile,
+        type: formData.type,
+        payment_terms: formData.paymentTerms
+      };
 
-    onSave(contactData);
-    onClose();
+      let savedContact: Contact;
+      
+      if (mode === 'edit') {
+        savedContact = await updateContact(contactData);
+      } else {
+        savedContact = await saveContact(contactData);
+      }
+
+      // Call the parent's onSave with the saved contact
+      onSave(savedContact);
+      onClose();
+    } catch (error) {
+      console.error('Error saving contact:', error);
+      // Don't close dialog on error
+    }
   };
 
   const handleCancel = () => {

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -88,10 +87,16 @@ const CreateInvoice = () => {
 
   const { toast } = useToast();
 
+  // Filter templates for factuur and schapkun types
+  const availableTemplates = documentTemplates.filter(t => 
+    t.type === 'factuur' || t.type === 'schapkun'
+  );
+
   // Set default template and payment terms when loaded
   useEffect(() => {
-    if (documentTemplates.length > 0 && !selectedTemplate) {
-      setSelectedTemplate(documentTemplates[0].id);
+    if (availableTemplates.length > 0 && !selectedTemplate) {
+      console.log('Available templates:', availableTemplates);
+      setSelectedTemplate(availableTemplates[0].id);
     }
     if (invoiceSettings.default_payment_terms) {
       setFormData(prev => ({
@@ -99,7 +104,7 @@ const CreateInvoice = () => {
         payment_terms: invoiceSettings.default_payment_terms
       }));
     }
-  }, [documentTemplates, selectedTemplate, invoiceSettings]);
+  }, [availableTemplates, selectedTemplate, invoiceSettings]);
 
   // Calculate due date based on payment terms and invoice date
   const calculateDueDate = (invoiceDate: string, paymentTerms: number) => {
@@ -187,6 +192,7 @@ const CreateInvoice = () => {
     }));
   };
 
+  // Fix contact creation - only save contact, don't create invoice
   const handleContactCreated = (contact: Contact) => {
     console.log('Contact created:', contact);
     setSelectedContact(contact);
@@ -197,6 +203,7 @@ const CreateInvoice = () => {
     });
   };
 
+  // Fix contact update - only save contact, don't create invoice
   const handleContactUpdated = (contact: Contact) => {
     console.log('Contact updated:', contact);
     setSelectedContact(contact);
@@ -297,10 +304,15 @@ const CreateInvoice = () => {
     updateLineItem(index, 'description', content);
   };
 
+  // Fixed preview HTML generation
   const generatePreviewHTML = () => {
-    const selectedTemplateData = documentTemplates.find(t => t.id === selectedTemplate);
+    const selectedTemplateData = availableTemplates.find(t => t.id === selectedTemplate);
     const { subtotal, vatAmount, total } = calculateTotals();
     
+    console.log('Generating preview with template:', selectedTemplateData?.name);
+    console.log('Line items for preview:', lineItems);
+    
+    // Default template when no custom template is selected
     if (!selectedTemplateData) {
       return `
         <html>
@@ -373,25 +385,10 @@ const CreateInvoice = () => {
       `;
     }
 
+    // Use selected template and replace ALL placeholders
     let templateHTML = selectedTemplateData.html_content;
 
-    // Replace placeholders with actual data
-    templateHTML = templateHTML
-      .replace(/\{invoice_number\}/g, invoiceNumber || getDefaultInvoiceNumber())
-      .replace(/\{invoice_date\}/g, formData.invoice_date)
-      .replace(/\{due_date\}/g, formData.due_date)
-      .replace(/\{client_name\}/g, formData.client_name)
-      .replace(/\{client_address\}/g, formData.client_address)
-      .replace(/\{client_postal_code\}/g, formData.client_postal_code)
-      .replace(/\{client_city\}/g, formData.client_city)
-      .replace(/\{client_country\}/g, formData.client_country)
-      .replace(/\{subtotal\}/g, subtotal.toFixed(2))
-      .replace(/\{vat_amount\}/g, vatAmount.toFixed(2))
-      .replace(/\{total\}/g, total.toFixed(2))
-      .replace(/\{payment_terms\}/g, formData.payment_terms.toString())
-      .replace(/\{client_email\}/g, formData.client_email);
-
-    // Generate line items HTML
+    // Generate line items HTML for template replacement
     const lineItemsHTML = lineItems.map(item => `
       <tr>
         <td>${item.description || ''}</td>
@@ -402,8 +399,25 @@ const CreateInvoice = () => {
       </tr>
     `).join('');
 
-    templateHTML = templateHTML.replace(/\{line_items\}/g, lineItemsHTML);
+    // Replace ALL placeholders in the template
+    templateHTML = templateHTML
+      .replace(/\{invoice_number\}/g, invoiceNumber || getDefaultInvoiceNumber())
+      .replace(/\{invoice_date\}/g, formData.invoice_date)
+      .replace(/\{due_date\}/g, formData.due_date)
+      .replace(/\{client_name\}/g, formData.client_name)
+      .replace(/\{client_address\}/g, formData.client_address)
+      .replace(/\{client_postal_code\}/g, formData.client_postal_code)
+      .replace(/\{client_city\}/g, formData.client_city)
+      .replace(/\{client_country\}/g, formData.client_country)
+      .replace(/\{client_email\}/g, formData.client_email)
+      .replace(/\{subtotal\}/g, subtotal.toFixed(2))
+      .replace(/\{vat_amount\}/g, vatAmount.toFixed(2))
+      .replace(/\{total\}/g, total.toFixed(2))
+      .replace(/\{payment_terms\}/g, formData.payment_terms.toString())
+      .replace(/\{line_items\}/g, lineItemsHTML)
+      .replace(/\{notes\}/g, formData.notes);
 
+    console.log('Template HTML generated successfully');
     return templateHTML;
   };
 
@@ -603,7 +617,7 @@ Uw administratie`
                       <SelectValue placeholder="Selecteer layout" />
                     </SelectTrigger>
                     <SelectContent className="bg-white border shadow-lg z-50">
-                      {documentTemplates.map((template) => (
+                      {availableTemplates.map((template) => (
                         <SelectItem key={template.id} value={template.id}>
                           {template.name}
                         </SelectItem>
@@ -722,7 +736,8 @@ Uw administratie`
                             minHeight: '32px', 
                             direction: 'ltr', 
                             textAlign: 'left',
-                            unicodeBidi: 'normal'
+                            unicodeBidi: 'normal',
+                            writingMode: 'horizontal-tb'
                           }}
                         />
                         <div className="flex items-center gap-1">
