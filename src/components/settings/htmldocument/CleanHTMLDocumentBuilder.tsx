@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -231,9 +232,11 @@ export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> =
     }
   }, [documentId, templates, selectedLayoutId, getDraft, applyLayoutStyling, setCurrentDocument]);
 
-  // Auto-save draft when content changes
+  // Auto-save draft when content changes - debounced with proper dependencies
   useEffect(() => {
-    if (name && htmlContent && type) {
+    if (!name || !htmlContent || !type) return;
+    
+    const timeoutId = setTimeout(() => {
       const draft = {
         name,
         type,
@@ -247,7 +250,10 @@ export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> =
       
       // Save draft with current layout
       saveDraft(documentId, draft, selectedLayoutId);
-    }
+      console.log('[Builder] Auto-saved draft for layout:', selectedLayoutId);
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
   }, [htmlContent, placeholders, name, type, documentId, selectedLayoutId, saveDraft]);
 
   // Handle layout switch
@@ -276,7 +282,6 @@ export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> =
     if (newLayoutDraft) {
       console.log('[Builder] Loading existing content for layout:', layout.id);
       setHtmlContent(newLayoutDraft.htmlContent);
-      // Safely merge placeholder values with defaults
       setPlaceholders(mergePlaceholders(newLayoutDraft.placeholderValues));
     } else {
       console.log('[Builder] Applying new layout styling to current content');
