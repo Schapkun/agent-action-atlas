@@ -5,13 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Send } from 'lucide-react';
+import { Plus, Trash2, Send, Bold, Italic, Underline, List, AlignLeft, AlignCenter, AlignRight, Link, Paperclip, MoreHorizontal, MessageSquare } from 'lucide-react';
 import { useInvoices, Invoice } from '@/hooks/useInvoices';
 import { useInvoiceLines } from '@/hooks/useInvoiceLines';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { DialogFooter } from '@/components/settings/components/DialogFooter';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface InvoiceDialogProps {
   isOpen: boolean;
@@ -47,6 +47,7 @@ export const InvoiceDialog = ({ isOpen, onClose, invoice }: InvoiceDialogProps) 
   
   const [loading, setLoading] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState('debuitendeur.nl');
   
   const [formData, setFormData] = useState<InvoiceFormData>({
     client_name: '',
@@ -269,252 +270,348 @@ Uw administratie`
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader>
-          <DialogTitle>
-            {invoice ? 'Factuur Bewerken' : 'Nieuwe Factuur'}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-7xl max-h-[95vh] flex flex-col overflow-hidden p-0">
+        {/* Header like in screenshot */}
+        <div className="bg-white border-b px-6 py-4 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-semibold text-green-600">📄 Factuur</h2>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button variant="outline" className="bg-blue-500 text-white hover:bg-blue-600 border-blue-500">
+              Verstuur
+            </Button>
+            <Button variant="outline">📋</Button>
+            <Button variant="outline">❌</Button>
+            <Button variant="outline">↶</Button>
+            <Button variant="outline">↷</Button>
+            <div className="flex items-center gap-2 ml-4">
+              <Button variant="outline" className="flex items-center gap-2">
+                👁️ Voorbeeld
+              </Button>
+              <Button variant="outline" className="flex items-center gap-2">
+                💾 Opslaan als concept
+              </Button>
+              <Button variant="outline" className="flex items-center gap-2">
+                ⚙️ Naar offerte
+              </Button>
+            </div>
+          </div>
+        </div>
 
-        <div className="flex-1 overflow-y-auto">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Client Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Klantgegevens</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="client_name">Naam *</Label>
-                    <Input
-                      id="client_name"
-                      value={formData.client_name}
-                      onChange={(e) => setFormData({...formData, client_name: e.target.value})}
-                      required
-                    />
+        <div className="flex-1 flex overflow-hidden">
+          {/* Main content area */}
+          <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Client selection section like in screenshot */}
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="flex-1">
+                    <Label htmlFor="client_select" className="text-sm font-medium">Aan</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input 
+                        placeholder="Selecteer klant - zoek op naam, klantnummer, plaats, adres, e-mailadres of postcode"
+                        className="flex-1"
+                        value={formData.client_name}
+                        onChange={(e) => setFormData({...formData, client_name: e.target.value})}
+                      />
+                      <Button type="button" variant="outline" className="text-blue-500">Nieuw</Button>
+                      <Button type="button" variant="outline" className="text-blue-500">Bewerken</Button>
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="client_email">E-mail</Label>
-                    <Input
-                      id="client_email"
-                      type="email"
-                      value={formData.client_email}
-                      onChange={(e) => setFormData({...formData, client_email: e.target.value})}
-                    />
+                  <div className="w-64">
+                    <Label className="text-sm font-medium">Profiel</Label>
+                    <Select value={selectedProfile} onValueChange={setSelectedProfile}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="debuitendeur.nl">debuitendeur.nl</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+                  <Button type="button" variant="outline" size="icon">⚙️</Button>
                 </div>
-                
-                <div>
-                  <Label htmlFor="client_address">Adres</Label>
-                  <Input
-                    id="client_address"
-                    value={formData.client_address}
-                    onChange={(e) => setFormData({...formData, client_address: e.target.value})}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="client_postal_code">Postcode</Label>
-                    <Input
-                      id="client_postal_code"
-                      value={formData.client_postal_code}
-                      onChange={(e) => setFormData({...formData, client_postal_code: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="client_city">Plaats</Label>
-                    <Input
-                      id="client_city"
-                      value={formData.client_city}
-                      onChange={(e) => setFormData({...formData, client_city: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="client_country">Land</Label>
-                    <Input
-                      id="client_country"
-                      value={formData.client_country}
-                      onChange={(e) => setFormData({...formData, client_country: e.target.value})}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Invoice Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Factuurgegevens</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* References section */}
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <Label className="text-sm font-medium">Referenties</Label>
+                  <Button type="button" variant="link" className="text-blue-500 text-sm">Bewerk introductie</Button>
+                </div>
+                <Input placeholder="Voer hier een factuurreferentie in van maximaal 3 regels." className="text-sm" />
+              </div>
+
+              {/* Invoice details section */}
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <div className="grid grid-cols-6 gap-4 mb-4">
                   <div>
-                    <Label htmlFor="invoice_date">Factuurdatum</Label>
-                    <Input
-                      id="invoice_date"
+                    <Label className="text-sm font-medium">Factuur</Label>
+                    <div className="flex mt-1">
+                      <span className="text-sm bg-gray-100 px-2 py-1 rounded-l border">2025-</span>
+                      <Input className="rounded-l-none border-l-0" placeholder="185" />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Datum</Label>
+                    <Input 
                       type="date"
                       value={formData.invoice_date}
                       onChange={(e) => setFormData({...formData, invoice_date: e.target.value})}
+                      className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="due_date">Vervaldatum</Label>
-                    <Input
-                      id="due_date"
+                    <Label className="text-sm font-medium">Vervaldatum</Label>
+                    <Input 
                       type="date"
                       value={formData.due_date}
                       onChange={(e) => setFormData({...formData, due_date: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="payment_terms">Betalingstermijn (dagen)</Label>
-                    <Input
-                      id="payment_terms"
-                      type="number"
-                      value={formData.payment_terms}
-                      onChange={(e) => setFormData({...formData, payment_terms: parseInt(e.target.value)})}
+                      className="mt-1"
                     />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Line Items */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">Factuurregels</CardTitle>
-                <Button type="button" onClick={addLineItem} size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Regel toevoegen
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {lineItems.map((item, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-2 items-end">
-                    <div className="col-span-5">
-                      <Label>Omschrijving</Label>
-                      <Input
-                        value={item.description}
-                        onChange={(e) => updateLineItem(index, 'description', e.target.value)}
-                        placeholder="Beschrijving van het item"
-                      />
+              {/* Products/Services table */}
+              <div className="bg-white rounded-lg shadow-sm">
+                <div className="p-4 border-b">
+                  <div className="flex justify-between items-center">
+                    <div className="grid grid-cols-6 gap-4 text-sm font-medium text-gray-700 flex-1">
+                      <div>Aantal</div>
+                      <div className="col-span-2">Omschrijving</div>
+                      <div>Prijs</div>
+                      <div>btw</div>
+                      <div>Prijs incl. btw</div>
                     </div>
-                    <div className="col-span-2">
-                      <Label>Aantal</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={item.quantity}
-                        onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <Label>Prijs</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={item.unit_price}
-                        onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="col-span-1">
-                      <Label>BTW%</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={item.vat_rate}
-                        onChange={(e) => updateLineItem(index, 'vat_rate', parseFloat(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="col-span-1">
-                      <Label>Totaal</Label>
-                      <div className="px-3 py-2 bg-gray-50 rounded text-sm">
-                        €{item.line_total.toFixed(2)}
-                      </div>
-                    </div>
-                    <div className="col-span-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeLineItem(index)}
-                        disabled={lineItems.length === 1}
+                  </div>
+                </div>
+
+                <div className="p-4">
+                  {lineItems.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>Er zijn geen productregels</p>
+                      <Button 
+                        type="button" 
+                        onClick={addLineItem}
+                        className="mt-4 bg-gray-100 text-gray-700 hover:bg-gray-200"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        Voeg regel toe
                       </Button>
                     </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+                  ) : (
+                    <div className="space-y-2">
+                      {lineItems.map((item, index) => (
+                        <div key={index} className="grid grid-cols-6 gap-4 items-center">
+                          <div>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={item.quantity}
+                              onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                              className="text-center"
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <div className="relative">
+                              <Textarea
+                                value={item.description}
+                                onChange={(e) => updateLineItem(index, 'description', e.target.value)}
+                                placeholder=""
+                                className="min-h-[40px] resize-none"
+                                rows={1}
+                              />
+                              {/* Rich text editor toolbar */}
+                              <div className="flex items-center gap-1 mt-1 text-gray-500">
+                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                  <Bold className="h-3 w-3" />
+                                </Button>
+                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                  <Italic className="h-3 w-3" />
+                                </Button>
+                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                  <Underline className="h-3 w-3" />
+                                </Button>
+                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                  <List className="h-3 w-3" />
+                                </Button>
+                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                  <AlignLeft className="h-3 w-3" />
+                                </Button>
+                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                  <AlignCenter className="h-3 w-3" />
+                                </Button>
+                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                  <AlignRight className="h-3 w-3" />
+                                </Button>
+                                <Select defaultValue="9pt">
+                                  <SelectTrigger className="h-6 w-16 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="9pt">9pt</SelectItem>
+                                    <SelectItem value="10pt">10pt</SelectItem>
+                                    <SelectItem value="12pt">12pt</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                  📋
+                                </Button>
+                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                  ❓
+                                </Button>
+                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                  <Link className="h-3 w-3" />
+                                </Button>
+                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                  <Paperclip className="h-3 w-3" />
+                                </Button>
+                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                  <MoreHorizontal className="h-3 w-3" />
+                                </Button>
+                                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                  <MessageSquare className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center">
+                              <span className="text-sm mr-1">€</span>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={item.unit_price}
+                                onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                                className="text-right"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={item.vat_rate}
+                                onChange={(e) => updateLineItem(index, 'vat_rate', parseFloat(e.target.value) || 0)}
+                                className="text-right w-16"
+                              />
+                              <span className="text-sm ml-1">%</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <span className="text-sm mr-1">€</span>
+                              <span className="text-sm font-medium">{item.line_total.toFixed(2)}</span>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeLineItem(index)}
+                              disabled={lineItems.length === 1}
+                              className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
 
-            {/* Totals */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-2 max-w-md ml-auto">
-                  <div className="flex justify-between">
-                    <span>Subtotaal:</span>
-                    <span>€{subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>BTW:</span>
-                    <span>€{vatAmount.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-lg border-t pt-2">
-                    <span>Totaal:</span>
-                    <span>€{total.toFixed(2)}</span>
+              {/* Add line and rich text toolbar */}
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Button 
+                    type="button" 
+                    onClick={addLineItem}
+                    className="bg-blue-500 text-white hover:bg-blue-600"
+                  >
+                    Voeg regel toe
+                  </Button>
+                  {/* Toolbar buttons as in screenshot */}
+                  <div className="flex items-center gap-1 ml-4">
+                    <Button type="button" variant="ghost" size="sm">
+                      <Bold className="h-4 w-4" />
+                    </Button>
+                    <Button type="button" variant="ghost" size="sm">
+                      <Italic className="h-4 w-4" />
+                    </Button>
+                    <Button type="button" variant="ghost" size="sm">
+                      <Underline className="h-4 w-4" />
+                    </Button>
+                    <Button type="button" variant="ghost" size="sm">
+                      <List className="h-4 w-4" />
+                    </Button>
+                    <Button type="button" variant="ghost" size="sm">
+                      📋
+                    </Button>
+                    <Button type="button" variant="ghost" size="sm">
+                      ❓
+                    </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Notes */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Notities</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  value={formData.notes}
-                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                  placeholder="Extra opmerkingen voor deze factuur..."
-                  rows={3}
+              {/* Footer with payment info */}
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <Textarea 
+                  value="Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendeur.nl met omschrijving: %INVOICE_NUMBER%"
+                  className="text-sm"
+                  rows={2}
                 />
-              </CardContent>
-            </Card>
+              </div>
+            </form>
+          </div>
 
-            {/* Actions */}
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={onClose}>
+          {/* Right sidebar with total */}
+          <div className="w-80 bg-white border-l p-6 flex flex-col">
+            <div className="flex-1">
+              {/* Total section */}
+              <div className="bg-blue-50 rounded-lg p-4 mb-6">
+                <div className="text-right">
+                  <div className="text-2xl font-bold">Totaal</div>
+                  <div className="text-3xl font-bold text-blue-600">€ {total.toFixed(2)}</div>
+                </div>
+              </div>
+
+              {/* Additional options could go here */}
+            </div>
+
+            {/* Action buttons */}
+            <div className="space-y-2 pt-4 border-t">
+              <Button 
+                type="button" 
+                onClick={onClose}
+                variant="outline" 
+                className="w-full"
+              >
                 Annuleren
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button 
+                type="submit" 
+                disabled={loading}
+                className="w-full"
+                onClick={handleSubmit}
+              >
                 {loading ? 'Opslaan...' : (invoice ? 'Bijwerken' : 'Opslaan')}
               </Button>
               <Button 
                 type="button" 
                 onClick={handleSaveAndSend}
                 disabled={sendLoading || !formData.client_email}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="w-full bg-blue-600 hover:bg-blue-700"
               >
                 <Send className="h-4 w-4 mr-2" />
                 {sendLoading ? 'Verzenden...' : 'Opslaan & Versturen'}
               </Button>
             </div>
-          </form>
+          </div>
         </div>
-
-        <DialogFooter
-          onCancel={onClose}
-          onSave={handleSave}
-          saving={loading}
-          showSendButton={true}
-          onSend={handleSend}
-          sending={sendLoading}
-          sendDisabled={!formData.client_email}
-        />
       </DialogContent>
     </Dialog>
   );

@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { 
   LayoutDashboard, 
   Activity, 
@@ -16,7 +17,14 @@ import {
   Phone,
   Mail,
   Users,
-  Clock
+  Clock,
+  ChevronDown,
+  ChevronRight,
+  Plus,
+  Send,
+  Eye,
+  FileCheck,
+  Calculator
 } from 'lucide-react';
 
 export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
@@ -35,6 +43,15 @@ export const Sidebar = ({
   pendingTasksCount = 0 
 }: SidebarProps) => {
   const navigate = useNavigate();
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['invoices']);
+
+  const toggleSubmenu = (menuId: string) => {
+    setExpandedMenus(prev => 
+      prev.includes(menuId) 
+        ? prev.filter(id => id !== menuId)
+        : [...prev, menuId]
+    );
+  };
 
   const menuItems = [
     { id: 'overview' as ViewType, label: 'Dashboard', icon: LayoutDashboard, path: '/' },
@@ -43,12 +60,41 @@ export const Sidebar = ({
     { id: 'documents' as ViewType, label: 'Documenten', icon: FolderOpen, path: '/documenten' },
     { id: 'active-dossiers' as ViewType, label: 'Actieve Dossiers', icon: FileText, path: '/actieve-dossiers' },
     { id: 'closed-dossiers' as ViewType, label: 'Gesloten Dossiers', icon: FolderX, path: '/gesloten-dossiers' },
-    { id: 'invoices' as ViewType, label: 'Facturen', icon: CreditCard, path: '/facturen' },
+    { 
+      id: 'invoices' as ViewType, 
+      label: 'Facturen', 
+      icon: CreditCard, 
+      path: '/facturen',
+      hasSubmenu: true,
+      submenu: [
+        { id: 'new-invoice', label: 'Opstellen', icon: Plus, action: 'new-invoice' },
+        { id: 'sent-invoices', label: 'Verzonden', icon: Send, path: '/facturen?status=sent' },
+        { id: 'concept-invoices', label: 'Concepten', icon: FileCheck, path: '/facturen?status=draft' },
+        { id: 'paid-invoices', label: 'Betaald', icon: Calculator, path: '/facturen?status=paid' },
+      ]
+    },
     { id: 'phone-calls' as ViewType, label: 'Telefoongesprekken', icon: Phone, path: '/telefoongesprekken' },
     { id: 'emails' as ViewType, label: 'E-mails', icon: Mail, path: '/e-mails' },
     { id: 'contacts' as ViewType, label: 'Contacten', icon: Users, path: '/contacten' },
     { id: 'settings' as ViewType, label: 'Instellingen', icon: Settings, path: '/instellingen' },
   ];
+
+  const handleMenuClick = (item: any, submenuItem?: any) => {
+    if (submenuItem?.action === 'new-invoice') {
+      // Trigger new invoice dialog - we'll implement this in the parent
+      const event = new CustomEvent('openNewInvoiceDialog');
+      window.dispatchEvent(event);
+      return;
+    }
+    
+    if (item.hasSubmenu && !submenuItem) {
+      toggleSubmenu(item.id);
+      return;
+    }
+    
+    const path = submenuItem?.path || item.path;
+    navigate(path);
+  };
 
   return (
     <div className={cn(
@@ -83,18 +129,24 @@ export const Sidebar = ({
         <ul className="space-y-2">
           {menuItems.map((item) => (
             <li key={item.id}>
+              {/* Main menu item */}
               <Button
                 variant={currentView === item.id ? "secondary" : "ghost"}
                 className={cn(
                   "w-full justify-start relative",
                   collapsed && "px-3"
                 )}
-                onClick={() => navigate(item.path)}
+                onClick={() => handleMenuClick(item)}
               >
                 <item.icon className="h-4 w-4" />
                 {!collapsed && (
                   <>
-                    <span className="ml-3">{item.label}</span>
+                    <span className="ml-3 flex-1 text-left">{item.label}</span>
+                    {item.hasSubmenu && (
+                      expandedMenus.includes(item.id) ? 
+                        <ChevronDown className="h-4 w-4" /> : 
+                        <ChevronRight className="h-4 w-4" />
+                    )}
                     {item.badge && item.badge > 0 && (
                       <Badge 
                         variant="secondary" 
@@ -114,6 +166,25 @@ export const Sidebar = ({
                   </Badge>
                 )}
               </Button>
+
+              {/* Submenu */}
+              {item.hasSubmenu && !collapsed && expandedMenus.includes(item.id) && (
+                <ul className="ml-6 mt-2 space-y-1">
+                  {item.submenu?.map((submenuItem) => (
+                    <li key={submenuItem.id}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start text-sm"
+                        onClick={() => handleMenuClick(item, submenuItem)}
+                      >
+                        <submenuItem.icon className="h-3 w-3" />
+                        <span className="ml-2">{submenuItem.label}</span>
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))}
         </ul>
