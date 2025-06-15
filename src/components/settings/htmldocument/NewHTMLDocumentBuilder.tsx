@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,7 +57,8 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
     switchToLayout,
     availableTemplates,
     selectedOrganization,
-    selectedWorkspace
+    selectedWorkspace,
+    hasDraft
   } = useNewDocumentBuilder(documentId);
 
   const {
@@ -177,7 +179,7 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
             />
           </div>
           {getDraftStatusBadge()}
-          {hasLayoutDraft(selectedLayoutId) && (
+          {hasDraft() && (
             <Badge variant="outline" className="flex items-center gap-1">
               <Palette className="h-3 w-3" />
               Layout draft
