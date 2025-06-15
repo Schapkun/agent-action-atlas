@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -168,8 +167,8 @@ const DEFAULT_PLACEHOLDERS = {
   LINE_TOTAL: '100.00'
 };
 
-// Helper function to safely merge placeholder values
-const mergePlaceholders = (templateValues: Record<string, string> | null | undefined) => {
+// Helper function to safely merge placeholder values - FIXED TypeScript issue
+const mergePlaceholders = (templateValues: Record<string, string> | null | undefined): typeof DEFAULT_PLACEHOLDERS => {
   const result = { ...DEFAULT_PLACEHOLDERS };
   
   if (templateValues && typeof templateValues === 'object') {
@@ -289,7 +288,7 @@ export const CleanHTMLDocumentBuilder: React.FC<CleanHTMLDocumentBuilderProps> =
     const newLayoutDraft = getDraft(documentId, layout.id);
     
     let finalContent: string;
-    let finalPlaceholders: Record<string, string>;
+    let finalPlaceholders: typeof DEFAULT_PLACEHOLDERS;
     
     if (newLayoutDraft) {
       // Use existing content for this layout
