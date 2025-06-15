@@ -9,6 +9,7 @@ import { LayoutSwitcher } from './components/LayoutSwitcher';
 import { LivePreview } from './components/LivePreview';
 import { useDirectSave } from './hooks/useDirectSave';
 import { UNIQUE_LAYOUT_TEMPLATES } from '../types/LayoutTemplates';
+import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 
 interface HtmlDocumentBuilderProps {
   documentId?: string;
@@ -19,29 +20,66 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
   const [selectedLayoutId, setSelectedLayoutId] = useState('modern-blue');
   const [htmlContent, setHtmlContent] = useState('<h1>Document Title</h1>\n<p>Start typing your content here...</p>');
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const { toast } = useToast();
   const { saveData, loadData, hasUnsavedChanges } = useDirectSave(documentId);
+  const { templates } = useDocumentTemplates();
 
-  // Load saved data when component mounts or document changes
+  // Load initial data when component mounts or document changes
   useEffect(() => {
-    const loadSavedData = async () => {
-      if (documentId) {
-        const savedData = await loadData();
+    const loadInitialData = async () => {
+      if (!documentId) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        console.log('[Builder] Loading initial data for document:', documentId);
+        
+        // First, try to load data for the current layout
+        const savedData = await loadData(selectedLayoutId);
+        
         if (savedData) {
-          setSelectedLayoutId(savedData.layoutId || 'modern-blue');
-          setHtmlContent(savedData.htmlContent || htmlContent);
+          console.log('[Builder] Found saved data:', savedData);
+          setSelectedLayoutId(savedData.layoutId);
+          setHtmlContent(savedData.htmlContent);
+        } else {
+          // If no saved data, check if we have a template with basic content
+          const template = templates.find(t => t.id === documentId);
+          if (template) {
+            console.log('[Builder] Using template data:', template);
+            
+            // Get the current layout ID from placeholder_values if available
+            const savedLayoutId = template.placeholder_values?.layoutId as string;
+            if (savedLayoutId) {
+              setSelectedLayoutId(savedLayoutId);
+            }
+            
+            // Use html_content if available
+            if (template.html_content) {
+              setHtmlContent(template.html_content);
+            }
+          }
         }
+      } catch (error) {
+        console.error('[Builder] Error loading initial data:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     
-    loadSavedData();
-  }, [documentId, loadData]);
+    loadInitialData();
+  }, [documentId, loadData, templates]);
 
-  // Auto-save when content changes
+  // Auto-save when content changes (with debounce)
   useEffect(() => {
+    if (isLoading) return;
+    
     const autoSave = async () => {
       if (documentId) {
+        console.log('[Builder] Auto-saving content for layout:', selectedLayoutId);
         await saveData({
           layoutId: selectedLayoutId,
           htmlContent: htmlContent,
@@ -52,13 +90,13 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
 
     const debounceTimer = setTimeout(autoSave, 1000);
     return () => clearTimeout(debounceTimer);
-  }, [selectedLayoutId, htmlContent, documentId, saveData]);
+  }, [selectedLayoutId, htmlContent, documentId, saveData, isLoading]);
 
   const handleLayoutChange = async (newLayoutId: string) => {
-    console.log('Switching layout from', selectedLayoutId, 'to', newLayoutId);
+    console.log('[Builder] Switching layout from', selectedLayoutId, 'to', newLayoutId);
     
-    // Save current content with current layout
-    if (documentId) {
+    // Save current content with current layout before switching
+    if (documentId && !isLoading) {
       await saveData({
         layoutId: selectedLayoutId,
         htmlContent: htmlContent,
@@ -69,7 +107,10 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
     // Load content for new layout
     const savedData = await loadData(newLayoutId);
     if (savedData && savedData.htmlContent) {
+      console.log('[Builder] Loading saved content for layout:', newLayoutId);
       setHtmlContent(savedData.htmlContent);
+    } else {
+      console.log('[Builder] No saved content for layout:', newLayoutId, 'keeping current content');
     }
     
     setSelectedLayoutId(newLayoutId);
@@ -128,6 +169,17 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
 
     return styledHtml;
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+          <p className="text-sm text-gray-600">Document laden...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col bg-gray-50">

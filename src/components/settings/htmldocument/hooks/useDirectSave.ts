@@ -10,7 +10,7 @@ interface SaveData {
 
 export const useDirectSave = (documentId?: string) => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const { updateTemplate } = useDocumentTemplates();
+  const { updateTemplate, templates } = useDocumentTemplates();
   const dataCache = useRef<Map<string, SaveData>>(new Map());
 
   const saveData = useCallback(async (data: SaveData) => {
@@ -26,10 +26,21 @@ export const useDirectSave = (documentId?: string) => {
       const cacheKey = `${documentId}:${data.layoutId}`;
       dataCache.current.set(cacheKey, data);
       
+      // Get current template to preserve other data
+      const currentTemplate = templates.find(t => t.id === documentId);
+      const currentPlaceholders = currentTemplate?.placeholder_values || {};
+      
+      // Create layout-specific placeholder values
+      const updatedPlaceholders = {
+        ...currentPlaceholders,
+        [`layout_${data.layoutId}_content`]: data.htmlContent,
+        layoutId: data.layoutId
+      };
+      
       // Save to database
       await updateTemplate(documentId, {
         html_content: data.htmlContent,
-        placeholder_values: { layoutId: data.layoutId }
+        placeholder_values: updatedPlaceholders
       });
       
       setHasUnsavedChanges(false);
@@ -38,7 +49,7 @@ export const useDirectSave = (documentId?: string) => {
       console.error('[DirectSave] Save failed:', error);
       setHasUnsavedChanges(true);
     }
-  }, [documentId, updateTemplate]);
+  }, [documentId, updateTemplate, templates]);
 
   const loadData = useCallback(async (specificLayoutId?: string): Promise<SaveData | null> => {
     if (!documentId) {
@@ -57,14 +68,45 @@ export const useDirectSave = (documentId?: string) => {
         return cachedData;
       }
       
-      // If no specific layout data, return null to use default
-      console.log('[DirectSave] No cached data for layout:', layoutId);
+      // Load from database
+      const template = templates.find(t => t.id === documentId);
+      if (template?.placeholder_values) {
+        const layoutSpecificContent = template.placeholder_values[`layout_${layoutId}_content`];
+        
+        if (layoutSpecificContent) {
+          const loadedData: SaveData = {
+            layoutId,
+            htmlContent: layoutSpecificContent as string,
+            lastModified: new Date(template.updated_at).getTime()
+          };
+          
+          // Cache the loaded data
+          dataCache.current.set(cacheKey, loadedData);
+          
+          console.log('[DirectSave] Loaded from database for layout:', layoutId);
+          return loadedData;
+        }
+      }
+      
+      // If no layout-specific data, use general html_content as fallback
+      if (template?.html_content) {
+        const fallbackData: SaveData = {
+          layoutId,
+          htmlContent: template.html_content,
+          lastModified: new Date(template.updated_at).getTime()
+        };
+        
+        console.log('[DirectSave] Using fallback content for layout:', layoutId);
+        return fallbackData;
+      }
+      
+      console.log('[DirectSave] No saved data for layout:', layoutId);
       return null;
     } catch (error) {
       console.error('[DirectSave] Load failed:', error);
       return null;
     }
-  }, [documentId]);
+  }, [documentId, templates]);
 
   const clearCache = useCallback(() => {
     dataCache.current.clear();
