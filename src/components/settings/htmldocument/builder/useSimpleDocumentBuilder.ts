@@ -23,6 +23,7 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
   // Control flags
   const [isInitialized, setIsInitialized] = useState(false);
   const previousEditingDocumentId = useRef<string | undefined>(undefined);
+  const previousUpdatedAt = useRef<string | undefined>(undefined);
   const lastSavedContent = useRef('');
 
   // Clear any existing localStorage drafts on mount
@@ -143,6 +144,7 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     setIsInitialized(true);
 
     previousEditingDocumentId.current = editingDocument?.id;
+    previousUpdatedAt.current = editingDocument?.updated_at;
     
     console.log('[Simple Builder] Document initialized with type:', newType, 'name:', newName);
   }, [editingDocument, getTemplateForType, mapDatabaseTypeToUI]);
@@ -165,12 +167,15 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     console.log('[Simple Builder] Template switched to:', newType);
   }, [documentType, getTemplateForType]);
 
-  // Initialize on mount or when editing document changes
+  // Initialize on mount or when editing document changes OR when content is updated in database
   useEffect(() => {
     const hasDocumentChanged = editingDocument?.id !== previousEditingDocumentId.current;
+    const hasContentUpdated = editingDocument?.updated_at !== previousUpdatedAt.current;
     
-    if (!isInitialized || hasDocumentChanged) {
-      console.log('[Simple Builder] Document changed, reinitializing from database');
+    if (!isInitialized || hasDocumentChanged || hasContentUpdated) {
+      console.log('[Simple Builder] Document changed or updated, reinitializing from database');
+      console.log('[Simple Builder] Document changed:', hasDocumentChanged, 'Content updated:', hasContentUpdated);
+      console.log('[Simple Builder] Previous updated_at:', previousUpdatedAt.current, 'New updated_at:', editingDocument?.updated_at);
       initializeDocument();
     }
   }, [editingDocument?.id, editingDocument?.updated_at, isInitialized, initializeDocument]);
