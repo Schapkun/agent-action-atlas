@@ -38,19 +38,24 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     });
   }, []);
 
-  // Map database types to UI types - FIXED VERSION
+  // FIXED: Map database types to UI types with proper schapkun detection
   const mapDatabaseTypeToUI = (dbType: string, htmlContent?: string): DocumentTypeUI => {
     console.log('[Simple Builder] Mapping DB type:', dbType, 'with HTML content check');
     
-    // First check explicit database type
-    if (dbType === 'schapkun') {
-      console.log('[Simple Builder] Detected schapkun from DB type');
+    // CRITICAL: Check HTML content FIRST for schapkun indicators
+    if (htmlContent && (
+        htmlContent.includes('SCHAPKUN') || 
+        htmlContent.includes('schapkun') ||
+        htmlContent.includes('WERKNEMER_NAAM') ||
+        htmlContent.includes('BEDRIJF_NAAM')
+    )) {
+      console.log('[Simple Builder] Detected schapkun from HTML content patterns');
       return 'schapkun';
     }
     
-    // Then check HTML content for schapkun indicators
-    if (htmlContent && htmlContent.includes('SCHAPKUN')) {
-      console.log('[Simple Builder] Detected schapkun from HTML content');
+    // Then check explicit database type
+    if (dbType === 'schapkun') {
+      console.log('[Simple Builder] Detected schapkun from DB type');
       return 'schapkun';
     }
     
@@ -93,7 +98,7 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     }
   }, []);
 
-  // Initialize document content - ALWAYS from database, never from localStorage
+  // FIXED: Initialize document content - ALWAYS preserve database content
   const initializeDocument = useCallback(() => {
     console.log('[Simple Builder] Initializing document from database only');
     
@@ -106,7 +111,7 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
       // ALWAYS load from database, never from drafts
       newName = editingDocument.name;
       
-      // FIXED: Proper type mapping with detailed logging
+      // CRITICAL: Detect type from HTML content first, then database type
       newType = mapDatabaseTypeToUI(editingDocument.type, editingDocument.html_content);
       console.log('[Simple Builder] Final mapped type:', newType, 'from DB type:', editingDocument.type);
       
@@ -118,10 +123,10 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
         };
       }
       
-      // ALWAYS use database content, never drafts
-      if (editingDocument.html_content) {
+      // CRITICAL: ALWAYS preserve database content, never replace with template
+      if (editingDocument.html_content && editingDocument.html_content.trim()) {
         newContent = editingDocument.html_content;
-        console.log('[Simple Builder] Using database content, length:', newContent.length);
+        console.log('[Simple Builder] Using database content, length:', newContent.length, 'type detected:', newType);
       } else {
         newContent = getTemplateForType(newType);
         console.log('[Simple Builder] Using default template for type:', newType);
@@ -146,16 +151,28 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     previousEditingDocumentId.current = editingDocument?.id;
     previousUpdatedAt.current = editingDocument?.updated_at;
     
-    console.log('[Simple Builder] Document initialized with type:', newType, 'name:', newName);
+    console.log('[Simple Builder] Document initialized with type:', newType, 'name:', newName, 'content length:', newContent.length);
   }, [editingDocument, getTemplateForType, mapDatabaseTypeToUI]);
 
-  // Handle template type changes
+  // FIXED: Handle template type changes - preserve content when possible
   const handleDocumentTypeChange = useCallback((newType: DocumentTypeUI) => {
-    console.log('[Simple Builder] Document type changed to:', newType);
+    console.log('[Simple Builder] Document type changed to:', newType, 'from:', documentType);
     
     if (newType === documentType) {
       console.log('[Simple Builder] Same type, no change needed');
       return;
+    }
+
+    // CRITICAL: When editing existing document, warn about content replacement
+    if (editingDocument && htmlContent !== lastSavedContent.current) {
+      const confirmed = window.confirm(
+        `Het wijzigen van het documenttype zal de huidige inhoud vervangen met een nieuw template. ` +
+        `Weet je zeker dat je het type wilt wijzigen van "${documentType}" naar "${newType}"?`
+      );
+      if (!confirmed) {
+        console.log('[Simple Builder] Type change cancelled by user');
+        return;
+      }
     }
 
     const newContent = getTemplateForType(newType);
@@ -164,10 +181,10 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     lastSavedContent.current = newContent;
     setHasUnsavedChanges(true);
     
-    console.log('[Simple Builder] Template switched to:', newType);
-  }, [documentType, getTemplateForType]);
+    console.log('[Simple Builder] Template switched to:', newType, 'new content length:', newContent.length);
+  }, [documentType, editingDocument, htmlContent, getTemplateForType]);
 
-  // Initialize on mount or when editing document changes OR when content is updated in database
+  // FIXED: Initialize on mount or when editing document changes OR when content is updated in database
   useEffect(() => {
     const hasDocumentChanged = editingDocument?.id !== previousEditingDocumentId.current;
     const hasContentUpdated = editingDocument?.updated_at !== previousUpdatedAt.current;
