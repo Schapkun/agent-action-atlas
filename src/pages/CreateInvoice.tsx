@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -291,7 +292,8 @@ const CreateInvoice = () => {
     selection.removeAllRanges();
   };
 
-  const handleDescriptionChange = (index: number, content: string) => {
+  const handleDescriptionChange = (index: number, event: React.FormEvent<HTMLDivElement>) => {
+    const content = event.currentTarget.innerHTML;
     updateLineItem(index, 'description', content);
   };
 
@@ -689,7 +691,7 @@ Uw administratie`
                 <div className="col-span-1 text-center">Aantal</div>
                 <div className="col-span-6">Omschrijving</div>
                 <div className="col-span-2 text-center">Prijs</div>
-                <div className="col-span-1 text-center">btw</div>
+                <div className="col-span-1 text-center">BTW</div>
                 <div className="col-span-2 text-center">Totaal</div>
               </div>
             </CardHeader>
@@ -714,9 +716,14 @@ Uw administratie`
                           contentEditable
                           className="min-h-[32px] border rounded p-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                           dangerouslySetInnerHTML={{ __html: item.description }}
-                          onInput={(e) => handleDescriptionChange(index, e.currentTarget.innerHTML)}
-                          onBlur={(e) => handleDescriptionChange(index, e.currentTarget.innerHTML)}
-                          style={{ minHeight: '32px', direction: 'ltr', textAlign: 'left' }}
+                          onInput={(e) => handleDescriptionChange(index, e)}
+                          onBlur={(e) => handleDescriptionChange(index, e)}
+                          style={{ 
+                            minHeight: '32px', 
+                            direction: 'ltr', 
+                            textAlign: 'left',
+                            unicodeBidi: 'normal'
+                          }}
                         />
                         <div className="flex items-center gap-1">
                           <Button 
@@ -884,16 +891,15 @@ Uw administratie`
 
       {/* Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-5xl max-h-[90vh] w-[90vw] p-0">
-          <DialogHeader className="p-6 pb-0">
+        <DialogContent className="max-w-4xl max-h-[90vh] w-[80vw] flex flex-col">
+          <DialogHeader>
             <DialogTitle>Factuur Voorbeeld</DialogTitle>
           </DialogHeader>
-          <div className="p-6 pt-4 overflow-auto">
-            <div className="bg-white mx-auto border shadow-lg" style={{ width: '210mm', minHeight: '297mm' }}>
+          <div className="flex-1 overflow-hidden">
+            <div className="bg-white mx-auto border shadow-lg" style={{ width: '210mm', height: '297mm', transform: 'scale(0.6)', transformOrigin: 'top left', margin: '0 auto' }}>
               <iframe
                 srcDoc={generatePreviewHTML()}
-                className="w-full border-0"
-                style={{ height: '297mm' }}
+                className="w-full h-full border-0"
                 title="Invoice Preview"
               />
             </div>
