@@ -83,11 +83,20 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     let newContent = '';
     let newName = '';
     let newType: DocumentTypeUI = 'factuur';
+    let newPlaceholderValues = DEFAULT_PLACEHOLDER_VALUES;
 
     if (editingDocument) {
       // Load existing document
       newName = editingDocument.name;
       newType = editingDocument.type as DocumentTypeUI;
+      
+      // Load saved placeholder values if they exist
+      if (editingDocument.placeholder_values) {
+        newPlaceholderValues = {
+          ...DEFAULT_PLACEHOLDER_VALUES,
+          ...editingDocument.placeholder_values
+        };
+      }
       
       if (editingDocument.html_content) {
         newContent = editingDocument.html_content;
@@ -109,13 +118,14 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
       newName = 'Nieuw Document';
       newType = 'factuur';
       newContent = getTemplateForType(newType);
-      setPlaceholderValues(DEFAULT_PLACEHOLDER_VALUES);
+      newPlaceholderValues = DEFAULT_PLACEHOLDER_VALUES;
       console.log('[Simple Builder] Creating new document with example data');
     }
 
     setDocumentName(newName);
     setDocumentType(newType);
     setHtmlContent(newContent);
+    setPlaceholderValues(newPlaceholderValues);
     lastSavedContent.current = newContent;
     setHasUnsavedChanges(false);
     setIsInitialized(true);

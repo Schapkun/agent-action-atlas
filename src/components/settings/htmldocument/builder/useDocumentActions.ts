@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { DocumentTemplate, useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { DocumentTypeUI } from './htmlDocumentConstants';
@@ -58,7 +57,8 @@ export function useDocumentActions({
           name: documentName,
           type: documentType === 'schapkun' ? 'custom' : documentType,
           html_content: htmlContent,
-          description: editingDocument.description
+          description: editingDocument.description,
+          placeholder_values: placeholderValues
         });
       } else {
         savedDocument = await createTemplate({
@@ -67,7 +67,8 @@ export function useDocumentActions({
           html_content: htmlContent,
           description: `${documentType} document`,
           is_default: false,
-          is_active: true
+          is_active: true,
+          placeholder_values: placeholderValues
         });
       }
 
@@ -91,6 +92,7 @@ export function useDocumentActions({
     documentName,
     documentType,
     htmlContent,
+    placeholderValues,
     editingDocument,
     clearDraftForDocument,
     setHasUnsavedChanges,
