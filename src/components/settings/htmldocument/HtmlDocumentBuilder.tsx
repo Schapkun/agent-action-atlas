@@ -37,46 +37,63 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [templatesReady, setTemplatesReady] = useState(false);
   
   const { toast } = useToast();
   const { saveData, hasUnsavedChanges } = useDirectSave(documentId);
   const { templates, loading: templatesLoading } = useDocumentTemplates();
 
-  // Stable reference to prevent unnecessary re-renders
+  // Wait for templates to be fully loaded and available
+  useEffect(() => {
+    if (!templatesLoading && templates.length >= 0) {
+      console.log('[Builder] Templates are now ready, count:', templates.length);
+      setTemplatesReady(true);
+    } else {
+      console.log('[Builder] Templates not ready yet, loading:', templatesLoading, 'count:', templates.length);
+      setTemplatesReady(false);
+    }
+  }, [templatesLoading, templates]);
+
+  // Enhanced content loader that never returns null for existing documents
   const loadDataStable = useCallback(async (profileId: string) => {
-    // Critical: Wait for templates to be loaded before attempting to load content
-    if (templatesLoading) {
-      console.log('[Builder] Templates still loading, waiting...');
+    // Don't attempt to load if templates aren't ready
+    if (!templatesReady) {
+      console.log('[Builder] Templates not ready, skipping load for profile:', profileId);
       return null;
     }
 
-    if (!documentId) return '<h1>Document Titel</h1>\n<p>Begin hier met typen...</p>';
+    if (!documentId) {
+      console.log('[Builder] No document ID, returning default content');
+      return '<h1>Document Titel</h1>\n<p>Begin hier met typen...</p>';
+    }
 
     try {
       console.log('[Builder] Loading content for profile:', profileId, 'Templates available:', templates.length);
       const template = templates.find(t => t.id === documentId);
+      
       if (template?.placeholder_values) {
         const profileSpecificContent = template.placeholder_values[`profile_${profileId}_content`];
         
-        if (profileSpecificContent) {
+        if (profileSpecificContent && String(profileSpecificContent).trim() !== '') {
           console.log('[Builder] Found saved content for profile:', profileId, 'Length:', String(profileSpecificContent).length);
           return profileSpecificContent as string;
         }
       }
       
-      console.log('[Builder] No saved content found, using default for profile:', profileId);
-      return '<h1>Document Titel</h1>\n<p>Begin hier met typen...</p>';
+      // For existing documents without saved content, return empty editor (not default text)
+      console.log('[Builder] No saved content found for existing document, returning empty editor for profile:', profileId);
+      return '';
     } catch (error) {
       console.error('[Builder] Error loading profile content:', error);
-      return '<h1>Document Titel</h1>\n<p>Begin hier met typen...</p>';
+      return '';
     }
-  }, [documentId, templates, templatesLoading]);
+  }, [documentId, templates, templatesReady]);
 
-  // Load content for all profiles only on initial mount and when templates are ready
+  // Load content for all profiles only when templates are ready
   useEffect(() => {
-    // Critical: Don't load content if templates are still loading
-    if (!isInitialLoad || templatesLoading) {
-      console.log('[Builder] Skipping load - Initial load:', isInitialLoad, 'Templates loading:', templatesLoading);
+    // Critical: Only load when templates are ready and it's the initial load
+    if (!isInitialLoad || !templatesReady) {
+      console.log('[Builder] Skipping load - Initial load:', isInitialLoad, 'Templates ready:', templatesReady);
       return;
     }
     
@@ -89,21 +106,20 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
 
       try {
         setIsLoading(true);
-        console.log('[Builder] Starting initial load with templates available:', templates.length);
+        console.log('[Builder] Starting initial load with templates ready, templates count:', templates.length);
         const newProfileContents: ProfileContent = {};
         
         for (const profile of DEFAULT_PROFILES) {
           const content = await loadDataStable(profile.id);
           if (content !== null) {
             newProfileContents[profile.id] = content;
+            console.log('[Builder] Loaded content for profile:', profile.id, 'Length:', content.length);
           }
         }
         
-        // Only update state if we actually loaded content
-        if (Object.keys(newProfileContents).length > 0) {
-          setProfileContents(newProfileContents);
-          console.log('[Builder] Initial load completed for all profiles:', Object.keys(newProfileContents));
-        }
+        // Always update state when templates are ready (even if empty content)
+        setProfileContents(newProfileContents);
+        console.log('[Builder] Initial load completed for all profiles:', Object.keys(newProfileContents));
       } catch (error) {
         console.error('[Builder] Error during initial load:', error);
       } finally {
@@ -113,7 +129,7 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
     };
     
     loadAllProfileContent();
-  }, [documentId, loadDataStable, isInitialLoad, templatesLoading]);
+  }, [documentId, loadDataStable, isInitialLoad, templatesReady]);
 
   // Save current profile content when switching profiles
   const handleProfileSwitch = async (newProfileId: string) => {
@@ -162,7 +178,7 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
     try {
       // Save all profiles with force flag
       for (const [profileId, content] of Object.entries(profileContents)) {
-        if (content) {
+        if (content !== undefined) {
           await saveData({
             layoutId: profileId,
             htmlContent: content,
@@ -211,14 +227,14 @@ export const HtmlDocumentBuilder = ({ documentId, onComplete }: HtmlDocumentBuil
     return styledHtml;
   };
 
-  // Show loading state while templates are loading
-  if (isLoading || templatesLoading) {
+  // Show loading state while templates are loading or content is being loaded
+  if (!templatesReady || isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
           <p className="text-sm text-gray-600">
-            {templatesLoading ? 'Templates laden...' : 'Document laden...'}
+            {!templatesReady ? 'Templates laden...' : 'Document laden...'}
           </p>
         </div>
       </div>
