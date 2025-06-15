@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentNameHeader } from './components/DocumentNameHeader';
@@ -215,16 +214,16 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       />
 
       <div className="flex-1 flex" style={{ minHeight: 0 }}>
-        {/* Variables Panel - 10% */}
-        <div style={{ width: '10%', minWidth: '200px' }}>
+        {/* Variables Panel - 20% */}
+        <div style={{ width: '20%', minWidth: '250px' }}>
           <VariablesPanel
             placeholderValues={placeholderValues}
             onPlaceholderChange={handlePlaceholderChange}
           />
         </div>
 
-        {/* HTML Editor - 45% */}
-        <div style={{ width: '45%' }}>
+        {/* HTML Editor - 35% */}
+        <div style={{ width: '35%' }}>
           <EnhancedHtmlEditor
             htmlContent={htmlContent}
             onChange={setHtmlContent}

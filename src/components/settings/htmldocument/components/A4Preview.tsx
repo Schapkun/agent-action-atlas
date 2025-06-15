@@ -21,7 +21,7 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
 
   const processedHtml = replacePlaceholders(htmlContent);
 
-  // Create styled HTML with A4 constraints
+  // Create styled HTML with A4 constraints and auto-scaling
   const styledHtml = `
     <!DOCTYPE html>
     <html>
@@ -39,23 +39,12 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
             font-size: 12px;
             line-height: 1.4;
             color: #333;
-            background: #f5f5f5;
-            padding: 20px;
-          }
-          
-          .page {
+            background: white;
+            padding: 20mm;
             width: 210mm;
             min-height: 297mm;
-            background: white;
-            margin: 0 auto 20mm auto;
-            padding: 20mm;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            page-break-after: always;
+            margin: 0;
             overflow: hidden;
-          }
-          
-          .page:last-child {
-            margin-bottom: 0;
           }
           
           h1 { font-size: 18px; margin-bottom: 12px; }
@@ -67,20 +56,29 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
           th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
           th { background-color: #f5f5f5; font-weight: bold; }
           
-          @media print {
-            body { background: white; padding: 0; }
-            .page { 
-              margin: 0; 
-              box-shadow: none; 
-              page-break-after: always;
-            }
+          .header {
+            text-align: right;
+            margin-bottom: 40px;
+          }
+          .logo {
+            max-width: 150px;
+            height: auto;
+          }
+          .document-info {
+            margin-bottom: 30px;
+          }
+          .content {
+            margin-bottom: 30px;
+          }
+          .footer {
+            margin-top: 50px;
+            font-size: 12px;
+            color: #666;
           }
         </style>
       </head>
       <body>
-        <div class="page">
-          ${processedHtml}
-        </div>
+        ${processedHtml}
       </body>
     </html>
   `;
@@ -94,15 +92,17 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
         </div>
       </CardHeader>
       
-      <CardContent className="flex-1 p-4 overflow-auto bg-gray-100">
-        <div className="flex justify-center">
+      <CardContent className="flex-1 p-4 flex items-center justify-center bg-gray-100 overflow-hidden">
+        <div className="w-full h-full flex items-center justify-center">
           <iframe
             srcDoc={styledHtml}
-            className="w-full border-0 rounded-lg shadow-sm"
+            className="border-0 rounded-lg shadow-sm bg-white"
             style={{
-              height: '800px',
-              maxWidth: '600px',
-              background: 'white'
+              width: '100%',
+              height: '100%',
+              maxWidth: 'calc(100vh * 210 / 297)',
+              maxHeight: 'calc(100vw * 297 / 210)',
+              aspectRatio: '210 / 297'
             }}
             title="A4 Document Preview"
           />
