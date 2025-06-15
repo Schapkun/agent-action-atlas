@@ -16,6 +16,22 @@ interface UseSimplestDocumentBuilderProps {
   onComplete?: (success: boolean) => void;
 }
 
+// Helper function to safely parse placeholder values from database
+const parsePlaceholderValues = (dbValues: any): Record<string, string> => {
+  if (!dbValues || typeof dbValues !== 'object' || Array.isArray(dbValues)) {
+    return {};
+  }
+  
+  // Ensure all values are strings
+  const result: Record<string, string> = {};
+  Object.keys(dbValues).forEach(key => {
+    const value = dbValues[key];
+    result[key] = typeof value === 'string' ? value : String(value || '');
+  });
+  
+  return result;
+};
+
 export function useSimplestDocumentBuilder({ 
   documentId, 
   onComplete 
@@ -31,7 +47,7 @@ export function useSimplestDocumentBuilder({
     htmlContent: '',
     documentName: '',
     documentType: 'factuur' as DocumentTypeUI,
-    placeholderValues: DEFAULT_PLACEHOLDER_VALUES,
+    placeholderValues: { ...DEFAULT_PLACEHOLDER_VALUES } as Record<string, string>,
     
     // UI state
     hasUnsavedChanges: false,
@@ -90,7 +106,8 @@ export function useSimplestDocumentBuilder({
           };
 
           const content = data.html_content || getTemplateForType(data.type as DocumentTypeUI);
-          const placeholders = { ...DEFAULT_PLACEHOLDER_VALUES, ...(data.placeholder_values || {}) };
+          const dbPlaceholders = parsePlaceholderValues(data.placeholder_values);
+          const placeholders = { ...DEFAULT_PLACEHOLDER_VALUES, ...dbPlaceholders };
 
           setState(prev => ({
             ...prev,
@@ -114,7 +131,7 @@ export function useSimplestDocumentBuilder({
             htmlContent: content,
             documentName: 'Nieuw Document',
             documentType: 'factuur',
-            placeholderValues: DEFAULT_PLACEHOLDER_VALUES,
+            placeholderValues: { ...DEFAULT_PLACEHOLDER_VALUES },
             loading: false,
             error: null,
             initialized: true,
@@ -154,23 +171,25 @@ export function useSimplestDocumentBuilder({
   }, []);
 
   const setDocumentType = useCallback((type: DocumentTypeUI) => {
-    if (type === state.documentType) return;
-    
-    if (state.hasUnsavedChanges) {
-      const confirmed = window.confirm(
-        'Het wijzigen van het documenttype zal de huidige inhoud vervangen. Weet je zeker dat je doorgaat?'
-      );
-      if (!confirmed) return;
-    }
+    setState(prev => {
+      if (type === prev.documentType) return prev;
+      
+      if (prev.hasUnsavedChanges) {
+        const confirmed = window.confirm(
+          'Het wijzigen van het documenttype zal de huidige inhoud vervangen. Weet je zeker dat je doorgaat?'
+        );
+        if (!confirmed) return prev;
+      }
 
-    const newContent = getTemplateForType(type);
-    setState(prev => ({
-      ...prev,
-      documentType: type,
-      htmlContent: newContent,
-      hasUnsavedChanges: true
-    }));
-  }, [state.documentType, state.hasUnsavedChanges, getTemplateForType]);
+      const newContent = getTemplateForType(type);
+      return {
+        ...prev,
+        documentType: type,
+        htmlContent: newContent,
+        hasUnsavedChanges: true
+      };
+    });
+  }, [getTemplateForType]);
 
   const setPlaceholderValues = useCallback((values: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => {
     setState(prev => ({
