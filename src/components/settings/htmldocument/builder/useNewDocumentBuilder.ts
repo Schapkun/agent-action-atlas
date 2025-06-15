@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
@@ -16,6 +15,7 @@ export interface DocumentBuilderState {
   hasChanges: boolean;
   error: string | null;
   currentWorkingDocumentId?: string;
+  currentLayoutId?: string; // Add layout tracking to main state
   lastTemplateLoaded?: string;
 }
 
@@ -87,7 +87,8 @@ export const useNewDocumentBuilder = (documentId?: string) => {
     isSaving: false,
     hasChanges: false,
     error: null,
-    currentWorkingDocumentId: documentId
+    currentWorkingDocumentId: documentId,
+    currentLayoutId: 'modern-blue' // Default layout
   });
 
   const { createTemplate, updateTemplate, templates, loading: templatesLoading } = useDocumentTemplates();
@@ -98,16 +99,16 @@ export const useNewDocumentBuilder = (documentId?: string) => {
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout>();
   const lastSavedContentRef = useRef<string>('');
 
-  // Set current working document in draft manager
+  // Set current working document in draft manager with layout
   useEffect(() => {
-    setCurrentDocument(documentId);
+    setCurrentDocument(documentId, state.currentLayoutId);
     setState(prev => ({ ...prev, currentWorkingDocumentId: documentId }));
-  }, [documentId, setCurrentDocument]);
+  }, [documentId, state.currentLayoutId, setCurrentDocument]);
 
-  // Save current state before loading template
-  const saveCurrentStateBeforeSwitch = useCallback(async (currentState: DocumentBuilderState) => {
+  // Save current state with layout info
+  const saveCurrentStateWithLayout = useCallback(async (currentState: DocumentBuilderState) => {
     if (currentState.hasChanges && currentState.currentWorkingDocumentId !== undefined) {
-      console.log('[DocumentBuilder] Saving current state before template switch');
+      console.log('[DocumentBuilder] Saving current state with layout:', currentState.currentLayoutId);
       
       const success = saveImmediately(currentState.currentWorkingDocumentId, {
         htmlContent: currentState.htmlContent,
@@ -116,21 +117,54 @@ export const useNewDocumentBuilder = (documentId?: string) => {
         type: currentState.type,
         hasChanges: currentState.hasChanges,
         lastSaved: Date.now(),
-        documentId: currentState.currentWorkingDocumentId
-      });
+        documentId: currentState.currentWorkingDocumentId,
+        layoutId: currentState.currentLayoutId
+      }, currentState.currentLayoutId);
       
       if (success) {
-        console.log('[DocumentBuilder] Successfully saved current state');
+        console.log('[DocumentBuilder] Successfully saved current state with layout');
       }
     }
   }, [saveImmediately]);
+
+  // Switch layout with unified draft management
+  const switchToLayout = useCallback(async (newLayoutId: string) => {
+    console.log('[DocumentBuilder] Switching layout from', state.currentLayoutId, 'to', newLayoutId);
+    
+    // Save current state with current layout
+    await saveCurrentStateWithLayout(state);
+    
+    // Check if we have a draft for the new layout
+    const layoutDraft = getDraft(state.currentWorkingDocumentId, newLayoutId);
+    
+    if (layoutDraft) {
+      console.log('[DocumentBuilder] Restoring draft for layout:', newLayoutId);
+      setState(prev => ({
+        ...prev,
+        name: layoutDraft.name,
+        type: layoutDraft.type,
+        htmlContent: layoutDraft.htmlContent,
+        placeholderValues: layoutDraft.placeholderValues,
+        hasChanges: layoutDraft.hasChanges,
+        currentLayoutId: newLayoutId
+      }));
+      lastSavedContentRef.current = layoutDraft.htmlContent;
+    } else {
+      console.log('[DocumentBuilder] No draft found for layout, keeping current content');
+      setState(prev => ({
+        ...prev,
+        currentLayoutId: newLayoutId,
+        hasChanges: true // Mark as changed since layout switched
+      }));
+    }
+  }, [state, saveCurrentStateWithLayout, getDraft]);
 
   // Load document with proper state management
   const loadDocument = useCallback(async (id: string) => {
     if (state.isLoading) return;
     
     // Save current state first
-    await saveCurrentStateBeforeSwitch(state);
+    await saveCurrentStateWithLayout(state);
     
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     
@@ -189,9 +223,9 @@ export const useNewDocumentBuilder = (documentId?: string) => {
         error: error instanceof Error ? error.message : 'Fout bij laden document'
       }));
     }
-  }, [getDraft, state, saveCurrentStateBeforeSwitch]);
+  }, [getDraft, state, saveCurrentStateWithLayout]);
 
-  // Load template with immediate save of current state
+  // Load template with layout-aware draft management
   const loadTemplate = useCallback(async (templateId: string) => {
     const template = templates.find(t => t.id === templateId);
     if (!template) {
@@ -201,25 +235,15 @@ export const useNewDocumentBuilder = (documentId?: string) => {
 
     console.log('[DocumentBuilder] Loading template:', template.name);
     
-    // Check if we have unsaved changes and confirm with user
-    if (state.hasChanges && state.currentWorkingDocumentId !== templateId) {
-      const confirmed = window.confirm(
-        `Je hebt niet-opgeslagen wijzigingen. Wil je deze eerst opslaan voordat je een andere template laadt?`
-      );
-      
-      if (confirmed) {
-        // Save current state immediately
-        await saveCurrentStateBeforeSwitch(state);
-      }
-    } else if (state.hasChanges) {
-      // Always save current state before switching
-      await saveCurrentStateBeforeSwitch(state);
+    // Save current state before switching
+    if (state.hasChanges) {
+      await saveCurrentStateWithLayout(state);
     }
 
     const placeholders = parseJsonToStringRecord(template.placeholder_values);
-    const draft = getDraft(templateId);
+    const draft = getDraft(templateId, state.currentLayoutId);
 
-    console.log('[DocumentBuilder] Template draft found:', !!draft);
+    console.log('[DocumentBuilder] Template draft found for current layout:', !!draft);
 
     if (draft && draft.hasChanges) {
       setState(prev => ({
@@ -251,9 +275,9 @@ export const useNewDocumentBuilder = (documentId?: string) => {
       }));
       lastSavedContentRef.current = content;
     }
-  }, [templates, getDraft, state, saveCurrentStateBeforeSwitch]);
+  }, [templates, getDraft, state, saveCurrentStateWithLayout]);
 
-  // Initialize
+  // Initialize with layout awareness
   useEffect(() => {
     if (isInitialized.current || templatesLoading) return;
     
@@ -262,7 +286,7 @@ export const useNewDocumentBuilder = (documentId?: string) => {
     if (documentId) {
       loadDocument(documentId);
     } else {
-      const draft = getDraft(undefined);
+      const draft = getDraft(undefined, state.currentLayoutId);
       if (draft && draft.hasChanges) {
         setState(prev => ({
           ...prev,
@@ -276,9 +300,9 @@ export const useNewDocumentBuilder = (documentId?: string) => {
         lastSavedContentRef.current = draft.htmlContent;
       }
     }
-  }, [documentId, templatesLoading, loadDocument, getDraft]);
+  }, [documentId, templatesLoading, loadDocument, getDraft, state.currentLayoutId]);
 
-  // Debounced auto-save
+  // Debounced auto-save with layout info
   const debouncedSaveDraft = useCallback((currentState: DocumentBuilderState) => {
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
@@ -292,12 +316,13 @@ export const useNewDocumentBuilder = (documentId?: string) => {
         type: currentState.type,
         hasChanges: currentState.hasChanges,
         lastSaved: Date.now(),
-        documentId: currentState.currentWorkingDocumentId
-      });
+        documentId: currentState.currentWorkingDocumentId,
+        layoutId: currentState.currentLayoutId
+      }, currentState.currentLayoutId);
     }, 1000);
   }, [saveDraft]);
 
-  // Update functions with proper change tracking
+  // Update functions with layout-aware change tracking
   const updateName = useCallback((name: string) => {
     setState(prev => {
       const newState = { ...prev, name, hasChanges: true };
@@ -345,7 +370,7 @@ export const useNewDocumentBuilder = (documentId?: string) => {
     });
   }, [debouncedSaveDraft]);
 
-  // Save document
+  // Save document with layout-aware cleanup
   const saveDocument = useCallback(async () => {
     if (!state.name.trim()) {
       setState(prev => ({ ...prev, error: 'Documentnaam is verplicht' }));
@@ -372,7 +397,7 @@ export const useNewDocumentBuilder = (documentId?: string) => {
         setState(prev => ({ ...prev, id: newTemplate.id }));
       }
 
-      clearDraft(state.currentWorkingDocumentId);
+      clearDraft(state.currentWorkingDocumentId, state.currentLayoutId);
       lastSavedContentRef.current = state.htmlContent;
       setState(prev => ({ ...prev, isSaving: false, hasChanges: false }));
       return true;
@@ -404,10 +429,11 @@ export const useNewDocumentBuilder = (documentId?: string) => {
     saveDocument,
     loadDocument,
     loadTemplate,
+    switchToLayout, // New unified layout switching function
     availableTemplates: templates,
     selectedOrganization,
     selectedWorkspace,
-    clearDraft: () => clearDraft(state.currentWorkingDocumentId),
-    hasDraft: () => hasDraft(state.currentWorkingDocumentId)
+    clearDraft: () => clearDraft(state.currentWorkingDocumentId, state.currentLayoutId),
+    hasDraft: () => hasDraft(state.currentWorkingDocumentId, state.currentLayoutId)
   };
 };

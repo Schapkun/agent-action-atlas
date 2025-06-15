@@ -1,71 +1,9 @@
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { UNIQUE_LAYOUT_TEMPLATES, UniqueLayoutTemplate } from '../../types/LayoutTemplates';
-
-interface LayoutDraft {
-  htmlContent: string;
-  placeholderValues: Record<string, string>;
-  name: string;
-  type: 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun';
-  hasChanges: boolean;
-  lastSaved: number;
-}
 
 export const useLayoutManager = () => {
   const [selectedLayoutId, setSelectedLayoutId] = useState<string>('modern-blue');
-  const layoutDrafts = useRef<Map<string, LayoutDraft>>(new Map());
-
-  // Save current layout draft with all current state
-  const saveLayoutDraft = useCallback((layoutId: string, currentState: {
-    htmlContent: string;
-    placeholderValues: Record<string, string>;
-    name: string;
-    type: 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun';
-    hasChanges: boolean;
-  }) => {
-    console.log('[LayoutManager] Saving draft for layout:', layoutId, {
-      contentLength: currentState.htmlContent.length,
-      hasChanges: currentState.hasChanges,
-      name: currentState.name
-    });
-    
-    layoutDrafts.current.set(layoutId, {
-      ...currentState,
-      lastSaved: Date.now()
-    });
-  }, []);
-
-  // Get layout draft
-  const getLayoutDraft = useCallback((layoutId: string): LayoutDraft | null => {
-    const draft = layoutDrafts.current.get(layoutId);
-    if (draft) {
-      console.log('[LayoutManager] Retrieved draft for layout:', layoutId, {
-        contentLength: draft.htmlContent.length,
-        hasChanges: draft.hasChanges
-      });
-    }
-    return draft || null;
-  }, []);
-
-  // Switch layout with proper draft management
-  const switchLayout = useCallback((newLayoutId: string, currentState: {
-    htmlContent: string;
-    placeholderValues: Record<string, string>;
-    name: string;
-    type: 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun';
-    hasChanges: boolean;
-  }) => {
-    console.log('[LayoutManager] Switching from', selectedLayoutId, 'to', newLayoutId);
-    
-    // Always save current state before switching
-    saveLayoutDraft(selectedLayoutId, currentState);
-
-    // Update selected layout
-    setSelectedLayoutId(newLayoutId);
-    
-    // Return the draft for the new layout (if any)
-    return getLayoutDraft(newLayoutId);
-  }, [selectedLayoutId, saveLayoutDraft, getLayoutDraft]);
 
   // Get selected layout template
   const getSelectedLayout = useCallback((): UniqueLayoutTemplate | null => {
@@ -129,10 +67,11 @@ export const useLayoutManager = () => {
     }
   }, []);
 
-  // Clear all layout drafts
-  const clearAllLayoutDrafts = useCallback(() => {
-    console.log('[LayoutManager] Clearing all layout drafts');
-    layoutDrafts.current.clear();
+  // Switch layout (simplified - just updates selection)
+  const switchLayout = useCallback((newLayoutId: string) => {
+    console.log('[LayoutManager] Switching layout to:', newLayoutId);
+    setSelectedLayoutId(newLayoutId);
+    return newLayoutId;
   }, []);
 
   return {
@@ -140,11 +79,6 @@ export const useLayoutManager = () => {
     layouts: UNIQUE_LAYOUT_TEMPLATES,
     switchLayout,
     getSelectedLayout,
-    saveLayoutDraft,
-    getLayoutDraft,
-    applyLayoutStyling,
-    clearAllLayoutDrafts,
-    hasLayoutDraft: (layoutId: string) => layoutDrafts.current.has(layoutId),
-    getAllLayoutDrafts: () => Array.from(layoutDrafts.current.keys())
+    applyLayoutStyling
   };
 };

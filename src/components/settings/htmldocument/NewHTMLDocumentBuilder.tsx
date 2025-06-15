@@ -53,6 +53,7 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
     updatePlaceholderValues,
     saveDocument,
     loadTemplate,
+    switchToLayout,
     availableTemplates,
     selectedOrganization,
     selectedWorkspace
@@ -62,40 +63,23 @@ export const NewHTMLDocumentBuilder: React.FC<NewHTMLDocumentBuilderProps> = ({
     selectedLayoutId,
     layouts,
     switchLayout,
-    applyLayoutStyling,
-    hasLayoutDraft
+    applyLayoutStyling
   } = useLayoutManager();
 
-  // Handle layout switching with proper state preservation
-  const handleLayoutChange = useCallback((layout: any) => {
+  // Handle layout switching with unified draft management
+  const handleLayoutChange = useCallback(async (layout: any) => {
     console.log('[UI] Switching to layout:', layout.name);
     
-    // Create current state snapshot
-    const currentStateSnapshot = {
-      htmlContent: state.htmlContent,
-      placeholderValues: state.placeholderValues,
-      name: state.name,
-      type: state.type,
-      hasChanges: state.hasChanges
-    };
+    // Use the unified layout switching from document builder
+    await switchToLayout(layout.id);
     
-    // Switch layout and get any existing draft
-    const layoutDraft = switchLayout(layout.id, currentStateSnapshot);
+    // Update layout manager selection
+    switchLayout(layout.id);
     
-    if (layoutDraft) {
-      // Restore draft for this layout
-      console.log('[UI] Restoring layout draft');
-      updateName(layoutDraft.name);
-      updateType(layoutDraft.type);
-      updateHtmlContent(layoutDraft.htmlContent);
-      updatePlaceholderValues(layoutDraft.placeholderValues);
-    } else {
-      // Apply layout styling to current content
-      console.log('[UI] Applying layout styling to current content');
-      const styledContent = applyLayoutStyling(state.htmlContent, layout.id);
-      updateHtmlContent(styledContent);
-    }
-  }, [state, switchLayout, applyLayoutStyling, updateName, updateType, updateHtmlContent, updatePlaceholderValues]);
+    // Apply layout styling to current content
+    const styledContent = applyLayoutStyling(state.htmlContent, layout.id);
+    updateHtmlContent(styledContent);
+  }, [switchToLayout, switchLayout, applyLayoutStyling, state.htmlContent, updateHtmlContent]);
 
   // Memoize processed HTML with layout styling
   const processedHtmlContent = useMemo(() => {

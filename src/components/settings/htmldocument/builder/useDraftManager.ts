@@ -9,6 +9,7 @@ interface DocumentDraft {
   hasChanges: boolean;
   lastSaved: number;
   documentId?: string;
+  layoutId?: string; // Add layout info to main draft system
 }
 
 interface DraftManagerState {
@@ -26,19 +27,21 @@ export const useDraftManager = () => {
   });
   const maxDrafts = 10;
 
-  // Generate proper draft key
-  const getDraftKey = useCallback((documentId: string | undefined): string => {
-    return documentId || 'new-document';
+  // Generate draft key that includes layout info
+  const getDraftKey = useCallback((documentId: string | undefined, layoutId?: string): string => {
+    const baseKey = documentId || 'new-document';
+    return layoutId ? `${baseKey}:layout:${layoutId}` : baseKey;
   }, []);
 
-  // Immediate save for critical operations (template switching)
-  const saveImmediately = useCallback((documentId: string | undefined, draft: DocumentDraft) => {
-    const key = getDraftKey(documentId);
+  // Immediate save for critical operations (template/layout switching)
+  const saveImmediately = useCallback((documentId: string | undefined, draft: DocumentDraft, layoutId?: string) => {
+    const key = getDraftKey(documentId, layoutId);
     
     console.log('[DraftManager] Immediate save for:', key, {
       name: draft.name,
       hasChanges: draft.hasChanges,
-      contentLength: draft.htmlContent.length
+      contentLength: draft.htmlContent.length,
+      layoutId: layoutId
     });
     
     // Memory management
@@ -53,7 +56,8 @@ export const useDraftManager = () => {
     const draftWithTimestamp = {
       ...draft,
       lastSaved: Date.now(),
-      documentId
+      documentId,
+      layoutId
     };
     
     drafts.current.set(key, draftWithTimestamp);
@@ -68,12 +72,13 @@ export const useDraftManager = () => {
   }, [getDraftKey]);
 
   // Standard debounced save
-  const saveDraft = useCallback((documentId: string | undefined, draft: DocumentDraft) => {
-    const key = getDraftKey(documentId);
+  const saveDraft = useCallback((documentId: string | undefined, draft: DocumentDraft, layoutId?: string) => {
+    const key = getDraftKey(documentId, layoutId);
     
     console.log('[DraftManager] Auto save for:', key, {
       name: draft.name,
-      hasChanges: draft.hasChanges
+      hasChanges: draft.hasChanges,
+      layoutId: layoutId
     });
     
     // Memory management
@@ -87,7 +92,8 @@ export const useDraftManager = () => {
     const draftWithTimestamp = {
       ...draft,
       lastSaved: Date.now(),
-      documentId
+      documentId,
+      layoutId
     };
     
     drafts.current.set(key, draftWithTimestamp);
@@ -98,23 +104,24 @@ export const useDraftManager = () => {
     }));
   }, [getDraftKey]);
 
-  const getDraft = useCallback((documentId: string | undefined): DocumentDraft | null => {
-    const key = getDraftKey(documentId);
+  const getDraft = useCallback((documentId: string | undefined, layoutId?: string): DocumentDraft | null => {
+    const key = getDraftKey(documentId, layoutId);
     const draft = drafts.current.get(key) || null;
     
     if (draft) {
       console.log('[DraftManager] Retrieved draft for:', key, {
         name: draft.name,
         hasChanges: draft.hasChanges,
-        lastSaved: new Date(draft.lastSaved).toLocaleTimeString()
+        lastSaved: new Date(draft.lastSaved).toLocaleTimeString(),
+        layoutId: draft.layoutId
       });
     }
     
     return draft;
   }, [getDraftKey]);
 
-  const clearDraft = useCallback((documentId: string | undefined) => {
-    const key = getDraftKey(documentId);
+  const clearDraft = useCallback((documentId: string | undefined, layoutId?: string) => {
+    const key = getDraftKey(documentId, layoutId);
     console.log('[DraftManager] Clearing draft for:', key);
     
     drafts.current.delete(key);
@@ -125,8 +132,8 @@ export const useDraftManager = () => {
     }));
   }, [getDraftKey]);
 
-  const hasDraft = useCallback((documentId: string | undefined): boolean => {
-    const key = getDraftKey(documentId);
+  const hasDraft = useCallback((documentId: string | undefined, layoutId?: string): boolean => {
+    const key = getDraftKey(documentId, layoutId);
     return drafts.current.has(key);
   }, [getDraftKey]);
 
@@ -146,8 +153,8 @@ export const useDraftManager = () => {
   }, []);
 
   // Set current working document
-  const setCurrentDocument = useCallback((documentId: string | undefined) => {
-    const key = getDraftKey(documentId);
+  const setCurrentDocument = useCallback((documentId: string | undefined, layoutId?: string) => {
+    const key = getDraftKey(documentId, layoutId);
     setState(prev => ({
       ...prev,
       currentDocumentId: key
