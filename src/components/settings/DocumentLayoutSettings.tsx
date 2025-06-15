@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { HTMLDocumentBuilderV2 } from './htmldocument/HTMLDocumentBuilderV2';
+import { HTMLDocumentBuilderV3 } from './htmldocument/HTMLDocumentBuilderV3';
 import { DocumentNameDialog } from './components/DocumentNameDialog';
 import { DocumentProvider, useDocumentContext } from './contexts/DocumentContext';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
@@ -13,7 +13,6 @@ const DocumentLayoutContent = () => {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
   const [editingDocumentId, setEditingDocumentId] = useState<string | undefined>(undefined);
-  const [forceRefreshKey, setForceRefreshKey] = useState<string>(''); // Add force refresh key
   const [duplicatingDocument, setDuplicatingDocument] = useState<DocumentTemplate | null>(null);
   
   const { documents, deleteDocument, duplicateDocument, refreshTemplates } = useDocumentContext();
@@ -21,27 +20,23 @@ const DocumentLayoutContent = () => {
 
   const handleNewDocument = () => {
     setEditingDocumentId(undefined);
-    setForceRefreshKey(''); // Clear for new document
     setIsBuilderOpen(true);
   };
 
   const handleEditDocument = (document: DocumentTemplate) => {
-    console.log('[Settings V2] Opening document for editing:', document.name, document.id);
+    console.log('[Settings V3] Opening document for editing:', document.name, document.id);
     setEditingDocumentId(document.id);
-    // Create unique force refresh key to ensure fresh data
-    setForceRefreshKey(`edit-${document.id}-${Date.now()}`);
     setIsBuilderOpen(true);
   };
 
   const handleDocumentSaved = async (document: DocumentTemplate | null) => {
-    console.log('[Settings V2] Document saved, refreshing context...');
+    console.log('[Settings V3] Document saved, refreshing context...');
     
     // Refresh the context to update the list
     await refreshTemplates();
     
     // Close the builder and clear states
     setEditingDocumentId(undefined);
-    setForceRefreshKey('');
     setIsBuilderOpen(false);
     
     if (document) {
@@ -73,7 +68,6 @@ const DocumentLayoutContent = () => {
     // If we're currently editing the deleted document, clear the state
     if (editingDocumentId === document.id) {
       setEditingDocumentId(undefined);
-      setForceRefreshKey('');
     }
     toast({
       title: "Document verwijderd",
@@ -99,17 +93,16 @@ const DocumentLayoutContent = () => {
         onDeleteDocument={handleDeleteDocument}
       />
 
-      {/* HTML Builder Dialog with force refresh key */}
+      {/* Atomic HTML Builder Dialog */}
       <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-2.5 flex flex-col">
           <div 
             className="p-2.5 min-h-0 overflow-hidden"
             style={{ height: 'calc(100% - 5px)' }}
           >
-            <HTMLDocumentBuilderV2 
-              key={`builder-${editingDocumentId}-${forceRefreshKey}`} // Force complete re-mount
+            <HTMLDocumentBuilderV3 
+              key={`atomic-builder-${editingDocumentId || 'new'}`}
               documentId={editingDocumentId}
-              forceRefreshKey={forceRefreshKey} // Pass force refresh key
               onDocumentSaved={handleDocumentSaved}
             />
           </div>
