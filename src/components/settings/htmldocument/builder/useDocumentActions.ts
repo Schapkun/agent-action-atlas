@@ -48,21 +48,21 @@ export function useDocumentActions({
 
     setIsSaving(true);
     try {
-      // Import here to avoid circular dependencies
-      const { useDocumentContext } = await import('../../contexts/DocumentContext');
-      const documentContext = useDocumentContext();
+      // Use the useDocumentTemplates hook directly
+      const { useDocumentTemplates } = await import('@/hooks/useDocumentTemplates');
+      const { createTemplate, updateTemplate } = useDocumentTemplates();
       
       let savedDocument: DocumentTemplate;
       
       if (editingDocument) {
-        savedDocument = await documentContext.updateDocument(editingDocument.id, {
+        savedDocument = await updateTemplate(editingDocument.id, {
           name: documentName,
           type: documentType === 'schapkun' ? 'custom' : documentType,
           html_content: htmlContent,
           description: editingDocument.description
         });
       } else {
-        savedDocument = await documentContext.saveDocument({
+        savedDocument = await createTemplate({
           name: documentName,
           type: documentType === 'schapkun' ? 'custom' : documentType,
           html_content: htmlContent,
