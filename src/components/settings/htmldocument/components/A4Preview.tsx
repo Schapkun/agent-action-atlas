@@ -14,7 +14,15 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
     let replaced = content;
     Object.entries(placeholderValues).forEach(([key, value]) => {
       const regex = new RegExp(`{{${key}}}`, 'g');
-      replaced = replaced.replace(regex, value || `<span style="color:#9ca3af;">[${key}]</span>`);
+      
+      // Special handling for logo - create img tag if it's a data URL
+      if (key === 'logo' && value && value.startsWith('data:')) {
+        replaced = replaced.replace(regex, `<img src="${value}" alt="Logo" style="max-width: 150px; height: auto;" />`);
+      } else if (value) {
+        replaced = replaced.replace(regex, value);
+      } else {
+        replaced = replaced.replace(regex, `<span style="color:#9ca3af;">[${key}]</span>`);
+      }
     });
     return replaced;
   };
@@ -101,25 +109,18 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       <CardContent className="flex-1 p-4 flex items-center justify-center bg-gray-100 overflow-hidden">
         <div className="w-full h-full flex items-center justify-center">
           <div 
-            className="bg-white shadow-lg"
+            className="bg-white shadow-lg border border-gray-300"
             style={{
-              width: '210mm',
-              height: '297mm',
-              maxWidth: '100%',
-              maxHeight: '100%',
+              width: '100%',
+              height: '100%',
               aspectRatio: '210 / 297',
-              transform: 'scale(0.8)',
-              transformOrigin: 'center',
-              border: '1px solid #e5e7eb'
+              maxWidth: 'calc(100vh * 210 / 297)',
+              maxHeight: '100%'
             }}
           >
             <iframe
               srcDoc={styledHtml}
               className="w-full h-full border-0"
-              style={{
-                width: '210mm',
-                height: '297mm'
-              }}
               title="A4 Document Preview"
             />
           </div>

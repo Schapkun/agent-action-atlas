@@ -4,7 +4,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Settings, Upload } from 'lucide-react';
+import { Settings, Upload, Image } from 'lucide-react';
 
 interface VariablesPanelProps {
   placeholderValues: Record<string, string>;
@@ -15,7 +15,7 @@ const PLACEHOLDER_GROUPS = [
   {
     title: 'Bedrijf',
     fields: [
-      { key: 'logo', label: 'Logo URL', type: 'file' },
+      { key: 'logo', label: 'Logo', type: 'file' },
       { key: 'bedrijfsnaam', label: 'Bedrijfsnaam' },
       { key: 'adres', label: 'Adres' },
       { key: 'postcode', label: 'Postcode' },
@@ -81,27 +81,41 @@ export const VariablesPanel = ({ placeholderValues, onPlaceholderChange }: Varia
   const renderField = (field: any) => {
     if (field.type === 'file') {
       return (
-        <div key={field.key} className="space-y-1">
+        <div key={field.key} className="space-y-2">
           <Label htmlFor={field.key} className="text-xs text-gray-600">
             {field.label}
           </Label>
-          <div className="flex gap-1">
-            <Input
+          <div className="space-y-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full h-8 text-xs relative overflow-hidden"
+              onClick={() => document.getElementById(field.key)?.click()}
+            >
+              <Upload className="h-3 w-3 mr-2" />
+              Kies bestand
+            </Button>
+            <input
+              id={field.key}
               type="file"
               accept="image/*"
               onChange={(e) => handleFileUpload(field.key, e)}
-              className="text-xs h-7 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-gray-50"
+              className="hidden"
             />
+            {placeholderValues[field.key] && (
+              <div className="mt-2 p-2 border rounded bg-gray-50">
+                <div className="flex items-center gap-2 mb-1">
+                  <Image className="h-3 w-3 text-green-600" />
+                  <span className="text-xs text-green-600 font-medium">Logo geüpload</span>
+                </div>
+                <img 
+                  src={placeholderValues[field.key]} 
+                  alt="Logo preview" 
+                  className="max-w-full h-12 object-contain border rounded"
+                />
+              </div>
+            )}
           </div>
-          {placeholderValues[field.key] && (
-            <div className="mt-1">
-              <img 
-                src={placeholderValues[field.key]} 
-                alt="Logo preview" 
-                className="max-w-full h-8 object-contain border rounded"
-              />
-            </div>
-          )}
         </div>
       );
     }
@@ -154,7 +168,7 @@ export const VariablesPanel = ({ placeholderValues, onPlaceholderChange }: Varia
             <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
               {group.title}
             </h4>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {group.fields.map(renderField)}
             </div>
           </div>
