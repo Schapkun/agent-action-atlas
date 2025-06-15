@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInvoices } from './useInvoices';
@@ -108,6 +107,34 @@ export const useInvoiceForm = () => {
         payment_terms: contactPaymentTerms
       }));
     }
+  };
+
+  const handleContactCreated = (contact: Contact) => {
+    setSelectedContact(contact);
+    setFormData(prev => ({
+      ...prev,
+      client_name: contact.name,
+      client_email: contact.email || '',
+      client_address: contact.address || '',
+      client_postal_code: contact.postal_code || '',
+      client_city: contact.city || '',
+      client_country: contact.country || 'Nederland',
+      payment_terms: contact.payment_terms || invoiceSettings.default_payment_terms || 30
+    }));
+  };
+
+  const handleContactUpdated = (contact: Contact) => {
+    setSelectedContact(contact);
+    setFormData(prev => ({
+      ...prev,
+      client_name: contact.name,
+      client_email: contact.email || '',
+      client_address: contact.address || '',
+      client_postal_code: contact.postal_code || '',
+      client_city: contact.city || '',
+      client_country: contact.country || 'Nederland',
+      payment_terms: contact.payment_terms || invoiceSettings.default_payment_terms || 30
+    }));
   };
 
   const handleContactClear = () => {
@@ -297,6 +324,8 @@ Uw administratie`
     invoiceSettings,
     getDefaultInvoiceNumber,
     handleContactSelect,
+    handleContactCreated,
+    handleContactUpdated,
     handleContactClear,
     updateLineItem,
     addLineItem,

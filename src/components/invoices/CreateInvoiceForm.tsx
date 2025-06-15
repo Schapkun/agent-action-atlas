@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -139,6 +138,11 @@ export const CreateInvoiceForm = () => {
     getDefaultInvoiceNumber
   );
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSubmit();
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <InvoiceHeader
@@ -152,7 +156,7 @@ export const CreateInvoiceForm = () => {
       />
 
       <div className="max-w-6xl mx-auto p-3">
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleFormSubmit} className="space-y-3">
           <ContactSelectionCard
             selectedContact={selectedContact}
             selectedTemplate={selectedTemplate}
