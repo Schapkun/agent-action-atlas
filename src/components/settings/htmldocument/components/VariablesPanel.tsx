@@ -1,10 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Settings, Upload, Image } from 'lucide-react';
+import { Settings, Upload, Image, Plus, X } from 'lucide-react';
 
 interface VariablesPanelProps {
   placeholderValues: Record<string, string>;
@@ -15,57 +15,61 @@ const PLACEHOLDER_GROUPS = [
   {
     title: 'Bedrijf',
     fields: [
-      { key: 'logo', label: 'Logo', type: 'file' },
-      { key: 'bedrijfsnaam', label: 'Bedrijfsnaam' },
-      { key: 'adres', label: 'Adres' },
-      { key: 'postcode', label: 'Postcode' },
-      { key: 'plaats', label: 'Plaats' },
-      { key: 'telefoon', label: 'Telefoon' },
-      { key: 'email', label: 'E-mail' },
-      { key: 'website', label: 'Website' },
-      { key: 'kvk', label: 'KvK nummer' },
-      { key: 'btw', label: 'BTW nummer' },
+      { key: 'logo', label: '{{logo}}', type: 'file' },
+      { key: 'bedrijfsnaam', label: '{{bedrijfsnaam}}' },
+      { key: 'adres', label: '{{adres}}' },
+      { key: 'postcode', label: '{{postcode}}' },
+      { key: 'plaats', label: '{{plaats}}' },
+      { key: 'telefoon', label: '{{telefoon}}' },
+      { key: 'email', label: '{{email}}' },
+      { key: 'website', label: '{{website}}' },
+      { key: 'kvk', label: '{{kvk}}' },
+      { key: 'btw', label: '{{btw}}' },
     ]
   },
   {
     title: 'Document',
     fields: [
-      { key: 'datum', label: 'Datum' },
-      { key: 'referentie', label: 'Referentie' },
-      { key: 'onderwerp', label: 'Onderwerp' },
-      { key: 'documentnummer', label: 'Doc. nummer' },
+      { key: 'datum', label: '{{datum}}' },
+      { key: 'referentie', label: '{{referentie}}' },
+      { key: 'onderwerp', label: '{{onderwerp}}' },
+      { key: 'documentnummer', label: '{{documentnummer}}' },
     ]
   },
   {
     title: 'Klant',
     fields: [
-      { key: 'klant_naam', label: 'Naam' },
-      { key: 'klant_bedrijf', label: 'Bedrijf' },
-      { key: 'klant_adres', label: 'Adres' },
-      { key: 'klant_postcode', label: 'Postcode' },
-      { key: 'klant_plaats', label: 'Plaats' },
-      { key: 'klant_email', label: 'E-mail' },
+      { key: 'klant_naam', label: '{{klant_naam}}' },
+      { key: 'klant_bedrijf', label: '{{klant_bedrijf}}' },
+      { key: 'klant_adres', label: '{{klant_adres}}' },
+      { key: 'klant_postcode', label: '{{klant_postcode}}' },
+      { key: 'klant_plaats', label: '{{klant_plaats}}' },
+      { key: 'klant_email', label: '{{klant_email}}' },
     ]
   },
   {
     title: 'Brief',
     fields: [
-      { key: 'aanhef', label: 'Aanhef' },
-      { key: 'tekst', label: 'Hoofdtekst', type: 'textarea' },
-      { key: 'afsluiting', label: 'Afsluiting' },
-      { key: 'handtekening', label: 'Handtekening' },
+      { key: 'aanhef', label: '{{aanhef}}' },
+      { key: 'tekst', label: '{{tekst}}', type: 'textarea' },
+      { key: 'afsluiting', label: '{{afsluiting}}' },
+      { key: 'handtekening', label: '{{handtekening}}' },
     ]
   },
   {
     title: 'Footer',
     fields: [
-      { key: 'footer_tekst', label: 'Footer tekst' },
-      { key: 'footer_contact', label: 'Contact info' },
+      { key: 'footer_tekst', label: '{{footer_tekst}}' },
+      { key: 'footer_contact', label: '{{footer_contact}}' },
     ]
   }
 ];
 
 export const VariablesPanel = ({ placeholderValues, onPlaceholderChange }: VariablesPanelProps) => {
+  const [customVariables, setCustomVariables] = useState<Array<{ key: string; label: string }>>([]);
+  const [newVariableName, setNewVariableName] = useState('');
+  const [isAddingVariable, setIsAddingVariable] = useState(false);
+
   const handleFileUpload = (key: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -78,7 +82,21 @@ export const VariablesPanel = ({ placeholderValues, onPlaceholderChange }: Varia
     }
   };
 
-  const renderField = (field: any) => {
+  const handleAddVariable = () => {
+    if (newVariableName.trim()) {
+      const key = newVariableName.toLowerCase().replace(/\s+/g, '_');
+      const label = `{{${key}}}`;
+      setCustomVariables(prev => [...prev, { key, label }]);
+      setNewVariableName('');
+      setIsAddingVariable(false);
+    }
+  };
+
+  const handleRemoveCustomVariable = (indexToRemove: number) => {
+    setCustomVariables(prev => prev.filter((_, index) => index !== indexToRemove));
+  };
+
+  const renderField = (field: any, isCustom = false, customIndex?: number) => {
     if (field.type === 'file') {
       return (
         <div key={field.key} className="space-y-2">
@@ -123,15 +141,27 @@ export const VariablesPanel = ({ placeholderValues, onPlaceholderChange }: Varia
     if (field.type === 'textarea') {
       return (
         <div key={field.key} className="space-y-1">
-          <Label htmlFor={field.key} className="text-xs text-gray-600">
-            {field.label}
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor={field.key} className="text-xs text-gray-600">
+              {field.label}
+            </Label>
+            {isCustom && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-4 w-4 p-0 text-red-500 hover:text-red-700"
+                onClick={() => handleRemoveCustomVariable(customIndex!)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
           <textarea
             id={field.key}
             value={placeholderValues[field.key] || ''}
             onChange={(e) => onPlaceholderChange(field.key, e.target.value)}
             className="w-full text-xs h-16 px-2 py-1 border border-gray-300 rounded-md resize-none"
-            placeholder={`{{${field.key}}}`}
+            placeholder=""
           />
         </div>
       );
@@ -139,15 +169,27 @@ export const VariablesPanel = ({ placeholderValues, onPlaceholderChange }: Varia
 
     return (
       <div key={field.key} className="space-y-1">
-        <Label htmlFor={field.key} className="text-xs text-gray-600">
-          {field.label}
-        </Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor={field.key} className="text-xs text-gray-600">
+            {field.label}
+          </Label>
+          {isCustom && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-4 w-4 p-0 text-red-500 hover:text-red-700"
+              onClick={() => handleRemoveCustomVariable(customIndex!)}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
         <Input
           id={field.key}
           value={placeholderValues[field.key] || ''}
           onChange={(e) => onPlaceholderChange(field.key, e.target.value)}
           className="text-xs h-7"
-          placeholder={`{{${field.key}}}`}
+          placeholder=""
         />
       </div>
     );
@@ -173,6 +215,65 @@ export const VariablesPanel = ({ placeholderValues, onPlaceholderChange }: Varia
             </div>
           </div>
         ))}
+
+        {/* Custom Variables Section */}
+        {customVariables.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+              Aangepaste Variabelen
+            </h4>
+            <div className="space-y-3">
+              {customVariables.map((field, index) => renderField(field, true, index))}
+            </div>
+          </div>
+        )}
+
+        {/* Add Variable Section */}
+        <div className="space-y-2 pt-2 border-t">
+          {isAddingVariable ? (
+            <div className="space-y-2">
+              <Input
+                value={newVariableName}
+                onChange={(e) => setNewVariableName(e.target.value)}
+                placeholder="Variabele naam"
+                className="text-xs h-7"
+                onKeyPress={(e) => e.key === 'Enter' && handleAddVariable()}
+              />
+              <div className="flex gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 px-2 text-xs flex-1"
+                  onClick={handleAddVariable}
+                  disabled={!newVariableName.trim()}
+                >
+                  Toevoegen
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  onClick={() => {
+                    setIsAddingVariable(false);
+                    setNewVariableName('');
+                  }}
+                >
+                  Annuleer
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full h-7 text-xs"
+              onClick={() => setIsAddingVariable(true)}
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Variabele toevoegen
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
