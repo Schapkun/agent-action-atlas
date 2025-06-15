@@ -24,6 +24,7 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
   const [isInitialized, setIsInitialized] = useState(false);
   const previousEditingDocumentId = useRef<string | undefined>(undefined);
   const previousUpdatedAt = useRef<string | undefined>(undefined);
+  const previousForceRefresh = useRef<string | undefined>(undefined);
   const lastSavedContent = useRef('');
 
   // Clear any existing localStorage drafts on mount
@@ -136,6 +137,7 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
 
     previousEditingDocumentId.current = editingDocument?.id;
     previousUpdatedAt.current = editingDocument?.updated_at;
+    previousForceRefresh.current = (editingDocument as any)?._forceRefresh;
     
     console.log('[Simple Builder] Document initialized with type:', newType, 'name:', newName, 'content length:', newContent.length);
   }, [editingDocument, getTemplateForType, mapDatabaseTypeToUI]);
@@ -170,18 +172,20 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     console.log('[Simple Builder] Template switched to:', newType, 'new content length:', newContent.length);
   }, [documentType, editingDocument, htmlContent, getTemplateForType]);
 
-  // FIXED: Initialize on mount or when editing document changes OR when content is updated in database
+  // FIXED: Initialize on mount or when editing document changes OR when content is updated in database OR force refresh
   useEffect(() => {
     const hasDocumentChanged = editingDocument?.id !== previousEditingDocumentId.current;
     const hasContentUpdated = editingDocument?.updated_at !== previousUpdatedAt.current;
+    const hasForceRefresh = (editingDocument as any)?._forceRefresh !== previousForceRefresh.current;
     
-    if (!isInitialized || hasDocumentChanged || hasContentUpdated) {
-      console.log('[Simple Builder] Document changed or updated, reinitializing from database');
-      console.log('[Simple Builder] Document changed:', hasDocumentChanged, 'Content updated:', hasContentUpdated);
+    if (!isInitialized || hasDocumentChanged || hasContentUpdated || hasForceRefresh) {
+      console.log('[Simple Builder] Document changed, content updated, or force refresh triggered - reinitializing from database');
+      console.log('[Simple Builder] Document changed:', hasDocumentChanged, 'Content updated:', hasContentUpdated, 'Force refresh:', hasForceRefresh);
       console.log('[Simple Builder] Previous updated_at:', previousUpdatedAt.current, 'New updated_at:', editingDocument?.updated_at);
+      console.log('[Simple Builder] Previous force refresh:', previousForceRefresh.current, 'New force refresh:', (editingDocument as any)?._forceRefresh);
       initializeDocument();
     }
-  }, [editingDocument?.id, editingDocument?.updated_at, isInitialized, initializeDocument]);
+  }, [editingDocument?.id, editingDocument?.updated_at, (editingDocument as any)?._forceRefresh, isInitialized, initializeDocument]);
 
   // Track content changes for unsaved state
   useEffect(() => {

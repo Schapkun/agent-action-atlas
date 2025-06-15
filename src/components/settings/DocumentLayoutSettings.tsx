@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { HTMLDocumentBuilder } from './htmldocument/HTMLDocumentBuilder';
@@ -25,17 +26,21 @@ const DocumentLayoutContent = () => {
   const handleEditDocument = async (document: DocumentTemplate) => {
     console.log('[Settings] Opening document for editing:', document.name, document.id);
     
-    // ALWAYS force refresh to get the absolute latest from database
+    // CRITICAL: ALWAYS force refresh to get the absolute latest from database
     await refreshTemplates();
     
-    // Get the fresh version from database after refresh
+    // Get the fresh version from database after refresh with a timestamp to force re-render
     const freshDocument = documents.find(d => d.id === document.id);
     const documentToEdit = freshDocument || document;
     
     console.log('[Settings] Using fresh document from DB:', documentToEdit.name, 'updated_at:', documentToEdit.updated_at);
     
-    // Force new object reference to trigger re-initialization
-    setEditingDocument({ ...documentToEdit });
+    // Force new object reference with timestamp to ensure re-initialization
+    setEditingDocument({ 
+      ...documentToEdit,
+      // Add a timestamp to force the useEffect to recognize this as a "new" document
+      _forceRefresh: Date.now().toString()
+    } as DocumentTemplate & { _forceRefresh: string });
     setIsBuilderOpen(true);
   };
 
