@@ -378,6 +378,8 @@ export type Database = {
       organization_settings: {
         Row: {
           created_at: string
+          customer_prefix: string | null
+          customer_start_number: number | null
           id: string
           invoice_prefix: string | null
           invoice_start_number: number | null
@@ -388,6 +390,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          customer_prefix?: string | null
+          customer_start_number?: number | null
           id?: string
           invoice_prefix?: string | null
           invoice_start_number?: number | null
@@ -398,6 +402,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          customer_prefix?: string | null
+          customer_start_number?: number | null
           id?: string
           invoice_prefix?: string | null
           invoice_start_number?: number | null

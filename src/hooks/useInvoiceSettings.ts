@@ -8,6 +8,8 @@ interface InvoiceSettingsData {
   invoice_start_number: number;
   quote_prefix: string;
   quote_start_number: number;
+  customer_prefix: string;
+  customer_start_number: number;
 }
 
 export const useInvoiceSettings = () => {
@@ -16,7 +18,9 @@ export const useInvoiceSettings = () => {
     invoice_prefix: '2025-',
     invoice_start_number: 1,
     quote_prefix: 'OFF-2025-',
-    quote_start_number: 1
+    quote_start_number: 1,
+    customer_prefix: 'KLANT-',
+    customer_start_number: 1
   });
   const [loading, setLoading] = useState(true);
 
@@ -30,7 +34,7 @@ export const useInvoiceSettings = () => {
       // Use type assertion for the new table until types are refreshed
       const { data, error } = await (supabase as any)
         .from('organization_settings')
-        .select('invoice_prefix, invoice_start_number, quote_prefix, quote_start_number')
+        .select('invoice_prefix, invoice_start_number, quote_prefix, quote_start_number, customer_prefix, customer_start_number')
         .eq('organization_id', selectedOrganization.id)
         .single();
 
@@ -43,7 +47,9 @@ export const useInvoiceSettings = () => {
           invoice_prefix: data.invoice_prefix || '2025-',
           invoice_start_number: data.invoice_start_number || 1,
           quote_prefix: data.quote_prefix || 'OFF-2025-',
-          quote_start_number: data.quote_start_number || 1
+          quote_start_number: data.quote_start_number || 1,
+          customer_prefix: data.customer_prefix || 'KLANT-',
+          customer_start_number: data.customer_start_number || 1
         });
       }
     } catch (error) {

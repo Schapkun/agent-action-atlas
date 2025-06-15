@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -89,6 +88,24 @@ const CreateInvoice = () => {
     }
   }, [defaultTemplate, selectedTemplate]);
 
+  // Calculate due date based on payment terms and invoice date
+  const calculateDueDate = (invoiceDate: string, paymentTerms: number) => {
+    const date = new Date(invoiceDate);
+    date.setDate(date.getDate() + paymentTerms);
+    return date.toISOString().split('T')[0];
+  };
+
+  // Update due date when invoice date or payment terms change
+  useEffect(() => {
+    if (formData.invoice_date && formData.payment_terms) {
+      const newDueDate = calculateDueDate(formData.invoice_date, formData.payment_terms);
+      setFormData(prev => ({
+        ...prev,
+        due_date: newDueDate
+      }));
+    }
+  }, [formData.invoice_date, formData.payment_terms]);
+
   const handleContactSelect = (contact: Contact | null) => {
     setSelectedContact(contact);
     if (contact) {
@@ -157,6 +174,11 @@ const CreateInvoice = () => {
     const total = subtotal + vatAmount;
     
     return { subtotal, vatAmount, total };
+  };
+
+  const applyTextFormatting = (index: number, type: 'bold' | 'italic' | 'underline' | 'list') => {
+    // This function can be implemented to apply formatting to the description field
+    console.log(`Applying ${type} formatting to line item ${index}`);
   };
 
   const handleConvertToQuote = async () => {
@@ -382,10 +404,10 @@ Uw administratie`
             </CardContent>
           </Card>
 
-          {/* Invoice details with proper numbering */}
+          {/* Invoice details with improved field widths */}
           <Card>
             <CardContent className="p-3">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-4 gap-4">
                 <div>
                   <Label className="text-xs font-medium">Factuur</Label>
                   <div className="flex mt-1">
@@ -393,7 +415,7 @@ Uw administratie`
                       {invoiceSettings.invoice_prefix}
                     </span>
                     <Input 
-                      className="rounded-l-none border-l-0 text-xs h-8" 
+                      className="rounded-l-none border-l-0 text-xs h-8 w-16" 
                       placeholder={invoiceSettings.invoice_start_number.toString().padStart(3, '0')}
                       readOnly
                     />
@@ -405,16 +427,34 @@ Uw administratie`
                     type="date"
                     value={formData.invoice_date}
                     onChange={(e) => setFormData({...formData, invoice_date: e.target.value})}
-                    className="mt-1 text-xs h-8"
+                    className="mt-1 text-xs h-8 w-32"
                   />
+                </div>
+                <div>
+                  <Label className="text-xs font-medium">Betalingstermijn</Label>
+                  <Select 
+                    value={formData.payment_terms.toString()} 
+                    onValueChange={(value) => setFormData({...formData, payment_terms: parseInt(value)})}
+                  >
+                    <SelectTrigger className="mt-1 text-xs h-8 w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7">7 dagen</SelectItem>
+                      <SelectItem value="14">14 dagen</SelectItem>
+                      <SelectItem value="21">21 dagen</SelectItem>
+                      <SelectItem value="30">30 dagen</SelectItem>
+                      <SelectItem value="60">60 dagen</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label className="text-xs font-medium">Vervaldatum</Label>
                   <Input 
                     type="date"
                     value={formData.due_date}
-                    onChange={(e) => setFormData({...formData, due_date: e.target.value})}
-                    className="mt-1 text-xs h-8"
+                    readOnly
+                    className="mt-1 text-xs h-8 w-32 bg-gray-100"
                   />
                 </div>
               </div>
@@ -424,26 +464,26 @@ Uw administratie`
           {/* Products/Services table with improved layout */}
           <Card>
             <CardHeader className="p-2">
-              <div className="grid grid-cols-12 gap-3 text-xs font-medium text-gray-700">
+              <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700">
                 <div className="col-span-1">Aantal</div>
                 <div className="col-span-6">Omschrijving</div>
                 <div className="col-span-2">Prijs</div>
-                <div className="col-span-2">btw</div>
-                <div className="col-span-1">Totaal</div>
+                <div className="col-span-1">btw</div>
+                <div className="col-span-2">Totaal</div>
               </div>
             </CardHeader>
 
             <CardContent className="p-2">
               <div className="space-y-2">
                 {lineItems.map((item, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-3 items-start">
+                  <div key={index} className="grid grid-cols-12 gap-2 items-start">
                     <div className="col-span-1">
                       <Input
                         type="number"
                         step="0.01"
                         value={item.quantity}
                         onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                        className="text-center text-xs h-8"
+                        className="text-center text-xs h-8 w-12"
                       />
                     </div>
                     <div className="col-span-6">
@@ -451,20 +491,44 @@ Uw administratie`
                         value={item.description}
                         onChange={(e) => updateLineItem(index, 'description', e.target.value)}
                         placeholder=""
-                        className="min-h-[32px] resize-none text-xs h-8"
+                        className="min-h-[32px] resize-none text-xs"
                         rows={1}
                       />
                       <div className="flex items-center gap-1 mt-1">
-                        <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-5 w-5 p-0"
+                          onClick={() => applyTextFormatting(index, 'bold')}
+                        >
                           <Bold className="h-3 w-3" />
                         </Button>
-                        <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-5 w-5 p-0"
+                          onClick={() => applyTextFormatting(index, 'italic')}
+                        >
                           <Italic className="h-3 w-3" />
                         </Button>
-                        <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-5 w-5 p-0"
+                          onClick={() => applyTextFormatting(index, 'underline')}
+                        >
                           <Underline className="h-3 w-3" />
                         </Button>
-                        <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0">
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-5 w-5 p-0"
+                          onClick={() => applyTextFormatting(index, 'list')}
+                        >
                           <List className="h-3 w-3" />
                         </Button>
                       </div>
@@ -477,18 +541,18 @@ Uw administratie`
                           step="0.01"
                           value={item.unit_price}
                           onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                          className="text-right text-xs h-8"
+                          className="text-right text-xs h-8 w-16"
                         />
                       </div>
                     </div>
-                    <div className="col-span-2">
+                    <div className="col-span-1">
                       <VatSelector
                         value={item.vat_rate}
                         onValueChange={(value) => updateLineItem(index, 'vat_rate', value)}
-                        className="text-xs h-8"
+                        className="text-xs h-8 w-12"
                       />
                     </div>
-                    <div className="col-span-1 flex items-center justify-between">
+                    <div className="col-span-2 flex items-center justify-between">
                       <div className="flex items-center">
                         <span className="mr-1 text-xs">€</span>
                         <span className="font-medium text-xs">{item.line_total.toFixed(2)}</span>

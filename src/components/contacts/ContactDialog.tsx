@@ -40,18 +40,8 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
     mobile: '',
     notes: '',
     active: true,
-    contactNameOnInvoice: true,
-    paymentTerms: 30,
-    invoiceDate: new Date().toISOString().split('T')[0],
-    dueDate: ''
+    contactNameOnInvoice: true
   });
-
-  // Calculate due date based on payment terms
-  const calculateDueDate = (invoiceDate: string, paymentTerms: number) => {
-    const date = new Date(invoiceDate);
-    date.setDate(date.getDate() + paymentTerms);
-    return date.toISOString().split('T')[0];
-  };
 
   useEffect(() => {
     if (contact && mode === 'edit') {
@@ -70,33 +60,17 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
         mobile: contact.mobile || '',
         notes: '',
         active: true,
-        contactNameOnInvoice: true,
-        paymentTerms: 30,
-        invoiceDate: new Date().toISOString().split('T')[0],
-        dueDate: calculateDueDate(new Date().toISOString().split('T')[0], 30)
+        contactNameOnInvoice: true
       });
     } else {
       // Generate random number for new contact
       const randomNumber = Math.floor(Math.random() * 9000 + 1000).toString();
-      const today = new Date().toISOString().split('T')[0];
       setFormData(prev => ({
         ...prev,
-        number: randomNumber,
-        invoiceDate: today,
-        dueDate: calculateDueDate(today, 30)
+        number: randomNumber
       }));
     }
   }, [contact, mode, isOpen]);
-
-  // Update due date when invoice date or payment terms change
-  useEffect(() => {
-    if (formData.invoiceDate) {
-      setFormData(prev => ({
-        ...prev,
-        dueDate: calculateDueDate(prev.invoiceDate, prev.paymentTerms)
-      }));
-    }
-  }, [formData.invoiceDate, formData.paymentTerms]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,7 +97,7 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl min-h-[90vh] max-h-[90vh] flex flex-col p-6">
+      <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col p-6">
         <DialogHeader>
           <DialogTitle className="text-white bg-blue-500 p-3 -m-6 mb-6">
             Contacten
