@@ -38,29 +38,15 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
     });
   }, []);
 
-  // FIXED: Map database types to UI types with proper schapkun detection
-  const mapDatabaseTypeToUI = (dbType: string, htmlContent?: string): DocumentTypeUI => {
-    console.log('[Simple Builder] Mapping DB type:', dbType, 'with HTML content check');
+  // FIXED: Simple database type to UI type mapping - don't auto-detect from content
+  const mapDatabaseTypeToUI = (dbType: string): DocumentTypeUI => {
+    console.log('[Simple Builder] Mapping DB type:', dbType);
     
-    // CRITICAL: Check HTML content FIRST for schapkun indicators
-    if (htmlContent && (
-        htmlContent.includes('SCHAPKUN') || 
-        htmlContent.includes('schapkun') ||
-        htmlContent.includes('WERKNEMER_NAAM') ||
-        htmlContent.includes('BEDRIJF_NAAM')
-    )) {
-      console.log('[Simple Builder] Detected schapkun from HTML content patterns');
-      return 'schapkun';
-    }
-    
-    // Then check explicit database type
-    if (dbType === 'schapkun') {
-      console.log('[Simple Builder] Detected schapkun from DB type');
-      return 'schapkun';
-    }
-    
-    // Map other standard types
+    // Direct mapping without content analysis
     switch (dbType) {
+      case 'schapkun':
+        console.log('[Simple Builder] Mapped to schapkun');
+        return 'schapkun';
       case 'factuur': 
         console.log('[Simple Builder] Mapped to factuur');
         return 'factuur';
@@ -111,8 +97,8 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
       // ALWAYS load from database, never from drafts
       newName = editingDocument.name;
       
-      // CRITICAL: Detect type from HTML content first, then database type
-      newType = mapDatabaseTypeToUI(editingDocument.type, editingDocument.html_content);
+      // Simple type mapping without content detection
+      newType = mapDatabaseTypeToUI(editingDocument.type);
       console.log('[Simple Builder] Final mapped type:', newType, 'from DB type:', editingDocument.type);
       
       // Load saved placeholder values if they exist
@@ -126,7 +112,7 @@ export function useSimpleDocumentBuilder({ editingDocument }: UseSimpleDocumentB
       // CRITICAL: ALWAYS preserve database content, never replace with template
       if (editingDocument.html_content && editingDocument.html_content.trim()) {
         newContent = editingDocument.html_content;
-        console.log('[Simple Builder] Using database content, length:', newContent.length, 'type detected:', newType);
+        console.log('[Simple Builder] Using database content, length:', newContent.length, 'type:', newType);
       } else {
         newContent = getTemplateForType(newType);
         console.log('[Simple Builder] Using default template for type:', newType);
