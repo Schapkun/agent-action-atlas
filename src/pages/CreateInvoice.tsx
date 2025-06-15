@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,8 +63,8 @@ const CreateInvoice = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [showSettings, setShowSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [customInvoiceNumber, setCustomInvoiceNumber] = useState('');
-  const [useCustomInvoiceNumber, setUseCustomInvoiceNumber] = useState(false);
+  const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [isInvoiceNumberFocused, setIsInvoiceNumberFocused] = useState(false);
   
   const [formData, setFormData] = useState<InvoiceFormData>({
     client_name: '',
@@ -86,12 +86,18 @@ const CreateInvoice = () => {
 
   const { toast } = useToast();
 
-  // Set default template when templates are loaded
+  // Set default template and payment terms when loaded
   useEffect(() => {
     if (defaultTemplate && !selectedTemplate) {
       setSelectedTemplate(defaultTemplate.id);
     }
-  }, [defaultTemplate, selectedTemplate]);
+    if (invoiceSettings.default_payment_terms) {
+      setFormData(prev => ({
+        ...prev,
+        payment_terms: invoiceSettings.default_payment_terms
+      }));
+    }
+  }, [defaultTemplate, selectedTemplate, invoiceSettings]);
 
   // Calculate due date based on payment terms and invoice date
   const calculateDueDate = (invoiceDate: string, paymentTerms: number) => {
@@ -110,6 +116,41 @@ const CreateInvoice = () => {
       }));
     }
   }, [formData.invoice_date, formData.payment_terms]);
+
+  // Generate default invoice number
+  const getDefaultInvoiceNumber = () => {
+    return invoiceSettings.invoice_prefix + invoiceSettings.invoice_start_number.toString().padStart(3, '0');
+  };
+
+  // Handle invoice number changes
+  const handleInvoiceNumberChange = (value: string) => {
+    setInvoiceNumber(value);
+  };
+
+  const handleInvoiceNumberFocus = () => {
+    setIsInvoiceNumberFocused(true);
+    if (!invoiceNumber) {
+      setInvoiceNumber(getDefaultInvoiceNumber());
+    }
+  };
+
+  const handleInvoiceNumberBlur = () => {
+    setIsInvoiceNumberFocused(false);
+  };
+
+  const getDisplayInvoiceNumber = () => {
+    if (isInvoiceNumberFocused || invoiceNumber) {
+      return invoiceNumber;
+    }
+    return '';
+  };
+
+  const getPlaceholderInvoiceNumber = () => {
+    if (!isInvoiceNumberFocused && !invoiceNumber) {
+      return getDefaultInvoiceNumber();
+    }
+    return '';
+  };
 
   const handleContactSelect = (contact: Contact | null) => {
     setSelectedContact(contact);
@@ -203,7 +244,7 @@ const CreateInvoice = () => {
         break;
       case 'list':
         const lines = selectedText.split('\n');
-        formattedText = lines.map(line => `• ${line}`).join('\n');
+        formattedText = lines.map(line => `<li>${line}</li>`).join('\n');
         break;
     }
     
@@ -335,7 +376,7 @@ Uw administratie`
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Compact Header with action buttons */}
+      {/* Header */}
       <div className="bg-white border-b px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -357,7 +398,6 @@ Uw administratie`
               ⚙️ Naar offerte
             </Button>
             
-            {/* Action buttons moved to header */}
             <div className="flex items-center gap-2 ml-4 border-l pl-4">
               <Button 
                 type="button" 
@@ -394,7 +434,7 @@ Uw administratie`
       {/* Main content */}
       <div className="max-w-6xl mx-auto p-3">
         <form onSubmit={handleSubmit} className="space-y-3">
-          {/* Contact selection with new ContactSelector */}
+          {/* Contact selection */}
           <Card>
             <CardContent className="p-3">
               <div className="flex items-center gap-3 mb-2">
@@ -439,10 +479,10 @@ Uw administratie`
             </CardContent>
           </Card>
 
-          {/* Invoice details with improved field widths */}
+          {/* Invoice details */}
           <Card>
             <CardContent className="p-3">
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-4 gap-3">
                 <div>
                   <Label className="text-xs font-medium">Factuur</Label>
                   <div className="flex mt-1">
@@ -450,13 +490,12 @@ Uw administratie`
                       {invoiceSettings.invoice_prefix}
                     </span>
                     <Input 
-                      className="rounded-l-none border-l-0 text-xs h-8 w-16" 
-                      value={useCustomInvoiceNumber ? customInvoiceNumber : invoiceSettings.invoice_start_number.toString().padStart(3, '0')}
-                      onChange={(e) => {
-                        setCustomInvoiceNumber(e.target.value);
-                        setUseCustomInvoiceNumber(true);
-                      }}
-                      onFocus={() => setUseCustomInvoiceNumber(true)}
+                      className="rounded-l-none border-l-0 text-xs h-8 w-20" 
+                      value={getDisplayInvoiceNumber().replace(invoiceSettings.invoice_prefix, '')}
+                      placeholder={getPlaceholderInvoiceNumber().replace(invoiceSettings.invoice_prefix, '')}
+                      onChange={(e) => handleInvoiceNumberChange(invoiceSettings.invoice_prefix + e.target.value)}
+                      onFocus={handleInvoiceNumberFocus}
+                      onBlur={handleInvoiceNumberBlur}
                     />
                   </div>
                 </div>
@@ -466,19 +505,20 @@ Uw administratie`
                     type="date"
                     value={formData.invoice_date}
                     onChange={(e) => setFormData({...formData, invoice_date: e.target.value})}
-                    className="mt-1 text-xs h-8 w-32"
+                    className="mt-1 text-xs h-8 w-36"
                   />
                 </div>
                 <div>
                   <Label className="text-xs font-medium">Betalingstermijn</Label>
-                  <div className="flex items-center mt-1">
+                  <div className="flex items-center mt-1 gap-1">
                     <Input 
                       type="number"
                       value={formData.payment_terms}
                       onChange={(e) => setFormData({...formData, payment_terms: parseInt(e.target.value) || 0})}
                       className="text-xs h-8 w-16"
+                      placeholder={invoiceSettings.default_payment_terms?.toString() || '30'}
                     />
-                    <span className="text-xs ml-2">dagen</span>
+                    <span className="text-xs">dagen</span>
                   </div>
                 </div>
                 <div>
@@ -487,18 +527,18 @@ Uw administratie`
                     type="date"
                     value={formData.due_date}
                     readOnly
-                    className="mt-1 text-xs h-8 w-32 bg-gray-100"
+                    className="mt-1 text-xs h-8 w-36 bg-gray-100"
                   />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Products/Services table with improved layout */}
+          {/* Products/Services table */}
           <Card>
             <CardHeader className="p-2">
               <div className="grid grid-cols-12 gap-1 text-xs font-medium text-gray-700">
-                <div className="col-span-1">Aantal</div>
+                <div className="col-span-1 text-center">Aantal</div>
                 <div className="col-span-6">Omschrijving</div>
                 <div className="col-span-2 text-center">Prijs</div>
                 <div className="col-span-1 text-center">btw</div>
@@ -510,65 +550,74 @@ Uw administratie`
               <div className="space-y-2">
                 {lineItems.map((item, index) => (
                   <div key={index} className="grid grid-cols-12 gap-1 items-start">
-                    <div className="col-span-1">
+                    <div className="col-span-1 flex justify-center">
                       <Input
                         type="number"
                         step="0.01"
                         value={item.quantity}
                         onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                        className="text-center text-xs h-8 w-12"
+                        className="text-center text-xs h-8 w-14"
                       />
                     </div>
                     <div className="col-span-6">
-                      <Textarea
-                        id={`description-${index}`}
-                        value={item.description}
-                        onChange={(e) => updateLineItem(index, 'description', e.target.value)}
-                        placeholder=""
-                        className="min-h-[32px] resize-none text-xs"
-                        rows={1}
-                      />
-                      <div className="flex items-center gap-1 mt-1">
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-5 w-5 p-0"
-                          onClick={() => applyTextFormatting(index, 'bold')}
-                        >
-                          <Bold className="h-3 w-3" />
-                        </Button>
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-5 w-5 p-0"
-                          onClick={() => applyTextFormatting(index, 'italic')}
-                        >
-                          <Italic className="h-3 w-3" />
-                        </Button>
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-5 w-5 p-0"
-                          onClick={() => applyTextFormatting(index, 'underline')}
-                        >
-                          <Underline className="h-3 w-3" />
-                        </Button>
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-5 w-5 p-0"
-                          onClick={() => applyTextFormatting(index, 'list')}
-                        >
-                          <List className="h-3 w-3" />
-                        </Button>
+                      <div className="space-y-1">
+                        <Textarea
+                          id={`description-${index}`}
+                          value={item.description}
+                          onChange={(e) => updateLineItem(index, 'description', e.target.value)}
+                          placeholder="Omschrijving"
+                          className="min-h-[32px] resize-none text-xs"
+                          rows={1}
+                        />
+                        {/* HTML Preview */}
+                        {item.description && (
+                          <div 
+                            className="text-xs p-1 border rounded bg-gray-50 min-h-[20px]"
+                            dangerouslySetInnerHTML={{ __html: item.description }}
+                          />
+                        )}
+                        <div className="flex items-center gap-1">
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-5 w-5 p-0"
+                            onClick={() => applyTextFormatting(index, 'bold')}
+                          >
+                            <Bold className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-5 w-5 p-0"
+                            onClick={() => applyTextFormatting(index, 'italic')}
+                          >
+                            <Italic className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-5 w-5 p-0"
+                            onClick={() => applyTextFormatting(index, 'underline')}
+                          >
+                            <Underline className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-5 w-5 p-0"
+                            onClick={() => applyTextFormatting(index, 'list')}
+                          >
+                            <List className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                    <div className="col-span-2">
-                      <div className="flex items-center justify-center gap-1">
+                    <div className="col-span-2 flex justify-center">
+                      <div className="flex items-center gap-1">
                         <span className="text-xs">€</span>
                         <Input
                           type="number"
@@ -583,7 +632,7 @@ Uw administratie`
                       <VatSelector
                         value={item.vat_rate}
                         onValueChange={(value) => updateLineItem(index, 'vat_rate', value)}
-                        className="text-xs h-8 w-14"
+                        className="text-xs h-8 w-16"
                       />
                     </div>
                     <div className="col-span-2 flex items-center justify-between">
@@ -597,7 +646,7 @@ Uw administratie`
                         size="sm"
                         onClick={() => removeLineItem(index)}
                         disabled={lineItems.length === 1}
-                        className="text-red-500 hover:text-red-700 h-6 w-6 p-0 ml-2"
+                        className="text-red-500 hover:text-red-700 h-6 w-6 p-0"
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -646,7 +695,7 @@ Uw administratie`
                 </div>
                 <div className="flex justify-between text-sm font-bold text-blue-600 border-t pt-1">
                   <span>Totaal:</span>
-                  <span>€ {total.toFixed(2)}</span>
+                  <div>€ {total.toFixed(2)}</div>
                 </div>
               </div>
             </CardContent>
@@ -654,33 +703,38 @@ Uw administratie`
         </form>
       </div>
 
-      {/* Settings Dialog */}
-      <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Klantinstellingen</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label className="text-sm">Btw verlegd</Label>
-              <div className="flex gap-2 mt-1">
-                <Button variant="outline" size="sm" className="text-xs">Ja</Button>
-                <Button variant="outline" size="sm" className="text-xs bg-green-100">Nee</Button>
-              </div>
+      {/* Settings Sidebar */}
+      {showSettings && (
+        <div className="fixed inset-y-0 right-0 w-80 bg-white shadow-lg border-l z-50 overflow-y-auto">
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium">Klantinstellingen</h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowSettings(false)}>
+                ×
+              </Button>
             </div>
-            <div>
-              <Label className="text-sm">Producten btw</Label>
-              <div className="flex gap-2 mt-1">
-                <Button variant="outline" size="sm" className="text-xs bg-green-100">incl.</Button>
-                <Button variant="outline" size="sm" className="text-xs">excl.</Button>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm">Btw verlegd</Label>
+                <div className="flex gap-2 mt-1">
+                  <Button variant="outline" size="sm" className="text-xs">Ja</Button>
+                  <Button variant="outline" size="sm" className="text-xs bg-green-100">Nee</Button>
+                </div>
               </div>
-            </div>
-            <div className="text-xs text-gray-600">
-              Deze opties passen de klant instelling aan. Ingevulde periodieke facturen voor deze klant zullen ook aangepast worden.
+              <div>
+                <Label className="text-sm">Producten btw</Label>
+                <div className="flex gap-2 mt-1">
+                  <Button variant="outline" size="sm" className="text-xs bg-green-100">incl.</Button>
+                  <Button variant="outline" size="sm" className="text-xs">excl.</Button>
+                </div>
+              </div>
+              <div className="text-xs text-gray-600">
+                Deze opties passen de klant instelling aan. Ingevulde periodieke facturen voor deze klant zullen ook aangepast worden.
+              </div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
       {/* Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
@@ -693,7 +747,7 @@ Uw administratie`
               <div className="flex justify-between mb-8">
                 <div>
                   <h1 className="text-2xl font-bold">FACTUUR</h1>
-                  <p>Factuurnummer: {useCustomInvoiceNumber ? customInvoiceNumber : invoiceSettings.invoice_prefix + invoiceSettings.invoice_start_number.toString().padStart(3, '0')}</p>
+                  <p>Factuurnummer: {invoiceNumber || getDefaultInvoiceNumber()}</p>
                   <p>Factuurdatum: {formData.invoice_date}</p>
                   <p>Vervaldatum: {formData.due_date}</p>
                 </div>

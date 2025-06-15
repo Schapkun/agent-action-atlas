@@ -12,7 +12,7 @@ interface ContactShippingTabProps {
 
 export const ContactShippingTab = ({ formData, setFormData }: ContactShippingTabProps) => {
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 gap-3 h-full">
       {/* Left column */}
       <div className="space-y-3">
         <div>
@@ -63,7 +63,8 @@ export const ContactShippingTab = ({ formData, setFormData }: ContactShippingTab
             <Input
               id="paymentTerms"
               type="number"
-              value={formData.paymentTerms || 14}
+              value={formData.paymentTerms || ''}
+              placeholder="14"
               onChange={(e) => setFormData({...formData, paymentTerms: parseInt(e.target.value) || 14})}
               className="h-7 text-xs w-16"
             />

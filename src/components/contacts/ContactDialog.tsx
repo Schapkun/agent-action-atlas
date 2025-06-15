@@ -41,7 +41,6 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
     notes: '',
     active: true,
     contactNameOnInvoice: true,
-    // Document tab fields
     standardDiscount: 0,
     documentLanguage: 'Standaardinstelling',
     currency: 'Euro',
@@ -49,7 +48,6 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
     standardCategory: 'geen',
     referenceText: '',
     hideNoticesOnNewInvoice: false,
-    // Shipping tab fields
     shippingMethod: 'E-mail',
     standardEmailText: 'geen',
     reminderEmail: '',
@@ -127,19 +125,21 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col p-4">
-        <DialogHeader>
-          <DialogTitle className="text-white bg-blue-500 p-2 -m-4 mb-4 text-sm">
+      <DialogContent className="fixed max-w-4xl w-[90vw] h-[85vh] flex flex-col p-0">
+        <DialogHeader className="px-4 py-3 border-b">
+          <DialogTitle className="text-white bg-blue-500 p-2 -mx-4 -mt-3 mb-3 text-sm">
             Contacten
           </DialogTitle>
         </DialogHeader>
 
-        <ContactDialogTabs 
-          formData={formData}
-          setFormData={setFormData}
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-        />
+        <div className="flex-1 overflow-hidden px-4 pb-4">
+          <ContactDialogTabs 
+            formData={formData}
+            setFormData={setFormData}
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );

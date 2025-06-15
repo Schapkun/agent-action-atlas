@@ -33,7 +33,6 @@ export const useInvoiceSettings = () => {
     }
 
     try {
-      // Use type assertion for the new table until types are refreshed
       const { data, error } = await (supabase as any)
         .from('organization_settings')
         .select('invoice_prefix, invoice_start_number, quote_prefix, quote_start_number, customer_prefix, customer_start_number, default_payment_terms')
