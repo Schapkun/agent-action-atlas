@@ -64,13 +64,8 @@ export const DocumentListItem = ({ document, onEdit, onDuplicate, onDelete }: Do
           </div>
         )}
         
-        <div className="flex items-center gap-4 text-xs text-gray-500">
-          <span>
-            Aangemaakt: {new Date(document.created_at).toLocaleDateString('nl-NL')}
-          </span>
-          <span>
-            Bijgewerkt: {new Date(document.updated_at).toLocaleDateString('nl-NL')}
-          </span>
+        <div className="text-xs text-gray-500">
+          Bijgewerkt: {new Date(document.updated_at).toLocaleDateString('nl-NL')}
         </div>
       </div>
       
