@@ -17,7 +17,7 @@ export const LabelDropdown = ({ selectedLabels, onLabelsChange, disabled }: Labe
   const [isOpen, setIsOpen] = useState(false);
   const { labels, loading } = useDocumentTemplateLabels();
 
-  const handleLabelToggle = (label: DocumentTemplateLabel) => {
+  const handleLabelToggle = async (label: DocumentTemplateLabel) => {
     const isSelected = selectedLabels.some(l => l.id === label.id);
     
     if (isSelected) {
@@ -25,6 +25,11 @@ export const LabelDropdown = ({ selectedLabels, onLabelsChange, disabled }: Labe
     } else {
       onLabelsChange([...selectedLabels, label]);
     }
+    
+    // Close the popover after a short delay to show the visual feedback
+    setTimeout(() => {
+      setIsOpen(false);
+    }, 200);
   };
 
   return (
