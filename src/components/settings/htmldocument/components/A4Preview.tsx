@@ -10,12 +10,7 @@ interface A4PreviewProps {
 }
 
 export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) => {
-  const { handlePDFDownload, handleHTMLExport } = useExportOperations({
-    documentName: placeholderValues.onderwerp || 'Document',
-    htmlContent: processedHtml
-  });
-
-  // Replace all placeholders in the HTML content
+  // Replace all placeholders in the HTML content - moved before useExportOperations
   const processedHtml = React.useMemo(() => {
     let processed = htmlContent;
     
@@ -29,7 +24,12 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
     return processed;
   }, [htmlContent, placeholderValues]);
 
-  // Create optimized A4 preview with better scaling
+  const { handlePDFDownload, handleHTMLExport } = useExportOperations({
+    documentName: placeholderValues.onderwerp || 'Document',
+    htmlContent: processedHtml
+  });
+
+  // Create optimized A4 preview with better scaling and content fitting
   const getOptimizedPreviewHtml = (content: string) => {
     return content.replace(
       /<style[^>]*>([\s\S]*?)<\/style>/i,
@@ -49,20 +49,32 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
           }
           
           body {
-            transform: scale(0.75);
-            width: 133.33%; /* 100% / 0.75 to compensate for scale */
-            height: 133.33%;
+            transform: scale(0.85);
+            width: 117.65%; /* 100% / 0.85 to compensate for scale */
+            height: 117.65%;
+            font-size: 14px;
           }
           
-          /* Ensure content fits well */
+          /* Better content fitting */
           .header, .content, .document-info, .recipient, .footer {
             page-break-inside: avoid;
+            margin-bottom: 15px;
           }
           
-          /* Better text rendering */
+          /* Optimize text rendering */
           * {
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            line-height: 1.4;
+          }
+          
+          /* Better spacing for A4 */
+          p {
+            margin: 8px 0;
+          }
+          
+          h1, h2, h3 {
+            margin: 12px 0 8px 0;
           }
           
           /* Optimize for preview */
