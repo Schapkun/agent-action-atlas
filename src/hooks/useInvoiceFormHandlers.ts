@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useInvoiceForm } from './useInvoiceForm';
 import { useDocumentTemplates } from './useDocumentTemplates';
@@ -70,7 +69,8 @@ export const useInvoiceFormHandlers = () => {
   };
 
   const handlePreview = () => {
-    console.log('🎨 PREVIEW: Opening preview with data:', {
+    console.log('🎨 PREVIEW: Opening preview with company data integration');
+    console.log('🎨 PREVIEW: Data:', {
       formData,
       lineItems,
       invoiceNumber,
