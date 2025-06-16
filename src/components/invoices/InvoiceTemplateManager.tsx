@@ -101,10 +101,13 @@ export const InvoiceTemplateManager = ({
             </SelectValue>
           </div>
         </SelectTrigger>
-        <SelectContent className="w-64 max-h-80">
+        <SelectContent className="w-64 max-h-80 bg-white border shadow-lg z-50">
           {availableTemplates.map((template) => (
             <div key={template.id} className="relative group">
-              <SelectItem value={template.id} className="py-2 pl-8 pr-12 cursor-pointer">
+              <SelectItem 
+                value={template.id} 
+                className="py-2 pl-8 pr-12 cursor-pointer hover:bg-gray-50 focus:bg-gray-50"
+              >
                 <div className="flex items-center gap-2 w-full">
                   {(template.is_default || favoriteTemplate === template.id) && (
                     <Star className="h-3 w-3 text-yellow-500 fill-current" />
@@ -114,12 +117,13 @@ export const InvoiceTemplateManager = ({
               </SelectItem>
               <button
                 type="button"
-                className={`absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 flex items-center justify-center cursor-pointer hover:bg-gray-100 rounded transition-colors z-20 ${favoriteTemplate === template.id ? 'text-yellow-500' : 'text-gray-400'}`}
+                className={`absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 flex items-center justify-center cursor-pointer hover:bg-gray-100 rounded transition-colors z-[60] ${favoriteTemplate === template.id ? 'text-yellow-500' : 'text-gray-400'}`}
                 onClick={(e) => {
                   console.log('InvoiceTemplateManager - Star clicked for template:', template.id);
                   handleSetFavorite(template.id, e);
                 }}
-                style={{ pointerEvents: 'auto' }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
               >
                 <Star className={`h-3.5 w-3.5 ${favoriteTemplate === template.id ? 'fill-current' : ''}`} />
               </button>
