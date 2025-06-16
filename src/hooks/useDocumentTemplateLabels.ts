@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -60,7 +59,8 @@ export const useDocumentTemplateLabels = () => {
 
       if (error) throw error;
 
-      setLabels(prev => [...prev, data]);
+      // Refresh the labels list immediately
+      await fetchLabels();
       
       toast({
         title: "Label aangemaakt",
@@ -90,7 +90,8 @@ export const useDocumentTemplateLabels = () => {
 
       if (error) throw error;
 
-      setLabels(prev => prev.map(label => label.id === id ? data : label));
+      // Refresh the labels list immediately
+      await fetchLabels();
       
       toast({
         title: "Label bijgewerkt",
@@ -118,7 +119,8 @@ export const useDocumentTemplateLabels = () => {
 
       if (error) throw error;
 
-      setLabels(prev => prev.filter(label => label.id !== id));
+      // Refresh the labels list immediately
+      await fetchLabels();
       
       toast({
         title: "Label verwijderd",

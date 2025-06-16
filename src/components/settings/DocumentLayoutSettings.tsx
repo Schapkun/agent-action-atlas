@@ -7,18 +7,14 @@ import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentActions } from './components/DocumentActions';
 import { DocumentList } from './components/DocumentList';
-import { DocumentFilters } from './components/DocumentFilters';
+import { CompactDocumentFilters } from './components/CompactDocumentFilters';
 import { DocumentProvider } from './contexts/DocumentContext';
 import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 import { DocumentTemplateLabel } from '@/types/documentLabels';
-import { DocumentTemplateLabelsDialog } from './components/DocumentTemplateLabelsDialog';
-import { Button } from '@/components/ui/button';
-import { Tags } from 'lucide-react';
 
 const DocumentLayoutContent = () => {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
-  const [isLabelsDialogOpen, setIsLabelsDialogOpen] = useState(false);
   const [editingDocumentId, setEditingDocumentId] = useState<string | undefined>(undefined);
   const [duplicatingDocument, setDuplicatingDocument] = useState<DocumentTemplateWithLabels | null>(null);
   
@@ -142,18 +138,9 @@ const DocumentLayoutContent = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
-          <DocumentActions onNewDocument={handleNewDocument} />
-          <Button
-            variant="outline"
-            onClick={() => setIsLabelsDialogOpen(true)}
-          >
-            <Tags className="h-4 w-4 mr-2" />
-            Beheer Labels
-          </Button>
-        </div>
+        <DocumentActions onNewDocument={handleNewDocument} />
 
-        <DocumentFilters
+        <CompactDocumentFilters
           selectedLabels={selectedFilterLabels}
           onLabelsChange={setSelectedFilterLabels}
           onClearFilters={handleClearFilters}
@@ -193,12 +180,6 @@ const DocumentLayoutContent = () => {
           initialName={duplicatingDocument ? `${duplicatingDocument.name} (kopie)` : ''}
           initialType={duplicatingDocument?.type || 'factuur'}
           initialDescription={duplicatingDocument?.description || ''}
-        />
-
-        {/* Document Template Labels Dialog */}
-        <DocumentTemplateLabelsDialog
-          open={isLabelsDialogOpen}
-          onClose={() => setIsLabelsDialogOpen(false)}
         />
       </div>
     </DocumentProvider>

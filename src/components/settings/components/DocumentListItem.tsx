@@ -2,8 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Edit, MoreHorizontal, Trash2, Tags } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Copy, Edit, Trash2 } from 'lucide-react';
 import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 import { LabelDropdown } from './LabelDropdown';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
@@ -14,27 +13,6 @@ interface DocumentListItemProps {
   onDuplicate: (document: DocumentTemplateWithLabels) => void;
   onDelete: (document: DocumentTemplateWithLabels) => void;
 }
-
-const getTypeColor = (type: string) => {
-  switch (type) {
-    case 'factuur': return 'bg-green-100 text-green-800';
-    case 'contract': return 'bg-blue-100 text-blue-800';
-    case 'brief': return 'bg-purple-100 text-purple-800';
-    case 'schapkun': return 'bg-orange-100 text-orange-800';
-    default: return 'bg-gray-100 text-gray-800';
-  }
-};
-
-const getTypeLabel = (type: string) => {
-  switch (type) {
-    case 'factuur': return 'Factuur';
-    case 'contract': return 'Contract';
-    case 'brief': return 'Brief';
-    case 'schapkun': return 'Schapkun';
-    case 'custom': return 'Aangepast';
-    default: return type;
-  }
-};
 
 export const DocumentListItem = ({ document, onEdit, onDuplicate, onDelete }: DocumentListItemProps) => {
   const { updateTemplate } = useDocumentTemplates();
@@ -64,9 +42,6 @@ export const DocumentListItem = ({ document, onEdit, onDuplicate, onDelete }: Do
           <h4 className="text-sm font-medium text-gray-900 truncate">
             {document.name}
           </h4>
-          <Badge variant="secondary" className={getTypeColor(document.type)}>
-            {getTypeLabel(document.type)}
-          </Badge>
           {document.is_default && (
             <Badge variant="outline" className="text-xs">
               Standaard
@@ -125,26 +100,23 @@ export const DocumentListItem = ({ document, onEdit, onDuplicate, onDelete }: Do
           <Edit className="h-4 w-4" />
         </Button>
         
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={handleDuplicate}>
-              <Copy className="h-4 w-4 mr-2" />
-              Dupliceren
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={handleDelete}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Verwijderen
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleDuplicate}
+          className="hover:bg-green-50"
+        >
+          <Copy className="h-4 w-4" />
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleDelete}
+          className="hover:bg-red-50 text-red-600"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

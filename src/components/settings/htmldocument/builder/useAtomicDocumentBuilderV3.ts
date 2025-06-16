@@ -74,12 +74,18 @@ export function useAtomicDocumentBuilderV3({
   const documentBuilder = useAtomicDocumentBuilder({ documentId });
   
   // Document actions (save, export, etc.)
-  const documentActions = useDocumentActions({
-    ...documentBuilder,
-    editingDocument: documentBuilder.document,
-    onDocumentSaved,
-    clearDraftForDocument: documentBuilder.clearDraftForDocument
-  });
+  const documentActions = useDocumentActions(
+    documentBuilder.document?.id,
+    documentBuilder.documentName,
+    documentBuilder.htmlContent,
+    documentBuilder.placeholderValues,
+    documentBuilder.selectedLabels,
+    (success: boolean) => {
+      if (success && onDocumentSaved) {
+        onDocumentSaved(documentBuilder.document);
+      }
+    }
+  );
 
   // UI handlers
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,16 +116,11 @@ export function useAtomicDocumentBuilderV3({
     }
   };
 
-  const handlePreview = () => {
-    documentActions.setIsPreviewOpen(true);
-  };
-
   return {
     ...documentBuilder,
     ...documentActions,
     handleLogoUpload,
     SNIPPETS,
-    handlePreview,
     insertSnippet,
     DOCUMENT_TYPE_OPTIONS,
     PLACEHOLDER_FIELDS,
