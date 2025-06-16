@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,8 +30,11 @@ export const LabelDropdown = ({ selectedLabels, onLabelsChange, disabled }: Labe
     // User can close it manually or it will close when clicking outside
   };
 
+  // Create a key that changes when selectedLabels change to force re-render
+  const selectedLabelsKey = selectedLabels.map(l => l.id).sort().join(',');
+
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover open={isOpen} onOpenChange={setIsOpen} key={selectedLabelsKey}>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" disabled={disabled} className="flex items-center gap-2">
           <Tags className="h-4 w-4" />
