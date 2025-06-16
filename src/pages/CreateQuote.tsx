@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -88,16 +87,6 @@ const CreateQuote = () => {
         client_country: contact.country || 'Nederland'
       }));
     }
-  };
-
-  const handleContactCreated = (contact: Contact) => {
-    console.log('Contact created:', contact);
-  };
-
-  const handleContactUpdated = (contact: Contact) => {
-    console.log('Contact updated:', contact);
-    setSelectedContact(contact);
-    handleContactSelect(contact);
   };
 
   const calculateLineTotal = (quantity: number, unitPrice: number) => {
@@ -263,8 +252,6 @@ const CreateQuote = () => {
                   <ContactSelector
                     selectedContact={selectedContact}
                     onContactSelect={handleContactSelect}
-                    onContactCreated={handleContactCreated}
-                    onContactUpdated={handleContactUpdated}
                   />
                 </div>
                 <div className="w-48">

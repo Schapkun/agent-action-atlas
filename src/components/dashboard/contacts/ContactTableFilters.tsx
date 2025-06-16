@@ -1,13 +1,12 @@
 
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, UserPlus, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, X } from 'lucide-react';
 
 interface ContactTableFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  onNewContact: () => void;
   canInviteUsers: boolean;
   contextInfo: string;
   labelFilter?: Array<{ id: string; name: string; color: string; }>;
@@ -17,7 +16,6 @@ interface ContactTableFiltersProps {
 export const ContactTableFilters = ({
   searchTerm,
   onSearchChange,
-  onNewContact,
   canInviteUsers,
   contextInfo,
   labelFilter = [],
@@ -64,12 +62,6 @@ export const ContactTableFilters = ({
             className="pl-10"
           />
         </div>
-        {canInviteUsers && (
-          <Button variant="outline" size="sm" onClick={onNewContact}>
-            <UserPlus className="h-4 w-4 mr-2" />
-            Nieuw
-          </Button>
-        )}
       </div>
     </>
   );

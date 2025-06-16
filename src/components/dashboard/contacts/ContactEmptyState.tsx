@@ -1,6 +1,5 @@
 
-import { Button } from '@/components/ui/button';
-import { Users, UserPlus } from 'lucide-react';
+import { Users } from 'lucide-react';
 
 interface ContactEmptyStateProps {
   hasOrganizationSelected: boolean;
@@ -8,7 +7,6 @@ interface ContactEmptyStateProps {
   hasContacts: boolean;
   hasFilteredContacts: boolean;
   canInviteUsers: boolean;
-  onNewContact: () => void;
 }
 
 export const ContactEmptyState = ({
@@ -16,8 +14,7 @@ export const ContactEmptyState = ({
   loading,
   hasContacts,
   hasFilteredContacts,
-  canInviteUsers,
-  onNewContact
+  canInviteUsers
 }: ContactEmptyStateProps) => {
   if (!hasOrganizationSelected) {
     return (
@@ -46,17 +43,6 @@ export const ContactEmptyState = ({
             : 'Geen contacten gevonden die voldoen aan de zoekcriteria'
           }
         </p>
-        {canInviteUsers && !hasContacts && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onNewContact}
-            className="mt-4"
-          >
-            <UserPlus className="h-4 w-4 mr-2" />
-            Voeg je eerste contact toe
-          </Button>
-        )}
       </div>
     );
   }
