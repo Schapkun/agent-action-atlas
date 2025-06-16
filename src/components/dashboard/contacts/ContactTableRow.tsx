@@ -108,13 +108,13 @@ export const ContactTableRow = ({
               <Badge
                 key={label.id}
                 style={{ backgroundColor: label.color, color: 'white' }}
-                className="text-xs px-3 py-1 h-6 border-0"
+                className="text-xs px-2 py-1 h-5 border-0"
               >
                 {label.name}
               </Badge>
             ))}
             {contact.labels.length > 3 && (
-              <Badge variant="outline" className="text-xs px-3 py-1 h-6">
+              <Badge variant="outline" className="text-xs px-2 py-1 h-5">
                 +{contact.labels.length - 3}
               </Badge>
             )}
@@ -164,13 +164,13 @@ export const ContactTableRow = ({
                 <Badge
                   key={label.id}
                   style={{ backgroundColor: label.color, color: 'white' }}
-                  className="text-xs px-3 py-1 h-6 border-0"
+                  className="text-xs px-2 py-1 h-5 border-0"
                 >
                   {label.name}
                 </Badge>
               ))}
               {contact.labels.length > 2 && (
-                <Badge variant="outline" className="text-xs px-3 py-1 h-6">
+                <Badge variant="outline" className="text-xs px-2 py-1 h-5">
                   +{contact.labels.length - 2}
                 </Badge>
               )}
