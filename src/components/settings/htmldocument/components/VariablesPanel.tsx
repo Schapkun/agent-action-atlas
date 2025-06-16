@@ -1,331 +1,184 @@
 
 import React, { useState } from 'react';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Settings, Upload, Image, Plus, X } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown, ChevronRight, Plus, Building, User, FileText, Calendar } from 'lucide-react';
 
 interface VariablesPanelProps {
   placeholderValues: Record<string, string>;
   onPlaceholderChange: (key: string, value: string) => void;
 }
 
-const PLACEHOLDER_GROUPS = [
-  {
-    title: 'Bedrijf',
-    fields: [
-      { key: 'logo', label: '{{logo}}', type: 'file' },
-      { key: 'bedrijfsnaam', label: '{{bedrijfsnaam}}' },
-      { key: 'adres', label: '{{adres}}' },
-      { key: 'postcode', label: '{{postcode}}' },
-      { key: 'plaats', label: '{{plaats}}' },
-      { key: 'telefoon', label: '{{telefoon}}' },
-      { key: 'email', label: '{{email}}' },
-      { key: 'website', label: '{{website}}' },
-      { key: 'kvk', label: '{{kvk}}' },
-      { key: 'btw', label: '{{btw}}' },
-    ]
-  },
-  {
-    title: 'Document',
-    fields: [
-      { key: 'datum', label: '{{datum}}' },
-      { key: 'referentie', label: '{{referentie}}' },
-      { key: 'onderwerp', label: '{{onderwerp}}' },
-      { key: 'documentnummer', label: '{{documentnummer}}' },
-    ]
-  },
-  {
-    title: 'Klant',
-    fields: [
-      { key: 'klant_naam', label: '{{klant_naam}}' },
-      { key: 'klant_bedrijf', label: '{{klant_bedrijf}}' },
-      { key: 'klant_adres', label: '{{klant_adres}}' },
-      { key: 'klant_postcode', label: '{{klant_postcode}}' },
-      { key: 'klant_plaats', label: '{{klant_plaats}}' },
-      { key: 'klant_email', label: '{{klant_email}}' },
-    ]
-  },
-  {
-    title: 'Brief',
-    fields: [
-      { key: 'aanhef', label: '{{aanhef}}' },
-      { key: 'tekst', label: '{{tekst}}', type: 'textarea' },
-      { key: 'afsluiting', label: '{{afsluiting}}' },
-      { key: 'handtekening', label: '{{handtekening}}' },
-    ]
-  },
-  {
-    title: 'Footer',
-    fields: [
-      { key: 'footer_tekst', label: '{{footer_tekst}}' },
-      { key: 'footer_contact', label: '{{footer_contact}}' },
-    ]
-  }
-];
-
 export const VariablesPanel = ({ placeholderValues, onPlaceholderChange }: VariablesPanelProps) => {
-  const [customVariables, setCustomVariables] = useState<Array<{ key: string; label: string }>>([]);
-  const [newVariableName, setNewVariableName] = useState('');
-  const [isAddingVariable, setIsAddingVariable] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    bedrijf: true,
+    document: true,
+    klant: false
+  });
 
-  const handleFileUpload = (key: string, event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        onPlaceholderChange(key, result);
-      };
-      reader.readAsDataURL(file);
+  const toggleSection = (section: string) => {
+    setOpenSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  // Categorize variables
+  const variableCategories = {
+    bedrijf: {
+      title: 'Bedrijf',
+      icon: Building,
+      variables: Object.entries(placeholderValues).filter(([key]) => 
+        ['bedrijfsnaam', 'adres', 'postcode', 'plaats', 'telefoon', 'email', 'kvk', 'btw', 'iban', 'website'].includes(key)
+      )
+    },
+    document: {
+      title: 'Document',
+      icon: FileText,
+      variables: Object.entries(placeholderValues).filter(([key]) => 
+        ['onderwerp', 'datum', 'referentie', 'aanhef', 'tekst', 'afsluiting', 'footer_tekst', 'footer_contact'].includes(key)
+      )
+    },
+    klant: {
+      title: 'Klant',
+      icon: User,
+      variables: Object.entries(placeholderValues).filter(([key]) => 
+        key.startsWith('klant_')
+      )
     }
   };
 
-  const handleAddVariable = () => {
-    if (newVariableName.trim()) {
-      const key = newVariableName.toLowerCase().replace(/\s+/g, '_');
-      const label = `{{${key}}}`;
-      setCustomVariables(prev => [...prev, { key, label }]);
-      setNewVariableName('');
-      setIsAddingVariable(false);
-    }
-  };
-
-  const handleRemoveCustomVariable = (indexToRemove: number) => {
-    setCustomVariables(prev => prev.filter((_, index) => index !== indexToRemove));
-  };
-
-  const insertVariableIntoEditor = (variableCode: string) => {
-    const htmlEditor = document.querySelector('.w-full.h-full.font-mono') as HTMLTextAreaElement;
-    if (htmlEditor) {
-      const start = htmlEditor.selectionStart;
-      const end = htmlEditor.selectionEnd;
-      const currentValue = htmlEditor.value;
-      const newValue = currentValue.slice(0, start) + variableCode + currentValue.slice(end);
-      
-      // Create a synthetic event to trigger onChange
-      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
-      nativeInputValueSetter?.call(htmlEditor, newValue);
-      
-      const event = new Event('input', { bubbles: true });
-      htmlEditor.dispatchEvent(event);
-      
-      // Set cursor position after the inserted text
-      setTimeout(() => {
-        htmlEditor.focus();
-        htmlEditor.setSelectionRange(start + variableCode.length, start + variableCode.length);
-      }, 0);
-    }
-  };
-
-  const renderField = (field: any, isCustom = false, customIndex?: number) => {
-    if (field.type === 'file') {
+  const renderInput = (key: string, value: string) => {
+    const isLongText = ['tekst', 'afsluiting', 'footer_tekst', 'footer_contact'].includes(key);
+    
+    if (isLongText) {
       return (
-        <div key={field.key} className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor={field.key} className="text-xs text-gray-600">
-              {field.label}
-            </Label>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-4 w-4 p-0 text-blue-500 hover:text-blue-700"
-              onClick={() => insertVariableIntoEditor(field.label)}
-            >
-              <Plus className="h-3 w-3" />
-            </Button>
-          </div>
-          <div className="space-y-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full h-8 text-xs relative overflow-hidden"
-              onClick={() => document.getElementById(field.key)?.click()}
-            >
-              <Upload className="h-3 w-3 mr-2" />
-              Kies bestand
-            </Button>
-            <input
-              id={field.key}
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleFileUpload(field.key, e)}
-              className="hidden"
-            />
-            {placeholderValues[field.key] && (
-              <div className="mt-2 p-2 border rounded bg-gray-50">
-                <div className="flex items-center gap-2 mb-1">
-                  <Image className="h-3 w-3 text-green-600" />
-                  <span className="text-xs text-green-600 font-medium">Logo geüpload</span>
-                </div>
-                <img 
-                  src={placeholderValues[field.key]} 
-                  alt="Logo preview" 
-                  className="max-w-full h-12 object-contain border rounded"
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    if (field.type === 'textarea') {
-      return (
-        <div key={field.key} className="space-y-1">
-          <div className="flex items-center justify-between">
-            <Label htmlFor={field.key} className="text-xs text-gray-600">
-              {field.label}
-            </Label>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-4 w-4 p-0 text-blue-500 hover:text-blue-700"
-                onClick={() => insertVariableIntoEditor(field.label)}
-              >
-                <Plus className="h-3 w-3" />
-              </Button>
-              {isCustom && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 text-red-500 hover:text-red-700"
-                  onClick={() => handleRemoveCustomVariable(customIndex!)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
-          </div>
-          <textarea
-            id={field.key}
-            value={placeholderValues[field.key] || ''}
-            onChange={(e) => onPlaceholderChange(field.key, e.target.value)}
-            className="w-full text-xs h-16 px-2 py-1 border border-gray-300 rounded-md resize-none"
-            placeholder=""
-          />
-        </div>
-      );
-    }
-
-    return (
-      <div key={field.key} className="space-y-1">
-        <div className="flex items-center justify-between">
-          <Label htmlFor={field.key} className="text-xs text-gray-600">
-            {field.label}
-          </Label>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-4 w-4 p-0 text-blue-500 hover:text-blue-700"
-              onClick={() => insertVariableIntoEditor(field.label)}
-            >
-              <Plus className="h-3 w-3" />
-            </Button>
-            {isCustom && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-4 w-4 p-0 text-red-500 hover:text-red-700"
-                onClick={() => handleRemoveCustomVariable(customIndex!)}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
-        </div>
-        <Input
-          id={field.key}
-          value={placeholderValues[field.key] || ''}
-          onChange={(e) => onPlaceholderChange(field.key, e.target.value)}
-          className="text-xs h-7"
-          placeholder=""
+        <Textarea
+          value={value}
+          onChange={(e) => onPlaceholderChange(key, e.target.value)}
+          placeholder={`Voer ${key} in...`}
+          className="min-h-[80px] text-sm"
+          rows={4}
         />
-      </div>
+      );
+    }
+    
+    return (
+      <Input
+        value={value}
+        onChange={(e) => onPlaceholderChange(key, e.target.value)}
+        placeholder={`Voer ${key} in...`}
+        className="text-sm"
+      />
     );
+  };
+
+  const formatLabel = (key: string) => {
+    const labelMap: Record<string, string> = {
+      bedrijfsnaam: 'Bedrijfsnaam',
+      adres: 'Adres',
+      postcode: 'Postcode',
+      plaats: 'Plaats',
+      telefoon: 'Telefoon',
+      email: 'E-mail',
+      kvk: 'KvK nummer',
+      btw: 'BTW nummer',
+      iban: 'IBAN',
+      website: 'Website',
+      onderwerp: 'Onderwerp',
+      datum: 'Datum',
+      referentie: 'Referentie',
+      aanhef: 'Aanhef',
+      tekst: 'Hoofdtekst',
+      afsluiting: 'Afsluiting',
+      footer_tekst: 'Footer tekst',
+      footer_contact: 'Footer contact',
+      klant_naam: 'Klant naam',
+      klant_bedrijf: 'Klant bedrijf',
+      klant_adres: 'Klant adres',
+      klant_postcode: 'Klant postcode',
+      klant_plaats: 'Klant plaats'
+    };
+    
+    return labelMap[key] || key.charAt(0).toUpperCase() + key.slice(1);
   };
 
   return (
     <div className="h-full flex flex-col bg-white border-r">
-      <div className="p-3 border-b bg-gray-50">
-        <div className="flex items-center gap-2">
-          <Settings className="h-4 w-4" />
-          <span className="text-sm font-medium">Variabelen</span>
-        </div>
+      {/* Header */}
+      <div className="flex-shrink-0 p-4 border-b bg-gray-50">
+        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+          <Calendar className="h-4 w-4" />
+          Variabelen
+        </h3>
+        <p className="text-xs text-gray-600 mt-1">
+          Pas de waarden aan om ze in het document te zien
+        </p>
       </div>
+
+      {/* Variables */}
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-4">
+          {Object.entries(variableCategories).map(([categoryKey, category]) => {
+            const Icon = category.icon;
+            const isOpen = openSections[categoryKey];
+            
+            return (
+              <Card key={categoryKey} className="border border-gray-200">
+                <Collapsible open={isOpen} onOpenChange={() => toggleSection(categoryKey)}>
+                  <CollapsibleTrigger asChild>
+                    <CardHeader className="pb-3 cursor-pointer hover:bg-gray-50 transition-colors">
+                      <CardTitle className="text-sm flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4 text-gray-600" />
+                          {category.title}
+                          <span className="text-xs text-gray-500">({category.variables.length})</span>
+                        </div>
+                        {isOpen ? 
+                          <ChevronDown className="h-4 w-4 text-gray-500" /> : 
+                          <ChevronRight className="h-4 w-4 text-gray-500" />
+                        }
+                      </CardTitle>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  
+                  <CollapsibleContent>
+                    <CardContent className="pt-0 space-y-3">
+                      {category.variables.map(([key, value]) => (
+                        <div key={key} className="space-y-1">
+                          <Label htmlFor={key} className="text-xs font-medium text-gray-700">
+                            {formatLabel(key)}
+                          </Label>
+                          {renderInput(key, value)}
+                        </div>
+                      ))}
+                      
+                      {category.variables.length === 0 && (
+                        <div className="text-xs text-gray-500 italic py-2">
+                          Geen variabelen in deze categorie
+                        </div>
+                      )}
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+            );
+          })}
+        </div>
+      </ScrollArea>
       
-      <div className="flex-1 overflow-auto p-3 space-y-4">
-        {PLACEHOLDER_GROUPS.map((group) => (
-          <div key={group.title} className="space-y-2">
-            <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-              {group.title}
-            </h4>
-            <div className="space-y-3">
-              {group.fields.map((field) => renderField(field, false))}
-            </div>
+      {/* Footer Info */}
+      <div className="flex-shrink-0 p-4 border-t bg-gray-50">
+        <div className="text-xs text-gray-600">
+          <div className="flex justify-between items-center">
+            <span>Totaal variabelen:</span>
+            <span className="font-medium">{Object.keys(placeholderValues).length}</span>
           </div>
-        ))}
-
-        {/* Custom Variables Section */}
-        {customVariables.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-              Aangepaste Variabelen
-            </h4>
-            <div className="space-y-3">
-              {customVariables.map((field, index) => renderField(field, true, index))}
-            </div>
-          </div>
-        )}
-
-        {/* Add Variable Section */}
-        <div className="space-y-2 pt-2 border-t">
-          {isAddingVariable ? (
-            <div className="space-y-2">
-              <Input
-                value={newVariableName}
-                onChange={(e) => setNewVariableName(e.target.value)}
-                placeholder="Variabele naam"
-                className="text-xs h-7"
-                onKeyPress={(e) => e.key === 'Enter' && handleAddVariable()}
-              />
-              <div className="flex gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-6 px-2 text-xs flex-1"
-                  onClick={handleAddVariable}
-                  disabled={!newVariableName.trim()}
-                >
-                  Toevoegen
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 px-2 text-xs"
-                  onClick={() => {
-                    setIsAddingVariable(false);
-                    setNewVariableName('');
-                  }}
-                >
-                  Annuleer
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full h-7 text-xs"
-              onClick={() => setIsAddingVariable(true)}
-            >
-              <Plus className="h-3 w-3 mr-1" />
-              Variabele toevoegen
-            </Button>
-          )}
         </div>
       </div>
     </div>
