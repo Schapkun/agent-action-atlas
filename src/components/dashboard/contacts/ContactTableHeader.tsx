@@ -1,4 +1,3 @@
-
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -6,7 +5,6 @@ import { Settings, Archive, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
@@ -46,6 +44,11 @@ export const ContactTableHeader = ({
   onBulkArchive,
   onBulkDelete
 }: ContactTableHeaderProps) => {
+  const handleColumnToggle = (column: keyof ColumnVisibility, checked: boolean) => {
+    // Prevent event propagation to keep dropdown open
+    onColumnVisibilityChange(column, checked);
+  };
+
   return (
     <>
       {/* Bulk Actions Row */}
@@ -114,84 +117,204 @@ export const ContactTableHeader = ({
                   <Settings className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-white">
+              <DropdownMenuContent align="end" className="w-56 bg-white" onCloseAutoFocus={(e) => e.preventDefault()}>
                 <DropdownMenuLabel className="text-xs font-semibold">Contactgegevens</DropdownMenuLabel>
-                <DropdownMenuCheckboxItem
-                  checked={columnVisibility.email}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('email', checked)}
-                  className="text-xs"
-                >
-                  E-mail
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={columnVisibility.address}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('address', checked)}
-                  className="text-xs"
-                >
-                  Adres
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={columnVisibility.phone}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('phone', checked)}
-                  className="text-xs"
-                >
-                  Telefoon
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={columnVisibility.mobile}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('mobile', checked)}
-                  className="text-xs"
-                >
-                  Mobiel
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={columnVisibility.postal_code}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('postal_code', checked)}
-                  className="text-xs"
-                >
-                  Postcode
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={columnVisibility.city}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('city', checked)}
-                  className="text-xs"
-                >
-                  Plaats
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={columnVisibility.country}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('country', checked)}
-                  className="text-xs"
-                >
-                  Land
-                </DropdownMenuCheckboxItem>
+                
+                <div className="px-2 py-1.5">
+                  <div 
+                    className="flex items-center space-x-2 text-xs cursor-pointer hover:bg-gray-50 rounded px-1 py-1"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleColumnToggle('email', !columnVisibility.email);
+                    }}
+                  >
+                    <Checkbox
+                      checked={columnVisibility.email}
+                      onCheckedChange={(checked) => handleColumnToggle('email', checked as boolean)}
+                      className="h-4 w-4"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span>E-mail</span>
+                  </div>
+                </div>
+
+                <div className="px-2 py-1.5">
+                  <div 
+                    className="flex items-center space-x-2 text-xs cursor-pointer hover:bg-gray-50 rounded px-1 py-1"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleColumnToggle('address', !columnVisibility.address);
+                    }}
+                  >
+                    <Checkbox
+                      checked={columnVisibility.address}
+                      onCheckedChange={(checked) => handleColumnToggle('address', checked as boolean)}
+                      className="h-4 w-4"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span>Adres</span>
+                  </div>
+                </div>
+
+                <div className="px-2 py-1.5">
+                  <div 
+                    className="flex items-center space-x-2 text-xs cursor-pointer hover:bg-gray-50 rounded px-1 py-1"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleColumnToggle('phone', !columnVisibility.phone);
+                    }}
+                  >
+                    <Checkbox
+                      checked={columnVisibility.phone}
+                      onCheckedChange={(checked) => handleColumnToggle('phone', checked as boolean)}
+                      className="h-4 w-4"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span>Telefoon</span>
+                  </div>
+                </div>
+
+                <div className="px-2 py-1.5">
+                  <div 
+                    className="flex items-center space-x-2 text-xs cursor-pointer hover:bg-gray-50 rounded px-1 py-1"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleColumnToggle('mobile', !columnVisibility.mobile);
+                    }}
+                  >
+                    <Checkbox
+                      checked={columnVisibility.mobile}
+                      onCheckedChange={(checked) => handleColumnToggle('mobile', checked as boolean)}
+                      className="h-4 w-4"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span>Mobiel</span>
+                  </div>
+                </div>
+
+                <div className="px-2 py-1.5">
+                  <div 
+                    className="flex items-center space-x-2 text-xs cursor-pointer hover:bg-gray-50 rounded px-1 py-1"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleColumnToggle('postal_code', !columnVisibility.postal_code);
+                    }}
+                  >
+                    <Checkbox
+                      checked={columnVisibility.postal_code}
+                      onCheckedChange={(checked) => handleColumnToggle('postal_code', checked as boolean)}
+                      className="h-4 w-4"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span>Postcode</span>
+                  </div>
+                </div>
+
+                <div className="px-2 py-1.5">
+                  <div 
+                    className="flex items-center space-x-2 text-xs cursor-pointer hover:bg-gray-50 rounded px-1 py-1"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleColumnToggle('city', !columnVisibility.city);
+                    }}
+                  >
+                    <Checkbox
+                      checked={columnVisibility.city}
+                      onCheckedChange={(checked) => handleColumnToggle('city', checked as boolean)}
+                      className="h-4 w-4"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span>Plaats</span>
+                  </div>
+                </div>
+
+                <div className="px-2 py-1.5">
+                  <div 
+                    className="flex items-center space-x-2 text-xs cursor-pointer hover:bg-gray-50 rounded px-1 py-1"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleColumnToggle('country', !columnVisibility.country);
+                    }}
+                  >
+                    <Checkbox
+                      checked={columnVisibility.country}
+                      onCheckedChange={(checked) => handleColumnToggle('country', checked as boolean)}
+                      className="h-4 w-4"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span>Land</span>
+                  </div>
+                </div>
                 
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel className="text-xs font-semibold">Financiële gegevens</DropdownMenuLabel>
-                <DropdownMenuCheckboxItem
-                  checked={columnVisibility.openstaand}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('openstaand', checked)}
-                  className="text-xs"
-                >
-                  Openstaand
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={columnVisibility.omzet}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('omzet', checked)}
-                  className="text-xs"
-                >
-                  Omzet
-                </DropdownMenuCheckboxItem>
+                
+                <div className="px-2 py-1.5">
+                  <div 
+                    className="flex items-center space-x-2 text-xs cursor-pointer hover:bg-gray-50 rounded px-1 py-1"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleColumnToggle('openstaand', !columnVisibility.openstaand);
+                    }}
+                  >
+                    <Checkbox
+                      checked={columnVisibility.openstaand}
+                      onCheckedChange={(checked) => handleColumnToggle('openstaand', checked as boolean)}
+                      className="h-4 w-4"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span>Openstaand</span>
+                  </div>
+                </div>
+
+                <div className="px-2 py-1.5">
+                  <div 
+                    className="flex items-center space-x-2 text-xs cursor-pointer hover:bg-gray-50 rounded px-1 py-1"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleColumnToggle('omzet', !columnVisibility.omzet);
+                    }}
+                  >
+                    <Checkbox
+                      checked={columnVisibility.omzet}
+                      onCheckedChange={(checked) => handleColumnToggle('omzet', checked as boolean)}
+                      className="h-4 w-4"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span>Omzet</span>
+                  </div>
+                </div>
                 
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel className="text-xs font-semibold">Status</DropdownMenuLabel>
-                <DropdownMenuCheckboxItem
-                  checked={columnVisibility.actief}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('actief', checked)}
-                  className="text-xs"
-                >
-                  Actief
-                </DropdownMenuCheckboxItem>
+                
+                <div className="px-2 py-1.5">
+                  <div 
+                    className="flex items-center space-x-2 text-xs cursor-pointer hover:bg-gray-50 rounded px-1 py-1"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleColumnToggle('actief', !columnVisibility.actief);
+                    }}
+                  >
+                    <Checkbox
+                      checked={columnVisibility.actief}
+                      onCheckedChange={(checked) => handleColumnToggle('actief', checked as boolean)}
+                      className="h-4 w-4"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span>Actief</span>
+                  </div>
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
           </TableHead>
