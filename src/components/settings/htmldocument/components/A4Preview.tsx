@@ -59,7 +59,6 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
     html, body {
       width: 100%;
       height: 100%;
-      overflow: hidden;
       font-family: Arial, sans-serif;
       background: white;
     }
@@ -70,15 +69,13 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       padding-top: 5px;
       padding-bottom: 5px;
       background: white;
-      overflow: hidden;
     }
     
     .a4-content {
       width: 100%;
       height: 100%;
       padding: 15mm;
-      overflow: hidden;
-      font-size: 11px;
+      font-size: 12px;
       line-height: 1.4;
       color: #333;
     }
@@ -126,15 +123,13 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
         </div>
       </div>
 
-      {/* A4 Preview Area - 700px breed met correcte A4 ratio en 5px marges */}
-      <div className="flex-1 p-6 overflow-hidden flex justify-center items-center">
+      {/* A4 Preview Area - Grote preview met correcte A4 ratio en 5px marges */}
+      <div className="flex-1 overflow-hidden flex justify-center items-center" style={{ padding: '5px 24px' }}>
         <div 
-          className="bg-white shadow-lg border border-gray-300 overflow-hidden"
+          className="bg-white shadow-lg border border-gray-300"
           style={{
-            width: '700px',
-            height: '990px',
-            maxWidth: 'calc(100vw - 48px)',
-            maxHeight: 'calc(100vh - 180px)',
+            width: '800px',
+            height: '1131px',
             aspectRatio: '210/297'
           }}
         >
