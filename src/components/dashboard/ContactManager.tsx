@@ -19,6 +19,7 @@ interface Contact {
   type?: string;
   payment_terms?: number;
   is_active?: boolean;
+  labels?: Array<{ id: string; name: string; color: string; }>;
 }
 
 export const ContactManager = () => {
@@ -41,7 +42,8 @@ export const ContactManager = () => {
     setContacts,
     setSelectedContacts,
     setColumnVisibility,
-    toast
+    toast,
+    fetchContacts
   } = useContactManager();
 
   const getContextInfo = () => {
@@ -71,14 +73,12 @@ export const ContactManager = () => {
     console.log('🔵 ContactManager: Contact saved:', contact);
     
     if (editingContact) {
-      // Update existing contact
       setContacts(prev => prev.map(c => c.id === contact.id ? contact : c));
       toast({
         title: "Contact bijgewerkt",
         description: `Contact "${contact.name}" is succesvol bijgewerkt.`
       });
     } else {
-      // Add new contact
       setContacts(prev => [contact, ...prev]);
       toast({
         title: "Contact toegevoegd",
@@ -88,6 +88,7 @@ export const ContactManager = () => {
     
     setIsContactDialogOpen(false);
     setEditingContact(undefined);
+    fetchContacts(); // Refresh to get labels
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -180,6 +181,10 @@ export const ContactManager = () => {
     setColumnVisibility(prev => ({ ...prev, [column]: checked }));
   };
 
+  const handleContactsUpdated = () => {
+    fetchContacts();
+  };
+
   console.log('🔵 ContactManager: Rendering with data:', {
     selectedOrganization: selectedOrganization?.name,
     selectedWorkspace: selectedWorkspace?.name,
@@ -227,6 +232,7 @@ export const ContactManager = () => {
               onBulkDelete={handleBulkDelete}
               onNewContact={handleNewContact}
               onEditContact={handleEditContact}
+              onContactsUpdated={handleContactsUpdated}
             />
           </CardContent>
         </Card>

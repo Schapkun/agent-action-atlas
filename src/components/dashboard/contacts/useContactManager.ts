@@ -18,6 +18,7 @@ interface Contact {
   type?: string;
   payment_terms?: number;
   is_active?: boolean;
+  labels?: Array<{ id: string; name: string; color: string; }>;
 }
 
 interface ColumnVisibility {
@@ -112,7 +113,16 @@ export const useContactManager = () => {
     try {
       let query = supabase
         .from('clients')
-        .select('*')
+        .select(`
+          *,
+          contact_label_assignments(
+            contact_labels(
+              id,
+              name,
+              color
+            )
+          )
+        `)
         .eq('organization_id', selectedOrganization.id)
         .order('created_at', { ascending: false });
 
@@ -139,9 +149,10 @@ export const useContactManager = () => {
         city: client.city || undefined,
         country: client.country || undefined,
         phone: client.phone || undefined,
-        mobile: undefined, // We'll need to add this field to the database later
+        mobile: undefined,
         payment_terms: 30,
-        is_active: true
+        is_active: true,
+        labels: client.contact_label_assignments?.map((assignment: any) => assignment.contact_labels).filter(Boolean) || []
       }));
 
       console.log('🔵 useContactManager: Mapped contacts:', mappedContacts);
@@ -201,6 +212,7 @@ export const useContactManager = () => {
     setContacts,
     setSelectedContacts,
     setColumnVisibility,
-    toast
+    toast,
+    fetchContacts
   };
 };

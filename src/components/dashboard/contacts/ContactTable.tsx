@@ -1,8 +1,14 @@
 
+import { useState } from 'react';
 import { Table, TableBody } from '@/components/ui/table';
 import { ContactTableHeader } from './ContactTableHeader';
 import { ContactTableRow } from './ContactTableRow';
 import { ContactEmptyState } from './ContactEmptyState';
+import { ContactInvoicesDialog } from './ContactInvoicesDialog';
+import { ContactQuotesDialog } from './ContactQuotesDialog';
+import { ContactEmailDialog } from './ContactEmailDialog';
+import { ContactLabelsDialog } from './ContactLabelsDialog';
+import { useNavigate } from 'react-router-dom';
 
 interface Contact {
   id: string;
@@ -17,6 +23,7 @@ interface Contact {
   type?: string;
   payment_terms?: number;
   is_active?: boolean;
+  labels?: Array<{ id: string; name: string; color: string; }>;
 }
 
 interface ColumnVisibility {
@@ -50,6 +57,7 @@ interface ContactTableProps {
   onBulkDelete: () => void;
   onNewContact: () => void;
   onEditContact?: (contact: Contact) => void;
+  onContactsUpdated?: () => void;
 }
 
 export const ContactTable = ({
@@ -69,8 +77,16 @@ export const ContactTable = ({
   onBulkArchive,
   onBulkDelete,
   onNewContact,
-  onEditContact
+  onEditContact,
+  onContactsUpdated
 }: ContactTableProps) => {
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [invoicesDialogOpen, setInvoicesDialogOpen] = useState(false);
+  const [quotesDialogOpen, setQuotesDialogOpen] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [labelsDialogOpen, setLabelsDialogOpen] = useState(false);
+  const navigate = useNavigate();
+
   console.log('🔵 ContactTable: Rendering with props:', {
     hasOrganizationSelected,
     loading,
@@ -79,8 +95,6 @@ export const ContactTable = ({
   });
 
   const showEmptyState = !hasOrganizationSelected || loading || filteredContacts.length === 0;
-
-  console.log('🔵 ContactTable: Show empty state?', showEmptyState);
 
   if (showEmptyState) {
     return (
@@ -95,8 +109,6 @@ export const ContactTable = ({
     );
   }
 
-  console.log('🔵 ContactTable: Rendering actual table with contacts:', filteredContacts.length);
-
   const handleEditContact = (contact: Contact) => {
     console.log('🔵 ContactTable: Edit contact clicked:', contact.name);
     onEditContact?.(contact);
@@ -104,32 +116,54 @@ export const ContactTable = ({
 
   const handleViewInvoices = (contact: Contact) => {
     console.log('🔵 ContactTable: View invoices for:', contact.name);
-    // TODO: Implement navigation to invoices filtered by contact
+    setSelectedContact(contact);
+    setInvoicesDialogOpen(true);
   };
 
   const handleViewQuotes = (contact: Contact) => {
     console.log('🔵 ContactTable: View quotes for:', contact.name);
-    // TODO: Implement navigation to quotes filtered by contact
+    setSelectedContact(contact);
+    setQuotesDialogOpen(true);
   };
 
   const handleCreateInvoice = (contact: Contact) => {
     console.log('🔵 ContactTable: Create invoice for:', contact.name);
-    // TODO: Implement navigation to create invoice with pre-filled contact
+    // Navigate to create invoice page with pre-selected contact
+    navigate('/facturen/nieuw', { 
+      state: { 
+        preSelectedContact: {
+          name: contact.name,
+          email: contact.email,
+          address: contact.address,
+          postal_code: contact.postal_code,
+          city: contact.city,
+          country: contact.country
+        }
+      }
+    });
   };
 
   const handleCreateQuote = (contact: Contact) => {
     console.log('🔵 ContactTable: Create quote for:', contact.name);
-    // TODO: Implement navigation to create quote with pre-filled contact
+    // Navigate to create quote page with pre-selected contact
+    navigate('/offertes/nieuw', { 
+      state: { 
+        preSelectedContact: {
+          name: contact.name,
+          email: contact.email,
+          address: contact.address,
+          postal_code: contact.postal_code,
+          city: contact.city,
+          country: contact.country
+        }
+      }
+    });
   };
 
   const handleSendEmail = (contact: Contact) => {
     console.log('🔵 ContactTable: Send email to:', contact.name);
-    // TODO: Implement email functionality
-  };
-
-  const handleExportVCard = (contact: Contact) => {
-    console.log('🔵 ContactTable: Export vCard for:', contact.name);
-    // TODO: Implement vCard export
+    setSelectedContact(contact);
+    setEmailDialogOpen(true);
   };
 
   const handleDeleteContact = (contact: Contact) => {
@@ -137,39 +171,76 @@ export const ContactTable = ({
     // TODO: Implement delete confirmation and action
   };
 
+  const handleManageLabels = (contact: Contact) => {
+    console.log('🔵 ContactTable: Manage labels for:', contact.name);
+    setSelectedContact(contact);
+    setLabelsDialogOpen(true);
+  };
+
   return (
-    <Table>
-      <ContactTableHeader
-        isAllSelected={isAllSelected}
-        isIndeterminate={isIndeterminate}
-        selectedContactsCount={selectedContacts.size}
-        columnVisibility={columnVisibility}
-        onSelectAll={onSelectAll}
-        onColumnVisibilityChange={onColumnVisibilityChange}
-        onBulkArchive={onBulkArchive}
-        onBulkDelete={onBulkDelete}
+    <>
+      <Table>
+        <ContactTableHeader
+          isAllSelected={isAllSelected}
+          isIndeterminate={isIndeterminate}
+          selectedContactsCount={selectedContacts.size}
+          columnVisibility={columnVisibility}
+          onSelectAll={onSelectAll}
+          onColumnVisibilityChange={onColumnVisibilityChange}
+          onBulkArchive={onBulkArchive}
+          onBulkDelete={onBulkDelete}
+        />
+        <TableBody>
+          {filteredContacts.map((contact, index) => (
+            <ContactTableRow
+              key={contact.id}
+              contact={contact}
+              index={index}
+              isSelected={selectedContacts.has(contact.id)}
+              columnVisibility={columnVisibility}
+              onSelectContact={onSelectContact}
+              onToggleStatus={onToggleStatus}
+              onEditContact={handleEditContact}
+              onViewInvoices={handleViewInvoices}
+              onViewQuotes={handleViewQuotes}
+              onCreateInvoice={handleCreateInvoice}
+              onCreateQuote={handleCreateQuote}
+              onSendEmail={handleSendEmail}
+              onDeleteContact={handleDeleteContact}
+              onManageLabels={handleManageLabels}
+            />
+          ))}
+        </TableBody>
+      </Table>
+
+      {/* Dialogs */}
+      <ContactInvoicesDialog
+        isOpen={invoicesDialogOpen}
+        onClose={() => setInvoicesDialogOpen(false)}
+        contact={selectedContact}
       />
-      <TableBody>
-        {filteredContacts.map((contact, index) => (
-          <ContactTableRow
-            key={contact.id}
-            contact={contact}
-            index={index}
-            isSelected={selectedContacts.has(contact.id)}
-            columnVisibility={columnVisibility}
-            onSelectContact={onSelectContact}
-            onToggleStatus={onToggleStatus}
-            onEditContact={handleEditContact}
-            onViewInvoices={handleViewInvoices}
-            onViewQuotes={handleViewQuotes}
-            onCreateInvoice={handleCreateInvoice}
-            onCreateQuote={handleCreateQuote}
-            onSendEmail={handleSendEmail}
-            onExportVCard={handleExportVCard}
-            onDeleteContact={handleDeleteContact}
-          />
-        ))}
-      </TableBody>
-    </Table>
+
+      <ContactQuotesDialog
+        isOpen={quotesDialogOpen}
+        onClose={() => setQuotesDialogOpen(false)}
+        contact={selectedContact}
+      />
+
+      <ContactEmailDialog
+        isOpen={emailDialogOpen}
+        onClose={() => setEmailDialogOpen(false)}
+        contact={selectedContact}
+      />
+
+      <ContactLabelsDialog
+        isOpen={labelsDialogOpen}
+        onClose={() => setLabelsDialogOpen(false)}
+        contact={selectedContact}
+        onLabelsUpdated={() => {
+          onContactsUpdated?.();
+          setLabelsDialogOpen(false);
+        }}
+      />
+    </>
   );
 };

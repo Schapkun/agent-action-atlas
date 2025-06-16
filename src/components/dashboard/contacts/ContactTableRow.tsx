@@ -2,7 +2,8 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
-import { Check, Edit, ChevronDown } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Check, Edit, ChevronDown, Plus } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +25,7 @@ interface Contact {
   type?: string;
   payment_terms?: number;
   is_active?: boolean;
+  labels?: Array<{ id: string; name: string; color: string; }>;
 }
 
 interface ColumnVisibility {
@@ -52,8 +54,8 @@ interface ContactTableRowProps {
   onCreateInvoice?: (contact: Contact) => void;
   onCreateQuote?: (contact: Contact) => void;
   onSendEmail?: (contact: Contact) => void;
-  onExportVCard?: (contact: Contact) => void;
   onDeleteContact?: (contact: Contact) => void;
+  onManageLabels?: (contact: Contact) => void;
 }
 
 export const ContactTableRow = ({
@@ -69,8 +71,8 @@ export const ContactTableRow = ({
   onCreateInvoice,
   onCreateQuote,
   onSendEmail,
-  onExportVCard,
-  onDeleteContact
+  onDeleteContact,
+  onManageLabels
 }: ContactTableRowProps) => {
   const formatAddress = (contact: Contact) => {
     const parts = [];
@@ -96,6 +98,24 @@ export const ContactTableRow = ({
         <div className="text-xs font-medium text-gray-900">{contact.name}</div>
         {contact.email && (
           <div className="text-xs text-muted-foreground">{contact.email}</div>
+        )}
+        {contact.labels && contact.labels.length > 0 && (
+          <div className="flex gap-1 mt-1 flex-wrap">
+            {contact.labels.slice(0, 3).map((label) => (
+              <Badge
+                key={label.id}
+                style={{ backgroundColor: label.color, color: 'white' }}
+                className="text-xs px-1 py-0 h-4 border-0"
+              >
+                {label.name}
+              </Badge>
+            ))}
+            {contact.labels.length > 3 && (
+              <Badge variant="outline" className="text-xs px-1 py-0 h-4">
+                +{contact.labels.length - 3}
+              </Badge>
+            )}
+          </div>
         )}
       </TableCell>
       {columnVisibility.email && (
@@ -163,7 +183,7 @@ export const ContactTableRow = ({
           </div>
         </TableCell>
       )}
-      <TableCell className="p-2 w-20">
+      <TableCell className="p-2">
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button
             variant="ghost"
@@ -172,6 +192,16 @@ export const ContactTableRow = ({
             onClick={() => onEditContact?.(contact)}
           >
             <Edit className="h-3 w-3" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-1 text-xs"
+            onClick={() => onManageLabels?.(contact)}
+            title="Labels beheren"
+          >
+            <Plus className="h-3 w-3" />
           </Button>
           
           <DropdownMenu>
@@ -198,10 +228,7 @@ export const ContactTableRow = ({
                 Offerte maken
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onExportVCard?.(contact)}>
-                Kopieer
-              </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onManageLabels?.(contact)}>
                 Labels
               </DropdownMenuItem>
               <DropdownMenuItem>
@@ -209,12 +236,6 @@ export const ContactTableRow = ({
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onSendEmail?.(contact)}>
                 E-mail versturen
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onExportVCard?.(contact)}>
-                vCard
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onToggleStatus(contact.id, contact.is_active ?? true)}>
-                Markeer als niet actief
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
