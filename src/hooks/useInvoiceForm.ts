@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInvoices } from './useInvoices';
@@ -91,8 +92,9 @@ export const useInvoiceForm = () => {
     return invoiceSettings.invoice_prefix + invoiceSettings.invoice_start_number.toString().padStart(3, '0');
   };
 
+  // PURE FORM UPDATE FUNCTIONS - NO INVOICE CREATION LOGIC
   const handleContactSelect = (contact: Contact | null) => {
-    console.log('🚫 ISOLATED: useInvoiceForm.handleContactSelect - ONLY contact selection, NO INVOICE LOGIC');
+    console.log('🔴 PURE FORM UPDATE: handleContactSelect - NO INVOICE LOGIC');
     setSelectedContact(contact);
     if (contact) {
       const contactPaymentTerms = contact.payment_terms || invoiceSettings.default_payment_terms || 30;
@@ -108,43 +110,15 @@ export const useInvoiceForm = () => {
         payment_terms: contactPaymentTerms
       }));
     }
-    console.log('🚫 ISOLATED: useInvoiceForm.handleContactSelect completed - NO INVOICE TRIGGERS');
+    console.log('🔴 FORM UPDATE COMPLETE: No invoice creation triggers');
   };
 
-  // COMPLETELY ISOLATED CONTACT HANDLERS - NO INVOICE LOGIC ALLOWED
+  // ISOLATED CONTACT HANDLERS - ABSOLUTELY NO INVOICE CREATION
   const handleContactCreated = useCallback((contact: Contact) => {
-    console.log('🚫 COMPLETE ISOLATION: useInvoiceForm.handleContactCreated - BLOCKING ALL INVOICE CREATION');
-    console.log('🚫 This function is ONLY for form updates - ZERO INVOICE LOGIC');
-    console.log('🚫 Contact received for form update only:', contact);
+    console.log('🚫🚫🚫 ABSOLUTE BLOCK: handleContactCreated - ZERO INVOICE CREATION');
+    console.log('🚫🚫🚫 This is ONLY for updating form fields - NO INVOICE LOGIC WHATSOEVER');
     
-    // BLOCK: Prevent any automatic effects or callbacks that might trigger invoice creation
-    console.log('🚫 BLOCKING: Setting contact state WITHOUT any invoice creation triggers');
-    
-    setSelectedContact(contact);
-    setFormData(prev => {
-      console.log('🚫 FORM UPDATE ONLY: Updating form data with contact info');
-      return {
-        ...prev,
-        client_name: contact.name,
-        client_email: contact.email || '',
-        client_address: contact.address || '',
-        client_postal_code: contact.postal_code || '',
-        client_city: contact.city || '',
-        client_country: contact.country || 'Nederland',
-        payment_terms: contact.payment_terms || invoiceSettings.default_payment_terms || 30
-      };
-    });
-
-    console.log('🚫 ISOLATION COMPLETE: Form updated with contact data - NO INVOICE CREATION OCCURRED');
-
-    toast({
-      title: "Contact toegevoegd",
-      description: `Contact "${contact.name}" is toegevoegd aan de factuur.`
-    });
-  }, [invoiceSettings.default_payment_terms, toast]);
-
-  const handleContactUpdated = (contact: Contact) => {
-    console.log('🚫 ISOLATED: useInvoiceForm.handleContactUpdated - ONLY contact update, NO INVOICE LOGIC');
+    // BLOCK ALL AUTOMATIC EFFECTS
     setSelectedContact(contact);
     setFormData(prev => ({
       ...prev,
@@ -156,11 +130,33 @@ export const useInvoiceForm = () => {
       client_country: contact.country || 'Nederland',
       payment_terms: contact.payment_terms || invoiceSettings.default_payment_terms || 30
     }));
-    console.log('🚫 ISOLATED: useInvoiceForm.handleContactUpdated completed - NO INVOICE TRIGGERS');
+
+    toast({
+      title: "Contact toegevoegd",
+      description: `Contact "${contact.name}" is toegevoegd aan de factuur.`
+    });
+
+    console.log('🚫🚫🚫 BLOCK COMPLETE: Form updated ONLY - NO INVOICE CREATION OCCURRED');
+  }, [invoiceSettings.default_payment_terms, toast]);
+
+  const handleContactUpdated = (contact: Contact) => {
+    console.log('🚫🚫🚫 ABSOLUTE BLOCK: handleContactUpdated - ZERO INVOICE CREATION');
+    setSelectedContact(contact);
+    setFormData(prev => ({
+      ...prev,
+      client_name: contact.name,
+      client_email: contact.email || '',
+      client_address: contact.address || '',
+      client_postal_code: contact.postal_code || '',
+      client_city: contact.city || '',
+      client_country: contact.country || 'Nederland',
+      payment_terms: contact.payment_terms || invoiceSettings.default_payment_terms || 30
+    }));
+    console.log('🚫🚫🚫 BLOCK COMPLETE: Form updated ONLY - NO INVOICE CREATION');
   };
 
   const handleContactClear = () => {
-    console.log('🚫 ISOLATED: useInvoiceForm.handleContactClear - NO INVOICE LOGIC');
+    console.log('🔴 PURE FORM UPDATE: handleContactClear - NO INVOICE LOGIC');
     setSelectedContact(null);
     setFormData(prev => ({
       ...prev,
@@ -251,9 +247,9 @@ export const useInvoiceForm = () => {
     }
   };
 
-  // EXPLICIT INVOICE CREATION - This is the ONLY way invoices should be created
+  // ONLY EXPLICIT INVOICE CREATION ALLOWED
   const handleSubmit = async () => {
-    console.log('✅ EXPLICIT INVOICE CREATION: useInvoiceForm.handleSubmit called by user action');
+    console.log('✅✅✅ EXPLICIT USER ACTION: handleSubmit - Creating invoice by user request');
     setLoading(true);
 
     try {
@@ -267,9 +263,9 @@ export const useInvoiceForm = () => {
         status: 'draft' as const
       };
 
-      console.log('✅ Creating invoice explicitly:', invoiceData);
+      console.log('✅✅✅ EXPLICIT: Creating invoice via user action:', invoiceData);
       await createInvoice(invoiceData);
-      console.log('✅ Invoice created successfully via explicit action');
+      console.log('✅✅✅ SUCCESS: Invoice created via explicit user action');
       navigate('/facturen');
     } catch (error) {
       console.error('Error saving invoice:', error);
@@ -278,9 +274,9 @@ export const useInvoiceForm = () => {
     }
   };
 
-  // EXPLICIT INVOICE CREATION AND SEND - This is the ONLY way invoices should be created and sent
+  // ONLY EXPLICIT INVOICE CREATION AND SEND ALLOWED
   const handleSaveAndSend = async () => {
-    console.log('✅ EXPLICIT INVOICE CREATION AND SEND: useInvoiceForm.handleSaveAndSend called by user action');
+    console.log('✅✅✅ EXPLICIT USER ACTION: handleSaveAndSend - Creating and sending invoice');
     setSendLoading(true);
 
     try {
@@ -294,7 +290,7 @@ export const useInvoiceForm = () => {
         status: 'sent' as const
       };
 
-      console.log('✅ Creating and sending invoice explicitly:', invoiceData);
+      console.log('✅✅✅ EXPLICIT: Creating and sending invoice via user action:', invoiceData);
       const newInvoice = await createInvoice(invoiceData);
       
       if (formData.client_email) {

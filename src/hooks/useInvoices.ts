@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -156,9 +157,10 @@ export const useInvoices = () => {
     }
   };
 
+  // ONLY EXPLICIT INVOICE CREATION - NO AUTOMATIC TRIGGERS
   const createInvoice = async (invoiceData: Partial<Invoice>) => {
-    console.log('🔥 useInvoices.createInvoice: STARTING INVOICE CREATION - This should ONLY be called from handleSubmit or handleSaveAndSend');
-    console.log('🔥 Call stack:', new Error().stack);
+    console.log('🟢🟢🟢 EXPLICIT INVOICE CREATION: createInvoice called - Stack trace follows');
+    console.log('🟢🟢🟢 Call stack:', new Error().stack);
     
     try {
       console.log('Creating invoice with data:', invoiceData);
@@ -190,7 +192,7 @@ export const useInvoices = () => {
         created_by: invoiceData.created_by || null
       };
 
-      console.log('🔥 useInvoices.createInvoice: Insert data prepared:', insertData);
+      console.log('🟢🟢🟢 EXPLICIT: Insert data prepared:', insertData);
 
       const { data, error } = await supabase
         .from('invoices')
@@ -203,7 +205,7 @@ export const useInvoices = () => {
         throw error;
       }
 
-      console.log('🔥 useInvoices.createInvoice: Invoice created successfully:', data);
+      console.log('🟢🟢🟢 EXPLICIT: Invoice created successfully:', data);
 
       const newInvoice = castToInvoice(data);
       setInvoices(prev => [newInvoice, ...prev]);
@@ -213,10 +215,10 @@ export const useInvoices = () => {
         description: `Factuur ${invoiceNumber} succesvol aangemaakt`
       });
 
-      console.log('🔥 useInvoices.createInvoice: COMPLETED - Invoice was successfully created');
+      console.log('🟢🟢🟢 EXPLICIT CREATION COMPLETE: Invoice was successfully created via explicit action');
       return newInvoice;
     } catch (error) {
-      console.error('🔥 useInvoices.createInvoice: Error creating invoice:', error);
+      console.error('🟢🟢🟢 EXPLICIT CREATION ERROR:', error);
       toast({
         title: "Fout",
         description: "Kon factuur niet aanmaken",
