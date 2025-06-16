@@ -12,14 +12,11 @@ interface ContactDialogTabsProps {
 }
 
 export const ContactDialogTabs = ({ formData, setFormData, onSubmit, onCancel }: ContactDialogTabsProps) => {
-  // PUNT 1: Volledig uitgeschakelde submit handler
-  const handleDisabledSubmit = (e: React.FormEvent) => {
+  // Restore working submit handler
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('🚫 PUNT 1: VOLLEDIG UITGESCHAKELD - ContactDialogTabs.handleDisabledSubmit');
-    console.log('🚫 Deze submit handler doet ABSOLUUT NIETS MEER');
-    console.log('🚫 Opslaan knop is volledig gedeactiveerd');
-    // GEEN ENKELE ACTIE - volledig uitgeschakeld
-    return false;
+    console.log('📝 ContactDialogTabs: Submit triggered - saving contact');
+    onSubmit(e);
   };
 
   return (
@@ -32,7 +29,7 @@ export const ContactDialogTabs = ({ formData, setFormData, onSubmit, onCancel }:
         </TabsList>
         
         <div className="flex-1 min-h-0 overflow-hidden">
-          <form onSubmit={handleDisabledSubmit} className="h-full flex flex-col">
+          <form onSubmit={handleSubmit} className="h-full flex flex-col">
             <div className="flex-1 overflow-y-auto">
               <TabsContent value="klant" className="h-full">
                 <ContactFormData formData={formData} setFormData={setFormData} />
@@ -57,15 +54,9 @@ export const ContactDialogTabs = ({ formData, setFormData, onSubmit, onCancel }:
               </button>
               <button 
                 type="submit" 
-                disabled={true}
-                className="px-3 py-1 bg-gray-400 text-gray-600 rounded-md cursor-not-allowed text-xs opacity-50"
-                onClick={(e) => {
-                  e.preventDefault();
-                  console.log('🚫 PUNT 1: Opslaan knop VOLLEDIG UITGESCHAKELD');
-                  return false;
-                }}
+                className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs"
               >
-                Opslaan (Uitgeschakeld)
+                Opslaan
               </button>
             </div>
           </form>

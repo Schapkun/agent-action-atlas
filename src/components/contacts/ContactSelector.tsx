@@ -184,11 +184,11 @@ export const ContactSelector = ({
                 </Button>
               )}
               
-              {/* Dropdown */}
+              {/* Dropdown with corrected font size */}
               {isDropdownOpen && (
                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
                   {loading ? (
-                    <div className="p-2 text-sm text-gray-500">Contacten laden...</div>
+                    <div className="p-2 text-xs text-gray-500">Contacten laden...</div>
                   ) : filteredContacts.length > 0 ? (
                     filteredContacts.map((contact) => (
                       <div
@@ -196,7 +196,7 @@ export const ContactSelector = ({
                         className="p-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
                         onClick={() => handleContactSelect(contact)}
                       >
-                        <div className="font-medium text-sm">{contact.name}</div>
+                        <div className="font-medium text-xs">{contact.name}</div>
                         <div className="text-xs text-gray-500">
                           {contact.email && <div>{contact.email}</div>}
                           {contact.address && contact.city && (
@@ -206,7 +206,7 @@ export const ContactSelector = ({
                       </div>
                     ))
                   ) : (
-                    <div className="p-2 text-sm text-gray-500">
+                    <div className="p-2 text-xs text-gray-500">
                       {contacts.length === 0 ? 'Geen contacten gevonden in deze organisatie' : 'Geen contacten gevonden'}
                     </div>
                   )}

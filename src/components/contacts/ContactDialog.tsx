@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ContactDialogTabs } from './ContactDialogTabs';
 import { useContactCreator } from './ContactCreator';
+import { useLocation } from 'react-router-dom';
 
 interface Contact {
   id: string;
@@ -28,6 +29,12 @@ interface ContactDialogProps {
 
 export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: ContactDialogProps) => {
   const { saveContact, updateContact } = useContactCreator();
+  const location = useLocation();
+  
+  // Check if we're on an invoice or quote creation page
+  const isInvoiceOrQuotePage = location.pathname.includes('/facturen/opstellen') || 
+                              location.pathname.includes('/offertes/opstellen');
+
   const [formData, setFormData] = useState({
     number: '',
     type: 'Privé',
@@ -114,11 +121,50 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('🚫 PUNT 1: ContactDialog.handleSubmit VOLLEDIG UITGESCHAKELD');
-    console.log('🚫 De "Opslaan" knop doet helemaal niets meer');
+    console.log('📝 ContactDialog: Saving contact with context check');
+    console.log('📝 Current page:', location.pathname);
+    console.log('📝 Is invoice/quote page:', isInvoiceOrQuotePage);
     
-    // PUNT 1: Knop functionaliteit volledig uitgeschakeld - doet absoluut niets
-    return;
+    try {
+      const contactData: Contact = {
+        id: mode === 'edit' ? contact!.id : '',
+        name: formData.name,
+        email: formData.email || undefined,
+        address: formData.address || undefined,
+        postal_code: formData.postalCode || undefined,
+        city: formData.city || undefined,
+        country: formData.country || 'Nederland',
+        phone: formData.phone || undefined,
+        mobile: formData.mobile || undefined,
+        payment_terms: formData.paymentTerms
+      };
+
+      let savedContact: Contact;
+      
+      if (mode === 'edit') {
+        console.log('📝 ContactDialog: Updating existing contact');
+        savedContact = await updateContact(contactData);
+      } else {
+        console.log('📝 ContactDialog: Creating new contact');
+        savedContact = await saveContact(contactData);
+      }
+
+      console.log('📝 ContactDialog: Contact saved successfully');
+      
+      // Close popup
+      onClose();
+      
+      // Call the parent onSave handler
+      // This will handle both contexts automatically:
+      // - For invoice/quote pages: will select the contact for the form
+      // - For contacts page: will just add to the contact list
+      onSave(savedContact);
+      
+      console.log('📝 ContactDialog: Process completed');
+      
+    } catch (error) {
+      console.error('📝 ContactDialog: Error saving contact:', error);
+    }
   };
 
   const handleCancel = () => {

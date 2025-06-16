@@ -143,7 +143,7 @@ export const InvoiceSettings = () => {
     }
   };
 
-  // PUNT 4: Werkende opslaan functie met nieuwe database kolommen
+  // PUNT 4: Fixed save function with correct database columns
   const handleSave = async () => {
     if (!selectedOrganization) {
       console.error('💾 PUNT 4: Geen organisatie geselecteerd');
@@ -160,6 +160,7 @@ export const InvoiceSettings = () => {
       console.log('💾 PUNT 4: Instellingen opslaan voor organisatie:', selectedOrganization.id);
       console.log('💾 PUNT 4: Settings data:', settings);
       
+      // Use the correct column names from the database
       const { error } = await supabase
         .from('organization_settings')
         .upsert({

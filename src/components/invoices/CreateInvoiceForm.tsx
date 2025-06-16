@@ -112,18 +112,17 @@ export const CreateInvoiceForm = () => {
     return '';
   };
 
-  // NEW: Function to add contact to contact list and use it for invoice
+  // FIXED: Proper contact creation handler for invoice context
   const handleContactCreatedAndSelected = async (contact: any) => {
     console.log('📝 STEP 2: Adding contact to contact list and selecting for invoice');
     
     try {
-      // Step 1: Add contact to the contact list using handleContactCreated
-      console.log('📝 Adding contact to database...');
-      await handleContactCreated(contact);
+      // The contact is already saved in the database by ContactDialog
+      // We just need to select it for the invoice form
+      console.log('📝 Contact saved and now selecting for invoice form');
       
-      // Step 2: The handleContactCreated already calls handleContactSelect,
-      // so the contact is automatically selected for the invoice form
-      console.log('📝 Contact added and selected for invoice');
+      // Select the contact for the invoice
+      handleContactSelect(contact);
       
       toast({
         title: "Contact toegevoegd",
@@ -131,10 +130,10 @@ export const CreateInvoiceForm = () => {
       });
       
     } catch (error) {
-      console.error('📝 Error adding contact:', error);
+      console.error('📝 Error selecting contact for invoice:', error);
       toast({
         title: "Fout",
-        description: "Kon contact niet toevoegen",
+        description: "Kon contact niet selecteren voor factuur",
         variant: "destructive"
       });
     }
