@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,9 +7,15 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { useToast } from '@/hooks/use-toast';
+
+interface Contact {
+  id: string;
+  name: string;
+  labels?: Array<{ id: string; name: string; color: string; }>;
+}
 
 interface ContactLabel {
   id: string;
@@ -16,28 +23,31 @@ interface ContactLabel {
   color: string;
 }
 
-interface Contact {
-  id: string;
-  name: string;
-}
-
 interface ContactLabelsDialogProps {
   isOpen: boolean;
   onClose: () => void;
   contact: Contact | null;
-  onLabelsUpdated?: () => void;
+  onLabelsUpdated: () => void;
 }
 
-const predefinedColors = [
-  '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
-  '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1'
+const PRESET_COLORS = [
+  '#3B82F6', // blue
+  '#EF4444', // red
+  '#10B981', // green
+  '#F59E0B', // yellow
+  '#8B5CF6', // purple
+  '#EC4899', // pink
+  '#06B6D4', // cyan
+  '#84CC16', // lime
+  '#F97316', // orange
+  '#6366F1', // indigo
 ];
 
 export const ContactLabelsDialog = ({ isOpen, onClose, contact, onLabelsUpdated }: ContactLabelsDialogProps) => {
-  const [allLabels, setAllLabels] = useState<ContactLabel[]>([]);
-  const [contactLabels, setContactLabels] = useState<Set<string>>(new Set());
+  const [availableLabels, setAvailableLabels] = useState<ContactLabel[]>([]);
+  const [contactLabels, setContactLabels] = useState<string[]>([]);
   const [newLabelName, setNewLabelName] = useState('');
-  const [selectedColor, setSelectedColor] = useState(predefinedColors[0]);
+  const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
   const [loading, setLoading] = useState(false);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
@@ -45,7 +55,7 @@ export const ContactLabelsDialog = ({ isOpen, onClose, contact, onLabelsUpdated 
   useEffect(() => {
     if (isOpen && contact && selectedOrganization) {
       fetchLabels();
-      fetchContactLabels();
+      setContactLabels(contact.labels?.map(l => l.id) || []);
     }
   }, [isOpen, contact, selectedOrganization, selectedWorkspace]);
 
@@ -65,174 +75,157 @@ export const ContactLabelsDialog = ({ isOpen, onClose, contact, onLabelsUpdated 
 
       const { data, error } = await query;
       if (error) throw error;
-      setAllLabels(data || []);
+      setAvailableLabels(data || []);
     } catch (error) {
       console.error('Error fetching labels:', error);
     }
   };
 
-  const fetchContactLabels = async () => {
-    if (!contact) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('contact_label_assignments')
-        .select('label_id')
-        .eq('contact_id', contact.id);
-
-      if (error) throw error;
-      setContactLabels(new Set(data?.map(item => item.label_id) || []));
-    } catch (error) {
-      console.error('Error fetching contact labels:', error);
-    }
-  };
-
-  const createLabel = async () => {
+  const handleCreateLabel = async () => {
     if (!newLabelName.trim() || !selectedOrganization) return;
 
-    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('contact_labels')
-        .insert([{
+        .insert({
           name: newLabelName.trim(),
           color: selectedColor,
           organization_id: selectedOrganization.id,
-          workspace_id: selectedWorkspace?.id
-        }])
+          workspace_id: selectedWorkspace?.id || null
+        })
         .select()
         .single();
 
       if (error) throw error;
 
-      setAllLabels(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+      setAvailableLabels(prev => [...prev, data]);
       setNewLabelName('');
-      setSelectedColor(predefinedColors[0]);
+      setSelectedColor(PRESET_COLORS[0]);
       
       toast({
-        title: "Label toegevoegd",
-        description: `Label "${data.name}" is succesvol toegevoegd`
+        title: "Label aangemaakt",
+        description: `Label "${data.name}" is succesvol aangemaakt`
       });
     } catch (error) {
       console.error('Error creating label:', error);
       toast({
         title: "Fout",
-        description: "Label kon niet worden toegevoegd",
+        description: "Kon label niet aanmaken",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
   };
 
-  const toggleLabel = async (labelId: string) => {
+  const handleToggleLabel = async (labelId: string, checked: boolean) => {
     if (!contact) return;
 
-    const isAssigned = contactLabels.has(labelId);
-    
     try {
-      if (isAssigned) {
-        await supabase
+      if (checked) {
+        const { error } = await supabase
+          .from('contact_label_assignments')
+          .insert({
+            contact_id: contact.id,
+            label_id: labelId
+          });
+        if (error) throw error;
+        setContactLabels(prev => [...prev, labelId]);
+      } else {
+        const { error } = await supabase
           .from('contact_label_assignments')
           .delete()
           .eq('contact_id', contact.id)
           .eq('label_id', labelId);
-
-        setContactLabels(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(labelId);
-          return newSet;
-        });
-      } else {
-        await supabase
-          .from('contact_label_assignments')
-          .insert([{
-            contact_id: contact.id,
-            label_id: labelId
-          }]);
-
-        setContactLabels(prev => new Set([...prev, labelId]));
+        if (error) throw error;
+        setContactLabels(prev => prev.filter(id => id !== labelId));
       }
     } catch (error) {
       console.error('Error toggling label:', error);
       toast({
         title: "Fout",
-        description: "Label kon niet worden toegevoegd/verwijderd",
+        description: "Kon label niet bijwerken",
         variant: "destructive"
       });
     }
   };
 
   const handleSave = () => {
-    onLabelsUpdated?.();
-    onClose();
+    onLabelsUpdated();
+    toast({
+      title: "Labels bijgewerkt",
+      description: `Labels voor ${contact?.name} zijn bijgewerkt`
+    });
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Labels beheren - {contact?.name}</DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4">
-          {/* Create new label */}
-          <div className="space-y-2">
-            <Label>Nieuw label toevoegen</Label>
+        <div className="space-y-6">
+          {/* Nieuw label toevoegen */}
+          <div className="space-y-4">
+            <Label className="text-base font-medium">Nieuw label toevoegen</Label>
+            
             <div className="flex gap-2">
               <Input
                 value={newLabelName}
                 onChange={(e) => setNewLabelName(e.target.value)}
                 placeholder="Label naam"
-                onKeyDown={(e) => e.key === 'Enter' && createLabel()}
+                className="flex-1"
               />
               <Button 
-                size="sm" 
-                onClick={createLabel} 
-                disabled={!newLabelName.trim() || loading}
+                onClick={handleCreateLabel} 
+                disabled={!newLabelName.trim()}
+                size="sm"
+                className="px-3"
               >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
-            
-            {/* Color selection */}
-            <div className="flex gap-1">
-              {predefinedColors.map((color) => (
+
+            {/* Kleur selectie */}
+            <div className="flex gap-2 flex-wrap">
+              {PRESET_COLORS.map((color) => (
                 <button
                   key={color}
-                  className={`w-6 h-6 rounded-full border-2 ${
-                    selectedColor === color ? 'border-gray-400' : 'border-gray-200'
+                  onClick={() => setSelectedColor(color)}
+                  className={`w-8 h-8 rounded-full border-2 transition-all ${
+                    selectedColor === color ? 'border-gray-800 scale-110' : 'border-gray-300'
                   }`}
                   style={{ backgroundColor: color }}
-                  onClick={() => setSelectedColor(color)}
                 />
               ))}
             </div>
           </div>
 
-          {/* Existing labels */}
-          <div className="space-y-2">
-            <Label>Bestaande labels</Label>
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {allLabels.length === 0 ? (
-                <div className="text-sm text-muted-foreground">Geen labels beschikbaar</div>
-              ) : (
-                allLabels.map((label) => (
-                  <div key={label.id} className="flex items-center space-x-2">
+          {/* Bestaande labels */}
+          <div className="space-y-4">
+            <Label className="text-base font-medium">Bestaande labels</Label>
+            
+            {availableLabels.length === 0 ? (
+              <div className="text-sm text-muted-foreground py-8 text-center">
+                Geen labels beschikbaar
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {availableLabels.map((label) => (
+                  <div key={label.id} className="flex items-center space-x-3 p-2 rounded-lg border">
                     <Checkbox
-                      checked={contactLabels.has(label.id)}
-                      onCheckedChange={() => toggleLabel(label.id)}
+                      checked={contactLabels.includes(label.id)}
+                      onCheckedChange={(checked) => handleToggleLabel(label.id, checked as boolean)}
                     />
-                    <Badge 
+                    <Badge
                       style={{ backgroundColor: label.color, color: 'white' }}
                       className="border-0"
                     >
                       {label.name}
                     </Badge>
                   </div>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
         
