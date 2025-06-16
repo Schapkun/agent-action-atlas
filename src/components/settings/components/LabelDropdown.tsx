@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,10 +25,8 @@ export const LabelDropdown = ({ selectedLabels, onLabelsChange, disabled }: Labe
       onLabelsChange([...selectedLabels, label]);
     }
     
-    // Close the popover after a short delay to show the visual feedback
-    setTimeout(() => {
-      setIsOpen(false);
-    }, 200);
+    // Keep popover open for multiple selections
+    // User can close it manually or it will close when clicking outside
   };
 
   return (
@@ -68,19 +65,21 @@ export const LabelDropdown = ({ selectedLabels, onLabelsChange, disabled }: Labe
                     onClick={() => handleLabelToggle(label)}
                     disabled={disabled}
                   >
-                    <Badge
-                      variant="secondary"
-                      style={{ 
-                        backgroundColor: label.color, 
-                        color: 'white',
-                        border: 'none'
-                      }}
-                    >
-                      {label.name}
-                    </Badge>
-                    {isSelected && (
-                      <span className="ml-2 text-blue-600">✓</span>
-                    )}
+                    <div className="flex items-center justify-between">
+                      <Badge
+                        variant="secondary"
+                        style={{ 
+                          backgroundColor: label.color, 
+                          color: 'white',
+                          border: 'none'
+                        }}
+                      >
+                        {label.name}
+                      </Badge>
+                      {isSelected && (
+                        <span className="text-blue-600 font-bold">✓</span>
+                      )}
+                    </div>
                   </button>
                 );
               })}

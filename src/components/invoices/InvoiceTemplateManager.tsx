@@ -16,9 +16,10 @@ export const InvoiceTemplateManager = ({
   selectedTemplate,
   setSelectedTemplate
 }: InvoiceTemplateManagerProps) => {
-  // Filter templates that have "Factuur" label
+  // Filter templates that have "Factuur" label and exclude any custom types
   const availableTemplates = documentTemplates.filter(template => 
-    template.labels?.some(label => label.name.toLowerCase() === 'factuur')
+    template.labels?.some(label => label.name.toLowerCase() === 'factuur') &&
+    template.type !== 'custom'
   );
 
   const handleTemplateChange = (templateId: string) => {
