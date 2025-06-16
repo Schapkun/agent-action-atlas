@@ -1,7 +1,12 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { Eye } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { FileText, ZoomIn, ZoomOut, Eye } from 'lucide-react';
+import { usePlaceholderReplacement } from '../builder/usePlaceholderReplacement';
+import { PreviewDialog } from './PreviewDialog';
+import { loadCompanyData } from '@/utils/companyDataMapping';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 interface A4PreviewProps {
   htmlContent: string;
@@ -9,234 +14,113 @@ interface A4PreviewProps {
 }
 
 export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) => {
-  // Replace placeholders in HTML content
-  const replacePlaceholders = (content: string) => {
-    let replaced = content;
-    Object.entries(placeholderValues).forEach(([key, value]) => {
-      const regex = new RegExp(`{{${key}}}`, 'g');
-      
-      // Special handling for logo - create img tag if it's a data URL or valid image URL
-      if (key === 'logo' && value) {
-        if (value.startsWith('data:') || value.startsWith('http') || value.startsWith('/')) {
-          replaced = replaced.replace(regex, `<img src="${value}" alt="Logo" style="max-width: 150px; height: auto;" />`);
-        } else {
-          // If it's not a valid image URL, show placeholder
-          replaced = replaced.replace(regex, `<span style="color:#9ca3af; border: 1px dashed #ccc; padding: 10px; display: inline-block;">[Logo]</span>`);
-        }
-      } else if (value) {
-        replaced = replaced.replace(regex, value);
-      } else {
-        replaced = replaced.replace(regex, `<span style="color:#9ca3af;">[${key}]</span>`);
+  const [zoom, setZoom] = useState(0.6);
+  const [showFullPreview, setShowFullPreview] = useState(false);
+  const [companyData, setCompanyData] = useState<Record<string, string>>({});
+  const { selectedOrganization } = useOrganization();
+  
+  const { getScaledHtmlContent } = usePlaceholderReplacement({ 
+    placeholderValues,
+    companyData 
+  });
+
+  // Load company data when organization changes
+  useEffect(() => {
+    const loadData = async () => {
+      if (selectedOrganization?.id) {
+        console.log('Loading company data for preview...');
+        const data = await loadCompanyData(selectedOrganization.id);
+        setCompanyData(data);
       }
-    });
+    };
     
-    // Also handle any img tags with logo src placeholders
-    replaced = replaced.replace(/src=["']{{logo}}["']/g, (match) => {
-      const logoValue = placeholderValues.logo;
-      if (logoValue && (logoValue.startsWith('data:') || logoValue.startsWith('http') || logoValue.startsWith('/'))) {
-        return `src="${logoValue}"`;
-      }
-      return `src="" style="display: none;"`;
-    });
-    
-    return replaced;
+    loadData();
+  }, [selectedOrganization?.id]);
+
+  const handleZoomIn = () => {
+    setZoom(Math.min(zoom + 0.1, 1.5));
   };
 
-  const processedHtml = replacePlaceholders(htmlContent);
-
-  // Create styled HTML with strict A4 constraints and proper text wrapping
-  const styledHtml = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="UTF-8">
-        <style>
-          * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-          }
-          
-          @page {
-            size: A4;
-            margin: 0;
-          }
-          
-          body {
-            font-family: 'Inter', Arial, sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
-            color: #333;
-            background: white;
-            width: 210mm;
-            height: 297mm;
-            padding: 20mm;
-            margin: 0;
-            overflow: hidden;
-            position: relative;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            hyphens: auto;
-          }
-          
-          h1, h2, h3, h4, h5, h6 { 
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            hyphens: auto;
-          }
-          
-          p, div, span {
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            hyphens: auto;
-            white-space: normal;
-          }
-          
-          h1 { 
-            font-size: 18px; 
-            margin-bottom: 12px;
-            word-wrap: break-word;
-          }
-          
-          h2 { 
-            font-size: 16px; 
-            margin-bottom: 10px;
-            word-wrap: break-word;
-          }
-          
-          h3 { 
-            font-size: 14px; 
-            margin-bottom: 8px;
-            word-wrap: break-word;
-          }
-          
-          p { 
-            margin-bottom: 8px;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            white-space: normal;
-          }
-          
-          ul, ol { 
-            margin-bottom: 8px; 
-            padding-left: 20px;
-            word-wrap: break-word;
-          }
-          
-          li {
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-          }
-          
-          table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin-bottom: 12px;
-            table-layout: fixed;
-          }
-          
-          th, td { 
-            border: 1px solid #ddd; 
-            padding: 6px; 
-            text-align: left;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            hyphens: auto;
-          }
-          
-          th { 
-            background-color: #f5f5f5; 
-            font-weight: bold;
-          }
-          
-          .header {
-            text-align: right;
-            margin-bottom: 40px;
-            word-wrap: break-word;
-          }
-          
-          .logo {
-            max-width: 150px;
-            height: auto;
-            display: block;
-            margin: 0 auto 10px auto;
-          }
-          
-          .document-info {
-            margin-bottom: 30px;
-            word-wrap: break-word;
-          }
-          
-          .content {
-            margin-bottom: 30px;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-          }
-          
-          .footer {
-            margin-top: 50px;
-            font-size: 12px;
-            color: #666;
-            word-wrap: break-word;
-          }
-          
-          .recipient {
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            margin-bottom: 20px;
-          }
-          
-          /* Ensure no text overflows horizontally */
-          * {
-            max-width: 100%;
-            overflow-wrap: break-word;
-            word-break: break-word;
-          }
-          
-          /* Special handling for very long words without spaces */
-          .content p, .document-info p, .recipient p {
-            word-break: break-all;
-            overflow-wrap: anywhere;
-          }
-          
-          /* Image handling */
-          img {
-            max-width: 100%;
-            height: auto;
-          }
-        </style>
-      </head>
-      <body>
-        ${processedHtml}
-      </body>
-    </html>
-  `;
+  const handleZoomOut = () => {
+    setZoom(Math.max(zoom - 0.1, 0.3));
+  };
 
   return (
-    <div className="h-full flex flex-col bg-white">
-      <CardHeader className="py-3 px-4 border-b flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <Eye className="h-4 w-4" />
-          <span className="text-sm font-medium">A4 Preview</span>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="flex-1 flex items-center justify-center bg-gray-50 overflow-hidden" style={{ padding: '5px' }}>
-        <div 
-          className="bg-white shadow-xl border border-gray-200 overflow-hidden"
-          style={{
-            height: 'calc(100% - 10px)', // Full height minus top/bottom margins
-            aspectRatio: '210 / 297', // A4 ratio (width/height)
-            maxWidth: 'calc(100% - 10px)', // Ensure horizontal margins
-          }}
-        >
-          <iframe
-            srcDoc={styledHtml}
-            className="w-full h-full border-0"
-            title="A4 Document Preview"
-          />
-        </div>
-      </CardContent>
-    </div>
+    <>
+      <Card className="h-full flex flex-col bg-white">
+        <CardHeader className="py-3 px-4 border-b flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              <span className="text-sm font-medium">A4 Preview</span>
+              <span className="text-xs text-muted-foreground">
+                {Math.round(zoom * 100)}%
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleZoomOut}
+                disabled={zoom <= 0.3}
+                className="h-8 w-8 p-0"
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleZoomIn}
+                disabled={zoom >= 1.5}
+                className="h-8 w-8 p-0"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFullPreview(true)}
+                className="ml-2"
+              >
+                <Eye className="h-4 w-4 mr-1" />
+                Volledig
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        
+        <CardContent className="flex-1 p-4 overflow-auto bg-gray-50">
+          <div className="flex justify-center">
+            <div 
+              className="bg-white border shadow-lg transition-all duration-200"
+              style={{
+                aspectRatio: '210/297', // A4 ratio
+                width: `${zoom * 100}%`,
+                maxWidth: '800px',
+                minWidth: '300px'
+              }}
+            >
+              <iframe
+                srcDoc={getScaledHtmlContent(htmlContent)}
+                className="w-full h-full border-0 rounded-sm"
+                title="Document A4 Preview"
+                style={{ 
+                  transform: `scale(${zoom})`,
+                  transformOrigin: 'top left'
+                }}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <PreviewDialog
+        isOpen={showFullPreview}
+        onClose={() => setShowFullPreview(false)}
+        htmlContent={getScaledHtmlContent(htmlContent)}
+        documentName="Document Preview"
+      />
+    </>
   );
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { SimpleDocumentHeader } from './components/SimpleDocumentHeader';
@@ -97,6 +96,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
   const [isLoading, setIsLoading] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [companyData, setCompanyData] = useState<Record<string, string>>({});
   
   // Use refs to prevent infinite loops
   const initialLoadCompleted = useRef(false);
@@ -222,6 +222,21 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
 
     loadDocument();
   }, [documentId, templatesLoading, templates.length]); // SIMPLIFIED DEPENDENCIES
+
+  // Load company data when organization changes
+  useEffect(() => {
+    const loadData = async () => {
+      if (selectedOrganization?.id) {
+        console.log('[DocumentBuilder] Loading company data...');
+        const { loadCompanyData } = await import('@/utils/companyDataMapping');
+        const data = await loadCompanyData(selectedOrganization.id);
+        setCompanyData(data);
+        console.log('[DocumentBuilder] Company data loaded:', data);
+      }
+    };
+    
+    loadData();
+  }, [selectedOrganization?.id]);
 
   // Track changes - only after initial load and with stable dependencies
   useEffect(() => {
@@ -444,7 +459,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       <div className="flex-1 flex" style={{ minHeight: 0 }}>
         <div style={{ width: '20%', minWidth: '250px' }}>
           <VariablesPanel
-            placeholderValues={placeholderValues}
+            placeholderValues={{ ...companyData, ...placeholderValues }}
             onPlaceholderChange={handlePlaceholderChange}
           />
         </div>
@@ -459,7 +474,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
         <div style={{ width: '45%' }}>
           <A4Preview
             htmlContent={htmlContent}
-            placeholderValues={placeholderValues}
+            placeholderValues={{ ...companyData, ...placeholderValues }}
           />
         </div>
       </div>
