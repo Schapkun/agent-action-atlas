@@ -126,13 +126,13 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
         </div>
       </div>
 
-      {/* A4 Preview Area - Correcte A4 ratio met 5px marges */}
+      {/* A4 Preview Area - 700px breed met correcte A4 ratio en 5px marges */}
       <div className="flex-1 p-6 overflow-hidden flex justify-center items-center">
         <div 
           className="bg-white shadow-lg border border-gray-300 overflow-hidden"
           style={{
-            width: '210mm',
-            height: '297mm',
+            width: '700px',
+            height: '990px',
             maxWidth: 'calc(100vw - 48px)',
             maxHeight: 'calc(100vh - 180px)',
             aspectRatio: '210/297'
