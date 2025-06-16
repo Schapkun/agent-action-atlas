@@ -114,46 +114,12 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    try {
-      console.log('🚫 ABSOLUTE BLOCK: ContactDialog.handleSubmit - ZERO INVOICE CREATION ALLOWED');
-      console.log('🚫 This is ONLY a contact save operation - NO INVOICE LOGIC WHATSOEVER');
-      
-      const contactData: Contact = {
-        id: formData.number,
-        name: formData.name,
-        email: formData.email,
-        address: formData.address,
-        postal_code: formData.postalCode,
-        city: formData.city,
-        country: formData.country,
-        phone: formData.phone,
-        mobile: formData.mobile,
-        type: formData.type,
-        payment_terms: formData.paymentTerms
-      };
-
-      console.log('🚫 ContactDialog: Contact data prepared (ISOLATED FROM ALL INVOICE LOGIC):', contactData);
-
-      let savedContact: Contact;
-      
-      if (mode === 'edit') {
-        console.log('🚫 ContactDialog: Updating existing contact - COMPLETELY ISOLATED');
-        savedContact = await updateContact(contactData);
-      } else {
-        console.log('🚫 ContactDialog: Creating new contact - COMPLETELY ISOLATED');
-        savedContact = await saveContact(contactData);
-      }
-
-      console.log('🚫 ContactDialog: Contact saved - calling onSave ONLY for form update:', savedContact);
-
-      // ISOLATION: This ONLY passes contact data to parent for form population
-      // NO INVOICE CREATION should happen anywhere in the chain
-      onSave(savedContact);
-      onClose();
-    } catch (error) {
-      console.error('ContactDialog: Error saving contact:', error);
-      // Don't close dialog on error so user can retry
-    }
+    console.log('🚫 STAP 1: ContactDialog.handleSubmit UITGESCHAKELD - KNOP DOET NIETS');
+    console.log('🚫 Deze functie is tijdelijk uitgeschakeld om ongewenste factuur opslag te voorkomen');
+    
+    // STAP 1: Functionaliteit volledig uitgeschakeld
+    // De knop doet nu helemaal niets
+    return;
   };
 
   const handleCancel = () => {
