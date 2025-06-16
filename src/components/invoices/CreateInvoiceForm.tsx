@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -123,8 +124,7 @@ export const CreateInvoiceForm = () => {
   };
 
   const handleContactClear = () => {
-    setFormData(prev => ({
-      ...prev,
+    setFormData({
       client_name: '',
       client_email: '',
       client_address: '',
@@ -132,7 +132,7 @@ export const CreateInvoiceForm = () => {
       client_city: '',
       client_country: 'Nederland',
       payment_terms: invoiceSettings.default_payment_terms || 30
-    }));
+    });
   };
 
   const { subtotal, vatAmount, total } = calculateTotals();
@@ -216,7 +216,7 @@ export const CreateInvoiceForm = () => {
             formData={formData}
             invoiceNumber={invoiceNumber}
             invoiceSettings={invoiceSettings}
-            onFormDataChange={(updates) => setFormData(prev => ({ ...prev, ...updates }))}
+            onFormDataChange={(updates) => setFormData(updates)}
             onInvoiceNumberChange={handleInvoiceNumberChange}
             onInvoiceNumberFocus={handleInvoiceNumberFocus}
             onInvoiceNumberBlur={handleInvoiceNumberBlur}
