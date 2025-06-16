@@ -1,10 +1,12 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ContactDialog } from './ContactDialog';
 import { X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 interface Contact {
   id: string;
@@ -34,30 +36,61 @@ export const ContactSelector = ({
   const [isEditContactOpen, setIsEditContactOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { selectedOrganization, selectedWorkspace } = useOrganization();
 
-  // Mock contacts data - replace with real data from your contacts hook
-  const contacts: Contact[] = [
-    {
-      id: '1',
-      name: 'Jan Jansen',
-      email: 'jan@example.com',
-      address: 'Hoofdstraat 123',
-      postal_code: '1234AB',
-      city: 'Amsterdam',
-      country: 'Nederland',
-      payment_terms: 14
-    },
-    {
-      id: '2',
-      name: 'Marie Peters',
-      email: 'marie@example.com',
-      address: 'Kerkstraat 45',
-      postal_code: '5678CD',
-      city: 'Rotterdam',
-      country: 'Nederland',
-      payment_terms: 30
+  // PUNT 2: Echte contacten ophalen uit de database
+  const fetchContacts = async () => {
+    if (!selectedOrganization) return;
+
+    setLoading(true);
+    try {
+      console.log('📋 PUNT 2: Contacten ophalen uit database voor organisatie:', selectedOrganization.id);
+      
+      let query = supabase
+        .from('clients')
+        .select('*')
+        .eq('organization_id', selectedOrganization.id)
+        .order('name');
+
+      // Ook filteren op workspace als die geselecteerd is
+      if (selectedWorkspace) {
+        query = query.eq('workspace_id', selectedWorkspace.id);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('📋 PUNT 2: Fout bij ophalen contacten:', error);
+        return;
+      }
+
+      console.log('📋 PUNT 2: Contacten opgehaald:', data?.length || 0);
+      
+      const formattedContacts: Contact[] = data?.map(client => ({
+        id: client.id,
+        name: client.name,
+        email: client.email || undefined,
+        address: client.address || undefined,
+        postal_code: client.postal_code || undefined,
+        city: client.city || undefined,
+        country: client.country || 'Nederland',
+        payment_terms: 30 // Default payment terms
+      })) || [];
+
+      setContacts(formattedContacts);
+    } catch (error) {
+      console.error('📋 PUNT 2: Onverwachte fout bij ophalen contacten:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  // Contacten ophalen bij mount en bij wijziging van organisatie/werkruimte
+  useEffect(() => {
+    fetchContacts();
+  }, [selectedOrganization, selectedWorkspace]);
 
   const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -93,12 +126,16 @@ export const ContactSelector = ({
     onContactCreated(contact);
     setIsNewContactOpen(false);
     handleContactSelect(contact);
+    // Herlaad de contactenlijst
+    fetchContacts();
   };
 
   const handleContactUpdated = (contact: Contact) => {
     onContactUpdated(contact);
     setIsEditContactOpen(false);
     onContactSelect(contact);
+    // Herlaad de contactenlijst
+    fetchContacts();
   };
 
   return (
@@ -135,7 +172,9 @@ export const ContactSelector = ({
               {/* Dropdown */}
               {isDropdownOpen && (
                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
-                  {filteredContacts.length > 0 ? (
+                  {loading ? (
+                    <div className="p-2 text-sm text-gray-500">Contacten laden...</div>
+                  ) : filteredContacts.length > 0 ? (
                     filteredContacts.map((contact) => (
                       <div
                         key={contact.id}
@@ -152,7 +191,9 @@ export const ContactSelector = ({
                       </div>
                     ))
                   ) : (
-                    <div className="p-2 text-sm text-gray-500">Geen contacten gevonden</div>
+                    <div className="p-2 text-sm text-gray-500">
+                      {contacts.length === 0 ? 'Geen contacten gevonden in deze organisatie' : 'Geen contacten gevonden'}
+                    </div>
                   )}
                 </div>
               )}

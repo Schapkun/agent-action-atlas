@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ContactDialogTabs } from './ContactDialogTabs';
@@ -114,45 +113,11 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('📝 STAP 2: ContactDialog.handleSubmit - Contact toevoegen aan lijst en selecteren voor factuur');
+    console.log('🚫 PUNT 1: ContactDialog.handleSubmit UITGESCHAKELD - KNOP DOET NIETS MEER');
+    console.log('🚫 De "Opslaan" knop functionaliteit is volledig uitgeschakeld');
     
-    try {
-      const contactData: Contact = {
-        id: formData.number,
-        name: formData.name,
-        email: formData.email,
-        address: formData.address,
-        postal_code: formData.postalCode,
-        city: formData.city,
-        country: formData.country,
-        phone: formData.phone,
-        mobile: formData.mobile,
-        type: formData.type,
-        payment_terms: formData.paymentTerms
-      };
-
-      console.log('📝 STAP 2: Contact data voorbereid voor opslaan:', contactData);
-
-      let savedContact: Contact;
-      
-      if (mode === 'edit') {
-        console.log('📝 STAP 2: Bestaand contact bijwerken');
-        savedContact = await updateContact(contactData);
-      } else {
-        console.log('📝 STAP 2: Nieuw contact opslaan in database');
-        savedContact = await saveContact(contactData);
-      }
-
-      console.log('📝 STAP 2: Contact succesvol opgeslagen, doorgeven aan factuurformulier:', savedContact);
-
-      // STAP 2: Contact is opgeslagen, nu doorgeven aan parent component
-      // Dit zorgt ervoor dat het contact wordt geselecteerd voor de factuur
-      onSave(savedContact);
-      onClose();
-    } catch (error) {
-      console.error('📝 STAP 2: Fout bij opslaan contact:', error);
-      // Don't close dialog on error so user can retry
-    }
+    // PUNT 1: Functionaliteit volledig uitgeschakeld - knop doet niets
+    return;
   };
 
   const handleCancel = () => {

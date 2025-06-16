@@ -39,11 +39,87 @@ export const InvoiceSettings = () => {
     fetchSettings();
   }, [selectedOrganization]);
 
+  // PUNT 3: Automatische nummering ophalen uit database
+  const fetchCurrentNumbers = async () => {
+    if (!selectedOrganization) return { invoice: 1, quote: 1, contact: 1 };
+
+    try {
+      // Huidige hoogste factuurnummer ophalen
+      const { data: invoices } = await supabase
+        .from('invoices')
+        .select('invoice_number')
+        .eq('organization_id', selectedOrganization.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      // Huidige hoogste offertenummer ophalen
+      const { data: quotes } = await supabase
+        .from('quotes')
+        .select('quote_number')
+        .eq('organization_id', selectedOrganization.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      // Huidige hoogste contactnummer ophalen
+      const { data: contacts } = await supabase
+        .from('clients')
+        .select('contact_number')
+        .eq('organization_id', selectedOrganization.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      let nextInvoiceNumber = 1;
+      let nextQuoteNumber = 1;
+      let nextContactNumber = 1;
+
+      // Parse hoogste factuurnummer
+      if (invoices && invoices.length > 0 && invoices[0].invoice_number) {
+        const match = invoices[0].invoice_number.match(/(\d+)$/);
+        if (match) {
+          nextInvoiceNumber = parseInt(match[1]) + 1;
+        }
+      }
+
+      // Parse hoogste offertenummer
+      if (quotes && quotes.length > 0 && quotes[0].quote_number) {
+        const match = quotes[0].quote_number.match(/(\d+)$/);
+        if (match) {
+          nextQuoteNumber = parseInt(match[1]) + 1;
+        }
+      }
+
+      // Parse hoogste contactnummer
+      if (contacts && contacts.length > 0 && contacts[0].contact_number) {
+        const match = contacts[0].contact_number.match(/(\d+)$/);
+        if (match) {
+          nextContactNumber = parseInt(match[1]) + 1;
+        }
+      }
+
+      console.log('📊 PUNT 3: Huidige nummers opgehaald:', {
+        nextInvoiceNumber,
+        nextQuoteNumber, 
+        nextContactNumber
+      });
+
+      return {
+        invoice: nextInvoiceNumber,
+        quote: nextQuoteNumber,
+        contact: nextContactNumber
+      };
+    } catch (error) {
+      console.error('📊 PUNT 3: Fout bij ophalen huidige nummers:', error);
+      return { invoice: 1, quote: 1, contact: 1 };
+    }
+  };
+
   const fetchSettings = async () => {
     if (!selectedOrganization) return;
 
     setLoading(true);
     try {
+      console.log('📊 PUNT 3: Instellingen ophalen voor organisatie:', selectedOrganization.id);
+      
       const { data, error } = await supabase
         .from('organization_settings')
         .select('*')
@@ -54,20 +130,31 @@ export const InvoiceSettings = () => {
         throw error;
       }
 
+      // PUNT 3: Automatische nummering ophalen
+      const currentNumbers = await fetchCurrentNumbers();
+
       if (data) {
         setSettings({
           default_payment_terms: 30,
           default_vat_rate: 21,
           invoice_prefix: data.invoice_prefix || '',
-          invoice_start_number: data.invoice_start_number || 1,
+          invoice_start_number: currentNumbers.invoice,  // Automatisch bijgewerkt
           quote_prefix: data.quote_prefix || '',
-          quote_start_number: data.quote_start_number || 1,
+          quote_start_number: currentNumbers.quote,      // Automatisch bijgewerkt
           contact_prefix: data.contact_prefix || '',
-          contact_start_number: data.contact_start_number || 1,
+          contact_start_number: currentNumbers.contact,  // Automatisch bijgewerkt
         });
+      } else {
+        // Geen instellingen gevonden, gebruik automatische nummering
+        setSettings(prev => ({
+          ...prev,
+          invoice_start_number: currentNumbers.invoice,
+          quote_start_number: currentNumbers.quote,
+          contact_start_number: currentNumbers.contact,
+        }));
       }
     } catch (error) {
-      console.error('Error fetching settings:', error);
+      console.error('📊 PUNT 3: Fout bij ophalen instellingen:', error);
       toast({
         title: "Fout",
         description: "Kon instellingen niet ophalen",
@@ -78,11 +165,14 @@ export const InvoiceSettings = () => {
     }
   };
 
+  // PUNT 3: Werkende opslaan functie
   const handleSave = async () => {
     if (!selectedOrganization) return;
 
     setSaving(true);
     try {
+      console.log('💾 PUNT 3: Instellingen opslaan:', settings);
+      
       const { error } = await supabase
         .from('organization_settings')
         .upsert({
@@ -97,14 +187,19 @@ export const InvoiceSettings = () => {
           onConflict: 'organization_id'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('💾 PUNT 3: Database fout bij opslaan:', error);
+        throw error;
+      }
 
+      console.log('💾 PUNT 3: Instellingen succesvol opgeslagen');
+      
       toast({
         title: "Succes",
         description: "Instellingen succesvol opgeslagen"
       });
     } catch (error) {
-      console.error('Error saving settings:', error);
+      console.error('💾 PUNT 3: Fout bij opslaan instellingen:', error);
       toast({
         title: "Fout",
         description: "Kon instellingen niet opslaan",
@@ -154,13 +249,15 @@ export const InvoiceSettings = () => {
               />
             </div>
             <div>
-              <Label htmlFor="invoice_start_number">Factuur startnummer</Label>
+              <Label htmlFor="invoice_start_number">Factuur startnummer (automatisch bijgewerkt)</Label>
               <Input
                 id="invoice_start_number"
                 type="number"
                 value={settings.invoice_start_number}
                 onChange={(e) => setSettings(prev => ({ ...prev, invoice_start_number: parseInt(e.target.value) || 1 }))}
+                className="bg-blue-50"
               />
+              <p className="text-xs text-gray-500 mt-1">Wordt automatisch bijgewerkt naar het volgende beschikbare nummer</p>
             </div>
           </div>
 
@@ -175,13 +272,15 @@ export const InvoiceSettings = () => {
               />
             </div>
             <div>
-              <Label htmlFor="quote_start_number">Offerte startnummer</Label>
+              <Label htmlFor="quote_start_number">Offerte startnummer (automatisch bijgewerkt)</Label>
               <Input
                 id="quote_start_number"
                 type="number"
                 value={settings.quote_start_number}
                 onChange={(e) => setSettings(prev => ({ ...prev, quote_start_number: parseInt(e.target.value) || 1 }))}
+                className="bg-blue-50"
               />
+              <p className="text-xs text-gray-500 mt-1">Wordt automatisch bijgewerkt naar het volgende beschikbare nummer</p>
             </div>
           </div>
 
@@ -193,16 +292,20 @@ export const InvoiceSettings = () => {
                 value={settings.contact_prefix}
                 onChange={(e) => setSettings(prev => ({ ...prev, contact_prefix: e.target.value }))}
                 placeholder="optioneel"
+                disabled
               />
+              <p className="text-xs text-gray-400 mt-1">Functie uitgeschakeld zoals gevraagd</p>
             </div>
             <div>
-              <Label htmlFor="contact_start_number">Contact startnummer</Label>
+              <Label htmlFor="contact_start_number">Contact startnummer (automatisch bijgewerkt)</Label>
               <Input
                 id="contact_start_number"
                 type="number"
                 value={settings.contact_start_number}
                 onChange={(e) => setSettings(prev => ({ ...prev, contact_start_number: parseInt(e.target.value) || 1 }))}
+                className="bg-blue-50"
               />
+              <p className="text-xs text-gray-500 mt-1">Wordt automatisch bijgewerkt naar het volgende beschikbare nummer</p>
             </div>
           </div>
 
