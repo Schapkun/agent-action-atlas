@@ -18,7 +18,7 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
     Object.entries(placeholderValues).forEach(([key, value]) => {
       const placeholder = `{{${key}}}`;
       const regex = new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-      processed = processed.replace(regex, value || '');
+      processed = processed.replace(regex, value || `[${key}]`);
     });
     
     return processed;
@@ -29,64 +29,180 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
     htmlContent: processedHtml
   });
 
-  // Create optimized A4 preview with better scaling and content fitting
-  const getOptimizedPreviewHtml = (content: string) => {
-    return content.replace(
-      /<style[^>]*>([\s\S]*?)<\/style>/i,
-      (match, styles) => {
-        return `<style>
-          ${styles}
-          
-          /* A4 Preview Optimizations */
-          html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            transform-origin: top left;
-            background: white;
-          }
-          
-          body {
-            transform: scale(0.85);
-            width: 117.65%; /* 100% / 0.85 to compensate for scale */
-            height: 117.65%;
-            font-size: 14px;
-          }
-          
-          /* Better content fitting */
-          .header, .content, .document-info, .recipient, .footer {
-            page-break-inside: avoid;
-            margin-bottom: 15px;
-          }
-          
-          /* Optimize text rendering */
-          * {
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            line-height: 1.4;
-          }
-          
-          /* Better spacing for A4 */
-          p {
-            margin: 8px 0;
-          }
-          
-          h1, h2, h3 {
-            margin: 12px 0 8px 0;
-          }
-          
-          /* Optimize for preview */
-          @media screen {
-            body {
-              box-shadow: none;
-              border: none;
+  // Create complete HTML document with proper A4 styling
+  const getCompleteHtmlDocument = (content: string) => {
+    // If content is already a complete HTML document, enhance its styles
+    if (content.includes('<!DOCTYPE html>')) {
+      return content.replace(
+        /<style[^>]*>([\s\S]*?)<\/style>/i,
+        (match, styles) => {
+          return `<style>
+            ${styles}
+            
+            /* A4 Preview Optimizations */
+            @page {
+              size: A4;
+              margin: 0;
             }
-          }
-        </style>`;
-      }
-    );
+            
+            html {
+              margin: 0;
+              padding: 0;
+              width: 100%;
+              height: 100%;
+              overflow-x: hidden;
+            }
+            
+            body {
+              margin: 0;
+              padding: 20mm;
+              width: calc(210mm - 40mm);
+              min-height: calc(297mm - 40mm);
+              font-family: Arial, sans-serif;
+              font-size: 12px;
+              line-height: 1.4;
+              color: #333;
+              background: white;
+              box-sizing: border-box;
+              -webkit-font-smoothing: antialiased;
+              -moz-osx-font-smoothing: grayscale;
+            }
+            
+            .header {
+              margin-bottom: 30px;
+            }
+            
+            .logo {
+              max-width: 150px;
+              height: auto;
+              margin-bottom: 10px;
+            }
+            
+            .document-info, .recipient, .content {
+              margin-bottom: 20px;
+            }
+            
+            .footer {
+              margin-top: 40px;
+              font-size: 10px;
+              color: #666;
+            }
+            
+            p {
+              margin: 8px 0;
+            }
+            
+            h1 {
+              font-size: 18px;
+              margin: 0 0 10px 0;
+              font-weight: bold;
+            }
+            
+            h2, h3 {
+              font-size: 14px;
+              margin: 15px 0 8px 0;
+              font-weight: bold;
+            }
+            
+            strong {
+              font-weight: bold;
+            }
+            
+            /* Ensure content fits on page */
+            * {
+              page-break-inside: avoid;
+            }
+          </style>`;
+        }
+      );
+    }
+    
+    // If content is just HTML fragments, wrap it in a complete document
+    return `<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Preview</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 0;
+    }
+    
+    html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow-x: hidden;
+    }
+    
+    body {
+      margin: 0;
+      padding: 20mm;
+      width: calc(210mm - 40mm);
+      min-height: calc(297mm - 40mm);
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #333;
+      background: white;
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    .header {
+      margin-bottom: 30px;
+    }
+    
+    .logo {
+      max-width: 150px;
+      height: auto;
+      margin-bottom: 10px;
+    }
+    
+    .document-info, .recipient, .content {
+      margin-bottom: 20px;
+    }
+    
+    .footer {
+      margin-top: 40px;
+      font-size: 10px;
+      color: #666;
+    }
+    
+    p {
+      margin: 8px 0;
+    }
+    
+    h1 {
+      font-size: 18px;
+      margin: 0 0 10px 0;
+      font-weight: bold;
+    }
+    
+    h2, h3 {
+      font-size: 14px;
+      margin: 15px 0 8px 0;
+      font-weight: bold;
+    }
+    
+    strong {
+      font-weight: bold;
+    }
+    
+    /* Ensure content fits on page */
+    * {
+      page-break-inside: avoid;
+    }
+  </style>
+</head>
+<body>
+  ${content}
+</body>
+</html>`;
   };
 
   return (
@@ -131,15 +247,17 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
               height: '842px',   // A4 height at 72 DPI
               aspectRatio: '210/297', // A4 ratio
               maxWidth: '100%',
-              maxHeight: '100%'
+              maxHeight: 'none'
             }}
           >
             <iframe
-              srcDoc={getOptimizedPreviewHtml(processedHtml)}
+              srcDoc={getCompleteHtmlDocument(processedHtml)}
               className="w-full h-full border-0"
               title="A4 Document Preview"
               style={{
-                background: 'white'
+                background: 'white',
+                transform: 'scale(1)',
+                transformOrigin: 'top left'
               }}
             />
           </div>
