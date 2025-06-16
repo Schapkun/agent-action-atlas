@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { SimpleDocumentHeader } from './components/SimpleDocumentHeader';
@@ -99,8 +98,10 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
   const { selectedOrganization } = useOrganization();
   const { templates, loading: templatesLoading, updateTemplate, createTemplate, fetchTemplates } = useDocumentTemplates();
 
-  // Check user access
+  // Enhanced access check
   const checkAccess = () => {
+    console.log('[DocumentBuilder] Access check:', { user: !!user, org: !!selectedOrganization });
+    
     if (!user) {
       setError('Je bent niet ingelogd');
       return false;
@@ -121,7 +122,8 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       console.log('[DocumentBuilder] Loading document...', {
         documentId,
         templatesLoading,
-        templatesCount: templates.length
+        templatesCount: templates.length,
+        hasAccess: checkAccess()
       });
       
       if (!checkAccess()) {
@@ -134,8 +136,9 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       }
 
       if (!documentId) {
-        console.log('[DocumentBuilder] No document ID, using defaults');
+        console.log('[DocumentBuilder] No document ID, using defaults for new document');
         setIsLoading(false);
+        setHasUnsavedChanges(false); // New document starts without changes
         return;
       }
 
@@ -169,10 +172,14 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
 
   // Track changes
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && !documentId) {
+      // Only mark as changed for new documents when user actually makes changes
+      const isDefaultContent = documentName === 'Nieuw Document' && htmlContent === DEFAULT_HTML;
+      setHasUnsavedChanges(!isDefaultContent);
+    } else if (!isLoading && documentId) {
       setHasUnsavedChanges(true);
     }
-  }, [documentName, htmlContent, placeholderValues, isLoading]);
+  }, [documentName, htmlContent, placeholderValues, isLoading, documentId]);
 
   const handlePlaceholderChange = (key: string, value: string) => {
     setPlaceholderValues(prev => ({
@@ -182,30 +189,66 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
   };
 
   const handleSave = async () => {
-    console.log('[DocumentBuilder] Save initiated');
+    console.log('[DocumentBuilder] Save initiated for:', { 
+      isNew: !documentId, 
+      documentName,
+      hasAccess: checkAccess() 
+    });
     
     if (!checkAccess()) {
       return;
     }
     
+    // Enhanced validation for new documents
     if (!documentName.trim()) {
-      setError('Documentnaam is verplicht');
+      const errorMsg = 'Documentnaam is verplicht';
+      setError(errorMsg);
       toast({
         title: "Validatiefout",
-        description: "Documentnaam is verplicht",
+        description: errorMsg,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (documentName.trim().length < 3) {
+      const errorMsg = 'Documentnaam moet minimaal 3 karakters bevatten';
+      setError(errorMsg);
+      toast({
+        title: "Validatiefout",
+        description: errorMsg,
         variant: "destructive"
       });
       return;
     }
 
     if (!htmlContent.trim()) {
-      setError('HTML content is verplicht');
+      const errorMsg = 'HTML content is verplicht';
+      setError(errorMsg);
       toast({
         title: "Validatiefout", 
-        description: "HTML content is verplicht",
+        description: errorMsg,
         variant: "destructive"
       });
       return;
+    }
+
+    // Check for duplicate names when creating new document
+    if (!documentId) {
+      const existingTemplate = templates.find(t => 
+        t.name.toLowerCase().trim() === documentName.toLowerCase().trim()
+      );
+      
+      if (existingTemplate) {
+        const errorMsg = `Een document met de naam "${documentName}" bestaat al`;
+        setError(errorMsg);
+        toast({
+          title: "Validatiefout",
+          description: errorMsg,
+          variant: "destructive"
+        });
+        return;
+      }
     }
     
     setIsSaving(true);
@@ -217,17 +260,22 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
         html_content: htmlContent,
         placeholder_values: placeholderValues,
         type: 'custom' as const,
-        description: 'Document template',
+        description: documentId ? undefined : 'Nieuw document template',
         is_default: false,
         is_active: true
       };
       
-      console.log('[DocumentBuilder] Saving template data');
+      console.log('[DocumentBuilder] Saving template data:', {
+        isUpdate: !!documentId,
+        dataKeys: Object.keys(templateData)
+      });
       
       let result;
       if (documentId) {
+        console.log('[DocumentBuilder] Updating existing template');
         result = await updateTemplate(documentId, templateData);
       } else {
+        console.log('[DocumentBuilder] Creating new template');
         result = await createTemplate(templateData);
       }
       
@@ -236,7 +284,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       setHasUnsavedChanges(false);
       setError(null);
       
-      // Refresh templates
+      // Refresh templates to ensure UI is up to date
       await fetchTemplates();
       
       toast({
@@ -247,7 +295,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       onComplete(true);
     } catch (error) {
       console.error('[DocumentBuilder] Save failed:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Onbekende fout';
+      const errorMessage = error instanceof Error ? error.message : 'Onbekende fout bij opslaan';
       setError(errorMessage);
       
       toast({
