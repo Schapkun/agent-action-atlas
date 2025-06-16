@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ContactSearch } from './ContactSearch';
 import { ContactDropdown } from './ContactDropdown';
 import { ContactActions } from './ContactActions';
@@ -14,6 +14,7 @@ interface Contact {
   city?: string;
   country?: string;
   payment_terms?: number;
+  contact_number?: string;
 }
 
 interface ContactSelectorProps {
@@ -28,14 +29,24 @@ export const ContactSelector = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
-  const { contacts, loading } = useContactData();
+  const { contacts, loading, refreshContacts } = useContactData();
+
+  // Update search term when selected contact changes
+  useEffect(() => {
+    if (selectedContact) {
+      setSearchTerm(selectedContact.name);
+    } else {
+      setSearchTerm('');
+    }
+  }, [selectedContact]);
 
   const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contact.postal_code?.toLowerCase().includes(searchTerm.toLowerCase())
+    contact.postal_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    contact.contact_number?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleContactSelect = (contact: Contact) => {
@@ -53,10 +64,17 @@ export const ContactSelector = ({
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
     setIsDropdownOpen(true);
+    
+    // Als het zoekveld leeg wordt, clear de selectie
+    if (!value.trim()) {
+      onContactSelect(null);
+    }
   };
 
   const handleSearchFocus = () => {
     setIsDropdownOpen(true);
+    // Refresh contacten als dropdown wordt geopend
+    refreshContacts();
   };
 
   const handleDropdownClose = () => {

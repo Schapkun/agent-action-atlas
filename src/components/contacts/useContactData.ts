@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 
@@ -12,6 +12,7 @@ interface Contact {
   city?: string;
   country?: string;
   payment_terms?: number;
+  contact_number?: string;
 }
 
 export const useContactData = () => {
@@ -19,7 +20,7 @@ export const useContactData = () => {
   const [loading, setLoading] = useState(false);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
 
-  const fetchContacts = async () => {
+  const fetchContacts = useCallback(async () => {
     if (!selectedOrganization) {
       console.log('📋 PUNT 2: Geen organisatie geselecteerd');
       setContacts([]);
@@ -60,7 +61,8 @@ export const useContactData = () => {
         postal_code: client.postal_code || undefined,
         city: client.city || undefined,
         country: client.country || 'Nederland',
-        payment_terms: 30 // Default payment terms
+        payment_terms: 30, // Default payment terms
+        contact_number: client.contact_number || undefined
       })) || [];
 
       setContacts(formattedContacts);
@@ -71,22 +73,28 @@ export const useContactData = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedOrganization, selectedWorkspace]);
 
   // Contacten ophalen bij mount en bij wijziging van organisatie/werkruimte
   useEffect(() => {
     console.log('📋 PUNT 2: useEffect triggered - ophalen contacten');
     fetchContacts();
-  }, [selectedOrganization, selectedWorkspace]);
+  }, [fetchContacts]);
 
   // Debug logging voor contacten
   useEffect(() => {
     console.log('📋 PUNT 2: Contacts state updated:', contacts.length, contacts);
   }, [contacts]);
 
+  // Refresh functie om contacten opnieuw op te halen
+  const refreshContacts = useCallback(() => {
+    fetchContacts();
+  }, [fetchContacts]);
+
   return {
     contacts,
     loading,
-    fetchContacts
+    fetchContacts,
+    refreshContacts
   };
 };
