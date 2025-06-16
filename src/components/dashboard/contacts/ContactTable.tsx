@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Table, TableBody } from '@/components/ui/table';
 import { ContactTableHeader } from './ContactTableHeader';
@@ -37,6 +36,7 @@ interface ColumnVisibility {
   openstaand: boolean;
   omzet: boolean;
   actief: boolean;
+  labels: boolean;
 }
 
 interface ContactTableProps {
