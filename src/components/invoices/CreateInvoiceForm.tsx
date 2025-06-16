@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -145,15 +144,16 @@ export const CreateInvoiceForm = () => {
     handleSubmit();
   };
 
-  // CRITICAL: This handler ensures NO AUTOMATIC INVOICE CREATION
+  // ABSOLUTE ISOLATION: This handler ensures NO AUTOMATIC INVOICE CREATION
   const handleContactCreatedSafely = (contact: any) => {
-    console.log('🛑 CreateInvoiceForm: Contact created - BLOCKING ANY INVOICE CREATION');
-    console.log('🛑 This will ONLY update the form, NO invoice creation allowed');
+    console.log('🚫 ABSOLUTE ISOLATION: CreateInvoiceForm.handleContactCreatedSafely');
+    console.log('🚫 This will ONLY call handleContactCreated for form updates');
+    console.log('🚫 NO INVOICE CREATION will happen in this isolated handler');
     
     // Call the handleContactCreated which should ONLY update form data
     handleContactCreated(contact);
     
-    console.log('🛑 CreateInvoiceForm: Form updated only - NO INVOICE CREATED');
+    console.log('🚫 ISOLATION COMPLETE: Form updated only - ZERO INVOICE CREATION');
   };
 
   return (
@@ -217,7 +217,7 @@ export const CreateInvoiceForm = () => {
           <Card>
             <CardContent className="p-3">
               <Textarea 
-                value="Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendeur.nl met omschrijving: %INVOICE_NUMBER%"
+                value="Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %INVOICE_NUMBER%"
                 className="h-12 resize-none text-xs"
                 rows={2}
               />

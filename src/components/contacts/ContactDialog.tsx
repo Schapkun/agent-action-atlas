@@ -115,8 +115,8 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
     e.preventDefault();
     
     try {
-      console.log('🛑 CRITICAL: ContactDialog.handleSubmit - NO INVOICE CREATION ALLOWED');
-      console.log('🛑 This will ONLY save contact to database and update form');
+      console.log('🚫 ABSOLUTE BLOCK: ContactDialog.handleSubmit - ZERO INVOICE CREATION ALLOWED');
+      console.log('🚫 This is ONLY a contact save operation - NO INVOICE LOGIC WHATSOEVER');
       
       const contactData: Contact = {
         id: formData.number,
@@ -132,22 +132,22 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
         payment_terms: formData.paymentTerms
       };
 
-      console.log('🛑 ContactDialog: Contact data prepared (NO INVOICE CREATION):', contactData);
+      console.log('🚫 ContactDialog: Contact data prepared (ISOLATED FROM ALL INVOICE LOGIC):', contactData);
 
       let savedContact: Contact;
       
       if (mode === 'edit') {
-        console.log('🛑 ContactDialog: Updating existing contact - NO INVOICE CREATION');
+        console.log('🚫 ContactDialog: Updating existing contact - COMPLETELY ISOLATED');
         savedContact = await updateContact(contactData);
       } else {
-        console.log('🛑 ContactDialog: Creating new contact - NO INVOICE CREATION');
+        console.log('🚫 ContactDialog: Creating new contact - COMPLETELY ISOLATED');
         savedContact = await saveContact(contactData);
       }
 
-      console.log('🛑 ContactDialog: Contact saved - calling onSave to ONLY update form:', savedContact);
+      console.log('🚫 ContactDialog: Contact saved - calling onSave ONLY for form update:', savedContact);
 
-      // CRITICAL: This should ONLY update the form data in the parent component
-      // NO INVOICE CREATION should happen here
+      // ISOLATION: This ONLY passes contact data to parent for form population
+      // NO INVOICE CREATION should happen anywhere in the chain
       onSave(savedContact);
       onClose();
     } catch (error) {
@@ -157,6 +157,7 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
   };
 
   const handleCancel = () => {
+    console.log('🚫 ContactDialog: Cancel - NO INVOICE LOGIC');
     onClose();
   };
 

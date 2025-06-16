@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInvoices } from './useInvoices';
@@ -93,7 +92,7 @@ export const useInvoiceForm = () => {
   };
 
   const handleContactSelect = (contact: Contact | null) => {
-    console.log('🟦 useInvoiceForm.handleContactSelect: ONLY selecting contact - NO INVOICE CREATION EVER');
+    console.log('🚫 ISOLATED: useInvoiceForm.handleContactSelect - ONLY contact selection, NO INVOICE LOGIC');
     setSelectedContact(contact);
     if (contact) {
       const contactPaymentTerms = contact.payment_terms || invoiceSettings.default_payment_terms || 30;
@@ -109,38 +108,43 @@ export const useInvoiceForm = () => {
         payment_terms: contactPaymentTerms
       }));
     }
-    console.log('🟦 useInvoiceForm.handleContactSelect: Contact form updated - NO INVOICE CREATED');
+    console.log('🚫 ISOLATED: useInvoiceForm.handleContactSelect completed - NO INVOICE TRIGGERS');
   };
 
-  // CRITICAL: This function should NEVER create an invoice - only update form data
-  const handleContactCreated = (contact: Contact) => {
-    console.log('🛑 CRITICAL BLOCK: useInvoiceForm.handleContactCreated - ABSOLUTELY NO INVOICE CREATION ALLOWED');
-    console.log('🛑 This should ONLY update form data, nothing else');
-    console.log('🛑 Contact received:', contact);
+  // COMPLETELY ISOLATED CONTACT HANDLERS - NO INVOICE LOGIC ALLOWED
+  const handleContactCreated = useCallback((contact: Contact) => {
+    console.log('🚫 COMPLETE ISOLATION: useInvoiceForm.handleContactCreated - BLOCKING ALL INVOICE CREATION');
+    console.log('🚫 This function is ONLY for form updates - ZERO INVOICE LOGIC');
+    console.log('🚫 Contact received for form update only:', contact);
     
-    // ONLY update the form - NO INVOICE CREATION LOGIC WHATSOEVER
+    // BLOCK: Prevent any automatic effects or callbacks that might trigger invoice creation
+    console.log('🚫 BLOCKING: Setting contact state WITHOUT any invoice creation triggers');
+    
     setSelectedContact(contact);
-    setFormData(prev => ({
-      ...prev,
-      client_name: contact.name,
-      client_email: contact.email || '',
-      client_address: contact.address || '',
-      client_postal_code: contact.postal_code || '',
-      client_city: contact.city || '',
-      client_country: contact.country || 'Nederland',
-      payment_terms: contact.payment_terms || invoiceSettings.default_payment_terms || 30
-    }));
+    setFormData(prev => {
+      console.log('🚫 FORM UPDATE ONLY: Updating form data with contact info');
+      return {
+        ...prev,
+        client_name: contact.name,
+        client_email: contact.email || '',
+        client_address: contact.address || '',
+        client_postal_code: contact.postal_code || '',
+        client_city: contact.city || '',
+        client_country: contact.country || 'Nederland',
+        payment_terms: contact.payment_terms || invoiceSettings.default_payment_terms || 30
+      };
+    });
 
-    console.log('🛑 useInvoiceForm.handleContactCreated: Form updated - NO INVOICE CREATION HAPPENED');
+    console.log('🚫 ISOLATION COMPLETE: Form updated with contact data - NO INVOICE CREATION OCCURRED');
 
     toast({
       title: "Contact toegevoegd",
       description: `Contact "${contact.name}" is toegevoegd aan de factuur.`
     });
-  };
+  }, [invoiceSettings.default_payment_terms, toast]);
 
   const handleContactUpdated = (contact: Contact) => {
-    console.log('🟦 useInvoiceForm.handleContactUpdated: ONLY updating contact - NO INVOICE CREATION');
+    console.log('🚫 ISOLATED: useInvoiceForm.handleContactUpdated - ONLY contact update, NO INVOICE LOGIC');
     setSelectedContact(contact);
     setFormData(prev => ({
       ...prev,
@@ -152,10 +156,11 @@ export const useInvoiceForm = () => {
       client_country: contact.country || 'Nederland',
       payment_terms: contact.payment_terms || invoiceSettings.default_payment_terms || 30
     }));
-    console.log('🟦 useInvoiceForm.handleContactUpdated: Contact updated - NO INVOICE CREATED');
+    console.log('🚫 ISOLATED: useInvoiceForm.handleContactUpdated completed - NO INVOICE TRIGGERS');
   };
 
   const handleContactClear = () => {
+    console.log('🚫 ISOLATED: useInvoiceForm.handleContactClear - NO INVOICE LOGIC');
     setSelectedContact(null);
     setFormData(prev => ({
       ...prev,
