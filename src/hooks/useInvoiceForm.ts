@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInvoices } from './useInvoices';
@@ -92,9 +91,9 @@ export const useInvoiceForm = () => {
     return invoiceSettings.invoice_prefix + invoiceSettings.invoice_start_number.toString().padStart(3, '0');
   };
 
-  // PURE FORM UPDATE FUNCTIONS - NO INVOICE CREATION LOGIC
+  // SECURED CONTACT HANDLERS - ABSOLUTELY NO INVOICE CREATION
   const handleContactSelect = (contact: Contact | null) => {
-    console.log('🔴 PURE FORM UPDATE: handleContactSelect - NO INVOICE LOGIC');
+    console.log('🛡️ SECURED: handleContactSelect - ONLY form updates, NO INVOICE LOGIC');
     setSelectedContact(contact);
     if (contact) {
       const contactPaymentTerms = contact.payment_terms || invoiceSettings.default_payment_terms || 30;
@@ -110,15 +109,14 @@ export const useInvoiceForm = () => {
         payment_terms: contactPaymentTerms
       }));
     }
-    console.log('🔴 FORM UPDATE COMPLETE: No invoice creation triggers');
+    console.log('🛡️ SECURED: Contact selection complete - ZERO INVOICE CREATION');
   };
 
-  // ISOLATED CONTACT HANDLERS - ABSOLUTELY NO INVOICE CREATION
   const handleContactCreated = useCallback((contact: Contact) => {
-    console.log('🚫🚫🚫 ABSOLUTE BLOCK: handleContactCreated - ZERO INVOICE CREATION');
-    console.log('🚫🚫🚫 This is ONLY for updating form fields - NO INVOICE LOGIC WHATSOEVER');
+    console.log('🛡️🛡️🛡️ SECURED: handleContactCreated - ABSOLUTELY NO INVOICE CREATION');
+    console.log('🛡️🛡️🛡️ This is ONLY for form updates - INVOICE LOGIC COMPLETELY DISABLED');
     
-    // BLOCK ALL AUTOMATIC EFFECTS
+    // ONLY UPDATE FORM - NO INVOICE LOGIC WHATSOEVER
     setSelectedContact(contact);
     setFormData(prev => ({
       ...prev,
@@ -136,11 +134,11 @@ export const useInvoiceForm = () => {
       description: `Contact "${contact.name}" is toegevoegd aan de factuur.`
     });
 
-    console.log('🚫🚫🚫 BLOCK COMPLETE: Form updated ONLY - NO INVOICE CREATION OCCURRED');
+    console.log('🛡️🛡️🛡️ SECURED: Form updated ONLY - INVOICE CREATION COMPLETELY BLOCKED');
   }, [invoiceSettings.default_payment_terms, toast]);
 
   const handleContactUpdated = (contact: Contact) => {
-    console.log('🚫🚫🚫 ABSOLUTE BLOCK: handleContactUpdated - ZERO INVOICE CREATION');
+    console.log('🛡️🛡️🛡️ SECURED: handleContactUpdated - NO INVOICE CREATION');
     setSelectedContact(contact);
     setFormData(prev => ({
       ...prev,
@@ -152,11 +150,11 @@ export const useInvoiceForm = () => {
       client_country: contact.country || 'Nederland',
       payment_terms: contact.payment_terms || invoiceSettings.default_payment_terms || 30
     }));
-    console.log('🚫🚫🚫 BLOCK COMPLETE: Form updated ONLY - NO INVOICE CREATION');
+    console.log('🛡️🛡️🛡️ SECURED: Form updated ONLY - NO INVOICE CREATION');
   };
 
   const handleContactClear = () => {
-    console.log('🔴 PURE FORM UPDATE: handleContactClear - NO INVOICE LOGIC');
+    console.log('🛡️ SECURED: handleContactClear - ONLY form updates');
     setSelectedContact(null);
     setFormData(prev => ({
       ...prev,
@@ -247,9 +245,9 @@ export const useInvoiceForm = () => {
     }
   };
 
-  // ONLY EXPLICIT INVOICE CREATION ALLOWED
+  // SECURED INVOICE CREATION - ONLY EXPLICIT USER ACTIONS
   const handleSubmit = async () => {
-    console.log('✅✅✅ EXPLICIT USER ACTION: handleSubmit - Creating invoice by user request');
+    console.log('🔒🔒🔒 SECURED: handleSubmit - Explicit user action to create invoice');
     setLoading(true);
 
     try {
@@ -263,9 +261,9 @@ export const useInvoiceForm = () => {
         status: 'draft' as const
       };
 
-      console.log('✅✅✅ EXPLICIT: Creating invoice via user action:', invoiceData);
-      await createInvoice(invoiceData);
-      console.log('✅✅✅ SUCCESS: Invoice created via explicit user action');
+      console.log('🔒🔒🔒 SECURED: Creating invoice via secured explicit action:', invoiceData);
+      await createInvoice(invoiceData, 'EXPLICIT_USER_ACTION');
+      console.log('🔒🔒🔒 SECURED: Invoice created successfully via explicit action');
       navigate('/facturen');
     } catch (error) {
       console.error('Error saving invoice:', error);
@@ -274,9 +272,8 @@ export const useInvoiceForm = () => {
     }
   };
 
-  // ONLY EXPLICIT INVOICE CREATION AND SEND ALLOWED
   const handleSaveAndSend = async () => {
-    console.log('✅✅✅ EXPLICIT USER ACTION: handleSaveAndSend - Creating and sending invoice');
+    console.log('🔒🔒🔒 SECURED: handleSaveAndSend - Explicit user action to create and send invoice');
     setSendLoading(true);
 
     try {
@@ -290,8 +287,8 @@ export const useInvoiceForm = () => {
         status: 'sent' as const
       };
 
-      console.log('✅✅✅ EXPLICIT: Creating and sending invoice via user action:', invoiceData);
-      const newInvoice = await createInvoice(invoiceData);
+      console.log('🔒🔒🔒 SECURED: Creating and sending invoice via secured explicit action:', invoiceData);
+      const newInvoice = await createInvoice(invoiceData, 'EXPLICIT_USER_ACTION');
       
       if (formData.client_email) {
         const emailTemplate = {

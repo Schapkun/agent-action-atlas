@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -157,10 +156,17 @@ export const useInvoices = () => {
     }
   };
 
-  // ONLY EXPLICIT INVOICE CREATION - NO AUTOMATIC TRIGGERS
-  const createInvoice = async (invoiceData: Partial<Invoice>) => {
-    console.log('🟢🟢🟢 EXPLICIT INVOICE CREATION: createInvoice called - Stack trace follows');
-    console.log('🟢🟢🟢 Call stack:', new Error().stack);
+  // SECURED INVOICE CREATION - ONLY EXPLICIT CALLS ALLOWED
+  const createInvoice = async (invoiceData: Partial<Invoice>, caller?: string) => {
+    // ABSOLUTE SECURITY CHECK - Block all automatic calls
+    if (!caller || caller !== 'EXPLICIT_USER_ACTION') {
+      console.error('🚫🚫🚫 BLOCKED: createInvoice called without explicit user action');
+      console.error('🚫🚫🚫 Call stack:', new Error().stack);
+      throw new Error('BLOCKED: Invoice creation must be explicitly requested by user');
+    }
+
+    console.log('✅✅✅ ALLOWED: createInvoice called with explicit user action');
+    console.log('✅✅✅ Call stack:', new Error().stack);
     
     try {
       console.log('Creating invoice with data:', invoiceData);
@@ -192,7 +198,7 @@ export const useInvoices = () => {
         created_by: invoiceData.created_by || null
       };
 
-      console.log('🟢🟢🟢 EXPLICIT: Insert data prepared:', insertData);
+      console.log('✅✅✅ EXPLICIT: Insert data prepared:', insertData);
 
       const { data, error } = await supabase
         .from('invoices')
@@ -205,7 +211,7 @@ export const useInvoices = () => {
         throw error;
       }
 
-      console.log('🟢🟢🟢 EXPLICIT: Invoice created successfully:', data);
+      console.log('✅✅✅ EXPLICIT: Invoice created successfully:', data);
 
       const newInvoice = castToInvoice(data);
       setInvoices(prev => [newInvoice, ...prev]);
@@ -215,10 +221,10 @@ export const useInvoices = () => {
         description: `Factuur ${invoiceNumber} succesvol aangemaakt`
       });
 
-      console.log('🟢🟢🟢 EXPLICIT CREATION COMPLETE: Invoice was successfully created via explicit action');
+      console.log('✅✅✅ EXPLICIT CREATION COMPLETE: Invoice was successfully created via explicit action');
       return newInvoice;
     } catch (error) {
-      console.error('🟢🟢🟢 EXPLICIT CREATION ERROR:', error);
+      console.error('✅✅✅ EXPLICIT CREATION ERROR:', error);
       toast({
         title: "Fout",
         description: "Kon factuur niet aanmaken",
