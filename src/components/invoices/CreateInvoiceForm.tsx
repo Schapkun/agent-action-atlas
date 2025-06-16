@@ -45,11 +45,25 @@ export const CreateInvoiceForm = () => {
     getDefaultInvoiceNumber
   } = useInvoiceFormHandlers();
 
+  // Find the actual template object from the selectedTemplate ID
+  const selectedTemplateObject = selectedTemplate && typeof selectedTemplate === 'string' 
+    ? documentTemplates.find(t => t.id === selectedTemplate) || null
+    : selectedTemplate;
+
+  // Handle template change by converting the object back to ID for the hook
+  const handleTemplateChange = (template: any) => {
+    if (template && typeof template === 'object') {
+      setSelectedTemplate(template.id);
+    } else {
+      setSelectedTemplate(template);
+    }
+  };
+
   const { availableTemplates } = InvoiceTemplateManager({
     documentTemplates,
     templatesLoading,
-    selectedTemplate,
-    setSelectedTemplate
+    selectedTemplate: selectedTemplateObject,
+    setSelectedTemplate: handleTemplateChange
   });
 
   const { subtotal, vatAmount, total } = calculateTotals();
@@ -70,11 +84,11 @@ export const CreateInvoiceForm = () => {
         <form onSubmit={handleFormSubmit} className="space-y-3">
           <ContactSelectionCard
             selectedContact={selectedContact}
-            selectedTemplate={selectedTemplate}
+            selectedTemplate={selectedTemplateObject?.id || ''}
             availableTemplates={availableTemplates}
             templatesLoading={templatesLoading}
             onContactSelect={handleContactSelectOnly}
-            onTemplateChange={setSelectedTemplate}
+            onTemplateChange={handleTemplateChange}
             onShowSettings={() => setShowSettings(true)}
           />
 
@@ -120,7 +134,7 @@ export const CreateInvoiceForm = () => {
         showPreview={showPreview}
         setShowPreview={setShowPreview}
         availableTemplates={availableTemplates}
-        selectedTemplate={selectedTemplate}
+        selectedTemplate={selectedTemplateObject?.id || ''}
         formData={formData}
         lineItems={lineItems}
         invoiceNumber={invoiceNumber}
