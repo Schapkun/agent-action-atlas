@@ -157,6 +157,9 @@ export const useInvoices = () => {
   };
 
   const createInvoice = async (invoiceData: Partial<Invoice>) => {
+    console.log('🔥 useInvoices.createInvoice: STARTING INVOICE CREATION - This should ONLY be called from handleSubmit or handleSaveAndSend');
+    console.log('🔥 Call stack:', new Error().stack);
+    
     try {
       console.log('Creating invoice with data:', invoiceData);
       
@@ -187,7 +190,7 @@ export const useInvoices = () => {
         created_by: invoiceData.created_by || null
       };
 
-      console.log('Insert data prepared:', insertData);
+      console.log('🔥 useInvoices.createInvoice: Insert data prepared:', insertData);
 
       const { data, error } = await supabase
         .from('invoices')
@@ -200,7 +203,7 @@ export const useInvoices = () => {
         throw error;
       }
 
-      console.log('Invoice created successfully:', data);
+      console.log('🔥 useInvoices.createInvoice: Invoice created successfully:', data);
 
       const newInvoice = castToInvoice(data);
       setInvoices(prev => [newInvoice, ...prev]);
@@ -210,9 +213,10 @@ export const useInvoices = () => {
         description: `Factuur ${invoiceNumber} succesvol aangemaakt`
       });
 
+      console.log('🔥 useInvoices.createInvoice: COMPLETED - Invoice was successfully created');
       return newInvoice;
     } catch (error) {
-      console.error('Error creating invoice:', error);
+      console.error('🔥 useInvoices.createInvoice: Error creating invoice:', error);
       toast({
         title: "Fout",
         description: "Kon factuur niet aanmaken",

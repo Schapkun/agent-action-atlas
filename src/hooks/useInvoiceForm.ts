@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInvoices } from './useInvoices';
@@ -92,6 +93,7 @@ export const useInvoiceForm = () => {
   };
 
   const handleContactSelect = (contact: Contact | null) => {
+    console.log('useInvoiceForm.handleContactSelect: ONLY selecting contact, NO INVOICE CREATION:', contact);
     setSelectedContact(contact);
     if (contact) {
       const contactPaymentTerms = contact.payment_terms || invoiceSettings.default_payment_terms || 30;
@@ -107,12 +109,15 @@ export const useInvoiceForm = () => {
         payment_terms: contactPaymentTerms
       }));
     }
+    console.log('useInvoiceForm.handleContactSelect: Contact selected, form updated - NO INVOICE SHOULD BE CREATED');
   };
 
   const handleContactCreated = (contact: Contact) => {
-    console.log('Contact created, updating form data only - no invoice creation');
+    console.log('🔴 useInvoiceForm.handleContactCreated: CRITICAL - ONLY updating form data, ABSOLUTELY NO INVOICE CREATION');
+    console.log('🔴 Contact data received:', contact);
+    console.log('🔴 Current stack trace:', new Error().stack);
     
-    // Only update the form data with the new contact, don't create an invoice
+    // CRITICAL: Only update the form data with the new contact, don't create an invoice
     setSelectedContact(contact);
     setFormData(prev => ({
       ...prev,
@@ -124,14 +129,19 @@ export const useInvoiceForm = () => {
       client_country: contact.country || 'Nederland',
       payment_terms: contact.payment_terms || invoiceSettings.default_payment_terms || 30
     }));
+
+    console.log('🔴 useInvoiceForm.handleContactCreated: Form data updated - ABSOLUTELY NO INVOICE CREATION SHOULD HAPPEN HERE');
 
     toast({
       title: "Contact toegevoegd",
       description: `Contact "${contact.name}" is toegevoegd aan de factuur.`
     });
+
+    console.log('🔴 useInvoiceForm.handleContactCreated: COMPLETED - NO INVOICE WAS CREATED');
   };
 
   const handleContactUpdated = (contact: Contact) => {
+    console.log('useInvoiceForm.handleContactUpdated: ONLY updating contact, NO INVOICE CREATION:', contact);
     setSelectedContact(contact);
     setFormData(prev => ({
       ...prev,
@@ -143,6 +153,7 @@ export const useInvoiceForm = () => {
       client_country: contact.country || 'Nederland',
       payment_terms: contact.payment_terms || invoiceSettings.default_payment_terms || 30
     }));
+    console.log('useInvoiceForm.handleContactUpdated: Contact updated, form updated - NO INVOICE SHOULD BE CREATED');
   };
 
   const handleContactClear = () => {
@@ -237,6 +248,7 @@ export const useInvoiceForm = () => {
   };
 
   const handleSubmit = async () => {
+    console.log('🟢 useInvoiceForm.handleSubmit: EXPLICIT INVOICE CREATION - This is the ONLY place where invoices should be created');
     setLoading(true);
 
     try {
@@ -250,7 +262,9 @@ export const useInvoiceForm = () => {
         status: 'draft' as const
       };
 
+      console.log('🟢 useInvoiceForm.handleSubmit: Creating invoice with data:', invoiceData);
       await createInvoice(invoiceData);
+      console.log('🟢 useInvoiceForm.handleSubmit: Invoice created successfully');
       navigate('/facturen');
     } catch (error) {
       console.error('Error saving invoice:', error);
@@ -260,6 +274,7 @@ export const useInvoiceForm = () => {
   };
 
   const handleSaveAndSend = async () => {
+    console.log('🟢 useInvoiceForm.handleSaveAndSend: EXPLICIT INVOICE CREATION AND SEND - This is the ONLY place where invoices should be created and sent');
     setSendLoading(true);
 
     try {
@@ -273,6 +288,7 @@ export const useInvoiceForm = () => {
         status: 'sent' as const
       };
 
+      console.log('🟢 useInvoiceForm.handleSaveAndSend: Creating and sending invoice with data:', invoiceData);
       const newInvoice = await createInvoice(invoiceData);
       
       if (formData.client_email) {
