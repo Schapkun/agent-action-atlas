@@ -13,7 +13,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-export const SettingsLayout = () => {
+interface SettingsLayoutProps {
+  currentTab: string;
+  onTabChange: (value: string) => void;
+}
+
+export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps) => {
   const { user } = useAuth();
   const [userRole, setUserRole] = useState<string>('lid');
   const [isRoleLoading, setIsRoleLoading] = useState(true);
@@ -89,7 +94,7 @@ export const SettingsLayout = () => {
 
   return (
     <div className="container mx-auto px-2 sm:px-4 max-w-6xl">
-      <Tabs defaultValue="organizations" className="space-y-4">
+      <Tabs value={currentTab} onValueChange={onTabChange} className="space-y-4">
         <TabsList className={`grid w-full gap-1 h-auto p-1 ${
           isMobile 
             ? 'grid-cols-3 grid-rows-2' 
@@ -120,10 +125,10 @@ export const SettingsLayout = () => {
             Documenten
           </TabsTrigger>
           <TabsTrigger 
-            value="email-templates" 
+            value="emails" 
             className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
           >
-            Email Templates
+            Emails
           </TabsTrigger>
           <TabsTrigger 
             value="history" 
@@ -170,7 +175,7 @@ export const SettingsLayout = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="email-templates">
+        <TabsContent value="emails">
           <Card>
             <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
               <RoleGuard 

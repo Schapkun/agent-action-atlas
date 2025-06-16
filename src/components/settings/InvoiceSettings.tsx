@@ -93,6 +93,8 @@ export const InvoiceSettings = () => {
           quote_start_number: settings.quote_start_number,
           contact_prefix: settings.contact_prefix,
           contact_start_number: settings.contact_start_number,
+        }, {
+          onConflict: 'organization_id'
         });
 
       if (error) throw error;

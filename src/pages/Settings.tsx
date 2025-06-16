@@ -19,7 +19,7 @@ const Settings = () => {
     }
   }, [searchParams, setSearchParams]);
 
-  return <SettingsLayout />;
+  return <SettingsLayout currentTab={currentTab} onTabChange={handleTabChange} />;
 };
 
 export default Settings;
