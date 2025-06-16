@@ -5,13 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, FileText, Edit } from 'lucide-react';
-import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
+import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 
 interface TemplateListProps {
-  templates: DocumentTemplate[];
-  onSelectTemplate: (template: DocumentTemplate) => void;
-  onEditTemplate: (template: DocumentTemplate) => void;
-  selectedTemplate: DocumentTemplate | null;
+  templates: DocumentTemplateWithLabels[];
+  onSelectTemplate: (template: DocumentTemplateWithLabels) => void;
+  onEditTemplate: (template: DocumentTemplateWithLabels) => void;
+  selectedTemplate: DocumentTemplateWithLabels | null;
 }
 
 export const TemplateList = ({ 

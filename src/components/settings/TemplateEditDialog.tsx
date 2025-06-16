@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
+import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 import { VisualTemplateEditor } from './VisualTemplateEditor';
 import { VisualTemplateData, DEFAULT_VARIABLES } from './types/VisualTemplate';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -9,8 +10,8 @@ import { Save } from 'lucide-react';
 interface TemplateEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  template: DocumentTemplate | null;
-  onUpdateTemplate: (template: DocumentTemplate) => void;
+  template: DocumentTemplateWithLabels | null;
+  onUpdateTemplate: (template: DocumentTemplateWithLabels) => void;
   onSaveTemplate: () => void;
   saving?: boolean;
 }
@@ -87,7 +88,7 @@ export const TemplateEditDialog = ({
     return existingData || {
       id: template.id,
       name: template.name,
-      documentType: template.type === 'factuur' ? 'invoice' : template.type === 'brief' ? 'letter' : template.type === 'contract' ? 'contract' : 'invoice',
+      documentType: 'invoice',
       layout: 'modern-blue',
       styling: {
         primaryColor: '#2563eb',
@@ -121,14 +122,9 @@ export const TemplateEditDialog = ({
     
     // Update the original template
     if (template) {
-      const mappedType = data.documentType === 'invoice' ? 'factuur' : 
-                        data.documentType === 'letter' ? 'brief' : 
-                        data.documentType === 'contract' ? 'contract' : 'custom';
-      
       onUpdateTemplate({
         ...template,
         name: data.name,
-        type: mappedType,
         // Store visual data as JSON in html_content field
         html_content: JSON.stringify(data)
       });

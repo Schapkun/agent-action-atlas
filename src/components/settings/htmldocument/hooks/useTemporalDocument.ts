@@ -1,131 +1,111 @@
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 
-interface TemporalDocumentState {
-  document: DocumentTemplate | null;
-  version: number;
-  loading: boolean;
-  error: string | null;
-}
+export const useTemporalDocument = (documentId?: string) => {
+  const [document, setDocument] = useState<DocumentTemplate | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const lastFetchTimestamp = useRef<number>(0);
+  const refreshIntervalRef = useRef<NodeJS.Timeout>();
 
-// Global version counter to prevent race conditions
-let globalVersion = 0;
-
-export function useTemporalDocument(documentId?: string) {
-  const [state, setState] = useState<TemporalDocumentState>({
-    document: null,
-    version: 0,
-    loading: false,
-    error: null
-  });
-  
-  const currentOperationRef = useRef<number>(0);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  // Create atomic operation that can't be overridden by older operations
-  const executeAtomicOperation = useCallback(async (operation: () => Promise<DocumentTemplate | null>) => {
-    // Abort any pending operation
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    
-    // Create new operation with unique version
-    const operationVersion = ++globalVersion;
-    currentOperationRef.current = operationVersion;
-    abortControllerRef.current = new AbortController();
-    
-    setState(prev => ({ ...prev, loading: true, error: null }));
-    
-    try {
-      const result = await operation();
-      
-      // Only update state if this is still the latest operation
-      if (currentOperationRef.current === operationVersion && !abortControllerRef.current.signal.aborted) {
-        setState({
-          document: result,
-          version: operationVersion,
-          loading: false,
-          error: null
-        });
-        
-        // Emit custom event for other components
-        window.dispatchEvent(new CustomEvent('documentUpdated', { 
-          detail: { document: result, version: operationVersion } 
-        }));
-      }
-      
-      return result;
-    } catch (error) {
-      if (currentOperationRef.current === operationVersion && !abortControllerRef.current.signal.aborted) {
-        setState(prev => ({
-          ...prev,
-          loading: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        }));
-      }
+  const fetchDocument = useCallback(async (forceRefresh = false) => {
+    if (!documentId) {
+      setDocument(null);
+      setLoading(false);
       return null;
     }
-  }, []);
 
-  const fetchDocument = useCallback(async (id: string): Promise<DocumentTemplate | null> => {
-    return executeAtomicOperation(async () => {
-      console.log('[TemporalDocument] Fetching document with atomic operation:', id);
-      
+    // Debounce rapid calls
+    const now = Date.now();
+    if (!forceRefresh && now - lastFetchTimestamp.current < 100) {
+      console.log('[useTemporalDocument] Skipping fetch due to debounce');
+      return document;
+    }
+    lastFetchTimestamp.current = now;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      console.log('[useTemporalDocument] Fetching document:', documentId);
+
       const { data, error } = await supabase
         .from('document_templates')
         .select('*')
-        .eq('id', id)
+        .eq('id', documentId)
         .eq('is_active', true)
         .single();
 
-      if (error || !data) {
-        throw new Error(error?.message || 'Document not found');
+      if (error) {
+        console.error('[useTemporalDocument] Error fetching document:', error);
+        throw error;
       }
 
-      const transformedDocument: DocumentTemplate = {
-        ...data,
-        type: data.type as 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun',
-        placeholder_values: data.placeholder_values ? 
-          (typeof data.placeholder_values === 'object' && data.placeholder_values !== null ? 
-            data.placeholder_values as Record<string, string> : null) : null
-      };
+      if (data) {
+        const transformedDocument: DocumentTemplate = {
+          ...data,
+          placeholder_values: data.placeholder_values ? 
+            (typeof data.placeholder_values === 'object' && data.placeholder_values !== null ? 
+              data.placeholder_values as Record<string, string> : null) : null
+        };
 
-      console.log('[TemporalDocument] Document loaded atomically:', transformedDocument.name);
-      return transformedDocument;
-    });
-  }, [executeAtomicOperation]);
-
-  const refreshDocument = useCallback(() => {
-    if (documentId) {
-      return fetchDocument(documentId);
+        console.log('[useTemporalDocument] Document fetched successfully:', transformedDocument.name);
+        setDocument(transformedDocument);
+        return transformedDocument;
+      } else {
+        console.log('[useTemporalDocument] No document found with id:', documentId);
+        setDocument(null);
+        return null;
+      }
+    } catch (err) {
+      console.error('[useTemporalDocument] Error fetching document:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      setDocument(null);
+      return null;
+    } finally {
+      setLoading(false);
     }
-    return Promise.resolve(null);
-  }, [documentId, fetchDocument]);
+  }, [documentId, document]);
 
-  // Load document when documentId changes
+  // Initial fetch
   useEffect(() => {
+    console.log('[useTemporalDocument] Effect triggered for documentId:', documentId);
     if (documentId) {
-      fetchDocument(documentId);
+      fetchDocument(true);
     } else {
-      // Clear state atomically for new documents
-      executeAtomicOperation(async () => null);
+      setDocument(null);
+      setLoading(false);
+      setError(null);
     }
-  }, [documentId, fetchDocument, executeAtomicOperation]);
+  }, [documentId]);
 
-  // Cleanup on unmount
+  // Listen for document updates
   useEffect(() => {
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+    const handleDocumentUpdate = (event: CustomEvent) => {
+      const updatedDocumentId = event.detail?.documentId;
+      console.log('[useTemporalDocument] Document update event received for:', updatedDocumentId);
+      
+      if (updatedDocumentId === documentId) {
+        console.log('[useTemporalDocument] Refreshing document due to update event');
+        fetchDocument(true);
       }
     };
-  }, []);
+
+    window.addEventListener('documentUpdated', handleDocumentUpdate as EventListener);
+    return () => window.removeEventListener('documentUpdated', handleDocumentUpdate as EventListener);
+  }, [documentId, fetchDocument]);
+
+  const refreshDocument = useCallback(() => {
+    console.log('[useTemporalDocument] Manual refresh requested');
+    return fetchDocument(true);
+  }, [fetchDocument]);
 
   return {
-    ...state,
-    refreshDocument,
-    fetchDocument
+    document,
+    loading,
+    error,
+    refreshDocument
   };
-}
+};

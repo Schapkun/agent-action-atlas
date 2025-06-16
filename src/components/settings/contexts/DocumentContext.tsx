@@ -56,7 +56,6 @@ export const DocumentProvider = ({ children }: DocumentProviderProps) => {
       // Transform the data to ensure proper typing
       const transformedDocument: DocumentTemplate = {
         ...data,
-        type: data.type as 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun',
         placeholder_values: data.placeholder_values ? 
           (typeof data.placeholder_values === 'object' && data.placeholder_values !== null ? 
             data.placeholder_values as Record<string, string> : null) : null
@@ -128,7 +127,6 @@ export const DocumentProvider = ({ children }: DocumentProviderProps) => {
 
     const duplicatedData = {
       name: newName,
-      type: template.type,
       description: template.description,
       html_content: template.html_content,
       is_default: false,

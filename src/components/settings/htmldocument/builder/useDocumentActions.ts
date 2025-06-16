@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
@@ -70,7 +71,6 @@ export const useDocumentActions = (
         console.log('[useDocumentActions] Creating new document');
         const result = await createTemplate({
           name: documentName.trim(),
-          type: 'custom' as 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun', // Fix the type assertion
           html_content: htmlContent,
           placeholder_values: placeholderValues,
           is_active: true,

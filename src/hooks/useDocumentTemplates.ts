@@ -18,6 +18,15 @@ export interface DocumentTemplate {
   created_at: string;
   updated_at: string;
   placeholder_values?: Record<string, string> | null;
+  labels?: Array<{
+    id: string;
+    name: string;
+    color: string;
+    organization_id: string;
+    workspace_id?: string | null;
+    created_at: string;
+    updated_at: string;
+  }>;
 }
 
 export const useDocumentTemplates = () => {
@@ -190,6 +199,7 @@ export const useDocumentTemplates = () => {
         name: templateData.name.trim(),
         description: templateData.description?.trim() || null,
         html_content: templateData.html_content.trim(),
+        type: 'custom', // Default type for database compatibility
         organization_id: organization.id,
         workspace_id: selectedWorkspace?.id || null,
         created_by: user.id,
@@ -296,6 +306,7 @@ export const useDocumentTemplates = () => {
         ...updates,
         updated_at: new Date().toISOString(),
         placeholder_values: updates.placeholder_values || null,
+        type: 'custom', // Ensure type is always provided for database compatibility
       };
 
       // Remove labelIds from update data as it's not a column

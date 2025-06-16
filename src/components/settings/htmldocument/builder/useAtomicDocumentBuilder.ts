@@ -29,18 +29,6 @@ export function useAtomicDocumentBuilder({ documentId }: UseAtomicDocumentBuilde
   const lastInitializedVersion = useRef<number>(0);
   const lastSavedContent = useRef('');
 
-  // Map database type to UI type
-  const mapDatabaseTypeToUI = (dbType: string): DocumentTypeUI => {
-    switch (dbType) {
-      case 'schapkun': return 'schapkun';
-      case 'factuur': return 'factuur';
-      case 'contract': return 'contract';
-      case 'brief': return 'brief';
-      case 'custom': return 'custom';
-      default: return 'custom';
-    }
-  };
-
   // Get template for document type
   const getTemplateForType = useCallback((type: DocumentTypeUI): string => {
     switch (type) {
@@ -59,7 +47,6 @@ export function useAtomicDocumentBuilder({ documentId }: UseAtomicDocumentBuilde
       if (document) {
         console.log('[AtomicBuilder] Initializing from fresh document:', document.name);
         
-        const newType = mapDatabaseTypeToUI(document.type);
         const newPlaceholderValues = {
           ...DEFAULT_PLACEHOLDER_VALUES,
           ...(document.placeholder_values || {})
@@ -69,13 +56,13 @@ export function useAtomicDocumentBuilder({ documentId }: UseAtomicDocumentBuilde
         if (document.html_content && document.html_content.trim()) {
           newContent = document.html_content;
         } else {
-          newContent = getTemplateForType(newType);
+          newContent = getTemplateForType('factuur');
         }
         
         setLocalState({
           htmlContent: newContent,
           documentName: document.name,
-          documentType: newType,
+          documentType: 'factuur',
           placeholderValues: newPlaceholderValues,
           hasUnsavedChanges: false,
           isInitialized: true

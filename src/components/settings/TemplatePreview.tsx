@@ -2,10 +2,10 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit } from 'lucide-react';
-import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
+import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 
 interface TemplatePreviewProps {
-  template: DocumentTemplate;
+  template: DocumentTemplateWithLabels;
   onEditTemplate: () => void;
 }
 
