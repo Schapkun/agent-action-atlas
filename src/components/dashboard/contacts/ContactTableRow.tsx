@@ -102,25 +102,6 @@ export const ContactTableRow = ({
         {contact.email && (
           <div className="text-xs text-muted-foreground">{contact.email}</div>
         )}
-        {/* Only show labels under name when Labels column is NOT visible */}
-        {!columnVisibility.labels && contact.labels && contact.labels.length > 0 && (
-          <div className="flex gap-1 mt-1 flex-wrap">
-            {contact.labels.slice(0, 3).map((label) => (
-              <Badge
-                key={label.id}
-                style={{ backgroundColor: label.color, color: 'white' }}
-                className="text-xs px-2 py-1 h-5 border-0"
-              >
-                {label.name}
-              </Badge>
-            ))}
-            {contact.labels.length > 3 && (
-              <Badge variant="outline" className="text-xs px-2 py-1 h-5">
-                +{contact.labels.length - 3}
-              </Badge>
-            )}
-          </div>
-        )}
       </TableCell>
       {columnVisibility.email && (
         <TableCell className="p-2 text-xs text-muted-foreground">
