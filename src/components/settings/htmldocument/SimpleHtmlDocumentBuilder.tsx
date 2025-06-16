@@ -175,12 +175,12 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       if (documentId) {
         console.log('📝 Updating existing template:', documentId);
         // Update existing
-        await updateTemplate(documentId, {
+        const result = await updateTemplate(documentId, {
           name: documentName,
           html_content: htmlContent,
           placeholder_values: placeholderValues
         });
-        console.log('✅ Template updated successfully');
+        console.log('✅ Template updated successfully:', result);
       } else {
         console.log('🆕 Creating new template with data:', {
           name: documentName,
@@ -188,8 +188,8 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
           placeholder_values: placeholderValues
         });
         
-        // Create new
-        const newTemplate = await createTemplate({
+        // Create new - make sure all required fields are provided
+        const result = await createTemplate({
           name: documentName,
           type: 'custom',
           html_content: htmlContent,
@@ -199,7 +199,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
           placeholder_values: placeholderValues
         });
         
-        console.log('✅ New template created with ID:', newTemplate?.id);
+        console.log('✅ New template created with result:', result);
       }
       
       setHasUnsavedChanges(false);

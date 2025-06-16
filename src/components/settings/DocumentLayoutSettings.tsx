@@ -1,10 +1,9 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { SimpleHtmlDocumentBuilder } from './htmldocument/SimpleHtmlDocumentBuilder';
 import { DocumentNameDialog } from './components/DocumentNameDialog';
-import { DocumentProvider, useDocumentContext } from './contexts/DocumentContext';
-import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
+import { DocumentTemplate, useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentActions } from './components/DocumentActions';
 import { DocumentList } from './components/DocumentList';
@@ -15,10 +14,11 @@ const DocumentLayoutContent = () => {
   const [editingDocumentId, setEditingDocumentId] = useState<string | undefined>(undefined);
   const [duplicatingDocument, setDuplicatingDocument] = useState<DocumentTemplate | null>(null);
   
-  const { documents, deleteDocument, duplicateDocument, refreshTemplates } = useDocumentContext();
+  const { templates, deleteTemplate, createTemplate, fetchTemplates } = useDocumentTemplates();
   const { toast } = useToast();
 
   const handleNewDocument = () => {
+    console.log('[Settings] Creating new document');
     setEditingDocumentId(undefined);
     setIsBuilderOpen(true);
   };
@@ -36,7 +36,7 @@ const DocumentLayoutContent = () => {
     setEditingDocumentId(undefined);
     
     if (success) {
-      await refreshTemplates();
+      await fetchTemplates();
       toast({
         title: "Succes",
         description: "Document is opgeslagen."
@@ -49,26 +49,53 @@ const DocumentLayoutContent = () => {
     setIsNameDialogOpen(true);
   };
 
-  const handleDuplicateSave = (name: string, type: 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun', description: string) => {
+  const handleDuplicateSave = async (name: string, type: 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun', description: string) => {
     if (duplicatingDocument) {
-      duplicateDocument(duplicatingDocument.id, name);
-      setDuplicatingDocument(null);
-      toast({
-        title: "Document gedupliceerd",
-        description: `"${name}" is aangemaakt als kopie.`
-      });
+      try {
+        await createTemplate({
+          name,
+          type,
+          description,
+          html_content: duplicatingDocument.html_content,
+          placeholder_values: duplicatingDocument.placeholder_values,
+          is_active: true,
+          is_default: false
+        });
+        
+        setDuplicatingDocument(null);
+        toast({
+          title: "Document gedupliceerd",
+          description: `"${name}" is aangemaakt als kopie.`
+        });
+      } catch (error) {
+        console.error('Error duplicating document:', error);
+        toast({
+          title: "Fout",
+          description: "Kon document niet dupliceren",
+          variant: "destructive"
+        });
+      }
     }
   };
 
-  const handleDeleteDocument = (document: DocumentTemplate) => {
-    deleteDocument(document.id);
-    if (editingDocumentId === document.id) {
-      setEditingDocumentId(undefined);
+  const handleDeleteDocument = async (document: DocumentTemplate) => {
+    try {
+      await deleteTemplate(document.id);
+      if (editingDocumentId === document.id) {
+        setEditingDocumentId(undefined);
+      }
+      toast({
+        title: "Document verwijderd",
+        description: `"${document.name}" is verwijderd.`
+      });
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast({
+        title: "Fout",
+        description: "Kon document niet verwijderen",
+        variant: "destructive"
+      });
     }
-    toast({
-      title: "Document verwijderd",
-      description: `"${document.name}" is verwijderd.`
-    });
   };
 
   return (
@@ -83,7 +110,7 @@ const DocumentLayoutContent = () => {
       <DocumentActions onNewDocument={handleNewDocument} />
 
       <DocumentList
-        documents={documents}
+        documents={templates}
         onEditDocument={handleEditDocument}
         onDuplicateDocument={handleDuplicateDocument}
         onDeleteDocument={handleDeleteDocument}
@@ -92,6 +119,7 @@ const DocumentLayoutContent = () => {
       {/* Simple HTML Document Builder Dialog */}
       <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 flex flex-col">
+          <DialogTitle className="sr-only">Document Builder</DialogTitle>
           <SimpleHtmlDocumentBuilder 
             documentId={editingDocumentId}
             onComplete={handleBuilderComplete}
@@ -107,7 +135,7 @@ const DocumentLayoutContent = () => {
           setDuplicatingDocument(null);
         }}
         onSave={handleDuplicateSave}
-        existingNames={documents.map(d => d.name)}
+        existingNames={templates.map(d => d.name)}
         initialName={duplicatingDocument ? `${duplicatingDocument.name} (kopie)` : ''}
         initialType={duplicatingDocument?.type || 'factuur'}
         initialDescription={duplicatingDocument?.description || ''}
@@ -117,9 +145,5 @@ const DocumentLayoutContent = () => {
 };
 
 export const DocumentLayoutSettings = () => {
-  return (
-    <DocumentProvider>
-      <DocumentLayoutContent />
-    </DocumentProvider>
-  );
+  return <DocumentLayoutContent />;
 };
