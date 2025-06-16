@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Edit, Trash2 } from 'lucide-react';
+import { Edit, Copy, Trash2 } from 'lucide-react';
 import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 import { LabelDropdown } from './LabelDropdown';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
