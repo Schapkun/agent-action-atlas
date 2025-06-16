@@ -20,6 +20,7 @@ export const DocumentActions = ({
   onClearFilters
 }: DocumentActionsProps) => {
   const [isCompanyDialogOpen, setIsCompanyDialogOpen] = useState(false);
+  const [isLabelDialogOpen, setIsLabelDialogOpen] = useState(false);
 
   return (
     <>
@@ -29,6 +30,15 @@ export const DocumentActions = ({
           <Button onClick={onNewDocument} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Nieuw Document Template
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={() => setIsLabelDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Tags className="h-4 w-4" />
+            Label toevoegen
           </Button>
           
           <Button 
@@ -71,6 +81,26 @@ export const DocumentActions = ({
         open={isCompanyDialogOpen}
         onClose={() => setIsCompanyDialogOpen(false)}
       />
+      
+      {/* Label Dialog - placeholder for now, you can implement the actual dialog later */}
+      {isLabelDialogOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-medium mb-4">Label beheren</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Hier kun je labels aanmaken en beheren voor je document templates.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsLabelDialogOpen(false)}
+              >
+                Sluiten
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
