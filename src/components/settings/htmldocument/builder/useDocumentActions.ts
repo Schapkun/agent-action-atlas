@@ -1,171 +1,100 @@
-import { useState, useCallback } from 'react';
-import { DocumentTemplate, useDocumentTemplates } from '@/hooks/useDocumentTemplates';
-import { DocumentTypeUI } from './htmlDocumentConstants';
-import { usePlaceholderReplacement } from './usePlaceholderReplacement';
-import { useDocumentContext } from '@/components/settings/contexts/DocumentContext';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 
-interface UseDocumentActionsProps {
-  htmlContent: string;
-  setHtmlContent: (content: string) => void;
-  documentName: string;
-  setDocumentName: (name: string) => void;
-  documentType: DocumentTypeUI;
-  setDocumentType: (type: DocumentTypeUI) => void;
-  hasUnsavedChanges: boolean;
-  setHasUnsavedChanges: (value: boolean) => void;
-  placeholderValues: Record<string, string>;
-  setPlaceholderValues: (values: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => void;
-  editingDocument?: DocumentTemplate | null;
-  onDocumentSaved?: (document: DocumentTemplate | null) => void;
-  clearDraftForDocument: (docName: string) => void;
-}
-
-export function useDocumentActions({
-  htmlContent,
-  setHtmlContent,
-  documentName,
-  setDocumentName,
-  documentType,
-  setDocumentType,
-  hasUnsavedChanges,
-  setHasUnsavedChanges,
-  placeholderValues,
-  setPlaceholderValues,
-  editingDocument,
-  onDocumentSaved,
-  clearDraftForDocument
-}: UseDocumentActionsProps) {
+export const useDocumentActions = (
+  documentId: string | undefined,
+  documentName: string,
+  htmlContent: string,
+  placeholderValues: Record<string, string>,
+  selectedLabels: any[], // Add this parameter
+  onComplete: (success: boolean) => void
+) => {
   const [isSaving, setIsSaving] = useState(false);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  
-  const { getScaledHtmlContent } = usePlaceholderReplacement({ placeholderValues });
-  const { createTemplate, updateTemplate } = useDocumentTemplates();
-  const { refreshTemplates } = useDocumentContext();
+  const { updateTemplate, createTemplate } = useDocumentTemplates();
+  const { toast } = useToast();
 
-  // Map UI types to database types
-  const mapTypeToDatabase = (type: DocumentTypeUI): 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun' => {
-    switch (type) {
-      case 'schapkun':
-        return 'schapkun';
-      case 'factuur':
-        return 'factuur';
-      case 'contract':
-        return 'contract';
-      case 'brief':
-        return 'brief';
-      case 'custom':
-        return 'custom';
-      default:
-        return 'custom';
-    }
-  };
+  const handleSave = async () => {
+    console.log('[useDocumentActions] ========= SAVE STARTED =========');
+    console.log('[useDocumentActions] Save called with:', {
+      documentId,
+      documentName,
+      htmlContentLength: htmlContent?.length,
+      placeholderKeys: Object.keys(placeholderValues),
+      selectedLabelsCount: selectedLabels?.length
+    });
 
-  const handleSave = useCallback(async () => {
     if (!documentName.trim()) {
-      alert('Voer een documentnaam in');
+      console.error('[useDocumentActions] Validation failed: empty name');
+      toast({
+        title: "Validatiefout",
+        description: "Documentnaam is verplicht",
+        variant: "destructive"
+      });
       return;
     }
 
-    setIsSaving(true);
+    if (documentName.trim().length < 2) {
+      console.error('[useDocumentActions] Validation failed: name too short');
+      toast({
+        title: "Validatiefout", 
+        description: "Documentnaam moet minimaal 2 karakters bevatten",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!htmlContent?.trim()) {
+      console.error('[useDocumentActions] Validation failed: empty content');
+      toast({
+        title: "Validatiefout",
+        description: "Document inhoud mag niet leeg zijn",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
-      let savedDocument: DocumentTemplate;
-      const dbType = mapTypeToDatabase(documentType);
-      
-      console.log('[Document Actions] Saving with type:', documentType, '-> DB type:', dbType);
-      
-      if (editingDocument) {
-        savedDocument = await updateTemplate(editingDocument.id, {
-          name: documentName,
-          type: dbType,
+      setIsSaving(true);
+      console.log('[useDocumentActions] Starting save operation...');
+
+      if (documentId) {
+        console.log('[useDocumentActions] Updating existing document:', documentId);
+        await updateTemplate(documentId, {
+          name: documentName.trim(),
           html_content: htmlContent,
-          description: editingDocument.description,
-          placeholder_values: placeholderValues
+          placeholder_values: placeholderValues,
+          labelIds: selectedLabels?.map(label => label.id) || []
         });
       } else {
-        savedDocument = await createTemplate({
-          name: documentName,
-          type: dbType,
+        console.log('[useDocumentActions] Creating new document');
+        const result = await createTemplate({
+          name: documentName.trim(),
+          type: 'custom' as 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun', // Fix the type assertion
           html_content: htmlContent,
-          description: `${documentType} document`,
-          is_default: false,
+          placeholder_values: placeholderValues,
           is_active: true,
-          placeholder_values: placeholderValues
+          is_default: false,
+          labelIds: selectedLabels?.map(label => label.id) || []
         });
+        
+        console.log('[useDocumentActions] Document created successfully:', result?.id);
       }
 
-      if (savedDocument) {
-        clearDraftForDocument(documentName);
-        setHasUnsavedChanges(false);
-        
-        // Refresh the templates list using DocumentContext to ensure UI sync
-        await refreshTemplates();
-        
-        console.log('[Document Actions] Document saved successfully and context refreshed');
-        onDocumentSaved?.(savedDocument);
-      }
+      console.log('[useDocumentActions] Save completed successfully');
+      onComplete(true);
+      
     } catch (error) {
-      console.error('[Document Actions] Save failed:', error);
-      alert('Fout bij opslaan van document: ' + (error as Error).message);
+      console.error('[useDocumentActions] Save failed:', error);
+      onComplete(false);
     } finally {
       setIsSaving(false);
+      console.log('[useDocumentActions] ========= SAVE COMPLETED =========');
     }
-  }, [
-    documentName,
-    documentType,
-    htmlContent,
-    placeholderValues,
-    editingDocument,
-    clearDraftForDocument,
-    setHasUnsavedChanges,
-    onDocumentSaved,
-    createTemplate,
-    updateTemplate,
-    refreshTemplates
-  ]);
-
-  const handleCancel = useCallback(() => {
-    if (hasUnsavedChanges) {
-      const confirmed = window.confirm('Er zijn niet-opgeslagen wijzigingen. Weet je zeker dat je wilt annuleren?');
-      if (!confirmed) return;
-    }
-    onDocumentSaved?.(null);
-  }, [hasUnsavedChanges, onDocumentSaved]);
-
-  const handlePDFDownload = useCallback(() => {
-    const processedContent = getScaledHtmlContent(htmlContent);
-    // Simple PDF download implementation
-    const blob = new Blob([processedContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${documentName}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, [htmlContent, documentName, getScaledHtmlContent]);
-
-  const handleHTMLExport = useCallback(() => {
-    const processedContent = getScaledHtmlContent(htmlContent);
-    const blob = new Blob([processedContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${documentName}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, [htmlContent, documentName, getScaledHtmlContent]);
+  };
 
   return {
     isSaving,
-    isPreviewOpen,
-    setIsPreviewOpen,
-    handleSave,
-    handleCancel,
-    handlePDFDownload,
-    handleHTMLExport,
-    getScaledHtmlContent
+    handleSave
   };
-}
+};

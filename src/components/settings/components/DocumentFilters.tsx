@@ -2,32 +2,18 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Filter, X } from 'lucide-react';
+import { Filter, X, Tags } from 'lucide-react';
 import { useDocumentTemplateLabels } from '@/hooks/useDocumentTemplateLabels';
 import { DocumentTemplateLabel } from '@/types/documentLabels';
 
 interface DocumentFiltersProps {
-  selectedType: string;
-  onTypeChange: (type: string) => void;
   selectedLabels: DocumentTemplateLabel[];
   onLabelsChange: (labels: DocumentTemplateLabel[]) => void;
   onClearFilters: () => void;
 }
 
-const DOCUMENT_TYPES = [
-  { value: 'all', label: 'Alle Types' },
-  { value: 'factuur', label: 'Facturen' },
-  { value: 'contract', label: 'Contracten' },
-  { value: 'brief', label: 'Brieven' },
-  { value: 'custom', label: 'Aangepast' },
-  { value: 'schapkun', label: 'Schapkun' }
-];
-
 export const DocumentFilters = ({
-  selectedType,
-  onTypeChange,
   selectedLabels,
   onLabelsChange,
   onClearFilters
@@ -49,7 +35,7 @@ export const DocumentFilters = ({
     onLabelsChange(selectedLabels.filter(l => l.id !== labelId));
   };
 
-  const hasActiveFilters = selectedType !== 'all' || selectedLabels.length > 0;
+  const hasActiveFilters = selectedLabels.length > 0;
 
   return (
     <div className="space-y-4 p-4 bg-white border rounded-lg">
@@ -71,27 +57,13 @@ export const DocumentFilters = ({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Type filter */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Type:</label>
-          <Select value={selectedType} onValueChange={onTypeChange}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DOCUMENT_TYPES.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
+      <div className="space-y-4">
         {/* Label filter */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Labels:</label>
+          <label className="text-sm font-medium flex items-center gap-2">
+            <Tags className="h-4 w-4" />
+            Labels:
+          </label>
           
           <Popover open={isOpen} onOpenChange={setIsOpen}>
             <PopoverTrigger asChild>
@@ -144,37 +116,37 @@ export const DocumentFilters = ({
             </PopoverContent>
           </Popover>
         </div>
-      </div>
 
-      {/* Selected labels display */}
-      {selectedLabels.length > 0 && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Geselecteerde labels:</label>
-          <div className="flex flex-wrap gap-2">
-            {selectedLabels.map((label) => (
-              <div key={label.id} className="flex items-center">
-                <Badge
-                  variant="secondary"
-                  style={{ 
-                    backgroundColor: label.color, 
-                    color: 'white',
-                    border: 'none'
-                  }}
-                  className="pr-1"
-                >
-                  {label.name}
-                  <button
-                    className="ml-1 hover:bg-white hover:bg-opacity-20 rounded-full p-0.5"
-                    onClick={() => removeLabel(label.id)}
+        {/* Selected labels display */}
+        {selectedLabels.length > 0 && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Geselecteerde labels:</label>
+            <div className="flex flex-wrap gap-2">
+              {selectedLabels.map((label) => (
+                <div key={label.id} className="flex items-center">
+                  <Badge
+                    variant="secondary"
+                    style={{ 
+                      backgroundColor: label.color, 
+                      color: 'white',
+                      border: 'none'
+                    }}
+                    className="pr-1"
                   >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              </div>
-            ))}
+                    {label.name}
+                    <button
+                      className="ml-1 hover:bg-white hover:bg-opacity-20 rounded-full p-0.5"
+                      onClick={() => removeLabel(label.id)}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

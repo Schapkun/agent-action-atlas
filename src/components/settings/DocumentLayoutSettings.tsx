@@ -11,28 +11,26 @@ import { DocumentFilters } from './components/DocumentFilters';
 import { DocumentProvider } from './contexts/DocumentContext';
 import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 import { DocumentTemplateLabel } from '@/types/documentLabels';
+import { DocumentTemplateLabelsDialog } from './components/DocumentTemplateLabelsDialog';
+import { Button } from '@/components/ui/button';
+import { Tags } from 'lucide-react';
 
 const DocumentLayoutContent = () => {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
+  const [isLabelsDialogOpen, setIsLabelsDialogOpen] = useState(false);
   const [editingDocumentId, setEditingDocumentId] = useState<string | undefined>(undefined);
   const [duplicatingDocument, setDuplicatingDocument] = useState<DocumentTemplateWithLabels | null>(null);
   
   // Filter states
-  const [selectedType, setSelectedType] = useState('all');
   const [selectedFilterLabels, setSelectedFilterLabels] = useState<DocumentTemplateLabel[]>([]);
   
   const { templates, deleteTemplate, createTemplate, fetchTemplates } = useDocumentTemplates();
   const { toast } = useToast();
 
-  // Filter templates based on selected filters
+  // Filter templates based on selected labels
   const filteredTemplates = useMemo(() => {
     return templates.filter(template => {
-      // Type filter
-      if (selectedType !== 'all' && template.type !== selectedType) {
-        return false;
-      }
-      
       // Label filter - if any labels are selected, the template must have at least one of them
       if (selectedFilterLabels.length > 0) {
         const templateLabelIds = template.labels?.map(label => label.id) || [];
@@ -46,7 +44,7 @@ const DocumentLayoutContent = () => {
       
       return true;
     });
-  }, [templates, selectedType, selectedFilterLabels]);
+  }, [templates, selectedFilterLabels]);
 
   const handleNewDocument = () => {
     console.log('[Settings] Creating new document');
@@ -131,7 +129,6 @@ const DocumentLayoutContent = () => {
   };
 
   const handleClearFilters = () => {
-    setSelectedType('all');
     setSelectedFilterLabels([]);
   };
 
@@ -145,11 +142,18 @@ const DocumentLayoutContent = () => {
           </p>
         </div>
 
-        <DocumentActions onNewDocument={handleNewDocument} />
+        <div className="flex items-center gap-4">
+          <DocumentActions onNewDocument={handleNewDocument} />
+          <Button
+            variant="outline"
+            onClick={() => setIsLabelsDialogOpen(true)}
+          >
+            <Tags className="h-4 w-4 mr-2" />
+            Beheer Labels
+          </Button>
+        </div>
 
         <DocumentFilters
-          selectedType={selectedType}
-          onTypeChange={setSelectedType}
           selectedLabels={selectedFilterLabels}
           onLabelsChange={setSelectedFilterLabels}
           onClearFilters={handleClearFilters}
@@ -189,6 +193,12 @@ const DocumentLayoutContent = () => {
           initialName={duplicatingDocument ? `${duplicatingDocument.name} (kopie)` : ''}
           initialType={duplicatingDocument?.type || 'factuur'}
           initialDescription={duplicatingDocument?.description || ''}
+        />
+
+        {/* Document Template Labels Dialog */}
+        <DocumentTemplateLabelsDialog
+          open={isLabelsDialogOpen}
+          onClose={() => setIsLabelsDialogOpen(false)}
         />
       </div>
     </DocumentProvider>

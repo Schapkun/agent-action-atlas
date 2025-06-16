@@ -2,9 +2,11 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Edit, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Copy, Edit, MoreHorizontal, Trash2, Tags } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { DocumentTemplateWithLabels } from '@/types/documentLabels';
+import { LabelDropdown } from './LabelDropdown';
+import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 
 interface DocumentListItemProps {
   document: DocumentTemplateWithLabels;
@@ -35,11 +37,23 @@ const getTypeLabel = (type: string) => {
 };
 
 export const DocumentListItem = ({ document, onEdit, onDuplicate, onDelete }: DocumentListItemProps) => {
+  const { updateTemplate } = useDocumentTemplates();
+
   const handleEdit = () => onEdit(document);
   const handleDuplicate = () => onDuplicate(document);
   const handleDelete = () => {
     if (window.confirm(`Weet je zeker dat je "${document.name}" wilt verwijderen?`)) {
       onDelete(document);
+    }
+  };
+
+  const handleLabelsChange = async (labels: any[]) => {
+    try {
+      await updateTemplate(document.id, {
+        labelIds: labels.map(label => label.id)
+      });
+    } catch (error) {
+      console.error('Error updating document labels:', error);
     }
   };
 
@@ -97,6 +111,11 @@ export const DocumentListItem = ({ document, onEdit, onDuplicate, onDelete }: Do
       </div>
       
       <div className="flex items-center gap-2 ml-4">
+        <LabelDropdown
+          selectedLabels={document.labels || []}
+          onLabelsChange={handleLabelsChange}
+        />
+        
         <Button
           variant="ghost"
           size="sm"
