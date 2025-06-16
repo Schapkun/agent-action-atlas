@@ -1,12 +1,11 @@
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { ContactDialog } from './ContactDialog';
-import { X } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useOrganization } from '@/contexts/OrganizationContext';
+import { ContactSearch } from './ContactSearch';
+import { ContactDropdown } from './ContactDropdown';
+import { ContactActions } from './ContactActions';
+import { useContactData } from './useContactData';
 
 interface Contact {
   id: string;
@@ -36,75 +35,8 @@ export const ContactSelector = ({
   const [isEditContactOpen, setIsEditContactOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [loading, setLoading] = useState(false);
-  const { selectedOrganization, selectedWorkspace } = useOrganization();
-
-  // PUNT 2: Contacten ophalen uit de database
-  const fetchContacts = async () => {
-    if (!selectedOrganization) {
-      console.log('📋 PUNT 2: Geen organisatie geselecteerd');
-      setContacts([]);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      console.log('📋 PUNT 2: Contacten ophalen uit database voor organisatie:', selectedOrganization.id);
-      
-      let query = supabase
-        .from('clients')
-        .select('*')
-        .eq('organization_id', selectedOrganization.id)
-        .order('name');
-
-      // Ook filteren op workspace als die geselecteerd is
-      if (selectedWorkspace) {
-        query = query.eq('workspace_id', selectedWorkspace.id);
-        console.log('📋 PUNT 2: Ook filteren op workspace:', selectedWorkspace.id);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('📋 PUNT 2: Fout bij ophalen contacten:', error);
-        setContacts([]);
-        return;
-      }
-
-      console.log('📋 PUNT 2: Contacten succesvol opgehaald:', data?.length || 0);
-      
-      const formattedContacts: Contact[] = data?.map(client => ({
-        id: client.id,
-        name: client.name,
-        email: client.email || undefined,
-        address: client.address || undefined,
-        postal_code: client.postal_code || undefined,
-        city: client.city || undefined,
-        country: client.country || 'Nederland',
-        payment_terms: 30 // Default payment terms
-      })) || [];
-
-      setContacts(formattedContacts);
-      console.log('📋 PUNT 2: Contacten ingesteld in state:', formattedContacts.length);
-    } catch (error) {
-      console.error('📋 PUNT 2: Onverwachte fout bij ophalen contacten:', error);
-      setContacts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Contacten ophalen bij mount en bij wijziging van organisatie/werkruimte
-  useEffect(() => {
-    console.log('📋 PUNT 2: useEffect triggered - ophalen contacten');
-    fetchContacts();
-  }, [selectedOrganization, selectedWorkspace]);
-
-  // Debug logging voor contacten
-  useEffect(() => {
-    console.log('📋 PUNT 2: Contacts state updated:', contacts.length, contacts);
-  }, [contacts]);
+  
+  const { contacts, loading, fetchContacts } = useContactData();
 
   const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -137,7 +69,6 @@ export const ContactSelector = ({
     setIsEditContactOpen(true);
   };
 
-  // FIXED: Simple contact creation handler - just select the contact
   const handleContactCreated = (contact: Contact) => {
     console.log('📋 Contact created, now selecting for form:', contact.name);
     
@@ -162,96 +93,49 @@ export const ContactSelector = ({
     fetchContacts();
   };
 
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setIsDropdownOpen(true);
+  };
+
+  const handleSearchFocus = () => {
+    setIsDropdownOpen(true);
+  };
+
+  const handleDropdownClose = () => {
+    setIsDropdownOpen(false);
+  };
+
   return (
     <>
       <div className="flex items-center gap-3 mb-2">
         <div className="flex-1">
           <Label htmlFor="client_select" className="text-xs font-medium">Aan</Label>
           <div className="flex gap-2 mt-1 relative">
-            <div className="flex-1 relative">
-              <Input 
-                placeholder="Selecteer contact - zoek op naam, contactnummer, plaats, adres, e-mailadres of postcode"
-                className="flex-1 text-xs h-8 pr-8"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setIsDropdownOpen(true);
-                }}
-                onFocus={() => setIsDropdownOpen(true)}
-              />
-              
-              {/* Clear button inside input field */}
-              {selectedContact && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleContactClear}
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-red-100"
-                >
-                  <X className="h-3 w-3 text-red-500" />
-                </Button>
-              )}
-              
-              {/* FIXED: Dropdown font size back to text-xs to match page styling */}
-              {isDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
-                  {loading ? (
-                    <div className="p-2 text-xs text-gray-500">Contacten laden...</div>
-                  ) : filteredContacts.length > 0 ? (
-                    filteredContacts.map((contact) => (
-                      <div
-                        key={contact.id}
-                        className="p-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
-                        onClick={() => handleContactSelect(contact)}
-                      >
-                        <div className="font-medium text-xs">{contact.name}</div>
-                        <div className="text-xs text-gray-500">
-                          {contact.email && <div>{contact.email}</div>}
-                          {contact.address && contact.city && (
-                            <div>{contact.address}, {contact.postal_code} {contact.city}</div>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-2 text-xs text-gray-500">
-                      {contacts.length === 0 ? 'Geen contacten gevonden in deze organisatie' : 'Geen contacten gevonden'}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm" 
-              onClick={handleNewContact} 
-              className="text-blue-500 text-xs px-2 h-8"
-            >
-              Nieuw
-            </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm" 
-              onClick={handleEditContact} 
-              disabled={!selectedContact}
-              className="text-blue-500 text-xs px-2 h-8"
-            >
-              Bewerken
-            </Button>
+            <ContactSearch
+              searchTerm={searchTerm}
+              selectedContact={selectedContact}
+              onSearchChange={handleSearchChange}
+              onFocus={handleSearchFocus}
+              onClear={handleContactClear}
+            />
+            
+            <ContactDropdown
+              isOpen={isDropdownOpen}
+              loading={loading}
+              contacts={filteredContacts}
+              onContactSelect={handleContactSelect}
+              onClose={handleDropdownClose}
+            />
+            
+            <ContactActions
+              selectedContact={selectedContact}
+              onNewContact={handleNewContact}
+              onEditContact={handleEditContact}
+            />
           </div>
         </div>
       </div>
-
-      {/* Click outside to close dropdown */}
-      {isDropdownOpen && (
-        <div 
-          className="fixed inset-0 z-10" 
-          onClick={() => setIsDropdownOpen(false)}
-        />
-      )}
 
       <ContactDialog
         isOpen={isNewContactOpen}
