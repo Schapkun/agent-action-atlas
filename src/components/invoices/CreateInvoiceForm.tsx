@@ -112,6 +112,34 @@ export const CreateInvoiceForm = () => {
     return '';
   };
 
+  // NEW: Function to add contact to contact list and use it for invoice
+  const handleContactCreatedAndSelected = async (contact: any) => {
+    console.log('📝 STEP 2: Adding contact to contact list and selecting for invoice');
+    
+    try {
+      // Step 1: Add contact to the contact list using handleContactCreated
+      console.log('📝 Adding contact to database...');
+      await handleContactCreated(contact);
+      
+      // Step 2: The handleContactCreated already calls handleContactSelect,
+      // so the contact is automatically selected for the invoice form
+      console.log('📝 Contact added and selected for invoice');
+      
+      toast({
+        title: "Contact toegevoegd",
+        description: `Contact "${contact.name}" is toegevoegd en geselecteerd voor de factuur.`
+      });
+      
+    } catch (error) {
+      console.error('📝 Error adding contact:', error);
+      toast({
+        title: "Fout",
+        description: "Kon contact niet toevoegen",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleContactClear = () => {
     setFormData(prev => ({
       ...prev,
@@ -188,7 +216,7 @@ export const CreateInvoiceForm = () => {
             availableTemplates={availableTemplates}
             templatesLoading={templatesLoading}
             onContactSelect={handleContactSelect}
-            onContactCreated={handleContactCreatedSafely}
+            onContactCreated={handleContactCreatedAndSelected}
             onContactUpdated={handleContactUpdated}
             onTemplateChange={setSelectedTemplate}
             onShowSettings={() => setShowSettings(true)}
