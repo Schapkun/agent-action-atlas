@@ -60,7 +60,12 @@ export const InvoiceTemplateManager = ({
         disabled={templatesLoading}
       >
         <SelectTrigger className="h-8 text-xs flex-1">
-          <SelectValue placeholder={templatesLoading ? "Laden..." : "Selecteer template"} />
+          <div className="flex items-center gap-2">
+            {selectedTemplate?.is_default && (
+              <Star className="h-3 w-3 text-yellow-500 fill-current" />
+            )}
+            <SelectValue placeholder={templatesLoading ? "Laden..." : "Selecteer template"} />
+          </div>
         </SelectTrigger>
         <SelectContent>
           {availableTemplates.map((template) => (
