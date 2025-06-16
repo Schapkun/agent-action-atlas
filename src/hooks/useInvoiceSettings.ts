@@ -8,9 +8,8 @@ interface InvoiceSettingsData {
   invoice_start_number: number;
   quote_prefix: string;
   quote_start_number: number;
-  customer_prefix: string;
-  customer_start_number: number;
   default_payment_terms: number;
+  default_vat_rate: number;
 }
 
 export const useInvoiceSettings = () => {
@@ -20,9 +19,8 @@ export const useInvoiceSettings = () => {
     invoice_start_number: 1,
     quote_prefix: 'OFF-2025-',
     quote_start_number: 1,
-    customer_prefix: 'KLANT-',
-    customer_start_number: 1,
-    default_payment_terms: 30
+    default_payment_terms: 30,
+    default_vat_rate: 21
   });
   const [loading, setLoading] = useState(true);
 
@@ -33,9 +31,11 @@ export const useInvoiceSettings = () => {
     }
 
     try {
-      const { data, error } = await (supabase as any)
+      console.log('⚙️ PUNT 4: useInvoiceSettings - ophalen instellingen voor:', selectedOrganization.id);
+      
+      const { data, error } = await supabase
         .from('organization_settings')
-        .select('invoice_prefix, invoice_start_number, quote_prefix, quote_start_number, customer_prefix, customer_start_number, default_payment_terms')
+        .select('invoice_prefix, invoice_start_number, quote_prefix, quote_start_number, default_payment_terms, default_vat_rate')
         .eq('organization_id', selectedOrganization.id)
         .single();
 
@@ -49,13 +49,15 @@ export const useInvoiceSettings = () => {
           invoice_start_number: data.invoice_start_number || 1,
           quote_prefix: data.quote_prefix || 'OFF-2025-',
           quote_start_number: data.quote_start_number || 1,
-          customer_prefix: data.customer_prefix || 'KLANT-',
-          customer_start_number: data.customer_start_number || 1,
-          default_payment_terms: data.default_payment_terms || 30
+          default_payment_terms: data.default_payment_terms || 30,
+          default_vat_rate: data.default_vat_rate || 21
         });
+        console.log('⚙️ PUNT 4: Instellingen succesvol opgehaald:', data);
+      } else {
+        console.log('⚙️ PUNT 4: Geen instellingen gevonden, standaardwaarden gebruikt');
       }
     } catch (error) {
-      console.error('Error fetching invoice settings:', error);
+      console.error('⚙️ PUNT 4: Fout bij ophalen invoice settings:', error);
     } finally {
       setLoading(false);
     }

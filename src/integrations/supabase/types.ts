@@ -446,11 +446,11 @@ export type Database = {
       }
       organization_settings: {
         Row: {
-          contact_prefix: string | null
-          contact_start_number: number | null
           created_at: string
           customer_prefix: string | null
           customer_start_number: number | null
+          default_payment_terms: number | null
+          default_vat_rate: number | null
           id: string
           invoice_prefix: string | null
           invoice_start_number: number | null
@@ -460,11 +460,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          contact_prefix?: string | null
-          contact_start_number?: number | null
           created_at?: string
           customer_prefix?: string | null
           customer_start_number?: number | null
+          default_payment_terms?: number | null
+          default_vat_rate?: number | null
           id?: string
           invoice_prefix?: string | null
           invoice_start_number?: number | null
@@ -474,11 +474,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          contact_prefix?: string | null
-          contact_start_number?: number | null
           created_at?: string
           customer_prefix?: string | null
           customer_start_number?: number | null
+          default_payment_terms?: number | null
+          default_vat_rate?: number | null
           id?: string
           invoice_prefix?: string | null
           invoice_start_number?: number | null

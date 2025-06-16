@@ -21,9 +21,9 @@ export const InvoiceSettings = () => {
   const [settings, setSettings] = useState<InvoiceSettings>({
     default_payment_terms: 30,
     default_vat_rate: 21,
-    invoice_prefix: '',
+    invoice_prefix: '2025-',
     invoice_start_number: 1,
-    quote_prefix: '',
+    quote_prefix: 'OFF-2025-',
     quote_start_number: 1,
   });
   const [loading, setLoading] = useState(false);
@@ -35,12 +35,12 @@ export const InvoiceSettings = () => {
     fetchSettings();
   }, [selectedOrganization]);
 
-  // PUNT 3: Automatische nummering ophalen uit database
+  // PUNT 4: Automatische nummering ophalen uit database
   const fetchCurrentNumbers = async () => {
     if (!selectedOrganization) return { invoice: 1, quote: 1 };
 
     try {
-      console.log('📊 PUNT 3: Huidige nummers ophalen voor organisatie:', selectedOrganization.id);
+      console.log('📊 PUNT 4: Huidige nummers ophalen voor organisatie:', selectedOrganization.id);
       
       // Huidige hoogste factuurnummer ophalen
       const { data: invoices } = await supabase
@@ -77,7 +77,7 @@ export const InvoiceSettings = () => {
         }
       }
 
-      console.log('📊 PUNT 3: Huidige nummers opgehaald:', {
+      console.log('📊 PUNT 4: Huidige nummers opgehaald:', {
         nextInvoiceNumber,
         nextQuoteNumber
       });
@@ -87,7 +87,7 @@ export const InvoiceSettings = () => {
         quote: nextQuoteNumber
       };
     } catch (error) {
-      console.error('📊 PUNT 3: Fout bij ophalen huidige nummers:', error);
+      console.error('📊 PUNT 4: Fout bij ophalen huidige nummers:', error);
       return { invoice: 1, quote: 1 };
     }
   };
@@ -97,7 +97,7 @@ export const InvoiceSettings = () => {
 
     setLoading(true);
     try {
-      console.log('📊 PUNT 3: Instellingen ophalen voor organisatie:', selectedOrganization.id);
+      console.log('📊 PUNT 4: Instellingen ophalen voor organisatie:', selectedOrganization.id);
       
       const { data, error } = await supabase
         .from('organization_settings')
@@ -109,18 +109,19 @@ export const InvoiceSettings = () => {
         throw error;
       }
 
-      // PUNT 3: Automatische nummering ophalen
+      // PUNT 4: Automatische nummering ophalen
       const currentNumbers = await fetchCurrentNumbers();
 
       if (data) {
         setSettings({
-          default_payment_terms: 30,
-          default_vat_rate: 21,
-          invoice_prefix: data.invoice_prefix || '',
-          invoice_start_number: currentNumbers.invoice,  // Automatisch bijgewerkt
-          quote_prefix: data.quote_prefix || '',
-          quote_start_number: currentNumbers.quote,      // Automatisch bijgewerkt
+          default_payment_terms: data.default_payment_terms || 30,
+          default_vat_rate: data.default_vat_rate || 21,
+          invoice_prefix: data.invoice_prefix || '2025-',
+          invoice_start_number: currentNumbers.invoice,
+          quote_prefix: data.quote_prefix || 'OFF-2025-',
+          quote_start_number: currentNumbers.quote,
         });
+        console.log('📊 PUNT 4: Instellingen succesvol opgehaald:', data);
       } else {
         // Geen instellingen gevonden, gebruik automatische nummering
         setSettings(prev => ({
@@ -128,9 +129,10 @@ export const InvoiceSettings = () => {
           invoice_start_number: currentNumbers.invoice,
           quote_start_number: currentNumbers.quote,
         }));
+        console.log('📊 PUNT 4: Geen instellingen gevonden, standaardwaarden gebruikt');
       }
     } catch (error) {
-      console.error('📊 PUNT 3: Fout bij ophalen instellingen:', error);
+      console.error('📊 PUNT 4: Fout bij ophalen instellingen:', error);
       toast({
         title: "Fout",
         description: "Kon instellingen niet ophalen",
@@ -141,7 +143,7 @@ export const InvoiceSettings = () => {
     }
   };
 
-  // PUNT 4: Werkende opslaan functie
+  // PUNT 4: Werkende opslaan functie met nieuwe database kolommen
   const handleSave = async () => {
     if (!selectedOrganization) {
       console.error('💾 PUNT 4: Geen organisatie geselecteerd');
@@ -162,6 +164,8 @@ export const InvoiceSettings = () => {
         .from('organization_settings')
         .upsert({
           organization_id: selectedOrganization.id,
+          default_payment_terms: settings.default_payment_terms,
+          default_vat_rate: settings.default_vat_rate,
           invoice_prefix: settings.invoice_prefix,
           invoice_start_number: settings.invoice_start_number,
           quote_prefix: settings.quote_prefix,
@@ -215,6 +219,7 @@ export const InvoiceSettings = () => {
               <Input
                 id="default_vat_rate"
                 type="number"
+                step="0.01"
                 value={settings.default_vat_rate}
                 onChange={(e) => setSettings(prev => ({ ...prev, default_vat_rate: parseFloat(e.target.value) || 0 }))}
               />
