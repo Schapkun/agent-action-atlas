@@ -403,9 +403,9 @@ export const ContactManager = () => {
                     <TableHead className="w-8 p-3">
                       <Checkbox
                         checked={isAllSelected}
-                        indeterminate={isIndeterminate}
                         onCheckedChange={handleSelectAll}
-                        className="h-4 w-4"
+                        className={`h-4 w-4 ${isIndeterminate ? 'data-[state=checked]:bg-blue-500' : ''}`}
+                        data-state={isIndeterminate ? 'indeterminate' : isAllSelected ? 'checked' : 'unchecked'}
                       />
                     </TableHead>
                     <TableHead className="text-xs font-medium text-muted-foreground p-3 w-20">Klantnr</TableHead>
