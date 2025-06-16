@@ -102,6 +102,7 @@ export const ContactTableRow = ({
         {contact.email && (
           <div className="text-xs text-muted-foreground">{contact.email}</div>
         )}
+        {/* Only show labels under name when Labels column is NOT visible */}
         {!columnVisibility.labels && contact.labels && contact.labels.length > 0 && (
           <div className="flex gap-1 mt-1 flex-wrap">
             {contact.labels.slice(0, 3).map((label) => (
@@ -156,6 +157,7 @@ export const ContactTableRow = ({
           {contact.country || '-'}
         </TableCell>
       )}
+      {/* Only show labels column when Labels column IS visible */}
       {columnVisibility.labels && (
         <TableCell className="p-2">
           {contact.labels && contact.labels.length > 0 ? (
