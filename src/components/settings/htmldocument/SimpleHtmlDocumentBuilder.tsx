@@ -228,7 +228,9 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       hasContent: htmlContent.length > 0,
       placeholderCount: Object.keys(placeholderValues).length,
       user: !!user,
-      organization: !!selectedOrganization
+      organization: !!selectedOrganization,
+      userDetails: user ? { id: user.id, email: user.email } : null,
+      organizationDetails: selectedOrganization ? { id: selectedOrganization.id, name: selectedOrganization.name } : null
     });
     
     setSaveError(null);
@@ -236,6 +238,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
     // Check access
     const accessCheck = checkUserAccess();
     if (accessCheck.error) {
+      console.error('[DocumentBuilder] Access check failed:', accessCheck.error);
       toast({
         title: "Toegangsfout",
         description: accessCheck.error,
@@ -273,7 +276,8 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       
       console.log('[DocumentBuilder] Saving template data:', {
         ...templateData,
-        html_content: htmlContent.substring(0, 100) + '...'
+        html_content: htmlContent.substring(0, 100) + '...',
+        placeholderCount: Object.keys(placeholderValues).length
       });
       
       let result;
@@ -285,24 +289,35 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
         result = await createTemplate(templateData);
       }
       
-      console.log('[DocumentBuilder] Save successful:', result);
+      console.log('[DocumentBuilder] Save operation completed successfully:', result?.id);
       
       setHasUnsavedChanges(false);
       setSaveError(null);
       
       // Refresh templates list
+      console.log('[DocumentBuilder] Refreshing templates list...');
       await fetchTemplates();
       
       toast({
         title: "Opgeslagen",
-        description: "Document succesvol opgeslagen"
+        description: `Document "${result?.name}" succesvol opgeslagen`
       });
       
       onComplete(true);
     } catch (error) {
-      console.error('[DocumentBuilder] Save failed:', error);
+      console.error('[DocumentBuilder] Save failed with error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Onbekende fout';
       setSaveError(errorMessage);
+      
+      // More detailed error logging
+      if (error instanceof Error) {
+        console.error('[DocumentBuilder] Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
+      }
+      
       toast({
         title: "Opslagfout",
         description: `Kon document niet opslaan: ${errorMessage}`,

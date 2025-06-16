@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +24,23 @@ export const useDocumentTemplates = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
+
+  // Test database connectivity
+  const testDatabaseConnection = async () => {
+    try {
+      console.log('[useDocumentTemplates] Testing database connection...');
+      const { data, error } = await supabase.from('document_templates').select('count').limit(1);
+      if (error) {
+        console.error('[useDocumentTemplates] Database connection test failed:', error);
+        return false;
+      }
+      console.log('[useDocumentTemplates] Database connection test successful');
+      return true;
+    } catch (error) {
+      console.error('[useDocumentTemplates] Database connection test error:', error);
+      return false;
+    }
+  };
 
   // Enhanced authentication and membership check
   const checkUserAccess = async () => {
@@ -122,6 +138,7 @@ export const useDocumentTemplates = () => {
       }));
       
       console.log('[useDocumentTemplates] Templates fetched successfully:', transformedData.length);
+      console.log('[useDocumentTemplates] Templates data:', transformedData);
       setTemplates(transformedData);
     } catch (error) {
       console.error('[useDocumentTemplates] Error fetching templates:', error);
@@ -138,9 +155,22 @@ export const useDocumentTemplates = () => {
   const createTemplate = async (templateData: Partial<DocumentTemplate>) => {
     try {
       console.log('[useDocumentTemplates] Creating new template:', templateData.name);
+      console.log('[useDocumentTemplates] Template data received:', templateData);
+      
+      // Test database connection first
+      const isConnected = await testDatabaseConnection();
+      if (!isConnected) {
+        throw new Error('Database verbinding mislukt');
+      }
       
       // Check access and get user/organization info
       const { user, organization } = await checkUserAccess();
+      
+      console.log('[useDocumentTemplates] User info for template creation:', {
+        userId: user.id,
+        organizationId: organization.id,
+        workspaceId: selectedWorkspace?.id
+      });
       
       // Prepare insert data with all required fields
       const insertData = {
@@ -156,10 +186,11 @@ export const useDocumentTemplates = () => {
         placeholder_values: templateData.placeholder_values || null,
       };
 
-      console.log('[useDocumentTemplates] Insert data prepared:', {
+      console.log('[useDocumentTemplates] Final insert data:', {
         ...insertData,
-        html_content: insertData.html_content.substring(0, 100) + '...',
+        html_content: `${insertData.html_content.substring(0, 100)}...`,
         organization_id: insertData.organization_id,
+        workspace_id: insertData.workspace_id,
         created_by: insertData.created_by
       });
 
@@ -172,34 +203,57 @@ export const useDocumentTemplates = () => {
         throw new Error('HTML content is verplicht');
       }
 
+      if (!insertData.organization_id) {
+        throw new Error('Organisatie ID is verplicht');
+      }
+
+      if (!insertData.created_by) {
+        throw new Error('Gebruiker ID is verplicht');
+      }
+
+      console.log('[useDocumentTemplates] Starting database insert...');
+
       const { data, error } = await supabase
         .from('document_templates')
         .insert(insertData)
         .select()
         .single();
 
+      console.log('[useDocumentTemplates] Database insert response:', { data, error });
+
       if (error) {
-        console.error('[useDocumentTemplates] Database insert error:', error);
+        console.error('[useDocumentTemplates] Database insert error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
         
-        // Enhanced error handling
+        // Enhanced error handling with specific messages
         if (error.code === '23502') {
           const missingColumn = error.message.includes('organization_id') ? 'organization_id' : 
-                               error.message.includes('created_by') ? 'created_by' : 'onbekend veld';
-          throw new Error(`Verplicht veld ontbreekt: ${missingColumn}`);
+                               error.message.includes('created_by') ? 'created_by' : 
+                               error.message.includes('name') ? 'name' :
+                               error.message.includes('html_content') ? 'html_content' : 'onbekend veld';
+          throw new Error(`Verplicht veld ontbreekt: ${missingColumn}. Error: ${error.message}`);
         } else if (error.code === '23505') {
           throw new Error('Een template met deze naam bestaat al');
         } else if (error.code === '42501') {
           throw new Error('Geen toegang om templates aan te maken. Controleer je rechten.');
         } else if (error.message.includes('row-level security')) {
-          throw new Error('Geen toegang tot deze organisatie. Log opnieuw in of neem contact op met een beheerder.');
+          throw new Error(`RLS Policy fout: ${error.message}. Gebruiker: ${user.id}, Organisatie: ${organization.id}`);
+        } else if (error.code === 'PGRST116') {
+          throw new Error('RLS Policy blokkeert de operatie. Controleer je toegangsrechten.');
         } else {
-          throw new Error(`Database fout: ${error.message}`);
+          throw new Error(`Database fout (${error.code}): ${error.message}`);
         }
       }
 
       if (!data) {
-        throw new Error('Geen data ontvangen van database');
+        throw new Error('Geen data ontvangen van database - operatie mogelijk mislukt');
       }
+
+      console.log('[useDocumentTemplates] Template successfully created:', data);
 
       const newTemplate: DocumentTemplate = {
         ...data,
@@ -211,7 +265,12 @@ export const useDocumentTemplates = () => {
       
       setTemplates(prev => [newTemplate, ...prev]);
       
-      console.log('[useDocumentTemplates] Template created successfully:', newTemplate.id);
+      console.log('[useDocumentTemplates] Template created successfully and added to state');
+      
+      toast({
+        title: "Succes",
+        description: `Template "${newTemplate.name}" is succesvol aangemaakt`,
+      });
       
       return newTemplate;
     } catch (error) {
