@@ -25,6 +25,7 @@ interface Contact {
 export const ContactManager = () => {
   const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | undefined>(undefined);
+  const [labelFilter, setLabelFilter] = useState<Array<{ id: string; name: string; color: string; }>>([]);
   
   const {
     searchTerm,
@@ -56,6 +57,15 @@ export const ContactManager = () => {
   };
 
   const canInviteUsers = userRole !== 'lid';
+
+  // Apply label filter on top of existing filtered contacts
+  const finalFilteredContacts = labelFilter.length > 0 
+    ? filteredContacts.filter(contact => 
+        contact.labels?.some(label => 
+          labelFilter.some(filterLabel => filterLabel.id === label.id)
+        )
+      )
+    : filteredContacts;
 
   const handleNewContact = () => {
     console.log('🔵 ContactManager: Opening contact dialog for new contact');
@@ -93,7 +103,7 @@ export const ContactManager = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedContacts(new Set(filteredContacts.map(contact => contact.id)));
+      setSelectedContacts(new Set(finalFilteredContacts.map(contact => contact.id)));
     } else {
       setSelectedContacts(new Set());
     }
@@ -185,11 +195,25 @@ export const ContactManager = () => {
     fetchContacts();
   };
 
+  const handleFilterByLabels = (contact: Contact) => {
+    if (contact.labels && contact.labels.length > 0) {
+      setLabelFilter(contact.labels);
+      toast({
+        title: "Filter toegepast",
+        description: `Contacten gefilterd op ${contact.labels.length} label(s)`
+      });
+    }
+  };
+
+  const handleRemoveLabelFilter = () => {
+    setLabelFilter([]);
+  };
+
   console.log('🔵 ContactManager: Rendering with data:', {
     selectedOrganization: selectedOrganization?.name,
     selectedWorkspace: selectedWorkspace?.name,
     contactsCount: contacts.length,
-    filteredContactsCount: filteredContacts.length,
+    filteredContactsCount: finalFilteredContacts.length,
     loading
   });
 
@@ -209,6 +233,8 @@ export const ContactManager = () => {
                 onNewContact={handleNewContact}
                 canInviteUsers={canInviteUsers}
                 contextInfo={getContextInfo()}
+                labelFilter={labelFilter}
+                onRemoveLabelFilter={handleRemoveLabelFilter}
               />
             )}
           </CardHeader>
@@ -216,7 +242,7 @@ export const ContactManager = () => {
           <CardContent className="p-0">
             <ContactTable
               contacts={contacts}
-              filteredContacts={filteredContacts}
+              filteredContacts={finalFilteredContacts}
               selectedContacts={selectedContacts}
               columnVisibility={columnVisibility}
               loading={loading}
@@ -233,6 +259,7 @@ export const ContactManager = () => {
               onNewContact={handleNewContact}
               onEditContact={handleEditContact}
               onContactsUpdated={handleContactsUpdated}
+              onFilterByLabels={handleFilterByLabels}
             />
           </CardContent>
         </Card>

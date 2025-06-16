@@ -3,7 +3,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Check, Edit, ChevronDown, Plus } from 'lucide-react';
+import { Check, Edit, ChevronDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,6 +57,7 @@ interface ContactTableRowProps {
   onSendEmail?: (contact: Contact) => void;
   onDeleteContact?: (contact: Contact) => void;
   onManageLabels?: (contact: Contact) => void;
+  onFilterByLabels?: (contact: Contact) => void;
 }
 
 export const ContactTableRow = ({
@@ -73,7 +74,8 @@ export const ContactTableRow = ({
   onCreateQuote,
   onSendEmail,
   onDeleteContact,
-  onManageLabels
+  onManageLabels,
+  onFilterByLabels
 }: ContactTableRowProps) => {
   const formatAddress = (contact: Contact) => {
     const parts = [];
@@ -106,13 +108,13 @@ export const ContactTableRow = ({
               <Badge
                 key={label.id}
                 style={{ backgroundColor: label.color, color: 'white' }}
-                className="text-xs px-1 py-0 h-4 border-0"
+                className="text-xs px-2 py-1 h-5 border-0"
               >
                 {label.name}
               </Badge>
             ))}
             {contact.labels.length > 3 && (
-              <Badge variant="outline" className="text-xs px-1 py-0 h-4">
+              <Badge variant="outline" className="text-xs px-2 py-1 h-5">
                 +{contact.labels.length - 3}
               </Badge>
             )}
@@ -162,13 +164,13 @@ export const ContactTableRow = ({
                 <Badge
                   key={label.id}
                   style={{ backgroundColor: label.color, color: 'white' }}
-                  className="text-xs px-1 py-0 h-4 border-0"
+                  className="text-xs px-2 py-1 h-5 border-0"
                 >
                   {label.name}
                 </Badge>
               ))}
               {contact.labels.length > 2 && (
-                <Badge variant="outline" className="text-xs px-1 py-0 h-4">
+                <Badge variant="outline" className="text-xs px-2 py-1 h-5">
                   +{contact.labels.length - 2}
                 </Badge>
               )}
@@ -219,16 +221,6 @@ export const ContactTableRow = ({
             <Edit className="h-3 w-3" />
           </Button>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 px-1 text-xs"
-            onClick={() => onManageLabels?.(contact)}
-            title="Labels beheren"
-          >
-            <Plus className="h-3 w-3" />
-          </Button>
-          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
@@ -256,7 +248,7 @@ export const ContactTableRow = ({
               <DropdownMenuItem onClick={() => onManageLabels?.(contact)}>
                 Labels
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onFilterByLabels?.(contact)}>
                 Filter op deze labels
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onSendEmail?.(contact)}>

@@ -58,6 +58,7 @@ interface ContactTableProps {
   onNewContact: () => void;
   onEditContact?: (contact: Contact) => void;
   onContactsUpdated?: () => void;
+  onFilterByLabels?: (contact: Contact) => void;
 }
 
 export const ContactTable = ({
@@ -78,7 +79,8 @@ export const ContactTable = ({
   onBulkDelete,
   onNewContact,
   onEditContact,
-  onContactsUpdated
+  onContactsUpdated,
+  onFilterByLabels
 }: ContactTableProps) => {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [invoicesDialogOpen, setInvoicesDialogOpen] = useState(false);
@@ -208,6 +210,7 @@ export const ContactTable = ({
               onSendEmail={handleSendEmail}
               onDeleteContact={handleDeleteContact}
               onManageLabels={handleManageLabels}
+              onFilterByLabels={onFilterByLabels}
             />
           ))}
         </TableBody>
