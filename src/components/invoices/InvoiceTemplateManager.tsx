@@ -54,46 +54,44 @@ export const InvoiceTemplateManager = ({
   return {
     availableTemplates,
     templateSelect: (
-      <div className="flex items-center gap-2">
-        <Select
-          value={selectedTemplate?.id || ''}
-          onValueChange={handleTemplateChange}
-          disabled={templatesLoading}
-        >
-          <SelectTrigger className="h-8 text-xs flex-1">
-            <SelectValue placeholder={templatesLoading ? "Laden..." : "Selecteer template"} />
-          </SelectTrigger>
-          <SelectContent>
-            {availableTemplates.map((template) => (
-              <SelectItem key={template.id} value={template.id}>
-                <div className="flex items-center gap-2 w-full">
+      <Select
+        value={selectedTemplate?.id || ''}
+        onValueChange={handleTemplateChange}
+        disabled={templatesLoading}
+      >
+        <SelectTrigger className="h-8 text-xs flex-1">
+          <SelectValue placeholder={templatesLoading ? "Laden..." : "Selecteer template"} />
+        </SelectTrigger>
+        <SelectContent>
+          {availableTemplates.map((template) => (
+            <SelectItem key={template.id} value={template.id}>
+              <div className="flex items-center justify-between w-full group">
+                <div className="flex items-center gap-2">
                   {template.is_default && (
                     <Star className="h-3 w-3 text-yellow-500 fill-current" />
                   )}
                   <span>{template.name}</span>
                 </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {selectedTemplate && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={(e) => handleToggleFavorite(selectedTemplate, e)}
-            title={selectedTemplate.is_default ? "Favoriet verwijderen" : "Als favoriet instellen"}
-          >
-            <Star 
-              className={`h-4 w-4 ${
-                selectedTemplate.is_default 
-                  ? 'text-yellow-500 fill-current' 
-                  : 'text-gray-400 hover:text-yellow-500'
-              }`} 
-            />
-          </Button>
-        )}
-      </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => handleToggleFavorite(template, e)}
+                  title={template.is_default ? "Favoriet verwijderen" : "Als favoriet instellen"}
+                >
+                  <Star 
+                    className={`h-3 w-3 ${
+                      template.is_default 
+                        ? 'text-yellow-500 fill-current' 
+                        : 'text-gray-400 hover:text-yellow-500'
+                    }`} 
+                  />
+                </Button>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     )
   };
 };
