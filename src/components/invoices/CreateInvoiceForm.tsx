@@ -9,8 +9,12 @@ import { InvoiceFormActions } from './InvoiceFormActions';
 import { InvoiceTemplateManager } from './InvoiceTemplateManager';
 import { InvoiceFormPreview } from './InvoiceFormPreview';
 import { useInvoiceFormHandlers } from '@/hooks/useInvoiceFormHandlers';
+import { useInvoiceTemplates } from '@/hooks/useInvoiceTemplates';
+import { useEffect } from 'react';
 
 export const CreateInvoiceForm = () => {
+  const { defaultTemplate } = useInvoiceTemplates();
+  
   const {
     documentTemplates,
     templatesLoading,
@@ -44,6 +48,13 @@ export const CreateInvoiceForm = () => {
     handleSaveAndSend,
     getDefaultInvoiceNumber
   } = useInvoiceFormHandlers();
+
+  // Auto-select default template when available
+  useEffect(() => {
+    if (defaultTemplate && !selectedTemplate) {
+      setSelectedTemplate(defaultTemplate.id);
+    }
+  }, [defaultTemplate, selectedTemplate, setSelectedTemplate]);
 
   // Find the actual template object from the selectedTemplate ID (selectedTemplate is always a string)
   const selectedTemplateObject = selectedTemplate 

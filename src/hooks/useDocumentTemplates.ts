@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -85,13 +84,13 @@ export const useDocumentTemplates = () => {
       
       const { organization } = await checkUserAccess();
       
-      // First get the templates
+      // First get the templates - sorted by created_at ASC (oldest first)
       const { data: templatesData, error: templatesError } = await supabase
         .from('document_templates')
         .select('*')
         .eq('is_active', true)
         .eq('organization_id', organization.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true });
 
       if (templatesError) {
         console.error('[useDocumentTemplates] Fetch error:', templatesError);
@@ -140,6 +139,55 @@ export const useDocumentTemplates = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const setTemplateFavorite = async (templateId: string, isFavorite: boolean) => {
+    try {
+      console.log('[useDocumentTemplates] Setting template favorite:', templateId, isFavorite);
+      
+      const { organization } = await checkUserAccess();
+
+      // If setting as favorite, first remove favorite from all other templates
+      if (isFavorite) {
+        await supabase
+          .from('document_templates')
+          .update({ is_default: false })
+          .eq('organization_id', organization.id)
+          .eq('is_active', true);
+      }
+
+      const { error } = await supabase
+        .from('document_templates')
+        .update({ is_default: isFavorite })
+        .eq('id', templateId)
+        .eq('organization_id', organization.id);
+
+      if (error) {
+        console.error('[useDocumentTemplates] Favorite error:', error);
+        throw new Error(`Kon favoriet niet instellen: ${error.message}`);
+      }
+
+      // Refresh templates to show updated favorite status
+      await fetchTemplates();
+      
+      toast({
+        title: isFavorite ? "Favoriet ingesteld" : "Favoriet verwijderd",
+        description: `Template is ${isFavorite ? 'ingesteld' : 'verwijderd'} als favoriet`,
+      });
+      
+      console.log('[useDocumentTemplates] Template favorite updated successfully');
+    } catch (error) {
+      console.error('[useDocumentTemplates] Favorite error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Onbekende fout';
+      
+      toast({
+        title: "Fout bij instellen favoriet",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      
+      throw error;
     }
   };
 
@@ -424,6 +472,7 @@ export const useDocumentTemplates = () => {
     fetchTemplates,
     createTemplate,
     updateTemplate,
-    deleteTemplate
+    deleteTemplate,
+    setTemplateFavorite
   };
 };

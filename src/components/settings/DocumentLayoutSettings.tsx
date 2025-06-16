@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { SimpleHtmlDocumentBuilder } from './htmldocument/SimpleHtmlDocumentBuilder';
@@ -23,22 +22,27 @@ const DocumentLayoutContent = () => {
   const { templates, deleteTemplate, createTemplate, fetchTemplates } = useDocumentTemplates();
   const { toast } = useToast();
 
-  // Filter templates based on selected labels
+  // Filter and sort templates based on selected labels - oldest first
   const filteredTemplates = useMemo(() => {
-    return templates.filter(template => {
-      // Label filter - if any labels are selected, the template must have at least one of them
-      if (selectedFilterLabels.length > 0) {
-        const templateLabelIds = template.labels?.map(label => label.id) || [];
-        const hasMatchingLabel = selectedFilterLabels.some(filterLabel => 
-          templateLabelIds.includes(filterLabel.id)
-        );
-        if (!hasMatchingLabel) {
-          return false;
+    return templates
+      .filter(template => {
+        // Label filter - if any labels are selected, the template must have at least one of them
+        if (selectedFilterLabels.length > 0) {
+          const templateLabelIds = template.labels?.map(label => label.id) || [];
+          const hasMatchingLabel = selectedFilterLabels.some(filterLabel => 
+            templateLabelIds.includes(filterLabel.id)
+          );
+          if (!hasMatchingLabel) {
+            return false;
+          }
         }
-      }
-      
-      return true;
-    });
+        
+        return true;
+      })
+      .sort((a, b) => {
+        // Sort by creation date (oldest first) - this is already handled in the hook
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      });
   }, [templates, selectedFilterLabels]);
 
   const handleNewDocument = () => {
