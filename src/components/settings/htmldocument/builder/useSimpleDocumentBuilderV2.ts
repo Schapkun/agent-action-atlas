@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { useDocumentData } from '../hooks/useDocumentData';
@@ -18,11 +17,8 @@ export function useSimpleDocumentBuilderV2({
   documentId, 
   forceRefreshKey 
 }: UseSimpleDocumentBuilderV2Props) {
-  // Document data fetching with force refresh capability
-  const { document, loading, refreshDocument } = useDocumentData({ 
-    documentId, 
-    forceRefreshKey // Pass force refresh key
-  });
+  // Document data fetching - fix the hook call
+  const { document, loading, error } = useDocumentData(documentId);
   
   // Builder state
   const [htmlContent, setHtmlContent] = useState('');
@@ -34,16 +30,16 @@ export function useSimpleDocumentBuilderV2({
   
   const lastSavedContent = useRef('');
 
-  // Map database type to UI type
-  const mapDatabaseTypeToUI = (dbType: string): DocumentTypeUI => {
-    switch (dbType) {
-      case 'schapkun': return 'schapkun';
-      case 'factuur': return 'factuur';
-      case 'contract': return 'contract';
-      case 'brief': return 'brief';
-      case 'custom': return 'custom';
-      default: return 'custom';
-    }
+  // Map database type to UI type - use labels instead
+  const getDocumentTypeFromLabels = (labels?: any[]): DocumentTypeUI => {
+    if (!labels || labels.length === 0) return 'custom';
+    
+    const labelNames = labels.map(label => label.name.toLowerCase());
+    if (labelNames.includes('schapkun')) return 'schapkun';
+    if (labelNames.includes('factuur')) return 'factuur';
+    if (labelNames.includes('contract')) return 'contract';
+    if (labelNames.includes('brief')) return 'brief';
+    return 'custom';
   };
 
   // Get template for document type
@@ -58,12 +54,12 @@ export function useSimpleDocumentBuilderV2({
     }
   }, []);
 
-  // Initialize from document data - ALWAYS fresh due to force refresh
+  // Initialize from document data
   useEffect(() => {
     if (document) {
-      console.log('[Builder V2] Initializing from FORCE REFRESHED document data:', forceRefreshKey);
+      console.log('[Builder V2] Initializing from document data:', forceRefreshKey);
       
-      const newType = mapDatabaseTypeToUI(document.type);
+      const newType = getDocumentTypeFromLabels(document.labels);
       const newPlaceholderValues = {
         ...DEFAULT_PLACEHOLDER_VALUES,
         ...(document.placeholder_values || {})
@@ -84,7 +80,7 @@ export function useSimpleDocumentBuilderV2({
       setHasUnsavedChanges(false);
       setIsInitialized(true);
       
-      console.log('[Builder V2] FORCE REFRESH Initialized with type:', newType, 'content length:', newContent.length);
+      console.log('[Builder V2] Initialized with type:', newType, 'content length:', newContent.length);
     } else if (!documentId) {
       // New document
       console.log('[Builder V2] Initializing new document with force refresh key:', forceRefreshKey);
@@ -98,7 +94,7 @@ export function useSimpleDocumentBuilderV2({
       setHasUnsavedChanges(false);
       setIsInitialized(true);
     }
-  }, [document, documentId, forceRefreshKey, getTemplateForType]); // Include forceRefreshKey
+  }, [document, documentId, forceRefreshKey, getTemplateForType]);
 
   // Handle template type changes
   const handleDocumentTypeChange = useCallback((newType: DocumentTypeUI) => {
@@ -149,7 +145,6 @@ export function useSimpleDocumentBuilderV2({
     isInitialized,
     
     // Operations
-    clearDraftForDocument,
-    refreshDocument
+    clearDraftForDocument
   };
 }

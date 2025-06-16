@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -118,10 +117,10 @@ export const InvoiceOverview = () => {
       // Properly type the template to match DocumentTemplate interface
       const defaultTemplate: DocumentTemplate | null = templates?.[0] ? {
         ...templates[0],
-        type: templates[0].type as 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun',
         placeholder_values: templates[0].placeholder_values ? 
           (typeof templates[0].placeholder_values === 'object' && templates[0].placeholder_values !== null ? 
-            templates[0].placeholder_values as Record<string, string> : null) : null
+            templates[0].placeholder_values as Record<string, string> : null) : null,
+        labels: [] // Add empty labels array for compatibility
       } : null;
       
       const pdfData = {

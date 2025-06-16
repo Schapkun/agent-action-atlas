@@ -100,11 +100,12 @@ export function useSimplestDocumentBuilder({
 
           const doc: DocumentTemplate = {
             ...data,
-            type: data.type as DocumentTypeUI,
-            placeholder_values: parsePlaceholderValues(data.placeholder_values)
+            placeholder_values: parsePlaceholderValues(data.placeholder_values),
+            labels: [] // Add empty labels for compatibility
           };
 
-          const content = data.html_content || getTemplateForType(data.type as DocumentTypeUI);
+          // Use default type since we no longer store type
+          const content = data.html_content || getTemplateForType('factuur');
           const dbPlaceholders = parsePlaceholderValues(data.placeholder_values);
           const placeholders = { ...DEFAULT_PLACEHOLDER_VALUES, ...dbPlaceholders };
 
@@ -113,7 +114,7 @@ export function useSimplestDocumentBuilder({
             document: doc,
             htmlContent: content,
             documentName: data.name,
-            documentType: data.type as DocumentTypeUI,
+            documentType: 'factuur', // Default type
             placeholderValues: placeholders,
             loading: false,
             error: null,
@@ -212,31 +213,22 @@ export function useSimplestDocumentBuilder({
     setState(prev => ({ ...prev, isSaving: true }));
 
     try {
-      const dbType = state.documentType === 'schapkun' ? 'schapkun' : 
-                    state.documentType === 'factuur' ? 'factuur' : 
-                    state.documentType === 'contract' ? 'contract' : 
-                    state.documentType === 'brief' ? 'brief' : 'custom';
+      // Always use 'document' as default type since we're moving away from types
+      const documentData = {
+        name: state.documentName,
+        html_content: state.htmlContent,
+        description: `Document template`,
+        placeholder_values: state.placeholderValues,
+        is_default: false,
+        is_active: true
+      };
 
       if (state.document) {
         // Update existing
-        await updateTemplate(state.document.id, {
-          name: state.documentName,
-          type: dbType,
-          html_content: state.htmlContent,
-          description: state.document.description,
-          placeholder_values: state.placeholderValues
-        });
+        await updateTemplate(state.document.id, documentData);
       } else {
         // Create new
-        await createTemplate({
-          name: state.documentName,
-          type: dbType,
-          html_content: state.htmlContent,
-          description: `${state.documentType} document`,
-          is_default: false,
-          is_active: true,
-          placeholder_values: state.placeholderValues
-        });
+        await createTemplate(documentData);
       }
 
       setState(prev => ({ 

@@ -260,12 +260,13 @@ export const useNewDocumentBuilder = (documentId?: string) => {
       }));
       lastSavedContentRef.current = draft.htmlContent;
     } else {
-      const content = template.html_content || TEMPLATES[template.type as keyof typeof TEMPLATES] || DEFAULT_TEMPLATE;
+      // Use default type 'factuur' since we no longer have type in template
+      const content = template.html_content || TEMPLATES['factuur'] || DEFAULT_TEMPLATE;
       setState(prev => ({
         ...prev,
         id: template.id,
         name: template.name,
-        type: template.type,
+        type: 'factuur', // Default type
         htmlContent: content,
         placeholderValues: placeholders,
         hasChanges: false,
