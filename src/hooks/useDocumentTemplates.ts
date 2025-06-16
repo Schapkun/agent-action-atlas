@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 
 export interface DocumentTemplate {
   id: string;
@@ -21,7 +22,7 @@ export interface DocumentTemplate {
 }
 
 export const useDocumentTemplates = () => {
-  const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
+  const [templates, setTemplates] = useState<DocumentTemplateWithLabels[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
@@ -76,28 +77,53 @@ export const useDocumentTemplates = () => {
       
       const { organization } = await checkUserAccess();
       
-      const { data, error } = await supabase
+      // First get the templates
+      const { data: templatesData, error: templatesError } = await supabase
         .from('document_templates')
         .select('*')
         .eq('is_active', true)
         .eq('organization_id', organization.id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('[useDocumentTemplates] Fetch error:', error);
-        throw error;
+      if (templatesError) {
+        console.error('[useDocumentTemplates] Fetch error:', templatesError);
+        throw templatesError;
+      }
+
+      // Get labels for each template
+      const templatesWithLabels: DocumentTemplateWithLabels[] = [];
+      
+      for (const template of templatesData || []) {
+        const { data: labelAssignments } = await supabase
+          .from('document_template_label_assignments')
+          .select(`
+            label_id,
+            document_template_labels (
+              id,
+              name,
+              color,
+              organization_id,
+              workspace_id,
+              created_at,
+              updated_at
+            )
+          `)
+          .eq('template_id', template.id);
+
+        const labels = labelAssignments?.map(assignment => assignment.document_template_labels).filter(Boolean) || [];
+
+        templatesWithLabels.push({
+          ...template,
+          type: template.type as 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun',
+          placeholder_values: template.placeholder_values ? 
+            (typeof template.placeholder_values === 'object' && template.placeholder_values !== null ? 
+              template.placeholder_values as Record<string, string> : null) : null,
+          labels: labels as any[]
+        });
       }
       
-      const transformedData = (data || []).map(item => ({
-        ...item,
-        type: item.type as 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun',
-        placeholder_values: item.placeholder_values ? 
-          (typeof item.placeholder_values === 'object' && item.placeholder_values !== null ? 
-            item.placeholder_values as Record<string, string> : null) : null
-      }));
-      
-      console.log('[useDocumentTemplates] Templates fetched:', transformedData.length);
-      setTemplates(transformedData);
+      console.log('[useDocumentTemplates] Templates fetched:', templatesWithLabels.length);
+      setTemplates(templatesWithLabels);
     } catch (error) {
       console.error('[useDocumentTemplates] Error fetching templates:', error);
       toast({
@@ -110,7 +136,7 @@ export const useDocumentTemplates = () => {
     }
   };
 
-  const createTemplate = async (templateData: Partial<DocumentTemplate>) => {
+  const createTemplate = async (templateData: Partial<DocumentTemplate> & { labelIds?: string[] }) => {
     try {
       console.log('[useDocumentTemplates] ========= CREATE TEMPLATE START =========');
       console.log('[useDocumentTemplates] Template data received:', {
@@ -118,7 +144,8 @@ export const useDocumentTemplates = () => {
         type: templateData.type,
         htmlContentLength: templateData.html_content?.length,
         placeholderValuesKeys: templateData.placeholder_values ? Object.keys(templateData.placeholder_values) : [],
-        hasDescription: !!templateData.description
+        hasDescription: !!templateData.description,
+        labelIds: templateData.labelIds
       });
       
       const { user, organization } = await checkUserAccess();
@@ -203,17 +230,31 @@ export const useDocumentTemplates = () => {
         throw new Error('Template werd aangemaakt maar er werd geen data teruggestuurd');
       }
 
+      // Assign labels if provided
+      if (templateData.labelIds && templateData.labelIds.length > 0) {
+        for (const labelId of templateData.labelIds) {
+          await supabase
+            .from('document_template_label_assignments')
+            .insert({
+              template_id: data.id,
+              label_id: labelId
+            });
+        }
+      }
+
       console.log('[useDocumentTemplates] Insert successful:', data.id);
 
-      const newTemplate: DocumentTemplate = {
+      const newTemplate: DocumentTemplateWithLabels = {
         ...data,
         type: data.type as 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun',
         placeholder_values: data.placeholder_values ? 
           (typeof data.placeholder_values === 'object' && data.placeholder_values !== null ? 
-            data.placeholder_values as Record<string, string> : null) : null
+            data.placeholder_values as Record<string, string> : null) : null,
+        labels: []
       };
       
-      setTemplates(prev => [newTemplate, ...prev]);
+      // Refresh templates to get updated data with labels
+      await fetchTemplates();
       
       toast({
         title: "Succes",
@@ -242,7 +283,7 @@ export const useDocumentTemplates = () => {
     }
   };
 
-  const updateTemplate = async (id: string, updates: Partial<DocumentTemplate>) => {
+  const updateTemplate = async (id: string, updates: Partial<DocumentTemplate> & { labelIds?: string[] }) => {
     try {
       console.log('[useDocumentTemplates] Updating template:', id);
       
@@ -262,6 +303,9 @@ export const useDocumentTemplates = () => {
         placeholder_values: updates.placeholder_values || null,
       };
 
+      // Remove labelIds from update data as it's not a column
+      delete (updateData as any).labelIds;
+
       const { data, error } = await supabase
         .from('document_templates')
         .update(updateData)
@@ -279,19 +323,33 @@ export const useDocumentTemplates = () => {
         throw new Error('Template niet gevonden of geen toegang');
       }
 
-      const updatedTemplate: DocumentTemplate = {
-        ...data,
-        type: data.type as 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun',
-        placeholder_values: data.placeholder_values ? 
-          (typeof data.placeholder_values === 'object' && data.placeholder_values !== null ? 
-            data.placeholder_values as Record<string, string> : null) : null
-      };
-      
-      setTemplates(prev => prev.map(t => t.id === id ? updatedTemplate : t));
+      // Update labels if provided
+      if (updates.labelIds !== undefined) {
+        // First remove all existing label assignments
+        await supabase
+          .from('document_template_label_assignments')
+          .delete()
+          .eq('template_id', id);
+
+        // Then add new ones
+        if (updates.labelIds.length > 0) {
+          for (const labelId of updates.labelIds) {
+            await supabase
+              .from('document_template_label_assignments')
+              .insert({
+                template_id: id,
+                label_id: labelId
+              });
+          }
+        }
+      }
+
+      // Refresh templates to get updated data with labels
+      await fetchTemplates();
       
       console.log('[useDocumentTemplates] Template updated successfully');
       
-      return updatedTemplate;
+      return data;
     } catch (error) {
       console.error('[useDocumentTemplates] Update error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Onbekende fout';

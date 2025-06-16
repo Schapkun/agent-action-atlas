@@ -1,22 +1,52 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { SimpleHtmlDocumentBuilder } from './htmldocument/SimpleHtmlDocumentBuilder';
 import { DocumentNameDialog } from './components/DocumentNameDialog';
-import { DocumentTemplate, useDocumentTemplates } from '@/hooks/useDocumentTemplates';
+import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentActions } from './components/DocumentActions';
 import { DocumentList } from './components/DocumentList';
+import { DocumentFilters } from './components/DocumentFilters';
 import { DocumentProvider } from './contexts/DocumentContext';
+import { DocumentTemplateWithLabels } from '@/types/documentLabels';
+import { DocumentTemplateLabel } from '@/types/documentLabels';
 
 const DocumentLayoutContent = () => {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
   const [editingDocumentId, setEditingDocumentId] = useState<string | undefined>(undefined);
-  const [duplicatingDocument, setDuplicatingDocument] = useState<DocumentTemplate | null>(null);
+  const [duplicatingDocument, setDuplicatingDocument] = useState<DocumentTemplateWithLabels | null>(null);
+  
+  // Filter states
+  const [selectedType, setSelectedType] = useState('all');
+  const [selectedFilterLabels, setSelectedFilterLabels] = useState<DocumentTemplateLabel[]>([]);
   
   const { templates, deleteTemplate, createTemplate, fetchTemplates } = useDocumentTemplates();
   const { toast } = useToast();
+
+  // Filter templates based on selected filters
+  const filteredTemplates = useMemo(() => {
+    return templates.filter(template => {
+      // Type filter
+      if (selectedType !== 'all' && template.type !== selectedType) {
+        return false;
+      }
+      
+      // Label filter - if any labels are selected, the template must have at least one of them
+      if (selectedFilterLabels.length > 0) {
+        const templateLabelIds = template.labels?.map(label => label.id) || [];
+        const hasMatchingLabel = selectedFilterLabels.some(filterLabel => 
+          templateLabelIds.includes(filterLabel.id)
+        );
+        if (!hasMatchingLabel) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }, [templates, selectedType, selectedFilterLabels]);
 
   const handleNewDocument = () => {
     console.log('[Settings] Creating new document');
@@ -24,7 +54,7 @@ const DocumentLayoutContent = () => {
     setIsBuilderOpen(true);
   };
 
-  const handleEditDocument = (document: DocumentTemplate) => {
+  const handleEditDocument = (document: DocumentTemplateWithLabels) => {
     console.log('[Settings] Opening document for editing:', document.name, document.id);
     setEditingDocumentId(document.id);
     setIsBuilderOpen(true);
@@ -45,7 +75,7 @@ const DocumentLayoutContent = () => {
     }
   };
 
-  const handleDuplicateDocument = (document: DocumentTemplate) => {
+  const handleDuplicateDocument = (document: DocumentTemplateWithLabels) => {
     setDuplicatingDocument(document);
     setIsNameDialogOpen(true);
   };
@@ -60,7 +90,8 @@ const DocumentLayoutContent = () => {
           html_content: duplicatingDocument.html_content,
           placeholder_values: duplicatingDocument.placeholder_values,
           is_active: true,
-          is_default: false
+          is_default: false,
+          labelIds: duplicatingDocument.labels?.map(label => label.id) || []
         });
         
         setDuplicatingDocument(null);
@@ -79,7 +110,7 @@ const DocumentLayoutContent = () => {
     }
   };
 
-  const handleDeleteDocument = async (document: DocumentTemplate) => {
+  const handleDeleteDocument = async (document: DocumentTemplateWithLabels) => {
     try {
       await deleteTemplate(document.id);
       if (editingDocumentId === document.id) {
@@ -99,6 +130,11 @@ const DocumentLayoutContent = () => {
     }
   };
 
+  const handleClearFilters = () => {
+    setSelectedType('all');
+    setSelectedFilterLabels([]);
+  };
+
   return (
     <DocumentProvider>
       <div className="space-y-6">
@@ -111,8 +147,20 @@ const DocumentLayoutContent = () => {
 
         <DocumentActions onNewDocument={handleNewDocument} />
 
+        <DocumentFilters
+          selectedType={selectedType}
+          onTypeChange={setSelectedType}
+          selectedLabels={selectedFilterLabels}
+          onLabelsChange={setSelectedFilterLabels}
+          onClearFilters={handleClearFilters}
+        />
+
+        <div className="text-sm text-gray-600">
+          {filteredTemplates.length} van {templates.length} templates {filteredTemplates.length === 1 ? 'wordt' : 'worden'} getoond
+        </div>
+
         <DocumentList
-          documents={templates}
+          documents={filteredTemplates}
           onEditDocument={handleEditDocument}
           onDuplicateDocument={handleDuplicateDocument}
           onDeleteDocument={handleDeleteDocument}

@@ -8,6 +8,7 @@ import { A4Preview } from './components/A4Preview';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { DocumentTemplateLabel } from '@/types/documentLabels';
 
 interface SimpleHtmlDocumentBuilderProps {
   documentId?: string;
@@ -91,11 +92,11 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
   const [documentName, setDocumentName] = useState('Nieuw Document');
   const [htmlContent, setHtmlContent] = useState(DEFAULT_HTML);
   const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>(DEFAULT_PLACEHOLDERS);
+  const [selectedLabels, setSelectedLabels] = useState<DocumentTemplateLabel[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saveAttempts, setSaveAttempts] = useState(0);
   
   // Use refs to prevent infinite loops
   const initialLoadCompleted = useRef(false);
@@ -203,6 +204,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
             ...DEFAULT_PLACEHOLDERS,
             ...(template.placeholder_values || {})
           });
+          setSelectedLabels(template.labels || []);
           setHasUnsavedChanges(false);
           setError(null);
         } else {
@@ -256,16 +258,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
   }, []);
 
   const handleSave = useCallback(async () => {
-    const attemptNumber = saveAttempts + 1;
-    setSaveAttempts(attemptNumber);
-    
-    console.log('[DocumentBuilder] === SAVE ATTEMPT #' + attemptNumber + ' START ===');
-    
-    // Show immediate feedback
-    toast({
-      title: "Opslaan gestart",
-      description: `Poging #${attemptNumber} om document op te slaan...`,
-    });
+    console.log('[DocumentBuilder] === SAVE START ===');
     
     if (!checkAccess()) {
       console.error('[DocumentBuilder] === SAVE FAILED: ACCESS DENIED ===');
@@ -315,14 +308,16 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
         type: 'custom' as const,
         description: documentId ? undefined : 'Nieuw document template',
         is_default: false,
-        is_active: true
+        is_active: true,
+        labelIds: selectedLabels.map(label => label.id)
       };
       
       console.log('[DocumentBuilder] Saving template data:', {
         isUpdate: !!documentId,
         name: templateData.name,
         htmlContentLength: templateData.html_content.length,
-        placeholderValuesKeys: Object.keys(templateData.placeholder_values || {})
+        placeholderValuesKeys: Object.keys(templateData.placeholder_values || {}),
+        labelIds: templateData.labelIds
       });
       
       let result;
@@ -341,12 +336,10 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       setHasUnsavedChanges(false);
       setError(null);
       
-      // Refresh templates to ensure UI is up to date
-      await fetchTemplates();
-      
+      // Only show success toast (remove the "starting" toast)
       toast({
         title: "Opgeslagen!",
-        description: `Document "${result?.name}" succesvol opgeslagen`,
+        description: `Document "${result?.name || trimmedName}" succesvol opgeslagen`,
       });
       
       onComplete(true);
@@ -363,14 +356,14 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       
       toast({
         title: "Opslagfout",
-        description: `Poging #${attemptNumber}: ${errorMessage}`,
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
       setIsSaving(false);
-      console.log('[DocumentBuilder] === SAVE ATTEMPT #' + attemptNumber + ' END ===');
+      console.log('[DocumentBuilder] === SAVE END ===');
     }
-  }, [documentName, htmlContent, placeholderValues, documentId, saveAttempts, checkAccess, templates, updateTemplate, createTemplate, fetchTemplates, toast, onComplete]);
+  }, [documentName, htmlContent, placeholderValues, selectedLabels, documentId, checkAccess, templates, updateTemplate, createTemplate, toast, onComplete]);
 
   const handleCancel = useCallback(() => {
     console.log('[DocumentBuilder] Cancel requested, hasUnsavedChanges:', hasUnsavedChanges);
@@ -426,6 +419,8 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
         onDocumentNameChange={setDocumentName}
         onSave={handleSave}
         onClose={handleCancel}
+        selectedLabels={selectedLabels}
+        onLabelsChange={setSelectedLabels}
       />
 
       {error && (
@@ -440,9 +435,6 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
               <h3 className="text-sm font-medium text-red-800">Fout</h3>
               <div className="mt-2 text-sm text-red-700">
                 <p>{error}</p>
-                {saveAttempts > 0 && (
-                  <p className="mt-1 text-xs">Aantal pogingen: {saveAttempts}</p>
-                )}
               </div>
             </div>
           </div>
