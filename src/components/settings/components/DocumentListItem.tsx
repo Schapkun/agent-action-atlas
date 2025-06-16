@@ -12,10 +12,17 @@ interface DocumentListItemProps {
   onEdit: (document: DocumentTemplateWithLabels) => void;
   onDuplicate: (document: DocumentTemplateWithLabels) => void;
   onDelete: (document: DocumentTemplateWithLabels) => void;
+  onLabelUpdate?: (documentId: string) => void;
 }
 
-export const DocumentListItem = ({ document, onEdit, onDuplicate, onDelete }: DocumentListItemProps) => {
-  const { updateTemplate, fetchTemplates } = useDocumentTemplates();
+export const DocumentListItem = ({ 
+  document, 
+  onEdit, 
+  onDuplicate, 
+  onDelete, 
+  onLabelUpdate 
+}: DocumentListItemProps) => {
+  const { updateTemplate } = useDocumentTemplates();
 
   const handleEdit = () => onEdit(document);
   const handleDuplicate = () => onDuplicate(document);
@@ -30,8 +37,11 @@ export const DocumentListItem = ({ document, onEdit, onDuplicate, onDelete }: Do
       await updateTemplate(document.id, {
         labelIds: labels.map(label => label.id)
       });
-      // Refresh templates to show updated labels immediately
-      await fetchTemplates();
+      
+      // Trigger immediate refresh of this specific document
+      if (onLabelUpdate) {
+        onLabelUpdate(document.id);
+      }
     } catch (error) {
       console.error('Error updating document labels:', error);
     }

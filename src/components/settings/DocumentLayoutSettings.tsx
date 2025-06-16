@@ -122,6 +122,12 @@ const DocumentLayoutContent = () => {
     }
   };
 
+  const handleLabelUpdate = async (documentId: string) => {
+    console.log('[Settings] Label updated for document:', documentId);
+    // Refresh templates to show updated labels immediately
+    await fetchTemplates();
+  };
+
   const handleClearFilters = () => {
     setSelectedFilterLabels([]);
   };
@@ -152,6 +158,7 @@ const DocumentLayoutContent = () => {
           onEditDocument={handleEditDocument}
           onDuplicateDocument={handleDuplicateDocument}
           onDeleteDocument={handleDeleteDocument}
+          onLabelUpdate={handleLabelUpdate}
         />
 
         {/* Simple HTML Document Builder Dialog */}

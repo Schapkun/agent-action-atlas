@@ -9,13 +9,15 @@ interface DocumentListProps {
   onEditDocument: (document: DocumentTemplate) => void;
   onDuplicateDocument: (document: DocumentTemplate) => void;
   onDeleteDocument: (document: DocumentTemplate) => void;
+  onLabelUpdate?: (documentId: string) => void;
 }
 
 export const DocumentList = ({ 
   documents, 
   onEditDocument, 
   onDuplicateDocument, 
-  onDeleteDocument 
+  onDeleteDocument,
+  onLabelUpdate
 }: DocumentListProps) => {
   if (documents.length === 0) {
     return (
@@ -39,6 +41,7 @@ export const DocumentList = ({
             onEdit={onEditDocument}
             onDuplicate={onDuplicateDocument}
             onDelete={onDeleteDocument}
+            onLabelUpdate={onLabelUpdate}
           />
         ))}
       </div>
