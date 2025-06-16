@@ -153,13 +153,18 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
   };
 
   const handleSave = async () => {
-    console.log('💾 Save initiated:', { documentName: documentName.trim(), documentId });
+    console.log('💾 Save initiated:', { 
+      documentName: documentName.trim(), 
+      documentId,
+      hasContent: htmlContent.length > 0,
+      placeholderCount: Object.keys(placeholderValues).length
+    });
     
     if (!documentName.trim()) {
       console.log('❌ Save blocked: empty document name');
       toast({
-        title: "Fout",
-        description: "Voer een documentnaam in",
+        title: "Validatiefout",
+        description: "Voer een geldige documentnaam in",
         variant: "destructive"
       });
       return;
@@ -177,18 +182,24 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
         });
         console.log('✅ Template updated successfully');
       } else {
-        console.log('🆕 Creating new template');
+        console.log('🆕 Creating new template with data:', {
+          name: documentName,
+          html_content: htmlContent.substring(0, 100) + '...',
+          placeholder_values: placeholderValues
+        });
+        
         // Create new
         const newTemplate = await createTemplate({
           name: documentName,
           type: 'custom',
           html_content: htmlContent,
-          description: 'Custom document',
+          description: 'Custom document template',
           is_default: false,
           is_active: true,
           placeholder_values: placeholderValues
         });
-        console.log('✅ New template created:', newTemplate?.id);
+        
+        console.log('✅ New template created with ID:', newTemplate?.id);
       }
       
       setHasUnsavedChanges(false);
@@ -199,9 +210,10 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       onComplete(true);
     } catch (error) {
       console.error('❌ Save failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Onbekende fout';
       toast({
-        title: "Fout",
-        description: "Kon document niet opslaan: " + (error instanceof Error ? error.message : 'Onbekende fout'),
+        title: "Opslagfout",
+        description: "Kon document niet opslaan: " + errorMessage,
         variant: "destructive"
       });
     } finally {

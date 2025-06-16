@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -29,6 +28,8 @@ export const useDocumentTemplates = () => {
   const fetchTemplates = async () => {
     try {
       setLoading(true);
+      console.log('🔄 Fetching templates for organization:', selectedOrganization?.id);
+      
       let query = supabase
         .from('document_templates')
         .select('*')
@@ -41,7 +42,10 @@ export const useDocumentTemplates = () => {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching templates:', error);
+        throw error;
+      }
       
       // Transform the data to ensure proper typing
       const transformedData = (data || []).map(item => ({
@@ -52,9 +56,10 @@ export const useDocumentTemplates = () => {
             item.placeholder_values as Record<string, string> : null) : null
       }));
       
+      console.log('✅ Templates fetched successfully:', transformedData.length);
       setTemplates(transformedData);
     } catch (error) {
-      console.error('Error fetching templates:', error);
+      console.error('❌ Error fetching templates:', error);
       toast({
         title: "Fout",
         description: "Kon templates niet ophalen",
@@ -67,6 +72,11 @@ export const useDocumentTemplates = () => {
 
   const createTemplate = async (templateData: Partial<DocumentTemplate>) => {
     try {
+      console.log('🆕 Creating new template:', templateData);
+      
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
       // Ensure required fields are present
       const insertData = {
         name: templateData.name || '',
@@ -75,10 +85,13 @@ export const useDocumentTemplates = () => {
         html_content: templateData.html_content || '',
         organization_id: selectedOrganization?.id || null,
         workspace_id: selectedWorkspace?.id || null,
+        created_by: user?.id || null,
         is_default: templateData.is_default || false,
         is_active: templateData.is_active !== false, // Default to true
         placeholder_values: templateData.placeholder_values || null,
       };
+
+      console.log('📝 Insert data:', insertData);
 
       const { data, error } = await supabase
         .from('document_templates')
@@ -86,7 +99,14 @@ export const useDocumentTemplates = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Database error:', error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error('No data returned from insert');
+      }
 
       const newTemplate: DocumentTemplate = {
         ...data,
@@ -98,6 +118,8 @@ export const useDocumentTemplates = () => {
       
       setTemplates(prev => [newTemplate, ...prev]);
       
+      console.log('✅ Template created successfully:', newTemplate.id);
+      
       toast({
         title: "Succes",
         description: "Template succesvol aangemaakt"
@@ -105,10 +127,11 @@ export const useDocumentTemplates = () => {
 
       return newTemplate;
     } catch (error) {
-      console.error('Error creating template:', error);
+      console.error('❌ Error creating template:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Onbekende fout';
       toast({
         title: "Fout",
-        description: "Kon template niet aanmaken",
+        description: "Kon template niet aanmaken: " + errorMessage,
         variant: "destructive"
       });
       throw error;
@@ -186,7 +209,12 @@ export const useDocumentTemplates = () => {
 
   useEffect(() => {
     if (selectedOrganization) {
+      console.log('🔄 Organization changed, fetching templates');
       fetchTemplates();
+    } else {
+      console.log('⏹️ No organization selected, clearing templates');
+      setTemplates([]);
+      setLoading(false);
     }
   }, [selectedOrganization, selectedWorkspace]);
 
