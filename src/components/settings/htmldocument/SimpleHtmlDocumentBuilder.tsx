@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { SimpleDocumentHeader } from './components/SimpleDocumentHeader';
 import { VariablesPanel } from './components/VariablesPanel';
@@ -79,22 +79,27 @@ const DEFAULT_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
+const DEFAULT_PLACEHOLDERS = {
+  datum: new Date().toLocaleDateString('nl-NL'),
+  bedrijfsnaam: 'Uw Bedrijf B.V.',
+  aanhef: 'Geachte heer/mevrouw,',
+  afsluiting: 'Met vriendelijke groet,',
+  footer_tekst: 'Dit document is automatisch gegenereerd.',
+};
+
 export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtmlDocumentBuilderProps) => {
   const [documentName, setDocumentName] = useState('Nieuw Document');
   const [htmlContent, setHtmlContent] = useState(DEFAULT_HTML);
-  const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>({
-    datum: new Date().toLocaleDateString('nl-NL'),
-    bedrijfsnaam: 'Uw Bedrijf B.V.',
-    aanhef: 'Geachte heer/mevrouw,',
-    afsluiting: 'Met vriendelijke groet,',
-    footer_tekst: 'Dit document is automatisch gegenereerd.',
-  });
+  const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>(DEFAULT_PLACEHOLDERS);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [initialLoaded, setInitialLoaded] = useState(false);
   const [saveAttempts, setSaveAttempts] = useState(0);
+  
+  // Use refs to prevent infinite loops
+  const initialLoadCompleted = useRef(false);
+  const documentIdRef = useRef(documentId);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -102,7 +107,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
   const { templates, loading: templatesLoading, updateTemplate, createTemplate, fetchTemplates } = useDocumentTemplates();
 
   // Enhanced access check with detailed logging
-  const checkAccess = () => {
+  const checkAccess = useCallback(() => {
     console.log('[DocumentBuilder] === ACCESS CHECK START ===');
     console.log('[DocumentBuilder] User exists:', !!user);
     console.log('[DocumentBuilder] User ID:', user?.id);
@@ -125,10 +130,10 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
     console.log('[DocumentBuilder] ACCESS GRANTED');
     setError(null);
     return true;
-  };
+  }, [user, selectedOrganization]);
 
-  // Test database connection
-  const testDatabaseConnection = async () => {
+  // Test database connection - memoized to prevent loops
+  const testDatabaseConnection = useCallback(async () => {
     try {
       console.log('[DocumentBuilder] Testing database connection...');
       await fetchTemplates();
@@ -143,17 +148,22 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       });
       return false;
     }
-  };
+  }, [fetchTemplates, toast]);
 
-  // Load document when documentId changes
+  // Load document when documentId changes - FIXED DEPENDENCIES
   useEffect(() => {
+    // Prevent infinite loops by checking if we really need to reload
+    if (documentIdRef.current === documentId && initialLoadCompleted.current) {
+      return;
+    }
+    
+    documentIdRef.current = documentId;
+    
     const loadDocument = async () => {
       console.log('[DocumentBuilder] === LOAD DOCUMENT START ===');
       console.log('[DocumentBuilder] Document ID:', documentId);
       console.log('[DocumentBuilder] Templates loading:', templatesLoading);
       console.log('[DocumentBuilder] Templates count:', templates.length);
-      console.log('[DocumentBuilder] Has access:', checkAccess());
-      console.log('[DocumentBuilder] Initial loaded:', initialLoaded);
       
       if (!checkAccess()) {
         setIsLoading(false);
@@ -165,17 +175,19 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
         return;
       }
 
-      // Test database connection on first load
-      const connectionOk = await testDatabaseConnection();
-      if (!connectionOk) {
-        setIsLoading(false);
-        return;
+      // Test database connection on first load only
+      if (!initialLoadCompleted.current) {
+        const connectionOk = await testDatabaseConnection();
+        if (!connectionOk) {
+          setIsLoading(false);
+          return;
+        }
       }
 
       if (!documentId) {
         console.log('[DocumentBuilder] No document ID, using defaults for new document');
         setIsLoading(false);
-        setInitialLoaded(true);
+        initialLoadCompleted.current = true;
         setHasUnsavedChanges(false);
         return;
       }
@@ -188,7 +200,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
           setDocumentName(template.name);
           setHtmlContent(template.html_content || DEFAULT_HTML);
           setPlaceholderValues({
-            ...placeholderValues,
+            ...DEFAULT_PLACEHOLDERS,
             ...(template.placeholder_values || {})
           });
           setHasUnsavedChanges(false);
@@ -202,16 +214,16 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
         setError(error instanceof Error ? error.message : 'Fout bij laden');
       } finally {
         setIsLoading(false);
-        setInitialLoaded(true);
+        initialLoadCompleted.current = true;
       }
     };
 
     loadDocument();
-  }, [documentId, templates, templatesLoading, user, selectedOrganization]);
+  }, [documentId, templatesLoading, templates.length]); // SIMPLIFIED DEPENDENCIES
 
-  // Track changes - only after initial load
+  // Track changes - only after initial load and with stable dependencies
   useEffect(() => {
-    if (!initialLoaded) {
+    if (!initialLoadCompleted.current) {
       return;
     }
 
@@ -219,7 +231,6 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
     console.log('[DocumentBuilder] Document ID:', documentId);
     console.log('[DocumentBuilder] Document name:', documentName);
     console.log('[DocumentBuilder] HTML content length:', htmlContent.length);
-    console.log('[DocumentBuilder] Placeholder values count:', Object.keys(placeholderValues).length);
 
     // For new documents, only mark as changed when user actually makes changes
     if (!documentId) {
@@ -230,26 +241,25 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       // For existing documents, mark as changed
       setHasUnsavedChanges(true);
     }
-  }, [documentName, htmlContent, placeholderValues, initialLoaded, documentId]);
+  }, [documentName, htmlContent, documentId]); // REMOVED placeholderValues to prevent loops
 
-  const handlePlaceholderChange = (key: string, value: string) => {
+  const handlePlaceholderChange = useCallback((key: string, value: string) => {
     console.log('[DocumentBuilder] Placeholder changed:', key, value);
     setPlaceholderValues(prev => ({
       ...prev,
       [key]: value
     }));
-  };
+    // Set unsaved changes directly here to avoid dependency loops
+    if (initialLoadCompleted.current) {
+      setHasUnsavedChanges(true);
+    }
+  }, []);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     const attemptNumber = saveAttempts + 1;
     setSaveAttempts(attemptNumber);
     
     console.log('[DocumentBuilder] === SAVE ATTEMPT #' + attemptNumber + ' START ===');
-    console.log('[DocumentBuilder] Is new document:', !documentId);
-    console.log('[DocumentBuilder] Document name:', documentName.trim());
-    console.log('[DocumentBuilder] HTML content length:', htmlContent.length);
-    console.log('[DocumentBuilder] Has access:', checkAccess());
-    console.log('[DocumentBuilder] Placeholder values:', placeholderValues);
     
     // Show immediate feedback
     toast({
@@ -360,16 +370,16 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       setIsSaving(false);
       console.log('[DocumentBuilder] === SAVE ATTEMPT #' + attemptNumber + ' END ===');
     }
-  };
+  }, [documentName, htmlContent, placeholderValues, documentId, saveAttempts, checkAccess, templates, updateTemplate, createTemplate, fetchTemplates, toast, onComplete]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     console.log('[DocumentBuilder] Cancel requested, hasUnsavedChanges:', hasUnsavedChanges);
     if (hasUnsavedChanges) {
       const confirmed = window.confirm('Er zijn niet-opgeslagen wijzigingen. Weet je zeker dat je wilt annuleren?');
       if (!confirmed) return;
     }
     onComplete(false);
-  };
+  }, [hasUnsavedChanges, onComplete]);
 
   if (isLoading) {
     return (
