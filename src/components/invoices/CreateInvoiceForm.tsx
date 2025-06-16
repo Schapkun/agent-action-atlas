@@ -70,7 +70,8 @@ export const CreateInvoiceForm = () => {
     }
   };
 
-  const { availableTemplates } = InvoiceTemplateManager({
+  // Get template manager components
+  const templateManager = InvoiceTemplateManager({
     documentTemplates,
     templatesLoading,
     selectedTemplate: selectedTemplateObject,
@@ -95,11 +96,8 @@ export const CreateInvoiceForm = () => {
         <form onSubmit={handleFormSubmit} className="space-y-3">
           <ContactSelectionCard
             selectedContact={selectedContact}
-            selectedTemplate={selectedTemplate || ''}
-            availableTemplates={availableTemplates}
-            templatesLoading={templatesLoading}
+            templateSelector={templateManager.templateSelect}
             onContactSelect={handleContactSelectOnly}
-            onTemplateChange={handleTemplateChange}
             onShowSettings={() => setShowSettings(true)}
           />
 
@@ -144,7 +142,7 @@ export const CreateInvoiceForm = () => {
       <InvoiceFormPreview
         showPreview={showPreview}
         setShowPreview={setShowPreview}
-        availableTemplates={availableTemplates}
+        availableTemplates={templateManager.availableTemplates}
         selectedTemplate={selectedTemplate || ''}
         formData={formData}
         lineItems={lineItems}
