@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Table, TableBody } from '@/components/ui/table';
 import { ContactTableHeader } from './ContactTableHeader';
@@ -55,8 +56,6 @@ interface ContactTableProps {
   onColumnVisibilityChange: (column: keyof ColumnVisibility, checked: boolean) => void;
   onBulkArchive: () => void;
   onBulkDelete: () => void;
-  onNewContact: () => void;
-  onEditContact?: (contact: Contact) => void;
   onContactsUpdated?: () => void;
   onFilterByLabels?: (contact: Contact) => void;
 }
@@ -77,8 +76,6 @@ export const ContactTable = ({
   onColumnVisibilityChange,
   onBulkArchive,
   onBulkDelete,
-  onNewContact,
-  onEditContact,
   onContactsUpdated,
   onFilterByLabels
 }: ContactTableProps) => {
@@ -106,15 +103,9 @@ export const ContactTable = ({
         hasContacts={contacts.length > 0}
         hasFilteredContacts={filteredContacts.length > 0}
         canInviteUsers={canInviteUsers}
-        onNewContact={onNewContact}
       />
     );
   }
-
-  const handleEditContact = (contact: Contact) => {
-    console.log('🔵 ContactTable: Edit contact clicked:', contact.name);
-    onEditContact?.(contact);
-  };
 
   const handleViewInvoices = (contact: Contact) => {
     console.log('🔵 ContactTable: View invoices for:', contact.name);
@@ -130,7 +121,6 @@ export const ContactTable = ({
 
   const handleCreateInvoice = (contact: Contact) => {
     console.log('🔵 ContactTable: Create invoice for:', contact.name);
-    // Navigate to create invoice page with pre-selected contact
     navigate('/facturen/nieuw', { 
       state: { 
         preSelectedContact: {
@@ -147,7 +137,6 @@ export const ContactTable = ({
 
   const handleCreateQuote = (contact: Contact) => {
     console.log('🔵 ContactTable: Create quote for:', contact.name);
-    // Navigate to create quote page with pre-selected contact
     navigate('/offertes/nieuw', { 
       state: { 
         preSelectedContact: {
@@ -202,7 +191,6 @@ export const ContactTable = ({
               columnVisibility={columnVisibility}
               onSelectContact={onSelectContact}
               onToggleStatus={onToggleStatus}
-              onEditContact={handleEditContact}
               onViewInvoices={handleViewInvoices}
               onViewQuotes={handleViewQuotes}
               onCreateInvoice={handleCreateInvoice}

@@ -25,8 +25,6 @@ export const useInvoiceFormHandlers = () => {
     invoiceSettings,
     getDefaultInvoiceNumber,
     handleContactSelectOnly,
-    handleContactSaveAndSelect,
-    handleContactUpdated,
     updateLineItem,
     addLineItem,
     removeLineItem,
@@ -57,13 +55,6 @@ export const useInvoiceFormHandlers = () => {
       return invoiceNumber;
     }
     return '';
-  };
-
-  // FIXED: ContactDialog -> onSave -> ContactSelectionCard -> handleContactSelectOnly (no double save)
-  const handleContactCreatedAndSelected = (contact: any) => {
-    console.log('📝 CreateInvoiceForm: Contact created by dialog, now selecting for invoice');
-    handleContactSelectOnly(contact);
-    console.log('📝 CreateInvoiceForm: Contact selected for invoice form');
   };
 
   const handleContactClear = () => {
@@ -126,14 +117,12 @@ export const useInvoiceFormHandlers = () => {
     sendLoading,
     invoiceSettings,
     
-    // Handlers - FIXED NAMING
+    // Handlers
     handleInvoiceNumberChange,
     handleInvoiceNumberFocus,
     handleInvoiceNumberBlur,
     getDisplayInvoiceNumber,
     handleContactSelectOnly,
-    handleContactCreatedAndSelected,
-    handleContactUpdated,
     handleContactClear,
     handlePreview,
     handleFormSubmit,

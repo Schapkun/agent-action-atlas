@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { Label } from '@/components/ui/label';
-import { ContactDialog } from './ContactDialog';
 import { ContactSearch } from './ContactSearch';
 import { ContactDropdown } from './ContactDropdown';
 import { ContactActions } from './ContactActions';
@@ -21,22 +20,16 @@ interface Contact {
 interface ContactSelectorProps {
   selectedContact?: Contact | null;
   onContactSelect: (contact: Contact | null) => void;
-  onContactCreated: (contact: Contact) => void;
-  onContactUpdated: (contact: Contact) => void;
 }
 
 export const ContactSelector = ({ 
   selectedContact, 
-  onContactSelect, 
-  onContactCreated, 
-  onContactUpdated 
+  onContactSelect
 }: ContactSelectorProps) => {
-  const [isNewContactOpen, setIsNewContactOpen] = useState(false);
-  const [isEditContactOpen, setIsEditContactOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
-  const { contacts, loading, fetchContacts } = useContactData();
+  const { contacts, loading } = useContactData();
 
   const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -47,7 +40,7 @@ export const ContactSelector = ({
   );
 
   const handleContactSelect = (contact: Contact) => {
-    console.log('📋 FIXED: ContactSelector - selecting existing contact:', contact.name);
+    console.log('📋 ContactSelector - selecting existing contact:', contact.name);
     onContactSelect(contact);
     setSearchTerm(contact.name);
     setIsDropdownOpen(false);
@@ -56,42 +49,6 @@ export const ContactSelector = ({
   const handleContactClear = () => {
     onContactSelect(null);
     setSearchTerm('');
-  };
-
-  const handleNewContact = () => {
-    setIsNewContactOpen(true);
-  };
-
-  const handleEditContact = () => {
-    if (!selectedContact) {
-      return;
-    }
-    setIsEditContactOpen(true);
-  };
-
-  // FIXED: ContactDialog saves contact, then we just select it (no double save)
-  const handleContactCreated = (contact: Contact) => {
-    console.log('📋 FIXED: ContactSelector - contact saved by dialog, now selecting:', contact.name);
-    
-    // Close dialog first
-    setIsNewContactOpen(false);
-    
-    // Update search term to show selected contact
-    setSearchTerm(contact.name);
-    
-    // Call parent callback (this will be ContactSelectionCard.handleContactCreated -> CreateInvoiceForm.handleContactCreatedAndSelected -> useInvoiceFormHandlers.handleContactSelectOnly)
-    onContactCreated(contact);
-    
-    // Reload the contacts list
-    fetchContacts();
-  };
-
-  const handleContactUpdated = (contact: Contact) => {
-    onContactUpdated(contact);
-    setIsEditContactOpen(false);
-    onContactSelect(contact);
-    // Herlaad de contactenlijst
-    fetchContacts();
   };
 
   const handleSearchChange = (value: string) => {
@@ -108,50 +65,31 @@ export const ContactSelector = ({
   };
 
   return (
-    <>
-      <div className="flex items-center gap-3 mb-2">
-        <div className="flex-1">
-          <Label htmlFor="client_select" className="text-xs font-medium">Aan</Label>
-          <div className="flex gap-2 mt-1 relative">
-            <ContactSearch
-              searchTerm={searchTerm}
-              selectedContact={selectedContact}
-              onSearchChange={handleSearchChange}
-              onFocus={handleSearchFocus}
-              onClear={handleContactClear}
-            />
-            
-            <ContactDropdown
-              isOpen={isDropdownOpen}
-              loading={loading}
-              contacts={filteredContacts}
-              onContactSelect={handleContactSelect}
-              onClose={handleDropdownClose}
-            />
-            
-            <ContactActions
-              selectedContact={selectedContact}
-              onNewContact={handleNewContact}
-              onEditContact={handleEditContact}
-            />
-          </div>
+    <div className="flex items-center gap-3 mb-2">
+      <div className="flex-1">
+        <Label htmlFor="client_select" className="text-xs font-medium">Aan</Label>
+        <div className="flex gap-2 mt-1 relative">
+          <ContactSearch
+            searchTerm={searchTerm}
+            selectedContact={selectedContact}
+            onSearchChange={handleSearchChange}
+            onFocus={handleSearchFocus}
+            onClear={handleContactClear}
+          />
+          
+          <ContactDropdown
+            isOpen={isDropdownOpen}
+            loading={loading}
+            contacts={filteredContacts}
+            onContactSelect={handleContactSelect}
+            onClose={handleDropdownClose}
+          />
+          
+          <ContactActions
+            selectedContact={selectedContact}
+          />
         </div>
       </div>
-
-      <ContactDialog
-        isOpen={isNewContactOpen}
-        onClose={() => setIsNewContactOpen(false)}
-        onSave={handleContactCreated}
-        mode="create"
-      />
-
-      <ContactDialog
-        isOpen={isEditContactOpen}
-        onClose={() => setIsEditContactOpen(false)}
-        onSave={handleContactUpdated}
-        contact={selectedContact}
-        mode="edit"
-      />
-    </>
+    </div>
   );
 };

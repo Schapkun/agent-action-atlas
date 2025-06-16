@@ -1,5 +1,4 @@
 
-import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -27,8 +26,6 @@ interface ContactSelectionCardProps {
   availableTemplates: any[];
   templatesLoading: boolean;
   onContactSelect: (contact: Contact | null) => void;
-  onContactCreated: (contact: Contact) => void;
-  onContactUpdated: (contact: Contact) => void;
   onTemplateChange: (templateId: string) => void;
   onShowSettings: () => void;
 }
@@ -39,32 +36,19 @@ export const ContactSelectionCard = ({
   availableTemplates,
   templatesLoading,
   onContactSelect,
-  onContactCreated,
-  onContactUpdated,
   onTemplateChange,
   onShowSettings
 }: ContactSelectionCardProps) => {
-  console.log('📋 FIXED: ContactSelectionCard rendering with props:', {
+  console.log('📋 ContactSelectionCard rendering with props:', {
     selectedContact: selectedContact?.name,
     selectedTemplate,
     availableTemplates: availableTemplates.length,
     templatesLoading
   });
 
-  // FIXED: Contact handlers now use correct functions
   const handleContactSelect = (contact: Contact | null) => {
-    console.log('📋 FIXED: ContactSelectionCard.handleContactSelect (existing contact):', contact?.name);
+    console.log('📋 ContactSelectionCard.handleContactSelect:', contact?.name);
     onContactSelect(contact);
-  };
-
-  const handleContactCreated = (contact: Contact) => {
-    console.log('📋 FIXED: ContactSelectionCard.handleContactCreated (dialog saved contact):', contact.name);
-    onContactCreated(contact);
-  };
-
-  const handleContactUpdated = (contact: Contact) => {
-    console.log('📋 FIXED: ContactSelectionCard.handleContactUpdated:', contact.name);
-    onContactUpdated(contact);
   };
 
   return (
@@ -73,12 +57,9 @@ export const ContactSelectionCard = ({
         <CardTitle className="text-sm font-medium">Contact en Template</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* FIXED: ContactSelector uses corrected handler chain */}
         <ContactSelector
           selectedContact={selectedContact}
           onContactSelect={handleContactSelect}
-          onContactCreated={handleContactCreated}
-          onContactUpdated={handleContactUpdated}
         />
 
         <div className="grid grid-cols-2 gap-4">
