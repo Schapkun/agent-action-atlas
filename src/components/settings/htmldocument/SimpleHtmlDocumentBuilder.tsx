@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { SimpleDocumentHeader } from './components/SimpleDocumentHeader';
@@ -93,45 +94,66 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [initialLoaded, setInitialLoaded] = useState(false);
+  const [saveAttempts, setSaveAttempts] = useState(0);
   
   const { toast } = useToast();
   const { user } = useAuth();
   const { selectedOrganization } = useOrganization();
   const { templates, loading: templatesLoading, updateTemplate, createTemplate, fetchTemplates } = useDocumentTemplates();
 
-  // Enhanced access check
+  // Enhanced access check with detailed logging
   const checkAccess = () => {
-    console.log('[DocumentBuilder] Access check:', { 
-      user: !!user, 
-      userId: user?.id,
-      org: !!selectedOrganization,
-      orgId: selectedOrganization?.id 
-    });
+    console.log('[DocumentBuilder] === ACCESS CHECK START ===');
+    console.log('[DocumentBuilder] User exists:', !!user);
+    console.log('[DocumentBuilder] User ID:', user?.id);
+    console.log('[DocumentBuilder] Organization exists:', !!selectedOrganization);
+    console.log('[DocumentBuilder] Organization ID:', selectedOrganization?.id);
+    console.log('[DocumentBuilder] Organization name:', selectedOrganization?.name);
     
     if (!user) {
+      console.log('[DocumentBuilder] ACCESS DENIED: No user');
       setError('Je bent niet ingelogd');
       return false;
     }
 
     if (!selectedOrganization) {
+      console.log('[DocumentBuilder] ACCESS DENIED: No organization');
       setError('Geen organisatie geselecteerd');
       return false;
     }
 
+    console.log('[DocumentBuilder] ACCESS GRANTED');
     setError(null);
     return true;
+  };
+
+  // Test database connection
+  const testDatabaseConnection = async () => {
+    try {
+      console.log('[DocumentBuilder] Testing database connection...');
+      await fetchTemplates();
+      console.log('[DocumentBuilder] Database connection test successful');
+      return true;
+    } catch (error) {
+      console.error('[DocumentBuilder] Database connection test failed:', error);
+      toast({
+        title: "Database verbinding gefaald",
+        description: "Kan geen verbinding maken met de database",
+        variant: "destructive"
+      });
+      return false;
+    }
   };
 
   // Load document when documentId changes
   useEffect(() => {
     const loadDocument = async () => {
-      console.log('[DocumentBuilder] Loading document...', {
-        documentId,
-        templatesLoading,
-        templatesCount: templates.length,
-        hasAccess: checkAccess(),
-        initialLoaded
-      });
+      console.log('[DocumentBuilder] === LOAD DOCUMENT START ===');
+      console.log('[DocumentBuilder] Document ID:', documentId);
+      console.log('[DocumentBuilder] Templates loading:', templatesLoading);
+      console.log('[DocumentBuilder] Templates count:', templates.length);
+      console.log('[DocumentBuilder] Has access:', checkAccess());
+      console.log('[DocumentBuilder] Initial loaded:', initialLoaded);
       
       if (!checkAccess()) {
         setIsLoading(false);
@@ -143,11 +165,18 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
         return;
       }
 
+      // Test database connection on first load
+      const connectionOk = await testDatabaseConnection();
+      if (!connectionOk) {
+        setIsLoading(false);
+        return;
+      }
+
       if (!documentId) {
         console.log('[DocumentBuilder] No document ID, using defaults for new document');
         setIsLoading(false);
         setInitialLoaded(true);
-        setHasUnsavedChanges(false); // New document starts without changes
+        setHasUnsavedChanges(false);
         return;
       }
 
@@ -186,12 +215,11 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       return;
     }
 
-    console.log('[DocumentBuilder] Tracking changes:', {
-      documentId,
-      documentName,
-      htmlContentLength: htmlContent.length,
-      placeholderValuesCount: Object.keys(placeholderValues).length
-    });
+    console.log('[DocumentBuilder] === TRACKING CHANGES ===');
+    console.log('[DocumentBuilder] Document ID:', documentId);
+    console.log('[DocumentBuilder] Document name:', documentName);
+    console.log('[DocumentBuilder] HTML content length:', htmlContent.length);
+    console.log('[DocumentBuilder] Placeholder values count:', Object.keys(placeholderValues).length);
 
     // For new documents, only mark as changed when user actually makes changes
     if (!documentId) {
@@ -213,82 +241,63 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
   };
 
   const handleSave = async () => {
-    console.log('[DocumentBuilder] Save initiated:', { 
-      isNew: !documentId, 
-      documentName: documentName.trim(),
-      htmlContentLength: htmlContent.length,
-      hasAccess: checkAccess(),
-      placeholderValuesCount: Object.keys(placeholderValues).length
+    const attemptNumber = saveAttempts + 1;
+    setSaveAttempts(attemptNumber);
+    
+    console.log('[DocumentBuilder] === SAVE ATTEMPT #' + attemptNumber + ' START ===');
+    console.log('[DocumentBuilder] Is new document:', !documentId);
+    console.log('[DocumentBuilder] Document name:', documentName.trim());
+    console.log('[DocumentBuilder] HTML content length:', htmlContent.length);
+    console.log('[DocumentBuilder] Has access:', checkAccess());
+    console.log('[DocumentBuilder] Placeholder values:', placeholderValues);
+    
+    // Show immediate feedback
+    toast({
+      title: "Opslaan gestart",
+      description: `Poging #${attemptNumber} om document op te slaan...`,
     });
     
     if (!checkAccess()) {
-      console.error('[DocumentBuilder] Access check failed during save');
+      console.error('[DocumentBuilder] === SAVE FAILED: ACCESS DENIED ===');
+      toast({
+        title: "Toegang geweigerd",
+        description: "Je hebt geen toegang om dit document op te slaan",
+        variant: "destructive"
+      });
       return;
     }
     
     // Clear any previous errors
     setError(null);
-    
-    // Enhanced validation
-    const trimmedName = documentName.trim();
-    if (!trimmedName) {
-      const errorMsg = 'Documentnaam is verplicht';
-      console.error('[DocumentBuilder] Validation error:', errorMsg);
-      setError(errorMsg);
-      toast({
-        title: "Validatiefout",
-        description: errorMsg,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (trimmedName.length < 2) {
-      const errorMsg = 'Documentnaam moet minimaal 2 karakters bevatten';
-      console.error('[DocumentBuilder] Validation error:', errorMsg);
-      setError(errorMsg);
-      toast({
-        title: "Validatiefout",
-        description: errorMsg,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!htmlContent.trim()) {
-      const errorMsg = 'HTML content is verplicht';
-      console.error('[DocumentBuilder] Validation error:', errorMsg);
-      setError(errorMsg);
-      toast({
-        title: "Validatiefout", 
-        description: errorMsg,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Check for duplicate names when creating new document
-    if (!documentId) {
-      const existingTemplate = templates.find(t => 
-        t.name.toLowerCase().trim() === trimmedName.toLowerCase()
-      );
-      
-      if (existingTemplate) {
-        const errorMsg = `Een document met de naam "${trimmedName}" bestaat al`;
-        console.error('[DocumentBuilder] Duplicate name error:', errorMsg);
-        setError(errorMsg);
-        toast({
-          title: "Validatiefout",
-          description: errorMsg,
-          variant: "destructive"
-        });
-        return;
-      }
-    }
-    
     setIsSaving(true);
     
     try {
+      // Enhanced validation with user feedback
+      const trimmedName = documentName.trim();
+      if (!trimmedName) {
+        throw new Error('Documentnaam is verplicht');
+      }
+
+      if (trimmedName.length < 2) {
+        throw new Error('Documentnaam moet minimaal 2 karakters bevatten');
+      }
+
+      if (!htmlContent.trim()) {
+        throw new Error('HTML content is verplicht');
+      }
+
+      // Check for duplicate names when creating new document
+      if (!documentId) {
+        console.log('[DocumentBuilder] Checking for duplicate names...');
+        const existingTemplate = templates.find(t => 
+          t.name.toLowerCase().trim() === trimmedName.toLowerCase()
+        );
+        
+        if (existingTemplate) {
+          throw new Error(`Een document met de naam "${trimmedName}" bestaat al`);
+        }
+      }
+      
       const templateData = {
         name: trimmedName,
         html_content: htmlContent,
@@ -315,10 +324,9 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
         result = await createTemplate(templateData);
       }
       
-      console.log('[DocumentBuilder] Save successful:', {
-        resultId: result?.id,
-        resultName: result?.name
-      });
+      console.log('[DocumentBuilder] === SAVE SUCCESS ===');
+      console.log('[DocumentBuilder] Result ID:', result?.id);
+      console.log('[DocumentBuilder] Result name:', result?.name);
       
       setHasUnsavedChanges(false);
       setError(null);
@@ -327,23 +335,30 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       await fetchTemplates();
       
       toast({
-        title: "Opgeslagen",
-        description: `Document "${result?.name}" succesvol opgeslagen`
+        title: "Opgeslagen!",
+        description: `Document "${result?.name}" succesvol opgeslagen`,
       });
       
       onComplete(true);
     } catch (error) {
-      console.error('[DocumentBuilder] Save failed:', error);
+      console.error('[DocumentBuilder] === SAVE FAILED ===');
+      console.error('[DocumentBuilder] Error details:', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
       const errorMessage = error instanceof Error ? error.message : 'Onbekende fout bij opslaan';
       setError(errorMessage);
       
       toast({
         title: "Opslagfout",
-        description: errorMessage,
+        description: `Poging #${attemptNumber}: ${errorMessage}`,
         variant: "destructive"
       });
     } finally {
       setIsSaving(false);
+      console.log('[DocumentBuilder] === SAVE ATTEMPT #' + attemptNumber + ' END ===');
     }
   };
 
@@ -415,6 +430,9 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
               <h3 className="text-sm font-medium text-red-800">Fout</h3>
               <div className="mt-2 text-sm text-red-700">
                 <p>{error}</p>
+                {saveAttempts > 0 && (
+                  <p className="mt-1 text-xs">Aantal pogingen: {saveAttempts}</p>
+                )}
               </div>
             </div>
           </div>
