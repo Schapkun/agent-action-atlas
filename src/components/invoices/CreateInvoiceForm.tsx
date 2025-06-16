@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -112,14 +113,14 @@ export const CreateInvoiceForm = () => {
     return '';
   };
 
-  // FIXED: Proper contact creation handler for invoice context
+  // FIXED: Complete contact creation handler for invoice context
   const handleContactCreatedAndSelected = async (contact: any) => {
-    console.log('📝 STEP 2: Adding contact to contact list and selecting for invoice');
+    console.log('📝 CreateInvoiceForm: Contact created and auto-selecting for invoice');
     
     try {
       // The contact is already saved in the database by ContactDialog
       // We just need to select it for the invoice form
-      console.log('📝 Contact saved and now selecting for invoice form');
+      console.log('📝 Contact saved, now selecting for invoice form');
       
       // Select the contact for the invoice
       handleContactSelect(contact);
@@ -155,15 +156,35 @@ export const CreateInvoiceForm = () => {
   const { subtotal, vatAmount, total } = calculateTotals();
 
   const handlePreview = () => {
+    console.log('🎨 PREVIEW: Opening preview with data:', {
+      formData,
+      lineItems,
+      invoiceNumber,
+      selectedTemplate
+    });
     setShowPreview(true);
   };
 
+  // FIXED: Generate preview HTML with complete data
   const previewHTML = generatePreviewHTML(
     availableTemplates,
     selectedTemplate,
-    formData,
+    {
+      ...formData,
+      // Ensure all required fields are present for preview
+      client_name: formData.client_name || selectedContact?.name || '[Klantnaam]',
+      client_email: formData.client_email || selectedContact?.email || '[Klant email]',
+      client_address: formData.client_address || selectedContact?.address || '[Klant adres]',
+      client_postal_code: formData.client_postal_code || selectedContact?.postal_code || '[Postcode]',
+      client_city: formData.client_city || selectedContact?.city || '[Plaats]',
+      client_country: formData.client_country || selectedContact?.country || 'Nederland',
+      invoice_date: formData.invoice_date || new Date().toLocaleDateString('nl-NL'),
+      due_date: formData.due_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL'),
+      payment_terms: formData.payment_terms || 30,
+      notes: formData.notes || ''
+    },
     lineItems,
-    invoiceNumber,
+    invoiceNumber || 'CONCEPT',
     getDefaultInvoiceNumber
   );
 
@@ -171,18 +192,6 @@ export const CreateInvoiceForm = () => {
     e.preventDefault();
     console.log('✅ EXPLICIT USER ACTION: Form submitted - this will create an invoice');
     handleSubmit();
-  };
-
-  // ABSOLUTE ISOLATION: This handler ensures NO AUTOMATIC INVOICE CREATION
-  const handleContactCreatedSafely = (contact: any) => {
-    console.log('🚫 ABSOLUTE ISOLATION: CreateInvoiceForm.handleContactCreatedSafely');
-    console.log('🚫 This will ONLY call handleContactCreated for form updates');
-    console.log('🚫 NO INVOICE CREATION will happen in this isolated handler');
-    
-    // Call the handleContactCreated which should ONLY update form data
-    handleContactCreated(contact);
-    
-    console.log('🚫 ISOLATION COMPLETE: Form updated only - ZERO INVOICE CREATION');
   };
 
   // Wrapper function to handle line item updates with correct signature

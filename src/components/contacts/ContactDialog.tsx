@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ContactDialogTabs } from './ContactDialogTabs';
 import { useContactCreator } from './ContactCreator';
 import { useLocation } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 interface Contact {
   id: string;
@@ -30,6 +31,7 @@ interface ContactDialogProps {
 export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: ContactDialogProps) => {
   const { saveContact, updateContact } = useContactCreator();
   const location = useLocation();
+  const { toast } = useToast();
   
   // Check if we're on an invoice or quote creation page
   const isInvoiceOrQuotePage = location.pathname.includes('/facturen/opstellen') || 
@@ -118,6 +120,7 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
     }
   }, [contact, mode, isOpen]);
 
+  // FIXED: Complete contact save implementation
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -144,17 +147,25 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
       if (mode === 'edit') {
         console.log('📝 ContactDialog: Updating existing contact');
         savedContact = await updateContact(contactData);
+        toast({
+          title: "Contact bijgewerkt",
+          description: `Contact "${savedContact.name}" is succesvol bijgewerkt.`
+        });
       } else {
         console.log('📝 ContactDialog: Creating new contact');
         savedContact = await saveContact(contactData);
+        toast({
+          title: "Contact toegevoegd",
+          description: `Contact "${savedContact.name}" is succesvol toegevoegd.`
+        });
       }
 
       console.log('📝 ContactDialog: Contact saved successfully');
       
-      // Close popup
+      // Close popup FIRST
       onClose();
       
-      // Call the parent onSave handler
+      // Then call the parent onSave handler
       // This will handle both contexts automatically:
       // - For invoice/quote pages: will select the contact for the form
       // - For contacts page: will just add to the contact list
@@ -164,6 +175,11 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
       
     } catch (error) {
       console.error('📝 ContactDialog: Error saving contact:', error);
+      toast({
+        title: "Fout",
+        description: "Er is een fout opgetreden bij het opslaan van het contact.",
+        variant: "destructive"
+      });
     }
   };
 

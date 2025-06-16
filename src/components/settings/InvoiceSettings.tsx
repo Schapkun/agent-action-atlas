@@ -106,6 +106,7 @@ export const InvoiceSettings = () => {
         .single();
 
       if (error && error.code !== 'PGRST116') {
+        console.error('📊 PUNT 4: Database error:', error);
         throw error;
       }
 
@@ -143,7 +144,7 @@ export const InvoiceSettings = () => {
     }
   };
 
-  // PUNT 4: Fixed save function with correct database columns
+  // FIXED: Improved save function with proper error handling and debugging
   const handleSave = async () => {
     if (!selectedOrganization) {
       console.error('💾 PUNT 4: Geen organisatie geselecteerd');
@@ -160,37 +161,44 @@ export const InvoiceSettings = () => {
       console.log('💾 PUNT 4: Instellingen opslaan voor organisatie:', selectedOrganization.id);
       console.log('💾 PUNT 4: Settings data:', settings);
       
-      // Use the correct column names from the database
-      const { error } = await supabase
+      // FIXED: Use correct column names and proper upsert
+      const upsertData = {
+        organization_id: selectedOrganization.id,
+        default_payment_terms: settings.default_payment_terms,
+        default_vat_rate: settings.default_vat_rate,
+        invoice_prefix: settings.invoice_prefix,
+        invoice_start_number: settings.invoice_start_number,
+        quote_prefix: settings.quote_prefix,
+        quote_start_number: settings.quote_start_number,
+        updated_at: new Date().toISOString()
+      };
+
+      console.log('💾 PUNT 4: Upsert data:', upsertData);
+
+      const { data, error } = await supabase
         .from('organization_settings')
-        .upsert({
-          organization_id: selectedOrganization.id,
-          default_payment_terms: settings.default_payment_terms,
-          default_vat_rate: settings.default_vat_rate,
-          invoice_prefix: settings.invoice_prefix,
-          invoice_start_number: settings.invoice_start_number,
-          quote_prefix: settings.quote_prefix,
-          quote_start_number: settings.quote_start_number,
-        }, {
+        .upsert(upsertData, {
           onConflict: 'organization_id'
-        });
+        })
+        .select();
 
       if (error) {
         console.error('💾 PUNT 4: Database fout bij opslaan:', error);
+        console.error('💾 PUNT 4: Error details:', error.details, error.hint, error.message);
         throw error;
       }
 
-      console.log('💾 PUNT 4: Instellingen succesvol opgeslagen');
+      console.log('💾 PUNT 4: Instellingen succesvol opgeslagen:', data);
       
       toast({
         title: "Succes",
         description: "Instellingen succesvol opgeslagen"
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('💾 PUNT 4: Fout bij opslaan instellingen:', error);
       toast({
         title: "Fout",
-        description: "Kon instellingen niet opslaan",
+        description: `Kon instellingen niet opslaan: ${error.message || 'Onbekende fout'}`,
         variant: "destructive"
       });
     } finally {

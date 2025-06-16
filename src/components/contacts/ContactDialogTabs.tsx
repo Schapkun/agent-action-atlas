@@ -12,10 +12,18 @@ interface ContactDialogTabsProps {
 }
 
 export const ContactDialogTabs = ({ formData, setFormData, onSubmit, onCancel }: ContactDialogTabsProps) => {
-  // Restore working submit handler
+  // FIXED: Real submit handler that actually saves the contact
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('📝 ContactDialogTabs: Submit triggered - saving contact');
+    
+    // Validate required fields
+    if (!formData.name || formData.name.trim() === '') {
+      console.error('📝 ContactDialogTabs: Name is required');
+      return;
+    }
+    
+    // Call the parent's submit handler which will save to database
     onSubmit(e);
   };
 
