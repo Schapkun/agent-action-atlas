@@ -51,16 +51,43 @@ export const ContactTableHeader = ({
             <Trash2 className="h-4 w-4 mr-2" />
             Verwijderen ({selectedContactsCount})
           </Button>
-          
-          {/* Column visibility settings */}
-          <div className="ml-auto">
+        </div>
+      )}
+
+      {/* Table Header */}
+      <TableHeader>
+        <TableRow className="text-xs border-b bg-gray-50">
+          <TableHead className="w-8 p-3">
+            <Checkbox
+              checked={isAllSelected}
+              onCheckedChange={onSelectAll}
+              className={`h-4 w-4 ${isIndeterminate ? 'data-[state=checked]:bg-blue-500' : ''}`}
+              data-state={isIndeterminate ? 'indeterminate' : isAllSelected ? 'checked' : 'unchecked'}
+            />
+          </TableHead>
+          <TableHead className="text-xs font-medium text-muted-foreground p-3 w-20">Klantnr</TableHead>
+          <TableHead className="text-xs font-medium text-muted-foreground p-3">Klant</TableHead>
+          {columnVisibility.email && (
+            <TableHead className="text-xs font-medium text-muted-foreground p-3">E-mail</TableHead>
+          )}
+          {columnVisibility.openstaand && (
+            <TableHead className="text-xs font-medium text-muted-foreground p-3 text-right w-24">Openstaand</TableHead>
+          )}
+          {columnVisibility.omzet && (
+            <TableHead className="text-xs font-medium text-muted-foreground p-3 text-right w-24">Omzet</TableHead>
+          )}
+          {columnVisibility.actief && (
+            <TableHead className="text-xs font-medium text-muted-foreground p-3 text-center w-16">Actief</TableHead>
+          )}
+          <TableHead className="text-xs font-medium text-muted-foreground p-3 w-12">
+            {/* Column visibility settings - always visible when there are contacts */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                   <Settings className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-48 bg-white">
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.email}
                   onCheckedChange={(checked) => 
@@ -95,35 +122,7 @@ export const ContactTableHeader = ({
                 </DropdownMenuCheckboxItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-        </div>
-      )}
-
-      {/* Table Header */}
-      <TableHeader>
-        <TableRow className="text-xs border-b bg-gray-50">
-          <TableHead className="w-8 p-3">
-            <Checkbox
-              checked={isAllSelected}
-              onCheckedChange={onSelectAll}
-              className={`h-4 w-4 ${isIndeterminate ? 'data-[state=checked]:bg-blue-500' : ''}`}
-              data-state={isIndeterminate ? 'indeterminate' : isAllSelected ? 'checked' : 'unchecked'}
-            />
           </TableHead>
-          <TableHead className="text-xs font-medium text-muted-foreground p-3 w-20">Klantnr</TableHead>
-          <TableHead className="text-xs font-medium text-muted-foreground p-3">Klant</TableHead>
-          {columnVisibility.email && (
-            <TableHead className="text-xs font-medium text-muted-foreground p-3">E-mail</TableHead>
-          )}
-          {columnVisibility.openstaand && (
-            <TableHead className="text-xs font-medium text-muted-foreground p-3 text-right w-24">Openstaand</TableHead>
-          )}
-          {columnVisibility.omzet && (
-            <TableHead className="text-xs font-medium text-muted-foreground p-3 text-right w-24">Omzet</TableHead>
-          )}
-          {columnVisibility.actief && (
-            <TableHead className="text-xs font-medium text-muted-foreground p-3 text-center w-16">Actief</TableHead>
-          )}
         </TableRow>
       </TableHeader>
     </>
