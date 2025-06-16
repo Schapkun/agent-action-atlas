@@ -29,7 +29,11 @@ export const useDocumentTemplates = () => {
   // Enhanced access check with better error messages
   const checkUserAccess = async () => {
     try {
+      console.log('[useDocumentTemplates] Starting access check...');
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
+      console.log('[useDocumentTemplates] User check result:', { user: !!user, error: userError });
+      
       if (userError || !user) {
         throw new Error('Je bent niet ingelogd');
       }
@@ -37,6 +41,11 @@ export const useDocumentTemplates = () => {
       if (!selectedOrganization) {
         throw new Error('Geen organisatie geselecteerd');
       }
+
+      console.log('[useDocumentTemplates] Checking organization membership for:', {
+        userId: user.id,
+        orgId: selectedOrganization.id
+      });
 
       // Check organization membership
       const { data: membership, error: membershipError } = await supabase
@@ -46,10 +55,13 @@ export const useDocumentTemplates = () => {
         .eq('user_id', user.id)
         .single();
 
+      console.log('[useDocumentTemplates] Membership check result:', { membership, error: membershipError });
+
       if (membershipError || !membership) {
         throw new Error('Geen toegang tot deze organisatie');
       }
 
+      console.log('[useDocumentTemplates] Access check successful');
       return { user, organization: selectedOrganization };
     } catch (error) {
       console.error('[useDocumentTemplates] Access check failed:', error);
@@ -100,24 +112,61 @@ export const useDocumentTemplates = () => {
 
   const createTemplate = async (templateData: Partial<DocumentTemplate>) => {
     try {
-      console.log('[useDocumentTemplates] Creating template:', templateData.name);
+      console.log('[useDocumentTemplates] ========= CREATE TEMPLATE START =========');
+      console.log('[useDocumentTemplates] Template data received:', {
+        name: templateData.name,
+        type: templateData.type,
+        htmlContentLength: templateData.html_content?.length,
+        placeholderValuesKeys: templateData.placeholder_values ? Object.keys(templateData.placeholder_values) : [],
+        hasDescription: !!templateData.description
+      });
       
       const { user, organization } = await checkUserAccess();
       
-      // Validate required fields
+      // Enhanced validation
       if (!templateData.name?.trim()) {
-        throw new Error('Documentnaam is verplicht');
+        const error = 'Documentnaam is verplicht';
+        console.error('[useDocumentTemplates] Validation error:', error);
+        throw new Error(error);
+      }
+
+      if (templateData.name.trim().length < 2) {
+        const error = 'Documentnaam moet minimaal 2 karakters bevatten';
+        console.error('[useDocumentTemplates] Validation error:', error);
+        throw new Error(error);
       }
 
       if (!templateData.html_content?.trim()) {
-        throw new Error('HTML content is verplicht');
+        const error = 'HTML content is verplicht';
+        console.error('[useDocumentTemplates] Validation error:', error);
+        throw new Error(error);
+      }
+
+      // Check for duplicate names
+      console.log('[useDocumentTemplates] Checking for duplicate names...');
+      const { data: existingTemplates, error: duplicateCheckError } = await supabase
+        .from('document_templates')
+        .select('name')
+        .eq('organization_id', organization.id)
+        .eq('is_active', true)
+        .ilike('name', templateData.name.trim());
+
+      if (duplicateCheckError) {
+        console.error('[useDocumentTemplates] Duplicate check error:', duplicateCheckError);
+        throw new Error(`Fout bij controleren duplicaten: ${duplicateCheckError.message}`);
+      }
+
+      if (existingTemplates && existingTemplates.length > 0) {
+        const error = `Een document met de naam "${templateData.name.trim()}" bestaat al`;
+        console.error('[useDocumentTemplates] Duplicate name error:', error);
+        throw new Error(error);
       }
       
       const insertData = {
         name: templateData.name.trim(),
         type: templateData.type || 'custom',
-        description: templateData.description || null,
-        html_content: templateData.html_content,
+        description: templateData.description?.trim() || null,
+        html_content: templateData.html_content.trim(),
         organization_id: organization.id,
         workspace_id: selectedWorkspace?.id || null,
         created_by: user.id,
@@ -126,11 +175,13 @@ export const useDocumentTemplates = () => {
         placeholder_values: templateData.placeholder_values || null,
       };
 
-      console.log('[useDocumentTemplates] Inserting data:', {
+      console.log('[useDocumentTemplates] Final insert data:', {
         ...insertData,
-        html_content: `${insertData.html_content.substring(0, 50)}...`
+        html_content: `${insertData.html_content.substring(0, 100)}...`,
+        placeholder_values: insertData.placeholder_values ? Object.keys(insertData.placeholder_values) : null
       });
 
+      console.log('[useDocumentTemplates] Attempting database insert...');
       const { data, error } = await supabase
         .from('document_templates')
         .insert(insertData)
@@ -138,13 +189,21 @@ export const useDocumentTemplates = () => {
         .single();
 
       if (error) {
-        console.error('[useDocumentTemplates] Insert error:', error);
-        throw new Error(`Kon template niet aanmaken: ${error.message}`);
+        console.error('[useDocumentTemplates] Database insert error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw new Error(`Database fout: ${error.message}`);
       }
 
       if (!data) {
+        console.error('[useDocumentTemplates] No data returned from insert');
         throw new Error('Template werd aangemaakt maar er werd geen data teruggestuurd');
       }
+
+      console.log('[useDocumentTemplates] Insert successful:', data.id);
 
       const newTemplate: DocumentTemplate = {
         ...data,
@@ -161,9 +220,16 @@ export const useDocumentTemplates = () => {
         description: `Template "${newTemplate.name}" is aangemaakt`,
       });
       
+      console.log('[useDocumentTemplates] ========= CREATE TEMPLATE SUCCESS =========');
       return newTemplate;
     } catch (error) {
-      console.error('[useDocumentTemplates] Create error:', error);
+      console.error('[useDocumentTemplates] ========= CREATE TEMPLATE ERROR =========');
+      console.error('[useDocumentTemplates] Create error details:', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
       const errorMessage = error instanceof Error ? error.message : 'Onbekende fout';
       
       toast({
