@@ -9,7 +9,7 @@ export const useInvoiceTemplates = () => {
   const [defaultTemplate, setDefaultTemplate] = useState<DocumentTemplate | null>(null);
   
   useEffect(() => {
-    // Filter templates that have "Factuur" label (removed type filtering)
+    // Filter templates that have "Factuur" label - no type filtering
     const factuurTemplates = templates.filter(t => 
       t.labels?.some(label => label.name.toLowerCase() === 'factuur')
     );

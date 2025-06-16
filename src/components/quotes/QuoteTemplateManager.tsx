@@ -16,7 +16,7 @@ export const QuoteTemplateManager = ({
   selectedTemplate,
   setSelectedTemplate
 }: QuoteTemplateManagerProps) => {
-  // Filter templates that have "Offerte" label
+  // Filter templates that have "Offerte" label - no type filtering
   const availableTemplates = documentTemplates.filter(template => 
     template.labels?.some(label => label.name.toLowerCase() === 'offerte')
   );
