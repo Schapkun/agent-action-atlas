@@ -2,7 +2,7 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Settings, Archive, Trash2, Check } from 'lucide-react';
+import { Settings, Archive, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,7 +64,7 @@ export const ContactTableHeader = ({
 
       {/* Table Header */}
       <TableHeader>
-        <TableRow className="h-10 border-b bg-gray-50">
+        <TableRow className="h-8 border-b bg-gray-50/50">
           <TableHead className="w-8 p-2">
             <Checkbox
               checked={isAllSelected}
@@ -121,70 +121,49 @@ export const ContactTableHeader = ({
                   onCheckedChange={(checked) => onColumnVisibilityChange('email', checked)}
                   className="text-xs"
                 >
-                  <div className="flex items-center">
-                    {columnVisibility.email && <Check className="h-3 w-3 mr-2" />}
-                    <span className={!columnVisibility.email ? "ml-5" : ""}>E-mail</span>
-                  </div>
+                  E-mail
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.address}
                   onCheckedChange={(checked) => onColumnVisibilityChange('address', checked)}
                   className="text-xs"
                 >
-                  <div className="flex items-center">
-                    {columnVisibility.address && <Check className="h-3 w-3 mr-2" />}
-                    <span className={!columnVisibility.address ? "ml-5" : ""}>Adres</span>
-                  </div>
+                  Adres
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.phone}
                   onCheckedChange={(checked) => onColumnVisibilityChange('phone', checked)}
                   className="text-xs"
                 >
-                  <div className="flex items-center">
-                    {columnVisibility.phone && <Check className="h-3 w-3 mr-2" />}
-                    <span className={!columnVisibility.phone ? "ml-5" : ""}>Telefoon</span>
-                  </div>
+                  Telefoon
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.mobile}
                   onCheckedChange={(checked) => onColumnVisibilityChange('mobile', checked)}
                   className="text-xs"
                 >
-                  <div className="flex items-center">
-                    {columnVisibility.mobile && <Check className="h-3 w-3 mr-2" />}
-                    <span className={!columnVisibility.mobile ? "ml-5" : ""}>Mobiel</span>
-                  </div>
+                  Mobiel
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.postal_code}
                   onCheckedChange={(checked) => onColumnVisibilityChange('postal_code', checked)}
                   className="text-xs"
                 >
-                  <div className="flex items-center">
-                    {columnVisibility.postal_code && <Check className="h-3 w-3 mr-2" />}
-                    <span className={!columnVisibility.postal_code ? "ml-5" : ""}>Postcode</span>
-                  </div>
+                  Postcode
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.city}
                   onCheckedChange={(checked) => onColumnVisibilityChange('city', checked)}
                   className="text-xs"
                 >
-                  <div className="flex items-center">
-                    {columnVisibility.city && <Check className="h-3 w-3 mr-2" />}
-                    <span className={!columnVisibility.city ? "ml-5" : ""}>Plaats</span>
-                  </div>
+                  Plaats
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.country}
                   onCheckedChange={(checked) => onColumnVisibilityChange('country', checked)}
                   className="text-xs"
                 >
-                  <div className="flex items-center">
-                    {columnVisibility.country && <Check className="h-3 w-3 mr-2" />}
-                    <span className={!columnVisibility.country ? "ml-5" : ""}>Land</span>
-                  </div>
+                  Land
                 </DropdownMenuCheckboxItem>
                 
                 <DropdownMenuSeparator />
@@ -194,20 +173,14 @@ export const ContactTableHeader = ({
                   onCheckedChange={(checked) => onColumnVisibilityChange('openstaand', checked)}
                   className="text-xs"
                 >
-                  <div className="flex items-center">
-                    {columnVisibility.openstaand && <Check className="h-3 w-3 mr-2" />}
-                    <span className={!columnVisibility.openstaand ? "ml-5" : ""}>Openstaand</span>
-                  </div>
+                  Openstaand
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.omzet}
                   onCheckedChange={(checked) => onColumnVisibilityChange('omzet', checked)}
                   className="text-xs"
                 >
-                  <div className="flex items-center">
-                    {columnVisibility.omzet && <Check className="h-3 w-3 mr-2" />}
-                    <span className={!columnVisibility.omzet ? "ml-5" : ""}>Omzet</span>
-                  </div>
+                  Omzet
                 </DropdownMenuCheckboxItem>
                 
                 <DropdownMenuSeparator />
@@ -217,10 +190,7 @@ export const ContactTableHeader = ({
                   onCheckedChange={(checked) => onColumnVisibilityChange('actief', checked)}
                   className="text-xs"
                 >
-                  <div className="flex items-center">
-                    {columnVisibility.actief && <Check className="h-3 w-3 mr-2" />}
-                    <span className={!columnVisibility.actief ? "ml-5" : ""}>Actief</span>
-                  </div>
+                  Actief
                 </DropdownMenuCheckboxItem>
               </DropdownMenuContent>
             </DropdownMenu>
