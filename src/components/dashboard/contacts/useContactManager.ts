@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -32,6 +31,7 @@ interface ColumnVisibility {
   openstaand: boolean;
   omzet: boolean;
   actief: boolean;
+  labels: boolean;
 }
 
 export const useContactManager = () => {
@@ -50,7 +50,8 @@ export const useContactManager = () => {
     country: false,
     openstaand: true,
     omzet: true,
-    actief: true
+    actief: true,
+    labels: false
   });
 
   const { user } = useAuth();

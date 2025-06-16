@@ -1,3 +1,4 @@
+
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -21,6 +22,7 @@ interface ColumnVisibility {
   openstaand: boolean;
   omzet: boolean;
   actief: boolean;
+  labels: boolean;
 }
 
 interface ContactTableHeaderProps {
@@ -99,6 +101,9 @@ export const ContactTableHeader = ({
           )}
           {columnVisibility.country && (
             <TableHead className="text-xs font-medium text-muted-foreground p-2">Land</TableHead>
+          )}
+          {columnVisibility.labels && (
+            <TableHead className="text-xs font-medium text-muted-foreground p-2">Labels</TableHead>
           )}
           {columnVisibility.openstaand && (
             <TableHead className="text-xs font-medium text-muted-foreground p-2 text-right w-20">Openstaand</TableHead>
@@ -250,6 +255,25 @@ export const ContactTableHeader = ({
                       onClick={(e) => e.stopPropagation()}
                     />
                     <span>Land</span>
+                  </div>
+                </div>
+
+                <div className="px-2 py-1.5">
+                  <div 
+                    className="flex items-center space-x-2 text-xs cursor-pointer hover:bg-gray-50 rounded px-1 py-1"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleColumnToggle('labels', !columnVisibility.labels);
+                    }}
+                  >
+                    <Checkbox
+                      checked={columnVisibility.labels}
+                      onCheckedChange={(checked) => handleColumnToggle('labels', checked as boolean)}
+                      className="h-4 w-4"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span>Labels</span>
                   </div>
                 </div>
                 

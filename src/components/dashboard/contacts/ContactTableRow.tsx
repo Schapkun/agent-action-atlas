@@ -39,6 +39,7 @@ interface ColumnVisibility {
   openstaand: boolean;
   omzet: boolean;
   actief: boolean;
+  labels: boolean;
 }
 
 interface ContactTableRowProps {
@@ -99,7 +100,7 @@ export const ContactTableRow = ({
         {contact.email && (
           <div className="text-xs text-muted-foreground">{contact.email}</div>
         )}
-        {contact.labels && contact.labels.length > 0 && (
+        {!columnVisibility.labels && contact.labels && contact.labels.length > 0 && (
           <div className="flex gap-1 mt-1 flex-wrap">
             {contact.labels.slice(0, 3).map((label) => (
               <Badge
@@ -151,6 +152,30 @@ export const ContactTableRow = ({
       {columnVisibility.country && (
         <TableCell className="p-2 text-xs text-muted-foreground">
           {contact.country || '-'}
+        </TableCell>
+      )}
+      {columnVisibility.labels && (
+        <TableCell className="p-2">
+          {contact.labels && contact.labels.length > 0 ? (
+            <div className="flex gap-1 flex-wrap">
+              {contact.labels.slice(0, 2).map((label) => (
+                <Badge
+                  key={label.id}
+                  style={{ backgroundColor: label.color, color: 'white' }}
+                  className="text-xs px-1 py-0 h-4 border-0"
+                >
+                  {label.name}
+                </Badge>
+              ))}
+              {contact.labels.length > 2 && (
+                <Badge variant="outline" className="text-xs px-1 py-0 h-4">
+                  +{contact.labels.length - 2}
+                </Badge>
+              )}
+            </div>
+          ) : (
+            <span className="text-xs text-muted-foreground">-</span>
+          )}
         </TableCell>
       )}
       {columnVisibility.openstaand && (
