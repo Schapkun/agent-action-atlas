@@ -1,16 +1,21 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, UserPlus, Users, Trash2, Archive, Mail } from 'lucide-react';
+import { Search, UserPlus, Users, Trash2, Archive, Mail, Settings, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ContactDialog } from '@/components/contacts/ContactDialog';
 import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Contact {
   id: string;
@@ -27,6 +32,13 @@ interface Contact {
   is_active?: boolean;
 }
 
+interface ColumnVisibility {
+  email: boolean;
+  openstaand: boolean;
+  omzet: boolean;
+  actief: boolean;
+}
+
 export const ContactManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -34,6 +46,12 @@ export const ContactManager = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
+  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({
+    email: true,
+    openstaand: true,
+    omzet: true,
+    actief: true
+  });
   const { user } = useAuth();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
@@ -275,6 +293,50 @@ export const ContactManager = () => {
                     </Button>
                   </>
                 )}
+                
+                {/* Column visibility settings */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuCheckboxItem
+                      checked={columnVisibility.email}
+                      onCheckedChange={(checked) => 
+                        setColumnVisibility(prev => ({ ...prev, email: checked }))
+                      }
+                    >
+                      E-mail
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={columnVisibility.openstaand}
+                      onCheckedChange={(checked) => 
+                        setColumnVisibility(prev => ({ ...prev, openstaand: checked }))
+                      }
+                    >
+                      Openstaand
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={columnVisibility.omzet}
+                      onCheckedChange={(checked) => 
+                        setColumnVisibility(prev => ({ ...prev, omzet: checked }))
+                      }
+                    >
+                      Omzet
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={columnVisibility.actief}
+                      onCheckedChange={(checked) => 
+                        setColumnVisibility(prev => ({ ...prev, actief: checked }))
+                      }
+                    >
+                      Actief
+                    </DropdownMenuCheckboxItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
                 {canInviteUsers && (
                   <Button variant="outline" size="sm" onClick={handleNewContact}>
                     <UserPlus className="h-4 w-4 mr-2" />
@@ -337,68 +399,85 @@ export const ContactManager = () => {
             ) : (
               <Table>
                 <TableHeader>
-                  <TableRow className="text-xs border-b">
-                    <TableHead className="w-8 p-2">
+                  <TableRow className="text-xs border-b bg-gray-50">
+                    <TableHead className="w-8 p-3">
                       <Checkbox
                         checked={isAllSelected}
+                        indeterminate={isIndeterminate}
                         onCheckedChange={handleSelectAll}
-                        className="h-3 w-3"
+                        className="h-4 w-4"
                       />
                     </TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground p-2 w-20">Klantnr</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground p-2">Klant</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground p-2">E-mail</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground p-2 text-right w-24">Openstaand</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground p-2 text-right w-24">Omzet</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground p-2 text-center w-16">Actief</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground p-3 w-20">Klantnr</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground p-3">Klant</TableHead>
+                    {columnVisibility.email && (
+                      <TableHead className="text-xs font-medium text-muted-foreground p-3">E-mail</TableHead>
+                    )}
+                    {columnVisibility.openstaand && (
+                      <TableHead className="text-xs font-medium text-muted-foreground p-3 text-right w-24">Openstaand</TableHead>
+                    )}
+                    {columnVisibility.omzet && (
+                      <TableHead className="text-xs font-medium text-muted-foreground p-3 text-right w-24">Omzet</TableHead>
+                    )}
+                    {columnVisibility.actief && (
+                      <TableHead className="text-xs font-medium text-muted-foreground p-3 text-center w-16">Actief</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredContacts.map((contact, index) => (
-                    <TableRow key={contact.id} className="text-xs hover:bg-muted/30 border-b">
-                      <TableCell className="p-2">
+                    <TableRow key={contact.id} className="text-xs hover:bg-gray-50 border-b">
+                      <TableCell className="p-3">
                         <Checkbox
                           checked={selectedContacts.has(contact.id)}
                           onCheckedChange={(checked) => handleSelectContact(contact.id, checked as boolean)}
-                          className="h-3 w-3"
+                          className="h-4 w-4"
                         />
                       </TableCell>
-                      <TableCell className="p-2 text-xs text-blue-600 font-medium">
+                      <TableCell className="p-3 text-xs text-blue-600 font-medium">
                         {4000 + index + 1}
                       </TableCell>
-                      <TableCell className="p-2">
+                      <TableCell className="p-3">
                         <div className="text-xs font-medium text-gray-900">{contact.name}</div>
                         {contact.email && (
                           <div className="text-xs text-muted-foreground">{contact.email}</div>
                         )}
                       </TableCell>
-                      <TableCell className="p-2 text-xs text-muted-foreground">
-                        {contact.email || '-'}
-                      </TableCell>
-                      <TableCell className="p-2 text-xs text-right font-mono">
-                        €0,00
-                      </TableCell>
-                      <TableCell className="p-2 text-xs text-right font-mono">
-                        €0,00
-                      </TableCell>
-                      <TableCell className="p-2">
-                        <div className="flex items-center justify-center">
-                          <button
-                            onClick={() => toggleContactStatus(contact.id, contact.is_active ?? true)}
-                            className="transition-colors hover:opacity-80"
-                          >
-                            <div className={`h-4 w-4 rounded-sm flex items-center justify-center ${
-                              contact.is_active !== false ? 'bg-green-500' : 'bg-gray-300'
-                            }`}>
-                              {contact.is_active !== false && (
-                                <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                              )}
-                            </div>
-                          </button>
-                        </div>
-                      </TableCell>
+                      {columnVisibility.email && (
+                        <TableCell className="p-3 text-xs text-muted-foreground">
+                          {contact.email || '-'}
+                        </TableCell>
+                      )}
+                      {columnVisibility.openstaand && (
+                        <TableCell className="p-3 text-xs text-right font-mono">
+                          €0,00
+                        </TableCell>
+                      )}
+                      {columnVisibility.omzet && (
+                        <TableCell className="p-3 text-xs text-right font-mono">
+                          €0,00
+                        </TableCell>
+                      )}
+                      {columnVisibility.actief && (
+                        <TableCell className="p-3">
+                          <div className="flex items-center justify-center">
+                            <button
+                              onClick={() => toggleContactStatus(contact.id, contact.is_active ?? true)}
+                              className="transition-colors hover:opacity-80 focus:outline-none"
+                            >
+                              <div className={`h-5 w-5 rounded-sm flex items-center justify-center border ${
+                                contact.is_active !== false 
+                                  ? 'bg-green-500 border-green-500' 
+                                  : 'bg-white border-gray-300'
+                              }`}>
+                                {contact.is_active !== false && (
+                                  <Check className="h-3 w-3 text-white" />
+                                )}
+                              </div>
+                            </button>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
