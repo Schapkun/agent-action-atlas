@@ -1,6 +1,5 @@
 
 import { useState } from 'react';
-import { Label } from '@/components/ui/label';
 import { ContactSearch } from './ContactSearch';
 import { ContactDropdown } from './ContactDropdown';
 import { ContactActions } from './ContactActions';
@@ -65,10 +64,9 @@ export const ContactSelector = ({
   };
 
   return (
-    <div className="flex items-center gap-3 mb-2">
+    <div className="flex items-center gap-3">
       <div className="flex-1">
-        <Label htmlFor="client_select" className="text-xs font-medium">Aan</Label>
-        <div className="flex gap-2 mt-1 relative">
+        <div className="flex gap-2 relative">
           <ContactSearch
             searchTerm={searchTerm}
             selectedContact={selectedContact}
