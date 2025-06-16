@@ -4,16 +4,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Save } from 'lucide-react';
 
 interface DocumentNameDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (name: string, type: 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun', description: string) => void;
+  onSave: (name: string, description: string) => void;
   existingNames: string[];
   initialName?: string;
-  initialType?: 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun';
   initialDescription?: string;
 }
 
@@ -23,11 +21,9 @@ export const DocumentNameDialog = ({
   onSave, 
   existingNames, 
   initialName = '',
-  initialType = 'factuur',
   initialDescription = ''
 }: DocumentNameDialogProps) => {
   const [name, setName] = useState(initialName);
-  const [type, setType] = useState<'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun'>(initialType);
   const [description, setDescription] = useState(initialDescription);
   const [error, setError] = useState('');
 
@@ -42,13 +38,12 @@ export const DocumentNameDialog = ({
       return;
     }
 
-    onSave(name.trim(), type, description.trim());
+    onSave(name.trim(), description.trim());
     handleClose();
   };
 
   const handleClose = () => {
     setName(initialName);
-    setType(initialType);
     setDescription(initialDescription);
     setError('');
     onClose();
@@ -86,22 +81,6 @@ export const DocumentNameDialog = ({
               className={error ? 'border-red-500' : ''}
             />
             {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
-          </div>
-
-          <div>
-            <Label htmlFor="document-type">Type</Label>
-            <Select value={type} onValueChange={(value: 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun') => setType(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecteer type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="factuur">Factuur</SelectItem>
-                <SelectItem value="contract">Contract</SelectItem>
-                <SelectItem value="brief">Brief</SelectItem>
-                <SelectItem value="custom">Custom</SelectItem>
-                <SelectItem value="schapkun">Schapkun</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <div>

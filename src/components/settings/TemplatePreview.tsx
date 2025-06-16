@@ -4,22 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Edit } from 'lucide-react';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 
-const getTypeColor = (type: string) => {
-  switch (type) {
-    case 'legal':
-    case 'contract':
-      return 'bg-blue-100 text-blue-800';
-    case 'factuur':
-      return 'bg-green-100 text-green-800';
-    case 'brief':
-      return 'bg-purple-100 text-purple-800';
-    case 'custom':
-      return 'bg-orange-100 text-orange-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
-
 interface TemplatePreviewProps {
   template: DocumentTemplate;
   onEditTemplate: () => void;
@@ -34,10 +18,27 @@ export const TemplatePreview = ({ template, onEditTemplate }: TemplatePreviewPro
           <p className="text-sm">{template.name}</p>
         </div>
         <div>
-          <label className="text-sm font-medium text-muted-foreground">Type</label>
-          <Badge variant="outline" className={getTypeColor(template.type)}>
-            {template.type}
-          </Badge>
+          <label className="text-sm font-medium text-muted-foreground">Labels</label>
+          <div className="flex flex-wrap gap-1 mt-1">
+            {template.labels && template.labels.length > 0 ? (
+              template.labels.map((label) => (
+                <Badge
+                  key={label.id}
+                  variant="secondary"
+                  style={{ 
+                    backgroundColor: label.color, 
+                    color: 'white',
+                    border: 'none'
+                  }}
+                  className="text-xs"
+                >
+                  {label.name}
+                </Badge>
+              ))
+            ) : (
+              <span className="text-sm text-muted-foreground">Geen labels</span>
+            )}
+          </div>
         </div>
         <div>
           <label className="text-sm font-medium text-muted-foreground">Laatst aangepast</label>

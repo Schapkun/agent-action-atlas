@@ -19,7 +19,6 @@ export interface DocumentTemplateLabelAssignment {
 export interface DocumentTemplateWithLabels {
   id: string;
   name: string;
-  type: 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun';
   description: string | null;
   html_content: string;
   organization_id: string | null;

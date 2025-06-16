@@ -73,12 +73,11 @@ const DocumentLayoutContent = () => {
     setIsNameDialogOpen(true);
   };
 
-  const handleDuplicateSave = async (name: string, type: 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun', description: string) => {
+  const handleDuplicateSave = async (name: string, description: string) => {
     if (duplicatingDocument) {
       try {
         await createTemplate({
           name,
-          type,
           description,
           html_content: duplicatingDocument.html_content,
           placeholder_values: duplicatingDocument.placeholder_values,
@@ -176,7 +175,6 @@ const DocumentLayoutContent = () => {
           onSave={handleDuplicateSave}
           existingNames={templates.map(d => d.name)}
           initialName={duplicatingDocument ? `${duplicatingDocument.name} (kopie)` : ''}
-          initialType={duplicatingDocument?.type || 'factuur'}
           initialDescription={duplicatingDocument?.description || ''}
         />
       </div>

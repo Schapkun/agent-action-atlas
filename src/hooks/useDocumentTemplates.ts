@@ -8,7 +8,6 @@ import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 export interface DocumentTemplate {
   id: string;
   name: string;
-  type: 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun';
   description: string | null;
   html_content: string;
   organization_id: string | null;
@@ -114,7 +113,6 @@ export const useDocumentTemplates = () => {
 
         templatesWithLabels.push({
           ...template,
-          type: template.type as 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun',
           placeholder_values: template.placeholder_values ? 
             (typeof template.placeholder_values === 'object' && template.placeholder_values !== null ? 
               template.placeholder_values as Record<string, string> : null) : null,
@@ -141,7 +139,6 @@ export const useDocumentTemplates = () => {
       console.log('[useDocumentTemplates] ========= CREATE TEMPLATE START =========');
       console.log('[useDocumentTemplates] Template data received:', {
         name: templateData.name,
-        type: templateData.type,
         htmlContentLength: templateData.html_content?.length,
         placeholderValuesKeys: templateData.placeholder_values ? Object.keys(templateData.placeholder_values) : [],
         hasDescription: !!templateData.description,
@@ -191,7 +188,6 @@ export const useDocumentTemplates = () => {
       
       const insertData = {
         name: templateData.name.trim(),
-        type: templateData.type || 'custom',
         description: templateData.description?.trim() || null,
         html_content: templateData.html_content.trim(),
         organization_id: organization.id,
@@ -246,7 +242,6 @@ export const useDocumentTemplates = () => {
 
       const newTemplate: DocumentTemplateWithLabels = {
         ...data,
-        type: data.type as 'factuur' | 'contract' | 'brief' | 'custom' | 'schapkun',
         placeholder_values: data.placeholder_values ? 
           (typeof data.placeholder_values === 'object' && data.placeholder_values !== null ? 
             data.placeholder_values as Record<string, string> : null) : null,

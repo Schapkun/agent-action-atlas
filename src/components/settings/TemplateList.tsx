@@ -7,22 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Search, FileText, Edit } from 'lucide-react';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 
-const getTypeColor = (type: string) => {
-  switch (type) {
-    case 'legal':
-    case 'contract':
-      return 'bg-blue-100 text-blue-800';
-    case 'factuur':
-      return 'bg-green-100 text-green-800';
-    case 'brief':
-      return 'bg-purple-100 text-purple-800';
-    case 'custom':
-      return 'bg-orange-100 text-orange-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
-
 interface TemplateListProps {
   templates: DocumentTemplate[];
   onSelectTemplate: (template: DocumentTemplate) => void;
@@ -38,12 +22,22 @@ export const TemplateList = ({
 }: TemplateListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredTemplates = templates.filter(template =>
-    searchTerm === '' || 
-    template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    template.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (template.description && template.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredTemplates = templates.filter(template => {
+    if (searchTerm === '') return true;
+    
+    const searchLower = searchTerm.toLowerCase();
+    
+    // Search in name and description
+    const nameMatch = template.name.toLowerCase().includes(searchLower);
+    const descriptionMatch = template.description && template.description.toLowerCase().includes(searchLower);
+    
+    // Search in labels
+    const labelMatch = template.labels?.some(label => 
+      label.name.toLowerCase().includes(searchLower)
+    );
+    
+    return nameMatch || descriptionMatch || labelMatch;
+  });
 
   return (
     <Card className="lg:col-span-1">
@@ -76,9 +70,24 @@ export const TemplateList = ({
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={`text-xs ${getTypeColor(template.type)}`}>
-                    {template.type}
-                  </Badge>
+                  {template.labels && template.labels.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {template.labels.map((label) => (
+                        <Badge
+                          key={label.id}
+                          variant="secondary"
+                          style={{ 
+                            backgroundColor: label.color, 
+                            color: 'white',
+                            border: 'none'
+                          }}
+                          className="text-xs"
+                        >
+                          {label.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                   <span className="text-xs text-muted-foreground">
                     {new Date(template.updated_at).toLocaleDateString('nl-NL')}
                   </span>

@@ -139,7 +139,7 @@ export const ContactSelectionCard = ({
                   ) : availableTemplates.length > 0 ? (
                     availableTemplates.map((template) => (
                       <SelectItem key={template.id} value={template.id} className="text-xs">
-                        {template.name} ({template.type})
+                        {template.name}
                       </SelectItem>
                     ))
                   ) : (
