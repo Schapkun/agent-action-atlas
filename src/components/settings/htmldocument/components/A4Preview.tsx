@@ -66,6 +66,8 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
     .a4-container {
       width: 100%;
       height: 100%;
+      padding-top: 5px;
+      padding-bottom: 5px;
       background: white;
     }
     
