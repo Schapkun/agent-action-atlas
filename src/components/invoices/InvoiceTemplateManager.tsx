@@ -103,8 +103,8 @@ export const InvoiceTemplateManager = ({
         </SelectTrigger>
         <SelectContent className="w-64 max-h-80">
           {availableTemplates.map((template) => (
-            <div key={template.id} className="relative">
-              <SelectItem value={template.id} className="py-2 pl-8 pr-12">
+            <div key={template.id} className="relative group">
+              <SelectItem value={template.id} className="py-2 pl-8 pr-12 cursor-pointer">
                 <div className="flex items-center gap-2 w-full">
                   {(template.is_default || favoriteTemplate === template.id) && (
                     <Star className="h-3 w-3 text-yellow-500 fill-current" />
@@ -114,11 +114,12 @@ export const InvoiceTemplateManager = ({
               </SelectItem>
               <button
                 type="button"
-                className={`absolute right-4 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 cursor-pointer hover:text-yellow-500 transition-colors z-20 ${favoriteTemplate === template.id ? 'text-yellow-500' : 'text-gray-400'}`}
+                className={`absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 flex items-center justify-center cursor-pointer hover:bg-gray-100 rounded transition-colors z-20 ${favoriteTemplate === template.id ? 'text-yellow-500' : 'text-gray-400'}`}
                 onClick={(e) => {
                   console.log('InvoiceTemplateManager - Star clicked for template:', template.id);
                   handleSetFavorite(template.id, e);
                 }}
+                style={{ pointerEvents: 'auto' }}
               >
                 <Star className={`h-3.5 w-3.5 ${favoriteTemplate === template.id ? 'fill-current' : ''}`} />
               </button>
