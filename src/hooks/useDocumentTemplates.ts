@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -25,51 +26,19 @@ export const useDocumentTemplates = () => {
   const { toast } = useToast();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
 
-  // Test database connectivity
-  const testDatabaseConnection = async () => {
-    try {
-      console.log('[useDocumentTemplates] Testing database connection...');
-      const { data, error } = await supabase.from('document_templates').select('count').limit(1);
-      if (error) {
-        console.error('[useDocumentTemplates] Database connection test failed:', error);
-        return false;
-      }
-      console.log('[useDocumentTemplates] Database connection test successful');
-      return true;
-    } catch (error) {
-      console.error('[useDocumentTemplates] Database connection test error:', error);
-      return false;
-    }
-  };
-
-  // Enhanced authentication and membership check
+  // Enhanced access check with better error messages
   const checkUserAccess = async () => {
     try {
-      console.log('[useDocumentTemplates] Checking user access...');
-      
-      // Check if user is authenticated
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) {
-        console.error('[useDocumentTemplates] Auth error:', userError);
-        throw new Error('Gebruiker niet ingelogd');
-      }
-      
-      if (!user) {
-        console.error('[useDocumentTemplates] No user found');
-        throw new Error('Geen gebruiker gevonden');
+      if (userError || !user) {
+        throw new Error('Je bent niet ingelogd');
       }
 
-      console.log('[useDocumentTemplates] User authenticated:', user.id);
-
-      // Check organization context
       if (!selectedOrganization) {
-        console.error('[useDocumentTemplates] No organization selected');
-        throw new Error('Geen organisatie geselecteerd. Selecteer eerst een organisatie.');
+        throw new Error('Geen organisatie geselecteerd');
       }
 
-      console.log('[useDocumentTemplates] Organization selected:', selectedOrganization.id);
-
-      // Check if user is member of the selected organization
+      // Check organization membership
       const { data: membership, error: membershipError } = await supabase
         .from('organization_members')
         .select('role')
@@ -78,26 +47,7 @@ export const useDocumentTemplates = () => {
         .single();
 
       if (membershipError || !membership) {
-        console.error('[useDocumentTemplates] Membership check failed:', membershipError);
-        
-        // Try to add user as member if they're not already
-        console.log('[useDocumentTemplates] Attempting to add user as organization member...');
-        const { error: insertError } = await supabase
-          .from('organization_members')
-          .insert({
-            organization_id: selectedOrganization.id,
-            user_id: user.id,
-            role: 'member'
-          });
-
-        if (insertError) {
-          console.error('[useDocumentTemplates] Failed to add as member:', insertError);
-          throw new Error('Geen toegang tot deze organisatie. Neem contact op met een beheerder.');
-        }
-        
-        console.log('[useDocumentTemplates] Successfully added user as organization member');
-      } else {
-        console.log('[useDocumentTemplates] User is organization member with role:', membership.role);
+        throw new Error('Geen toegang tot deze organisatie');
       }
 
       return { user, organization: selectedOrganization };
@@ -112,20 +62,17 @@ export const useDocumentTemplates = () => {
       setLoading(true);
       console.log('[useDocumentTemplates] Fetching templates...');
       
-      // Check access first
       const { organization } = await checkUserAccess();
       
-      let query = supabase
+      const { data, error } = await supabase
         .from('document_templates')
         .select('*')
         .eq('is_active', true)
         .eq('organization_id', organization.id)
         .order('created_at', { ascending: false });
 
-      const { data, error } = await query;
-
       if (error) {
-        console.error('[useDocumentTemplates] Database error:', error);
+        console.error('[useDocumentTemplates] Fetch error:', error);
         throw error;
       }
       
@@ -137,13 +84,12 @@ export const useDocumentTemplates = () => {
             item.placeholder_values as Record<string, string> : null) : null
       }));
       
-      console.log('[useDocumentTemplates] Templates fetched successfully:', transformedData.length);
-      console.log('[useDocumentTemplates] Templates data:', transformedData);
+      console.log('[useDocumentTemplates] Templates fetched:', transformedData.length);
       setTemplates(transformedData);
     } catch (error) {
       console.error('[useDocumentTemplates] Error fetching templates:', error);
       toast({
-        title: "Fout",
+        title: "Fout bij laden",
         description: error instanceof Error ? error.message : "Kon templates niet ophalen",
         variant: "destructive"
       });
@@ -154,64 +100,36 @@ export const useDocumentTemplates = () => {
 
   const createTemplate = async (templateData: Partial<DocumentTemplate>) => {
     try {
-      console.log('[useDocumentTemplates] Creating new template:', templateData.name);
-      console.log('[useDocumentTemplates] Template data received:', templateData);
+      console.log('[useDocumentTemplates] Creating template:', templateData.name);
       
-      // Test database connection first
-      const isConnected = await testDatabaseConnection();
-      if (!isConnected) {
-        throw new Error('Database verbinding mislukt');
-      }
-      
-      // Check access and get user/organization info
       const { user, organization } = await checkUserAccess();
       
-      console.log('[useDocumentTemplates] User info for template creation:', {
-        userId: user.id,
-        organizationId: organization.id,
-        workspaceId: selectedWorkspace?.id
-      });
+      // Validate required fields
+      if (!templateData.name?.trim()) {
+        throw new Error('Documentnaam is verplicht');
+      }
+
+      if (!templateData.html_content?.trim()) {
+        throw new Error('HTML content is verplicht');
+      }
       
-      // Prepare insert data with all required fields
       const insertData = {
-        name: templateData.name || '',
+        name: templateData.name.trim(),
         type: templateData.type || 'custom',
         description: templateData.description || null,
-        html_content: templateData.html_content || '',
+        html_content: templateData.html_content,
         organization_id: organization.id,
         workspace_id: selectedWorkspace?.id || null,
         created_by: user.id,
         is_default: templateData.is_default || false,
-        is_active: templateData.is_active !== false,
+        is_active: true,
         placeholder_values: templateData.placeholder_values || null,
       };
 
-      console.log('[useDocumentTemplates] Final insert data:', {
+      console.log('[useDocumentTemplates] Inserting data:', {
         ...insertData,
-        html_content: `${insertData.html_content.substring(0, 100)}...`,
-        organization_id: insertData.organization_id,
-        workspace_id: insertData.workspace_id,
-        created_by: insertData.created_by
+        html_content: `${insertData.html_content.substring(0, 50)}...`
       });
-
-      // Validate required fields
-      if (!insertData.name.trim()) {
-        throw new Error('Documentnaam is verplicht');
-      }
-
-      if (!insertData.html_content.trim()) {
-        throw new Error('HTML content is verplicht');
-      }
-
-      if (!insertData.organization_id) {
-        throw new Error('Organisatie ID is verplicht');
-      }
-
-      if (!insertData.created_by) {
-        throw new Error('Gebruiker ID is verplicht');
-      }
-
-      console.log('[useDocumentTemplates] Starting database insert...');
 
       const { data, error } = await supabase
         .from('document_templates')
@@ -219,41 +137,14 @@ export const useDocumentTemplates = () => {
         .select()
         .single();
 
-      console.log('[useDocumentTemplates] Database insert response:', { data, error });
-
       if (error) {
-        console.error('[useDocumentTemplates] Database insert error details:', {
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        });
-        
-        // Enhanced error handling with specific messages
-        if (error.code === '23502') {
-          const missingColumn = error.message.includes('organization_id') ? 'organization_id' : 
-                               error.message.includes('created_by') ? 'created_by' : 
-                               error.message.includes('name') ? 'name' :
-                               error.message.includes('html_content') ? 'html_content' : 'onbekend veld';
-          throw new Error(`Verplicht veld ontbreekt: ${missingColumn}. Error: ${error.message}`);
-        } else if (error.code === '23505') {
-          throw new Error('Een template met deze naam bestaat al');
-        } else if (error.code === '42501') {
-          throw new Error('Geen toegang om templates aan te maken. Controleer je rechten.');
-        } else if (error.message.includes('row-level security')) {
-          throw new Error(`RLS Policy fout: ${error.message}. Gebruiker: ${user.id}, Organisatie: ${organization.id}`);
-        } else if (error.code === 'PGRST116') {
-          throw new Error('RLS Policy blokkeert de operatie. Controleer je toegangsrechten.');
-        } else {
-          throw new Error(`Database fout (${error.code}): ${error.message}`);
-        }
+        console.error('[useDocumentTemplates] Insert error:', error);
+        throw new Error(`Kon template niet aanmaken: ${error.message}`);
       }
 
       if (!data) {
-        throw new Error('Geen data ontvangen van database - operatie mogelijk mislukt');
+        throw new Error('Template werd aangemaakt maar er werd geen data teruggestuurd');
       }
-
-      console.log('[useDocumentTemplates] Template successfully created:', data);
 
       const newTemplate: DocumentTemplate = {
         ...data,
@@ -265,21 +156,19 @@ export const useDocumentTemplates = () => {
       
       setTemplates(prev => [newTemplate, ...prev]);
       
-      console.log('[useDocumentTemplates] Template created successfully and added to state');
-      
       toast({
         title: "Succes",
-        description: `Template "${newTemplate.name}" is succesvol aangemaakt`,
+        description: `Template "${newTemplate.name}" is aangemaakt`,
       });
       
       return newTemplate;
     } catch (error) {
-      console.error('[useDocumentTemplates] Create template error:', error);
+      console.error('[useDocumentTemplates] Create error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Onbekende fout';
       
       toast({
-        title: "Fout",
-        description: `Kon template niet aanmaken: ${errorMessage}`,
+        title: "Fout bij aanmaken",
+        description: errorMessage,
         variant: "destructive"
       });
       
@@ -291,10 +180,8 @@ export const useDocumentTemplates = () => {
     try {
       console.log('[useDocumentTemplates] Updating template:', id);
       
-      // Check access and get user/organization info
-      const { user, organization } = await checkUserAccess();
+      const { organization } = await checkUserAccess();
 
-      // Validate required fields
       if (updates.name !== undefined && !updates.name.trim()) {
         throw new Error('Documentnaam is verplicht');
       }
@@ -309,33 +196,17 @@ export const useDocumentTemplates = () => {
         placeholder_values: updates.placeholder_values || null,
       };
 
-      console.log('[useDocumentTemplates] Update data:', {
-        ...updateData,
-        html_content: updateData.html_content ? updateData.html_content.substring(0, 100) + '...' : undefined
-      });
-
       const { data, error } = await supabase
         .from('document_templates')
         .update(updateData)
         .eq('id', id)
-        .eq('organization_id', organization.id) // Security check
+        .eq('organization_id', organization.id)
         .select()
         .single();
 
       if (error) {
-        console.error('[useDocumentTemplates] Database update error:', error);
-        
-        if (error.code === '23502') {
-          throw new Error('Verplichte velden ontbreken');
-        } else if (error.code === '23505') {
-          throw new Error('Een template met deze naam bestaat al');
-        } else if (error.code === '42501') {
-          throw new Error('Geen toegang om deze template bij te werken');
-        } else if (error.message.includes('row-level security')) {
-          throw new Error('Geen toegang tot deze template. Controleer je rechten.');
-        } else {
-          throw new Error(`Database fout: ${error.message}`);
-        }
+        console.error('[useDocumentTemplates] Update error:', error);
+        throw new Error(`Kon template niet bijwerken: ${error.message}`);
       }
 
       if (!data) {
@@ -356,12 +227,12 @@ export const useDocumentTemplates = () => {
       
       return updatedTemplate;
     } catch (error) {
-      console.error('[useDocumentTemplates] Update template error:', error);
+      console.error('[useDocumentTemplates] Update error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Onbekende fout';
       
       toast({
-        title: "Fout",
-        description: `Kon template niet bijwerken: ${errorMessage}`,
+        title: "Fout bij bijwerken",
+        description: errorMessage,
         variant: "destructive"
       });
       
@@ -373,21 +244,17 @@ export const useDocumentTemplates = () => {
     try {
       console.log('[useDocumentTemplates] Deleting template:', id);
       
-      // Check access
       const { organization } = await checkUserAccess();
       
       const { error } = await supabase
         .from('document_templates')
         .update({ is_active: false })
         .eq('id', id)
-        .eq('organization_id', organization.id); // Security check
+        .eq('organization_id', organization.id);
 
       if (error) {
         console.error('[useDocumentTemplates] Delete error:', error);
-        if (error.message.includes('row-level security')) {
-          throw new Error('Geen toegang tot deze template');
-        }
-        throw new Error(`Database fout: ${error.message}`);
+        throw new Error(`Kon template niet verwijderen: ${error.message}`);
       }
 
       setTemplates(prev => prev.filter(t => t.id !== id));
@@ -397,12 +264,12 @@ export const useDocumentTemplates = () => {
         description: "Template succesvol verwijderd"
       });
     } catch (error) {
-      console.error('[useDocumentTemplates] Delete template error:', error);
+      console.error('[useDocumentTemplates] Delete error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Onbekende fout';
       
       toast({
-        title: "Fout",
-        description: `Kon template niet verwijderen: ${errorMessage}`,
+        title: "Fout bij verwijderen",
+        description: errorMessage,
         variant: "destructive"
       });
       

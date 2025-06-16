@@ -92,59 +92,44 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
   const { toast } = useToast();
   const { user } = useAuth();
   const { selectedOrganization } = useOrganization();
   const { templates, loading: templatesLoading, updateTemplate, createTemplate, fetchTemplates } = useDocumentTemplates();
 
-  // Enhanced authentication and access checks
-  const checkUserAccess = () => {
-    console.log('[DocumentBuilder] Checking user access...', {
-      user: !!user,
-      userId: user?.id,
-      selectedOrganization: !!selectedOrganization,
-      organizationId: selectedOrganization?.id
-    });
-
+  // Check user access
+  const checkAccess = () => {
     if (!user) {
-      const error = 'Je bent niet ingelogd. Log eerst in om documenten te kunnen opslaan.';
-      setSaveError(error);
-      return { error };
+      setError('Je bent niet ingelogd');
+      return false;
     }
 
     if (!selectedOrganization) {
-      const error = 'Geen organisatie geselecteerd. Ga naar de organisatie-instellingen en selecteer een organisatie.';
-      setSaveError(error);
-      return { error };
+      setError('Geen organisatie geselecteerd');
+      return false;
     }
 
-    setSaveError(null);
-    return { user, organization: selectedOrganization };
+    setError(null);
+    return true;
   };
 
-  // Improved loading logic - wait for templates to be ready
+  // Load document when documentId changes
   useEffect(() => {
     const loadDocument = async () => {
-      console.log('[DocumentBuilder] Starting load process...', {
+      console.log('[DocumentBuilder] Loading document...', {
         documentId,
         templatesLoading,
-        templatesCount: templates.length,
-        user: !!user,
-        selectedOrganization: !!selectedOrganization
+        templatesCount: templates.length
       });
       
-      // Check access first
-      const accessCheck = checkUserAccess();
-      if (accessCheck.error) {
+      if (!checkAccess()) {
         setIsLoading(false);
         return;
       }
       
-      // Wait for templates to finish loading
       if (templatesLoading) {
-        console.log('[DocumentBuilder] Templates still loading, waiting...');
         return;
       }
 
@@ -155,7 +140,6 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       }
 
       try {
-        console.log('[DocumentBuilder] Looking for template with ID:', documentId);
         const template = templates.find(t => t.id === documentId);
         
         if (template) {
@@ -167,23 +151,14 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
             ...(template.placeholder_values || {})
           });
           setHasUnsavedChanges(false);
+          setError(null);
         } else {
-          console.log('[DocumentBuilder] Template not found, available templates:', templates.map(t => ({ id: t.id, name: t.name })));
-          setSaveError('Document template niet gevonden');
-          toast({
-            title: "Fout",
-            description: "Document template niet gevonden",
-            variant: "destructive"
-          });
+          console.log('[DocumentBuilder] Template not found');
+          setError('Document template niet gevonden');
         }
       } catch (error) {
         console.error('[DocumentBuilder] Error loading document:', error);
-        setSaveError(error instanceof Error ? error.message : 'Onbekende fout bij laden');
-        toast({
-          title: "Fout",
-          description: "Kon document niet laden",
-          variant: "destructive"
-        });
+        setError(error instanceof Error ? error.message : 'Fout bij laden');
       } finally {
         setIsLoading(false);
       }
@@ -192,7 +167,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
     loadDocument();
   }, [documentId, templates, templatesLoading, user, selectedOrganization]);
 
-  // Track changes for unsaved state
+  // Track changes
   useEffect(() => {
     if (!isLoading) {
       setHasUnsavedChanges(true);
@@ -200,68 +175,41 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
   }, [documentName, htmlContent, placeholderValues, isLoading]);
 
   const handlePlaceholderChange = (key: string, value: string) => {
-    console.log('[DocumentBuilder] Placeholder changed:', key, value);
     setPlaceholderValues(prev => ({
       ...prev,
       [key]: value
     }));
   };
 
-  const validateSaveData = () => {
-    const errors: string[] = [];
+  const handleSave = async () => {
+    console.log('[DocumentBuilder] Save initiated');
+    
+    if (!checkAccess()) {
+      return;
+    }
     
     if (!documentName.trim()) {
-      errors.push('Documentnaam is verplicht');
-    }
-    
-    if (!htmlContent.trim()) {
-      errors.push('HTML content is verplicht');
-    }
-    
-    return errors;
-  };
-
-  const handleSave = async () => {
-    console.log('[DocumentBuilder] Save initiated', {
-      documentName: documentName.trim(),
-      documentId,
-      hasContent: htmlContent.length > 0,
-      placeholderCount: Object.keys(placeholderValues).length,
-      user: !!user,
-      organization: !!selectedOrganization,
-      userDetails: user ? { id: user.id, email: user.email } : null,
-      organizationDetails: selectedOrganization ? { id: selectedOrganization.id, name: selectedOrganization.name } : null
-    });
-    
-    setSaveError(null);
-    
-    // Check access
-    const accessCheck = checkUserAccess();
-    if (accessCheck.error) {
-      console.error('[DocumentBuilder] Access check failed:', accessCheck.error);
+      setError('Documentnaam is verplicht');
       toast({
-        title: "Toegangsfout",
-        description: accessCheck.error,
+        title: "Validatiefout",
+        description: "Documentnaam is verplicht",
         variant: "destructive"
       });
       return;
     }
-    
-    // Validate required fields
-    const validationErrors = validateSaveData();
-    if (validationErrors.length > 0) {
-      const errorMessage = validationErrors.join(', ');
-      console.log('[DocumentBuilder] Validation failed:', validationErrors);
-      setSaveError(errorMessage);
+
+    if (!htmlContent.trim()) {
+      setError('HTML content is verplicht');
       toast({
-        title: "Validatiefout",
-        description: errorMessage,
+        title: "Validatiefout", 
+        description: "HTML content is verplicht",
         variant: "destructive"
       });
       return;
     }
     
     setIsSaving(true);
+    setError(null);
     
     try {
       const templateData = {
@@ -274,28 +222,21 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
         is_active: true
       };
       
-      console.log('[DocumentBuilder] Saving template data:', {
-        ...templateData,
-        html_content: htmlContent.substring(0, 100) + '...',
-        placeholderCount: Object.keys(placeholderValues).length
-      });
+      console.log('[DocumentBuilder] Saving template data');
       
       let result;
       if (documentId) {
-        console.log('[DocumentBuilder] Updating existing template:', documentId);
         result = await updateTemplate(documentId, templateData);
       } else {
-        console.log('[DocumentBuilder] Creating new template');
         result = await createTemplate(templateData);
       }
       
-      console.log('[DocumentBuilder] Save operation completed successfully:', result?.id);
+      console.log('[DocumentBuilder] Save successful:', result?.id);
       
       setHasUnsavedChanges(false);
-      setSaveError(null);
+      setError(null);
       
-      // Refresh templates list
-      console.log('[DocumentBuilder] Refreshing templates list...');
+      // Refresh templates
       await fetchTemplates();
       
       toast({
@@ -305,22 +246,13 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       
       onComplete(true);
     } catch (error) {
-      console.error('[DocumentBuilder] Save failed with error:', error);
+      console.error('[DocumentBuilder] Save failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Onbekende fout';
-      setSaveError(errorMessage);
-      
-      // More detailed error logging
-      if (error instanceof Error) {
-        console.error('[DocumentBuilder] Error details:', {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        });
-      }
+      setError(errorMessage);
       
       toast({
         title: "Opslagfout",
-        description: `Kon document niet opslaan: ${errorMessage}`,
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -336,7 +268,6 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
     onComplete(false);
   };
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -348,7 +279,6 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
     );
   }
 
-  // Show access error if user is not properly authenticated or has no organization
   if (!user || !selectedOrganization) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -359,18 +289,12 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
             </svg>
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">Toegang vereist</h3>
-          {!user ? (
-            <p className="text-sm text-gray-600 mb-4">
-              Je bent niet ingelogd. Log eerst in om documenten te kunnen bewerken.
-            </p>
-          ) : (
-            <p className="text-sm text-gray-600 mb-4">
-              Geen organisatie geselecteerd. Ga naar de organisatie-instellingen en selecteer een organisatie om documenten te kunnen bewerken.
-            </p>
-          )}
+          <p className="text-sm text-gray-600 mb-4">
+            {!user ? 'Je bent niet ingelogd' : 'Geen organisatie geselecteerd'}
+          </p>
           <button
             onClick={handleCancel}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
           >
             Sluiten
           </button>
@@ -391,7 +315,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
         onClose={handleCancel}
       />
 
-      {saveError && (
+      {error && (
         <div className="bg-red-50 border border-red-200 rounded-md p-3 m-4">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -400,9 +324,9 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Fout bij opslaan</h3>
+              <h3 className="text-sm font-medium text-red-800">Fout</h3>
               <div className="mt-2 text-sm text-red-700">
-                <p>{saveError}</p>
+                <p>{error}</p>
               </div>
             </div>
           </div>
