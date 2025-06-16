@@ -10,9 +10,10 @@ import { DocumentTemplateLabel } from '@/types/documentLabels';
 interface LabelDropdownProps {
   selectedLabels: DocumentTemplateLabel[];
   onLabelsChange: (labels: DocumentTemplateLabel[]) => void;
+  disabled?: boolean;
 }
 
-export const LabelDropdown = ({ selectedLabels, onLabelsChange }: LabelDropdownProps) => {
+export const LabelDropdown = ({ selectedLabels, onLabelsChange, disabled }: LabelDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { labels, loading } = useDocumentTemplateLabels();
 
@@ -29,7 +30,7 @@ export const LabelDropdown = ({ selectedLabels, onLabelsChange }: LabelDropdownP
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="flex items-center gap-2">
+        <Button variant="outline" size="sm" disabled={disabled} className="flex items-center gap-2">
           <Tags className="h-4 w-4" />
           {selectedLabels.length === 0 ? (
             'Labels'
@@ -60,6 +61,7 @@ export const LabelDropdown = ({ selectedLabels, onLabelsChange }: LabelDropdownP
                         : 'hover:bg-gray-50 border border-transparent'
                     }`}
                     onClick={() => handleLabelToggle(label)}
+                    disabled={disabled}
                   >
                     <Badge
                       variant="secondary"
