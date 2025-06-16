@@ -9,8 +9,10 @@ export const useInvoiceTemplates = () => {
   const [defaultTemplate, setDefaultTemplate] = useState<DocumentTemplate | null>(null);
   
   useEffect(() => {
-    // Filter templates for invoices
-    const factuurTemplates = templates.filter(t => t.type === 'factuur');
+    // Filter templates that have "Factuur" label
+    const factuurTemplates = templates.filter(t => 
+      t.labels?.some(label => label.name.toLowerCase() === 'factuur')
+    );
     setInvoiceTemplates(factuurTemplates);
     
     // Find default template or use first available

@@ -3,22 +3,22 @@ import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 
-interface InvoiceTemplateManagerProps {
+interface QuoteTemplateManagerProps {
   documentTemplates: DocumentTemplateWithLabels[];
   templatesLoading: boolean;
   selectedTemplate: DocumentTemplateWithLabels | null;
   setSelectedTemplate: (template: DocumentTemplateWithLabels | null) => void;
 }
 
-export const InvoiceTemplateManager = ({
+export const QuoteTemplateManager = ({
   documentTemplates,
   templatesLoading,
   selectedTemplate,
   setSelectedTemplate
-}: InvoiceTemplateManagerProps) => {
-  // Filter templates that have "Factuur" label
+}: QuoteTemplateManagerProps) => {
+  // Filter templates that have "Offerte" label
   const availableTemplates = documentTemplates.filter(template => 
-    template.labels?.some(label => label.name.toLowerCase() === 'factuur')
+    template.labels?.some(label => label.name.toLowerCase() === 'offerte')
   );
 
   const handleTemplateChange = (templateId: string) => {
