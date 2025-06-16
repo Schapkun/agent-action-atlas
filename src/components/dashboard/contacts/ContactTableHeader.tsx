@@ -8,10 +8,18 @@ import {
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 
 interface ColumnVisibility {
   email: boolean;
+  address: boolean;
+  phone: boolean;
+  mobile: boolean;
+  postal_code: boolean;
+  city: boolean;
+  country: boolean;
   openstaand: boolean;
   omzet: boolean;
   actief: boolean;
@@ -67,8 +75,27 @@ export const ContactTableHeader = ({
           </TableHead>
           <TableHead className="text-xs font-medium text-muted-foreground p-3 w-20">Klantnr</TableHead>
           <TableHead className="text-xs font-medium text-muted-foreground p-3">Klant</TableHead>
+          
           {columnVisibility.email && (
             <TableHead className="text-xs font-medium text-muted-foreground p-3">E-mail</TableHead>
+          )}
+          {columnVisibility.address && (
+            <TableHead className="text-xs font-medium text-muted-foreground p-3">Adres</TableHead>
+          )}
+          {columnVisibility.phone && (
+            <TableHead className="text-xs font-medium text-muted-foreground p-3">Telefoon</TableHead>
+          )}
+          {columnVisibility.mobile && (
+            <TableHead className="text-xs font-medium text-muted-foreground p-3">Mobiel</TableHead>
+          )}
+          {columnVisibility.postal_code && (
+            <TableHead className="text-xs font-medium text-muted-foreground p-3">Postcode</TableHead>
+          )}
+          {columnVisibility.city && (
+            <TableHead className="text-xs font-medium text-muted-foreground p-3">Plaats</TableHead>
+          )}
+          {columnVisibility.country && (
+            <TableHead className="text-xs font-medium text-muted-foreground p-3">Land</TableHead>
           )}
           {columnVisibility.openstaand && (
             <TableHead className="text-xs font-medium text-muted-foreground p-3 text-right w-24">Openstaand</TableHead>
@@ -79,44 +106,79 @@ export const ContactTableHeader = ({
           {columnVisibility.actief && (
             <TableHead className="text-xs font-medium text-muted-foreground p-3 text-center w-16">Actief</TableHead>
           )}
-          <TableHead className="text-xs font-medium text-muted-foreground p-3 w-12">
-            {/* Column visibility settings - always visible when there are contacts */}
+          
+          <TableHead className="text-xs font-medium text-muted-foreground p-3 w-20">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                   <Settings className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-white">
+              <DropdownMenuContent align="end" className="w-56 bg-white">
+                <DropdownMenuLabel>Contactgegevens</DropdownMenuLabel>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.email}
-                  onCheckedChange={(checked) => 
-                    onColumnVisibilityChange('email', checked)
-                  }
+                  onCheckedChange={(checked) => onColumnVisibilityChange('email', checked)}
                 >
                   E-mail
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
+                  checked={columnVisibility.address}
+                  onCheckedChange={(checked) => onColumnVisibilityChange('address', checked)}
+                >
+                  Adres
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={columnVisibility.phone}
+                  onCheckedChange={(checked) => onColumnVisibilityChange('phone', checked)}
+                >
+                  Telefoon
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={columnVisibility.mobile}
+                  onCheckedChange={(checked) => onColumnVisibilityChange('mobile', checked)}
+                >
+                  Mobiel
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={columnVisibility.postal_code}
+                  onCheckedChange={(checked) => onColumnVisibilityChange('postal_code', checked)}
+                >
+                  Postcode
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={columnVisibility.city}
+                  onCheckedChange={(checked) => onColumnVisibilityChange('city', checked)}
+                >
+                  Plaats
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={columnVisibility.country}
+                  onCheckedChange={(checked) => onColumnVisibilityChange('country', checked)}
+                >
+                  Land
+                </DropdownMenuCheckboxItem>
+                
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Financiële gegevens</DropdownMenuLabel>
+                <DropdownMenuCheckboxItem
                   checked={columnVisibility.openstaand}
-                  onCheckedChange={(checked) => 
-                    onColumnVisibilityChange('openstaand', checked)
-                  }
+                  onCheckedChange={(checked) => onColumnVisibilityChange('openstaand', checked)}
                 >
                   Openstaand
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.omzet}
-                  onCheckedChange={(checked) => 
-                    onColumnVisibilityChange('omzet', checked)
-                  }
+                  onCheckedChange={(checked) => onColumnVisibilityChange('omzet', checked)}
                 >
                   Omzet
                 </DropdownMenuCheckboxItem>
+                
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Status</DropdownMenuLabel>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.actief}
-                  onCheckedChange={(checked) => 
-                    onColumnVisibilityChange('actief', checked)
-                  }
+                  onCheckedChange={(checked) => onColumnVisibilityChange('actief', checked)}
                 >
                   Actief
                 </DropdownMenuCheckboxItem>

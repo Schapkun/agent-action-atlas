@@ -22,6 +22,12 @@ interface Contact {
 
 interface ColumnVisibility {
   email: boolean;
+  address: boolean;
+  phone: boolean;
+  mobile: boolean;
+  postal_code: boolean;
+  city: boolean;
+  country: boolean;
   openstaand: boolean;
   omzet: boolean;
   actief: boolean;
@@ -35,6 +41,12 @@ export const useContactManager = () => {
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
   const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({
     email: true,
+    address: false,
+    phone: false,
+    mobile: false,
+    postal_code: false,
+    city: false,
+    country: false,
     openstaand: true,
     omzet: true,
     actief: true
@@ -127,6 +139,7 @@ export const useContactManager = () => {
         city: client.city || undefined,
         country: client.country || undefined,
         phone: client.phone || undefined,
+        mobile: undefined, // We'll need to add this field to the database later
         payment_terms: 30,
         is_active: true
       }));

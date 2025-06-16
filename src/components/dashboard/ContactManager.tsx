@@ -23,6 +23,7 @@ interface Contact {
 
 export const ContactManager = () => {
   const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
+  const [editingContact, setEditingContact] = useState<Contact | undefined>(undefined);
   
   const {
     searchTerm,
@@ -55,20 +56,38 @@ export const ContactManager = () => {
   const canInviteUsers = userRole !== 'lid';
 
   const handleNewContact = () => {
-    console.log('🔵 ContactManager: Opening contact dialog from Contacten menu');
+    console.log('🔵 ContactManager: Opening contact dialog for new contact');
+    setEditingContact(undefined);
+    setIsContactDialogOpen(true);
+  };
+
+  const handleEditContact = (contact: Contact) => {
+    console.log('🔵 ContactManager: Opening contact dialog for editing:', contact.name);
+    setEditingContact(contact);
     setIsContactDialogOpen(true);
   };
 
   const handleContactSaved = (contact: Contact) => {
-    console.log('🔵 ContactManager: Contact saved from Contacten menu:', contact);
+    console.log('🔵 ContactManager: Contact saved:', contact);
     
-    setContacts(prev => [contact, ...prev]);
+    if (editingContact) {
+      // Update existing contact
+      setContacts(prev => prev.map(c => c.id === contact.id ? contact : c));
+      toast({
+        title: "Contact bijgewerkt",
+        description: `Contact "${contact.name}" is succesvol bijgewerkt.`
+      });
+    } else {
+      // Add new contact
+      setContacts(prev => [contact, ...prev]);
+      toast({
+        title: "Contact toegevoegd",
+        description: `Contact "${contact.name}" is succesvol toegevoegd.`
+      });
+    }
+    
     setIsContactDialogOpen(false);
-    
-    toast({
-      title: "Contact toegevoegd",
-      description: `Contact "${contact.name}" is succesvol toegevoegd.`
-    });
+    setEditingContact(undefined);
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -207,6 +226,7 @@ export const ContactManager = () => {
               onBulkArchive={handleBulkArchive}
               onBulkDelete={handleBulkDelete}
               onNewContact={handleNewContact}
+              onEditContact={handleEditContact}
             />
           </CardContent>
         </Card>
@@ -214,9 +234,13 @@ export const ContactManager = () => {
 
       <ContactDialog
         isOpen={isContactDialogOpen}
-        onClose={() => setIsContactDialogOpen(false)}
+        onClose={() => {
+          setIsContactDialogOpen(false);
+          setEditingContact(undefined);
+        }}
         onSave={handleContactSaved}
-        mode="create"
+        mode={editingContact ? "edit" : "create"}
+        contact={editingContact}
       />
     </>
   );

@@ -21,6 +21,12 @@ interface Contact {
 
 interface ColumnVisibility {
   email: boolean;
+  address: boolean;
+  phone: boolean;
+  mobile: boolean;
+  postal_code: boolean;
+  city: boolean;
+  country: boolean;
   openstaand: boolean;
   omzet: boolean;
   actief: boolean;
@@ -43,6 +49,7 @@ interface ContactTableProps {
   onBulkArchive: () => void;
   onBulkDelete: () => void;
   onNewContact: () => void;
+  onEditContact?: (contact: Contact) => void;
 }
 
 export const ContactTable = ({
@@ -61,7 +68,8 @@ export const ContactTable = ({
   onColumnVisibilityChange,
   onBulkArchive,
   onBulkDelete,
-  onNewContact
+  onNewContact,
+  onEditContact
 }: ContactTableProps) => {
   console.log('🔵 ContactTable: Rendering with props:', {
     hasOrganizationSelected,
@@ -89,6 +97,46 @@ export const ContactTable = ({
 
   console.log('🔵 ContactTable: Rendering actual table with contacts:', filteredContacts.length);
 
+  const handleEditContact = (contact: Contact) => {
+    console.log('🔵 ContactTable: Edit contact clicked:', contact.name);
+    onEditContact?.(contact);
+  };
+
+  const handleViewInvoices = (contact: Contact) => {
+    console.log('🔵 ContactTable: View invoices for:', contact.name);
+    // TODO: Implement navigation to invoices filtered by contact
+  };
+
+  const handleViewQuotes = (contact: Contact) => {
+    console.log('🔵 ContactTable: View quotes for:', contact.name);
+    // TODO: Implement navigation to quotes filtered by contact
+  };
+
+  const handleCreateInvoice = (contact: Contact) => {
+    console.log('🔵 ContactTable: Create invoice for:', contact.name);
+    // TODO: Implement navigation to create invoice with pre-filled contact
+  };
+
+  const handleCreateQuote = (contact: Contact) => {
+    console.log('🔵 ContactTable: Create quote for:', contact.name);
+    // TODO: Implement navigation to create quote with pre-filled contact
+  };
+
+  const handleSendEmail = (contact: Contact) => {
+    console.log('🔵 ContactTable: Send email to:', contact.name);
+    // TODO: Implement email functionality
+  };
+
+  const handleExportVCard = (contact: Contact) => {
+    console.log('🔵 ContactTable: Export vCard for:', contact.name);
+    // TODO: Implement vCard export
+  };
+
+  const handleDeleteContact = (contact: Contact) => {
+    console.log('🔵 ContactTable: Delete contact:', contact.name);
+    // TODO: Implement delete confirmation and action
+  };
+
   return (
     <Table>
       <ContactTableHeader
@@ -111,6 +159,14 @@ export const ContactTable = ({
             columnVisibility={columnVisibility}
             onSelectContact={onSelectContact}
             onToggleStatus={onToggleStatus}
+            onEditContact={handleEditContact}
+            onViewInvoices={handleViewInvoices}
+            onViewQuotes={handleViewQuotes}
+            onCreateInvoice={handleCreateInvoice}
+            onCreateQuote={handleCreateQuote}
+            onSendEmail={handleSendEmail}
+            onExportVCard={handleExportVCard}
+            onDeleteContact={handleDeleteContact}
           />
         ))}
       </TableBody>
