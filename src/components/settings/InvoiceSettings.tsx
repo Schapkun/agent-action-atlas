@@ -15,8 +15,6 @@ interface InvoiceSettings {
   invoice_start_number: number;
   quote_prefix: string;
   quote_start_number: number;
-  contact_prefix: string;
-  contact_start_number: number;
 }
 
 export const InvoiceSettings = () => {
@@ -27,8 +25,6 @@ export const InvoiceSettings = () => {
     invoice_start_number: 1,
     quote_prefix: '',
     quote_start_number: 1,
-    contact_prefix: '',
-    contact_start_number: 1,
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -41,9 +37,11 @@ export const InvoiceSettings = () => {
 
   // PUNT 3: Automatische nummering ophalen uit database
   const fetchCurrentNumbers = async () => {
-    if (!selectedOrganization) return { invoice: 1, quote: 1, contact: 1 };
+    if (!selectedOrganization) return { invoice: 1, quote: 1 };
 
     try {
+      console.log('📊 PUNT 3: Huidige nummers ophalen voor organisatie:', selectedOrganization.id);
+      
       // Huidige hoogste factuurnummer ophalen
       const { data: invoices } = await supabase
         .from('invoices')
@@ -60,17 +58,8 @@ export const InvoiceSettings = () => {
         .order('created_at', { ascending: false })
         .limit(1);
 
-      // Huidige hoogste contactnummer ophalen
-      const { data: contacts } = await supabase
-        .from('clients')
-        .select('contact_number')
-        .eq('organization_id', selectedOrganization.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
       let nextInvoiceNumber = 1;
       let nextQuoteNumber = 1;
-      let nextContactNumber = 1;
 
       // Parse hoogste factuurnummer
       if (invoices && invoices.length > 0 && invoices[0].invoice_number) {
@@ -88,28 +77,18 @@ export const InvoiceSettings = () => {
         }
       }
 
-      // Parse hoogste contactnummer
-      if (contacts && contacts.length > 0 && contacts[0].contact_number) {
-        const match = contacts[0].contact_number.match(/(\d+)$/);
-        if (match) {
-          nextContactNumber = parseInt(match[1]) + 1;
-        }
-      }
-
       console.log('📊 PUNT 3: Huidige nummers opgehaald:', {
         nextInvoiceNumber,
-        nextQuoteNumber, 
-        nextContactNumber
+        nextQuoteNumber
       });
 
       return {
         invoice: nextInvoiceNumber,
-        quote: nextQuoteNumber,
-        contact: nextContactNumber
+        quote: nextQuoteNumber
       };
     } catch (error) {
       console.error('📊 PUNT 3: Fout bij ophalen huidige nummers:', error);
-      return { invoice: 1, quote: 1, contact: 1 };
+      return { invoice: 1, quote: 1 };
     }
   };
 
@@ -141,8 +120,6 @@ export const InvoiceSettings = () => {
           invoice_start_number: currentNumbers.invoice,  // Automatisch bijgewerkt
           quote_prefix: data.quote_prefix || '',
           quote_start_number: currentNumbers.quote,      // Automatisch bijgewerkt
-          contact_prefix: data.contact_prefix || '',
-          contact_start_number: currentNumbers.contact,  // Automatisch bijgewerkt
         });
       } else {
         // Geen instellingen gevonden, gebruik automatische nummering
@@ -150,7 +127,6 @@ export const InvoiceSettings = () => {
           ...prev,
           invoice_start_number: currentNumbers.invoice,
           quote_start_number: currentNumbers.quote,
-          contact_start_number: currentNumbers.contact,
         }));
       }
     } catch (error) {
@@ -165,13 +141,22 @@ export const InvoiceSettings = () => {
     }
   };
 
-  // PUNT 3: Werkende opslaan functie
+  // PUNT 4: Werkende opslaan functie
   const handleSave = async () => {
-    if (!selectedOrganization) return;
+    if (!selectedOrganization) {
+      console.error('💾 PUNT 4: Geen organisatie geselecteerd');
+      toast({
+        title: "Fout", 
+        description: "Geen organisatie geselecteerd",
+        variant: "destructive"
+      });
+      return;
+    }
 
     setSaving(true);
     try {
-      console.log('💾 PUNT 3: Instellingen opslaan:', settings);
+      console.log('💾 PUNT 4: Instellingen opslaan voor organisatie:', selectedOrganization.id);
+      console.log('💾 PUNT 4: Settings data:', settings);
       
       const { error } = await supabase
         .from('organization_settings')
@@ -181,25 +166,23 @@ export const InvoiceSettings = () => {
           invoice_start_number: settings.invoice_start_number,
           quote_prefix: settings.quote_prefix,
           quote_start_number: settings.quote_start_number,
-          contact_prefix: settings.contact_prefix,
-          contact_start_number: settings.contact_start_number,
         }, {
           onConflict: 'organization_id'
         });
 
       if (error) {
-        console.error('💾 PUNT 3: Database fout bij opslaan:', error);
+        console.error('💾 PUNT 4: Database fout bij opslaan:', error);
         throw error;
       }
 
-      console.log('💾 PUNT 3: Instellingen succesvol opgeslagen');
+      console.log('💾 PUNT 4: Instellingen succesvol opgeslagen');
       
       toast({
         title: "Succes",
         description: "Instellingen succesvol opgeslagen"
       });
     } catch (error) {
-      console.error('💾 PUNT 3: Fout bij opslaan instellingen:', error);
+      console.error('💾 PUNT 4: Fout bij opslaan instellingen:', error);
       toast({
         title: "Fout",
         description: "Kon instellingen niet opslaan",
@@ -278,31 +261,6 @@ export const InvoiceSettings = () => {
                 type="number"
                 value={settings.quote_start_number}
                 onChange={(e) => setSettings(prev => ({ ...prev, quote_start_number: parseInt(e.target.value) || 1 }))}
-                className="bg-blue-50"
-              />
-              <p className="text-xs text-gray-500 mt-1">Wordt automatisch bijgewerkt naar het volgende beschikbare nummer</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="contact_prefix">Contact voorvoegsel</Label>
-              <Input
-                id="contact_prefix"
-                value={settings.contact_prefix}
-                onChange={(e) => setSettings(prev => ({ ...prev, contact_prefix: e.target.value }))}
-                placeholder="optioneel"
-                disabled
-              />
-              <p className="text-xs text-gray-400 mt-1">Functie uitgeschakeld zoals gevraagd</p>
-            </div>
-            <div>
-              <Label htmlFor="contact_start_number">Contact startnummer (automatisch bijgewerkt)</Label>
-              <Input
-                id="contact_start_number"
-                type="number"
-                value={settings.contact_start_number}
-                onChange={(e) => setSettings(prev => ({ ...prev, contact_start_number: parseInt(e.target.value) || 1 }))}
                 className="bg-blue-50"
               />
               <p className="text-xs text-gray-500 mt-1">Wordt automatisch bijgewerkt naar het volgende beschikbare nummer</p>

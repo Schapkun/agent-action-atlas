@@ -40,9 +40,13 @@ export const ContactSelector = ({
   const [loading, setLoading] = useState(false);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
 
-  // PUNT 2: Echte contacten ophalen uit de database
+  // PUNT 2: Contacten ophalen uit de database
   const fetchContacts = async () => {
-    if (!selectedOrganization) return;
+    if (!selectedOrganization) {
+      console.log('📋 PUNT 2: Geen organisatie geselecteerd');
+      setContacts([]);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -57,16 +61,18 @@ export const ContactSelector = ({
       // Ook filteren op workspace als die geselecteerd is
       if (selectedWorkspace) {
         query = query.eq('workspace_id', selectedWorkspace.id);
+        console.log('📋 PUNT 2: Ook filteren op workspace:', selectedWorkspace.id);
       }
 
       const { data, error } = await query;
 
       if (error) {
         console.error('📋 PUNT 2: Fout bij ophalen contacten:', error);
+        setContacts([]);
         return;
       }
 
-      console.log('📋 PUNT 2: Contacten opgehaald:', data?.length || 0);
+      console.log('📋 PUNT 2: Contacten succesvol opgehaald:', data?.length || 0);
       
       const formattedContacts: Contact[] = data?.map(client => ({
         id: client.id,
@@ -80,8 +86,10 @@ export const ContactSelector = ({
       })) || [];
 
       setContacts(formattedContacts);
+      console.log('📋 PUNT 2: Contacten ingesteld in state:', formattedContacts.length);
     } catch (error) {
       console.error('📋 PUNT 2: Onverwachte fout bij ophalen contacten:', error);
+      setContacts([]);
     } finally {
       setLoading(false);
     }
@@ -89,8 +97,14 @@ export const ContactSelector = ({
 
   // Contacten ophalen bij mount en bij wijziging van organisatie/werkruimte
   useEffect(() => {
+    console.log('📋 PUNT 2: useEffect triggered - ophalen contacten');
     fetchContacts();
   }, [selectedOrganization, selectedWorkspace]);
+
+  // Debug logging voor contacten
+  useEffect(() => {
+    console.log('📋 PUNT 2: Contacts state updated:', contacts.length, contacts);
+  }, [contacts]);
 
   const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -101,6 +115,7 @@ export const ContactSelector = ({
   );
 
   const handleContactSelect = (contact: Contact) => {
+    console.log('📋 PUNT 2: Contact geselecteerd:', contact.name);
     onContactSelect(contact);
     setSearchTerm(contact.name);
     setIsDropdownOpen(false);

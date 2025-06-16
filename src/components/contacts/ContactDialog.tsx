@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ContactDialogTabs } from './ContactDialogTabs';
@@ -113,10 +114,10 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('🚫 PUNT 1: ContactDialog.handleSubmit UITGESCHAKELD - KNOP DOET NIETS MEER');
-    console.log('🚫 De "Opslaan" knop functionaliteit is volledig uitgeschakeld');
+    console.log('🚫 PUNT 1: ContactDialog.handleSubmit VOLLEDIG UITGESCHAKELD');
+    console.log('🚫 De "Opslaan" knop doet helemaal niets meer');
     
-    // PUNT 1: Functionaliteit volledig uitgeschakeld - knop doet niets
+    // PUNT 1: Knop functionaliteit volledig uitgeschakeld - doet absoluut niets
     return;
   };
 
