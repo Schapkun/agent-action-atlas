@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { OrganizationWorkspaceView } from './OrganizationWorkspaceView';
@@ -23,6 +23,12 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
   const [userRole, setUserRole] = useState<string>('lid');
   const [isRoleLoading, setIsRoleLoading] = useState(true);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+
+  const handleTabChange = (value: string) => {
+    onTabChange(value);
+    navigate(`/instellingen?tab=${value}`);
+  };
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -94,7 +100,7 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
 
   return (
     <div className="container mx-auto px-2 sm:px-4 max-w-6xl">
-      <Tabs value={currentTab} onValueChange={onTabChange} className="space-y-4">
+      <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList className={`grid w-full gap-1 h-auto p-1 ${
           isMobile 
             ? 'grid-cols-3 grid-rows-2' 
