@@ -63,7 +63,16 @@ export const ContactTable = ({
   onBulkDelete,
   onNewContact
 }: ContactTableProps) => {
+  console.log('🔵 ContactTable: Rendering with props:', {
+    hasOrganizationSelected,
+    loading,
+    contactsLength: contacts.length,
+    filteredContactsLength: filteredContacts.length
+  });
+
   const showEmptyState = !hasOrganizationSelected || loading || filteredContacts.length === 0;
+
+  console.log('🔵 ContactTable: Show empty state?', showEmptyState);
 
   if (showEmptyState) {
     return (
@@ -77,6 +86,8 @@ export const ContactTable = ({
       />
     );
   }
+
+  console.log('🔵 ContactTable: Rendering actual table with contacts:', filteredContacts.length);
 
   return (
     <Table>

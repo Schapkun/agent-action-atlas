@@ -44,13 +44,22 @@ export const useContactManager = () => {
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
 
+  console.log('🔵 useContactManager: Hook initialized with:', {
+    selectedOrganization: selectedOrganization?.name,
+    selectedWorkspace: selectedWorkspace?.name,
+    userId: user?.id
+  });
+
   useEffect(() => {
     const fetchUserRole = async () => {
       if (!user?.id) return;
 
       try {
+        console.log('🔵 useContactManager: Fetching user role for:', user.email);
+        
         if (user.email === 'info@schapkun.com') {
           setUserRole('owner');
+          console.log('🔵 useContactManager: Set role to owner for special email');
           return;
         }
 
@@ -62,8 +71,10 @@ export const useContactManager = () => {
 
         if (memberships && memberships.length > 0) {
           setUserRole(memberships[0].role);
+          console.log('🔵 useContactManager: Set role from DB:', memberships[0].role);
         } else {
           setUserRole('lid');
+          console.log('🔵 useContactManager: Set default role: lid');
         }
       } catch (error) {
         console.error('Error fetching user role:', error);
@@ -75,7 +86,15 @@ export const useContactManager = () => {
   }, [user]);
 
   const fetchContacts = async () => {
-    if (!selectedOrganization) return;
+    if (!selectedOrganization) {
+      console.log('🔵 useContactManager: No organization selected, skipping fetch');
+      return;
+    }
+
+    console.log('🔵 useContactManager: Starting to fetch contacts for:', {
+      organization: selectedOrganization.name,
+      workspace: selectedWorkspace?.name
+    });
 
     setLoading(true);
     try {
@@ -87,11 +106,17 @@ export const useContactManager = () => {
 
       if (selectedWorkspace) {
         query = query.eq('workspace_id', selectedWorkspace.id);
+        console.log('🔵 useContactManager: Adding workspace filter:', selectedWorkspace.id);
       }
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('🔵 useContactManager: Database error:', error);
+        throw error;
+      }
+
+      console.log('🔵 useContactManager: Raw data from database:', data);
 
       const mappedContacts: Contact[] = (data || []).map(client => ({
         id: client.id,
@@ -106,6 +131,7 @@ export const useContactManager = () => {
         is_active: true
       }));
 
+      console.log('🔵 useContactManager: Mapped contacts:', mappedContacts);
       setContacts(mappedContacts);
     } catch (error) {
       console.error('Error fetching contacts:', error);
@@ -120,6 +146,7 @@ export const useContactManager = () => {
   };
 
   useEffect(() => {
+    console.log('🔵 useContactManager: Organization/workspace changed, fetching contacts');
     if (selectedOrganization) {
       fetchContacts();
     }
@@ -132,6 +159,12 @@ export const useContactManager = () => {
     contact.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.postal_code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  console.log('🔵 useContactManager: Filtered contacts:', {
+    total: contacts.length,
+    filtered: filteredContacts.length,
+    searchTerm
+  });
 
   const isAllSelected = filteredContacts.length > 0 && selectedContacts.size === filteredContacts.length;
   const isIndeterminate = selectedContacts.size > 0 && selectedContacts.size < filteredContacts.length;

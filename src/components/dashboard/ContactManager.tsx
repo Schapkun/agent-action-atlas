@@ -161,6 +161,14 @@ export const ContactManager = () => {
     setColumnVisibility(prev => ({ ...prev, [column]: checked }));
   };
 
+  console.log('🔵 ContactManager: Rendering with data:', {
+    selectedOrganization: selectedOrganization?.name,
+    selectedWorkspace: selectedWorkspace?.name,
+    contactsCount: contacts.length,
+    filteredContactsCount: filteredContacts.length,
+    loading
+  });
+
   return (
     <>
       <div className="grid grid-cols-1 gap-6">
@@ -169,12 +177,6 @@ export const ContactManager = () => {
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Contacten</CardTitle>
             </div>
-
-            {!selectedOrganization && !selectedWorkspace && (
-              <div className="text-sm text-muted-foreground">
-                Selecteer een organisatie of werkruimte om contacten te bekijken
-              </div>
-            )}
 
             {(selectedOrganization || selectedWorkspace) && (
               <ContactTableFilters
