@@ -8,123 +8,137 @@ interface InvoicePreviewDialogProps {
 }
 
 export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: InvoicePreviewDialogProps) => {
-  // Create A4-formatted HTML content with proper scaling
+  // Create A4-formatted HTML content with proper scaling to fit popup
   const getA4FormattedContent = (content: string) => {
-    // Add A4 specific CSS to the existing content
+    // Add A4 specific CSS to the existing content with scaling
     const a4Content = content.replace(
       /<style[^>]*>([\s\S]*?)<\/style>/i,
       (match, styles) => {
         return `<style>
           ${styles}
           
-          /* A4 Preview CSS */
+          /* A4 Preview CSS - Scaled to fit popup */
           html, body {
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             background: white;
             font-family: Arial, sans-serif;
-            line-height: 1.4;
-            width: 210mm;
-            min-height: 297mm;
+            line-height: 1.3;
+            width: 100%;
+            height: 100%;
             box-sizing: border-box;
+            overflow: hidden;
+            transform: scale(0.75);
+            transform-origin: top left;
           }
           
-          @page {
-            size: A4;
-            margin: 20mm;
-          }
-          
-          @media print {
-            body { 
-              padding: 0; 
-              margin: 0;
-            }
-          }
-          
-          /* Ensure content fits A4 */
           .container, .document-container {
-            max-width: 170mm;
+            max-width: 100%;
             margin: 0 auto;
+            padding: 0;
           }
           
-          /* Table styling for better A4 fit */
+          /* Table styling for better fit */
           table {
             width: 100%;
             border-collapse: collapse;
-            margin: 10px 0;
-            font-size: 12px;
+            margin: 8px 0;
+            font-size: 11px;
           }
           
           th, td {
-            padding: 8px;
+            padding: 6px;
             text-align: left;
             border-bottom: 1px solid #ddd;
           }
           
           /* Header and footer styling */
           .header, .footer {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
           }
           
           /* Company info styling */
           .company-info {
-            margin-bottom: 30px;
-            font-size: 14px;
+            margin-bottom: 20px;
+            font-size: 12px;
           }
           
           /* Client info styling */
           .client-info {
-            margin-bottom: 30px;
-            font-size: 14px;
+            margin-bottom: 20px;
+            font-size: 12px;
           }
           
           /* Invoice details styling */
           .invoice-details {
-            margin-bottom: 30px;
-            font-size: 14px;
+            margin-bottom: 20px;
+            font-size: 12px;
           }
           
           /* Totals styling */
           .totals {
-            margin-top: 20px;
+            margin-top: 15px;
             text-align: right;
-            font-size: 14px;
+            font-size: 12px;
+          }
+          
+          /* Scale down everything to fit */
+          * {
+            max-width: 100% !important;
+          }
+          
+          h1, h2, h3 {
+            font-size: 16px !important;
+            margin: 10px 0 !important;
+          }
+          
+          p {
+            font-size: 11px !important;
+            margin: 5px 0 !important;
           }
         </style>`;
       }
     );
 
-    // If no style tag exists, add one
+    // If no style tag exists, add one with scaling
     if (!content.includes('<style')) {
       const styleTag = `
         <style>
           html, body {
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             background: white;
             font-family: Arial, sans-serif;
-            line-height: 1.4;
-            width: 210mm;
-            min-height: 297mm;
+            line-height: 1.3;
+            width: 100%;
+            height: 100%;
             box-sizing: border-box;
-          }
-          
-          @page {
-            size: A4;
-            margin: 20mm;
+            overflow: hidden;
+            transform: scale(0.75);
+            transform-origin: top left;
           }
           
           table {
             width: 100%;
             border-collapse: collapse;
-            margin: 10px 0;
-            font-size: 12px;
+            margin: 8px 0;
+            font-size: 11px;
           }
           
           th, td {
-            padding: 8px;
+            padding: 6px;
             text-align: left;
             border-bottom: 1px solid #ddd;
+          }
+          
+          h1, h2, h3 {
+            font-size: 16px !important;
+            margin: 10px 0 !important;
+          }
+          
+          p {
+            font-size: 11px !important;
+            margin: 5px 0 !important;
           }
         </style>
       `;
@@ -145,9 +159,9 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Factuur Voorbeeld</DialogTitle>
         </DialogHeader>
-        <div className="flex-1 overflow-hidden bg-gray-100 p-4 rounded-lg min-h-0">
+        <div className="flex-1 bg-gray-100 p-4 rounded-lg min-h-0 overflow-hidden">
           <div 
-            className="bg-white mx-auto shadow-lg h-full overflow-auto"
+            className="bg-white mx-auto shadow-lg h-full"
             style={{
               aspectRatio: '210/297', // A4 ratio
               maxWidth: '600px',
@@ -158,6 +172,7 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
               srcDoc={getA4FormattedContent(previewHTML)}
               className="w-full h-full border-0 rounded-sm"
               title="Invoice Preview"
+              style={{ overflow: 'hidden' }}
             />
           </div>
         </div>
