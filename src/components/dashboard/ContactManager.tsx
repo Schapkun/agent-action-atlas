@@ -1,8 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Search, UserPlus, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -30,6 +31,7 @@ export const ContactManager = () => {
   const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
   const { user } = useAuth();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
@@ -149,6 +151,24 @@ export const ContactManager = () => {
     });
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedContacts(new Set(filteredContacts.map(contact => contact.id)));
+    } else {
+      setSelectedContacts(new Set());
+    }
+  };
+
+  const handleSelectContact = (contactId: string, checked: boolean) => {
+    const newSelected = new Set(selectedContacts);
+    if (checked) {
+      newSelected.add(contactId);
+    } else {
+      newSelected.delete(contactId);
+    }
+    setSelectedContacts(newSelected);
+  };
+
   // Filter contacts based on search term
   const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -157,6 +177,9 @@ export const ContactManager = () => {
     contact.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.postal_code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const isAllSelected = filteredContacts.length > 0 && selectedContacts.size === filteredContacts.length;
+  const isIndeterminate = selectedContacts.size > 0 && selectedContacts.size < filteredContacts.length;
 
   return (
     <>
@@ -169,7 +192,7 @@ export const ContactManager = () => {
               {canInviteUsers && (
                 <Button variant="outline" size="sm" onClick={handleNewContact}>
                   <UserPlus className="h-4 w-4 mr-2" />
-                  Nieuw Contact
+                  Nieuw
                 </Button>
               )}
             </div>
@@ -183,12 +206,12 @@ export const ContactManager = () => {
             {(selectedOrganization || selectedWorkspace) && (
               <>
                 <div className="text-sm text-muted-foreground">
-                  Data voor: {getContextInfo()}
+                  Werkruimte: {getContextInfo()}
                 </div>
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Zoek contacten..."
+                    placeholder="Zoeken in deze tabel"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -198,18 +221,18 @@ export const ContactManager = () => {
             )}
           </CardHeader>
 
-          <div className="px-6 pt-3 pb-6">
+          <CardContent className="p-0">
             {!selectedOrganization && !selectedWorkspace ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8 text-muted-foreground px-6">
                 <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>Selecteer een organisatie of werkruimte om contacten te bekijken</p>
               </div>
             ) : loading ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8 text-muted-foreground px-6">
                 <p>Contacten laden...</p>
               </div>
             ) : filteredContacts.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8 text-muted-foreground px-6">
                 <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>{contacts.length === 0 ? 'Geen contacten gevonden voor de geselecteerde context' : 'Geen contacten gevonden die voldoen aan de zoekcriteria'}</p>
                 {canInviteUsers && contacts.length === 0 && (
@@ -225,32 +248,67 @@ export const ContactManager = () => {
                 )}
               </div>
             ) : (
-              <div className="space-y-3">
-                {filteredContacts.map((contact) => (
-                  <div key={contact.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">{contact.name}</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow className="text-xs">
+                    <TableHead className="w-12 p-2">
+                      <Checkbox
+                        checked={isAllSelected}
+                        onCheckedChange={handleSelectAll}
+                        className="h-3 w-3"
+                      />
+                    </TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground p-2">Klantnr</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground p-2">Klant</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground p-2">E-mail</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground p-2">Openstaand</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground p-2">Omzet</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground p-2">Actief</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredContacts.map((contact, index) => (
+                    <TableRow key={contact.id} className="text-xs hover:bg-muted/30">
+                      <TableCell className="p-2">
+                        <Checkbox
+                          checked={selectedContacts.has(contact.id)}
+                          onCheckedChange={(checked) => handleSelectContact(contact.id, checked as boolean)}
+                          className="h-3 w-3"
+                        />
+                      </TableCell>
+                      <TableCell className="p-2 text-xs text-blue-600 font-medium">
+                        {4000 + index + 1}
+                      </TableCell>
+                      <TableCell className="p-2">
+                        <div className="text-xs font-medium text-gray-900">{contact.name}</div>
                         {contact.email && (
-                          <p className="text-sm text-gray-600 mt-1">{contact.email}</p>
+                          <div className="text-xs text-muted-foreground">{contact.email}</div>
                         )}
-                        {(contact.address || contact.city) && (
-                          <p className="text-sm text-gray-600 mt-1">
-                            {contact.address && `${contact.address}, `}
-                            {contact.postal_code && `${contact.postal_code} `}
-                            {contact.city}
-                          </p>
-                        )}
-                        {contact.phone && (
-                          <p className="text-sm text-gray-600 mt-1">Tel: {contact.phone}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                      </TableCell>
+                      <TableCell className="p-2 text-xs text-muted-foreground">
+                        {contact.email || '-'}
+                      </TableCell>
+                      <TableCell className="p-2 text-xs text-right">
+                        0,00
+                      </TableCell>
+                      <TableCell className="p-2 text-xs text-right">
+                        0,00
+                      </TableCell>
+                      <TableCell className="p-2">
+                        <div className="flex items-center justify-center">
+                          <div className="h-4 w-4 bg-green-500 rounded-sm flex items-center justify-center">
+                            <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
-          </div>
+          </CardContent>
         </Card>
       </div>
 
