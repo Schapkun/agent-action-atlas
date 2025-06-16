@@ -87,7 +87,8 @@ export const useDocumentTemplates = () => {
 
       // Check organization context
       if (!selectedOrganization) {
-        throw new Error('Geen organisatie geselecteerd');
+        console.error('[useDocumentTemplates] No organization selected');
+        throw new Error('Geen organisatie geselecteerd. Selecteer eerst een organisatie.');
       }
       
       // Prepare insert data with all required fields
@@ -106,12 +107,18 @@ export const useDocumentTemplates = () => {
 
       console.log('[useDocumentTemplates] Insert data prepared:', {
         ...insertData,
-        html_content: insertData.html_content.substring(0, 100) + '...'
+        html_content: insertData.html_content.substring(0, 100) + '...',
+        organization_id: insertData.organization_id,
+        created_by: insertData.created_by
       });
 
       // Validate required fields
       if (!insertData.name.trim()) {
         throw new Error('Documentnaam is verplicht');
+      }
+
+      if (!insertData.html_content.trim()) {
+        throw new Error('HTML content is verplicht');
       }
 
       const { data, error } = await supabase
@@ -125,9 +132,13 @@ export const useDocumentTemplates = () => {
         
         // Provide specific error messages for common issues
         if (error.code === '23502') {
-          throw new Error('Verplichte velden ontbreken');
+          const missingColumn = error.message.includes('organization_id') ? 'organization_id' : 
+                               error.message.includes('created_by') ? 'created_by' : 'onbekend veld';
+          throw new Error(`Verplicht veld ontbreekt: ${missingColumn}`);
         } else if (error.code === '23505') {
           throw new Error('Een template met deze naam bestaat al');
+        } else if (error.code === '42501') {
+          throw new Error('Geen toegang om templates aan te maken. Controleer je rechten.');
         } else {
           throw new Error(`Database fout: ${error.message}`);
         }
@@ -149,11 +160,6 @@ export const useDocumentTemplates = () => {
       
       console.log('[useDocumentTemplates] Template created successfully:', newTemplate.id);
       
-      toast({
-        title: "Succes",
-        description: "Template succesvol aangemaakt"
-      });
-
       return newTemplate;
     } catch (error) {
       console.error('[useDocumentTemplates] Create template error:', error);
@@ -179,9 +185,18 @@ export const useDocumentTemplates = () => {
         throw new Error('Gebruiker niet ingelogd');
       }
 
+      // Check organization context
+      if (!selectedOrganization) {
+        throw new Error('Geen organisatie geselecteerd');
+      }
+
       // Validate required fields
       if (updates.name !== undefined && !updates.name.trim()) {
         throw new Error('Documentnaam is verplicht');
+      }
+
+      if (updates.html_content !== undefined && !updates.html_content.trim()) {
+        throw new Error('HTML content is verplicht');
       }
 
       const updateData = {
@@ -199,7 +214,7 @@ export const useDocumentTemplates = () => {
         .from('document_templates')
         .update(updateData)
         .eq('id', id)
-        .eq('organization_id', selectedOrganization?.id) // Security check
+        .eq('organization_id', selectedOrganization.id) // Security check
         .select()
         .single();
 
@@ -210,6 +225,8 @@ export const useDocumentTemplates = () => {
           throw new Error('Verplichte velden ontbreken');
         } else if (error.code === '23505') {
           throw new Error('Een template met deze naam bestaat al');
+        } else if (error.code === '42501') {
+          throw new Error('Geen toegang om deze template bij te werken');
         } else {
           throw new Error(`Database fout: ${error.message}`);
         }
@@ -231,11 +248,6 @@ export const useDocumentTemplates = () => {
       
       console.log('[useDocumentTemplates] Template updated successfully');
       
-      toast({
-        title: "Succes",
-        description: "Template succesvol bijgewerkt"
-      });
-
       return updatedTemplate;
     } catch (error) {
       console.error('[useDocumentTemplates] Update template error:', error);
@@ -255,11 +267,15 @@ export const useDocumentTemplates = () => {
     try {
       console.log('[useDocumentTemplates] Deleting template:', id);
       
+      if (!selectedOrganization) {
+        throw new Error('Geen organisatie geselecteerd');
+      }
+      
       const { error } = await supabase
         .from('document_templates')
         .update({ is_active: false })
         .eq('id', id)
-        .eq('organization_id', selectedOrganization?.id); // Security check
+        .eq('organization_id', selectedOrganization.id); // Security check
 
       if (error) {
         console.error('[useDocumentTemplates] Delete error:', error);

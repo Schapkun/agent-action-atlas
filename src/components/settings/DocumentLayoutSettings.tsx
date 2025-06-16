@@ -7,6 +7,7 @@ import { DocumentTemplate, useDocumentTemplates } from '@/hooks/useDocumentTempl
 import { useToast } from '@/hooks/use-toast';
 import { DocumentActions } from './components/DocumentActions';
 import { DocumentList } from './components/DocumentList';
+import { DocumentProvider } from './contexts/DocumentContext';
 
 const DocumentLayoutContent = () => {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
@@ -99,48 +100,50 @@ const DocumentLayoutContent = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium">Document Templates</h3>
-        <p className="text-sm text-muted-foreground">
-          Beheer en creëer document templates met HTML editor en A4 preview.
-        </p>
+    <DocumentProvider>
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-medium">Document Templates</h3>
+          <p className="text-sm text-muted-foreground">
+            Beheer en creëer document templates met HTML editor en A4 preview.
+          </p>
+        </div>
+
+        <DocumentActions onNewDocument={handleNewDocument} />
+
+        <DocumentList
+          documents={templates}
+          onEditDocument={handleEditDocument}
+          onDuplicateDocument={handleDuplicateDocument}
+          onDeleteDocument={handleDeleteDocument}
+        />
+
+        {/* Simple HTML Document Builder Dialog */}
+        <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen}>
+          <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 flex flex-col">
+            <DialogTitle className="sr-only">Document Builder</DialogTitle>
+            <SimpleHtmlDocumentBuilder 
+              documentId={editingDocumentId}
+              onComplete={handleBuilderComplete}
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* Duplicate Name Dialog */}
+        <DocumentNameDialog
+          open={isNameDialogOpen}
+          onClose={() => {
+            setIsNameDialogOpen(false);
+            setDuplicatingDocument(null);
+          }}
+          onSave={handleDuplicateSave}
+          existingNames={templates.map(d => d.name)}
+          initialName={duplicatingDocument ? `${duplicatingDocument.name} (kopie)` : ''}
+          initialType={duplicatingDocument?.type || 'factuur'}
+          initialDescription={duplicatingDocument?.description || ''}
+        />
       </div>
-
-      <DocumentActions onNewDocument={handleNewDocument} />
-
-      <DocumentList
-        documents={templates}
-        onEditDocument={handleEditDocument}
-        onDuplicateDocument={handleDuplicateDocument}
-        onDeleteDocument={handleDeleteDocument}
-      />
-
-      {/* Simple HTML Document Builder Dialog */}
-      <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 flex flex-col">
-          <DialogTitle className="sr-only">Document Builder</DialogTitle>
-          <SimpleHtmlDocumentBuilder 
-            documentId={editingDocumentId}
-            onComplete={handleBuilderComplete}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Duplicate Name Dialog */}
-      <DocumentNameDialog
-        open={isNameDialogOpen}
-        onClose={() => {
-          setIsNameDialogOpen(false);
-          setDuplicatingDocument(null);
-        }}
-        onSave={handleDuplicateSave}
-        existingNames={templates.map(d => d.name)}
-        initialName={duplicatingDocument ? `${duplicatingDocument.name} (kopie)` : ''}
-        initialType={duplicatingDocument?.type || 'factuur'}
-        initialDescription={duplicatingDocument?.description || ''}
-      />
-    </div>
+    </DocumentProvider>
   );
 };
 
