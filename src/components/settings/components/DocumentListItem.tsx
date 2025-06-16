@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Copy, Trash2 } from 'lucide-react';
@@ -23,6 +23,9 @@ export const DocumentListItem = ({
   onLabelUpdate 
 }: DocumentListItemProps) => {
   const { updateTemplate } = useDocumentTemplates();
+  
+  // Local state for immediate label updates
+  const [currentLabels, setCurrentLabels] = useState(document.labels || []);
 
   const handleEdit = () => onEdit(document);
   const handleDuplicate = () => onDuplicate(document);
@@ -34,16 +37,22 @@ export const DocumentListItem = ({
 
   const handleLabelsChange = async (labels: any[]) => {
     try {
+      // Update local state immediately for instant feedback
+      setCurrentLabels(labels);
+      
+      // Update database in background
       await updateTemplate(document.id, {
         labelIds: labels.map(label => label.id)
       });
       
-      // Trigger immediate refresh of this specific document
+      // Trigger eventual refresh if needed
       if (onLabelUpdate) {
         onLabelUpdate(document.id);
       }
     } catch (error) {
       console.error('Error updating document labels:', error);
+      // Revert local state on error
+      setCurrentLabels(document.labels || []);
     }
   };
 
@@ -62,10 +71,10 @@ export const DocumentListItem = ({
       </div>
       
       <div className="flex items-center gap-2 ml-4">
-        {/* Labels display moved here, to the left of the dropdown */}
-        {document.labels && document.labels.length > 0 && (
+        {/* Labels display with current labels */}
+        {currentLabels && currentLabels.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {document.labels.map((label) => (
+            {currentLabels.map((label) => (
               <Badge
                 key={label.id}
                 variant="secondary"
@@ -83,7 +92,7 @@ export const DocumentListItem = ({
         )}
         
         <LabelDropdown
-          selectedLabels={document.labels || []}
+          selectedLabels={currentLabels || []}
           onLabelsChange={handleLabelsChange}
         />
         
