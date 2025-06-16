@@ -87,13 +87,10 @@ export const ContactSelectionCard = ({
   return (
     <>
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium">Contact en Template</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           <div className="grid grid-cols-12 gap-4">
-            {/* Aan section - breder gemaakt */}
-            <div className="col-span-6">
+            {/* Aan section - meer ruimte gekregen */}
+            <div className="col-span-7">
               <Label className="text-xs font-medium">Aan</Label>
               <div className="flex gap-2 mt-1">
                 <div className="flex-1">
@@ -129,7 +126,7 @@ export const ContactSelectionCard = ({
               </div>
             </div>
 
-            {/* Template section - smaller ratio and half width */}
+            {/* Template section - zelfde grootte */}
             <div className="col-span-3">
               <Label className="text-xs font-medium">Template</Label>
               <Select value={selectedTemplate} onValueChange={onTemplateChange}>
@@ -152,8 +149,8 @@ export const ContactSelectionCard = ({
               </Select>
             </div>
 
-            {/* Instellingen section - adjusted width */}
-            <div className="col-span-3">
+            {/* Instellingen section - smaller gemaakt */}
+            <div className="col-span-2">
               <Label className="text-xs font-medium">Instellingen</Label>
               <Button 
                 type="button"
