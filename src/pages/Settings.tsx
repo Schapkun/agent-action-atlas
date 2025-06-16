@@ -27,6 +27,23 @@ const Settings = () => {
     }
   }, [searchParams, setSearchParams]);
 
+  // Dummy handlers for components that need them
+  const handleUsersUpdate = () => {
+    // Handle users update
+  };
+
+  const handleUserRoleUpdate = () => {
+    // Handle user role update
+  };
+
+  const handleTemplateSelect = () => {
+    // Handle template selection
+  };
+
+  const handleTemplateEdit = () => {
+    // Handle template editing
+  };
+
   return (
     <SettingsLayout>
       <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
@@ -45,11 +62,14 @@ const Settings = () => {
         </TabsContent>
         
         <TabsContent value="workspace">
-          <WorkspaceSettings />
+          <WorkspaceSettings userRole="admin" />
         </TabsContent>
         
         <TabsContent value="users">
-          <UserManagement />
+          <UserManagement 
+            onUsersUpdate={handleUsersUpdate}
+            onUserRoleUpdate={handleUserRoleUpdate}
+          />
         </TabsContent>
         
         <TabsContent value="invoicing">
@@ -61,7 +81,12 @@ const Settings = () => {
         </TabsContent>
         
         <TabsContent value="templates">
-          <TemplateList />
+          <TemplateList 
+            templates={[]}
+            onSelectTemplate={handleTemplateSelect}
+            onEditTemplate={handleTemplateEdit}
+            selectedTemplate=""
+          />
         </TabsContent>
         
         <TabsContent value="history">

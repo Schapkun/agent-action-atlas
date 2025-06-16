@@ -250,3 +250,6 @@ export const useContactManager = () => {
     fetchContacts
   };
 };
+
+// Export the Contact type for use in other components
+export type { Contact, ColumnVisibility };

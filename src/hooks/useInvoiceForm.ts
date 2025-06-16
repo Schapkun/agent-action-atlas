@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useToast } from '@/hooks/use-toast';
@@ -7,7 +8,7 @@ import { useInvoiceSettings } from '@/hooks/useInvoiceSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
-interface FormData {
+export interface InvoiceFormData {
   client_name: string;
   client_email: string;
   client_address: string;
@@ -20,7 +21,7 @@ interface FormData {
   notes: string;
 }
 
-interface LineItem {
+export interface LineItem {
   id: string;
   description: string;
   quantity: number;
@@ -29,7 +30,7 @@ interface LineItem {
   line_total: number;
 }
 
-interface Contact {
+export interface Contact {
   id: string;
   name: string;
   email?: string;
@@ -51,11 +52,11 @@ export const useInvoiceForm = () => {
   const { user } = useAuth();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { createInvoice, generateInvoiceNumber } = useInvoices();
-  const { invoiceSettings } = useInvoiceSettings();
+  const { settings: invoiceSettings } = useInvoiceSettings();
   const { toast } = useToast();
 
   // Load saved form data from localStorage
-  const loadFormData = (): FormData => {
+  const loadFormData = (): InvoiceFormData => {
     try {
       const saved = localStorage.getItem(FORM_STORAGE_KEY);
       if (saved) {
@@ -123,7 +124,7 @@ export const useInvoiceForm = () => {
     return '';
   };
 
-  const [formData, setFormData] = useState<FormData>(loadFormData);
+  const [formData, setFormData] = useState<InvoiceFormData>(loadFormData);
   const [lineItems, setLineItems] = useState<LineItem[]>(loadLineItems);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(loadSelectedContact);
   const [invoiceNumber, setInvoiceNumber] = useState<string>(loadInvoiceNumber);
@@ -164,9 +165,9 @@ export const useInvoiceForm = () => {
     localStorage.removeItem(NUMBER_STORAGE_KEY);
   };
 
-  const getDefaultInvoiceNumber = async () => {
+  const getDefaultInvoiceNumber = () => {
     try {
-      return await generateInvoiceNumber();
+      return generateInvoiceNumber();
     } catch (error) {
       console.error('Error generating invoice number:', error);
       return `${new Date().getFullYear()}-001`;
@@ -293,10 +294,10 @@ export const useInvoiceForm = () => {
     }
   };
 
-  const updateLineItem = (id: string, updates: Partial<LineItem>) => {
+  const updateLineItem = (index: number, field: keyof LineItem, value: string | number) => {
     setLineItems(prev =>
-      prev.map(item =>
-        item.id === id ? { ...item, ...updates, line_total: calculateLineTotal({ ...item, ...updates }) } : item
+      prev.map((item, i) =>
+        i === index ? { ...item, [field]: value, line_total: calculateLineTotal({ ...item, [field]: value }) } : item
       )
     );
   };
@@ -313,8 +314,8 @@ export const useInvoiceForm = () => {
     setLineItems(prev => [...prev, newItem]);
   };
 
-  const removeLineItem = (id: string) => {
-    setLineItems(prev => prev.filter(item => item.id !== id));
+  const removeLineItem = (index: number) => {
+    setLineItems(prev => prev.filter((_, i) => i !== index));
   };
 
   const calculateLineTotal = (item: LineItem): number => {

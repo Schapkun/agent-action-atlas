@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,7 +89,9 @@ export const CreateInvoiceForm = () => {
   const handleInvoiceNumberFocus = () => {
     setIsInvoiceNumberFocused(true);
     if (!invoiceNumber) {
-      setInvoiceNumber(getDefaultInvoiceNumber());
+      // Generate a synchronous default number
+      const defaultNumber = getDefaultInvoiceNumber();
+      setInvoiceNumber(defaultNumber);
     }
   };
 
@@ -135,7 +138,7 @@ export const CreateInvoiceForm = () => {
     formData,
     lineItems,
     invoiceNumber,
-    getDefaultInvoiceNumber
+    () => Promise.resolve(getDefaultInvoiceNumber())
   );
 
   const handleFormSubmit = (e: React.FormEvent) => {
@@ -154,6 +157,16 @@ export const CreateInvoiceForm = () => {
     handleContactCreated(contact);
     
     console.log('🚫 ISOLATION COMPLETE: Form updated only - ZERO INVOICE CREATION');
+  };
+
+  // Wrapper function to handle line item updates with correct signature
+  const handleLineItemUpdate = (index: number, field: keyof import('@/hooks/useInvoiceForm').LineItem, value: string | number) => {
+    updateLineItem(index, field, value);
+  };
+
+  // Wrapper function to handle line item removal with correct signature
+  const handleLineItemRemove = (index: number) => {
+    removeLineItem(index);
   };
 
   return (
@@ -196,8 +209,8 @@ export const CreateInvoiceForm = () => {
 
           <LineItemsTable
             lineItems={lineItems}
-            onUpdateLineItem={updateLineItem}
-            onRemoveLineItem={removeLineItem}
+            onUpdateLineItem={handleLineItemUpdate}
+            onRemoveLineItem={handleLineItemRemove}
           />
 
           {/* Add line button */}
