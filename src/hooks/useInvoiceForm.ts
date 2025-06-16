@@ -93,7 +93,7 @@ export const useInvoiceForm = () => {
   };
 
   const handleContactSelect = (contact: Contact | null) => {
-    console.log('useInvoiceForm.handleContactSelect: ONLY selecting contact, NO INVOICE CREATION:', contact);
+    console.log('🟦 useInvoiceForm.handleContactSelect: ONLY selecting contact - NO INVOICE CREATION EVER');
     setSelectedContact(contact);
     if (contact) {
       const contactPaymentTerms = contact.payment_terms || invoiceSettings.default_payment_terms || 30;
@@ -109,15 +109,16 @@ export const useInvoiceForm = () => {
         payment_terms: contactPaymentTerms
       }));
     }
-    console.log('useInvoiceForm.handleContactSelect: Contact selected, form updated - NO INVOICE SHOULD BE CREATED');
+    console.log('🟦 useInvoiceForm.handleContactSelect: Contact form updated - NO INVOICE CREATED');
   };
 
+  // CRITICAL: This function should NEVER create an invoice - only update form data
   const handleContactCreated = (contact: Contact) => {
-    console.log('🔴 useInvoiceForm.handleContactCreated: CRITICAL - ONLY updating form data, ABSOLUTELY NO INVOICE CREATION');
-    console.log('🔴 Contact data received:', contact);
-    console.log('🔴 Current stack trace:', new Error().stack);
+    console.log('🛑 CRITICAL BLOCK: useInvoiceForm.handleContactCreated - ABSOLUTELY NO INVOICE CREATION ALLOWED');
+    console.log('🛑 This should ONLY update form data, nothing else');
+    console.log('🛑 Contact received:', contact);
     
-    // CRITICAL: Only update the form data with the new contact, don't create an invoice
+    // ONLY update the form - NO INVOICE CREATION LOGIC WHATSOEVER
     setSelectedContact(contact);
     setFormData(prev => ({
       ...prev,
@@ -130,18 +131,16 @@ export const useInvoiceForm = () => {
       payment_terms: contact.payment_terms || invoiceSettings.default_payment_terms || 30
     }));
 
-    console.log('🔴 useInvoiceForm.handleContactCreated: Form data updated - ABSOLUTELY NO INVOICE CREATION SHOULD HAPPEN HERE');
+    console.log('🛑 useInvoiceForm.handleContactCreated: Form updated - NO INVOICE CREATION HAPPENED');
 
     toast({
       title: "Contact toegevoegd",
       description: `Contact "${contact.name}" is toegevoegd aan de factuur.`
     });
-
-    console.log('🔴 useInvoiceForm.handleContactCreated: COMPLETED - NO INVOICE WAS CREATED');
   };
 
   const handleContactUpdated = (contact: Contact) => {
-    console.log('useInvoiceForm.handleContactUpdated: ONLY updating contact, NO INVOICE CREATION:', contact);
+    console.log('🟦 useInvoiceForm.handleContactUpdated: ONLY updating contact - NO INVOICE CREATION');
     setSelectedContact(contact);
     setFormData(prev => ({
       ...prev,
@@ -153,7 +152,7 @@ export const useInvoiceForm = () => {
       client_country: contact.country || 'Nederland',
       payment_terms: contact.payment_terms || invoiceSettings.default_payment_terms || 30
     }));
-    console.log('useInvoiceForm.handleContactUpdated: Contact updated, form updated - NO INVOICE SHOULD BE CREATED');
+    console.log('🟦 useInvoiceForm.handleContactUpdated: Contact updated - NO INVOICE CREATED');
   };
 
   const handleContactClear = () => {
@@ -247,8 +246,9 @@ export const useInvoiceForm = () => {
     }
   };
 
+  // EXPLICIT INVOICE CREATION - This is the ONLY way invoices should be created
   const handleSubmit = async () => {
-    console.log('🟢 useInvoiceForm.handleSubmit: EXPLICIT INVOICE CREATION - This is the ONLY place where invoices should be created');
+    console.log('✅ EXPLICIT INVOICE CREATION: useInvoiceForm.handleSubmit called by user action');
     setLoading(true);
 
     try {
@@ -262,9 +262,9 @@ export const useInvoiceForm = () => {
         status: 'draft' as const
       };
 
-      console.log('🟢 useInvoiceForm.handleSubmit: Creating invoice with data:', invoiceData);
+      console.log('✅ Creating invoice explicitly:', invoiceData);
       await createInvoice(invoiceData);
-      console.log('🟢 useInvoiceForm.handleSubmit: Invoice created successfully');
+      console.log('✅ Invoice created successfully via explicit action');
       navigate('/facturen');
     } catch (error) {
       console.error('Error saving invoice:', error);
@@ -273,8 +273,9 @@ export const useInvoiceForm = () => {
     }
   };
 
+  // EXPLICIT INVOICE CREATION AND SEND - This is the ONLY way invoices should be created and sent
   const handleSaveAndSend = async () => {
-    console.log('🟢 useInvoiceForm.handleSaveAndSend: EXPLICIT INVOICE CREATION AND SEND - This is the ONLY place where invoices should be created and sent');
+    console.log('✅ EXPLICIT INVOICE CREATION AND SEND: useInvoiceForm.handleSaveAndSend called by user action');
     setSendLoading(true);
 
     try {
@@ -288,7 +289,7 @@ export const useInvoiceForm = () => {
         status: 'sent' as const
       };
 
-      console.log('🟢 useInvoiceForm.handleSaveAndSend: Creating and sending invoice with data:', invoiceData);
+      console.log('✅ Creating and sending invoice explicitly:', invoiceData);
       const newInvoice = await createInvoice(invoiceData);
       
       if (formData.client_email) {

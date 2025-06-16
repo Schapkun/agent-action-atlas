@@ -115,7 +115,8 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
     e.preventDefault();
     
     try {
-      console.log('ContactDialog: Starting contact save process - NO INVOICE CREATION');
+      console.log('🛑 CRITICAL: ContactDialog.handleSubmit - NO INVOICE CREATION ALLOWED');
+      console.log('🛑 This will ONLY save contact to database and update form');
       
       const contactData: Contact = {
         id: formData.number,
@@ -131,22 +132,22 @@ export const ContactDialog = ({ isOpen, onClose, onSave, contact, mode }: Contac
         payment_terms: formData.paymentTerms
       };
 
-      console.log('ContactDialog: Contact data prepared (no invoice should be created):', contactData);
+      console.log('🛑 ContactDialog: Contact data prepared (NO INVOICE CREATION):', contactData);
 
       let savedContact: Contact;
       
       if (mode === 'edit') {
-        console.log('ContactDialog: Updating existing contact - NO INVOICE CREATION');
+        console.log('🛑 ContactDialog: Updating existing contact - NO INVOICE CREATION');
         savedContact = await updateContact(contactData);
       } else {
-        console.log('ContactDialog: Creating new contact - NO INVOICE CREATION');
+        console.log('🛑 ContactDialog: Creating new contact - NO INVOICE CREATION');
         savedContact = await saveContact(contactData);
       }
 
-      console.log('ContactDialog: Contact saved successfully - calling onSave to update form only:', savedContact);
+      console.log('🛑 ContactDialog: Contact saved - calling onSave to ONLY update form:', savedContact);
 
-      // CRITICAL: Only call onSave to update the UI - absolutely NO invoice creation
-      // This should ONLY update the form data, nothing else
+      // CRITICAL: This should ONLY update the form data in the parent component
+      // NO INVOICE CREATION should happen here
       onSave(savedContact);
       onClose();
     } catch (error) {

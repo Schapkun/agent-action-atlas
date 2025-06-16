@@ -141,16 +141,19 @@ export const CreateInvoiceForm = () => {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('CreateInvoiceForm: Form submitted explicitly by user - this is the ONLY time an invoice should be created');
+    console.log('✅ EXPLICIT USER ACTION: Form submitted - this will create an invoice');
     handleSubmit();
   };
 
-  // CRITICAL: Custom contact created handler to prevent automatic invoice creation
+  // CRITICAL: This handler ensures NO AUTOMATIC INVOICE CREATION
   const handleContactCreatedSafely = (contact: any) => {
-    console.log('CreateInvoiceForm: Contact created - ONLY updating form data, NO invoice creation');
-    // Call the handleContactCreated from useInvoiceForm which should ONLY update form data
+    console.log('🛑 CreateInvoiceForm: Contact created - BLOCKING ANY INVOICE CREATION');
+    console.log('🛑 This will ONLY update the form, NO invoice creation allowed');
+    
+    // Call the handleContactCreated which should ONLY update form data
     handleContactCreated(contact);
-    console.log('CreateInvoiceForm: Form data updated with new contact - NO invoice should be created');
+    
+    console.log('🛑 CreateInvoiceForm: Form updated only - NO INVOICE CREATED');
   };
 
   return (
