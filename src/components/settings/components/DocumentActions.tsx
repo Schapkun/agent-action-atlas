@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Building, Tags, Filter, X } from 'lucide-react';
-import { LabelSelector } from './LabelSelector';
+import { Plus, Building, Tags } from 'lucide-react';
+import { SimpleLabelFilter } from './SimpleLabelFilter';
 import { CompanySettingsDialog } from './CompanySettingsDialog';
 import { DocumentTemplateLabel } from '@/types/documentLabels';
 
@@ -51,30 +51,12 @@ export const DocumentActions = ({
           </Button>
         </div>
 
-        {/* Filter section */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Filter op labels:</span>
-          </div>
-          
-          <LabelSelector
-            selectedLabels={selectedLabels}
-            onLabelsChange={onLabelsChange}
-          />
-          
-          {selectedLabels.length > 0 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onClearFilters}
-              className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-3 w-3" />
-              Wis filters
-            </Button>
-          )}
-        </div>
+        {/* Simple filter section */}
+        <SimpleLabelFilter
+          selectedLabels={selectedLabels}
+          onLabelsChange={onLabelsChange}
+          onClearFilters={onClearFilters}
+        />
       </div>
 
       <CompanySettingsDialog
