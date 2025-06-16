@@ -159,7 +159,7 @@ export const CompanySettingsDialog = ({ open, onClose }: CompanySettingsDialogPr
         ) : (
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground mb-4">
-              Deze gegevens worden automatisch gebruikt in document templates via shortcodes zoals {{company_name}}, {{company_address}}, etc.
+              Deze gegevens worden automatisch gebruikt in document templates via shortcodes zoals {'{{company_name}}'}, {'{{company_address}}'}, etc.
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
