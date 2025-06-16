@@ -1,13 +1,10 @@
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useRef } from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronRight, Plus, Building, User, FileText, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Upload, X } from 'lucide-react';
 
 interface VariablesPanelProps {
   placeholderValues: Record<string, string>;
@@ -15,172 +12,157 @@ interface VariablesPanelProps {
 }
 
 export const VariablesPanel = ({ placeholderValues, onPlaceholderChange }: VariablesPanelProps) => {
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    bedrijf: true,
-    document: true,
-    klant: false
-  });
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
-  const toggleSection = (section: string) => {
-    setOpenSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
-
-  // Categorize variables
-  const variableCategories = {
-    bedrijf: {
-      title: 'Bedrijf',
-      icon: Building,
-      variables: Object.entries(placeholderValues).filter(([key]) => 
-        ['bedrijfsnaam', 'adres', 'postcode', 'plaats', 'telefoon', 'email', 'kvk', 'btw', 'iban', 'website'].includes(key)
-      )
-    },
-    document: {
-      title: 'Document',
-      icon: FileText,
-      variables: Object.entries(placeholderValues).filter(([key]) => 
-        ['onderwerp', 'datum', 'referentie', 'aanhef', 'tekst', 'afsluiting', 'footer_tekst', 'footer_contact'].includes(key)
-      )
-    },
-    klant: {
-      title: 'Klant',
-      icon: User,
-      variables: Object.entries(placeholderValues).filter(([key]) => 
-        key.startsWith('klant_')
-      )
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const logoDataUrl = e.target?.result as string;
+        onPlaceholderChange('logo', logoDataUrl);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const renderInput = (key: string, value: string) => {
-    const isLongText = ['tekst', 'afsluiting', 'footer_tekst', 'footer_contact'].includes(key);
-    
-    if (isLongText) {
-      return (
-        <Textarea
-          value={value}
-          onChange={(e) => onPlaceholderChange(key, e.target.value)}
-          placeholder={`Voer ${key} in...`}
-          className="min-h-[80px] text-sm"
-          rows={4}
-        />
-      );
+  const handleRemoveLogo = () => {
+    onPlaceholderChange('logo', '');
+    if (logoInputRef.current) {
+      logoInputRef.current.value = '';
     }
-    
-    return (
-      <Input
-        value={value}
-        onChange={(e) => onPlaceholderChange(key, e.target.value)}
-        placeholder={`Voer ${key} in...`}
-        className="text-sm"
-      />
-    );
   };
 
-  const formatLabel = (key: string) => {
-    const labelMap: Record<string, string> = {
-      bedrijfsnaam: 'Bedrijfsnaam',
-      adres: 'Adres',
-      postcode: 'Postcode',
-      plaats: 'Plaats',
-      telefoon: 'Telefoon',
-      email: 'E-mail',
-      kvk: 'KvK nummer',
-      btw: 'BTW nummer',
-      iban: 'IBAN',
-      website: 'Website',
-      onderwerp: 'Onderwerp',
-      datum: 'Datum',
-      referentie: 'Referentie',
-      aanhef: 'Aanhef',
-      tekst: 'Hoofdtekst',
-      afsluiting: 'Afsluiting',
-      footer_tekst: 'Footer tekst',
-      footer_contact: 'Footer contact',
-      klant_naam: 'Klant naam',
-      klant_bedrijf: 'Klant bedrijf',
-      klant_adres: 'Klant adres',
-      klant_postcode: 'Klant postcode',
-      klant_plaats: 'Klant plaats'
-    };
-    
-    return labelMap[key] || key.charAt(0).toUpperCase() + key.slice(1);
-  };
+  const sections = [
+    {
+      title: 'Bedrijfsgegevens',
+      fields: [
+        { key: 'bedrijfsnaam', label: 'Bedrijfsnaam', placeholder: 'Uw Bedrijf B.V.' },
+        { key: 'adres', label: 'Adres', placeholder: 'Straat en huisnummer' },
+        { key: 'postcode', label: 'Postcode', placeholder: '1234 AB' },
+        { key: 'plaats', label: 'Plaats', placeholder: 'Amsterdam' },
+        { key: 'telefoon', label: 'Telefoon', placeholder: '+31 6 12345678' },
+        { key: 'email', label: 'E-mail', placeholder: 'info@bedrijf.nl' },
+        { key: 'kvk', label: 'KvK nummer', placeholder: '12345678' },
+        { key: 'btw', label: 'BTW nummer', placeholder: 'NL123456789B01' },
+        { key: 'iban', label: 'IBAN', placeholder: 'NL91 ABNA 0417 1643 00' },
+        { key: 'website', label: 'Website', placeholder: 'www.bedrijf.nl' }
+      ]
+    },
+    {
+      title: 'Document gegevens',
+      fields: [
+        { key: 'datum', label: 'Datum', placeholder: new Date().toLocaleDateString('nl-NL') },
+        { key: 'referentie', label: 'Referentie', placeholder: 'REF-2024-001' },
+        { key: 'onderwerp', label: 'Onderwerp', placeholder: 'Document onderwerp' },
+        { key: 'aanhef', label: 'Aanhef', placeholder: 'Geachte heer/mevrouw,' },
+        { key: 'tekst', label: 'Tekst', placeholder: 'Document inhoud...' },
+        { key: 'afsluiting', label: 'Afsluiting', placeholder: 'Met vriendelijke groet,' },
+        { key: 'footer_tekst', label: 'Footer tekst', placeholder: 'Dit document is automatisch gegenereerd.' },
+        { key: 'footer_contact', label: 'Footer contact', placeholder: 'Voor vragen kunt u contact opnemen.' }
+      ]
+    },
+    {
+      title: 'Klantgegevens',
+      fields: [
+        { key: 'klant_naam', label: 'Naam', placeholder: 'Klant naam' },
+        { key: 'klant_bedrijf', label: 'Bedrijf', placeholder: 'Klant bedrijf' },
+        { key: 'klant_adres', label: 'Adres', placeholder: 'Klant adres' },
+        { key: 'klant_postcode', label: 'Postcode', placeholder: '1234 AB' },
+        { key: 'klant_plaats', label: 'Plaats', placeholder: 'Amsterdam' },
+        { key: 'klant_email', label: 'E-mail', placeholder: 'klant@email.nl' },
+        { key: 'klant_telefoon', label: 'Telefoon', placeholder: '+31 6 87654321' },
+        { key: 'klant_land', label: 'Land', placeholder: 'Nederland' }
+      ]
+    }
+  ];
 
   return (
-    <div className="h-full flex flex-col bg-white border-r">
-      {/* Header */}
-      <div className="flex-shrink-0 p-4 border-b bg-gray-50">
-        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-          <Calendar className="h-4 w-4" />
-          Variabelen
-        </h3>
-        <p className="text-xs text-gray-600 mt-1">
-          Pas de waarden aan om ze in het document te zien
+    <div className="w-full h-full bg-muted/20 border-r">
+      <div className="p-4 border-b bg-background">
+        <h3 className="text-sm font-medium">Variabelen & Preview</h3>
+        <p className="text-xs text-muted-foreground mt-1">
+          Vul waarden in om ze te zien in de preview
         </p>
       </div>
-
-      {/* Variables */}
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-4">
-          {Object.entries(variableCategories).map(([categoryKey, category]) => {
-            const Icon = category.icon;
-            const isOpen = openSections[categoryKey];
+      
+      <ScrollArea className="h-[calc(100%-80px)]">
+        <div className="p-4 space-y-6">
+          {/* Logo Upload Section */}
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Logo</Label>
             
-            return (
-              <Card key={categoryKey} className="border border-gray-200">
-                <Collapsible open={isOpen} onOpenChange={() => toggleSection(categoryKey)}>
-                  <CollapsibleTrigger asChild>
-                    <CardHeader className="pb-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                      <CardTitle className="text-sm flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4 text-gray-600" />
-                          {category.title}
-                          <span className="text-xs text-gray-500">({category.variables.length})</span>
-                        </div>
-                        {isOpen ? 
-                          <ChevronDown className="h-4 w-4 text-gray-500" /> : 
-                          <ChevronRight className="h-4 w-4 text-gray-500" />
-                        }
-                      </CardTitle>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  
-                  <CollapsibleContent>
-                    <CardContent className="pt-0 space-y-3">
-                      {category.variables.map(([key, value]) => (
-                        <div key={key} className="space-y-1">
-                          <Label htmlFor={key} className="text-xs font-medium text-gray-700">
-                            {formatLabel(key)}
-                          </Label>
-                          {renderInput(key, value)}
-                        </div>
-                      ))}
-                      
-                      {category.variables.length === 0 && (
-                        <div className="text-xs text-gray-500 italic py-2">
-                          Geen variabelen in deze categorie
-                        </div>
-                      )}
-                    </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
-            );
-          })}
+            {placeholderValues.logo ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 border rounded bg-background">
+                  <div className="flex items-center gap-2">
+                    <img 
+                      src={placeholderValues.logo} 
+                      alt="Logo preview" 
+                      className="h-8 w-8 object-contain rounded border"
+                    />
+                    <span className="text-xs text-muted-foreground">Logo geüpload</span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRemoveLogo}
+                    className="h-6 w-6 p-0 text-red-500 hover:text-red-600"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div 
+                className="border-2 border-dashed border-muted-foreground/25 rounded-md p-3 text-center cursor-pointer hover:border-muted-foreground/40 transition-colors"
+                onClick={() => logoInputRef.current?.click()}
+              >
+                <Upload className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">
+                  Klik om logo te uploaden
+                </p>
+                <p className="text-xs text-muted-foreground/70 mt-1">
+                  PNG, JPG tot 2MB
+                </p>
+              </div>
+            )}
+            
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+              className="hidden"
+            />
+          </div>
+
+          {/* Variable Sections */}
+          {sections.map((section) => (
+            <div key={section.title} className="space-y-3">
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                {section.title}
+              </h4>
+              <div className="space-y-2">
+                {section.fields.map((field) => (
+                  <div key={field.key} className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">
+                      {field.label}
+                    </Label>
+                    <Input
+                      value={placeholderValues[field.key] || ''}
+                      onChange={(e) => onPlaceholderChange(field.key, e.target.value)}
+                      placeholder={field.placeholder}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </ScrollArea>
-      
-      {/* Footer Info */}
-      <div className="flex-shrink-0 p-4 border-t bg-gray-50">
-        <div className="text-xs text-gray-600">
-          <div className="flex justify-between items-center">
-            <span>Totaal variabelen:</span>
-            <span className="font-medium">{Object.keys(placeholderValues).length}</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
