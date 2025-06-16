@@ -26,20 +26,85 @@ export const useDocumentTemplates = () => {
   const { toast } = useToast();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
 
+  // Enhanced authentication and membership check
+  const checkUserAccess = async () => {
+    try {
+      console.log('[useDocumentTemplates] Checking user access...');
+      
+      // Check if user is authenticated
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        console.error('[useDocumentTemplates] Auth error:', userError);
+        throw new Error('Gebruiker niet ingelogd');
+      }
+      
+      if (!user) {
+        console.error('[useDocumentTemplates] No user found');
+        throw new Error('Geen gebruiker gevonden');
+      }
+
+      console.log('[useDocumentTemplates] User authenticated:', user.id);
+
+      // Check organization context
+      if (!selectedOrganization) {
+        console.error('[useDocumentTemplates] No organization selected');
+        throw new Error('Geen organisatie geselecteerd. Selecteer eerst een organisatie.');
+      }
+
+      console.log('[useDocumentTemplates] Organization selected:', selectedOrganization.id);
+
+      // Check if user is member of the selected organization
+      const { data: membership, error: membershipError } = await supabase
+        .from('organization_members')
+        .select('role')
+        .eq('organization_id', selectedOrganization.id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (membershipError || !membership) {
+        console.error('[useDocumentTemplates] Membership check failed:', membershipError);
+        
+        // Try to add user as member if they're not already
+        console.log('[useDocumentTemplates] Attempting to add user as organization member...');
+        const { error: insertError } = await supabase
+          .from('organization_members')
+          .insert({
+            organization_id: selectedOrganization.id,
+            user_id: user.id,
+            role: 'member'
+          });
+
+        if (insertError) {
+          console.error('[useDocumentTemplates] Failed to add as member:', insertError);
+          throw new Error('Geen toegang tot deze organisatie. Neem contact op met een beheerder.');
+        }
+        
+        console.log('[useDocumentTemplates] Successfully added user as organization member');
+      } else {
+        console.log('[useDocumentTemplates] User is organization member with role:', membership.role);
+      }
+
+      return { user, organization: selectedOrganization };
+    } catch (error) {
+      console.error('[useDocumentTemplates] Access check failed:', error);
+      throw error;
+    }
+  };
+
   const fetchTemplates = async () => {
     try {
       setLoading(true);
-      console.log('[useDocumentTemplates] Fetching templates for organization:', selectedOrganization?.id);
+      console.log('[useDocumentTemplates] Fetching templates...');
+      
+      // Check access first
+      const { organization } = await checkUserAccess();
       
       let query = supabase
         .from('document_templates')
         .select('*')
         .eq('is_active', true)
+        .eq('organization_id', organization.id)
         .order('created_at', { ascending: false });
-
-      if (selectedOrganization) {
-        query = query.eq('organization_id', selectedOrganization.id);
-      }
 
       const { data, error } = await query;
 
@@ -62,7 +127,7 @@ export const useDocumentTemplates = () => {
       console.error('[useDocumentTemplates] Error fetching templates:', error);
       toast({
         title: "Fout",
-        description: "Kon templates niet ophalen",
+        description: error instanceof Error ? error.message : "Kon templates niet ophalen",
         variant: "destructive"
       });
     } finally {
@@ -74,22 +139,8 @@ export const useDocumentTemplates = () => {
     try {
       console.log('[useDocumentTemplates] Creating new template:', templateData.name);
       
-      // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) {
-        console.error('[useDocumentTemplates] Auth error:', userError);
-        throw new Error('Gebruiker niet ingelogd');
-      }
-      
-      if (!user) {
-        throw new Error('Gebruiker niet gevonden');
-      }
-
-      // Check organization context
-      if (!selectedOrganization) {
-        console.error('[useDocumentTemplates] No organization selected');
-        throw new Error('Geen organisatie geselecteerd. Selecteer eerst een organisatie.');
-      }
+      // Check access and get user/organization info
+      const { user, organization } = await checkUserAccess();
       
       // Prepare insert data with all required fields
       const insertData = {
@@ -97,7 +148,7 @@ export const useDocumentTemplates = () => {
         type: templateData.type || 'custom',
         description: templateData.description || null,
         html_content: templateData.html_content || '',
-        organization_id: selectedOrganization.id,
+        organization_id: organization.id,
         workspace_id: selectedWorkspace?.id || null,
         created_by: user.id,
         is_default: templateData.is_default || false,
@@ -130,7 +181,7 @@ export const useDocumentTemplates = () => {
       if (error) {
         console.error('[useDocumentTemplates] Database insert error:', error);
         
-        // Provide specific error messages for common issues
+        // Enhanced error handling
         if (error.code === '23502') {
           const missingColumn = error.message.includes('organization_id') ? 'organization_id' : 
                                error.message.includes('created_by') ? 'created_by' : 'onbekend veld';
@@ -139,6 +190,8 @@ export const useDocumentTemplates = () => {
           throw new Error('Een template met deze naam bestaat al');
         } else if (error.code === '42501') {
           throw new Error('Geen toegang om templates aan te maken. Controleer je rechten.');
+        } else if (error.message.includes('row-level security')) {
+          throw new Error('Geen toegang tot deze organisatie. Log opnieuw in of neem contact op met een beheerder.');
         } else {
           throw new Error(`Database fout: ${error.message}`);
         }
@@ -179,16 +232,8 @@ export const useDocumentTemplates = () => {
     try {
       console.log('[useDocumentTemplates] Updating template:', id);
       
-      // Get current user for security
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        throw new Error('Gebruiker niet ingelogd');
-      }
-
-      // Check organization context
-      if (!selectedOrganization) {
-        throw new Error('Geen organisatie geselecteerd');
-      }
+      // Check access and get user/organization info
+      const { user, organization } = await checkUserAccess();
 
       // Validate required fields
       if (updates.name !== undefined && !updates.name.trim()) {
@@ -214,7 +259,7 @@ export const useDocumentTemplates = () => {
         .from('document_templates')
         .update(updateData)
         .eq('id', id)
-        .eq('organization_id', selectedOrganization.id) // Security check
+        .eq('organization_id', organization.id) // Security check
         .select()
         .single();
 
@@ -227,6 +272,8 @@ export const useDocumentTemplates = () => {
           throw new Error('Een template met deze naam bestaat al');
         } else if (error.code === '42501') {
           throw new Error('Geen toegang om deze template bij te werken');
+        } else if (error.message.includes('row-level security')) {
+          throw new Error('Geen toegang tot deze template. Controleer je rechten.');
         } else {
           throw new Error(`Database fout: ${error.message}`);
         }
@@ -267,18 +314,20 @@ export const useDocumentTemplates = () => {
     try {
       console.log('[useDocumentTemplates] Deleting template:', id);
       
-      if (!selectedOrganization) {
-        throw new Error('Geen organisatie geselecteerd');
-      }
+      // Check access
+      const { organization } = await checkUserAccess();
       
       const { error } = await supabase
         .from('document_templates')
         .update({ is_active: false })
         .eq('id', id)
-        .eq('organization_id', selectedOrganization.id); // Security check
+        .eq('organization_id', organization.id); // Security check
 
       if (error) {
         console.error('[useDocumentTemplates] Delete error:', error);
+        if (error.message.includes('row-level security')) {
+          throw new Error('Geen toegang tot deze template');
+        }
         throw new Error(`Database fout: ${error.message}`);
       }
 
