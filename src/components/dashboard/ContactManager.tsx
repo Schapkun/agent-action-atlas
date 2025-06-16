@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, UserPlus, Users } from 'lucide-react';
+import { Search, UserPlus, Users, Trash2, Archive, Mail } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,6 +24,7 @@ interface Contact {
   mobile?: string;
   type?: string;
   payment_terms?: number;
+  is_active?: boolean;
 }
 
 export const ContactManager = () => {
@@ -97,7 +99,8 @@ export const ContactManager = () => {
         city: client.city || undefined,
         country: client.country || undefined,
         phone: client.phone || undefined,
-        payment_terms: 30 // Default payment terms
+        payment_terms: 30,
+        is_active: true // Default to active since we don't have this field yet
       }));
 
       setContacts(mappedContacts);
@@ -169,6 +172,76 @@ export const ContactManager = () => {
     setSelectedContacts(newSelected);
   };
 
+  const toggleContactStatus = async (contactId: string, currentStatus: boolean) => {
+    try {
+      // For now, just update local state since we don't have the is_active field in the database yet
+      setContacts(prev => prev.map(contact => 
+        contact.id === contactId 
+          ? { ...contact, is_active: !currentStatus }
+          : contact
+      ));
+
+      toast({
+        title: currentStatus ? "Contact gedeactiveerd" : "Contact geactiveerd",
+        description: "Status is bijgewerkt"
+      });
+    } catch (error) {
+      console.error('Error updating contact status:', error);
+      toast({
+        title: "Fout",
+        description: "Kon contactstatus niet bijwerken",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedContacts.size === 0) return;
+
+    try {
+      // For demo purposes, just remove from local state
+      setContacts(prev => prev.filter(contact => !selectedContacts.has(contact.id)));
+      setSelectedContacts(new Set());
+      
+      toast({
+        title: "Contacten verwijderd",
+        description: `${selectedContacts.size} contact(en) verwijderd`
+      });
+    } catch (error) {
+      console.error('Error deleting contacts:', error);
+      toast({
+        title: "Fout",
+        description: "Kon contacten niet verwijderen",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleBulkArchive = async () => {
+    if (selectedContacts.size === 0) return;
+
+    try {
+      setContacts(prev => prev.map(contact => 
+        selectedContacts.has(contact.id)
+          ? { ...contact, is_active: false }
+          : contact
+      ));
+      setSelectedContacts(new Set());
+      
+      toast({
+        title: "Contacten gearchiveerd",
+        description: `${selectedContacts.size} contact(en) gearchiveerd`
+      });
+    } catch (error) {
+      console.error('Error archiving contacts:', error);
+      toast({
+        title: "Fout",
+        description: "Kon contacten niet archiveren",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Filter contacts based on search term
   const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -189,12 +262,26 @@ export const ContactManager = () => {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Contacten</CardTitle>
-              {canInviteUsers && (
-                <Button variant="outline" size="sm" onClick={handleNewContact}>
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Nieuw
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                {selectedContacts.size > 0 && (
+                  <>
+                    <Button variant="outline" size="sm" onClick={handleBulkArchive}>
+                      <Archive className="h-4 w-4 mr-2" />
+                      Archiveren ({selectedContacts.size})
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleBulkDelete}>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Verwijderen ({selectedContacts.size})
+                    </Button>
+                  </>
+                )}
+                {canInviteUsers && (
+                  <Button variant="outline" size="sm" onClick={handleNewContact}>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Nieuw
+                  </Button>
+                )}
+              </div>
             </div>
 
             {!selectedOrganization && !selectedWorkspace && (
@@ -206,7 +293,7 @@ export const ContactManager = () => {
             {(selectedOrganization || selectedWorkspace) && (
               <>
                 <div className="text-sm text-muted-foreground">
-                  Werkruimte: {getContextInfo()}
+                  {getContextInfo()}
                 </div>
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -250,25 +337,25 @@ export const ContactManager = () => {
             ) : (
               <Table>
                 <TableHeader>
-                  <TableRow className="text-xs">
-                    <TableHead className="w-12 p-2">
+                  <TableRow className="text-xs border-b">
+                    <TableHead className="w-8 p-2">
                       <Checkbox
                         checked={isAllSelected}
                         onCheckedChange={handleSelectAll}
                         className="h-3 w-3"
                       />
                     </TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground p-2">Klantnr</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground p-2 w-20">Klantnr</TableHead>
                     <TableHead className="text-xs font-medium text-muted-foreground p-2">Klant</TableHead>
                     <TableHead className="text-xs font-medium text-muted-foreground p-2">E-mail</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground p-2">Openstaand</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground p-2">Omzet</TableHead>
-                    <TableHead className="text-xs font-medium text-muted-foreground p-2">Actief</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground p-2 text-right w-24">Openstaand</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground p-2 text-right w-24">Omzet</TableHead>
+                    <TableHead className="text-xs font-medium text-muted-foreground p-2 text-center w-16">Actief</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredContacts.map((contact, index) => (
-                    <TableRow key={contact.id} className="text-xs hover:bg-muted/30">
+                    <TableRow key={contact.id} className="text-xs hover:bg-muted/30 border-b">
                       <TableCell className="p-2">
                         <Checkbox
                           checked={selectedContacts.has(contact.id)}
@@ -288,19 +375,28 @@ export const ContactManager = () => {
                       <TableCell className="p-2 text-xs text-muted-foreground">
                         {contact.email || '-'}
                       </TableCell>
-                      <TableCell className="p-2 text-xs text-right">
-                        0,00
+                      <TableCell className="p-2 text-xs text-right font-mono">
+                        €0,00
                       </TableCell>
-                      <TableCell className="p-2 text-xs text-right">
-                        0,00
+                      <TableCell className="p-2 text-xs text-right font-mono">
+                        €0,00
                       </TableCell>
                       <TableCell className="p-2">
                         <div className="flex items-center justify-center">
-                          <div className="h-4 w-4 bg-green-500 rounded-sm flex items-center justify-center">
-                            <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </div>
+                          <button
+                            onClick={() => toggleContactStatus(contact.id, contact.is_active ?? true)}
+                            className="transition-colors hover:opacity-80"
+                          >
+                            <div className={`h-4 w-4 rounded-sm flex items-center justify-center ${
+                              contact.is_active !== false ? 'bg-green-500' : 'bg-gray-300'
+                            }`}>
+                              {contact.is_active !== false && (
+                                <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </div>
+                          </button>
                         </div>
                       </TableCell>
                     </TableRow>
