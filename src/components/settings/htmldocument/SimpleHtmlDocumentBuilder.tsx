@@ -80,11 +80,38 @@ const DEFAULT_HTML = `<!DOCTYPE html>
 </html>`;
 
 const DEFAULT_PLACEHOLDERS = {
+  // Document gegevens
   datum: new Date().toLocaleDateString('nl-NL'),
-  bedrijfsnaam: 'Uw Bedrijf B.V.',
+  referentie: '',
+  onderwerp: '',
   aanhef: 'Geachte heer/mevrouw,',
+  tekst: '',
   afsluiting: 'Met vriendelijke groet,',
   footer_tekst: 'Dit document is automatisch gegenereerd.',
+  footer_contact: '',
+  
+  // Bedrijfsgegevens
+  bedrijfsnaam: 'Uw Bedrijf B.V.',
+  adres: '',
+  postcode: '',
+  plaats: '',
+  telefoon: '',
+  email: '',
+  kvk: '',
+  btw: '',
+  iban: '',
+  website: '',
+  logo: '',
+  
+  // Klantgegevens
+  klant_naam: '',
+  klant_bedrijf: '',
+  klant_adres: '',
+  klant_postcode: '',
+  klant_plaats: '',
+  klant_email: '',
+  klant_telefoon: '',
+  klant_land: 'Nederland'
 };
 
 export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtmlDocumentBuilderProps) => {
@@ -259,6 +286,23 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       setHasUnsavedChanges(true);
     }
   }, [documentName, htmlContent, documentId]); // REMOVED placeholderValues to prevent loops
+
+  // Luister naar contact selectie events om klant placeholders bij te werken
+  useEffect(() => {
+    const handleContactSelection = (event: CustomEvent) => {
+      console.log('[DocumentBuilder] Contact selected for documents:', event.detail);
+      setPlaceholderValues(prev => ({
+        ...prev,
+        ...event.detail
+      }));
+    };
+
+    window.addEventListener('contactSelectedForDocuments', handleContactSelection as EventListener);
+    
+    return () => {
+      window.removeEventListener('contactSelectedForDocuments', handleContactSelection as EventListener);
+    };
+  }, []);
 
   const handlePlaceholderChange = useCallback((key: string, value: string) => {
     console.log('[DocumentBuilder] Placeholder changed:', key, value);

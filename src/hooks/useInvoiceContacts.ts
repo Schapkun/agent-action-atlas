@@ -28,6 +28,22 @@ export const useInvoiceContacts = (
         client_city: contact.city || '',
         client_country: contact.country || 'Nederland'
       });
+      
+      // NIEUWE FUNCTIONALITEIT: Update ook de klant placeholders voor document templates
+      const updateEvent = new CustomEvent('contactSelectedForDocuments', {
+        detail: {
+          klant_naam: contact.name,
+          klant_bedrijf: contact.name, // Als het een bedrijf is
+          klant_adres: contact.address || '',
+          klant_postcode: contact.postal_code || '',
+          klant_plaats: contact.city || '',
+          klant_email: contact.email || '',
+          klant_telefoon: contact.phone || '',
+          klant_land: contact.country || 'Nederland'
+        }
+      });
+      window.dispatchEvent(updateEvent);
+      
     } else {
       setSelectedContact(null);
       setFormData({
@@ -39,6 +55,21 @@ export const useInvoiceContacts = (
         client_city: '',
         client_country: 'Nederland'
       });
+      
+      // Clear ook de klant placeholders
+      const clearEvent = new CustomEvent('contactSelectedForDocuments', {
+        detail: {
+          klant_naam: '',
+          klant_bedrijf: '',
+          klant_adres: '',
+          klant_postcode: '',
+          klant_plaats: '',
+          klant_email: '',
+          klant_telefoon: '',
+          klant_land: 'Nederland'
+        }
+      });
+      window.dispatchEvent(clearEvent);
     }
     
     console.log('📋 useInvoiceContacts: Contact updated in form only - NO SAVE TRIGGERED');
