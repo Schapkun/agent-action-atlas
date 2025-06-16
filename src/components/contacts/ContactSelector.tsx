@@ -137,11 +137,20 @@ export const ContactSelector = ({
     setIsEditContactOpen(true);
   };
 
+  // FIXED: Simple contact creation handler - just select the contact
   const handleContactCreated = (contact: Contact) => {
-    onContactCreated(contact);
+    console.log('📋 Contact created, now selecting for form:', contact.name);
+    
+    // Close dialog first
     setIsNewContactOpen(false);
+    
+    // Select the contact (this will update the form)
     handleContactSelect(contact);
-    // Herlaad de contactenlijst
+    
+    // Call parent callback for any additional handling
+    onContactCreated(contact);
+    
+    // Reload the contacts list
     fetchContacts();
   };
 
@@ -184,11 +193,11 @@ export const ContactSelector = ({
                 </Button>
               )}
               
-              {/* FIXED: Dropdown font size naar text-sm */}
+              {/* FIXED: Dropdown font size back to text-xs to match page styling */}
               {isDropdownOpen && (
                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
                   {loading ? (
-                    <div className="p-2 text-sm text-gray-500">Contacten laden...</div>
+                    <div className="p-2 text-xs text-gray-500">Contacten laden...</div>
                   ) : filteredContacts.length > 0 ? (
                     filteredContacts.map((contact) => (
                       <div
@@ -196,8 +205,8 @@ export const ContactSelector = ({
                         className="p-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
                         onClick={() => handleContactSelect(contact)}
                       >
-                        <div className="font-medium text-sm">{contact.name}</div>
-                        <div className="text-sm text-gray-500">
+                        <div className="font-medium text-xs">{contact.name}</div>
+                        <div className="text-xs text-gray-500">
                           {contact.email && <div>{contact.email}</div>}
                           {contact.address && contact.city && (
                             <div>{contact.address}, {contact.postal_code} {contact.city}</div>
@@ -206,7 +215,7 @@ export const ContactSelector = ({
                       </div>
                     ))
                   ) : (
-                    <div className="p-2 text-sm text-gray-500">
+                    <div className="p-2 text-xs text-gray-500">
                       {contacts.length === 0 ? 'Geen contacten gevonden in deze organisatie' : 'Geen contacten gevonden'}
                     </div>
                   )}

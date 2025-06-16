@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useToast } from '@/hooks/use-toast';
@@ -174,7 +173,10 @@ export const useInvoiceForm = () => {
     }
   };
 
+  // FIXED: Simple contact selection - only update form data, NO database operations
   const handleContactSelect = (contact: Contact) => {
+    console.log('📋 useInvoiceForm: Selecting contact for form only:', contact.name);
+    
     setSelectedContact(contact);
     setFormData(prev => ({
       ...prev,
@@ -185,11 +187,13 @@ export const useInvoiceForm = () => {
       client_city: contact.city || '',
       client_country: contact.country || 'Nederland'
     }));
+    
+    console.log('📋 useInvoiceForm: Form data updated, no database operations');
   };
 
+  // SEPARATE: Contact creation function - only for database operations
   const handleContactCreated = async (contactData: any) => {
-    console.log('🚫 ABSOLUTE ISOLATION: useInvoiceForm.handleContactCreated');
-    console.log('🚫 This function will ONLY update form data - ZERO INVOICE CREATION');
+    console.log('📋 useInvoiceForm: Creating new contact in database');
     
     try {
       const { data: newContact, error } = await supabase
@@ -211,7 +215,7 @@ export const useInvoiceForm = () => {
 
       if (error) throw error;
 
-      console.log('🚫 ISOLATION: Contact created, updating form only:', newContact);
+      console.log('📋 useInvoiceForm: Contact created in database:', newContact);
       
       const contact: Contact = {
         id: newContact.id,
@@ -225,6 +229,7 @@ export const useInvoiceForm = () => {
         contact_number: newContact.contact_number
       };
 
+      // After creation, select it for the form
       handleContactSelect(contact);
       
       toast({
@@ -232,14 +237,16 @@ export const useInvoiceForm = () => {
         description: "Contact succesvol toegevoegd"
       });
 
-      console.log('🚫 ISOLATION COMPLETE: Form updated, NO INVOICE CREATED');
+      console.log('📋 useInvoiceForm: Contact created and selected');
+      return contact;
     } catch (error) {
-      console.error('🚫 ISOLATION ERROR:', error);
+      console.error('📋 useInvoiceForm: Error creating contact:', error);
       toast({
         title: "Fout",
         description: "Kon contact niet aanmaken",
         variant: "destructive"
       });
+      throw error;
     }
   };
 

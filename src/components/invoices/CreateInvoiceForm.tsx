@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,7 +37,6 @@ export const CreateInvoiceForm = () => {
     invoiceSettings,
     getDefaultInvoiceNumber,
     handleContactSelect,
-    handleContactCreated,
     handleContactUpdated,
     updateLineItem,
     addLineItem,
@@ -113,31 +111,15 @@ export const CreateInvoiceForm = () => {
     return '';
   };
 
-  // FIXED: Complete contact creation handler for invoice context
-  const handleContactCreatedAndSelected = async (contact: any) => {
-    console.log('📝 CreateInvoiceForm: Contact created and auto-selecting for invoice');
+  // FIXED: Simple contact creation handler - just select the contact, no duplicate saving
+  const handleContactCreatedAndSelected = (contact: any) => {
+    console.log('📝 CreateInvoiceForm: Contact created by dialog, now selecting for invoice');
     
-    try {
-      // The contact is already saved in the database by ContactDialog
-      // We just need to select it for the invoice form
-      console.log('📝 Contact saved, now selecting for invoice form');
-      
-      // Select the contact for the invoice
-      handleContactSelect(contact);
-      
-      toast({
-        title: "Contact toegevoegd",
-        description: `Contact "${contact.name}" is toegevoegd en geselecteerd voor de factuur.`
-      });
-      
-    } catch (error) {
-      console.error('📝 Error selecting contact for invoice:', error);
-      toast({
-        title: "Fout",
-        description: "Kon contact niet selecteren voor factuur",
-        variant: "destructive"
-      });
-    }
+    // The contact is already saved by ContactDialog
+    // Just select it for the invoice form using handleContactSelect (not handleContactCreated)
+    handleContactSelect(contact);
+    
+    console.log('📝 CreateInvoiceForm: Contact selected for invoice form');
   };
 
   const handleContactClear = () => {

@@ -20,16 +20,18 @@ export const generatePreviewHTML = (
   }, 0);
   const total = subtotal + vatAmount;
 
-  // FIXED: Complete placeholder replacements with ALL possible values
+  // FIXED: Extended placeholder replacements with ALL possible variations
   const replacements = {
-    // Invoice/Quote details
+    // Invoice/Quote details - all variations
     '%INVOICE_NUMBER%': invoiceNumber || 'CONCEPT',
     '%QUOTE_NUMBER%': invoiceNumber || 'CONCEPT',
     '%DOCUMENT_NUMBER%': invoiceNumber || 'CONCEPT',
     '%FACTUURNUMMER%': invoiceNumber || 'CONCEPT',
     '%OFFERTENUMMER%': invoiceNumber || 'CONCEPT',
+    '%NUMMER%': invoiceNumber || 'CONCEPT',
+    '%DOC_NUMMER%': invoiceNumber || 'CONCEPT',
     
-    // Client information
+    // Client information - all variations
     '%CLIENT_NAME%': formData.client_name || '[Klantnaam]',
     '%CLIENT_EMAIL%': formData.client_email || '[Klant email]',
     '%CLIENT_ADDRESS%': formData.client_address || '[Klant adres]',
@@ -42,8 +44,14 @@ export const generatePreviewHTML = (
     '%KLANT_POSTCODE%': formData.client_postal_code || '[Postcode]',
     '%KLANT_PLAATS%': formData.client_city || '[Plaats]',
     '%KLANT_LAND%': formData.client_country || 'Nederland',
+    '%NAAM%': formData.client_name || '[Klantnaam]',
+    '%EMAIL%': formData.client_email || '[Klant email]',
+    '%ADRES%': formData.client_address || '[Klant adres]',
+    '%POSTCODE%': formData.client_postal_code || '[Postcode]',
+    '%PLAATS%': formData.client_city || '[Plaats]',
+    '%LAND%': formData.client_country || 'Nederland',
     
-    // Dates
+    // Dates - all variations
     '%INVOICE_DATE%': formData.invoice_date || new Date().toLocaleDateString('nl-NL'),
     '%QUOTE_DATE%': formData.quote_date || formData.invoice_date || new Date().toLocaleDateString('nl-NL'),
     '%DUE_DATE%': formData.due_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL'),
@@ -52,14 +60,19 @@ export const generatePreviewHTML = (
     '%OFFERTEDATUM%': formData.quote_date || formData.invoice_date || new Date().toLocaleDateString('nl-NL'),
     '%VERVALDATUM%': formData.due_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL'),
     '%GELDIG_TOT%': formData.valid_until || formData.due_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL'),
+    '%DATUM%': formData.invoice_date || new Date().toLocaleDateString('nl-NL'),
+    '%GELDIG_DATUM%': formData.valid_until || formData.due_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL'),
     
-    // Terms and conditions
+    // Terms and conditions - all variations
     '%PAYMENT_TERMS%': formData.payment_terms?.toString() || '30',
     '%NOTES%': formData.notes || '',
     '%BETALINGSVOORWAARDEN%': formData.payment_terms?.toString() || '30',
     '%OPMERKINGEN%': formData.notes || '',
+    '%BETALINGSTERMIJN%': formData.payment_terms?.toString() || '30',
+    '%NOTITIES%': formData.notes || '',
+    '%VOORWAARDEN%': formData.payment_terms?.toString() || '30',
     
-    // Financial totals
+    // Financial totals - all variations
     '%SUBTOTAL%': `€${subtotal.toFixed(2)}`,
     '%VAT_AMOUNT%': `€${vatAmount.toFixed(2)}`,
     '%TOTAL_AMOUNT%': `€${total.toFixed(2)}`,
@@ -67,10 +80,12 @@ export const generatePreviewHTML = (
     '%BTW_BEDRAG%': `€${vatAmount.toFixed(2)}`,
     '%TOTAAL_BEDRAG%': `€${total.toFixed(2)}`,
     '%TOTAAL%': `€${total.toFixed(2)}`,
+    '%BEDRAG%': `€${total.toFixed(2)}`,
+    '%SUBTOTAAL_EXCL%': `€${subtotal.toFixed(2)}`,
+    '%BTW%': `€${vatAmount.toFixed(2)}`,
+    '%INCL_BTW%': `€${total.toFixed(2)}`,
     
-    // Other common placeholders
-    '%PAYMENT_INFO%': 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl',
-    '%BETALINGSINFO%': 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl',
+    // Company information - all variations
     '%COMPANY_NAME%': 'De Buitendeur',
     '%COMPANY_ADDRESS%': '[Bedrijfsadres]',
     '%COMPANY_EMAIL%': 'info@debuitendoor.nl',
@@ -80,10 +95,20 @@ export const generatePreviewHTML = (
     '%BEDRIJFS_ADRES%': '[Bedrijfsadres]',
     '%BEDRIJFS_EMAIL%': 'info@debuitendoor.nl',
     '%BEDRIJFS_TELEFOON%': '[Bedrijfs telefoon]',
-    '%BTW_NUMMER%': '[BTW nummer]'
+    '%BTW_NUMMER%': '[BTW nummer]',
+    '%ORGANISATIE%': 'De Buitendeur',
+    '%ORGANISATIE_ADRES%': '[Bedrijfsadres]',
+    
+    // Payment information - all variations
+    '%PAYMENT_INFO%': 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl',
+    '%BETALINGSINFO%': 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl',
+    '%BETALINGSGEGEVENS%': 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl',
+    '%REKENINGNUMMER%': 'NL77 ABNA 0885 5296 34',
+    '%IBAN%': 'NL77 ABNA 0885 5296 34',
+    '%REKENING%': 'NL77 ABNA 0885 5296 34'
   };
 
-  // FIXED: Replace ALL placeholders with proper regex escaping
+  // FIXED: Replace ALL placeholders with global regex
   Object.entries(replacements).forEach(([placeholder, value]) => {
     const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     html = html.replace(new RegExp(escapedPlaceholder, 'g'), value);
@@ -139,9 +164,8 @@ export const generatePreviewHTML = (
   html = html.replace(/%TABLE_HEADER%/g, tableHeader);
   html = html.replace(/%TABEL_HEADER%/g, tableHeader);
 
-  console.log('🎨 PREVIEW: HTML generated with replaced placeholders');
-  console.log('🎨 PREVIEW: Line items count:', lineItems.length);
-  console.log('🎨 PREVIEW: Totals - Subtotal:', subtotal, 'VAT:', vatAmount, 'Total:', total);
+  console.log('🎨 PREVIEW: HTML generated with comprehensive placeholder replacement');
+  console.log('🎨 PREVIEW: Replaced', Object.keys(replacements).length, 'placeholder types');
 
   return html;
 };
