@@ -109,7 +109,16 @@ export const CompanySettingsDialog = ({ open, onClose }: CompanySettingsDialogPr
         .from('organization_settings')
         .upsert({
           organization_id: selectedOrganization.id,
-          ...companyData,
+          company_name: companyData.company_name,
+          company_address: companyData.company_address,
+          company_postal_code: companyData.company_postal_code,
+          company_city: companyData.company_city,
+          company_email: companyData.company_email,
+          company_phone: companyData.company_phone,
+          company_website: companyData.company_website,
+          company_vat: companyData.company_vat,
+          company_kvk: companyData.company_kvk,
+          company_bank: companyData.company_bank,
           updated_at: new Date().toISOString()
         });
 
