@@ -57,15 +57,20 @@ export const CompanySettingsDialog = ({ open, onClose }: CompanySettingsDialogPr
     
     setIsLoading(true);
     try {
+      console.log('Loading company data for organization:', selectedOrganization.id);
+      
       const { data, error } = await supabase
         .from('organization_settings')
         .select('*')
         .eq('organization_id', selectedOrganization.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
+        console.error('Error loading company data:', error);
         throw error;
       }
+
+      console.log('Loaded company data:', data);
 
       if (data) {
         setCompanyData({
@@ -80,6 +85,8 @@ export const CompanySettingsDialog = ({ open, onClose }: CompanySettingsDialogPr
           company_kvk: data.company_kvk || '',
           company_bank: data.company_bank || ''
         });
+      } else {
+        console.log('No existing company data found, using empty defaults');
       }
     } catch (error) {
       console.error('Error loading company data:', error);
@@ -101,11 +108,22 @@ export const CompanySettingsDialog = ({ open, onClose }: CompanySettingsDialogPr
   };
 
   const handleSave = async () => {
-    if (!selectedOrganization) return;
+    if (!selectedOrganization) {
+      console.error('No organization selected');
+      toast({
+        title: "Fout",
+        description: "Geen organisatie geselecteerd",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setIsSaving(true);
     try {
-      const { error } = await supabase
+      console.log('Saving company data for organization:', selectedOrganization.id);
+      console.log('Company data to save:', companyData);
+      
+      const { data, error } = await supabase
         .from('organization_settings')
         .upsert({
           organization_id: selectedOrganization.id,
@@ -120,9 +138,17 @@ export const CompanySettingsDialog = ({ open, onClose }: CompanySettingsDialogPr
           company_kvk: companyData.company_kvk,
           company_bank: companyData.company_bank,
           updated_at: new Date().toISOString()
-        });
+        }, {
+          onConflict: 'organization_id'
+        })
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error saving company data:', error);
+        throw error;
+      }
+
+      console.log('Successfully saved company data:', data);
 
       toast({
         title: "Opgeslagen",
@@ -134,7 +160,7 @@ export const CompanySettingsDialog = ({ open, onClose }: CompanySettingsDialogPr
       console.error('Error saving company data:', error);
       toast({
         title: "Fout",
-        description: "Kon bedrijfsgegevens niet opslaan",
+        description: `Kon bedrijfsgegevens niet opslaan: ${error.message}`,
         variant: "destructive"
       });
     } finally {
