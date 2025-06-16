@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -86,11 +85,11 @@ export const CreateInvoiceForm = () => {
     setInvoiceNumber(value);
   };
 
-  const handleInvoiceNumberFocus = () => {
+  const handleInvoiceNumberFocus = async () => {
     setIsInvoiceNumberFocused(true);
     if (!invoiceNumber) {
-      // Generate a synchronous default number
-      const defaultNumber = getDefaultInvoiceNumber();
+      // Generate an async default number
+      const defaultNumber = await getDefaultInvoiceNumber();
       setInvoiceNumber(defaultNumber);
     }
   };
@@ -106,9 +105,9 @@ export const CreateInvoiceForm = () => {
     return '';
   };
 
-  const getPlaceholderInvoiceNumber = () => {
+  const getPlaceholderInvoiceNumber = async () => {
     if (!invoiceNumber) {
-      return getDefaultInvoiceNumber();
+      return await getDefaultInvoiceNumber();
     }
     return '';
   };
@@ -138,7 +137,7 @@ export const CreateInvoiceForm = () => {
     formData,
     lineItems,
     invoiceNumber,
-    () => Promise.resolve(getDefaultInvoiceNumber())
+    getDefaultInvoiceNumber
   );
 
   const handleFormSubmit = (e: React.FormEvent) => {
@@ -204,7 +203,7 @@ export const CreateInvoiceForm = () => {
             onInvoiceNumberFocus={handleInvoiceNumberFocus}
             onInvoiceNumberBlur={handleInvoiceNumberBlur}
             getDisplayInvoiceNumber={getDisplayInvoiceNumber}
-            getPlaceholderInvoiceNumber={getPlaceholderInvoiceNumber}
+            getPlaceholderInvoiceNumber={() => ''}
           />
 
           <LineItemsTable

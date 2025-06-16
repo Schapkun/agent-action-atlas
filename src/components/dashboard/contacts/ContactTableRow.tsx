@@ -22,6 +22,7 @@ interface Contact {
   country?: string;
   phone?: string;
   mobile?: string;
+  contact_number?: string;
   type?: string;
   payment_terms?: number;
   is_active?: boolean;

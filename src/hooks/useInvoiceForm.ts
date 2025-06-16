@@ -165,9 +165,9 @@ export const useInvoiceForm = () => {
     localStorage.removeItem(NUMBER_STORAGE_KEY);
   };
 
-  const getDefaultInvoiceNumber = () => {
+  const getDefaultInvoiceNumber = async () => {
     try {
-      return generateInvoiceNumber();
+      return await generateInvoiceNumber();
     } catch (error) {
       console.error('Error generating invoice number:', error);
       return `${new Date().getFullYear()}-001`;
