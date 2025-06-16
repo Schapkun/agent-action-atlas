@@ -512,6 +512,16 @@ export type Database = {
       }
       organization_settings: {
         Row: {
+          company_address: string | null
+          company_bank: string | null
+          company_city: string | null
+          company_email: string | null
+          company_kvk: string | null
+          company_name: string | null
+          company_phone: string | null
+          company_postal_code: string | null
+          company_vat: string | null
+          company_website: string | null
           contact_prefix: string | null
           contact_start_number: number | null
           created_at: string
@@ -528,6 +538,16 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_address?: string | null
+          company_bank?: string | null
+          company_city?: string | null
+          company_email?: string | null
+          company_kvk?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          company_postal_code?: string | null
+          company_vat?: string | null
+          company_website?: string | null
           contact_prefix?: string | null
           contact_start_number?: number | null
           created_at?: string
@@ -544,6 +564,16 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_address?: string | null
+          company_bank?: string | null
+          company_city?: string | null
+          company_email?: string | null
+          company_kvk?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          company_postal_code?: string | null
+          company_vat?: string | null
+          company_website?: string | null
           contact_prefix?: string | null
           contact_start_number?: number | null
           created_at?: string
