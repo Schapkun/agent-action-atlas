@@ -81,76 +81,76 @@ export const ContactTableRow = ({
   };
 
   return (
-    <TableRow className="text-xs hover:bg-gray-50 border-b group">
-      <TableCell className="p-3">
+    <TableRow className="h-10 hover:bg-gray-50 border-b group">
+      <TableCell className="p-2 w-8">
         <Checkbox
           checked={isSelected}
           onCheckedChange={(checked) => onSelectContact(contact.id, checked as boolean)}
           className="h-4 w-4"
         />
       </TableCell>
-      <TableCell className="p-3 text-xs text-blue-600 font-medium">
+      <TableCell className="p-2 text-xs text-blue-600 font-medium w-16">
         {4000 + index + 1}
       </TableCell>
-      <TableCell className="p-3">
+      <TableCell className="p-2">
         <div className="text-xs font-medium text-gray-900">{contact.name}</div>
         {contact.email && (
           <div className="text-xs text-muted-foreground">{contact.email}</div>
         )}
       </TableCell>
       {columnVisibility.email && (
-        <TableCell className="p-3 text-xs text-muted-foreground">
+        <TableCell className="p-2 text-xs text-muted-foreground">
           {contact.email || '-'}
         </TableCell>
       )}
       {columnVisibility.address && (
-        <TableCell className="p-3 text-xs text-muted-foreground">
+        <TableCell className="p-2 text-xs text-muted-foreground">
           {formatAddress(contact)}
         </TableCell>
       )}
       {columnVisibility.phone && (
-        <TableCell className="p-3 text-xs text-muted-foreground">
+        <TableCell className="p-2 text-xs text-muted-foreground">
           {contact.phone || '-'}
         </TableCell>
       )}
       {columnVisibility.mobile && (
-        <TableCell className="p-3 text-xs text-muted-foreground">
+        <TableCell className="p-2 text-xs text-muted-foreground">
           {contact.mobile || '-'}
         </TableCell>
       )}
       {columnVisibility.postal_code && (
-        <TableCell className="p-3 text-xs text-muted-foreground">
+        <TableCell className="p-2 text-xs text-muted-foreground">
           {contact.postal_code || '-'}
         </TableCell>
       )}
       {columnVisibility.city && (
-        <TableCell className="p-3 text-xs text-muted-foreground">
+        <TableCell className="p-2 text-xs text-muted-foreground">
           {contact.city || '-'}
         </TableCell>
       )}
       {columnVisibility.country && (
-        <TableCell className="p-3 text-xs text-muted-foreground">
+        <TableCell className="p-2 text-xs text-muted-foreground">
           {contact.country || '-'}
         </TableCell>
       )}
       {columnVisibility.openstaand && (
-        <TableCell className="p-3 text-xs text-right font-mono">
+        <TableCell className="p-2 text-xs text-right font-mono">
           €0,00
         </TableCell>
       )}
       {columnVisibility.omzet && (
-        <TableCell className="p-3 text-xs text-right font-mono">
+        <TableCell className="p-2 text-xs text-right font-mono">
           €0,00
         </TableCell>
       )}
       {columnVisibility.actief && (
-        <TableCell className="p-3">
+        <TableCell className="p-2">
           <div className="flex items-center justify-center">
             <button
               onClick={() => onToggleStatus(contact.id, contact.is_active ?? true)}
               className="transition-colors hover:opacity-80 focus:outline-none"
             >
-              <div className={`h-5 w-5 rounded-sm flex items-center justify-center border ${
+              <div className={`h-4 w-4 rounded-sm flex items-center justify-center border ${
                 contact.is_active !== false 
                   ? 'bg-green-500 border-green-500' 
                   : 'bg-white border-gray-300'
@@ -163,12 +163,12 @@ export const ContactTableRow = ({
           </div>
         </TableCell>
       )}
-      <TableCell className="p-3">
+      <TableCell className="p-2 w-20">
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 px-2"
+            className="h-6 px-1 text-xs"
             onClick={() => onEditContact?.(contact)}
           >
             <Edit className="h-3 w-3" />
@@ -176,52 +176,52 @@ export const ContactTableRow = ({
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 bg-white">
               <DropdownMenuItem onClick={() => onViewInvoices?.(contact)}>
-                📄 Facturen bekijken
+                Facturen bekijken
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onViewQuotes?.(contact)}>
-                🔄 Periodieken bekijken
+                Periodieken bekijken
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onViewQuotes?.(contact)}>
-                ✅ Offertes bekijken
+                Offertes bekijken
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => onCreateInvoice?.(contact)}>
-                🔄 Factuur maken
+                Factuur maken
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onCreateQuote?.(contact)}>
-                🔄 Offerte maken
+                Offerte maken
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => onExportVCard?.(contact)}>
-                💾 Kopieer
+                Kopieer
               </DropdownMenuItem>
               <DropdownMenuItem>
-                🏷️ Labels
+                Labels
               </DropdownMenuItem>
               <DropdownMenuItem>
-                🔍 Filter op deze labels
+                Filter op deze labels
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onSendEmail?.(contact)}>
-                📧 E-mail versturen
+                E-mail versturen
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onExportVCard?.(contact)}>
-                📇 vCard
+                vCard
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onToggleStatus(contact.id, contact.is_active ?? true)}>
-                ⚪ Markeer als niet actief
+                Markeer als niet actief
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 onClick={() => onDeleteContact?.(contact)}
                 className="text-red-600"
               >
-                🗑️ Verwijder
+                Verwijder
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

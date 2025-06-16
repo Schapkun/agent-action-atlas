@@ -2,7 +2,7 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Settings, Archive, Trash2 } from 'lucide-react';
+import { Settings, Archive, Trash2, Check } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,8 +64,8 @@ export const ContactTableHeader = ({
 
       {/* Table Header */}
       <TableHeader>
-        <TableRow className="text-xs border-b bg-gray-50">
-          <TableHead className="w-8 p-3">
+        <TableRow className="h-10 border-b bg-gray-50">
+          <TableHead className="w-8 p-2">
             <Checkbox
               checked={isAllSelected}
               onCheckedChange={onSelectAll}
@@ -73,114 +73,154 @@ export const ContactTableHeader = ({
               data-state={isIndeterminate ? 'indeterminate' : isAllSelected ? 'checked' : 'unchecked'}
             />
           </TableHead>
-          <TableHead className="text-xs font-medium text-muted-foreground p-3 w-20">Klantnr</TableHead>
-          <TableHead className="text-xs font-medium text-muted-foreground p-3">Klant</TableHead>
+          <TableHead className="text-xs font-medium text-muted-foreground p-2 w-16">Klantnr</TableHead>
+          <TableHead className="text-xs font-medium text-muted-foreground p-2">Klant</TableHead>
           
           {columnVisibility.email && (
-            <TableHead className="text-xs font-medium text-muted-foreground p-3">E-mail</TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground p-2">E-mail</TableHead>
           )}
           {columnVisibility.address && (
-            <TableHead className="text-xs font-medium text-muted-foreground p-3">Adres</TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground p-2">Adres</TableHead>
           )}
           {columnVisibility.phone && (
-            <TableHead className="text-xs font-medium text-muted-foreground p-3">Telefoon</TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground p-2">Telefoon</TableHead>
           )}
           {columnVisibility.mobile && (
-            <TableHead className="text-xs font-medium text-muted-foreground p-3">Mobiel</TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground p-2">Mobiel</TableHead>
           )}
           {columnVisibility.postal_code && (
-            <TableHead className="text-xs font-medium text-muted-foreground p-3">Postcode</TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground p-2">Postcode</TableHead>
           )}
           {columnVisibility.city && (
-            <TableHead className="text-xs font-medium text-muted-foreground p-3">Plaats</TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground p-2">Plaats</TableHead>
           )}
           {columnVisibility.country && (
-            <TableHead className="text-xs font-medium text-muted-foreground p-3">Land</TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground p-2">Land</TableHead>
           )}
           {columnVisibility.openstaand && (
-            <TableHead className="text-xs font-medium text-muted-foreground p-3 text-right w-24">Openstaand</TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground p-2 text-right w-20">Openstaand</TableHead>
           )}
           {columnVisibility.omzet && (
-            <TableHead className="text-xs font-medium text-muted-foreground p-3 text-right w-24">Omzet</TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground p-2 text-right w-20">Omzet</TableHead>
           )}
           {columnVisibility.actief && (
-            <TableHead className="text-xs font-medium text-muted-foreground p-3 text-center w-16">Actief</TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground p-2 text-center w-16">Actief</TableHead>
           )}
           
-          <TableHead className="text-xs font-medium text-muted-foreground p-3 w-20">
+          <TableHead className="text-xs font-medium text-muted-foreground p-2 w-20">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
                   <Settings className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-white">
-                <DropdownMenuLabel>Contactgegevens</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-xs font-semibold">Contactgegevens</DropdownMenuLabel>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.email}
                   onCheckedChange={(checked) => onColumnVisibilityChange('email', checked)}
+                  className="text-xs"
                 >
-                  E-mail
+                  <div className="flex items-center">
+                    {columnVisibility.email && <Check className="h-3 w-3 mr-2" />}
+                    <span className={!columnVisibility.email ? "ml-5" : ""}>E-mail</span>
+                  </div>
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.address}
                   onCheckedChange={(checked) => onColumnVisibilityChange('address', checked)}
+                  className="text-xs"
                 >
-                  Adres
+                  <div className="flex items-center">
+                    {columnVisibility.address && <Check className="h-3 w-3 mr-2" />}
+                    <span className={!columnVisibility.address ? "ml-5" : ""}>Adres</span>
+                  </div>
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.phone}
                   onCheckedChange={(checked) => onColumnVisibilityChange('phone', checked)}
+                  className="text-xs"
                 >
-                  Telefoon
+                  <div className="flex items-center">
+                    {columnVisibility.phone && <Check className="h-3 w-3 mr-2" />}
+                    <span className={!columnVisibility.phone ? "ml-5" : ""}>Telefoon</span>
+                  </div>
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.mobile}
                   onCheckedChange={(checked) => onColumnVisibilityChange('mobile', checked)}
+                  className="text-xs"
                 >
-                  Mobiel
+                  <div className="flex items-center">
+                    {columnVisibility.mobile && <Check className="h-3 w-3 mr-2" />}
+                    <span className={!columnVisibility.mobile ? "ml-5" : ""}>Mobiel</span>
+                  </div>
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.postal_code}
                   onCheckedChange={(checked) => onColumnVisibilityChange('postal_code', checked)}
+                  className="text-xs"
                 >
-                  Postcode
+                  <div className="flex items-center">
+                    {columnVisibility.postal_code && <Check className="h-3 w-3 mr-2" />}
+                    <span className={!columnVisibility.postal_code ? "ml-5" : ""}>Postcode</span>
+                  </div>
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.city}
                   onCheckedChange={(checked) => onColumnVisibilityChange('city', checked)}
+                  className="text-xs"
                 >
-                  Plaats
+                  <div className="flex items-center">
+                    {columnVisibility.city && <Check className="h-3 w-3 mr-2" />}
+                    <span className={!columnVisibility.city ? "ml-5" : ""}>Plaats</span>
+                  </div>
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.country}
                   onCheckedChange={(checked) => onColumnVisibilityChange('country', checked)}
+                  className="text-xs"
                 >
-                  Land
+                  <div className="flex items-center">
+                    {columnVisibility.country && <Check className="h-3 w-3 mr-2" />}
+                    <span className={!columnVisibility.country ? "ml-5" : ""}>Land</span>
+                  </div>
                 </DropdownMenuCheckboxItem>
                 
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel>Financiële gegevens</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-xs font-semibold">Financiële gegevens</DropdownMenuLabel>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.openstaand}
                   onCheckedChange={(checked) => onColumnVisibilityChange('openstaand', checked)}
+                  className="text-xs"
                 >
-                  Openstaand
+                  <div className="flex items-center">
+                    {columnVisibility.openstaand && <Check className="h-3 w-3 mr-2" />}
+                    <span className={!columnVisibility.openstaand ? "ml-5" : ""}>Openstaand</span>
+                  </div>
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.omzet}
                   onCheckedChange={(checked) => onColumnVisibilityChange('omzet', checked)}
+                  className="text-xs"
                 >
-                  Omzet
+                  <div className="flex items-center">
+                    {columnVisibility.omzet && <Check className="h-3 w-3 mr-2" />}
+                    <span className={!columnVisibility.omzet ? "ml-5" : ""}>Omzet</span>
+                  </div>
                 </DropdownMenuCheckboxItem>
                 
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel>Status</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-xs font-semibold">Status</DropdownMenuLabel>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.actief}
                   onCheckedChange={(checked) => onColumnVisibilityChange('actief', checked)}
+                  className="text-xs"
                 >
-                  Actief
+                  <div className="flex items-center">
+                    {columnVisibility.actief && <Check className="h-3 w-3 mr-2" />}
+                    <span className={!columnVisibility.actief ? "ml-5" : ""}>Actief</span>
+                  </div>
                 </DropdownMenuCheckboxItem>
               </DropdownMenuContent>
             </DropdownMenu>
