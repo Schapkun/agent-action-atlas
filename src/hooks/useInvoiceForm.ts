@@ -245,33 +245,18 @@ export const useInvoiceForm = () => {
     }
   };
 
-  // SECURED INVOICE CREATION - ONLY EXPLICIT USER ACTIONS
+  // DISABLED SUBMIT FUNCTION - DOES NOTHING
   const handleSubmit = async () => {
-    console.log('🔒🔒🔒 SECURED: handleSubmit - Explicit user action to create invoice');
-    setLoading(true);
-
-    try {
-      const { subtotal, vatAmount, total } = calculateTotals();
-      
-      const invoiceData = {
-        ...formData,
-        subtotal,
-        vat_amount: vatAmount,
-        total_amount: total,
-        status: 'draft' as const
-      };
-
-      console.log('🔒🔒🔒 SECURED: Creating invoice via secured explicit action:', invoiceData);
-      await createInvoice(invoiceData, 'EXPLICIT_USER_ACTION');
-      console.log('🔒🔒🔒 SECURED: Invoice created successfully via explicit action');
-      navigate('/facturen');
-    } catch (error) {
-      console.error('Error saving invoice:', error);
-    } finally {
-      setLoading(false);
-    }
+    console.log('🚫 OPSLAAN KNOP UITGESCHAKELD - Er gebeurt niets');
+    toast({
+      title: "Opslaan uitgeschakeld",
+      description: "De opslaan functie is tijdelijk uitgeschakeld",
+      variant: "destructive"
+    });
+    // Doe niets - geen invoice creatie
   };
 
+  // SECURED SAVE AND SEND - ONLY EXPLICIT USER ACTIONS
   const handleSaveAndSend = async () => {
     console.log('🔒🔒🔒 SECURED: handleSaveAndSend - Explicit user action to create and send invoice');
     setSendLoading(true);
