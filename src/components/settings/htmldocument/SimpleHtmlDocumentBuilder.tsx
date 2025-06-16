@@ -97,7 +97,15 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
   // Load document data
   useEffect(() => {
     const loadDocument = async () => {
-      if (!documentId || templatesLoading) {
+      console.log('🔄 Loading document, documentId:', documentId, 'templatesLoading:', templatesLoading);
+      
+      if (templatesLoading) {
+        console.log('⏳ Templates still loading, waiting...');
+        return;
+      }
+
+      if (!documentId) {
+        console.log('✅ New document mode - no loading needed');
         setIsLoading(false);
         return;
       }
@@ -105,12 +113,20 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       try {
         const template = templates.find(t => t.id === documentId);
         if (template) {
+          console.log('✅ Template found:', template.name);
           setDocumentName(template.name);
           setHtmlContent(template.html_content || DEFAULT_HTML);
           setPlaceholderValues(template.placeholder_values || placeholderValues);
+        } else {
+          console.log('❌ Template not found with ID:', documentId);
+          toast({
+            title: "Fout",
+            description: "Document niet gevonden",
+            variant: "destructive"
+          });
         }
       } catch (error) {
-        console.error('Error loading document:', error);
+        console.error('❌ Error loading document:', error);
         toast({
           title: "Fout",
           description: "Kon document niet laden",
@@ -122,7 +138,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
     };
 
     loadDocument();
-  }, [documentId, templates, templatesLoading]);
+  }, [documentId, templates, templatesLoading, toast]);
 
   // Track changes
   useEffect(() => {
@@ -137,10 +153,14 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
   };
 
   const handleSave = async () => {
+    console.log('💾 Save initiated:', { documentName: documentName.trim(), documentId });
+    
     if (!documentName.trim()) {
+      console.log('❌ Save blocked: empty document name');
       toast({
         title: "Fout",
-        description: "Voer een documentnaam in"
+        description: "Voer een documentnaam in",
+        variant: "destructive"
       });
       return;
     }
@@ -148,15 +168,18 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
     setIsSaving(true);
     try {
       if (documentId) {
+        console.log('📝 Updating existing template:', documentId);
         // Update existing
         await updateTemplate(documentId, {
           name: documentName,
           html_content: htmlContent,
           placeholder_values: placeholderValues
         });
+        console.log('✅ Template updated successfully');
       } else {
+        console.log('🆕 Creating new template');
         // Create new
-        await createTemplate({
+        const newTemplate = await createTemplate({
           name: documentName,
           type: 'custom',
           html_content: htmlContent,
@@ -165,6 +188,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
           is_active: true,
           placeholder_values: placeholderValues
         });
+        console.log('✅ New template created:', newTemplate?.id);
       }
       
       setHasUnsavedChanges(false);
@@ -174,10 +198,10 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       });
       onComplete(true);
     } catch (error) {
-      console.error('Save failed:', error);
+      console.error('❌ Save failed:', error);
       toast({
         title: "Fout",
-        description: "Kon document niet opslaan",
+        description: "Kon document niet opslaan: " + (error instanceof Error ? error.message : 'Onbekende fout'),
         variant: "destructive"
       });
     } finally {
