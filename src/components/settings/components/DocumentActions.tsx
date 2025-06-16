@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Building, Tags } from 'lucide-react';
 import { SimpleLabelFilter } from './SimpleLabelFilter';
 import { CompanySettingsDialog } from './CompanySettingsDialog';
+import { DocumentTemplateLabelsDialog } from './DocumentTemplateLabelsDialog';
 import { DocumentTemplateLabel } from '@/types/documentLabels';
 
 interface DocumentActionsProps {
@@ -64,25 +65,10 @@ export const DocumentActions = ({
         onClose={() => setIsCompanyDialogOpen(false)}
       />
       
-      {/* Label Dialog - placeholder for now, you can implement the actual dialog later */}
-      {isLabelDialogOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-            <h3 className="text-lg font-medium mb-4">Label beheren</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Hier kun je labels aanmaken en beheren voor je document templates.
-            </p>
-            <div className="flex justify-end gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setIsLabelDialogOpen(false)}
-              >
-                Sluiten
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DocumentTemplateLabelsDialog
+        open={isLabelDialogOpen}
+        onClose={() => setIsLabelDialogOpen(false)}
+      />
     </>
   );
 };

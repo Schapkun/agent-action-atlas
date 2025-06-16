@@ -2,123 +2,148 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit2, Trash2, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
 import { useDocumentTemplateLabels } from '@/hooks/useDocumentTemplateLabels';
+import { DocumentTemplateLabel } from '@/types/documentLabels';
 
 interface DocumentTemplateLabelsDialogProps {
   open: boolean;
   onClose: () => void;
 }
 
-const COLOR_OPTIONS = [
-  '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', 
-  '#EC4899', '#14B8A6', '#F97316', '#6366F1', '#84CC16'
+const predefinedColors = [
+  '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
+  '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1'
 ];
 
 export const DocumentTemplateLabelsDialog = ({ open, onClose }: DocumentTemplateLabelsDialogProps) => {
-  const { labels, loading, createLabel, updateLabel, deleteLabel } = useDocumentTemplateLabels();
-  const [editingLabel, setEditingLabel] = useState<{ id: string; name: string; color: string } | null>(null);
+  const { labels, createLabel, updateLabel, deleteLabel, loading } = useDocumentTemplateLabels();
   const [newLabelName, setNewLabelName] = useState('');
-  const [selectedColor, setSelectedColor] = useState(COLOR_OPTIONS[0]);
+  const [newLabelColor, setNewLabelColor] = useState(predefinedColors[0]);
+  const [editingLabel, setEditingLabel] = useState<DocumentTemplateLabel | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editColor, setEditColor] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
   const handleCreateLabel = async () => {
     if (!newLabelName.trim()) return;
-
+    
+    setIsCreating(true);
     try {
-      setIsCreating(true);
       await createLabel({
         name: newLabelName.trim(),
-        color: selectedColor
+        color: newLabelColor
       });
       setNewLabelName('');
-      setSelectedColor(COLOR_OPTIONS[0]);
+      setNewLabelColor(predefinedColors[0]);
     } catch (error) {
-      // Error is handled in the hook
+      console.error('Error creating label:', error);
     } finally {
       setIsCreating(false);
     }
   };
 
-  const handleUpdateLabel = async () => {
-    if (!editingLabel || !editingLabel.name.trim()) return;
+  const handleEditLabel = (label: DocumentTemplateLabel) => {
+    setEditingLabel(label);
+    setEditName(label.name);
+    setEditColor(label.color);
+  };
 
+  const handleSaveEdit = async () => {
+    if (!editingLabel || !editName.trim()) return;
+    
     try {
       await updateLabel(editingLabel.id, {
-        name: editingLabel.name.trim(),
-        color: editingLabel.color
+        name: editName.trim(),
+        color: editColor
       });
       setEditingLabel(null);
+      setEditName('');
+      setEditColor('');
     } catch (error) {
-      // Error is handled in the hook
+      console.error('Error updating label:', error);
     }
   };
 
-  const handleDeleteLabel = async (id: string) => {
-    if (window.confirm('Weet je zeker dat je dit label wilt verwijderen?')) {
-      try {
-        await deleteLabel(id);
-      } catch (error) {
-        // Error is handled in the hook
-      }
+  const handleDeleteLabel = async (labelId: string) => {
+    if (!window.confirm('Weet je zeker dat je dit label wilt verwijderen?')) return;
+    
+    try {
+      await deleteLabel(labelId);
+    } catch (error) {
+      console.error('Error deleting label:', error);
     }
+  };
+
+  const handleClose = () => {
+    setEditingLabel(null);
+    setEditName('');
+    setEditColor('');
+    setNewLabelName('');
+    setNewLabelColor(predefinedColors[0]);
+    onClose();
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Document Template Labels Beheren</DialogTitle>
+          <DialogTitle>Label beheren</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Create new label */}
-          <div className="space-y-4 p-4 border rounded-lg">
-            <h3 className="font-medium">Nieuw Label Aanmaken</h3>
+          {/* Create new label section */}
+          <div className="border rounded-lg p-4 bg-gray-50">
+            <h4 className="font-medium mb-3">Nieuw label aanmaken</h4>
             <div className="space-y-3">
-              <Input
-                placeholder="Label naam..."
-                value={newLabelName}
-                onChange={(e) => setNewLabelName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleCreateLabel()}
-              />
+              <div>
+                <Label htmlFor="new-label-name">Label naam</Label>
+                <Input
+                  id="new-label-name"
+                  value={newLabelName}
+                  onChange={(e) => setNewLabelName(e.target.value)}
+                  placeholder="Voer label naam in..."
+                  onKeyPress={(e) => e.key === 'Enter' && handleCreateLabel()}
+                />
+              </div>
               
-              <div className="space-y-2">
-                <span className="text-sm font-medium">Kleur:</span>
-                <div className="flex gap-2 flex-wrap">
-                  {COLOR_OPTIONS.map((color) => (
+              <div>
+                <Label>Kleur kiezen</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {predefinedColors.map((color) => (
                     <button
                       key={color}
                       className={`w-8 h-8 rounded-full border-2 ${
-                        selectedColor === color ? 'border-gray-400' : 'border-gray-200'
+                        newLabelColor === color ? 'border-gray-800' : 'border-gray-300'
                       }`}
                       style={{ backgroundColor: color }}
-                      onClick={() => setSelectedColor(color)}
+                      onClick={() => setNewLabelColor(color)}
                     />
                   ))}
                 </div>
               </div>
-
+              
               <Button 
-                onClick={handleCreateLabel}
+                onClick={handleCreateLabel} 
                 disabled={!newLabelName.trim() || isCreating}
                 className="w-full"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                {isCreating ? 'Aanmaken...' : 'Label Aanmaken'}
+                {isCreating ? 'Aanmaken...' : 'Label aanmaken'}
               </Button>
             </div>
           </div>
 
-          {/* Existing labels */}
-          <div className="space-y-4">
-            <h3 className="font-medium">Bestaande Labels</h3>
+          {/* Existing labels section */}
+          <div>
+            <h4 className="font-medium mb-3">Bestaande labels ({labels.length})</h4>
             
             {loading ? (
-              <div className="text-center py-4">Labels laden...</div>
+              <div className="text-center py-4 text-gray-500">Laden...</div>
             ) : labels.length === 0 ? (
-              <div className="text-center py-4 text-gray-500">
+              <div className="text-center py-8 text-gray-500">
                 Nog geen labels aangemaakt
               </div>
             ) : (
@@ -126,32 +151,34 @@ export const DocumentTemplateLabelsDialog = ({ open, onClose }: DocumentTemplate
                 {labels.map((label) => (
                   <div key={label.id} className="flex items-center justify-between p-3 border rounded-lg">
                     {editingLabel?.id === label.id ? (
-                      <div className="flex-1 space-y-3">
+                      <div className="flex-1 flex items-center gap-3">
                         <Input
-                          value={editingLabel.name}
-                          onChange={(e) => setEditingLabel({ ...editingLabel, name: e.target.value })}
-                          onKeyDown={(e) => e.key === 'Enter' && handleUpdateLabel()}
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="flex-1"
                         />
-                        
-                        <div className="flex gap-2">
-                          {COLOR_OPTIONS.map((color) => (
+                        <div className="flex gap-1">
+                          {predefinedColors.map((color) => (
                             <button
                               key={color}
-                              className={`w-6 h-6 rounded-full border-2 ${
-                                editingLabel.color === color ? 'border-gray-400' : 'border-gray-200'
+                              className={`w-6 h-6 rounded-full border ${
+                                editColor === color ? 'border-gray-800' : 'border-gray-300'
                               }`}
                               style={{ backgroundColor: color }}
-                              onClick={() => setEditingLabel({ ...editingLabel, color })}
+                              onClick={() => setEditColor(color)}
                             />
                           ))}
                         </div>
-
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={handleUpdateLabel}>
-                            Opslaan
+                        <div className="flex gap-1">
+                          <Button size="sm" onClick={handleSaveEdit}>
+                            <Save className="h-3 w-3" />
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => setEditingLabel(null)}>
-                            <X className="h-4 w-4" />
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => setEditingLabel(null)}
+                          >
+                            <X className="h-3 w-3" />
                           </Button>
                         </div>
                       </div>
@@ -159,7 +186,6 @@ export const DocumentTemplateLabelsDialog = ({ open, onClose }: DocumentTemplate
                       <>
                         <div className="flex items-center gap-3">
                           <Badge
-                            variant="secondary"
                             style={{ 
                               backgroundColor: label.color, 
                               color: 'white',
@@ -168,26 +194,25 @@ export const DocumentTemplateLabelsDialog = ({ open, onClose }: DocumentTemplate
                           >
                             {label.name}
                           </Badge>
+                          <span className="text-sm text-gray-500">
+                            Aangemaakt: {new Date(label.created_at).toLocaleDateString('nl-NL')}
+                          </span>
                         </div>
-                        
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setEditingLabel({ 
-                              id: label.id, 
-                              name: label.name, 
-                              color: label.color 
-                            })}
+                        <div className="flex gap-1">
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => handleEditLabel(label)}
                           >
-                            <Edit2 className="h-4 w-4" />
+                            <Edit2 className="h-3 w-3" />
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
                             onClick={() => handleDeleteLabel(label.id)}
+                            className="text-red-600 hover:text-red-700"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
                       </>
@@ -197,6 +222,12 @@ export const DocumentTemplateLabelsDialog = ({ open, onClose }: DocumentTemplate
               </div>
             )}
           </div>
+        </div>
+
+        <div className="flex justify-end pt-4">
+          <Button variant="outline" onClick={handleClose}>
+            Sluiten
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
