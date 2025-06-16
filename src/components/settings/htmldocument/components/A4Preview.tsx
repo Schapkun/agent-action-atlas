@@ -123,13 +123,20 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
         </div>
       </div>
 
-      {/* A4 Preview Area - Grote preview met correcte A4 ratio en 5px marges */}
-      <div className="flex-1 overflow-hidden flex justify-center items-center" style={{ padding: '5px 24px' }}>
+      {/* A4 Preview Area - Dynamische afmetingen met 5px verticale marges */}
+      <div 
+        className="flex-1 overflow-hidden flex justify-center items-center"
+        style={{ 
+          paddingTop: '5px',
+          paddingBottom: '5px'
+        }}
+      >
         <div 
           className="bg-white shadow-lg border border-gray-300"
           style={{
-            width: '800px',
-            height: '1131px',
+            height: 'calc(100vh - 160px)',
+            width: 'calc((100vh - 160px) * 0.707)',
+            maxWidth: '100%',
             aspectRatio: '210/297'
           }}
         >
@@ -140,7 +147,8 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
             style={{
               background: 'white',
               transform: 'scale(1)',
-              transformOrigin: 'top left'
+              transformOrigin: 'top left',
+              overflow: 'hidden'
             }}
           />
         </div>
