@@ -21,7 +21,7 @@ export const useInvoiceForm = () => {
   
   const { lineItems, updateLineItem, addLineItem, removeLineItem, calculateTotals } = useInvoiceLineItems();
   
-  const { selectedContact, handleContactSelect, handleContactCreated, handleContactUpdated } = useInvoiceContacts(
+  const { selectedContact, handleContactSelectOnly, handleContactSaveAndSelect, handleContactUpdated } = useInvoiceContacts(
     formData,
     setFormData
   );
@@ -62,8 +62,8 @@ export const useInvoiceForm = () => {
     sendLoading,
     invoiceSettings,
     getDefaultInvoiceNumber,
-    handleContactSelect,
-    handleContactCreated,
+    handleContactSelectOnly,
+    handleContactSaveAndSelect,
     handleContactUpdated,
     updateLineItem,
     addLineItem,

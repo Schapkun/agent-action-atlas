@@ -47,7 +47,7 @@ export const ContactSelector = ({
   );
 
   const handleContactSelect = (contact: Contact) => {
-    console.log('📋 PUNT 2: Contact geselecteerd:', contact.name);
+    console.log('📋 FIXED: ContactSelector - selecting existing contact:', contact.name);
     onContactSelect(contact);
     setSearchTerm(contact.name);
     setIsDropdownOpen(false);
@@ -69,16 +69,17 @@ export const ContactSelector = ({
     setIsEditContactOpen(true);
   };
 
+  // FIXED: ContactDialog saves contact, then we just select it (no double save)
   const handleContactCreated = (contact: Contact) => {
-    console.log('📋 Contact created, now selecting for form:', contact.name);
+    console.log('📋 FIXED: ContactSelector - contact saved by dialog, now selecting:', contact.name);
     
     // Close dialog first
     setIsNewContactOpen(false);
     
-    // Select the contact (this will update the form)
-    handleContactSelect(contact);
+    // Update search term to show selected contact
+    setSearchTerm(contact.name);
     
-    // Call parent callback for any additional handling
+    // Call parent callback (this will be ContactSelectionCard.handleContactCreated -> CreateInvoiceForm.handleContactCreatedAndSelected -> useInvoiceFormHandlers.handleContactSelectOnly)
     onContactCreated(contact);
     
     // Reload the contacts list

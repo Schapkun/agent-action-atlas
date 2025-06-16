@@ -21,8 +21,9 @@ export const useInvoiceContacts = (
     saveSelectedContact(selectedContact);
   }, [selectedContact, saveSelectedContact]);
 
-  const handleContactSelect = (contact: Contact) => {
-    console.log('📋 useInvoiceContacts: Selecting contact for form only:', contact.name);
+  // RENAMED: Was handleContactSelect, now handles ONLY selecting existing contacts (no DB operations)
+  const handleContactSelectOnly = (contact: Contact) => {
+    console.log('📋 useInvoiceContacts: Selecting existing contact for form:', contact.name);
     
     setSelectedContact(contact);
     setFormData({
@@ -35,10 +36,11 @@ export const useInvoiceContacts = (
       client_country: contact.country || 'Nederland'
     });
     
-    console.log('📋 useInvoiceContacts: Form data updated, no database operations');
+    console.log('📋 useInvoiceContacts: Contact selected for form, no database operations');
   };
 
-  const handleContactCreated = async (contactData: any) => {
+  // RENAMED: Was handleContactCreated, now handles creating NEW contacts AND selecting them
+  const handleContactSaveAndSelect = async (contactData: any) => {
     console.log('📋 useInvoiceContacts: Creating new contact in database');
     
     try {
@@ -75,7 +77,7 @@ export const useInvoiceContacts = (
         contact_number: newContact.contact_number
       };
 
-      handleContactSelect(contact);
+      handleContactSelectOnly(contact);
       
       toast({
         title: "Succes",
@@ -145,8 +147,8 @@ export const useInvoiceContacts = (
 
   return {
     selectedContact,
-    handleContactSelect,
-    handleContactCreated,
+    handleContactSelectOnly,
+    handleContactSaveAndSelect,
     handleContactUpdated
   };
 };

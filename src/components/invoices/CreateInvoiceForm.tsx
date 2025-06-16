@@ -32,7 +32,7 @@ export const CreateInvoiceForm = () => {
     handleInvoiceNumberFocus,
     handleInvoiceNumberBlur,
     getDisplayInvoiceNumber,
-    handleContactSelect,
+    handleContactSelectOnly,
     handleContactCreatedAndSelected,
     handleContactUpdated,
     handlePreview,
@@ -75,7 +75,7 @@ export const CreateInvoiceForm = () => {
             selectedTemplate={selectedTemplate}
             availableTemplates={availableTemplates}
             templatesLoading={templatesLoading}
-            onContactSelect={handleContactSelect}
+            onContactSelect={handleContactSelectOnly}
             onContactCreated={handleContactCreatedAndSelected}
             onContactUpdated={handleContactUpdated}
             onTemplateChange={setSelectedTemplate}

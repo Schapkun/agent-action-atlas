@@ -44,26 +44,26 @@ export const ContactSelectionCard = ({
   onTemplateChange,
   onShowSettings
 }: ContactSelectionCardProps) => {
-  console.log('📋 PUNT 3: ContactSelectionCard rendering with props:', {
+  console.log('📋 FIXED: ContactSelectionCard rendering with props:', {
     selectedContact: selectedContact?.name,
     selectedTemplate,
     availableTemplates: availableTemplates.length,
     templatesLoading
   });
 
-  // PUNT 3: Verbeterde contact handlers
+  // FIXED: Contact handlers now use correct functions
   const handleContactSelect = (contact: Contact | null) => {
-    console.log('📋 PUNT 3: ContactSelectionCard.handleContactSelect:', contact?.name);
+    console.log('📋 FIXED: ContactSelectionCard.handleContactSelect (existing contact):', contact?.name);
     onContactSelect(contact);
   };
 
   const handleContactCreated = (contact: Contact) => {
-    console.log('📋 PUNT 3: ContactSelectionCard.handleContactCreated:', contact.name);
+    console.log('📋 FIXED: ContactSelectionCard.handleContactCreated (dialog saved contact):', contact.name);
     onContactCreated(contact);
   };
 
   const handleContactUpdated = (contact: Contact) => {
-    console.log('📋 PUNT 3: ContactSelectionCard.handleContactUpdated:', contact.name);
+    console.log('📋 FIXED: ContactSelectionCard.handleContactUpdated:', contact.name);
     onContactUpdated(contact);
   };
 
@@ -73,7 +73,7 @@ export const ContactSelectionCard = ({
         <CardTitle className="text-sm font-medium">Contact en Template</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* PUNT 3: Geïntegreerde ContactSelector die echte contacten toont */}
+        {/* FIXED: ContactSelector uses corrected handler chain */}
         <ContactSelector
           selectedContact={selectedContact}
           onContactSelect={handleContactSelect}
