@@ -90,43 +90,57 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   
   const { toast } = useToast();
-  const { templates, loading: templatesLoading, updateTemplate, createTemplate } = useDocumentTemplates();
+  const { templates, loading: templatesLoading, updateTemplate, createTemplate, fetchTemplates } = useDocumentTemplates();
 
-  // Load document data
+  // Improved loading logic - wait for templates to be ready
   useEffect(() => {
     const loadDocument = async () => {
-      console.log('🔄 Loading document, documentId:', documentId, 'templatesLoading:', templatesLoading);
+      console.log('[DocumentBuilder] Starting load process...', {
+        documentId,
+        templatesLoading,
+        templatesCount: templates.length
+      });
       
+      // Wait for templates to finish loading
       if (templatesLoading) {
-        console.log('⏳ Templates still loading, waiting...');
+        console.log('[DocumentBuilder] Templates still loading, waiting...');
         return;
       }
 
       if (!documentId) {
-        console.log('✅ New document mode - no loading needed');
+        console.log('[DocumentBuilder] No document ID, using defaults');
         setIsLoading(false);
         return;
       }
 
       try {
+        console.log('[DocumentBuilder] Looking for template with ID:', documentId);
         const template = templates.find(t => t.id === documentId);
+        
         if (template) {
-          console.log('✅ Template found:', template.name);
+          console.log('[DocumentBuilder] Template found:', template.name);
           setDocumentName(template.name);
           setHtmlContent(template.html_content || DEFAULT_HTML);
-          setPlaceholderValues(template.placeholder_values || placeholderValues);
+          setPlaceholderValues({
+            ...placeholderValues,
+            ...(template.placeholder_values || {})
+          });
+          setHasUnsavedChanges(false);
         } else {
-          console.log('❌ Template not found with ID:', documentId);
+          console.log('[DocumentBuilder] Template not found, available templates:', templates.map(t => ({ id: t.id, name: t.name })));
+          setSaveError('Document template niet gevonden');
           toast({
             title: "Fout",
-            description: "Document niet gevonden",
+            description: "Document template niet gevonden",
             variant: "destructive"
           });
         }
       } catch (error) {
-        console.error('❌ Error loading document:', error);
+        console.error('[DocumentBuilder] Error loading document:', error);
+        setSaveError(error instanceof Error ? error.message : 'Onbekende fout bij laden');
         toast({
           title: "Fout",
           description: "Kon document niet laden",
@@ -138,82 +152,109 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
     };
 
     loadDocument();
-  }, [documentId, templates, templatesLoading, toast]);
+  }, [documentId, templates, templatesLoading]);
 
-  // Track changes
+  // Track changes for unsaved state
   useEffect(() => {
-    setHasUnsavedChanges(true);
-  }, [documentName, htmlContent, placeholderValues]);
+    if (!isLoading) {
+      setHasUnsavedChanges(true);
+    }
+  }, [documentName, htmlContent, placeholderValues, isLoading]);
 
   const handlePlaceholderChange = (key: string, value: string) => {
+    console.log('[DocumentBuilder] Placeholder changed:', key, value);
     setPlaceholderValues(prev => ({
       ...prev,
       [key]: value
     }));
   };
 
+  const validateSaveData = () => {
+    const errors: string[] = [];
+    
+    if (!documentName.trim()) {
+      errors.push('Documentnaam is verplicht');
+    }
+    
+    if (!htmlContent.trim()) {
+      errors.push('HTML content is verplicht');
+    }
+    
+    return errors;
+  };
+
   const handleSave = async () => {
-    console.log('💾 Save initiated:', { 
-      documentName: documentName.trim(), 
+    console.log('[DocumentBuilder] Save initiated', {
+      documentName: documentName.trim(),
       documentId,
       hasContent: htmlContent.length > 0,
       placeholderCount: Object.keys(placeholderValues).length
     });
     
-    if (!documentName.trim()) {
-      console.log('❌ Save blocked: empty document name');
+    setSaveError(null);
+    
+    // Validate required fields
+    const validationErrors = validateSaveData();
+    if (validationErrors.length > 0) {
+      const errorMessage = validationErrors.join(', ');
+      console.log('[DocumentBuilder] Validation failed:', validationErrors);
+      setSaveError(errorMessage);
       toast({
         title: "Validatiefout",
-        description: "Voer een geldige documentnaam in",
+        description: errorMessage,
         variant: "destructive"
       });
       return;
     }
     
     setIsSaving(true);
+    
     try {
+      const templateData = {
+        name: documentName.trim(),
+        html_content: htmlContent,
+        placeholder_values: placeholderValues,
+        type: 'custom' as const,
+        description: 'Document template',
+        is_default: false,
+        is_active: true
+      };
+      
+      console.log('[DocumentBuilder] Saving template data:', {
+        ...templateData,
+        html_content: htmlContent.substring(0, 100) + '...'
+      });
+      
+      let result;
       if (documentId) {
-        console.log('📝 Updating existing template:', documentId);
-        // Update existing
-        const result = await updateTemplate(documentId, {
-          name: documentName,
-          html_content: htmlContent,
-          placeholder_values: placeholderValues
-        });
-        console.log('✅ Template updated successfully:', result);
+        console.log('[DocumentBuilder] Updating existing template:', documentId);
+        result = await updateTemplate(documentId, templateData);
       } else {
-        console.log('🆕 Creating new template with data:', {
-          name: documentName,
-          html_content: htmlContent.substring(0, 100) + '...',
-          placeholder_values: placeholderValues
-        });
-        
-        // Create new - make sure all required fields are provided
-        const result = await createTemplate({
-          name: documentName,
-          type: 'custom',
-          html_content: htmlContent,
-          description: 'Custom document template',
-          is_default: false,
-          is_active: true,
-          placeholder_values: placeholderValues
-        });
-        
-        console.log('✅ New template created with result:', result);
+        console.log('[DocumentBuilder] Creating new template');
+        result = await createTemplate(templateData);
       }
       
+      console.log('[DocumentBuilder] Save successful:', result);
+      
       setHasUnsavedChanges(false);
+      setSaveError(null);
+      
+      // Refresh templates list
+      await fetchTemplates();
+      
       toast({
         title: "Opgeslagen",
         description: "Document succesvol opgeslagen"
       });
+      
       onComplete(true);
     } catch (error) {
-      console.error('❌ Save failed:', error);
+      console.error('[DocumentBuilder] Save failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Onbekende fout';
+      setSaveError(errorMessage);
       toast({
         title: "Opslagfout",
-        description: "Kon document niet opslaan: " + errorMessage,
+        description: `Kon document niet opslaan: ${errorMessage}`,
         variant: "destructive"
       });
     } finally {
@@ -252,8 +293,20 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
         onClose={handleCancel}
       />
 
+      {saveError && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-3 m-4">
+          <div className="flex">
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Fout bij opslaan</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{saveError}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 flex" style={{ minHeight: 0 }}>
-        {/* Variables Panel - 20% */}
         <div style={{ width: '20%', minWidth: '250px' }}>
           <VariablesPanel
             placeholderValues={placeholderValues}
@@ -261,7 +314,6 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
           />
         </div>
 
-        {/* HTML Editor - 35% */}
         <div style={{ width: '35%' }}>
           <EnhancedHtmlEditor
             htmlContent={htmlContent}
@@ -269,7 +321,6 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
           />
         </div>
 
-        {/* A4 Preview - 45% */}
         <div style={{ width: '45%' }}>
           <A4Preview
             htmlContent={htmlContent}
