@@ -7,7 +7,6 @@ import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentActions } from './components/DocumentActions';
 import { DocumentList } from './components/DocumentList';
-import { CompactDocumentFilters } from './components/CompactDocumentFilters';
 import { DocumentProvider } from './contexts/DocumentContext';
 import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 import { DocumentTemplateLabel } from '@/types/documentLabels';
@@ -138,9 +137,8 @@ const DocumentLayoutContent = () => {
           </p>
         </div>
 
-        <DocumentActions onNewDocument={handleNewDocument} />
-
-        <CompactDocumentFilters
+        <DocumentActions 
+          onNewDocument={handleNewDocument}
           selectedLabels={selectedFilterLabels}
           onLabelsChange={setSelectedFilterLabels}
           onClearFilters={handleClearFilters}

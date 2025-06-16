@@ -42,18 +42,7 @@ export const DocumentListItem = ({ document, onEdit, onDuplicate, onDelete }: Do
           <h4 className="text-sm font-medium text-gray-900 truncate">
             {document.name}
           </h4>
-          {document.is_default && (
-            <Badge variant="outline" className="text-xs">
-              Standaard
-            </Badge>
-          )}
         </div>
-        
-        {document.description && (
-          <p className="text-sm text-gray-600 mb-2 line-clamp-1">
-            {document.description}
-          </p>
-        )}
 
         {/* Labels */}
         {document.labels && document.labels.length > 0 && (
