@@ -18,7 +18,13 @@ export const useInvoiceSubmission = (
   const [sendLoading, setSendLoading] = useState(false);
 
   const handleSubmit = async () => {
-    console.log('✅ EXPLICIT USER ACTION: handleSubmit called');
+    console.log('✅ EXPLICIT USER ACTION: handleSubmit called - USER CLICKED SAVE');
+    
+    if (!formData.client_name.trim()) {
+      console.log('❌ BLOCKING SAVE: No client name provided');
+      return;
+    }
+    
     setLoading(true);
     try {
       const { subtotal, vatAmount, total } = calculateTotals();
@@ -54,6 +60,7 @@ export const useInvoiceSubmission = (
   };
 
   const handleSaveAndSend = async () => {
+    console.log('✅ EXPLICIT USER ACTION: handleSaveAndSend called - USER CLICKED SAVE & SEND');
     setSendLoading(true);
     try {
       await handleSubmit();
@@ -63,6 +70,7 @@ export const useInvoiceSubmission = (
   };
 
   const handleConvertToQuote = () => {
+    console.log('✅ EXPLICIT USER ACTION: handleConvertToQuote called - USER CLICKED CONVERT');
     navigate('/offertes/opstellen');
   };
 

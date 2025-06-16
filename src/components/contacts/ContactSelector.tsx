@@ -50,13 +50,16 @@ export const ContactSelector = ({
   );
 
   const handleContactSelect = (contact: Contact) => {
-    console.log('📋 ContactSelector - selecting existing contact:', contact.name);
+    console.log('📋 ContactSelector - selecting contact (NO SUBMIT):', contact.name);
+    
+    // CRITICAL: Only call onContactSelect, do NOT trigger any form submission
     onContactSelect(contact);
     setSearchTerm(contact.name);
     setIsDropdownOpen(false);
   };
 
   const handleContactClear = () => {
+    console.log('📋 ContactSelector - clearing contact (NO SUBMIT)');
     onContactSelect(null);
     setSearchTerm('');
   };

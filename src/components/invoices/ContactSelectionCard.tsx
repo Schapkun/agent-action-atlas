@@ -51,25 +51,35 @@ export const ContactSelectionCard = ({
   });
 
   const handleContactSelect = (contact: Contact | null) => {
-    console.log('📋 ContactSelectionCard.handleContactSelect:', contact?.name);
+    console.log('📋 ContactSelectionCard.handleContactSelect (ISOLATED):', contact?.name);
+    
+    // CRITICAL: This should ONLY update contact, NOT trigger form submission
     onContactSelect(contact);
   };
 
-  const handleNewContact = () => {
-    console.log('📋 Opening new contact dialog');
+  const handleNewContact = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent any form submission
+    e.stopPropagation(); // Stop event propagation
+    
+    console.log('📋 Opening new contact dialog (NO SUBMIT)');
     setShowNewContactDialog(true);
   };
 
   const handleContactCreated = (newContact: Contact) => {
-    console.log('📋 New contact created:', newContact.name);
-    // Selecteer het nieuwe contact direct
+    console.log('📋 New contact created (SELECTING ONLY):', newContact.name);
+    
+    // CRITICAL: Only select the contact, do NOT save the invoice
     onContactSelect(newContact);
+    
+    console.log('📋 Contact selected after creation - NO INVOICE SAVE');
   };
 
-  const handleEditContact = () => {
+  const handleEditContact = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent any form submission
+    e.stopPropagation(); // Stop event propagation
+    
     if (selectedContact) {
       console.log('📋 Opening edit contact dialog for:', selectedContact.name);
-      // TODO: Implement edit contact dialog functionality
       alert('Bewerk contact functionaliteit wordt binnenkort toegevoegd');
     }
   };
