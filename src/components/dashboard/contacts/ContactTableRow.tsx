@@ -95,7 +95,7 @@ export const ContactTableRow = ({
         />
       </TableCell>
       <TableCell className="p-2 text-xs text-blue-600 font-medium w-16">
-        {4000 + index + 1}
+        {contact.contact_number || `${4000 + index + 1}`}
       </TableCell>
       <TableCell className="p-2">
         <div className="text-xs font-medium text-gray-900">{contact.name}</div>

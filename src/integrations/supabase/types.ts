@@ -13,6 +13,7 @@ export type Database = {
         Row: {
           address: string | null
           city: string | null
+          contact_number: string | null
           country: string | null
           created_at: string
           created_by: string | null
@@ -29,6 +30,7 @@ export type Database = {
         Insert: {
           address?: string | null
           city?: string | null
+          contact_number?: string | null
           country?: string | null
           created_at?: string
           created_by?: string | null
@@ -45,6 +47,7 @@ export type Database = {
         Update: {
           address?: string | null
           city?: string | null
+          contact_number?: string | null
           country?: string | null
           created_at?: string
           created_by?: string | null
@@ -443,6 +446,8 @@ export type Database = {
       }
       organization_settings: {
         Row: {
+          contact_prefix: string | null
+          contact_start_number: number | null
           created_at: string
           customer_prefix: string | null
           customer_start_number: number | null
@@ -455,6 +460,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          contact_prefix?: string | null
+          contact_start_number?: number | null
           created_at?: string
           customer_prefix?: string | null
           customer_start_number?: number | null
@@ -467,6 +474,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          contact_prefix?: string | null
+          contact_start_number?: number | null
           created_at?: string
           customer_prefix?: string | null
           customer_start_number?: number | null
@@ -894,6 +903,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_contact_number: {
+        Args: { org_id: string }
+        Returns: string
+      }
       generate_invoice_number: {
         Args: { org_id: string; workspace_id?: string }
         Returns: string

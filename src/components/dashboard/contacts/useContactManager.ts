@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -14,6 +15,7 @@ interface Contact {
   country?: string;
   phone?: string;
   mobile?: string;
+  contact_number?: string;
   type?: string;
   payment_terms?: number;
   is_active?: boolean;
@@ -155,7 +157,7 @@ export const useContactManager = () => {
           )
         `)
         .eq('organization_id', selectedOrganization.id)
-        .order('created_at', { ascending: false });
+        .order('contact_number', { ascending: true });
 
       if (selectedWorkspace) {
         query = query.eq('workspace_id', selectedWorkspace.id);
@@ -181,6 +183,7 @@ export const useContactManager = () => {
         country: client.country || undefined,
         phone: client.phone || undefined,
         mobile: undefined,
+        contact_number: client.contact_number || undefined,
         payment_terms: 30,
         is_active: true,
         labels: client.contact_label_assignments?.map((assignment: any) => assignment.contact_labels).filter(Boolean) || []
