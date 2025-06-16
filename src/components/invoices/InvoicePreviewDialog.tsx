@@ -8,28 +8,26 @@ interface InvoicePreviewDialogProps {
 }
 
 export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: InvoicePreviewDialogProps) => {
-  // Create A4-formatted HTML content with proper scaling to fit popup
+  // Create A4-formatted HTML content with proper scaling for preview
   const getA4FormattedContent = (content: string) => {
-    // Add A4 specific CSS to the existing content with scaling
+    // Add A4 specific CSS to the existing content with minimal scaling
     const a4Content = content.replace(
       /<style[^>]*>([\s\S]*?)<\/style>/i,
       (match, styles) => {
         return `<style>
           ${styles}
           
-          /* A4 Preview CSS - Scaled to fit popup */
+          /* A4 Preview CSS - Minimal scaling for better readability */
           html, body {
             margin: 0;
-            padding: 15px;
+            padding: 20px;
             background: white;
             font-family: Arial, sans-serif;
-            line-height: 1.3;
+            line-height: 1.4;
             width: 100%;
             height: 100%;
             box-sizing: border-box;
-            overflow: hidden;
-            transform: scale(0.75);
-            transform-origin: top left;
+            overflow: auto;
           }
           
           .container, .document-container {
@@ -38,107 +36,86 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
             padding: 0;
           }
           
-          /* Table styling for better fit */
+          /* Table styling */
           table {
             width: 100%;
             border-collapse: collapse;
-            margin: 8px 0;
-            font-size: 11px;
+            margin: 12px 0;
+            font-size: 14px;
           }
           
           th, td {
-            padding: 6px;
+            padding: 8px;
             text-align: left;
             border-bottom: 1px solid #ddd;
           }
           
-          /* Header and footer styling */
+          /* Header and content styling */
           .header, .footer {
-            margin-bottom: 15px;
-          }
-          
-          /* Company info styling */
-          .company-info {
             margin-bottom: 20px;
-            font-size: 12px;
           }
           
-          /* Client info styling */
-          .client-info {
+          .company-info, .client-info, .invoice-details {
             margin-bottom: 20px;
-            font-size: 12px;
+            font-size: 14px;
           }
           
-          /* Invoice details styling */
-          .invoice-details {
-            margin-bottom: 20px;
-            font-size: 12px;
-          }
-          
-          /* Totals styling */
           .totals {
-            margin-top: 15px;
+            margin-top: 20px;
             text-align: right;
-            font-size: 12px;
-          }
-          
-          /* Scale down everything to fit */
-          * {
-            max-width: 100% !important;
+            font-size: 14px;
           }
           
           h1, h2, h3 {
-            font-size: 16px !important;
-            margin: 10px 0 !important;
+            font-size: 18px !important;
+            margin: 15px 0 !important;
           }
           
           p {
-            font-size: 11px !important;
-            margin: 5px 0 !important;
+            font-size: 14px !important;
+            margin: 8px 0 !important;
           }
         </style>`;
       }
     );
 
-    // If no style tag exists, add one with scaling
+    // If no style tag exists, add minimal styling
     if (!content.includes('<style')) {
       const styleTag = `
         <style>
           html, body {
             margin: 0;
-            padding: 15px;
+            padding: 20px;
             background: white;
             font-family: Arial, sans-serif;
-            line-height: 1.3;
+            line-height: 1.4;
             width: 100%;
             height: 100%;
             box-sizing: border-box;
-            overflow: hidden;
-            transform: scale(0.75);
-            transform-origin: top left;
+            overflow: auto;
           }
           
           table {
             width: 100%;
             border-collapse: collapse;
-            margin: 8px 0;
-            font-size: 11px;
+            margin: 12px 0;
+            font-size: 14px;
           }
           
           th, td {
-            padding: 6px;
+            padding: 8px;
             text-align: left;
             border-bottom: 1px solid #ddd;
           }
           
           h1, h2, h3 {
-            font-size: 16px !important;
-            margin: 10px 0 !important;
+            font-size: 18px !important;
+            margin: 15px 0 !important;
           }
           
           p {
-            font-size: 11px !important;
-            margin: 5px 0 !important;
+            font-size: 14px !important;
+            margin: 8px 0 !important;
           }
         </style>
       `;
@@ -161,10 +138,10 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
         </DialogHeader>
         <div className="flex-1 bg-gray-100 p-4 rounded-lg min-h-0 overflow-hidden">
           <div 
-            className="bg-white mx-auto shadow-lg h-full"
+            className="bg-white mx-auto shadow-lg h-full overflow-hidden"
             style={{
               aspectRatio: '210/297', // A4 ratio
-              maxWidth: '600px',
+              maxWidth: '700px',
               width: '100%'
             }}
           >
@@ -172,7 +149,10 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
               srcDoc={getA4FormattedContent(previewHTML)}
               className="w-full h-full border-0 rounded-sm"
               title="Invoice Preview"
-              style={{ overflow: 'hidden' }}
+              style={{ 
+                overflow: 'hidden',
+                border: 'none'
+              }}
             />
           </div>
         </div>
