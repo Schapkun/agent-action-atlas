@@ -8,9 +8,5 @@ interface ContactActionsProps {
 export const ContactActions = ({
   selectedContact
 }: ContactActionsProps) => {
-  return (
-    <div className="text-xs text-gray-500 px-2">
-      Contact weergave
-    </div>
-  );
+  return null;
 };

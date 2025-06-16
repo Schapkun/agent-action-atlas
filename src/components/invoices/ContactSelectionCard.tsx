@@ -53,13 +53,15 @@ export const ContactSelectionCard = ({
 
   const handleNewContact = () => {
     console.log('📋 Opening new contact dialog');
-    // TODO: Open new contact dialog
+    // TODO: Implement new contact dialog functionality
+    alert('Nieuwe contact functionaliteit wordt binnenkort toegevoegd');
   };
 
   const handleEditContact = () => {
     if (selectedContact) {
       console.log('📋 Opening edit contact dialog for:', selectedContact.name);
-      // TODO: Open edit contact dialog
+      // TODO: Implement edit contact dialog functionality
+      alert('Bewerk contact functionaliteit wordt binnenkort toegevoegd');
     }
   };
 
@@ -107,31 +109,31 @@ export const ContactSelectionCard = ({
             </div>
           </div>
 
-          {/* Template section - smaller ratio */}
-          <div className="col-span-4">
+          {/* Template section - smaller ratio and half width */}
+          <div className="col-span-3">
             <Label className="text-xs font-medium">Template</Label>
             <Select value={selectedTemplate} onValueChange={onTemplateChange}>
               <SelectTrigger className="h-8 text-xs mt-1">
                 <SelectValue placeholder="Selecteer template" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="text-xs">
                 {templatesLoading ? (
-                  <SelectItem value="loading" disabled>Templates laden...</SelectItem>
+                  <SelectItem value="loading" disabled className="text-xs">Templates laden...</SelectItem>
                 ) : availableTemplates.length > 0 ? (
                   availableTemplates.map((template) => (
-                    <SelectItem key={template.id} value={template.id}>
+                    <SelectItem key={template.id} value={template.id} className="text-xs">
                       {template.name} ({template.type})
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem value="no-templates" disabled>Geen templates beschikbaar</SelectItem>
+                  <SelectItem value="no-templates" disabled className="text-xs">Geen templates beschikbaar</SelectItem>
                 )}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Instellingen section - smaller ratio */}
-          <div className="col-span-2">
+          {/* Instellingen section - adjusted width */}
+          <div className="col-span-3">
             <Label className="text-xs font-medium">Instellingen</Label>
             <Button 
               type="button"
