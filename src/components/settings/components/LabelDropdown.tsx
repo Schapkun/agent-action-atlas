@@ -1,21 +1,20 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChevronDown, Tags } from 'lucide-react';
+import { ChevronDown, Tags, X } from 'lucide-react';
 import { useDocumentTemplateLabels } from '@/hooks/useDocumentTemplateLabels';
 import { DocumentTemplateLabel } from '@/types/documentLabels';
 
 interface LabelDropdownProps {
   selectedLabels: DocumentTemplateLabel[];
   onLabelsChange: (labels: DocumentTemplateLabel[]) => void;
-  disabled?: boolean;
 }
 
-export const LabelDropdown = ({ selectedLabels, onLabelsChange, disabled }: LabelDropdownProps) => {
-  const { labels } = useDocumentTemplateLabels();
+export const LabelDropdown = ({ selectedLabels, onLabelsChange }: LabelDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const { labels, loading } = useDocumentTemplateLabels();
 
   const handleLabelToggle = (label: DocumentTemplateLabel) => {
     const isSelected = selectedLabels.some(l => l.id === label.id);
@@ -30,7 +29,7 @@ export const LabelDropdown = ({ selectedLabels, onLabelsChange, disabled }: Labe
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" disabled={disabled} className="flex items-center gap-2">
+        <Button variant="outline" size="sm" className="flex items-center gap-2">
           <Tags className="h-4 w-4" />
           {selectedLabels.length === 0 ? (
             'Labels'
@@ -44,7 +43,9 @@ export const LabelDropdown = ({ selectedLabels, onLabelsChange, disabled }: Labe
         <div className="space-y-2">
           <h4 className="font-medium text-sm">Beschikbare Labels</h4>
           
-          {labels.length === 0 ? (
+          {loading ? (
+            <div className="text-sm text-gray-500">Labels laden...</div>
+          ) : labels.length === 0 ? (
             <p className="text-sm text-gray-500">Geen labels beschikbaar</p>
           ) : (
             <div className="space-y-1 max-h-48 overflow-y-auto">
