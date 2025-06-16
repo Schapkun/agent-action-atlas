@@ -29,7 +29,7 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
     htmlContent: processedHtml
   });
 
-  // Create complete HTML document optimized for A4 preview
+  // Create complete HTML document optimized for A4 preview with exact margins
   const getA4PreviewDocument = (content: string) => {
     // Extract body content if it's a complete HTML document
     let bodyContent = content;
@@ -37,7 +37,6 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
     if (bodyMatch) {
       bodyContent = bodyMatch[1];
     } else if (content.includes('<!DOCTYPE html>')) {
-      // If it's a complete document but no body tag found, extract everything after <body>
       const afterBodyMatch = content.match(/<body[^>]*>([\s\S]*)/i);
       if (afterBodyMatch) {
         bodyContent = afterBodyMatch[1].replace(/<\/body>[\s\S]*$/i, '');
@@ -65,7 +64,7 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       background: white;
     }
     
-    .a4-page {
+    .a4-container {
       width: 100%;
       height: 100%;
       padding: 5px;
@@ -74,7 +73,7 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       position: relative;
     }
     
-    .page-content {
+    .a4-content {
       width: 100%;
       height: 100%;
       padding: 15mm;
@@ -82,11 +81,12 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       font-size: 11px;
       line-height: 1.4;
       color: #333;
+      position: relative;
     }
     
     .header {
-      margin-bottom: 20px;
-      padding-bottom: 10px;
+      margin-bottom: 15px;
+      padding-bottom: 8px;
       border-bottom: 1px solid #eee;
     }
     
@@ -94,25 +94,29 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       max-width: 120px;
       max-height: 60px;
       height: auto;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     
     .document-info {
-      margin: 15px 0;
+      margin: 12px 0;
+      font-size: 10px;
     }
     
     .recipient {
-      margin: 15px 0;
+      margin: 12px 0;
+      font-size: 10px;
     }
     
     .content {
-      margin: 20px 0;
+      margin: 15px 0;
       flex: 1;
+      font-size: 11px;
+      line-height: 1.5;
     }
     
     .footer {
-      margin-top: 20px;
-      padding-top: 10px;
+      margin-top: 15px;
+      padding-top: 8px;
       border-top: 1px solid #eee;
       font-size: 9px;
       color: #666;
@@ -126,12 +130,12 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
     
     h2, h3 {
       font-size: 12px;
-      margin: 10px 0 5px 0;
+      margin: 8px 0 4px 0;
       font-weight: bold;
     }
     
     p {
-      margin: 5px 0;
+      margin: 4px 0;
       line-height: 1.4;
     }
     
@@ -139,20 +143,17 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       font-weight: bold;
     }
     
-    /* Company info styling */
     .bedrijf-info {
       text-align: right;
-      font-size: 10px;
+      font-size: 9px;
       line-height: 1.3;
     }
     
-    /* Document info styling */
     .document-details {
       font-size: 10px;
       line-height: 1.4;
     }
     
-    /* Content text styling */
     .main-content {
       font-size: 11px;
       line-height: 1.5;
@@ -160,8 +161,8 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
   </style>
 </head>
 <body>
-  <div class="a4-page">
-    <div class="page-content">
+  <div class="a4-container">
+    <div class="a4-content">
       ${bodyContent}
     </div>
   </div>
@@ -201,16 +202,16 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
         </div>
       </div>
 
-      {/* A4 Preview Area */}
-      <div className="flex-1 p-4 overflow-hidden flex justify-center items-center">
+      {/* A4 Preview Area - Increased size with proper ratio */}
+      <div className="flex-1 p-6 overflow-hidden flex justify-center items-center">
         <div 
           className="bg-white shadow-lg border border-gray-300 overflow-hidden"
           style={{
-            width: '595px',      // A4 width at 72 DPI
-            height: '842px',     // A4 height at 72 DPI
-            aspectRatio: '210/297', // A4 ratio
-            maxWidth: 'calc(100vw - 32px)',
-            maxHeight: 'calc(100vh - 200px)',
+            width: '700px',           // Increased from 595px
+            height: '990px',          // A4 ratio maintained (700 * 297/210 = 990)
+            aspectRatio: '210/297',   // A4 ratio
+            maxWidth: 'calc(100vw - 48px)',
+            maxHeight: 'calc(100vh - 180px)',
           }}
         >
           <iframe
@@ -229,7 +230,7 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       {/* Status Bar */}
       <div className="flex-shrink-0 px-4 py-2 bg-gray-100 border-t text-xs text-gray-600">
         <div className="flex justify-between items-center">
-          <span>A4 Format (210×297mm) - 5px margins</span>
+          <span>A4 Formaat (210×297mm) - 5px marges van header en footer</span>
           <span>{Object.keys(placeholderValues).length} variabelen vervangen</span>
         </div>
       </div>
