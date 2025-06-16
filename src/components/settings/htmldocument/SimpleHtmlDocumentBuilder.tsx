@@ -92,6 +92,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
   const [isLoading, setIsLoading] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [initialLoaded, setInitialLoaded] = useState(false);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -100,7 +101,12 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
 
   // Enhanced access check
   const checkAccess = () => {
-    console.log('[DocumentBuilder] Access check:', { user: !!user, org: !!selectedOrganization });
+    console.log('[DocumentBuilder] Access check:', { 
+      user: !!user, 
+      userId: user?.id,
+      org: !!selectedOrganization,
+      orgId: selectedOrganization?.id 
+    });
     
     if (!user) {
       setError('Je bent niet ingelogd');
@@ -123,7 +129,8 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
         documentId,
         templatesLoading,
         templatesCount: templates.length,
-        hasAccess: checkAccess()
+        hasAccess: checkAccess(),
+        initialLoaded
       });
       
       if (!checkAccess()) {
@@ -132,12 +139,14 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       }
       
       if (templatesLoading) {
+        console.log('[DocumentBuilder] Still loading templates, waiting...');
         return;
       }
 
       if (!documentId) {
         console.log('[DocumentBuilder] No document ID, using defaults for new document');
         setIsLoading(false);
+        setInitialLoaded(true);
         setHasUnsavedChanges(false); // New document starts without changes
         return;
       }
@@ -164,24 +173,39 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
         setError(error instanceof Error ? error.message : 'Fout bij laden');
       } finally {
         setIsLoading(false);
+        setInitialLoaded(true);
       }
     };
 
     loadDocument();
   }, [documentId, templates, templatesLoading, user, selectedOrganization]);
 
-  // Track changes
+  // Track changes - only after initial load
   useEffect(() => {
-    if (!isLoading && !documentId) {
-      // Only mark as changed for new documents when user actually makes changes
-      const isDefaultContent = documentName === 'Nieuw Document' && htmlContent === DEFAULT_HTML;
-      setHasUnsavedChanges(!isDefaultContent);
-    } else if (!isLoading && documentId) {
+    if (!initialLoaded) {
+      return;
+    }
+
+    console.log('[DocumentBuilder] Tracking changes:', {
+      documentId,
+      documentName,
+      htmlContentLength: htmlContent.length,
+      placeholderValuesCount: Object.keys(placeholderValues).length
+    });
+
+    // For new documents, only mark as changed when user actually makes changes
+    if (!documentId) {
+      const hasActualChanges = documentName !== 'Nieuw Document' || htmlContent !== DEFAULT_HTML;
+      console.log('[DocumentBuilder] New document change check:', { hasActualChanges });
+      setHasUnsavedChanges(hasActualChanges);
+    } else {
+      // For existing documents, mark as changed
       setHasUnsavedChanges(true);
     }
-  }, [documentName, htmlContent, placeholderValues, isLoading, documentId]);
+  }, [documentName, htmlContent, placeholderValues, initialLoaded, documentId]);
 
   const handlePlaceholderChange = (key: string, value: string) => {
+    console.log('[DocumentBuilder] Placeholder changed:', key, value);
     setPlaceholderValues(prev => ({
       ...prev,
       [key]: value
@@ -189,19 +213,27 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
   };
 
   const handleSave = async () => {
-    console.log('[DocumentBuilder] Save initiated for:', { 
+    console.log('[DocumentBuilder] Save initiated:', { 
       isNew: !documentId, 
-      documentName,
-      hasAccess: checkAccess() 
+      documentName: documentName.trim(),
+      htmlContentLength: htmlContent.length,
+      hasAccess: checkAccess(),
+      placeholderValuesCount: Object.keys(placeholderValues).length
     });
     
     if (!checkAccess()) {
+      console.error('[DocumentBuilder] Access check failed during save');
       return;
     }
     
-    // Enhanced validation for new documents
-    if (!documentName.trim()) {
+    // Clear any previous errors
+    setError(null);
+    
+    // Enhanced validation
+    const trimmedName = documentName.trim();
+    if (!trimmedName) {
       const errorMsg = 'Documentnaam is verplicht';
+      console.error('[DocumentBuilder] Validation error:', errorMsg);
       setError(errorMsg);
       toast({
         title: "Validatiefout",
@@ -211,8 +243,9 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       return;
     }
 
-    if (documentName.trim().length < 3) {
-      const errorMsg = 'Documentnaam moet minimaal 3 karakters bevatten';
+    if (trimmedName.length < 2) {
+      const errorMsg = 'Documentnaam moet minimaal 2 karakters bevatten';
+      console.error('[DocumentBuilder] Validation error:', errorMsg);
       setError(errorMsg);
       toast({
         title: "Validatiefout",
@@ -224,6 +257,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
 
     if (!htmlContent.trim()) {
       const errorMsg = 'HTML content is verplicht';
+      console.error('[DocumentBuilder] Validation error:', errorMsg);
       setError(errorMsg);
       toast({
         title: "Validatiefout", 
@@ -236,11 +270,12 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
     // Check for duplicate names when creating new document
     if (!documentId) {
       const existingTemplate = templates.find(t => 
-        t.name.toLowerCase().trim() === documentName.toLowerCase().trim()
+        t.name.toLowerCase().trim() === trimmedName.toLowerCase()
       );
       
       if (existingTemplate) {
-        const errorMsg = `Een document met de naam "${documentName}" bestaat al`;
+        const errorMsg = `Een document met de naam "${trimmedName}" bestaat al`;
+        console.error('[DocumentBuilder] Duplicate name error:', errorMsg);
         setError(errorMsg);
         toast({
           title: "Validatiefout",
@@ -252,11 +287,10 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
     }
     
     setIsSaving(true);
-    setError(null);
     
     try {
       const templateData = {
-        name: documentName.trim(),
+        name: trimmedName,
         html_content: htmlContent,
         placeholder_values: placeholderValues,
         type: 'custom' as const,
@@ -267,19 +301,24 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       
       console.log('[DocumentBuilder] Saving template data:', {
         isUpdate: !!documentId,
-        dataKeys: Object.keys(templateData)
+        name: templateData.name,
+        htmlContentLength: templateData.html_content.length,
+        placeholderValuesKeys: Object.keys(templateData.placeholder_values || {})
       });
       
       let result;
       if (documentId) {
-        console.log('[DocumentBuilder] Updating existing template');
+        console.log('[DocumentBuilder] Updating existing template:', documentId);
         result = await updateTemplate(documentId, templateData);
       } else {
         console.log('[DocumentBuilder] Creating new template');
         result = await createTemplate(templateData);
       }
       
-      console.log('[DocumentBuilder] Save successful:', result?.id);
+      console.log('[DocumentBuilder] Save successful:', {
+        resultId: result?.id,
+        resultName: result?.name
+      });
       
       setHasUnsavedChanges(false);
       setError(null);
@@ -309,6 +348,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
   };
 
   const handleCancel = () => {
+    console.log('[DocumentBuilder] Cancel requested, hasUnsavedChanges:', hasUnsavedChanges);
     if (hasUnsavedChanges) {
       const confirmed = window.confirm('Er zijn niet-opgeslagen wijzigingen. Weet je zeker dat je wilt annuleren?');
       if (!confirmed) return;
