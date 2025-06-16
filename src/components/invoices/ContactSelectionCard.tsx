@@ -57,16 +57,23 @@ export const ContactSelectionCard = ({
         <CardTitle className="text-sm font-medium">Contact en Template</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <ContactSelector
-          selectedContact={selectedContact}
-          onContactSelect={handleContactSelect}
-        />
+        <div className="grid grid-cols-3 gap-4">
+          {/* Aan section */}
+          <div>
+            <Label className="text-xs font-medium">Aan</Label>
+            <div className="mt-1">
+              <ContactSelector
+                selectedContact={selectedContact}
+                onContactSelect={handleContactSelect}
+              />
+            </div>
+          </div>
 
-        <div className="grid grid-cols-2 gap-4">
+          {/* Template section */}
           <div>
             <Label className="text-xs font-medium">Template</Label>
             <Select value={selectedTemplate} onValueChange={onTemplateChange}>
-              <SelectTrigger className="h-8 text-xs">
+              <SelectTrigger className="h-8 text-xs mt-1">
                 <SelectValue placeholder="Selecteer template" />
               </SelectTrigger>
               <SelectContent>
@@ -85,13 +92,15 @@ export const ContactSelectionCard = ({
             </Select>
           </div>
 
-          <div className="flex items-end">
+          {/* Instellingen section */}
+          <div>
+            <Label className="text-xs font-medium">Instellingen</Label>
             <Button 
               type="button"
               variant="outline" 
               size="sm" 
               onClick={onShowSettings}
-              className="text-xs h-8 w-full"
+              className="text-xs h-8 w-full mt-1"
             >
               <Settings className="h-3 w-3 mr-1" />
               Instellingen
