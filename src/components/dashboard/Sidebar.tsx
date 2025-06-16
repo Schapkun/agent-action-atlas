@@ -23,11 +23,10 @@ import {
   Plus,
   Send,
   FileCheck,
-  FileSpreadsheet,
-  ExternalLink
+  FileSpreadsheet
 } from 'lucide-react';
 
-export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'quotes' | 'factuursturen' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
+export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'quotes' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
 
 interface SidebarProps {
   currentView: ViewType;
@@ -81,7 +80,7 @@ export const Sidebar = ({
       id: 'invoices' as ViewType, 
       label: 'Facturen', 
       icon: CreditCard, 
-      path: '/facturen',
+      path: '/facturen/opstellen',
       hasSubmenu: true,
       submenu: [
         { id: 'new-invoice', label: 'Opstellen', icon: Plus, path: '/facturen/opstellen' },
@@ -93,7 +92,7 @@ export const Sidebar = ({
       id: 'quotes' as ViewType, 
       label: 'Offertes', 
       icon: FileSpreadsheet, 
-      path: '/offertes',
+      path: '/offertes/opstellen',
       hasSubmenu: true,
       submenu: [
         { id: 'new-quote', label: 'Opstellen', icon: Plus, path: '/offertes/opstellen' },
@@ -101,7 +100,6 @@ export const Sidebar = ({
         { id: 'sent-quotes', label: 'Verzonden', icon: Send, path: '/offertes?status=sent' },
       ]
     },
-    { id: 'factuursturen' as ViewType, label: 'factuursturen.nl', icon: ExternalLink, path: '/factuursturen' },
     { id: 'phone-calls' as ViewType, label: 'Telefoongesprekken', icon: Phone, path: '/telefoongesprekken' },
     { id: 'emails' as ViewType, label: 'E-mails', icon: Mail, path: '/e-mails' },
     { id: 'contacts' as ViewType, label: 'Contacten', icon: Users, path: '/contacten' },
@@ -110,7 +108,8 @@ export const Sidebar = ({
 
   const handleMenuClick = (item: any, submenuItem?: any) => {    
     if (item.hasSubmenu && !submenuItem) {
-      // For submenu items, toggle the submenu instead of navigating
+      // For main menu items with submenu, navigate to the main path and toggle submenu
+      navigate(item.path);
       const event = new MouseEvent('click');
       toggleSubmenu(item.id, event as any);
       return;

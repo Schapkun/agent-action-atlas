@@ -34,25 +34,50 @@ interface ColumnVisibility {
   labels: boolean;
 }
 
+const COLUMN_VISIBILITY_STORAGE_KEY = 'contactTableColumnVisibility';
+
+const getDefaultColumnVisibility = (): ColumnVisibility => ({
+  email: true,
+  address: false,
+  phone: false,
+  mobile: false,
+  postal_code: false,
+  city: false,
+  country: false,
+  openstaand: true,
+  omzet: true,
+  actief: true,
+  labels: false
+});
+
+const loadColumnVisibility = (): ColumnVisibility => {
+  try {
+    const stored = localStorage.getItem(COLUMN_VISIBILITY_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return { ...getDefaultColumnVisibility(), ...parsed };
+    }
+  } catch (error) {
+    console.error('Error loading column visibility:', error);
+  }
+  return getDefaultColumnVisibility();
+};
+
+const saveColumnVisibility = (visibility: ColumnVisibility) => {
+  try {
+    localStorage.setItem(COLUMN_VISIBILITY_STORAGE_KEY, JSON.stringify(visibility));
+  } catch (error) {
+    console.error('Error saving column visibility:', error);
+  }
+};
+
 export const useContactManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [userRole, setUserRole] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
-  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({
-    email: true,
-    address: false,
-    phone: false,
-    mobile: false,
-    postal_code: false,
-    city: false,
-    country: false,
-    openstaand: true,
-    omzet: true,
-    actief: true,
-    labels: false
-  });
+  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>(loadColumnVisibility);
 
   const { user } = useAuth();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
@@ -63,6 +88,11 @@ export const useContactManager = () => {
     selectedWorkspace: selectedWorkspace?.name,
     userId: user?.id
   });
+
+  // Save column visibility to localStorage whenever it changes
+  useEffect(() => {
+    saveColumnVisibility(columnVisibility);
+  }, [columnVisibility]);
 
   useEffect(() => {
     const fetchUserRole = async () => {
