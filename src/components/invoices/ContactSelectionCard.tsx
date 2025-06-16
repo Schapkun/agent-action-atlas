@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ContactSelector } from '@/components/contacts/ContactSelector';
-import { Settings } from 'lucide-react';
+import { Settings, Plus, Edit } from 'lucide-react';
 
 interface Contact {
   id: string;
@@ -51,26 +51,64 @@ export const ContactSelectionCard = ({
     onContactSelect(contact);
   };
 
+  const handleNewContact = () => {
+    console.log('📋 Opening new contact dialog');
+    // TODO: Open new contact dialog
+  };
+
+  const handleEditContact = () => {
+    if (selectedContact) {
+      console.log('📋 Opening edit contact dialog for:', selectedContact.name);
+      // TODO: Open edit contact dialog
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium">Contact en Template</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-3 gap-4">
-          {/* Aan section */}
-          <div>
+        <div className="grid grid-cols-12 gap-4">
+          {/* Aan section - breder gemaakt */}
+          <div className="col-span-6">
             <Label className="text-xs font-medium">Aan</Label>
-            <div className="mt-1">
-              <ContactSelector
-                selectedContact={selectedContact}
-                onContactSelect={handleContactSelect}
-              />
+            <div className="flex gap-2 mt-1">
+              <div className="flex-1">
+                <ContactSelector
+                  selectedContact={selectedContact}
+                  onContactSelect={handleContactSelect}
+                />
+              </div>
+              
+              {/* Nieuwe knoppen naast contact selector */}
+              <Button 
+                type="button"
+                variant="outline" 
+                size="sm" 
+                onClick={handleNewContact}
+                className="text-xs h-8 px-3 whitespace-nowrap"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Nieuw
+              </Button>
+              
+              <Button 
+                type="button"
+                variant="outline" 
+                size="sm" 
+                onClick={handleEditContact}
+                disabled={!selectedContact}
+                className="text-xs h-8 px-3 whitespace-nowrap"
+              >
+                <Edit className="h-3 w-3 mr-1" />
+                Bewerken
+              </Button>
             </div>
           </div>
 
-          {/* Template section */}
-          <div>
+          {/* Template section - smaller ratio */}
+          <div className="col-span-4">
             <Label className="text-xs font-medium">Template</Label>
             <Select value={selectedTemplate} onValueChange={onTemplateChange}>
               <SelectTrigger className="h-8 text-xs mt-1">
@@ -92,8 +130,8 @@ export const ContactSelectionCard = ({
             </Select>
           </div>
 
-          {/* Instellingen section */}
-          <div>
+          {/* Instellingen section - smaller ratio */}
+          <div className="col-span-2">
             <Label className="text-xs font-medium">Instellingen</Label>
             <Button 
               type="button"
