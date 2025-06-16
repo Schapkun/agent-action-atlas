@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Eye, Download, FileText } from 'lucide-react';
@@ -134,8 +133,8 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
         <div 
           className="bg-white shadow-lg border border-gray-300"
           style={{
-            height: 'calc(100vh - 70px)',
-            width: 'calc((100vh - 70px) * 0.707)',
+            height: 'calc(100vh - 80px)',
+            width: 'calc((100vh - 80px) * 0.707)',
             maxWidth: '100%',
             aspectRatio: '210/297'
           }}
