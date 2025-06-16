@@ -1,6 +1,7 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
+import { DocumentTemplateLabel } from '@/types/documentLabels';
 import { 
   DOCUMENT_TYPE_OPTIONS, 
   PLACEHOLDER_FIELDS
@@ -70,16 +71,29 @@ export function useAtomicDocumentBuilderV3({
   documentId, 
   onDocumentSaved 
 }: UseAtomicDocumentBuilderV3Props) {
+  // Label management state
+  const [selectedLabels, setSelectedLabels] = useState<DocumentTemplateLabel[]>([]);
+
   // Use the atomic document builder
   const documentBuilder = useAtomicDocumentBuilder({ documentId });
   
+  // Extract labels from document when it loads
+  useEffect(() => {
+    if (documentBuilder.document && 'labels' in documentBuilder.document) {
+      const documentWithLabels = documentBuilder.document as any;
+      setSelectedLabels(documentWithLabels.labels || []);
+    } else {
+      setSelectedLabels([]);
+    }
+  }, [documentBuilder.document]);
+
   // Document actions (save, export, etc.)
   const documentActions = useDocumentActions(
     documentBuilder.document?.id,
     documentBuilder.documentName,
     documentBuilder.htmlContent,
     documentBuilder.placeholderValues,
-    documentBuilder.selectedLabels,
+    selectedLabels,
     (success: boolean) => {
       if (success && onDocumentSaved) {
         onDocumentSaved(documentBuilder.document);
@@ -119,6 +133,8 @@ export function useAtomicDocumentBuilderV3({
   return {
     ...documentBuilder,
     ...documentActions,
+    selectedLabels,
+    setSelectedLabels,
     handleLogoUpload,
     SNIPPETS,
     insertSnippet,
