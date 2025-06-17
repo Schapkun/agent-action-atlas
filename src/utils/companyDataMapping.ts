@@ -1,89 +1,66 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-// Mapping van database velden naar template placeholders
-export const COMPANY_FIELD_MAPPING = {
-  company_name: 'bedrijfsnaam',
-  company_address: 'adres', 
-  company_postal_code: 'postcode',
-  company_city: 'plaats',
-  company_email: 'email',
-  company_phone: 'telefoon',
-  company_website: 'website',
-  company_vat: 'btw_nummer',
-  company_kvk: 'kvk_nummer',
-  company_bank: 'banknummer',
-  company_logo: 'logo'
-};
-
-export interface CompanyData {
-  company_name?: string;
-  company_address?: string;
-  company_postal_code?: string;
-  company_city?: string;
-  company_email?: string;
-  company_phone?: string;
-  company_website?: string;
-  company_vat?: string;
-  company_kvk?: string;
-  company_bank?: string;
-  company_logo?: string;
-}
-
-export const loadCompanyData = async (organizationId: string): Promise<Record<string, string>> => {
+export const loadCompanyData = async (organizationId: string) => {
+  console.log('🏢 Loading company data for organization:', organizationId);
+  
   try {
-    console.log('🏢 Loading company data for organization:', organizationId);
-    
     const { data, error } = await supabase
       .from('organization_settings')
       .select('*')
       .eq('organization_id', organizationId)
-      .maybeSingle();
+      .single();
 
     if (error) {
-      console.error('❌ Error loading company data:', error);
+      console.error('Error loading company data:', error);
       return {};
     }
 
     if (!data) {
-      console.log('⚠️ No company data found');
+      console.log('No company data found for organization');
       return {};
     }
 
     console.log('✅ Company data loaded:', data);
 
-    // Map database fields to placeholder keys
-    const mappedData: Record<string, string> = {};
-    
-    Object.entries(COMPANY_FIELD_MAPPING).forEach(([dbField, placeholderKey]) => {
-      const value = data[dbField as keyof CompanyData];
-      if (value) {
-        mappedData[placeholderKey] = value;
-      }
-    });
-
-    // Logo support - now with database column
-    const logoUrl = data.company_logo;
-    if (logoUrl) {
-      mappedData['logo'] = logoUrl;
-      mappedData['bedrijfslogo'] = logoUrl;
-      mappedData['company_logo'] = logoUrl;
-      console.log('🖼️ Logo found:', logoUrl);
+    // Add logo logging
+    if (data.company_logo) {
+      console.log('🖼️ Logo found:', data.company_logo);
     } else {
       console.log('⚠️ No logo found in company data');
-      mappedData['logo'] = '[Logo nog niet geconfigureerd]';
-      mappedData['bedrijfslogo'] = '[Logo nog niet geconfigureerd]';
-      mappedData['company_logo'] = '[Logo nog niet geconfigureerd]';
     }
 
-    // Add some computed fields
-    mappedData['datum'] = new Date().toLocaleDateString('nl-NL');
-    mappedData['referentie'] = `REF-${Date.now()}`;
+    // Create a comprehensive mapping with multiple logo field variations
+    const mappedData = {
+      // Company info
+      bedrijfsnaam: data.company_name || '',
+      adres: data.company_address || '',
+      postcode: data.company_postal_code || '',
+      plaats: data.company_city || '',
+      email: data.company_email || '',
+      telefoon: data.company_phone || '',
+      website: data.company_website || '',
+      btw_nummer: data.company_vat || '',
+      kvk_nummer: data.company_kvk || '',
+      banknummer: data.company_bank || '',
+      
+      // Logo variations - multiple field names for maximum compatibility
+      logo: data.company_logo || '',
+      bedrijfslogo: data.company_logo || '',
+      company_logo: data.company_logo || '',
+      LOGO: data.company_logo || '',
+      BEDRIJFSLOGO: data.company_logo || '',
+      
+      // Current date and reference
+      datum: new Date().toLocaleDateString('nl-NL'),
+      referentie: `REF-${Date.now()}`
+    };
 
     console.log('🔄 Mapped company data with logo support:', mappedData);
     return mappedData;
+
   } catch (error) {
-    console.error('❌ Error in loadCompanyData:', error);
+    console.error('Error in loadCompanyData:', error);
     return {};
   }
 };

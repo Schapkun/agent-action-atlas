@@ -1,5 +1,7 @@
 
 import { PLACEHOLDER_FIELDS } from './htmlDocumentConstants';
+import { loadCompanyData } from '@/utils/companyDataMapping';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 interface UsePlaceholderReplacementProps {
   placeholderValues: Record<string, string>;
@@ -7,17 +9,34 @@ interface UsePlaceholderReplacementProps {
 }
 
 export function usePlaceholderReplacement({ placeholderValues, companyData = {} }: UsePlaceholderReplacementProps) {
-  const replacePlaceholders = (content: string, forPreview = false) => {
+  const { selectedOrganization } = useOrganization();
+
+  const replacePlaceholders = async (content: string, forPreview = false) => {
     let replaced = content;
     
-    // Combine placeholder values with company data
-    const allValues = { ...companyData, ...placeholderValues };
+    // Load fresh company data including logo if we have an organization
+    let enhancedCompanyData = { ...companyData };
+    if (selectedOrganization?.id && forPreview) {
+      try {
+        const freshCompanyData = await loadCompanyData(selectedOrganization.id);
+        enhancedCompanyData = { ...enhancedCompanyData, ...freshCompanyData };
+        console.log('🔄 HTML EDITOR: Enhanced company data with logo:', enhancedCompanyData);
+      } catch (error) {
+        console.error('Failed to load company data for HTML editor:', error);
+      }
+    }
+    
+    // Combine placeholder values with enhanced company data
+    const allValues = { ...enhancedCompanyData, ...placeholderValues };
+    
+    console.log('🎨 HTML EDITOR: All values for replacement:', allValues);
     
     PLACEHOLDER_FIELDS.forEach(({ id, type }) => {
       const regex = new RegExp(`{{${id}}}`, "g");
       if (forPreview && type === "image") {
         const srcRegex = new RegExp(`src=[\\"']{{${id}}}[\\"']`, "g");
         if (allValues[id]) {
+          console.log(`🖼️ HTML EDITOR: Replacing logo placeholder ${id} with:`, allValues[id]);
           replaced = replaced.replace(
             srcRegex,
             `src="${allValues[id]}"`
@@ -27,6 +46,7 @@ export function usePlaceholderReplacement({ placeholderValues, companyData = {} 
             `<img src="${allValues[id]}" alt="Bedrijfslogo" style="width:120px;max-height:75px;object-fit:contain;" />`
           );
         } else {
+          console.log(`⚠️ HTML EDITOR: No value found for logo placeholder ${id}`);
           replaced = replaced.replace(
             srcRegex,
             `src="" style="background:#eee;border:1px dashed #ccc;width:120px;max-height:75px;object-fit:contain;"`
@@ -40,6 +60,35 @@ export function usePlaceholderReplacement({ placeholderValues, companyData = {} 
         replaced = replaced.replace(
           regex,
           forPreview ? (allValues[id] || `<span style="color:#9ca3af;">[${id}]</span>`) : `{{${id}}}`
+        );
+      }
+    });
+    
+    // Also replace common logo placeholders that might not be in PLACEHOLDER_FIELDS
+    const logoPlaceholders = ['logo', 'bedrijfslogo', 'company_logo', 'LOGO', 'BEDRIJFSLOGO'];
+    logoPlaceholders.forEach(logoField => {
+      const logoRegex = new RegExp(`{{${logoField}}}`, 'g');
+      const logoSrcRegex = new RegExp(`src=[\\"']{{${logoField}}}[\\"']`, "g");
+      
+      if (allValues[logoField] && forPreview) {
+        console.log(`🖼️ HTML EDITOR: Replacing ${logoField} with:`, allValues[logoField]);
+        replaced = replaced.replace(
+          logoSrcRegex,
+          `src="${allValues[logoField]}"`
+        );
+        replaced = replaced.replace(
+          logoRegex,
+          `<img src="${allValues[logoField]}" alt="Bedrijfslogo" style="max-width:200px;max-height:100px;object-fit:contain;" />`
+        );
+      } else if (forPreview) {
+        console.log(`⚠️ HTML EDITOR: No logo found for ${logoField}`);
+        replaced = replaced.replace(
+          logoSrcRegex,
+          `src="" style="background:#eee;border:1px dashed #ccc;width:200px;max-height:100px;object-fit:contain;"`
+        );
+        replaced = replaced.replace(
+          logoRegex,
+          `<div style="background:#eee;border:1px dashed #ccc;width:200px;max-height:100px;display:flex;align-items:center;justify-content:center;color:#999;">[Logo]</div>`
         );
       }
     });
@@ -59,8 +108,8 @@ export function usePlaceholderReplacement({ placeholderValues, companyData = {} 
     return replaced;
   };
 
-  const getScaledHtmlContent = (content: string) => {
-    const withValues = replacePlaceholders(content, true);
+  const getScaledHtmlContent = async (content: string) => {
+    const withValues = await replacePlaceholders(content, true);
 
     const htmlMatch = withValues.match(/<html[^>]*>([\s\S]*)<\/html>/i);
     if (!htmlMatch) return withValues;
