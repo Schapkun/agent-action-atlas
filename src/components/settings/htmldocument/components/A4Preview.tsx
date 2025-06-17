@@ -3,6 +3,8 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Eye, Download, FileText } from 'lucide-react';
 import { useExportOperations } from '../builder/useExportOperations';
+import { useOrganization } from '@/contexts/OrganizationContext';
+import { replaceAllPlaceholders } from '@/utils/universalPlaceholderReplacement';
 
 interface A4PreviewProps {
   htmlContent: string;
@@ -10,23 +12,39 @@ interface A4PreviewProps {
 }
 
 export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) => {
-  // Replace all placeholders in the HTML content
-  const processedHtml = React.useMemo(() => {
-    let processed = htmlContent;
+  const { selectedOrganization } = useOrganization();
+  
+  // Process HTML content with universal placeholder replacement
+  const processedHtml = React.useMemo(async () => {
+    console.log('🎨 A4 PREVIEW: Processing HTML with universal system');
     
-    // Replace all placeholders with actual values
-    Object.entries(placeholderValues).forEach(([key, value]) => {
-      const placeholder = `{{${key}}}`;
-      const regex = new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-      processed = processed.replace(regex, value || `[${key}]`);
-    });
-    
-    return processed;
-  }, [htmlContent, placeholderValues]);
+    try {
+      const processed = await replaceAllPlaceholders(htmlContent, {
+        organizationId: selectedOrganization?.id,
+        placeholderValues
+      });
+      console.log('✅ A4 PREVIEW: HTML processed successfully');
+      return processed;
+    } catch (error) {
+      console.error('❌ A4 PREVIEW: Error processing HTML:', error);
+      return htmlContent;
+    }
+  }, [htmlContent, placeholderValues, selectedOrganization?.id]);
+
+  // We need to handle the async nature of processedHtml
+  const [finalHtml, setFinalHtml] = React.useState(htmlContent);
+
+  React.useEffect(() => {
+    const processContent = async () => {
+      const result = await processedHtml;
+      setFinalHtml(result);
+    };
+    processContent();
+  }, [processedHtml]);
 
   const { handlePDFDownload, handleHTMLExport } = useExportOperations({
     documentName: placeholderValues.onderwerp || 'Document',
-    htmlContent: processedHtml
+    htmlContent: finalHtml
   });
 
   // Create complete HTML document for A4 preview
@@ -134,7 +152,7 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
           }}
         >
           <iframe
-            srcDoc={getA4PreviewDocument(processedHtml)}
+            srcDoc={getA4PreviewDocument(finalHtml)}
             className="w-full h-full border-0"
             title="A4 Document Preview"
             style={{
@@ -150,7 +168,7 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       
       {/* Footer - 40px hoog */}
       <div className="flex-shrink-0 h-[40px] px-4 py-2 bg-gray-100 border-t text-xs text-gray-600 flex items-center justify-between">
-        <span>A4 Formaat (210×297mm) - 5px marges van header en footer</span>
+        <span>A4 Formaat (210×297mm) - Universal Preview System</span>
         <span>{Object.keys(placeholderValues).length} variabelen vervangen</span>
       </div>
     </div>

@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { usePlaceholderReplacement } from './usePlaceholderReplacement';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { loadCompanyData } from '@/utils/companyDataMapping';
+import { replaceAllPlaceholders } from '@/utils/universalPlaceholderReplacement';
 
 interface DocumentPreviewProps {
   htmlContent: string;
@@ -14,42 +13,20 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   placeholderValues 
 }) => {
   const [processedHtml, setProcessedHtml] = useState('');
-  const [companyData, setCompanyData] = useState<Record<string, string>>({});
   const { selectedOrganization } = useOrganization();
-  
-  const { getScaledHtmlContent } = usePlaceholderReplacement({ 
-    placeholderValues,
-    companyData 
-  });
-
-  // Load company data when organization changes
-  useEffect(() => {
-    const loadData = async () => {
-      if (selectedOrganization?.id) {
-        console.log('🏢 DOCUMENT PREVIEW: Loading company data for organization:', selectedOrganization.id);
-        try {
-          const data = await loadCompanyData(selectedOrganization.id);
-          console.log('🏢 DOCUMENT PREVIEW: Company data loaded:', data);
-          setCompanyData(data);
-        } catch (error) {
-          console.error('❌ DOCUMENT PREVIEW: Error loading company data:', error);
-          setCompanyData({});
-        }
-      }
-    };
-    
-    loadData();
-  }, [selectedOrganization?.id]);
 
   useEffect(() => {
     const processHtml = async () => {
-      console.log('🎨 DOCUMENT PREVIEW: Processing HTML with placeholders and company data');
-      console.log('🔍 DOCUMENT PREVIEW: Company data keys:', Object.keys(companyData));
+      console.log('🎨 DOCUMENT PREVIEW: Processing HTML with universal system');
+      console.log('🔍 DOCUMENT PREVIEW: Organization:', selectedOrganization?.name);
       console.log('🔍 DOCUMENT PREVIEW: Placeholder values keys:', Object.keys(placeholderValues));
       
       try {
-        const processed = await getScaledHtmlContent(htmlContent);
-        console.log('✅ DOCUMENT PREVIEW: HTML processed successfully');
+        const processed = await replaceAllPlaceholders(htmlContent, {
+          organizationId: selectedOrganization?.id,
+          placeholderValues
+        });
+        console.log('✅ DOCUMENT PREVIEW: HTML processed successfully with universal system');
         setProcessedHtml(processed);
       } catch (error) {
         console.error('❌ DOCUMENT PREVIEW: Error processing HTML:', error);
@@ -57,14 +34,48 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       }
     };
 
-    if (htmlContent && Object.keys(companyData).length > 0) {
-      processHtml();
-    } else if (htmlContent && Object.keys(companyData).length === 0) {
-      // Process even without company data, but log it
-      console.log('⚠️ DOCUMENT PREVIEW: Processing without company data');
+    if (htmlContent) {
       processHtml();
     }
-  }, [htmlContent, placeholderValues, companyData, getScaledHtmlContent]);
+  }, [htmlContent, placeholderValues, selectedOrganization?.id]);
+
+  const getScaledHtmlContent = (content: string) => {
+    const htmlMatch = content.match(/<html[^>]*>([\s\S]*)<\/html>/i);
+    if (!htmlMatch) return content;
+
+    const scaledContent = content.replace(
+      /<style[^>]*>([\s\S]*?)<\/style>/i,
+      (match, styles) => {
+        return `<style>
+          ${styles}
+          
+          html, body {
+            margin: 0;
+            padding: 25px;
+            overflow: hidden;
+            transform-origin: top left;
+            transform: scale(0.75);
+            width: 133.33%;
+            height: 133.33%;
+            box-sizing: border-box;
+          }
+          
+          @page {
+            size: A4;
+            margin: 0;
+          }
+          
+          body {
+            width: 210mm;
+            min-height: 297mm;
+            font-family: Arial, sans-serif;
+            background: white;
+          }
+        </style>`;
+      }
+    );
+    return scaledContent;
+  };
 
   return (
     <div className="w-1/2 flex flex-col">
@@ -72,7 +83,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         <h3 className="font-semibold">Document Preview</h3>
         {selectedOrganization && (
           <p className="text-xs text-gray-500">
-            Organisatie: {selectedOrganization.name}
+            Organisatie: {selectedOrganization.name} - Universal System
           </p>
         )}
       </div>
@@ -88,7 +99,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             }}
           >
             <iframe
-              srcDoc={processedHtml}
+              srcDoc={getScaledHtmlContent(processedHtml)}
               className="w-full h-full border-0 rounded-lg"
               title="Document Preview"
             />

@@ -1,7 +1,6 @@
-
 import { PLACEHOLDER_FIELDS } from './htmlDocumentConstants';
-import { loadCompanyData } from '@/utils/companyDataMapping';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { replaceAllPlaceholders } from '@/utils/universalPlaceholderReplacement';
 
 interface UsePlaceholderReplacementProps {
   placeholderValues: Record<string, string>;
@@ -12,115 +11,28 @@ export function usePlaceholderReplacement({ placeholderValues, companyData = {} 
   const { selectedOrganization } = useOrganization();
 
   const replacePlaceholders = async (content: string, forPreview = false) => {
-    let replaced = content;
+    console.log('🎨 HTML EDITOR: Using universal placeholder replacement system');
+    console.log('🔍 HTML EDITOR: Preview mode:', forPreview);
+    console.log('🔍 HTML EDITOR: Organization:', selectedOrganization?.name);
     
-    // Load fresh company data including logo if we have an organization
-    let enhancedCompanyData = { ...companyData };
-    if (selectedOrganization?.id && forPreview) {
-      try {
-        const freshCompanyData = await loadCompanyData(selectedOrganization.id);
-        enhancedCompanyData = { ...enhancedCompanyData, ...freshCompanyData };
-        console.log('🔄 HTML EDITOR: Enhanced company data with logo:', enhancedCompanyData);
-      } catch (error) {
-        console.error('Failed to load company data for HTML editor:', error);
-      }
-    }
-    
-    // Combine placeholder values with enhanced company data
-    const allValues = { ...enhancedCompanyData, ...placeholderValues };
-    
-    console.log('🎨 HTML EDITOR: All values for replacement:', allValues);
-    
-    // First handle standard placeholder fields
-    PLACEHOLDER_FIELDS.forEach(({ id, type }) => {
-      const regex = new RegExp(`{{${id}}}`, "g");
-      if (forPreview && type === "image") {
-        const srcRegex = new RegExp(`src=[\\"']{{${id}}}[\\"']`, "g");
-        if (allValues[id]) {
-          console.log(`🖼️ HTML EDITOR: Replacing logo placeholder ${id} with:`, allValues[id]);
-          replaced = replaced.replace(
-            srcRegex,
-            `src="${allValues[id]}"`
-          );
-          replaced = replaced.replace(
-            regex,
-            `<img src="${allValues[id]}" alt="Bedrijfslogo" style="max-width:200px;max-height:100px;object-fit:contain;" />`
-          );
-        } else {
-          console.log(`⚠️ HTML EDITOR: No value found for logo placeholder ${id}`);
-          replaced = replaced.replace(
-            srcRegex,
-            `src="" style="background:#eee;border:1px dashed #ccc;width:200px;max-height:100px;object-fit:contain;"`
-          );
-          replaced = replaced.replace(
-            regex,
-            `<div style="background:#eee;border:1px dashed #ccc;width:200px;max-height:100px;display:flex;align-items:center;justify-content:center;color:#999;">[Logo]</div>`
-          );
-        }
-      } else {
-        replaced = replaced.replace(
-          regex,
-          forPreview ? (allValues[id] || `<span style="color:#9ca3af;">[${id}]</span>`) : `{{${id}}}`
-        );
-      }
-    });
-    
-    // Handle comprehensive logo placeholders - ensuring all variations are covered
-    const logoPlaceholders = ['logo', 'bedrijfslogo', 'company_logo', 'LOGO', 'BEDRIJFSLOGO'];
-    logoPlaceholders.forEach(logoField => {
-      const logoRegex = new RegExp(`{{${logoField}}}`, 'g');
-      const logoSrcRegex = new RegExp(`src=[\\"']{{${logoField}}}[\\"']`, "g");
-      
-      if (allValues[logoField] && forPreview) {
-        console.log(`🖼️ HTML EDITOR: Replacing ${logoField} with:`, allValues[logoField]);
-        replaced = replaced.replace(
-          logoSrcRegex,
-          `src="${allValues[logoField]}"`
-        );
-        replaced = replaced.replace(
-          logoRegex,
-          `<img src="${allValues[logoField]}" alt="Bedrijfslogo" style="max-width:200px;max-height:100px;object-fit:contain;" />`
-        );
-      } else if (forPreview) {
-        console.log(`⚠️ HTML EDITOR: No logo found for ${logoField}`);
-        replaced = replaced.replace(
-          logoSrcRegex,
-          `src="" style="background:#eee;border:1px dashed #ccc;width:200px;max-height:100px;object-fit:contain;"`
-        );
-        replaced = replaced.replace(
-          logoRegex,
-          `<div style="background:#eee;border:1px dashed #ccc;width:200px;max-height:100px;display:flex;align-items:center;justify-content:center;color:#999;">[Logo]</div>`
-        );
-      }
-    });
-
-    // Handle conditional logo blocks similar to invoiceTemplateUtils
-    const hasLogo = allValues && typeof allValues === 'object' && 'logo' in allValues && allValues.logo;
     if (forPreview) {
-      if (hasLogo) {
-        console.log('🖼️ HTML EDITOR: Processing conditional logo blocks - logo found');
-        replaced = replaced.replace(/{{#if logo}}([\s\S]*?){{else}}[\s\S]*?{{\/if}}/g, '$1');
-        replaced = replaced.replace(/{{#if logo}}([\s\S]*?){{\/if}}/g, '$1');
-      } else {
-        console.log('⚠️ HTML EDITOR: Processing conditional logo blocks - no logo');
-        replaced = replaced.replace(/{{#if logo}}[\s\S]*?{{else}}([\s\S]*?){{\/if}}/g, '$1');
-        replaced = replaced.replace(/{{#if logo}}[\s\S]*?{{\/if}}/g, '');
+      // Use the universal system for preview
+      try {
+        const processed = await replaceAllPlaceholders(content, {
+          organizationId: selectedOrganization?.id,
+          placeholderValues: { ...companyData, ...placeholderValues }
+        });
+        console.log('✅ HTML EDITOR: Universal replacement completed');
+        return processed;
+      } catch (error) {
+        console.error('❌ HTML EDITOR: Universal replacement failed:', error);
+        return content;
       }
+    } else {
+      // For editor mode, keep placeholders intact
+      console.log('📝 HTML EDITOR: Editor mode - keeping placeholders intact');
+      return content;
     }
-    
-    // Replace any other placeholders that might exist in the content
-    const remainingPlaceholders = content.match(/{{([^}]+)}}/g);
-    if (remainingPlaceholders && forPreview) {
-      remainingPlaceholders.forEach(placeholder => {
-        const key = placeholder.replace(/[{}]/g, '');
-        if (allValues[key]) {
-          const regex = new RegExp(placeholder.replace(/[{}]/g, '\\{\\}'), 'g');
-          replaced = replaced.replace(regex, allValues[key]);
-        }
-      });
-    }
-    
-    return replaced;
   };
 
   const getScaledHtmlContent = async (content: string) => {

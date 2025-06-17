@@ -1,5 +1,5 @@
 
-import { loadCompanyData } from './companyDataMapping';
+import { replaceAllPlaceholders } from './universalPlaceholderReplacement';
 
 interface InvoiceFormData {
   client_name: string;
@@ -22,13 +22,6 @@ interface LineItem {
   line_total: number;
 }
 
-interface CompanyData {
-  [key: string]: any;
-  logo?: string;
-  bedrijfslogo?: string;
-  company_logo?: string;
-}
-
 export const generatePreviewHTML = async (
   templateHTML: string,
   formData: InvoiceFormData,
@@ -36,26 +29,20 @@ export const generatePreviewHTML = async (
   invoiceNumber: string,
   organizationId?: string
 ): Promise<string> => {
-  console.log('🎨 TEMPLATE UTILS: Starting HTML generation with LOGO SUPPORT:', {
+  console.log('🎨 TEMPLATE UTILS: Starting HTML generation with UNIVERSAL SYSTEM:', {
     templateLength: templateHTML?.length,
     hasOrganizationId: !!organizationId,
     lineItemsCount: lineItems.length,
-    invoiceNumber,
-    formDataSample: {
-      client_name: formData.client_name,
-      client_email: formData.client_email
-    }
+    invoiceNumber
   });
 
-  let processedHTML = templateHTML || '<div>Geen template beschikbaar</div>';
+  if (!templateHTML) {
+    return '<div>Geen template beschikbaar</div>';
+  }
 
   try {
-    // Load company data including logo
-    const companyData: CompanyData = organizationId ? await loadCompanyData(organizationId) : {};
-    console.log('🏢 TEMPLATE UTILS: Company data loaded:', companyData);
-
-    // Create comprehensive placeholder replacements
-    const placeholders = {
+    // Prepare invoice-specific data
+    const invoiceData = {
       // Invoice data
       factuurnummer: invoiceNumber || 'CONCEPT',
       factuurdatum: formData.invoice_date ? new Date(formData.invoice_date).toLocaleDateString('nl-NL') : new Date().toLocaleDateString('nl-NL'),
@@ -69,84 +56,23 @@ export const generatePreviewHTML = async (
       klant_plaats: formData.client_city || '[Plaats]',
       klant_land: formData.client_country || 'Nederland',
       
-      // Company data (from database) - this now includes extensive logo mappings
-      ...companyData,
-      
       // Totals
       subtotaal: lineItems.reduce((sum, item) => sum + item.line_total, 0).toFixed(2),
       btw_bedrag: lineItems.reduce((sum, item) => sum + (item.line_total * item.vat_rate / 100), 0).toFixed(2),
       totaal_bedrag: lineItems.reduce((sum, item) => sum + item.line_total + (item.line_total * item.vat_rate / 100), 0).toFixed(2),
       
       // Notes
-      notities: formData.notes || '',
-      
-      // Current date
-      datum: new Date().toLocaleDateString('nl-NL')
+      notities: formData.notes || ''
     };
 
-    console.log('🔄 TEMPLATE UTILS: All placeholders including LOGO:', {
-      ...placeholders,
-      logoKeys: Object.keys(placeholders).filter(key => 
-        key.toLowerCase().includes('logo'))
+    // Use the universal placeholder replacement system
+    const processedHTML = await replaceAllPlaceholders(templateHTML, {
+      organizationId,
+      invoiceData,
+      lineItems
     });
 
-    // Replace all placeholders including the extensive logo variations
-    Object.entries(placeholders).forEach(([key, value]) => {
-      const regex = new RegExp(`{{${key}}}`, 'g');
-      processedHTML = processedHTML.replace(regex, String(value || ''));
-    });
-
-    // Handle line items table generation (Handlebars-style {{#each}} replacement)
-    if (lineItems.length > 0) {
-      const lineItemsHTML = lineItems.map(item => `
-        <tr>
-          <td>${item.description}</td>
-          <td>${item.quantity}</td>
-          <td>€${item.unit_price.toFixed(2)}</td>
-          <td>${item.vat_rate}%</td>
-          <td>€${item.line_total.toFixed(2)}</td>
-        </tr>
-      `).join('');
-
-      // Replace {{#each regels}} blocks
-      processedHTML = processedHTML.replace(
-        /{{#each regels}}[\s\S]*?{{\/each}}/g,
-        lineItemsHTML
-      );
-    } else {
-      // Remove empty {{#each}} blocks
-      processedHTML = processedHTML.replace(
-        /{{#each regels}}[\s\S]*?{{\/each}}/g,
-        '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #666;">Geen factuurregels toegevoegd</td></tr>'
-      );
-    }
-
-    // Handle conditional blocks ({{#if}})
-    // Simple {{#if notities}} replacement
-    if (formData.notes && formData.notes.trim()) {
-      processedHTML = processedHTML.replace(/{{#if notities}}([\s\S]*?){{\/if}}/g, '$1');
-    } else {
-      processedHTML = processedHTML.replace(/{{#if notities}}[\s\S]*?{{\/if}}/g, '');
-    }
-
-    // Handle logo conditional blocks with enhanced checking - using safe property access
-    const hasLogo = companyData && companyData.logo;
-    console.log('🖼️ TEMPLATE UTILS: Logo check result:', { hasLogo, logoValue: companyData?.logo });
-    
-    if (hasLogo) {
-      console.log('✅ TEMPLATE UTILS: Processing template with logo');
-      processedHTML = processedHTML.replace(/{{#if logo}}([\s\S]*?){{else}}[\s\S]*?{{\/if}}/g, '$1');
-      processedHTML = processedHTML.replace(/{{#if logo}}([\s\S]*?){{\/if}}/g, '$1');
-    } else {
-      console.log('⚠️ TEMPLATE UTILS: Processing template without logo');
-      processedHTML = processedHTML.replace(/{{#if logo}}[\s\S]*?{{else}}([\s\S]*?){{\/if}}/g, '$1');
-      processedHTML = processedHTML.replace(/{{#if logo}}[\s\S]*?{{\/if}}/g, '');
-    }
-
-    // Clean up any remaining unfilled placeholders
-    processedHTML = processedHTML.replace(/{{[^}]+}}/g, '');
-
-    console.log('✅ TEMPLATE UTILS: HTML generation completed with enhanced LOGO SUPPORT');
+    console.log('✅ TEMPLATE UTILS: HTML generation completed with UNIVERSAL SYSTEM');
     return processedHTML;
 
   } catch (error) {
