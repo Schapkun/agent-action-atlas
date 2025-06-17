@@ -27,15 +27,15 @@ export const getDocumentPreviewStyles = () => `
     overflow-wrap: break-word;
   }
 
-  /* LESS AGGRESSIVE: Only apply table styling if no existing styles */
-  .preview-content table:not([style*="border"]):not([class*="table"]) {
+  /* Enhanced table styling for invoices */
+  table {
     width: 100%;
     border-collapse: collapse;
     margin: 16px 0;
     font-size: 12px;
   }
   
-  .preview-content th:not([style*="background"]):not([style*="padding"]):not([class]) {
+  th {
     background: #f8f9fa;
     font-weight: 600;
     padding: 8px 6px;
@@ -44,50 +44,81 @@ export const getDocumentPreviewStyles = () => `
     font-size: 12px;
   }
   
-  .preview-content td:not([style*="padding"]):not([class]) {
+  td {
     padding: 6px 6px;
     text-align: left;
     border-bottom: 1px solid #e9ecef;
     font-size: 12px;
   }
 
-  /* LESS AGGRESSIVE: Only apply heading styles if no existing styles or classes */
-  .preview-content h1:not([style]):not([class]), 
-  .preview-content h2:not([style]):not([class]), 
-  .preview-content h3:not([style]):not([class]) {
+  /* Enhanced heading styles */
+  h1, h2, h3 {
     color: #212529;
     font-weight: 600;
     margin: 16px 0 8px 0;
   }
   
-  .preview-content h1:not([style]):not([class]) { font-size: 18px; }
-  .preview-content h2:not([style]):not([class]) { font-size: 16px; }
-  .preview-content h3:not([style]):not([class]) { font-size: 14px; }
+  h1 { font-size: 18px; }
+  h2 { font-size: 16px; }
+  h3 { font-size: 14px; }
   
-  .preview-content p:not([style]):not([class]) {
+  p {
     font-size: 12px;
     margin: 6px 0;
     color: #495057;
   }
 
-  /* WORKING LOGO STYLING - consistent across all previews */
-  .preview-content .company-logo, .preview-content .bedrijfslogo, 
-  .preview-content img[src*="logo"], .preview-content img[alt*="logo"], 
-  .preview-content img[alt*="Logo"], .preview-content .logo, 
-  .preview-content .Logo, .preview-content .LOGO,
-  .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], 
-  img[alt*="Logo"], .logo, .Logo, .LOGO {
+  /* ENHANCED LOGO STYLING - more comprehensive coverage */
+  img[src*="logo"], 
+  img[alt*="logo"], 
+  img[alt*="Logo"], 
+  img[class*="logo"],
+  img[class*="Logo"],
+  .company-logo, 
+  .bedrijfslogo, 
+  .logo, 
+  .Logo, 
+  .LOGO {
     max-width: 200px !important;
     max-height: 100px !important;
     height: auto !important;
+    width: auto !important;
     object-fit: contain !important;
     display: block !important;
+    margin: 8px 0 !important;
   }
 
-  /* Ensure images don't break layout */
-  .preview-content img {
+  /* Fallback for all images to prevent layout breaks */
+  img {
     max-width: 100%;
     height: auto;
+    display: block;
+  }
+
+  /* Specific styles for invoice layout */
+  .invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .invoice-details {
+    margin: 20px 0;
+  }
+
+  .invoice-table {
+    width: 100%;
+    margin: 20px 0;
+  }
+
+  .invoice-total {
+    text-align: right;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 2px solid #212529;
   }
 
   @media (max-width: 768px) {
@@ -96,8 +127,8 @@ export const getDocumentPreviewStyles = () => `
       max-width: 100%;
     }
     
-    .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], img[alt*="Logo"],
-    .logo, .Logo, .LOGO {
+    img[src*="logo"], img[alt*="logo"], img[alt*="Logo"],
+    .company-logo, .bedrijfslogo, .logo, .Logo, .LOGO {
       max-width: 160px !important;
       max-height: 80px !important;
     }
@@ -105,6 +136,7 @@ export const getDocumentPreviewStyles = () => `
 `;
 
 export const generatePreviewDocument = (content: string, title: string = 'Document Preview') => {
+  // Extract body content if it exists, otherwise use the full content
   let bodyContent = content;
   const bodyMatch = content.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   if (bodyMatch) {
@@ -116,6 +148,7 @@ export const generatePreviewDocument = (content: string, title: string = 'Docume
     }
   }
 
+  // Apply enhanced styling to the content
   return `<!DOCTYPE html>
 <html lang="nl">
 <head>

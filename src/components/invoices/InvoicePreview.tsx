@@ -6,7 +6,6 @@ import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 import { InvoiceFormData, LineItem } from '@/types/invoiceTypes';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { replaceAllPlaceholders } from '@/utils/universalPlaceholderReplacement';
-import { generatePreviewDocument } from '@/utils/documentPreviewStyles';
 
 interface InvoicePreviewProps {
   selectedTemplate: DocumentTemplateWithLabels | null;
@@ -24,18 +23,18 @@ export const InvoicePreview = ({
   className = ""
 }: InvoicePreviewProps) => {
   const [zoom, setZoom] = React.useState(0.8);
-  const [previewHTML, setPreviewHTML] = useState('<div style="padding: 40px; text-align: center; color: #6b7280;">Geen template geselecteerd</div>');
+  const [processedHTML, setProcessedHTML] = useState('');
   const { selectedOrganization } = useOrganization();
 
   useEffect(() => {
     const generatePreview = async () => {
-      console.log('🎨 INVOICE PREVIEW: Starting preview generation with generatePreviewDocument()');
+      console.log('🎨 INVOICE PREVIEW: Starting direct HTML rendering approach');
       console.log('🎨 Template:', selectedTemplate?.name);
       console.log('🎨 Organization:', selectedOrganization?.name, selectedOrganization?.id);
       
       if (!selectedTemplate) {
         console.log('⚠️ INVOICE PREVIEW: No template selected');
-        setPreviewHTML('<div style="padding: 40px; text-align: center; color: #6b7280;">Geen template geselecteerd</div>');
+        setProcessedHTML('<div style="padding: 40px; text-align: center; color: #6b7280;">Geen template geselecteerd</div>');
         return;
       }
 
@@ -56,28 +55,20 @@ export const InvoicePreview = ({
           notities: formData.notes || ''
         };
 
-        console.log('🔍 INVOICE PREVIEW: Before placeholder replacement - checking template content');
-        console.log('Template contains {{logo}}:', selectedTemplate.html_content.includes('{{logo}}'));
-        console.log('Organization ID being passed:', selectedOrganization?.id);
-
-        const processedHTML = await replaceAllPlaceholders(selectedTemplate.html_content, {
+        console.log('🔍 INVOICE PREVIEW: Processing placeholders with direct HTML approach');
+        
+        const finalHTML = await replaceAllPlaceholders(selectedTemplate.html_content, {
           organizationId: selectedOrganization?.id,
           invoiceData,
           lineItems
         });
 
-        console.log('🔍 INVOICE PREVIEW: After placeholder replacement - checking for logo');
-        console.log('Processed HTML contains {{logo}}:', processedHTML.includes('{{logo}}'));
-        console.log('Processed HTML contains img tags:', processedHTML.includes('<img'));
-
-        // NOW USE generatePreviewDocument() LIKE LivePreview DOES
-        const finalHTML = generatePreviewDocument(processedHTML, 'Factuur Voorbeeld');
-
-        console.log('✅ INVOICE PREVIEW: Using generatePreviewDocument() like LivePreview - logo should work now!');
-        setPreviewHTML(finalHTML);
+        console.log('✅ INVOICE PREVIEW: Direct HTML rendering completed - checking for logo');
+        console.log('Final HTML contains img tags:', finalHTML.includes('<img'));
+        setProcessedHTML(finalHTML);
       } catch (error) {
         console.error('❌ INVOICE PREVIEW: Error:', error);
-        setPreviewHTML('<div style="padding: 40px; text-align: center; color: #dc2626;">Fout bij laden van voorbeeld</div>');
+        setProcessedHTML('<div style="padding: 40px; text-align: center; color: #dc2626;">Fout bij laden van voorbeeld</div>');
       }
     };
 
@@ -139,36 +130,29 @@ export const InvoicePreview = ({
 
       <div className="flex-1 min-h-0 flex justify-center items-start p-4 overflow-auto">
         <div 
-          className="bg-white shadow-lg border border-gray-300 transition-transform duration-200"
+          className="bg-white shadow-lg border border-gray-300 transition-transform duration-200 origin-top"
           style={{
-            width: `${794 * zoom}px`,
-            minHeight: `${1123 * zoom}px`,
+            width: `${794}px`,
+            minHeight: `${1123}px`,
             transform: `scale(${zoom})`,
             transformOrigin: 'top center'
           }}
         >
-          <React.Suspense 
-            fallback={
-              <div className="w-full h-full flex items-center justify-center text-gray-500">
-                Laden...
-              </div>
-            }
-          >
-            <iframe
-              srcDoc={previewHTML}
-              className="w-full h-full border-0"
-              title="Factuur Voorbeeld"
-              style={{
-                width: '794px',
-                height: '1123px'
-              }}
-            />
-          </React.Suspense>
+          <div
+            className="w-full h-full p-6 overflow-hidden"
+            style={{
+              fontFamily: 'Arial, sans-serif',
+              fontSize: '12px',
+              lineHeight: '1.4',
+              color: '#333'
+            }}
+            dangerouslySetInnerHTML={{ __html: processedHTML }}
+          />
         </div>
       </div>
 
       <div className="flex-shrink-0 h-[40px] px-4 py-2 bg-gray-100 border-t border-l text-xs text-gray-600 flex items-center justify-between">
-        <span>A4 Formaat • Using generatePreviewDocument()</span>
+        <span>A4 Formaat • Direct HTML Rendering</span>
         <span>{lineItems.length} regel{lineItems.length !== 1 ? 's' : ''}</span>
       </div>
     </div>
