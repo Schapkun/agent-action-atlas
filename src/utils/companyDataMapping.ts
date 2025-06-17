@@ -60,22 +60,29 @@ export const loadCompanyData = async (organizationId: string): Promise<Record<st
       }
     });
 
-    // Add logo support - check multiple possible logo fields
-    const logoUrl = data.company_logo || data.logo || data.bedrijfslogo;
-    if (logoUrl) {
-      mappedData['logo'] = logoUrl;
-      mappedData['bedrijfslogo'] = logoUrl;
-      mappedData['company_logo'] = logoUrl;
-      console.log('🖼️ Logo found:', logoUrl);
-    } else {
-      console.log('⚠️ No logo found in company data');
-    }
+    // TODO: Logo support - currently no logo column exists in organization_settings
+    // When logo functionality is added to the database, uncomment and modify this:
+    // const logoUrl = data.company_logo;
+    // if (logoUrl) {
+    //   mappedData['logo'] = logoUrl;
+    //   mappedData['bedrijfslogo'] = logoUrl;
+    //   mappedData['company_logo'] = logoUrl;
+    //   console.log('🖼️ Logo found:', logoUrl);
+    // } else {
+    //   console.log('⚠️ No logo found in company data');
+    // }
+
+    // For now, provide placeholder for logo
+    console.log('⚠️ Logo functionality not yet implemented in database');
+    mappedData['logo'] = '[Logo nog niet geconfigureerd]';
+    mappedData['bedrijfslogo'] = '[Logo nog niet geconfigureerd]';
+    mappedData['company_logo'] = '[Logo nog niet geconfigureerd]';
 
     // Add some computed fields
     mappedData['datum'] = new Date().toLocaleDateString('nl-NL');
     mappedData['referentie'] = `REF-${Date.now()}`;
 
-    console.log('🔄 Mapped company data with logo:', mappedData);
+    console.log('🔄 Mapped company data:', mappedData);
     return mappedData;
   } catch (error) {
     console.error('❌ Error in loadCompanyData:', error);
