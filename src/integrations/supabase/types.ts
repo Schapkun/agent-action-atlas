@@ -517,6 +517,7 @@ export type Database = {
           company_city: string | null
           company_email: string | null
           company_kvk: string | null
+          company_logo: string | null
           company_name: string | null
           company_phone: string | null
           company_postal_code: string | null
@@ -543,6 +544,7 @@ export type Database = {
           company_city?: string | null
           company_email?: string | null
           company_kvk?: string | null
+          company_logo?: string | null
           company_name?: string | null
           company_phone?: string | null
           company_postal_code?: string | null
@@ -569,6 +571,7 @@ export type Database = {
           company_city?: string | null
           company_email?: string | null
           company_kvk?: string | null
+          company_logo?: string | null
           company_name?: string | null
           company_phone?: string | null
           company_postal_code?: string | null

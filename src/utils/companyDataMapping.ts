@@ -12,7 +12,8 @@ export const COMPANY_FIELD_MAPPING = {
   company_website: 'website',
   company_vat: 'btw_nummer',
   company_kvk: 'kvk_nummer',
-  company_bank: 'banknummer'
+  company_bank: 'banknummer',
+  company_logo: 'logo'
 };
 
 export interface CompanyData {
@@ -26,6 +27,7 @@ export interface CompanyData {
   company_vat?: string;
   company_kvk?: string;
   company_bank?: string;
+  company_logo?: string;
 }
 
 export const loadCompanyData = async (organizationId: string): Promise<Record<string, string>> => {
@@ -60,29 +62,25 @@ export const loadCompanyData = async (organizationId: string): Promise<Record<st
       }
     });
 
-    // TODO: Logo support - currently no logo column exists in organization_settings
-    // When logo functionality is added to the database, uncomment and modify this:
-    // const logoUrl = data.company_logo;
-    // if (logoUrl) {
-    //   mappedData['logo'] = logoUrl;
-    //   mappedData['bedrijfslogo'] = logoUrl;
-    //   mappedData['company_logo'] = logoUrl;
-    //   console.log('🖼️ Logo found:', logoUrl);
-    // } else {
-    //   console.log('⚠️ No logo found in company data');
-    // }
-
-    // For now, provide placeholder for logo
-    console.log('⚠️ Logo functionality not yet implemented in database');
-    mappedData['logo'] = '[Logo nog niet geconfigureerd]';
-    mappedData['bedrijfslogo'] = '[Logo nog niet geconfigureerd]';
-    mappedData['company_logo'] = '[Logo nog niet geconfigureerd]';
+    // Logo support - now with database column
+    const logoUrl = data.company_logo;
+    if (logoUrl) {
+      mappedData['logo'] = logoUrl;
+      mappedData['bedrijfslogo'] = logoUrl;
+      mappedData['company_logo'] = logoUrl;
+      console.log('🖼️ Logo found:', logoUrl);
+    } else {
+      console.log('⚠️ No logo found in company data');
+      mappedData['logo'] = '[Logo nog niet geconfigureerd]';
+      mappedData['bedrijfslogo'] = '[Logo nog niet geconfigureerd]';
+      mappedData['company_logo'] = '[Logo nog niet geconfigureerd]';
+    }
 
     // Add some computed fields
     mappedData['datum'] = new Date().toLocaleDateString('nl-NL');
     mappedData['referentie'] = `REF-${Date.now()}`;
 
-    console.log('🔄 Mapped company data:', mappedData);
+    console.log('🔄 Mapped company data with logo support:', mappedData);
     return mappedData;
   } catch (error) {
     console.error('❌ Error in loadCompanyData:', error);
