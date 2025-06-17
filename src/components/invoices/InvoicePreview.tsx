@@ -68,7 +68,7 @@ export const InvoicePreview = ({
         console.log('Processed HTML contains {{logo}}:', processedHTML.includes('{{logo}}'));
         console.log('Processed HTML contains img tags:', processedHTML.includes('<img'));
 
-        // Create a simple document with the template's original styling intact + working logo CSS
+        // Create a simple document with the template's original styling intact + EXACT WORKING logo CSS from documentPreviewStyles.ts
         const finalHTML = `<!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -85,11 +85,21 @@ export const InvoicePreview = ({
       margin: 0 auto;
     }
     
-    /* WORKING LOGO CSS - copied from documentPreviewStyles.ts */
+    /* EXACT WORKING LOGO CSS - copied from documentPreviewStyles.ts but WITHOUT .preview-content prefix */
     .company-logo, .bedrijfslogo, 
     img[src*="logo"], img[alt*="logo"], 
     img[alt*="Logo"], .logo, 
     .Logo, .LOGO {
+      max-width: 200px !important;
+      max-height: 100px !important;
+      height: auto !important;
+      object-fit: contain !important;
+      display: block !important;
+    }
+
+    /* Also target GLOBAL selectors without any prefix */
+    .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], img[alt*="Logo"],
+    .logo, .Logo, .LOGO {
       max-width: 200px !important;
       max-height: 100px !important;
       height: auto !important;
@@ -117,7 +127,7 @@ export const InvoicePreview = ({
 </body>
 </html>`;
 
-        console.log('✅ INVOICE PREVIEW: Final HTML prepared with working logo CSS');
+        console.log('✅ INVOICE PREVIEW: Final HTML prepared with EXACT WORKING logo CSS');
         setPreviewHTML(finalHTML);
       } catch (error) {
         console.error('❌ INVOICE PREVIEW: Error:', error);
