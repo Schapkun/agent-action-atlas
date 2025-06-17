@@ -33,8 +33,8 @@ export const LivePreview = ({ htmlContent, layoutId }: LivePreviewProps) => {
     processContent();
   }, [htmlContent, selectedOrganization?.id]);
 
-  // Enhanced HTML wrapper with consistent A4 styling and FIXED font specificity
-  const getEnhancedPreviewDocument = (content: string) => {
+  // UNIFIED HTML wrapper - IDENTICAL to InvoicePreview for consistency
+  const getUnifiedPreviewDocument = (content: string) => {
     // Extract body content if it's a complete HTML document
     let bodyContent = content;
     const bodyMatch = content.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
@@ -54,7 +54,7 @@ export const LivePreview = ({ htmlContent, layoutId }: LivePreviewProps) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Live Preview</title>
   <style>
-    /* CRITICAL: High specificity reset to override any template styles */
+    /* UNIFIED: High specificity reset - IDENTICAL to InvoicePreview */
     * {
       margin: 0 !important;
       padding: 0 !important;
@@ -69,109 +69,90 @@ export const LivePreview = ({ htmlContent, layoutId }: LivePreviewProps) => {
       overflow: hidden !important;
     }
     
-    /* A4 Container with precise dimensions matching other previews */
     .preview-container {
       width: 100% !important;
       height: 100% !important;
       background: white !important;
       overflow: auto !important;
       padding: 20px !important;
-      max-width: 794px !important; /* A4 width */
-      margin: 0 auto !important;
     }
     
     .preview-content {
       width: 100% !important;
       min-height: calc(100% - 40px) !important;
-      font-size: 12px !important; /* FIXED: Consistent small font */
+      font-size: 12px !important;
       line-height: 1.4 !important;
       color: #333 !important;
       max-width: 100% !important;
       overflow-wrap: break-word !important;
     }
 
-    /* FIXED: Enhanced table styling with high specificity */
-    .preview-content table,
-    table {
+    /* UNIFIED: Table styling - IDENTICAL to InvoicePreview */
+    .preview-content table, table {
       width: 100% !important;
       border-collapse: collapse !important;
       margin: 16px 0 !important;
-      font-size: 12px !important; /* FIXED: Smaller consistent font */
+      font-size: 12px !important;
     }
     
-    .preview-content th,
-    th {
+    .preview-content th, th {
       background: #f8f9fa !important;
       font-weight: 600 !important;
-      padding: 8px 6px !important; /* FIXED: Smaller padding */
+      padding: 8px 6px !important;
       text-align: left !important;
       border-bottom: 2px solid #e9ecef !important;
-      font-size: 12px !important; /* FIXED: Consistent font size */
+      font-size: 12px !important;
     }
     
-    .preview-content td,
-    td {
-      padding: 6px 6px !important; /* FIXED: Smaller padding */
+    .preview-content td, td {
+      padding: 6px 6px !important;
       text-align: left !important;
       border-bottom: 1px solid #e9ecef !important;
-      font-size: 12px !important; /* FIXED: Consistent font size */
+      font-size: 12px !important;
     }
 
-    /* FIXED: Typography with high specificity to override template styles */
-    .preview-content h1, .preview-content h2, .preview-content h3,
-    h1, h2, h3 {
+    /* UNIFIED: Typography - IDENTICAL to InvoicePreview */
+    .preview-content h1, .preview-content h2, .preview-content h3, h1, h2, h3 {
       color: #212529 !important;
       font-weight: 600 !important;
-      margin: 16px 0 8px 0 !important; /* FIXED: Smaller margins */
+      margin: 16px 0 8px 0 !important;
     }
     
-    .preview-content h1, h1 { font-size: 18px !important; } /* FIXED: Smaller font */
-    .preview-content h2, h2 { font-size: 16px !important; } /* FIXED: Smaller font */
-    .preview-content h3, h3 { font-size: 14px !important; } /* FIXED: Smaller font */
+    .preview-content h1, h1 { font-size: 18px !important; }
+    .preview-content h2, h2 { font-size: 16px !important; }
+    .preview-content h3, h3 { font-size: 14px !important; }
     
-    .preview-content p,
-    p {
-      font-size: 12px !important; /* FIXED: Consistent small font */
-      margin: 6px 0 !important; /* FIXED: Smaller margins */
+    .preview-content p, p {
+      font-size: 12px !important;
+      margin: 6px 0 !important;
       color: #495057 !important;
     }
 
-    /* FIXED: Unified logo styling with high specificity */
+    /* CRITICAL: Logo styling with MAXIMUM specificity to override template CSS */
     .preview-content .company-logo, .preview-content .bedrijfslogo, 
     .preview-content img[src*="logo"], .preview-content img[alt*="logo"], 
     .preview-content img[alt*="Logo"], .preview-content .logo, 
     .preview-content .Logo, .preview-content .LOGO,
     .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], 
     img[alt*="Logo"], .logo, .Logo, .LOGO {
-      max-width: 160px !important; /* FIXED: Smaller logo for preview */
-      max-height: 80px !important; /* FIXED: Smaller logo for preview */
+      max-width: 200px !important;
+      max-height: 100px !important;
       height: auto !important;
       object-fit: contain !important;
+      width: auto !important;
+      min-width: unset !important;
+      min-height: unset !important;
     }
 
-    /* FIXED: Prevent content overflow with high specificity */
-    .preview-content *, .preview-content *:before, .preview-content *:after {
-      max-width: 100% !important;
-      overflow-wrap: break-word !important;
-    }
-
-    /* FIXED: Override any template font sizes */
+    /* UNIFIED: Override template font sizes */
     .preview-content div, .preview-content span, .preview-content li {
       font-size: 12px !important;
     }
 
-    /* Responsive scaling for live preview */
-    @media (max-width: 768px) {
-      .preview-container {
-        padding: 10px !important;
-        max-width: 100% !important;
-      }
-      
-      .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], img[alt*="Logo"],
-      .logo, .Logo, .LOGO {
-        max-width: 120px !important;
-        max-height: 60px !important;
-      }
+    /* UNIFIED: Prevent content overflow */
+    .preview-content *, .preview-content *:before, .preview-content *:after {
+      max-width: 100% !important;
+      overflow-wrap: break-word !important;
     }
   </style>
 </head>
@@ -191,16 +172,16 @@ export const LivePreview = ({ htmlContent, layoutId }: LivePreviewProps) => {
         <div className="flex items-center gap-2">
           <Eye className="h-4 w-4" />
           <span className="text-sm font-medium">Live Preview</span>
-          <span className="text-xs text-gray-500">Universal System</span>
+          <span className="text-xs text-gray-500">Unified System</span>
         </div>
       </CardHeader>
       
       <CardContent className="flex-1 p-0 overflow-hidden">
         <div className="h-full">
           <iframe
-            srcDoc={getEnhancedPreviewDocument(processedHtml)}
+            srcDoc={getUnifiedPreviewDocument(processedHtml)}
             className="w-full h-full border-0"
-            title="Enhanced Live Preview"
+            title="Unified Live Preview"
             style={{
               background: 'white',
               minHeight: '400px'
