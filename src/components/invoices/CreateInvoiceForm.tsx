@@ -7,7 +7,6 @@ import { InvoiceTotals } from './InvoiceTotals';
 import { InvoiceSettingsSidebar } from './InvoiceSettingsSidebar';
 import { InvoiceFormActions } from './InvoiceFormActions';
 import { TemplateSelector } from './TemplateSelector';
-import { InvoiceFormPreview } from './InvoiceFormPreview';
 import { useInvoiceFormHandlers } from '@/hooks/useInvoiceFormHandlers';
 import { useInvoiceTemplateManager } from '@/hooks/useInvoiceTemplateManager';
 
@@ -20,12 +19,10 @@ export const CreateInvoiceForm = () => {
     handleTemplateSelect
   } = useInvoiceTemplateManager();
 
-  // Form handlers (without template logic)
+  // Form handlers (without preview logic)
   const {
     showSettings,
     setShowSettings,
-    showPreview,
-    setShowPreview,
     formData,
     setFormData,
     lineItems,
@@ -39,7 +36,6 @@ export const CreateInvoiceForm = () => {
     handleInvoiceNumberBlur,
     getDisplayInvoiceNumber,
     handleContactSelectOnly,
-    handlePreview,
     handleFormSubmit,
     handleLineItemUpdate,
     handleLineItemRemove,
@@ -47,8 +43,7 @@ export const CreateInvoiceForm = () => {
     calculateTotals,
     handleConvertToQuote,
     handleSubmit,
-    handleSaveAndSend,
-    getDefaultInvoiceNumber
+    handleSaveAndSend
   } = useInvoiceFormHandlers();
 
   const { subtotal, vatAmount, total } = calculateTotals();
@@ -67,7 +62,6 @@ export const CreateInvoiceForm = () => {
         loading={loading}
         sendLoading={sendLoading}
         clientEmail={formData.client_email}
-        onPreview={handlePreview}
         onConvertToQuote={handleConvertToQuote}
         onSubmit={handleSubmit}
         onSaveAndSend={handleSaveAndSend}
@@ -125,17 +119,6 @@ export const CreateInvoiceForm = () => {
       <InvoiceSettingsSidebar
         show={showSettings}
         onClose={() => setShowSettings(false)}
-      />
-
-      <InvoiceFormPreview
-        showPreview={showPreview}
-        setShowPreview={setShowPreview}
-        selectedTemplate={selectedTemplate}
-        formData={formData}
-        lineItems={lineItems}
-        invoiceNumber={invoiceNumber}
-        selectedContact={selectedContact}
-        getDefaultInvoiceNumber={getDefaultInvoiceNumber}
       />
     </div>
   );

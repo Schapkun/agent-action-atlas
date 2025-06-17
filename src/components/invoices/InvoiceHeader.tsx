@@ -1,13 +1,12 @@
 
 import { Button } from '@/components/ui/button';
-import { RotateCcw, RotateCw, Eye, Save, Send } from 'lucide-react';
+import { RotateCcw, RotateCw, Save, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface InvoiceHeaderProps {
   loading: boolean;
   sendLoading: boolean;
   clientEmail: string;
-  onPreview: () => void;
   onConvertToQuote: () => void;
   onSubmit: () => void;
   onSaveAndSend: () => void;
@@ -17,7 +16,6 @@ export const InvoiceHeader = ({
   loading,
   sendLoading,
   clientEmail,
-  onPreview,
   onConvertToQuote,
   onSubmit,
   onSaveAndSend
@@ -37,10 +35,6 @@ export const InvoiceHeader = ({
           </Button>
           <Button variant="outline" size="sm" className="text-xs px-2 py-1">
             <RotateCw className="h-3 w-3" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={onPreview} className="flex items-center gap-1 text-xs px-2 py-1">
-            <Eye className="h-3 w-3" />
-            Voorbeeld
           </Button>
           <Button variant="outline" size="sm" onClick={onConvertToQuote} className="flex items-center gap-1 text-xs px-2 py-1">
             ⚙️ Naar offerte

@@ -5,7 +5,6 @@ import { useToast } from './use-toast';
 
 export const useInvoiceFormHandlers = () => {
   const [showSettings, setShowSettings] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
 
   const {
@@ -66,11 +65,6 @@ export const useInvoiceFormHandlers = () => {
     });
   };
 
-  const handlePreview = () => {
-    console.log('🎨 PREVIEW: Opening preview');
-    setShowPreview(true);
-  };
-
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('✅ EXPLICIT USER ACTION: Form submitted - this will create an invoice');
@@ -89,8 +83,6 @@ export const useInvoiceFormHandlers = () => {
     // State
     showSettings,
     setShowSettings,
-    showPreview,
-    setShowPreview,
     
     // Form data
     formData,
@@ -112,7 +104,6 @@ export const useInvoiceFormHandlers = () => {
     getDisplayInvoiceNumber,
     handleContactSelectOnly,
     handleContactClear,
-    handlePreview,
     handleFormSubmit,
     handleLineItemUpdate,
     handleLineItemRemove,
