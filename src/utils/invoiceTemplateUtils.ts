@@ -22,6 +22,13 @@ interface LineItem {
   line_total: number;
 }
 
+interface CompanyData {
+  [key: string]: any;
+  logo?: string;
+  bedrijfslogo?: string;
+  company_logo?: string;
+}
+
 export const generatePreviewHTML = async (
   templateHTML: string,
   formData: InvoiceFormData,
@@ -44,7 +51,7 @@ export const generatePreviewHTML = async (
 
   try {
     // Load company data including logo
-    const companyData = organizationId ? await loadCompanyData(organizationId) : {};
+    const companyData: CompanyData = organizationId ? await loadCompanyData(organizationId) : {};
     console.log('🏢 TEMPLATE UTILS: Company data loaded:', companyData);
 
     // Create comprehensive placeholder replacements
@@ -122,8 +129,8 @@ export const generatePreviewHTML = async (
       processedHTML = processedHTML.replace(/{{#if notities}}[\s\S]*?{{\/if}}/g, '');
     }
 
-    // Handle logo conditional blocks with enhanced checking
-    const hasLogo = companyData && typeof companyData === 'object' && 'logo' in companyData && companyData.logo;
+    // Handle logo conditional blocks with enhanced checking - using safe property access
+    const hasLogo = companyData && companyData.logo;
     console.log('🖼️ TEMPLATE UTILS: Logo check result:', { hasLogo, logoValue: companyData?.logo });
     
     if (hasLogo) {
