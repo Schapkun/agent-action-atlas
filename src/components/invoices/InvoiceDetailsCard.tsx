@@ -44,16 +44,16 @@ export const InvoiceDetailsCard = ({
   }, [formData.invoice_date, formData.payment_terms, formData.due_date, onFormDataChange]);
 
   const getCurrentInvoiceNumber = () => {
-    const fullNumber = getDisplayInvoiceNumber() || invoiceNumber;
+    const fullNumber = invoiceNumber || getDisplayInvoiceNumber();
     const prefix = invoiceSettings.invoice_prefix || '2025-';
     
     // If the full number already includes the prefix, extract just the number part
-    if (fullNumber.startsWith(prefix)) {
+    if (fullNumber && fullNumber.startsWith(prefix)) {
       return fullNumber.substring(prefix.length);
     }
     
     // If it doesn't include the prefix, return the full number (it's just the number part)
-    return fullNumber;
+    return fullNumber || '';
   };
 
   const getPlaceholderNumber = () => {
@@ -61,11 +61,11 @@ export const InvoiceDetailsCard = ({
     const prefix = invoiceSettings.invoice_prefix || '2025-';
     
     // If placeholder already includes prefix, extract just the number part
-    if (placeholder.startsWith(prefix)) {
+    if (placeholder && placeholder.startsWith(prefix)) {
       return placeholder.substring(prefix.length);
     }
     
-    return placeholder;
+    return placeholder || '001';
   };
 
   const handleInvoiceNumberChange = (value: string) => {

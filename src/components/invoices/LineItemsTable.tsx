@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Bold, Italic, Underline, List, Trash2 } from 'lucide-react';
 import { VatSelector } from '@/components/ui/vat-selector';
 import { LineItem } from '@/hooks/useInvoiceForm';
+import { useRef } from 'react';
 
 interface LineItemsTableProps {
   lineItems: LineItem[];
@@ -19,7 +20,12 @@ export const LineItemsTable = ({
 }: LineItemsTableProps) => {
   const applyListFormatting = (index: number) => {
     const currentDescription = lineItems[index].description;
-    const lines = currentDescription.split('\n').filter(line => line.trim() !== '');
+    // Remove any existing HTML formatting and get clean text
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = currentDescription;
+    const cleanText = tempDiv.textContent || tempDiv.innerText || '';
+    
+    const lines = cleanText.split('\n').filter(line => line.trim() !== '');
     const formattedLines = lines.map(line => {
       const trimmedLine = line.trim();
       // If line doesn't start with bullet, add it
@@ -28,7 +34,7 @@ export const LineItemsTable = ({
       }
       return trimmedLine;
     });
-    const newDescription = formattedLines.join('\n');
+    const newDescription = formattedLines.join('<br>');
     onUpdateLineItem(index, 'description', newDescription);
   };
 
@@ -130,7 +136,7 @@ export const LineItemsTable = ({
                     step="0.01"
                     value={item.unit_price}
                     onChange={(e) => onUpdateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                    className="text-left text-xs h-8 flex-1"
+                    className="text-left text-xs h-8 w-16"
                   />
                 </div>
               </div>
