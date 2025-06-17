@@ -49,7 +49,7 @@ export const replaceAllPlaceholders = async (
     console.log('🏢 UNIVERSAL PLACEHOLDER: Company data loaded:', {
       hasData: Object.keys(companyData).length > 0,
       logoKeys: Object.keys(companyData).filter(key => key.toLowerCase().includes('logo')),
-      primaryLogo: companyData && 'logo' in companyData ? !!companyData.logo : false
+      primaryLogo: companyData && typeof companyData === 'object' && 'logo' in companyData ? !!companyData.logo : false
     });
 
     // Combine all data sources
@@ -68,7 +68,7 @@ export const replaceAllPlaceholders = async (
       totalPlaceholders: Object.keys(allPlaceholders).length,
       logoKeys: Object.keys(allPlaceholders).filter(key => 
         key.toLowerCase().includes('logo')),
-      hasMainLogo: !!allPlaceholders.logo
+      hasMainLogo: !!(allPlaceholders as any).logo
     });
 
     // Replace all standard placeholders
@@ -118,7 +118,7 @@ export const replaceAllPlaceholders = async (
     const hasLogo = companyData && typeof companyData === 'object' && 'logo' in companyData && companyData.logo;
     console.log('🖼️ UNIVERSAL PLACEHOLDER: Logo conditional check:', { 
       hasLogo, 
-      logoValue: companyData && 'logo' in companyData ? (companyData as any).logo : 'undefined',
+      logoValue: companyData && typeof companyData === 'object' && 'logo' in companyData ? companyData.logo : 'undefined',
       logoConditionalBlocks: (processedHTML.match(/{{#if logo}}/g) || []).length
     });
     
