@@ -7,7 +7,7 @@ import { InvoiceTotals } from './InvoiceTotals';
 import { InvoiceSettingsSidebar } from './InvoiceSettingsSidebar';
 import { InvoiceFormActions } from './InvoiceFormActions';
 import { TemplateSelector } from './TemplateSelector';
-import { InvoicePreview } from './InvoicePreview';
+import { InvoicePreviewPopup } from './InvoicePreviewPopup';
 import { useInvoiceFormHandlers } from '@/hooks/useInvoiceFormHandlers';
 import { useInvoiceTemplateManager } from '@/hooks/useInvoiceTemplateManager';
 
@@ -51,22 +51,6 @@ export const CreateInvoiceForm = () => {
 
   const { subtotal, vatAmount, total } = calculateTotals();
 
-  console.log('🎯 FORM: Rendering with live preview system:', {
-    selectedTemplate: selectedTemplate ? {
-      id: selectedTemplate.id,
-      name: selectedTemplate.name,
-      labels: selectedTemplate.labels?.map(l => l.name)
-    } : null,
-    showPreview,
-    availableTemplatesCount: availableTemplates.length,
-    templatesLoading
-  });
-
-  // Show warning if no templates are available
-  if (!templatesLoading && availableTemplates.length === 0) {
-    console.warn('⚠️ FORM: No invoice templates with "Factuur" label found!');
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <InvoiceHeader
@@ -80,76 +64,67 @@ export const CreateInvoiceForm = () => {
         onSaveAndSend={handleSaveAndSend}
       />
 
-      <div className="flex h-[calc(100vh-73px)]">
-        {/* Form Section */}
-        <div className={`${showPreview ? 'w-1/2' : 'w-full'} transition-all duration-300`}>
-          <div className="max-w-6xl mx-auto p-3 h-full overflow-auto">
-            <form onSubmit={handleFormSubmit} className="space-y-3">
-              <ContactSelectionCard
-                selectedContact={selectedContact}
-                templateSelector={
-                  <TemplateSelector
-                    selectedTemplate={selectedTemplate}
-                    availableTemplates={availableTemplates}
-                    templatesLoading={templatesLoading}
-                    onTemplateSelect={handleTemplateSelect}
-                  />
-                }
-                onContactSelect={handleContactSelectOnly}
-                onShowSettings={() => setShowSettings(true)}
+      <div className="max-w-6xl mx-auto p-3">
+        <form onSubmit={handleFormSubmit} className="space-y-3">
+          <ContactSelectionCard
+            selectedContact={selectedContact}
+            templateSelector={
+              <TemplateSelector
+                selectedTemplate={selectedTemplate}
+                availableTemplates={availableTemplates}
+                templatesLoading={templatesLoading}
+                onTemplateSelect={handleTemplateSelect}
               />
+            }
+            onContactSelect={handleContactSelectOnly}
+            onShowSettings={() => setShowSettings(true)}
+          />
 
-              <InvoiceDetailsCard
-                formData={formData}
-                invoiceNumber={invoiceNumber}
-                invoiceSettings={invoiceSettings}
-                onFormDataChange={(updates) => setFormData(updates)}
-                onInvoiceNumberChange={handleInvoiceNumberChange}
-                onInvoiceNumberFocus={handleInvoiceNumberFocus}
-                onInvoiceNumberBlur={handleInvoiceNumberBlur}
-                getDisplayInvoiceNumber={getDisplayInvoiceNumber}
-                getPlaceholderInvoiceNumber={() => ''}
-              />
+          <InvoiceDetailsCard
+            formData={formData}
+            invoiceNumber={invoiceNumber}
+            invoiceSettings={invoiceSettings}
+            onFormDataChange={(updates) => setFormData(updates)}
+            onInvoiceNumberChange={handleInvoiceNumberChange}
+            onInvoiceNumberFocus={handleInvoiceNumberFocus}
+            onInvoiceNumberBlur={handleInvoiceNumberBlur}
+            getDisplayInvoiceNumber={getDisplayInvoiceNumber}
+            getPlaceholderInvoiceNumber={() => ''}
+          />
 
-              <LineItemsTable
-                lineItems={lineItems}
-                onUpdateLineItem={handleLineItemUpdate}
-                onRemoveLineItem={handleLineItemRemove}
-              />
+          <LineItemsTable
+            lineItems={lineItems}
+            onUpdateLineItem={handleLineItemUpdate}
+            onRemoveLineItem={handleLineItemRemove}
+          />
 
-              <InvoiceFormActions
-                onAddLineItem={addLineItem}
-                subtotal={subtotal}
-                vatAmount={vatAmount}
-                total={total}
-              />
+          <InvoiceFormActions
+            onAddLineItem={addLineItem}
+            subtotal={subtotal}
+            vatAmount={vatAmount}
+            total={total}
+          />
 
-              <InvoiceTotals
-                subtotal={subtotal}
-                vatAmount={vatAmount}
-                total={total}
-              />
-            </form>
-          </div>
-        </div>
-
-        {/* Preview Section */}
-        {showPreview && (
-          <div className="w-1/2 h-full">
-            <InvoicePreview
-              selectedTemplate={selectedTemplate}
-              formData={formData}
-              lineItems={lineItems}
-              invoiceNumber={invoiceNumber}
-              className="h-full"
-            />
-          </div>
-        )}
+          <InvoiceTotals
+            subtotal={subtotal}
+            vatAmount={vatAmount}
+            total={total}
+          />
+        </form>
       </div>
 
       <InvoiceSettingsSidebar
         show={showSettings}
         onClose={() => setShowSettings(false)}
+      />
+
+      <InvoicePreviewPopup
+        isOpen={showPreview}
+        onClose={() => togglePreview()}
+        selectedTemplate={selectedTemplate}
+        formData={formData}
+        lineItems={lineItems}
+        invoiceNumber={invoiceNumber}
       />
     </div>
   );

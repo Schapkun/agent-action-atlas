@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { InvoiceFormData } from '@/hooks/useInvoiceForm';
+import { useEffect } from 'react';
 
 interface InvoiceDetailsCardProps {
   formData: InvoiceFormData;
@@ -28,6 +29,27 @@ export const InvoiceDetailsCard = ({
   getDisplayInvoiceNumber,
   getPlaceholderInvoiceNumber
 }: InvoiceDetailsCardProps) => {
+  // Automatically calculate due date when payment terms or invoice date change
+  useEffect(() => {
+    if (formData.invoice_date && formData.payment_terms) {
+      const invoiceDate = new Date(formData.invoice_date);
+      const dueDate = new Date(invoiceDate);
+      dueDate.setDate(dueDate.getDate() + formData.payment_terms);
+      
+      const dueDateString = dueDate.toISOString().split('T')[0];
+      if (dueDateString !== formData.due_date) {
+        onFormDataChange({ due_date: dueDateString });
+      }
+    }
+  }, [formData.invoice_date, formData.payment_terms, formData.due_date, onFormDataChange]);
+
+  const getCurrentInvoiceNumber = () => {
+    const displayNumber = getDisplayInvoiceNumber();
+    // Extract just the number part after the prefix
+    const numberPart = displayNumber.replace(invoiceSettings.invoice_prefix || '', '');
+    return numberPart;
+  };
+
   return (
     <>
       {/* References section */}
@@ -49,13 +71,13 @@ export const InvoiceDetailsCard = ({
               <Label className="text-xs font-medium">Factuur</Label>
               <div className="flex mt-1">
                 <span className="bg-gray-100 px-2 py-1 rounded-l border text-xs h-8 flex items-center">
-                  {invoiceSettings.invoice_prefix}
+                  {invoiceSettings.invoice_prefix || '2025-'}
                 </span>
                 <Input 
                   className="rounded-l-none border-l-0 text-xs h-8 w-16" 
-                  value={getDisplayInvoiceNumber().replace(invoiceSettings.invoice_prefix, '')}
-                  placeholder={getPlaceholderInvoiceNumber().replace(invoiceSettings.invoice_prefix, '')}
-                  onChange={(e) => onInvoiceNumberChange(invoiceSettings.invoice_prefix + e.target.value)}
+                  value={getCurrentInvoiceNumber()}
+                  placeholder="001"
+                  onChange={(e) => onInvoiceNumberChange((invoiceSettings.invoice_prefix || '2025-') + e.target.value)}
                   onFocus={onInvoiceNumberFocus}
                   onBlur={onInvoiceNumberBlur}
                 />

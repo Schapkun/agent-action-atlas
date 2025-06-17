@@ -21,11 +21,11 @@ export const LineItemsTable = ({
     <Card>
       <CardHeader className="p-2">
         <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700">
-          <div className="col-span-1 text-center">Aantal</div>
-          <div className="col-span-6">Omschrijving</div>
-          <div className="col-span-2 text-center">Prijs</div>
-          <div className="col-span-1 text-center">BTW</div>
-          <div className="col-span-2 text-center">Totaal</div>
+          <div className="col-span-1 text-left">Aantal</div>
+          <div className="col-span-6 text-left">Omschrijving</div>
+          <div className="col-span-2 text-left">Prijs</div>
+          <div className="col-span-1 text-left">BTW</div>
+          <div className="col-span-2 text-left">Totaal</div>
         </div>
       </CardHeader>
 
@@ -33,18 +33,26 @@ export const LineItemsTable = ({
         <div className="space-y-2">
           {lineItems.map((item, index) => (
             <div key={index} className="grid grid-cols-12 gap-2 items-start">
-              <div className="col-span-1 flex justify-center">
+              <div className="col-span-1">
                 <Input
                   type="number"
                   step="0.01"
                   value={item.quantity}
                   onChange={(e) => onUpdateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                  className="text-center text-xs h-8 w-14"
+                  className="text-left text-xs h-8"
                 />
               </div>
               <div className="col-span-6">
                 <div className="border rounded">
-                  <div className="flex items-center gap-1 p-1 border-b bg-gray-50">
+                  <div
+                    contentEditable
+                    className="min-h-[32px] p-2 text-xs focus:outline-none"
+                    style={{ direction: 'ltr', textAlign: 'left' }}
+                    onBlur={(e) => onUpdateLineItem(index, 'description', e.currentTarget.innerHTML || '')}
+                    dangerouslySetInnerHTML={{ __html: item.description }}
+                    suppressContentEditableWarning
+                  />
+                  <div className="flex items-center gap-1 p-1 border-t bg-gray-50">
                     <Button 
                       type="button" 
                       variant="ghost" 
@@ -102,17 +110,9 @@ export const LineItemsTable = ({
                       <List className="h-3 w-3" />
                     </Button>
                   </div>
-                  <div
-                    contentEditable
-                    className="min-h-[32px] p-2 text-xs focus:outline-none"
-                    style={{ direction: 'ltr', textAlign: 'left' }}
-                    onBlur={(e) => onUpdateLineItem(index, 'description', e.currentTarget.innerHTML || '')}
-                    dangerouslySetInnerHTML={{ __html: item.description }}
-                    suppressContentEditableWarning
-                  />
                 </div>
               </div>
-              <div className="col-span-2 flex justify-center">
+              <div className="col-span-2">
                 <div className="flex items-center gap-1">
                   <span className="text-xs">€</span>
                   <Input
@@ -120,23 +120,21 @@ export const LineItemsTable = ({
                     step="0.01"
                     value={item.unit_price}
                     onChange={(e) => onUpdateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                    className="text-center text-xs h-8 w-20"
+                    className="text-left text-xs h-8 flex-1"
                   />
                 </div>
               </div>
-              <div className="col-span-1 flex justify-center">
+              <div className="col-span-1">
                 <VatSelector
                   value={item.vat_rate}
                   onValueChange={(value) => onUpdateLineItem(index, 'vat_rate', value)}
-                  className="text-xs h-8 w-16"
+                  className="text-xs h-8 w-full"
                 />
               </div>
               <div className="col-span-2 flex items-center justify-between">
-                <div className="text-center flex-1">
-                  <div className="flex items-center justify-center gap-1">
-                    <span className="text-xs">€</span>
-                    <span className="font-medium text-xs">{item.line_total.toFixed(2)}</span>
-                  </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs">€</span>
+                  <span className="font-medium text-xs">{item.line_total.toFixed(2)}</span>
                 </div>
                 <Button
                   type="button"
