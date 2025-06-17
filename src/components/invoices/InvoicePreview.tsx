@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, ZoomIn, ZoomOut } from 'lucide-react';
@@ -28,10 +27,21 @@ export const InvoicePreview = ({
 
   useEffect(() => {
     const generatePreview = async () => {
-      console.log('🎨 PREVIEW: Generating preview for template AFTER CLEANUP:', {
+      console.log('🎨 PREVIEW DEBUG: Starting preview generation with:', {
         templateName: selectedTemplate?.name,
-        templateId: selectedTemplate?.id,
-        templateIdShort: selectedTemplate?.id?.substring(0, 8) + '...'
+        templateId: selectedTemplate?.id?.substring(0, 8) + '...',
+        formData: {
+          client_name: formData.client_name,
+          client_email: formData.client_email,
+          client_address: formData.client_address,
+          client_postal_code: formData.client_postal_code,
+          client_city: formData.client_city,
+          client_country: formData.client_country,
+          hasContactData: !!(formData.client_name && formData.client_name !== '')
+        },
+        lineItemsCount: lineItems.length,
+        invoiceNumber: invoiceNumber,
+        organizationId: selectedOrganization?.id?.substring(0, 8) + '...'
       });
       
       if (!selectedTemplate) {
@@ -41,18 +51,17 @@ export const InvoicePreview = ({
       }
 
       try {
-        // Use the template's html_content directly instead of searching through array
         const html = await generatePreviewHTML(
-          selectedTemplate.html_content, // Pass html_content directly
+          selectedTemplate.html_content,
           formData,
           lineItems,
           invoiceNumber,
           selectedOrganization?.id
         );
-        console.log('🎨 PREVIEW: Successfully generated HTML for template:', selectedTemplate.name, selectedTemplate.id);
+        console.log('🎨 PREVIEW SUCCESS: Generated HTML preview for template:', selectedTemplate.name);
         setPreviewHTML(html);
       } catch (error) {
-        console.error('🎨 PREVIEW ERROR: Failed to generate preview for template:', selectedTemplate.name, selectedTemplate.id, error);
+        console.error('🎨 PREVIEW ERROR: Failed to generate preview:', error);
         setPreviewHTML('<div style="padding: 40px; text-align: center; color: #dc2626;">Fout bij laden van voorbeeld</div>');
       }
     };
@@ -134,6 +143,13 @@ export const InvoicePreview = ({
       font-size: 14px;
       margin: 8px 0;
       color: #495057;
+    }
+
+    /* Logo styling */
+    .company-logo, .bedrijfslogo {
+      max-width: 200px;
+      max-height: 100px;
+      height: auto;
     }
   </style>
 </head>

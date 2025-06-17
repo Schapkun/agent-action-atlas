@@ -2,13 +2,27 @@
 import { loadCompanyData } from '@/utils/companyDataMapping';
 
 export const generatePreviewHTML = async (
-  templateHtml: string, // Changed: now accepts HTML content directly
+  templateHtml: string,
   formData: any,
   lineItems: any[],
   invoiceNumber: string,
   organizationId?: string
 ) => {
-  console.log('🎨 UTILS: generatePreviewHTML called with templateHtml length:', templateHtml?.length);
+  console.log('🎨 UTILS DEBUG: generatePreviewHTML called with:', {
+    templateHtmlLength: templateHtml?.length,
+    formDataContactInfo: {
+      client_name: formData.client_name,
+      client_email: formData.client_email,
+      client_address: formData.client_address,
+      client_postal_code: formData.client_postal_code,
+      client_city: formData.client_city,
+      client_country: formData.client_country,
+      hasContactSelected: !!(formData.client_name && formData.client_name !== '')
+    },
+    lineItemsCount: lineItems.length,
+    invoiceNumber: invoiceNumber,
+    organizationId: organizationId?.substring(0, 8) + '...'
+  });
   
   if (!templateHtml || typeof templateHtml !== 'string') {
     console.error('🎨 UTILS: Invalid template HTML provided:', templateHtml);
@@ -17,14 +31,20 @@ export const generatePreviewHTML = async (
 
   let html = templateHtml;
 
-  // Load company data from database
+  // Load company data from database including logo
   let companyData: Record<string, string> = {};
   if (organizationId) {
     try {
       companyData = await loadCompanyData(organizationId);
-      console.log('🏢 Company data loaded for invoice preview:', companyData);
+      console.log('🏢 UTILS: Company data loaded for preview:', {
+        bedrijfsnaam: companyData.bedrijfsnaam,
+        email: companyData.email,
+        adres: companyData.adres,
+        hasLogo: !!(companyData.logo || companyData.bedrijfslogo),
+        logoUrl: companyData.logo || companyData.bedrijfslogo || 'GEEN_LOGO'
+      });
     } catch (error) {
-      console.error('❌ Error loading company data for invoice:', error);
+      console.error('❌ UTILS: Error loading company data:', error);
     }
   }
 
@@ -37,7 +57,9 @@ export const generatePreviewHTML = async (
   }, 0);
   const total = subtotal + vatAmount;
 
-  // Extended placeholder replacements with company data and form data
+  console.log('🧮 UTILS: Calculated totals:', { subtotal, vatAmount, total });
+
+  // Enhanced placeholder replacements with company data, form data, and logo support
   const replacements = {
     // Invoice/Quote details - all variations
     '%INVOICE_NUMBER%': invoiceNumber || 'CONCEPT',
@@ -50,7 +72,7 @@ export const generatePreviewHTML = async (
     '{{factuurnummer}}': invoiceNumber || 'CONCEPT',
     '{{nummer}}': invoiceNumber || 'CONCEPT',
     
-    // Client information - all variations
+    // Client information - all variations with better handling
     '%CLIENT_NAME%': formData.client_name || '[Klantnaam]',
     '%CLIENT_EMAIL%': formData.client_email || '[Klant email]',
     '%CLIENT_ADDRESS%': formData.client_address || '[Klant adres]',
@@ -72,6 +94,9 @@ export const generatePreviewHTML = async (
     '{{klantnaam}}': formData.client_name || '[Klantnaam]',
     '{{klant_email}}': formData.client_email || '[Klant email]',
     '{{klant_adres}}': formData.client_address || '[Klant adres]',
+    '{{klant_postcode}}': formData.client_postal_code || '[Postcode]',
+    '{{klant_plaats}}': formData.client_city || '[Plaats]',
+    '{{klant_land}}': formData.client_country || 'Nederland',
     
     // Dates - all variations
     '%INVOICE_DATE%': formData.invoice_date || new Date().toLocaleDateString('nl-NL'),
@@ -142,6 +167,26 @@ export const generatePreviewHTML = async (
     '{{kvk_nummer}}': companyData.kvk_nummer || '[KVK nummer]',
     '{{banknummer}}': companyData.banknummer || '[Banknummer]',
     
+    // Logo support - all variations
+    '%COMPANY_LOGO%': companyData.logo || companyData.bedrijfslogo ? 
+      `<img src="${companyData.logo || companyData.bedrijfslogo}" alt="Bedrijfslogo" class="company-logo" style="max-width: 200px; max-height: 100px; height: auto;" />` : 
+      '[Logo niet beschikbaar]',
+    '%BEDRIJFSLOGO%': companyData.logo || companyData.bedrijfslogo ? 
+      `<img src="${companyData.logo || companyData.bedrijfslogo}" alt="Bedrijfslogo" class="bedrijfslogo" style="max-width: 200px; max-height: 100px; height: auto;" />` : 
+      '[Logo niet beschikbaar]',
+    '%LOGO%': companyData.logo || companyData.bedrijfslogo ? 
+      `<img src="${companyData.logo || companyData.bedrijfslogo}" alt="Logo" class="company-logo" style="max-width: 200px; max-height: 100px; height: auto;" />` : 
+      '[Logo niet beschikbaar]',
+    '{{company_logo}}': companyData.logo || companyData.bedrijfslogo ? 
+      `<img src="${companyData.logo || companyData.bedrijfslogo}" alt="Bedrijfslogo" class="company-logo" style="max-width: 200px; max-height: 100px; height: auto;" />` : 
+      '[Logo niet beschikbaar]',
+    '{{bedrijfslogo}}': companyData.logo || companyData.bedrijfslogo ? 
+      `<img src="${companyData.logo || companyData.bedrijfslogo}" alt="Bedrijfslogo" class="bedrijfslogo" style="max-width: 200px; max-height: 100px; height: auto;" />` : 
+      '[Logo niet beschikbaar]',
+    '{{logo}}': companyData.logo || companyData.bedrijfslogo ? 
+      `<img src="${companyData.logo || companyData.bedrijfslogo}" alt="Logo" class="company-logo" style="max-width: 200px; max-height: 100px; height: auto;" />` : 
+      '[Logo niet beschikbaar]',
+    
     // Payment information - all variations
     '%PAYMENT_INFO%': `Betaling op rekening ${companyData.banknummer || 'NL77 ABNA 0885 5296 34'} op naam van ${companyData.bedrijfsnaam || 'debuitendoor.nl'}`,
     '%BETALINGSINFO%': `Betaling op rekening ${companyData.banknummer || 'NL77 ABNA 0885 5296 34'} op naam van ${companyData.bedrijfsnaam || 'debuitendoor.nl'}`,
@@ -151,6 +196,13 @@ export const generatePreviewHTML = async (
     '%REKENING%': companyData.banknummer || 'NL77 ABNA 0885 5296 34',
     '{{rekeningnummer}}': companyData.banknummer || 'NL77 ABNA 0885 5296 34'
   };
+
+  console.log('🔄 UTILS: Starting placeholder replacement with contact data:', {
+    client_name_replacement: replacements['%CLIENT_NAME%'],
+    client_email_replacement: replacements['%CLIENT_EMAIL%'],
+    company_name_replacement: replacements['%COMPANY_NAME%'],
+    logo_available: !!(companyData.logo || companyData.bedrijfslogo)
+  });
 
   // Replace ALL placeholders with global regex
   Object.entries(replacements).forEach(([placeholder, value]) => {
@@ -211,7 +263,7 @@ export const generatePreviewHTML = async (
   html = html.replace(/%TABEL_HEADER%/g, tableHeader);
   html = html.replace(/{{tabel_header}}/g, tableHeader);
 
-  console.log('🎨 UTILS: Preview HTML generated successfully with enhanced direct template usage');
+  console.log('✅ UTILS: Preview HTML generated successfully with enhanced contact data and logo support');
 
   return html;
 };
