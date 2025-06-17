@@ -54,11 +54,18 @@ export const CreateInvoiceForm = () => {
   console.log('🎯 FORM: Rendering with live preview system:', {
     selectedTemplate: selectedTemplate ? {
       id: selectedTemplate.id,
-      name: selectedTemplate.name
+      name: selectedTemplate.name,
+      labels: selectedTemplate.labels?.map(l => l.name)
     } : null,
     showPreview,
-    availableTemplatesCount: availableTemplates.length
+    availableTemplatesCount: availableTemplates.length,
+    templatesLoading
   });
+
+  // Show warning if no templates are available
+  if (!templatesLoading && availableTemplates.length === 0) {
+    console.warn('⚠️ FORM: No invoice templates with "Factuur" label found!');
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
