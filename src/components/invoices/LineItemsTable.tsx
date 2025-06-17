@@ -54,67 +54,72 @@ export const LineItemsTable = ({
         lines[currentLineIndex] = '';
         const newText = lines.join('\n');
         element.textContent = newText;
-        
-        // Position cursor where the empty bullet was
-        const range2 = document.createRange();
-        const sel = window.getSelection();
-        
-        if (sel && element.firstChild) {
-          range2.setStart(element.firstChild, cursorPosition);
-          range2.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range2);
-        }
-        
         onUpdateLineItem(index, 'description', newText);
+        
+        // Let browser handle cursor positioning naturally
+        setTimeout(() => {
+          const range2 = document.createRange();
+          const sel = window.getSelection();
+          if (sel && element.firstChild) {
+            range2.setStart(element.firstChild, Math.min(cursorPosition, element.firstChild.textContent?.length || 0));
+            range2.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range2);
+          }
+        }, 0);
+        
       } else if (isInList) {
         // Single Enter in list: create new bullet
         lines.splice(currentLineIndex + 1, 0, '• ');
         const newText = lines.join('\n');
         element.textContent = newText;
+        onUpdateLineItem(index, 'description', newText);
         
         // Position cursor after the new bullet
-        let targetPosition = 0;
-        for (let i = 0; i <= currentLineIndex; i++) {
-          targetPosition += lines[i].length + 1; // +1 for newline
-        }
-        targetPosition += 2; // +2 for "• "
+        setTimeout(() => {
+          let targetPosition = 0;
+          for (let i = 0; i <= currentLineIndex; i++) {
+            targetPosition += lines[i].length + 1; // +1 for newline
+          }
+          targetPosition += 2; // +2 for "• "
+          
+          const range2 = document.createRange();
+          const sel = window.getSelection();
+          if (sel && element.firstChild) {
+            const safePosition = Math.min(targetPosition, element.firstChild.textContent?.length || 0);
+            range2.setStart(element.firstChild, safePosition);
+            range2.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range2);
+          }
+        }, 0);
         
-        const range2 = document.createRange();
-        const sel = window.getSelection();
-        
-        if (sel && element.firstChild) {
-          const safePosition = Math.min(targetPosition, element.firstChild.textContent?.length || 0);
-          range2.setStart(element.firstChild, safePosition);
-          range2.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range2);
-        }
-        
-        onUpdateLineItem(index, 'description', newText);
       } else {
-        // Normal Enter: laat contentEditable gewoon zijn werk doen
+        // Normal Enter: let contentEditable do its job naturally
+        // Don't prevent default, don't manipulate text
+        event.preventDefault();
+        
+        // Insert a line break at cursor position
         const beforeCursor = currentText.substring(0, cursorPosition);
         const afterCursor = currentText.substring(cursorPosition);
         const newText = beforeCursor + '\n' + afterCursor;
         
         element.textContent = newText;
-        
-        // Cursor aan het einde van de nieuwe regel (na de \n)
-        const newCursorPosition = beforeCursor.length + 1;
-        
-        const range2 = document.createRange();
-        const sel = window.getSelection();
-        
-        if (sel && element.firstChild) {
-          const safePosition = Math.min(newCursorPosition, element.firstChild.textContent?.length || 0);
-          range2.setStart(element.firstChild, safePosition);
-          range2.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range2);
-        }
-        
         onUpdateLineItem(index, 'description', newText);
+        
+        // Position cursor at the end of the new line (after the newline)
+        setTimeout(() => {
+          const range2 = document.createRange();
+          const sel = window.getSelection();
+          if (sel && element.firstChild) {
+            const newCursorPosition = beforeCursor.length + 1;
+            const safePosition = Math.min(newCursorPosition, element.firstChild.textContent?.length || 0);
+            range2.setStart(element.firstChild, safePosition);
+            range2.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range2);
+          }
+        }, 0);
       }
     }
   };
