@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, ZoomIn, ZoomOut } from 'lucide-react';
@@ -5,6 +6,7 @@ import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 import { InvoiceFormData, LineItem } from '@/types/invoiceTypes';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { replaceAllPlaceholders } from '@/utils/universalPlaceholderReplacement';
+import { generatePreviewDocument } from '@/utils/documentPreviewStyles';
 
 interface InvoicePreviewProps {
   selectedTemplate: DocumentTemplateWithLabels | null;
@@ -27,7 +29,7 @@ export const InvoicePreview = ({
 
   useEffect(() => {
     const generatePreview = async () => {
-      console.log('🎨 INVOICE PREVIEW: Starting preview generation');
+      console.log('🎨 INVOICE PREVIEW: Starting preview generation with generatePreviewDocument()');
       console.log('🎨 Template:', selectedTemplate?.name);
       console.log('🎨 Organization:', selectedOrganization?.name, selectedOrganization?.id);
       
@@ -68,66 +70,10 @@ export const InvoicePreview = ({
         console.log('Processed HTML contains {{logo}}:', processedHTML.includes('{{logo}}'));
         console.log('Processed HTML contains img tags:', processedHTML.includes('<img'));
 
-        // Create a simple document with the template's original styling intact + EXACT WORKING logo CSS from documentPreviewStyles.ts
-        const finalHTML = `<!DOCTYPE html>
-<html lang="nl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Factuur Voorbeeld</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 20px;
-      font-family: Arial, sans-serif;
-      background: white;
-      max-width: 794px;
-      margin: 0 auto;
-    }
-    
-    /* EXACT WORKING LOGO CSS - copied from documentPreviewStyles.ts but WITHOUT .preview-content prefix */
-    .company-logo, .bedrijfslogo, 
-    img[src*="logo"], img[alt*="logo"], 
-    img[alt*="Logo"], .logo, 
-    .Logo, .LOGO {
-      max-width: 200px !important;
-      max-height: 100px !important;
-      height: auto !important;
-      object-fit: contain !important;
-      display: block !important;
-    }
+        // NOW USE generatePreviewDocument() LIKE LivePreview DOES
+        const finalHTML = generatePreviewDocument(processedHTML, 'Factuur Voorbeeld');
 
-    /* Also target GLOBAL selectors without any prefix */
-    .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], img[alt*="Logo"],
-    .logo, .Logo, .LOGO {
-      max-width: 200px !important;
-      max-height: 100px !important;
-      height: auto !important;
-      object-fit: contain !important;
-      display: block !important;
-    }
-
-    /* Ensure images don't break layout */
-    img {
-      max-width: 100%;
-      height: auto;
-    }
-
-    @media (max-width: 768px) {
-      .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], img[alt*="Logo"],
-      .logo, .Logo, .LOGO {
-        max-width: 160px !important;
-        max-height: 80px !important;
-      }
-    }
-  </style>
-</head>
-<body>
-  ${processedHTML}
-</body>
-</html>`;
-
-        console.log('✅ INVOICE PREVIEW: Final HTML prepared with EXACT WORKING logo CSS');
+        console.log('✅ INVOICE PREVIEW: Using generatePreviewDocument() like LivePreview - logo should work now!');
         setPreviewHTML(finalHTML);
       } catch (error) {
         console.error('❌ INVOICE PREVIEW: Error:', error);
@@ -222,7 +168,7 @@ export const InvoicePreview = ({
       </div>
 
       <div className="flex-shrink-0 h-[40px] px-4 py-2 bg-gray-100 border-t border-l text-xs text-gray-600 flex items-center justify-between">
-        <span>A4 Formaat • Debug Mode</span>
+        <span>A4 Formaat • Using generatePreviewDocument()</span>
         <span>{lineItems.length} regel{lineItems.length !== 1 ? 's' : ''}</span>
       </div>
     </div>
