@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, ZoomIn, ZoomOut } from 'lucide-react';
@@ -69,7 +68,7 @@ export const InvoicePreview = ({
         console.log('Processed HTML contains {{logo}}:', processedHTML.includes('{{logo}}'));
         console.log('Processed HTML contains img tags:', processedHTML.includes('<img'));
 
-        // Create a simple document with the template's original styling intact
+        // Create a simple document with the template's original styling intact + working logo CSS
         const finalHTML = `<!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -86,12 +85,30 @@ export const InvoicePreview = ({
       margin: 0 auto;
     }
     
-    /* Minimal logo styling - let template handle the rest */
-    .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], 
-    img[alt*="Logo"], .logo, .Logo, .LOGO {
+    /* WORKING LOGO CSS - copied from documentPreviewStyles.ts */
+    .company-logo, .bedrijfslogo, 
+    img[src*="logo"], img[alt*="logo"], 
+    img[alt*="Logo"], .logo, 
+    .Logo, .LOGO {
       max-width: 200px !important;
+      max-height: 100px !important;
       height: auto !important;
       object-fit: contain !important;
+      display: block !important;
+    }
+
+    /* Ensure images don't break layout */
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    @media (max-width: 768px) {
+      .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], img[alt*="Logo"],
+      .logo, .Logo, .LOGO {
+        max-width: 160px !important;
+        max-height: 80px !important;
+      }
     }
   </style>
 </head>
@@ -100,7 +117,7 @@ export const InvoicePreview = ({
 </body>
 </html>`;
 
-        console.log('✅ INVOICE PREVIEW: Final HTML prepared');
+        console.log('✅ INVOICE PREVIEW: Final HTML prepared with working logo CSS');
         setPreviewHTML(finalHTML);
       } catch (error) {
         console.error('❌ INVOICE PREVIEW: Error:', error);

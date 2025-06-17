@@ -27,15 +27,15 @@ export const getDocumentPreviewStyles = () => `
     overflow-wrap: break-word;
   }
 
-  /* Only apply minimal table styling if no existing styles */
-  .preview-content table:not([style*="border"]) {
+  /* LESS AGGRESSIVE: Only apply table styling if no existing styles */
+  .preview-content table:not([style*="border"]):not([class*="table"]) {
     width: 100%;
     border-collapse: collapse;
     margin: 16px 0;
     font-size: 12px;
   }
   
-  .preview-content th:not([style*="background"]):not([style*="padding"]) {
+  .preview-content th:not([style*="background"]):not([style*="padding"]):not([class]) {
     background: #f8f9fa;
     font-weight: 600;
     padding: 8px 6px;
@@ -44,42 +44,44 @@ export const getDocumentPreviewStyles = () => `
     font-size: 12px;
   }
   
-  .preview-content td:not([style*="padding"]) {
+  .preview-content td:not([style*="padding"]):not([class]) {
     padding: 6px 6px;
     text-align: left;
     border-bottom: 1px solid #e9ecef;
     font-size: 12px;
   }
 
-  /* Only apply heading styles if no existing styles */
-  .preview-content h1:not([style]), .preview-content h2:not([style]), .preview-content h3:not([style]) {
+  /* LESS AGGRESSIVE: Only apply heading styles if no existing styles or classes */
+  .preview-content h1:not([style]):not([class]), 
+  .preview-content h2:not([style]):not([class]), 
+  .preview-content h3:not([style]):not([class]) {
     color: #212529;
     font-weight: 600;
     margin: 16px 0 8px 0;
   }
   
-  .preview-content h1:not([style]) { font-size: 18px; }
-  .preview-content h2:not([style]) { font-size: 16px; }
-  .preview-content h3:not([style]) { font-size: 14px; }
+  .preview-content h1:not([style]):not([class]) { font-size: 18px; }
+  .preview-content h2:not([style]):not([class]) { font-size: 16px; }
+  .preview-content h3:not([style]):not([class]) { font-size: 14px; }
   
-  .preview-content p:not([style]) {
+  .preview-content p:not([style]):not([class]) {
     font-size: 12px;
     margin: 6px 0;
     color: #495057;
   }
 
-  /* LOGO STYLING - consistent across all previews */
+  /* WORKING LOGO STYLING - consistent across all previews */
   .preview-content .company-logo, .preview-content .bedrijfslogo, 
   .preview-content img[src*="logo"], .preview-content img[alt*="logo"], 
   .preview-content img[alt*="Logo"], .preview-content .logo, 
   .preview-content .Logo, .preview-content .LOGO,
   .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], 
   img[alt*="Logo"], .logo, .Logo, .LOGO {
-    max-width: 200px;
-    max-height: 100px;
-    height: auto;
-    object-fit: contain;
-    display: block;
+    max-width: 200px !important;
+    max-height: 100px !important;
+    height: auto !important;
+    object-fit: contain !important;
+    display: block !important;
   }
 
   /* Ensure images don't break layout */
@@ -96,8 +98,8 @@ export const getDocumentPreviewStyles = () => `
     
     .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], img[alt*="Logo"],
     .logo, .Logo, .LOGO {
-      max-width: 160px;
-      max-height: 80px;
+      max-width: 160px !important;
+      max-height: 80px !important;
     }
   }
 `;
