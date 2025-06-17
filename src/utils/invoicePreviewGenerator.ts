@@ -29,32 +29,10 @@ export const generateInvoicePreviewDocument = (content: string, title: string = 
       overflow-x: hidden;
     }
     
-    /* WORKING LOGO STYLING - Simple and effective */
-    .company-logo, .bedrijfslogo, 
-    img[src*="logo"], img[alt*="logo"], 
-    img[alt*="Logo"], .logo, 
-    .Logo, .LOGO {
-      max-width: 200px !important;
-      max-height: 100px !important;
-      height: auto !important;
-      width: auto !important;
-      object-fit: contain !important;
-      display: block !important;
-    }
-
     /* Ensure all images don't break layout */
     img {
       max-width: 100%;
       height: auto;
-    }
-
-    /* Mobile responsive logo */
-    @media (max-width: 768px) {
-      .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], img[alt*="Logo"],
-      .logo, .Logo, .LOGO {
-        max-width: 160px !important;
-        max-height: 80px !important;
-      }
     }
   </style>
 </head>
