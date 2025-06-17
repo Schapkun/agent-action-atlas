@@ -1,4 +1,3 @@
-
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -24,19 +23,75 @@ export const LineItemsTable = ({
       
       const element = event.currentTarget;
       const currentText = element.textContent || '';
-      const newText = currentText + '\n• ';
+      const selection = window.getSelection();
+      
+      if (!selection || selection.rangeCount === 0) return;
+      
+      const range = selection.getRangeAt(0);
+      const cursorPosition = range.startOffset;
+      
+      // Find the current line by splitting on newlines and finding cursor position
+      const lines = currentText.split('\n');
+      let charCount = 0;
+      let currentLineIndex = 0;
+      let currentLineText = '';
+      
+      for (let i = 0; i < lines.length; i++) {
+        const lineLength = lines[i].length + (i < lines.length - 1 ? 1 : 0); // +1 for newline
+        if (cursorPosition <= charCount + lineLength) {
+          currentLineIndex = i;
+          currentLineText = lines[i];
+          break;
+        }
+        charCount += lineLength;
+      }
+      
+      const isInList = currentLineText.startsWith('• ');
+      const isEmptyListItem = currentLineText.trim() === '•' || currentLineText.trim() === '';
+      
+      let newText = '';
+      
+      if (isInList && isEmptyListItem) {
+        // Double Enter: remove empty bullet and exit list
+        lines[currentLineIndex] = '';
+        newText = lines.join('\n');
+      } else if (isInList) {
+        // Single Enter in list: create new bullet
+        lines.splice(currentLineIndex + 1, 0, '• ');
+        newText = lines.join('\n');
+      } else {
+        // Normal Enter: just add new line
+        const beforeCursor = currentText.substring(0, cursorPosition);
+        const afterCursor = currentText.substring(cursorPosition);
+        newText = beforeCursor + '\n' + afterCursor;
+      }
       
       element.textContent = newText;
       
-      // Position cursor at the end
-      const range = document.createRange();
+      // Position cursor appropriately
+      const range2 = document.createRange();
       const sel = window.getSelection();
       
       if (sel) {
-        range.selectNodeContents(element);
-        range.collapse(false);
+        if (isInList && !isEmptyListItem) {
+          // Position cursor after the new bullet
+          const newLines = newText.split('\n');
+          let targetPosition = 0;
+          for (let i = 0; i <= currentLineIndex; i++) {
+            targetPosition += newLines[i].length + 1; // +1 for newline
+          }
+          targetPosition += 2; // Position after "• "
+          
+          range2.setStart(element.firstChild || element, Math.min(targetPosition, newText.length));
+          range2.collapse(true);
+        } else {
+          // Position at end for other cases
+          range2.selectNodeContents(element);
+          range2.collapse(false);
+        }
+        
         sel.removeAllRanges();
-        sel.addRange(range);
+        sel.addRange(range2);
       }
       
       // Update the content
