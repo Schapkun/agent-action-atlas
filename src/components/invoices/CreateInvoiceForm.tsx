@@ -38,6 +38,7 @@ export const CreateInvoiceForm = () => {
     handleInvoiceNumberFocus,
     handleInvoiceNumberBlur,
     getDisplayInvoiceNumber,
+    getPlaceholderInvoiceNumber,
     handleContactSelectOnly,
     handleFormSubmit,
     handleLineItemUpdate,
@@ -89,7 +90,7 @@ export const CreateInvoiceForm = () => {
             onInvoiceNumberFocus={handleInvoiceNumberFocus}
             onInvoiceNumberBlur={handleInvoiceNumberBlur}
             getDisplayInvoiceNumber={getDisplayInvoiceNumber}
-            getPlaceholderInvoiceNumber={() => ''}
+            getPlaceholderInvoiceNumber={getPlaceholderInvoiceNumber}
           />
 
           <LineItemsTable
