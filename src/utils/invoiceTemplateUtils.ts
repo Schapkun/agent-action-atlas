@@ -118,8 +118,9 @@ export const generatePreviewHTML = async (
       processedHTML = processedHTML.replace(/{{#if notities}}[\s\S]*?{{\/if}}/g, '');
     }
 
-    // Handle logo conditional blocks
-    if (companyData.logo) {
+    // Handle logo conditional blocks - safely access logo property
+    const hasLogo = companyData && typeof companyData === 'object' && 'logo' in companyData && companyData.logo;
+    if (hasLogo) {
       processedHTML = processedHTML.replace(/{{#if logo}}([\s\S]*?){{else}}[\s\S]*?{{\/if}}/g, '$1');
       processedHTML = processedHTML.replace(/{{#if logo}}([\s\S]*?){{\/if}}/g, '$1');
     } else {
