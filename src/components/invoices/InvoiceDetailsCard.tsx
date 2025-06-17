@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { InvoiceFormData } from '@/hooks/useInvoiceForm';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface InvoiceDetailsCardProps {
   formData: InvoiceFormData;
@@ -15,7 +15,7 @@ interface InvoiceDetailsCardProps {
   onInvoiceNumberFocus: () => void;
   onInvoiceNumberBlur: () => void;
   getDisplayInvoiceNumber: () => string;
-  getPlaceholderInvoiceNumber: () => string;
+  getPlaceholderInvoiceNumber: () => Promise<string>;
 }
 
 export const InvoiceDetailsCard = ({
@@ -29,6 +29,22 @@ export const InvoiceDetailsCard = ({
   getDisplayInvoiceNumber,
   getPlaceholderInvoiceNumber
 }: InvoiceDetailsCardProps) => {
+  const [placeholderNumber, setPlaceholderNumber] = useState<string>('');
+
+  // Load placeholder number on mount
+  useEffect(() => {
+    const loadPlaceholder = async () => {
+      try {
+        const placeholder = await getPlaceholderInvoiceNumber();
+        setPlaceholderNumber(placeholder);
+      } catch (error) {
+        console.error('Failed to load placeholder number:', error);
+      }
+    };
+    
+    loadPlaceholder();
+  }, [getPlaceholderInvoiceNumber]);
+
   // Automatically calculate due date when payment terms or invoice date change
   useEffect(() => {
     if (formData.invoice_date && formData.payment_terms) {
@@ -57,22 +73,20 @@ export const InvoiceDetailsCard = ({
   };
 
   const getPlaceholderNumber = () => {
-    // Get the full placeholder number (e.g., "2025-041")
-    const placeholderFull = getPlaceholderInvoiceNumber();
     const prefix = invoiceSettings.invoice_prefix || '2025-';
     
-    console.log('Placeholder full number:', placeholderFull);
+    console.log('Placeholder full number:', placeholderNumber);
     console.log('Prefix:', prefix);
     
     // If placeholder includes prefix, extract just the number part
-    if (placeholderFull && placeholderFull.startsWith(prefix)) {
-      const numberPart = placeholderFull.substring(prefix.length);
+    if (placeholderNumber && placeholderNumber.startsWith(prefix)) {
+      const numberPart = placeholderNumber.substring(prefix.length);
       console.log('Extracted number part:', numberPart);
       return numberPart;
     }
     
-    // If no valid placeholder, try to parse as standalone number
-    return placeholderFull || '001';
+    // Return the placeholder as is if it doesn't contain prefix
+    return placeholderNumber || '';
   };
 
   const handleInvoiceNumberChange = (value: string) => {

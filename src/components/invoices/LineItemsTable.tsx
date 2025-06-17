@@ -23,31 +23,24 @@ export const LineItemsTable = ({
       event.preventDefault();
       
       const element = event.currentTarget;
-      const selection = window.getSelection();
+      const currentText = element.textContent || '';
+      const newText = currentText + '\n• ';
       
-      if (selection && selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        
-        // Insert line break with bullet point
-        const br = document.createElement('br');
-        const bulletSpan = document.createElement('span');
-        bulletSpan.innerHTML = '• ';
-        bulletSpan.style.marginLeft = '1em';
-        
-        range.deleteContents();
-        range.insertNode(br);
+      element.textContent = newText;
+      
+      // Position cursor at the end
+      const range = document.createRange();
+      const sel = window.getSelection();
+      
+      if (sel) {
+        range.selectNodeContents(element);
         range.collapse(false);
-        range.insertNode(bulletSpan);
-        
-        // Position cursor after bullet
-        range.setStartAfter(bulletSpan);
-        range.collapse(true);
-        selection.removeAllRanges();
-        selection.addRange(range);
-        
-        // Update the content
-        onUpdateLineItem(index, 'description', element.innerHTML);
+        sel.removeAllRanges();
+        sel.addRange(range);
       }
+      
+      // Update the content
+      onUpdateLineItem(index, 'description', newText);
     }
   };
 
@@ -55,58 +48,31 @@ export const LineItemsTable = ({
     const element = document.querySelector(`[data-description-index="${index}"]`) as HTMLElement;
     if (!element) return;
     
-    console.log('Applying list formatting to element:', element);
-    
-    // Get current selection
-    const selection = window.getSelection();
-    let hasSelection = false;
-    let selectedText = '';
-    
-    if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      if (!range.collapsed && range.toString().trim()) {
-        selectedText = range.toString().trim();
-        hasSelection = true;
-        console.log('Selected text:', selectedText);
-      }
-    }
-    
-    if (hasSelection && selectedText) {
-      // Format only selected text
-      if (!selectedText.startsWith('• ')) {
-        const bulletText = `<span style="margin-left: 1em;">• ${selectedText}</span>`;
-        // Replace the selected text with bullet version
-        const currentHTML = element.innerHTML;
-        const newHTML = currentHTML.replace(selectedText, bulletText);
-        element.innerHTML = newHTML;
-      }
-    } else {
-      // Format all content as a list
-      const textContent = element.textContent || '';
-      if (textContent.trim()) {
-        const lines = textContent.split('\n').filter(line => line.trim());
-        const formattedLines = lines.map(line => {
-          const trimmed = line.trim();
-          if (trimmed && !trimmed.startsWith('• ')) {
-            return `<span style="margin-left: 1em;">• ${trimmed}</span>`;
-          }
-          return `<span style="margin-left: 1em;">${trimmed}</span>`;
-        });
-        
-        element.innerHTML = formattedLines.join('<br>');
-      }
-    }
-    
-    // Update the state
-    onUpdateLineItem(index, 'description', element.innerHTML);
-    
-    // Clear selection and set cursor at end
-    if (selection) {
-      selection.removeAllRanges();
+    const textContent = element.textContent || '';
+    if (textContent.trim()) {
+      const lines = textContent.split('\n').filter(line => line.trim());
+      const formattedLines = lines.map(line => {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('• ')) {
+          return `• ${trimmed}`;
+        }
+        return trimmed;
+      });
+      
+      const newText = formattedLines.join('\n');
+      element.textContent = newText;
+      onUpdateLineItem(index, 'description', newText);
+      
+      // Position cursor at end
       const range = document.createRange();
-      range.selectNodeContents(element);
-      range.collapse(false);
-      selection.addRange(range);
+      const sel = window.getSelection();
+      
+      if (sel) {
+        range.selectNodeContents(element);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
     }
   };
 
@@ -144,13 +110,14 @@ export const LineItemsTable = ({
                   <div
                     data-description-index={index}
                     contentEditable
-                    className="min-h-[32px] p-2 text-xs focus:outline-none border rounded"
+                    className="min-h-[32px] p-2 text-xs focus:outline-none border rounded whitespace-pre-wrap"
                     style={{ direction: 'ltr', textAlign: 'left' }}
-                    onBlur={(e) => onUpdateLineItem(index, 'description', e.currentTarget.innerHTML || '')}
+                    onBlur={(e) => onUpdateLineItem(index, 'description', e.currentTarget.textContent || '')}
                     onKeyDown={(e) => handleKeyDown(e, index)}
-                    dangerouslySetInnerHTML={{ __html: item.description }}
                     suppressContentEditableWarning
-                  />
+                  >
+                    {item.description}
+                  </div>
                   <div className="flex items-center gap-1">
                     <Button 
                       type="button" 

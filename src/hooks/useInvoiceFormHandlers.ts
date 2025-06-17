@@ -1,12 +1,15 @@
+
 import { useState, useEffect } from 'react';
 import { useInvoiceForm } from './useInvoiceForm';
 import { useToast } from './use-toast';
+import { useInvoices } from './useInvoices';
 
 export const useInvoiceFormHandlers = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [currentInvoiceNumber, setCurrentInvoiceNumber] = useState<string>('');
   const { toast } = useToast();
+  const { generateInvoiceNumber } = useInvoices();
 
   const {
     formData,
@@ -35,7 +38,7 @@ export const useInvoiceFormHandlers = () => {
   useEffect(() => {
     const initializeInvoiceNumber = async () => {
       try {
-        const defaultNumber = await getDefaultInvoiceNumber();
+        const defaultNumber = await generateInvoiceNumber();
         console.log('Initialized invoice number:', defaultNumber);
         setCurrentInvoiceNumber(defaultNumber);
         
@@ -60,7 +63,7 @@ export const useInvoiceFormHandlers = () => {
     setIsInvoiceNumberFocused(true);
     if (!invoiceNumber) {
       try {
-        const defaultNumber = await getDefaultInvoiceNumber();
+        const defaultNumber = await generateInvoiceNumber();
         setInvoiceNumber(defaultNumber);
         setCurrentInvoiceNumber(defaultNumber);
       } catch (error) {
@@ -77,9 +80,15 @@ export const useInvoiceFormHandlers = () => {
     return invoiceNumber || '';
   };
 
-  const getPlaceholderInvoiceNumber = () => {
-    console.log('Getting placeholder number, currentInvoiceNumber:', currentInvoiceNumber);
-    return currentInvoiceNumber || '';
+  const getPlaceholderInvoiceNumber = async () => {
+    try {
+      const freshNumber = await generateInvoiceNumber();
+      console.log('Generated fresh placeholder number:', freshNumber);
+      return freshNumber;
+    } catch (error) {
+      console.error('Failed to generate placeholder number:', error);
+      return '';
+    }
   };
 
   const handleContactClear = () => {
