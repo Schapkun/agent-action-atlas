@@ -24,8 +24,7 @@ export const loadCompanyData = async (organizationId: string) => {
     console.log('✅ COMPANY DATA: Raw data loaded:', {
       company_name: data.company_name,
       has_logo: !!data.company_logo,
-      logo_length: data.company_logo ? data.company_logo.length : 0,
-      logo_preview: data.company_logo ? data.company_logo.substring(0, 100) + '...' : 'NONE'
+      logo_length: data.company_logo ? data.company_logo.length : 0
     });
 
     // Enhanced logo logging and validation
@@ -33,11 +32,10 @@ export const loadCompanyData = async (organizationId: string) => {
       console.log('🖼️ LOGO FOUND:', {
         logoUrl: data.company_logo.substring(0, 50) + '...',
         isValidUrl: data.company_logo.startsWith('http'),
-        logoType: data.company_logo.includes('data:') ? 'base64' : 'url',
-        fullLogoLength: data.company_logo.length
+        logoType: data.company_logo.includes('data:') ? 'base64' : 'url'
       });
     } else {
-      console.log('⚠️ NO LOGO: Company logo field is empty or null - THIS IS WHY NO LOGO SHOWS!');
+      console.log('⚠️ NO LOGO: Company logo field is empty or null');
     }
 
     // Create a comprehensive mapping with extensive logo field variations
@@ -75,8 +73,7 @@ export const loadCompanyData = async (organizationId: string) => {
       hasLogo: !!mappedData.logo,
       logoVariationsCount: Object.keys(mappedData).filter(key => 
         key.toLowerCase().includes('logo')).length,
-      totalFields: Object.keys(mappedData).length,
-      logoValuePreview: mappedData.logo ? String(mappedData.logo).substring(0, 50) + '...' : 'NONE'
+      totalFields: Object.keys(mappedData).length
     });
     
     return mappedData;
