@@ -1,10 +1,11 @@
+
 import React, { useMemo, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, ZoomIn, ZoomOut } from 'lucide-react';
 import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 import { InvoiceFormData, LineItem } from '@/types/invoiceTypes';
-import { generatePreviewHTML } from '@/utils/invoiceTemplateUtils';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { replaceAllPlaceholders } from '@/utils/universalPlaceholderReplacement';
 
 interface InvoicePreviewProps {
   selectedTemplate: DocumentTemplateWithLabels | null;
@@ -27,66 +28,67 @@ export const InvoicePreview = ({
 
   useEffect(() => {
     const generatePreview = async () => {
-      console.log('🎨 PREVIEW: Starting generation with DETAILED MAPPING:', {
+      console.log('🎨 INVOICE PREVIEW: Starting generation with UNIVERSAL SYSTEM:', {
         templateInfo: {
           name: selectedTemplate?.name,
           id: selectedTemplate?.id?.substring(0, 8) + '...',
           hasHtmlContent: !!(selectedTemplate?.html_content)
         },
-        formDataMapping: {
-          client_name: formData.client_name,
-          client_email: formData.client_email,
-          client_address: formData.client_address,
-          client_postal_code: formData.client_postal_code,
-          client_city: formData.client_city,
-          client_country: formData.client_country,
-          invoice_date: formData.invoice_date,
-          due_date: formData.due_date,
-          payment_terms: formData.payment_terms,
-          notes: formData.notes,
-          hasContactData: !!(formData.client_name && formData.client_name !== ''),
-          expectedPlaceholders: {
-            '{{klant_naam}}': formData.client_name || '[Klantnaam]',
-            '{{klant_email}}': formData.client_email || '[Klant email]',
-            '{{klant_adres}}': formData.client_address || '[Klant adres]',
-            '{{factuurnummer}}': invoiceNumber || 'CONCEPT'
-          }
-        },
-        lineItemsInfo: {
-          count: lineItems.length,
-          hasItems: lineItems.length > 0,
-          sampleItem: lineItems[0] ? {
-            description: lineItems[0].description,
-            quantity: lineItems[0].quantity,
-            unit_price: lineItems[0].unit_price,
-            line_total: lineItems[0].line_total
-          } : null
-        },
         organizationInfo: {
           id: selectedOrganization?.id?.substring(0, 8) + '...',
           hasOrganization: !!selectedOrganization?.id
+        },
+        invoiceData: {
+          invoiceNumber,
+          clientName: formData.client_name,
+          lineItemsCount: lineItems.length
         }
       });
       
       if (!selectedTemplate) {
-        console.log('⚠️ PREVIEW: No template selected');
+        console.log('⚠️ INVOICE PREVIEW: No template selected');
         setPreviewHTML('<div style="padding: 40px; text-align: center; color: #6b7280;">Geen template geselecteerd</div>');
         return;
       }
 
       try {
-        const html = await generatePreviewHTML(
-          selectedTemplate.html_content,
-          formData,
-          lineItems,
-          invoiceNumber,
-          selectedOrganization?.id
-        );
-        console.log('✅ PREVIEW SUCCESS: Generated HTML preview for template:', selectedTemplate.name);
-        console.log('🔍 PREVIEW: HTML snippet (first 200 chars):', html.substring(0, 200) + '...');
-        setPreviewHTML(html);
+        // Prepare invoice-specific data for the universal system
+        const invoiceData = {
+          // Invoice data
+          factuurnummer: invoiceNumber || 'CONCEPT',
+          factuurdatum: formData.invoice_date ? new Date(formData.invoice_date).toLocaleDateString('nl-NL') : new Date().toLocaleDateString('nl-NL'),
+          vervaldatum: formData.due_date ? new Date(formData.due_date).toLocaleDateString('nl-NL') : '',
+          
+          // Client data  
+          klant_naam: formData.client_name || '[Klantnaam]',
+          klant_email: formData.client_email || '[Klant email]',
+          klant_adres: formData.client_address || '[Klant adres]',
+          klant_postcode: formData.client_postal_code || '[Postcode]',
+          klant_plaats: formData.client_city || '[Plaats]',
+          klant_land: formData.client_country || 'Nederland',
+          
+          // Totals
+          subtotaal: lineItems.reduce((sum, item) => sum + item.line_total, 0).toFixed(2),
+          btw_bedrag: lineItems.reduce((sum, item) => sum + (item.line_total * item.vat_rate / 100), 0).toFixed(2),
+          totaal_bedrag: lineItems.reduce((sum, item) => sum + item.line_total + (item.line_total * item.vat_rate / 100), 0).toFixed(2),
+          
+          // Notes
+          notities: formData.notes || ''
+        };
+
+        console.log('🔄 INVOICE PREVIEW: Using universal placeholder replacement system');
+        
+        // Use the universal placeholder replacement system
+        const processedHTML = await replaceAllPlaceholders(selectedTemplate.html_content, {
+          organizationId: selectedOrganization?.id,
+          invoiceData,
+          lineItems
+        });
+
+        console.log('✅ INVOICE PREVIEW: Universal system completed successfully');
+        setPreviewHTML(processedHTML);
       } catch (error) {
-        console.error('❌ PREVIEW ERROR: Failed to generate preview:', error);
+        console.error('❌ INVOICE PREVIEW: Error with universal system:', error);
         setPreviewHTML('<div style="padding: 40px; text-align: center; color: #dc2626;">Fout bij laden van voorbeeld</div>');
       }
     };
@@ -121,17 +123,20 @@ export const InvoicePreview = ({
       height: 100%;
       background: white;
       overflow: auto;
+      padding: 20px;
     }
     
     .a4-content {
       width: 100%;
-      min-height: 100%;
+      min-height: calc(100% - 40px);
       font-size: 12px;
       line-height: 1.4;
       color: #333;
+      max-width: 100%;
+      overflow-wrap: break-word;
     }
 
-    /* Enhanced table styling */
+    /* Enhanced table styling matching other previews */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -153,7 +158,7 @@ export const InvoicePreview = ({
       border-bottom: 1px solid #e9ecef;
     }
 
-    /* Typography */
+    /* Typography matching other previews */
     h1, h2, h3 {
       color: #212529;
       font-weight: 600;
@@ -170,11 +175,26 @@ export const InvoicePreview = ({
       color: #495057;
     }
 
-    /* Logo styling */
-    .company-logo, .bedrijfslogo {
+    /* Unified logo styling - consistent with other previews */
+    .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], img[alt*="Logo"] {
       max-width: 200px;
       max-height: 100px;
       height: auto;
+      object-fit: contain;
+    }
+
+    /* Additional logo variations */
+    .logo, .Logo, .LOGO {
+      max-width: 200px;
+      max-height: 100px;
+      height: auto;
+      object-fit: contain;
+    }
+
+    /* Prevent content overflow */
+    .a4-content * {
+      max-width: 100%;
+      overflow-wrap: break-word;
     }
   </style>
 </head>
@@ -276,7 +296,7 @@ export const InvoicePreview = ({
 
       {/* Footer */}
       <div className="flex-shrink-0 h-[40px] px-4 py-2 bg-gray-100 border-t border-l text-xs text-gray-600 flex items-center justify-between">
-        <span>A4 Formaat • Real-time preview</span>
+        <span>A4 Formaat • Universal Preview System</span>
         <span>{lineItems.length} regel{lineItems.length !== 1 ? 's' : ''}</span>
       </div>
     </div>

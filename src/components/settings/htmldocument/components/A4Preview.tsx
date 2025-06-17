@@ -47,7 +47,7 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
     htmlContent: finalHtml
   });
 
-  // Create complete HTML document with enhanced styling matching invoice preview
+  // Create complete HTML document with enhanced A4 styling matching invoice preview
   const getA4PreviewDocument = (content: string) => {
     // Extract body content if it's a complete HTML document
     let bodyContent = content;
@@ -87,14 +87,17 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       height: 100%;
       background: white;
       overflow: auto;
+      padding: 20px;
     }
     
     .a4-content {
       width: 100%;
-      min-height: 100%;
+      min-height: calc(100% - 40px);
       font-size: 12px;
       line-height: 1.4;
       color: #333;
+      max-width: 100%;
+      overflow-wrap: break-word;
     }
 
     /* Enhanced table styling matching invoice preview */
@@ -136,7 +139,7 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       color: #495057;
     }
 
-    /* Logo styling - consistent with invoice preview */
+    /* Unified logo styling - consistent with invoice preview */
     .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], img[alt*="Logo"] {
       max-width: 200px;
       max-height: 100px;
@@ -150,6 +153,12 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       max-height: 100px;
       height: auto;
       object-fit: contain;
+    }
+
+    /* Prevent content overflow - FIXED */
+    .a4-content * {
+      max-width: 100%;
+      overflow-wrap: break-word;
     }
   </style>
 </head>
@@ -196,10 +205,10 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       {/* 5px ruimte boven preview */}
       <div className="flex-shrink-0 h-[5px]" />
 
-      {/* A4 Preview Area - vult de rest van de ruimte */}
-      <div className="flex-1 min-h-0 flex justify-center items-center px-4">
+      {/* A4 Preview Area - FIXED: Better overflow handling */}
+      <div className="flex-1 min-h-0 flex justify-center items-center px-4 overflow-hidden">
         <div 
-          className="bg-white shadow-lg border border-gray-300"
+          className="bg-white shadow-lg border border-gray-300 overflow-hidden"
           style={{
             height: '100%',
             width: 'calc(100% * 0.707)', // A4 verhouding: breedte = 70.7% van hoogte
@@ -224,7 +233,7 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       
       {/* Footer - 40px hoog */}
       <div className="flex-shrink-0 h-[40px] px-4 py-2 bg-gray-100 border-t text-xs text-gray-600 flex items-center justify-between">
-        <span>A4 Formaat (210×297mm) - Enhanced Preview System</span>
+        <span>A4 Formaat (210×297mm) • Universal Preview System</span>
         <span>{Object.keys(placeholderValues).length} variabelen vervangen</span>
       </div>
     </div>

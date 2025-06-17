@@ -1,4 +1,3 @@
-
 import { replaceAllPlaceholders } from './universalPlaceholderReplacement';
 
 interface InvoiceFormData {
@@ -29,13 +28,8 @@ export const generatePreviewHTML = async (
   invoiceNumber: string,
   organizationId?: string
 ): Promise<string> => {
-  console.log('🎨 TEMPLATE UTILS: Starting HTML generation with UNIVERSAL SYSTEM:', {
-    templateLength: templateHTML?.length,
-    hasOrganizationId: !!organizationId,
-    lineItemsCount: lineItems.length,
-    invoiceNumber
-  });
-
+  console.log('⚠️ DEPRECATED: invoiceTemplateUtils.generatePreviewHTML is deprecated, use universal system directly');
+  
   if (!templateHTML) {
     return '<div>Geen template beschikbaar</div>';
   }
@@ -72,11 +66,10 @@ export const generatePreviewHTML = async (
       lineItems
     });
 
-    console.log('✅ TEMPLATE UTILS: HTML generation completed with UNIVERSAL SYSTEM');
     return processedHTML;
 
   } catch (error) {
-    console.error('❌ TEMPLATE UTILS: Error generating HTML:', error);
+    console.error('❌ DEPRECATED TEMPLATE UTILS: Error generating HTML:', error);
     return '<div style="padding: 20px; color: red;">Fout bij genereren van preview</div>';
   }
 };

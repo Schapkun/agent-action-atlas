@@ -33,7 +33,7 @@ export const LivePreview = ({ htmlContent, layoutId }: LivePreviewProps) => {
     processContent();
   }, [htmlContent, selectedOrganization?.id]);
 
-  // Enhanced HTML wrapper with consistent styling
+  // Enhanced HTML wrapper with consistent A4 styling
   const getEnhancedPreviewDocument = (content: string) => {
     // Extract body content if it's a complete HTML document
     let bodyContent = content;
@@ -65,21 +65,25 @@ export const LivePreview = ({ htmlContent, layoutId }: LivePreviewProps) => {
       height: 100%;
       font-family: Arial, sans-serif;
       background: white;
-      padding: 20px;
+      overflow: hidden;
     }
     
     .preview-container {
       width: 100%;
       height: 100%;
       background: white;
+      overflow: auto;
+      padding: 20px;
     }
     
     .preview-content {
       width: 100%;
-      min-height: 100%;
+      min-height: calc(100% - 40px);
       font-size: 12px;
       line-height: 1.4;
       color: #333;
+      max-width: 100%;
+      overflow-wrap: break-word;
     }
 
     /* Enhanced table styling matching invoice preview */
@@ -121,7 +125,7 @@ export const LivePreview = ({ htmlContent, layoutId }: LivePreviewProps) => {
       color: #495057;
     }
 
-    /* Logo styling - consistent with invoice preview and A4 preview */
+    /* Unified logo styling - consistent with invoice preview */
     .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], img[alt*="Logo"] {
       max-width: 200px;
       max-height: 100px;
@@ -137,9 +141,15 @@ export const LivePreview = ({ htmlContent, layoutId }: LivePreviewProps) => {
       object-fit: contain;
     }
 
+    /* Prevent content overflow - FIXED */
+    .preview-content * {
+      max-width: 100%;
+      overflow-wrap: break-word;
+    }
+
     /* Responsive scaling for live preview */
     @media (max-width: 768px) {
-      html, body {
+      .preview-container {
         padding: 10px;
       }
       
@@ -167,11 +177,11 @@ export const LivePreview = ({ htmlContent, layoutId }: LivePreviewProps) => {
         <div className="flex items-center gap-2">
           <Eye className="h-4 w-4" />
           <span className="text-sm font-medium">Live Preview</span>
-          <span className="text-xs text-gray-500">Enhanced Universal System</span>
+          <span className="text-xs text-gray-500">Universal System</span>
         </div>
       </CardHeader>
       
-      <CardContent className="flex-1 p-0 overflow-auto">
+      <CardContent className="flex-1 p-0 overflow-hidden">
         <div className="h-full">
           <iframe
             srcDoc={getEnhancedPreviewDocument(processedHtml)}
