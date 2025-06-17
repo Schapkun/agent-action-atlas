@@ -49,11 +49,11 @@ export const replaceAllPlaceholders = async (
     console.log('🏢 UNIVERSAL PLACEHOLDER: Company data loaded:', {
       hasData: Object.keys(companyData).length > 0,
       logoKeys: Object.keys(companyData).filter(key => key.toLowerCase().includes('logo')),
-      primaryLogo: companyData?.logo || 'EMPTY'
+      primaryLogo: (companyData as any).logo || 'EMPTY'
     });
 
-    // Combine all data sources
-    const allPlaceholders = {
+    // Combine all data sources with proper typing
+    const allPlaceholders: Record<string, any> = {
       // Company data (includes extensive logo mappings)
       ...companyData,
       // User-provided placeholder values
@@ -115,7 +115,7 @@ export const replaceAllPlaceholders = async (
       processedHTML = processedHTML.replace(/{{#if notities}}[\s\S]*?{{\/if}}/g, '');
     }
 
-    // IMPROVED Logo conditional blocks - more robust checking
+    // IMPROVED Logo conditional blocks - more robust checking with safe property access
     const logoValue = allPlaceholders.logo;
     const hasValidLogo = logoValue && String(logoValue).trim().length > 0;
     
