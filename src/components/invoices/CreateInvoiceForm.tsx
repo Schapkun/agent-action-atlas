@@ -6,20 +6,22 @@ import { LineItemsTable } from './LineItemsTable';
 import { InvoiceTotals } from './InvoiceTotals';
 import { InvoiceSettingsSidebar } from './InvoiceSettingsSidebar';
 import { InvoiceFormActions } from './InvoiceFormActions';
-import { InvoiceTemplateManager } from './InvoiceTemplateManager';
+import { TemplateSelector } from './TemplateSelector';
 import { InvoiceFormPreview } from './InvoiceFormPreview';
 import { useInvoiceFormHandlers } from '@/hooks/useInvoiceFormHandlers';
-import { useInvoiceTemplates } from '@/hooks/useInvoiceTemplates';
-import { useEffect } from 'react';
+import { useInvoiceTemplateManager } from '@/hooks/useInvoiceTemplateManager';
 
 export const CreateInvoiceForm = () => {
-  const { defaultTemplate } = useInvoiceTemplates();
-  
+  // Centralized template management
   const {
-    documentTemplates,
-    templatesLoading,
     selectedTemplate,
-    setSelectedTemplate,
+    availableTemplates,
+    templatesLoading,
+    handleTemplateSelect
+  } = useInvoiceTemplateManager();
+
+  // Form handlers (without template logic)
+  const {
     showSettings,
     setShowSettings,
     showPreview,
@@ -49,29 +51,14 @@ export const CreateInvoiceForm = () => {
     getDefaultInvoiceNumber
   } = useInvoiceFormHandlers();
 
-  // Auto-select default template when available
-  useEffect(() => {
-    if (defaultTemplate && !selectedTemplate) {
-      setSelectedTemplate(defaultTemplate);
-    }
-  }, [defaultTemplate, selectedTemplate, setSelectedTemplate]);
-
-  // Get template manager components
-  const templateManager = InvoiceTemplateManager({
-    documentTemplates,
-    templatesLoading,
-    selectedTemplate,
-    setSelectedTemplate
-  });
-
   const { subtotal, vatAmount, total } = calculateTotals();
 
-  console.log('🎨 CreateInvoiceForm: Consistent template object usage:', {
+  console.log('🎯 FORM: Rendering with centralized template:', {
     selectedTemplate: selectedTemplate ? {
       id: selectedTemplate.id,
       name: selectedTemplate.name
     } : null,
-    availableTemplatesCount: documentTemplates.length
+    availableTemplatesCount: availableTemplates.length
   });
 
   return (
@@ -90,7 +77,14 @@ export const CreateInvoiceForm = () => {
         <form onSubmit={handleFormSubmit} className="space-y-3">
           <ContactSelectionCard
             selectedContact={selectedContact}
-            templateSelector={templateManager.templateSelect}
+            templateSelector={
+              <TemplateSelector
+                selectedTemplate={selectedTemplate}
+                availableTemplates={availableTemplates}
+                templatesLoading={templatesLoading}
+                onTemplateSelect={handleTemplateSelect}
+              />
+            }
             onContactSelect={handleContactSelectOnly}
             onShowSettings={() => setShowSettings(true)}
           />
@@ -136,7 +130,7 @@ export const CreateInvoiceForm = () => {
       <InvoiceFormPreview
         showPreview={showPreview}
         setShowPreview={setShowPreview}
-        selectedTemplateObject={selectedTemplate}
+        selectedTemplate={selectedTemplate}
         formData={formData}
         lineItems={lineItems}
         invoiceNumber={invoiceNumber}

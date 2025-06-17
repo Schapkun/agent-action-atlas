@@ -8,9 +8,8 @@ interface InvoicePreviewDialogProps {
 }
 
 export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: InvoicePreviewDialogProps) => {
-  // Create enhanced A4-formatted HTML content with professional styling
+  // Create enhanced A4-formatted HTML content with proper page breaks and content management
   const getA4FormattedContent = (content: string) => {
-    // Enhanced A4 styling with better visual presentation
     const a4Styles = `
       <style>
         /* Reset and base styling */
@@ -22,13 +21,14 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
           line-height: 1.6;
           width: 100%;
           height: 100vh;
-          overflow: hidden;
+          overflow: auto;
         }
         
-        /* A4 page container */
+        /* A4 page container with precise dimensions */
         .a4-page {
           width: 210mm;
           min-height: 297mm;
+          max-height: 297mm;
           max-width: 100%;
           margin: 20px auto;
           background: white;
@@ -36,14 +36,36 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
           border-radius: 8px;
           position: relative;
           overflow: hidden;
+          page-break-after: always;
         }
         
-        /* Page content with proper A4 margins */
+        /* Page content with proper A4 margins and overflow control */
         .page-content {
-          padding: 20mm;
+          padding: 20mm 20mm 40mm 20mm; /* Extra bottom padding for footer */
           width: calc(100% - 40mm);
-          min-height: calc(297mm - 40mm);
+          height: calc(297mm - 60mm); /* Reserve space for footer */
           box-sizing: border-box;
+          overflow: hidden;
+          position: relative;
+        }
+        
+        /* Content area that respects footer */
+        .content-area {
+          height: calc(100% - 40mm);
+          overflow: hidden;
+        }
+        
+        /* Footer positioning */
+        .footer, .document-footer {
+          position: absolute;
+          bottom: 20mm;
+          left: 20mm;
+          right: 20mm;
+          padding-top: 16px;
+          border-top: 1px solid #e9ecef;
+          font-size: 12px;
+          color: #6c757d;
+          background: white;
         }
         
         /* Enhanced typography */
@@ -51,15 +73,17 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
           max-width: 100%;
           margin: 0;
           padding: 0;
+          height: 100%;
         }
         
-        /* Table styling */
+        /* Table styling with better spacing */
         table {
           width: 100%;
           border-collapse: collapse;
           margin: 16px 0;
           font-size: 14px;
           background: white;
+          page-break-inside: avoid;
         }
         
         th {
@@ -94,6 +118,7 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
           margin-bottom: 20px;
           font-size: 14px;
           line-height: 1.5;
+          page-break-inside: avoid;
         }
         
         /* Totals section */
@@ -104,15 +129,7 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
           padding: 16px;
           background: #f8f9fa;
           border-radius: 6px;
-        }
-        
-        /* Footer styling */
-        .footer, .document-footer {
-          margin-top: 32px;
-          padding-top: 16px;
-          border-top: 1px solid #e9ecef;
-          font-size: 12px;
-          color: #6c757d;
+          page-break-inside: avoid;
         }
         
         /* Typography enhancements */
@@ -121,6 +138,7 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
           font-weight: 600;
           margin: 20px 0 12px 0;
           line-height: 1.3;
+          page-break-after: avoid;
         }
         
         h1 { font-size: 24px; }
@@ -131,6 +149,8 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
           font-size: 14px;
           margin: 8px 0;
           color: #495057;
+          orphans: 2;
+          widows: 2;
         }
         
         /* Status and emphasis */
@@ -154,6 +174,16 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
           color: #dc3545;
           background: #f8d7da;
           border: 1px solid #f5c6cb;
+        }
+        
+        /* Prevent content overflow */
+        * {
+          box-sizing: border-box;
+        }
+        
+        /* Hide overflow content that would go past the footer */
+        .page-content > *:last-child {
+          margin-bottom: 0;
         }
         
         /* Responsive adjustments */
@@ -183,16 +213,22 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
             margin: 0;
             box-shadow: none;
             border-radius: 0;
+            max-height: none;
           }
           
           body {
             background: white;
           }
+          
+          .footer, .document-footer {
+            position: fixed;
+            bottom: 0;
+          }
         }
       </style>
     `;
     
-    // Wrap content in A4 page structure
+    // Wrap content in A4 page structure with content area
     const wrappedContent = `
       <!DOCTYPE html>
       <html>
@@ -205,7 +241,9 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
       <body>
         <div class="a4-page">
           <div class="page-content">
-            ${content}
+            <div class="content-area">
+              ${content}
+            </div>
           </div>
         </div>
       </body>

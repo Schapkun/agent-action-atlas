@@ -8,7 +8,7 @@ import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 interface InvoiceFormPreviewProps {
   showPreview: boolean;
   setShowPreview: (show: boolean) => void;
-  selectedTemplateObject: DocumentTemplateWithLabels | null;
+  selectedTemplate: DocumentTemplateWithLabels | null;
   formData: any;
   lineItems: any[];
   invoiceNumber: string;
@@ -19,7 +19,7 @@ interface InvoiceFormPreviewProps {
 export const InvoiceFormPreview = ({
   showPreview,
   setShowPreview,
-  selectedTemplateObject,
+  selectedTemplate,
   formData,
   lineItems,
   invoiceNumber,
@@ -35,7 +35,7 @@ export const InvoiceFormPreview = ({
     if (showPreview) {
       generatePreview();
     }
-  }, [showPreview, selectedTemplateObject, formData, lineItems, invoiceNumber, selectedContact, selectedOrganization]);
+  }, [showPreview, selectedTemplate, formData, lineItems, invoiceNumber, selectedContact, selectedOrganization]);
 
   const generatePreview = async () => {
     if (!selectedOrganization?.id) {
@@ -45,19 +45,19 @@ export const InvoiceFormPreview = ({
 
     setIsLoading(true);
     try {
-      console.log('🎨 Generating preview with CONSISTENT template object');
-      console.log('📋 Template object:', selectedTemplateObject ? {
-        id: selectedTemplateObject.id,
-        name: selectedTemplateObject.name
+      console.log('🎯 PREVIEW: Direct template object gebruik');
+      console.log('🎯 PREVIEW: Template:', selectedTemplate ? {
+        id: selectedTemplate.id,
+        name: selectedTemplate.name
       } : null);
       
-      if (!selectedTemplateObject?.html_content) {
-        console.warn('⚠️ Geen template geselecteerd voor preview');
+      if (!selectedTemplate?.html_content) {
+        console.warn('⚠️ PREVIEW: Geen template geselecteerd');
         setPreviewHTML('<div class="preview-message">Selecteer eerst een template om een voorbeeld te zien</div>');
         return;
       }
 
-      console.log('✅ Using template:', selectedTemplateObject.name);
+      console.log('✅ PREVIEW: Using template:', selectedTemplate.name);
 
       // Load company data
       const companyData = await loadCompanyData(selectedOrganization.id);
@@ -114,7 +114,7 @@ export const InvoiceFormPreview = ({
       };
 
       // Replace placeholders in template HTML
-      let htmlWithValues = selectedTemplateObject.html_content;
+      let htmlWithValues = selectedTemplate.html_content;
       
       Object.entries(placeholderValues).forEach(([key, value]) => {
         const placeholder = `{{${key}}}`;
@@ -122,14 +122,13 @@ export const InvoiceFormPreview = ({
         htmlWithValues = htmlWithValues.replace(regex, value || `[${key}]`);
       });
       
-      console.log('🎨 Successfully generated preview HTML');
-      console.log('📊 Template used:', selectedTemplateObject.name);
-      console.log('📊 Placeholders replaced:', Object.keys(placeholderValues).length);
+      console.log('🎯 PREVIEW: Successfully generated with template:', selectedTemplate.name);
+      console.log('🎯 PREVIEW: Placeholders replaced:', Object.keys(placeholderValues).length);
       
       setPreviewHTML(htmlWithValues);
       
     } catch (error) {
-      console.error('❌ Error generating preview:', error);
+      console.error('❌ PREVIEW: Error generating preview:', error);
       setPreviewHTML('<div class="preview-error">Fout bij het genereren van het voorbeeld</div>');
     } finally {
       setIsLoading(false);
