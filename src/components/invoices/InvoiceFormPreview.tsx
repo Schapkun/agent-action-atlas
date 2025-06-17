@@ -2,7 +2,6 @@
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useState, useEffect } from 'react';
 import { InvoicePreviewDialog } from './InvoicePreviewDialog';
-import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { loadCompanyData } from '@/utils/companyDataMapping';
 
 interface InvoiceFormPreviewProps {
@@ -29,7 +28,6 @@ export const InvoiceFormPreview = ({
   getDefaultInvoiceNumber
 }: InvoiceFormPreviewProps) => {
   const { selectedOrganization } = useOrganization();
-  const { templates } = useDocumentTemplates();
   const [previewHTML, setPreviewHTML] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -48,20 +46,25 @@ export const InvoiceFormPreview = ({
 
     setIsLoading(true);
     try {
-      console.log('🎨 Generating invoice preview with direct placeholder replacement');
+      console.log('🎨 Generating invoice preview with selected template from dropdown');
+      console.log('📋 Selected template ID:', selectedTemplate);
+      console.log('📋 Available templates:', availableTemplates?.length);
       
-      // Find the selected template
-      const template = templates.find(t => t.id === selectedTemplate);
-      if (!template?.html_content) {
-        setPreviewHTML('<p>Template niet gevonden</p>');
+      // Find the EXACT template object that was selected in the dropdown
+      const templateObject = availableTemplates.find(t => t.id === selectedTemplate);
+      if (!templateObject?.html_content) {
+        console.error('❌ Template niet gevonden in availableTemplates:', selectedTemplate);
+        setPreviewHTML('<p>Geselecteerde template niet gevonden</p>');
         return;
       }
+
+      console.log('✅ Found template:', templateObject.name);
 
       // Load company data using the same system as HTML builder
       const companyData = await loadCompanyData(selectedOrganization.id);
       console.log('📊 Loaded company data:', companyData);
 
-      // Create comprehensive placeholder values
+      // Create comprehensive placeholder values (same as HTML builder)
       const placeholderValues = {
         // Company data (both lowercase and uppercase for compatibility)
         bedrijfsnaam: companyData.bedrijfsnaam || selectedOrganization.name || 'Uw Bedrijf B.V.',
@@ -75,7 +78,7 @@ export const InvoiceFormPreview = ({
         btw_nummer: companyData.btw_nummer || '',
         banknummer: companyData.banknummer || '',
         
-        // Uppercase variants
+        // Uppercase variants (for compatibility with different template formats)
         COMPANY_NAME: companyData.bedrijfsnaam || selectedOrganization.name || 'Uw Bedrijf B.V.',
         COMPANY_ADDRESS: companyData.adres || '',
         COMPANY_POSTAL_CODE: companyData.postcode || '',
@@ -92,7 +95,7 @@ export const InvoiceFormPreview = ({
         referentie: invoiceNumber || 'CONCEPT',
         onderwerp: 'Factuur',
         
-        // Client data
+        // Client data (using form data and selected contact)
         klant_naam: formData.client_name || selectedContact?.name || '[Klantnaam]',
         klant_bedrijf: formData.client_name || selectedContact?.name || '[Klant bedrijf]',
         klant_adres: formData.client_address || selectedContact?.address || '[Klant adres]',
@@ -102,7 +105,7 @@ export const InvoiceFormPreview = ({
         klant_telefoon: selectedContact?.phone || '[Telefoon]',
         klant_land: formData.client_country || selectedContact?.country || 'Nederland',
         
-        // Invoice specific placeholders
+        // Invoice specific placeholders (uppercase variants)
         INVOICE_NUMBER: invoiceNumber || 'CONCEPT',
         INVOICE_DATE: formData.invoice_date || new Date().toLocaleDateString('nl-NL'),
         DUE_DATE: formData.due_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('nl-NL'),
@@ -113,7 +116,7 @@ export const InvoiceFormPreview = ({
       };
 
       // Direct placeholder replacement (same logic as HTML builder)
-      let htmlWithValues = template.html_content;
+      let htmlWithValues = templateObject.html_content;
       
       // Replace all placeholders
       Object.entries(placeholderValues).forEach(([key, value]) => {
@@ -122,12 +125,13 @@ export const InvoiceFormPreview = ({
         htmlWithValues = htmlWithValues.replace(regex, value || `[${key}]`);
       });
       
-      console.log('🎨 Generated preview HTML with direct replacement');
+      console.log('🎨 Generated preview HTML using selected template from dropdown');
+      console.log('📊 Template used:', templateObject.name);
       console.log('📊 Replaced placeholders:', Object.keys(placeholderValues).length);
       setPreviewHTML(htmlWithValues);
       
     } catch (error) {
-      console.error('Error generating preview:', error);
+      console.error('❌ Error generating preview:', error);
       setPreviewHTML('<p>Fout bij het genereren van het voorbeeld</p>');
     } finally {
       setIsLoading(false);
