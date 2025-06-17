@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Bold, Italic, Underline, List, Trash2 } from 'lucide-react';
 import { VatSelector } from '@/components/ui/vat-selector';
 import { LineItem } from '@/hooks/useInvoiceForm';
-import { useRef } from 'react';
 
 interface LineItemsTableProps {
   lineItems: LineItem[];
@@ -19,58 +18,73 @@ export const LineItemsTable = ({
   onRemoveLineItem
 }: LineItemsTableProps) => {
   const applyListFormatting = (index: number) => {
-    // Get the contentEditable element
     const element = document.querySelector(`[data-description-index="${index}"]`) as HTMLElement;
     if (!element) return;
     
-    // Get the current selection or cursor position
-    const selection = window.getSelection();
-    const range = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+    console.log('Applying list formatting to element:', element);
     
-    // If there's selected text, format only that part
-    if (range && !range.collapsed) {
-      const selectedText = range.toString().trim();
-      if (selectedText) {
-        // Create bullet point for selected text
-        const bulletText = selectedText.startsWith('• ') ? selectedText : `• ${selectedText}`;
-        range.deleteContents();
-        const textNode = document.createTextNode(bulletText);
-        range.insertNode(textNode);
-        
-        // Update the state with new content
-        onUpdateLineItem(index, 'description', element.innerHTML);
-        return;
+    // Get current HTML content
+    const currentHTML = element.innerHTML;
+    console.log('Current HTML:', currentHTML);
+    
+    // Convert to text to work with lines
+    const textContent = element.textContent || '';
+    console.log('Text content:', textContent);
+    
+    // Get current selection
+    const selection = window.getSelection();
+    let hasSelection = false;
+    let selectedText = '';
+    
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      if (!range.collapsed && range.toString().trim()) {
+        selectedText = range.toString().trim();
+        hasSelection = true;
+        console.log('Selected text:', selectedText);
       }
     }
     
-    // If no selection, format the current line or all content
-    const cursorPosition = range ? range.startOffset : 0;
-    const textContent = element.textContent || '';
+    let newHTML = '';
     
-    // Split content into lines
-    const lines = textContent.split('\n');
-    const formattedLines = lines.map(line => {
-      const trimmedLine = line.trim();
-      if (trimmedLine && !trimmedLine.startsWith('• ')) {
-        return `• ${trimmedLine}`;
+    if (hasSelection && selectedText) {
+      // Format only selected text
+      if (!selectedText.startsWith('• ')) {
+        const bulletText = `• ${selectedText}`;
+        // Replace the selected text with bullet version
+        newHTML = currentHTML.replace(selectedText, bulletText);
+      } else {
+        newHTML = currentHTML;
       }
-      return trimmedLine;
-    }).filter(line => line); // Remove empty lines
+    } else {
+      // Format all lines
+      const lines = textContent.split('\n').filter(line => line.trim());
+      const formattedLines = lines.map(line => {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('• ')) {
+          return `• ${trimmed}`;
+        }
+        return trimmed;
+      });
+      
+      newHTML = formattedLines.join('<br>');
+    }
     
-    // Update the element content
-    const newContent = formattedLines.join('\n');
-    element.textContent = newContent;
+    console.log('New HTML:', newHTML);
+    
+    // Update the element
+    element.innerHTML = newHTML;
     
     // Update the state
-    onUpdateLineItem(index, 'description', element.innerHTML);
+    onUpdateLineItem(index, 'description', newHTML);
     
-    // Restore cursor position (approximately)
-    if (range) {
-      const newRange = document.createRange();
-      newRange.setStart(element.firstChild || element, Math.min(cursorPosition, newContent.length));
-      newRange.collapse(true);
-      selection?.removeAllRanges();
-      selection?.addRange(newRange);
+    // Clear selection and set cursor at end
+    if (selection) {
+      selection.removeAllRanges();
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      range.collapse(false);
+      selection.addRange(range);
     }
   };
 

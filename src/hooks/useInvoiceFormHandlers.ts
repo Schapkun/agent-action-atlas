@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useInvoiceForm } from './useInvoiceForm';
 import { useToast } from './use-toast';
@@ -36,6 +37,7 @@ export const useInvoiceFormHandlers = () => {
     const initializeInvoiceNumber = async () => {
       try {
         const defaultNumber = await getDefaultInvoiceNumber();
+        console.log('Initialized invoice number:', defaultNumber);
         setCurrentInvoiceNumber(defaultNumber);
         
         if (!invoiceNumber) {
@@ -77,6 +79,8 @@ export const useInvoiceFormHandlers = () => {
   };
 
   const getPlaceholderInvoiceNumber = () => {
+    console.log('Getting placeholder number, currentInvoiceNumber:', currentInvoiceNumber);
+    // Return the actual next invoice number as placeholder
     return currentInvoiceNumber || '';
   };
 
