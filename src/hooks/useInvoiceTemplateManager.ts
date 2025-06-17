@@ -7,20 +7,29 @@ export const useInvoiceTemplateManager = () => {
   const { templates: allTemplates, loading: templatesLoading } = useDocumentTemplates();
   const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplateWithLabels | null>(null);
 
-  // Filter templates with "Factuur" label (case-insensitive)
-  const invoiceTemplates = allTemplates.filter(template => 
-    template.labels?.some(label => label.name.toLowerCase() === 'factuur')
-  );
+  // Filter templates - ONLY show templates that have labels AND contain "Factuur" label
+  const invoiceTemplates = allTemplates.filter(template => {
+    // First check: template must have labels array with at least one label
+    if (!template.labels || template.labels.length === 0) {
+      return false;
+    }
+    
+    // Second check: must have a label with name "Factuur" (case-insensitive)
+    return template.labels.some(label => label.name.toLowerCase() === 'factuur');
+  });
 
-  console.log('🎯 TEMPLATE MANAGER: Available templates:', {
+  console.log('🎯 TEMPLATE MANAGER: Filtering results:', {
     totalTemplates: allTemplates.length,
-    allTemplateNames: allTemplates.map(t => t.name),
-    allTemplateLabels: allTemplates.map(t => ({
+    templatesWithLabels: allTemplates.filter(t => t.labels && t.labels.length > 0).length,
+    templatesWithoutLabels: allTemplates.filter(t => !t.labels || t.labels.length === 0).length,
+    factuurTemplatesFound: invoiceTemplates.length,
+    allTemplateDetails: allTemplates.map(t => ({
       name: t.name,
-      labels: t.labels?.map(l => l.name)
+      hasLabels: !!(t.labels && t.labels.length > 0),
+      labels: t.labels?.map(l => l.name) || [],
+      passesFilter: t.labels && t.labels.length > 0 && t.labels.some(l => l.name.toLowerCase() === 'factuur')
     })),
-    filteredInvoiceTemplates: invoiceTemplates.length,
-    invoiceTemplateNames: invoiceTemplates.map(t => t.name)
+    filteredTemplateNames: invoiceTemplates.map(t => t.name)
   });
 
   // Sort templates: favorite first, then by creation date (NEWEST FIRST)
@@ -61,12 +70,12 @@ export const useInvoiceTemplateManager = () => {
     localStorage.removeItem('favoriteTemplate');
   }, []);
 
-  console.log('🎯 TEMPLATE MANAGER: Current state (case-insensitive Factuur filtering):', {
+  console.log('🎯 TEMPLATE MANAGER: Final state (STRICT Factuur label filtering):', {
     selectedTemplate: selectedTemplate?.name,
     selectedTemplateLabels: selectedTemplate?.labels?.map(l => l.name),
     availableTemplates: sortedTemplates.length,
     loading: templatesLoading,
-    filteringBy: 'Factuur label (case-insensitive)',
+    filterRule: 'ONLY templates with labels AND containing "Factuur" label',
     templatesFound: sortedTemplates.map(t => ({
       name: t.name,
       isDefault: t.is_default,
