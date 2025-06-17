@@ -49,7 +49,7 @@ export const replaceAllPlaceholders = async (
     console.log('🏢 UNIVERSAL PLACEHOLDER: Company data loaded:', {
       hasData: Object.keys(companyData).length > 0,
       logoKeys: Object.keys(companyData).filter(key => key.toLowerCase().includes('logo')),
-      primaryLogo: companyData && typeof companyData === 'object' && 'logo' in companyData ? !!companyData.logo : false
+      primaryLogo: companyData?.logo || 'EMPTY'
     });
 
     // Combine all data sources
@@ -68,7 +68,8 @@ export const replaceAllPlaceholders = async (
       totalPlaceholders: Object.keys(allPlaceholders).length,
       logoKeys: Object.keys(allPlaceholders).filter(key => 
         key.toLowerCase().includes('logo')),
-      hasMainLogo: !!(allPlaceholders as any).logo
+      logoValue: allPlaceholders.logo ? 'HAS_VALUE' : 'EMPTY',
+      logoLength: allPlaceholders.logo ? String(allPlaceholders.logo).length : 0
     });
 
     // Replace all standard placeholders
@@ -79,7 +80,7 @@ export const replaceAllPlaceholders = async (
       const afterCount = (processedHTML.match(regex) || []).length;
       
       if (key.toLowerCase().includes('logo') && beforeCount > 0) {
-        console.log(`🖼️ LOGO REPLACEMENT: ${key}: ${beforeCount} -> ${afterCount} (value: ${value ? 'present' : 'empty'})`);
+        console.log(`🖼️ LOGO REPLACEMENT: ${key}: ${beforeCount} -> ${afterCount} (value: ${value ? 'HAS_VALUE' : 'EMPTY'})`);
       }
     });
 
@@ -114,15 +115,17 @@ export const replaceAllPlaceholders = async (
       processedHTML = processedHTML.replace(/{{#if notities}}[\s\S]*?{{\/if}}/g, '');
     }
 
-    // Logo conditional blocks - enhanced checking with safe property access and better debugging
-    const hasLogo = companyData && typeof companyData === 'object' && 'logo' in companyData && companyData.logo;
+    // IMPROVED Logo conditional blocks - more robust checking
+    const logoValue = allPlaceholders.logo;
+    const hasValidLogo = logoValue && String(logoValue).trim().length > 0;
+    
     console.log('🖼️ UNIVERSAL PLACEHOLDER: Logo conditional check:', { 
-      hasLogo, 
-      logoValue: companyData && typeof companyData === 'object' && 'logo' in companyData ? companyData.logo : 'undefined',
+      hasValidLogo, 
+      logoValue: logoValue ? String(logoValue).substring(0, 50) + '...' : 'NONE',
       logoConditionalBlocks: (processedHTML.match(/{{#if logo}}/g) || []).length
     });
     
-    if (hasLogo) {
+    if (hasValidLogo) {
       console.log('✅ UNIVERSAL PLACEHOLDER: Processing template WITH logo');
       processedHTML = processedHTML.replace(/{{#if logo}}([\s\S]*?){{else}}[\s\S]*?{{\/if}}/g, '$1');
       processedHTML = processedHTML.replace(/{{#if logo}}([\s\S]*?){{\/if}}/g, '$1');

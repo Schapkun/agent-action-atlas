@@ -47,7 +47,7 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
     htmlContent: finalHtml
   });
 
-  // Create complete HTML document with enhanced A4 styling matching invoice preview
+  // FIXED: Create complete HTML document with enhanced A4 styling matching other previews
   const getA4PreviewDocument = (content: string) => {
     // Extract body content if it's a complete HTML document
     let bodyContent = content;
@@ -68,97 +68,110 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>A4 Document Preview</title>
   <style>
+    /* CRITICAL: High specificity reset to override any template styles */
     * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-sizing: border-box !important;
     }
     
     html, body {
-      width: 100%;
-      height: 100%;
-      font-family: Arial, sans-serif;
-      background: white;
-      overflow: hidden;
+      width: 100% !important;
+      height: 100% !important;
+      font-family: Arial, sans-serif !important;
+      background: white !important;
+      overflow: hidden !important;
     }
     
+    /* FIXED: A4 container with exact dimensions */
     .a4-container {
-      width: 100%;
-      height: 100%;
-      background: white;
-      overflow: auto;
-      padding: 20px;
+      width: 100% !important;
+      height: 100% !important;
+      background: white !important;
+      overflow: auto !important;
+      padding: 20px !important;
+      max-width: 794px !important; /* A4 width exact */
+      margin: 0 auto !important;
     }
     
     .a4-content {
-      width: 100%;
-      min-height: calc(100% - 40px);
-      font-size: 12px;
-      line-height: 1.4;
-      color: #333;
-      max-width: 100%;
-      overflow-wrap: break-word;
+      width: 100% !important;
+      min-height: calc(100% - 40px) !important;
+      font-size: 12px !important; /* FIXED: Consistent small font */
+      line-height: 1.4 !important;
+      color: #333 !important;
+      max-width: 100% !important;
+      overflow-wrap: break-word !important;
     }
 
-    /* Enhanced table styling matching invoice preview */
+    /* FIXED: Enhanced table styling with high specificity */
+    .a4-content table,
     table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 16px 0;
-      font-size: 14px;
+      width: 100% !important;
+      border-collapse: collapse !important;
+      margin: 16px 0 !important;
+      font-size: 12px !important; /* FIXED: Consistent font */
     }
     
+    .a4-content th,
     th {
-      background: #f8f9fa;
-      font-weight: 600;
-      padding: 12px 8px;
-      text-align: left;
-      border-bottom: 2px solid #e9ecef;
+      background: #f8f9fa !important;
+      font-weight: 600 !important;
+      padding: 8px 6px !important; /* FIXED: Smaller padding */
+      text-align: left !important;
+      border-bottom: 2px solid #e9ecef !important;
+      font-size: 12px !important; /* FIXED: Consistent font size */
     }
     
+    .a4-content td,
     td {
-      padding: 10px 8px;
-      text-align: left;
-      border-bottom: 1px solid #e9ecef;
+      padding: 6px 6px !important; /* FIXED: Smaller padding */
+      text-align: left !important;
+      border-bottom: 1px solid #e9ecef !important;
+      font-size: 12px !important; /* FIXED: Consistent font size */
     }
 
-    /* Typography matching invoice preview */
+    /* FIXED: Typography with high specificity */
+    .a4-content h1, .a4-content h2, .a4-content h3,
     h1, h2, h3 {
-      color: #212529;
-      font-weight: 600;
-      margin: 20px 0 12px 0;
+      color: #212529 !important;
+      font-weight: 600 !important;
+      margin: 16px 0 8px 0 !important; /* FIXED: Smaller margins */
     }
     
-    h1 { font-size: 24px; }
-    h2 { font-size: 20px; }
-    h3 { font-size: 16px; }
+    .a4-content h1, h1 { font-size: 18px !important; } /* FIXED: Smaller font */
+    .a4-content h2, h2 { font-size: 16px !important; } /* FIXED: Smaller font */
+    .a4-content h3, h3 { font-size: 14px !important; } /* FIXED: Smaller font */
     
+    .a4-content p,
     p {
-      font-size: 14px;
-      margin: 8px 0;
-      color: #495057;
+      font-size: 12px !important; /* FIXED: Consistent small font */
+      margin: 6px 0 !important; /* FIXED: Smaller margins */
+      color: #495057 !important;
     }
 
-    /* Unified logo styling - consistent with invoice preview */
-    .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], img[alt*="Logo"] {
-      max-width: 200px;
-      max-height: 100px;
-      height: auto;
-      object-fit: contain;
+    /* FIXED: Unified logo styling with high specificity */
+    .a4-content .company-logo, .a4-content .bedrijfslogo, 
+    .a4-content img[src*="logo"], .a4-content img[alt*="logo"], 
+    .a4-content img[alt*="Logo"], .a4-content .logo, 
+    .a4-content .Logo, .a4-content .LOGO,
+    .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], 
+    img[alt*="Logo"], .logo, .Logo, .LOGO {
+      max-width: 160px !important; /* FIXED: Consistent with LivePreview */
+      max-height: 80px !important; /* FIXED: Consistent with LivePreview */
+      height: auto !important;
+      object-fit: contain !important;
     }
 
-    /* Additional logo variations */
-    .logo, .Logo, .LOGO {
-      max-width: 200px;
-      max-height: 100px;
-      height: auto;
-      object-fit: contain;
+    /* FIXED: Prevent content overflow with high specificity */
+    .a4-content *, .a4-content *:before, .a4-content *:after {
+      max-width: 100% !important;
+      overflow-wrap: break-word !important;
     }
 
-    /* Prevent content overflow - FIXED */
-    .a4-content * {
-      max-width: 100%;
-      overflow-wrap: break-word;
+    /* FIXED: Override any template font sizes */
+    .a4-content div, .a4-content span, .a4-content li {
+      font-size: 12px !important;
     }
   </style>
 </head>
@@ -205,15 +218,15 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       {/* 5px ruimte boven preview */}
       <div className="flex-shrink-0 h-[5px]" />
 
-      {/* A4 Preview Area - FIXED: Better overflow handling */}
+      {/* FIXED: A4 Preview Area with proper overflow handling */}
       <div className="flex-1 min-h-0 flex justify-center items-center px-4 overflow-hidden">
         <div 
           className="bg-white shadow-lg border border-gray-300 overflow-hidden"
           style={{
             height: '100%',
-            width: 'calc(100% * 0.707)', // A4 verhouding: breedte = 70.7% van hoogte
-            maxWidth: '100%',
-            aspectRatio: '210/297'
+            width: '100%',
+            maxWidth: '794px', /* FIXED: A4 width exact */
+            aspectRatio: '210/297' /* FIXED: A4 aspect ratio */
           }}
         >
           <iframe
