@@ -34,59 +34,79 @@ export const ContactSelectionCard = ({
     setShowEditDialog(false);
   };
 
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowEditDialog(true);
+  };
+
+  const handleCreateClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowCreateDialog(true);
+  };
+
+  const handleSettingsClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onShowSettings();
+  };
+
   return (
     <>
       <Card>
         <CardContent className="p-3">
-          {/* Single row layout */}
+          {/* Single row layout - no labels */}
           <div className="flex items-center gap-3">
-            {/* Contact section */}
-            <div className="flex-1">
+            {/* Contact section - wider */}
+            <div className="flex-[2]">
               <div className="flex items-center gap-2">
                 <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Contact</label>
                   <ContactSelector
                     selectedContact={selectedContact}
                     onContactSelect={onContactSelect}
                   />
                 </div>
-                <div className="flex gap-1 mt-5">
+                <div className="flex gap-1">
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setShowCreateDialog(true)}
+                    onClick={handleCreateClick}
                     className="text-xs h-8 px-2"
                   >
                     <UserPlus className="h-3 w-3 mr-1" />
                     Nieuw
                   </Button>
-                  {selectedContact && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowEditDialog(true)}
-                      className="text-xs h-8 px-2"
-                    >
-                      <Edit className="h-3 w-3 mr-1" />
-                      Bewerken
-                    </Button>
-                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEditClick}
+                    disabled={!selectedContact}
+                    className="text-xs h-8 px-2"
+                  >
+                    <Edit className="h-3 w-3 mr-1" />
+                    Bewerken
+                  </Button>
                 </div>
               </div>
             </div>
 
-            {/* Template section */}
+            {/* Template section - narrower */}
             <div className="flex-1">
-              <label className="block text-xs font-medium text-gray-700 mb-1">Template</label>
-              {templateSelector}
+              <div className="w-full">
+                {templateSelector}
+              </div>
             </div>
 
             {/* Settings button */}
-            <div className="mt-5">
+            <div>
               <Button
+                type="button"
                 variant="outline"
                 size="sm"
-                onClick={onShowSettings}
+                onClick={handleSettingsClick}
                 className="text-xs h-8 px-2"
               >
                 <Settings className="h-3 w-3 mr-1" />
@@ -94,38 +114,6 @@ export const ContactSelectionCard = ({
               </Button>
             </div>
           </div>
-
-          {/* Selected Contact Info */}
-          {selectedContact && (
-            <div className="pt-3 border-t mt-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                <div>
-                  <div className="font-medium text-gray-900">{selectedContact.name}</div>
-                  {selectedContact.email && (
-                    <div className="text-gray-600">{selectedContact.email}</div>
-                  )}
-                  {selectedContact.phone && (
-                    <div className="text-gray-600">{selectedContact.phone}</div>
-                  )}
-                </div>
-                <div>
-                  {selectedContact.address && (
-                    <div className="text-gray-600">{selectedContact.address}</div>
-                  )}
-                  {(selectedContact.postal_code || selectedContact.city) && (
-                    <div className="text-gray-600">
-                      {selectedContact.postal_code} {selectedContact.city}
-                    </div>
-                  )}
-                  {selectedContact.country && selectedContact.country !== 'Nederland' && (
-                    <Badge variant="outline" className="text-xs mt-1">
-                      {selectedContact.country}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 

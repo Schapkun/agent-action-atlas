@@ -32,7 +32,7 @@ export const LineItemsTable = ({
       <CardContent className="p-2">
         <div className="space-y-2">
           {lineItems.map((item, index) => (
-            <div key={index} className="grid grid-cols-12 gap-2 items-start">
+            <div key={index} className="grid grid-cols-12 gap-2 items-center">
               <div className="col-span-1">
                 <Input
                   type="number"
@@ -43,16 +43,16 @@ export const LineItemsTable = ({
                 />
               </div>
               <div className="col-span-6">
-                <div className="border rounded">
+                <div className="space-y-1">
                   <div
                     contentEditable
-                    className="min-h-[32px] p-2 text-xs focus:outline-none"
+                    className="min-h-[32px] p-2 text-xs focus:outline-none border rounded"
                     style={{ direction: 'ltr', textAlign: 'left' }}
                     onBlur={(e) => onUpdateLineItem(index, 'description', e.currentTarget.innerHTML || '')}
                     dangerouslySetInnerHTML={{ __html: item.description }}
                     suppressContentEditableWarning
                   />
-                  <div className="flex items-center gap-1 p-1 border-t bg-gray-50">
+                  <div className="flex items-center gap-1">
                     <Button 
                       type="button" 
                       variant="ghost" 

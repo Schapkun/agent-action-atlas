@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useInvoiceForm } from './useInvoiceForm';
 import { useToast } from './use-toast';
 
@@ -31,6 +31,22 @@ export const useInvoiceFormHandlers = () => {
     handleSaveAndSend
   } = useInvoiceForm();
 
+  // Initialize invoice number on component mount if not already set
+  useEffect(() => {
+    const initializeInvoiceNumber = async () => {
+      if (!invoiceNumber) {
+        try {
+          const defaultNumber = await getDefaultInvoiceNumber();
+          setInvoiceNumber(defaultNumber);
+        } catch (error) {
+          console.error('Failed to initialize invoice number:', error);
+        }
+      }
+    };
+
+    initializeInvoiceNumber();
+  }, [invoiceNumber, getDefaultInvoiceNumber, setInvoiceNumber]);
+
   const togglePreview = () => setShowPreview(!showPreview);
 
   const handleInvoiceNumberChange = (value: string) => {
@@ -40,8 +56,12 @@ export const useInvoiceFormHandlers = () => {
   const handleInvoiceNumberFocus = async () => {
     setIsInvoiceNumberFocused(true);
     if (!invoiceNumber) {
-      const defaultNumber = await getDefaultInvoiceNumber();
-      setInvoiceNumber(defaultNumber);
+      try {
+        const defaultNumber = await getDefaultInvoiceNumber();
+        setInvoiceNumber(defaultNumber);
+      } catch (error) {
+        console.error('Failed to get default invoice number:', error);
+      }
     }
   };
 
@@ -50,10 +70,7 @@ export const useInvoiceFormHandlers = () => {
   };
 
   const getDisplayInvoiceNumber = () => {
-    if (invoiceNumber) {
-      return invoiceNumber;
-    }
-    return '';
+    return invoiceNumber || '';
   };
 
   const handleContactClear = () => {

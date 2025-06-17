@@ -44,10 +44,22 @@ export const InvoiceDetailsCard = ({
   }, [formData.invoice_date, formData.payment_terms, formData.due_date, onFormDataChange]);
 
   const getCurrentInvoiceNumber = () => {
-    const displayNumber = getDisplayInvoiceNumber();
-    // Extract just the number part after the prefix
-    const numberPart = displayNumber.replace(invoiceSettings.invoice_prefix || '', '');
-    return numberPart;
+    const fullNumber = getDisplayInvoiceNumber() || invoiceNumber;
+    const prefix = invoiceSettings.invoice_prefix || '2025-';
+    
+    // If the full number already includes the prefix, extract just the number part
+    if (fullNumber.startsWith(prefix)) {
+      return fullNumber.substring(prefix.length);
+    }
+    
+    // If it doesn't include the prefix, return the full number (it's just the number part)
+    return fullNumber;
+  };
+
+  const handleInvoiceNumberChange = (value: string) => {
+    const prefix = invoiceSettings.invoice_prefix || '2025-';
+    const fullNumber = prefix + value;
+    onInvoiceNumberChange(fullNumber);
   };
 
   return (
@@ -74,10 +86,10 @@ export const InvoiceDetailsCard = ({
                   {invoiceSettings.invoice_prefix || '2025-'}
                 </span>
                 <Input 
-                  className="rounded-l-none border-l-0 text-xs h-8 w-16" 
+                  className="rounded-l-none border-l-0 text-xs h-8 w-20" 
                   value={getCurrentInvoiceNumber()}
                   placeholder="001"
-                  onChange={(e) => onInvoiceNumberChange((invoiceSettings.invoice_prefix || '2025-') + e.target.value)}
+                  onChange={(e) => handleInvoiceNumberChange(e.target.value)}
                   onFocus={onInvoiceNumberFocus}
                   onBlur={onInvoiceNumberBlur}
                 />
@@ -99,7 +111,10 @@ export const InvoiceDetailsCard = ({
                   type="number"
                   value={formData.payment_terms || ''}
                   placeholder={invoiceSettings.default_payment_terms?.toString() || '30'}
-                  onChange={(e) => onFormDataChange({ payment_terms: parseInt(e.target.value) || invoiceSettings.default_payment_terms || 30 })}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || invoiceSettings.default_payment_terms || 30;
+                    onFormDataChange({ payment_terms: value });
+                  }}
                   className="text-xs h-8 w-16"
                 />
                 <span className="text-xs">dagen</span>

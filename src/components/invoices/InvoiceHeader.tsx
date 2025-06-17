@@ -2,6 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { RotateCcw, RotateCw, Save, Send, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 interface InvoiceHeaderProps {
   loading: boolean;
@@ -25,6 +26,22 @@ export const InvoiceHeader = ({
   onSaveAndSend
 }: InvoiceHeaderProps) => {
   const navigate = useNavigate();
+  const [undoStack, setUndoStack] = useState<any[]>([]);
+  const [redoStack, setRedoStack] = useState<any[]>([]);
+
+  const handleUndo = () => {
+    if (undoStack.length > 0) {
+      console.log('Undo action triggered');
+      // For now, just log - in a real implementation this would restore previous state
+    }
+  };
+
+  const handleRedo = () => {
+    if (redoStack.length > 0) {
+      console.log('Redo action triggered');
+      // For now, just log - in a real implementation this would restore next state
+    }
+  };
 
   return (
     <div className="bg-white border-b px-4 py-3">
@@ -34,13 +51,28 @@ export const InvoiceHeader = ({
         </div>
         
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs px-2 py-1">
+          <Button 
+            type="button"
+            variant="outline" 
+            size="sm" 
+            onClick={handleUndo}
+            disabled={undoStack.length === 0}
+            className="text-xs px-2 py-1"
+          >
             <RotateCcw className="h-3 w-3" />
           </Button>
-          <Button variant="outline" size="sm" className="text-xs px-2 py-1">
+          <Button 
+            type="button"
+            variant="outline" 
+            size="sm" 
+            onClick={handleRedo}
+            disabled={redoStack.length === 0}
+            className="text-xs px-2 py-1"
+          >
             <RotateCw className="h-3 w-3" />
           </Button>
           <Button 
+            type="button"
             variant="outline" 
             size="sm" 
             onClick={onTogglePreview}
@@ -49,7 +81,13 @@ export const InvoiceHeader = ({
             {showPreview ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
             {showPreview ? 'Verberg' : 'Voorbeeld'}
           </Button>
-          <Button variant="outline" size="sm" onClick={onConvertToQuote} className="flex items-center gap-1 text-xs px-2 py-1">
+          <Button 
+            type="button"
+            variant="outline" 
+            size="sm" 
+            onClick={onConvertToQuote} 
+            className="flex items-center gap-1 text-xs px-2 py-1"
+          >
             ⚙️ Naar offerte
           </Button>
           
@@ -64,6 +102,7 @@ export const InvoiceHeader = ({
               Annuleren
             </Button>
             <Button 
+              type="button"
               onClick={onSubmit} 
               disabled={loading}
               size="sm"
@@ -73,6 +112,7 @@ export const InvoiceHeader = ({
               {loading ? 'Opslaan...' : 'Opslaan'}
             </Button>
             <Button 
+              type="button"
               onClick={onSaveAndSend}
               disabled={sendLoading || !clientEmail}
               size="sm"
