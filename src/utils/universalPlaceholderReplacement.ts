@@ -1,4 +1,3 @@
-
 import { loadCompanyData } from './companyDataMapping';
 
 interface PlaceholderReplacementOptions {
@@ -71,6 +70,10 @@ export const replaceAllPlaceholders = async (
       logoValue: allPlaceholders.logo ? 'HAS_VALUE' : 'EMPTY',
       logoLength: allPlaceholders.logo ? String(allPlaceholders.logo).length : 0
     });
+
+    // DIRECT LOGO FIX - explicit replacement before the forEach loop
+    processedHTML = processedHTML.replace(/\{\{logo\}\}/g, allPlaceholders.logo || '');
+    console.log('🖼️ DIRECT LOGO FIX: Replaced {{logo}} with:', allPlaceholders.logo ? 'HAS_VALUE' : 'EMPTY');
 
     // Replace all standard placeholders
     Object.entries(allPlaceholders).forEach(([key, value]) => {
