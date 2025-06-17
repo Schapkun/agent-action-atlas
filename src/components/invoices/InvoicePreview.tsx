@@ -27,25 +27,49 @@ export const InvoicePreview = ({
 
   useEffect(() => {
     const generatePreview = async () => {
-      console.log('🎨 PREVIEW DEBUG: Starting preview generation with:', {
-        templateName: selectedTemplate?.name,
-        templateId: selectedTemplate?.id?.substring(0, 8) + '...',
-        formData: {
+      console.log('🎨 PREVIEW: Starting generation with DETAILED MAPPING:', {
+        templateInfo: {
+          name: selectedTemplate?.name,
+          id: selectedTemplate?.id?.substring(0, 8) + '...',
+          hasHtmlContent: !!(selectedTemplate?.html_content)
+        },
+        formDataMapping: {
           client_name: formData.client_name,
           client_email: formData.client_email,
           client_address: formData.client_address,
           client_postal_code: formData.client_postal_code,
           client_city: formData.client_city,
           client_country: formData.client_country,
-          hasContactData: !!(formData.client_name && formData.client_name !== '')
+          invoice_date: formData.invoice_date,
+          due_date: formData.due_date,
+          payment_terms: formData.payment_terms,
+          notes: formData.notes,
+          hasContactData: !!(formData.client_name && formData.client_name !== ''),
+          expectedPlaceholders: {
+            '{{klant_naam}}': formData.client_name || '[Klantnaam]',
+            '{{klant_email}}': formData.client_email || '[Klant email]',
+            '{{klant_adres}}': formData.client_address || '[Klant adres]',
+            '{{factuurnummer}}': invoiceNumber || 'CONCEPT'
+          }
         },
-        lineItemsCount: lineItems.length,
-        invoiceNumber: invoiceNumber,
-        organizationId: selectedOrganization?.id?.substring(0, 8) + '...'
+        lineItemsInfo: {
+          count: lineItems.length,
+          hasItems: lineItems.length > 0,
+          sampleItem: lineItems[0] ? {
+            description: lineItems[0].description,
+            quantity: lineItems[0].quantity,
+            unit_price: lineItems[0].unit_price,
+            line_total: lineItems[0].line_total
+          } : null
+        },
+        organizationInfo: {
+          id: selectedOrganization?.id?.substring(0, 8) + '...',
+          hasOrganization: !!selectedOrganization?.id
+        }
       });
       
       if (!selectedTemplate) {
-        console.log('🎨 PREVIEW: No template selected');
+        console.log('⚠️ PREVIEW: No template selected');
         setPreviewHTML('<div style="padding: 40px; text-align: center; color: #6b7280;">Geen template geselecteerd</div>');
         return;
       }
@@ -58,10 +82,11 @@ export const InvoicePreview = ({
           invoiceNumber,
           selectedOrganization?.id
         );
-        console.log('🎨 PREVIEW SUCCESS: Generated HTML preview for template:', selectedTemplate.name);
+        console.log('✅ PREVIEW SUCCESS: Generated HTML preview for template:', selectedTemplate.name);
+        console.log('🔍 PREVIEW: HTML snippet (first 200 chars):', html.substring(0, 200) + '...');
         setPreviewHTML(html);
       } catch (error) {
-        console.error('🎨 PREVIEW ERROR: Failed to generate preview:', error);
+        console.error('❌ PREVIEW ERROR: Failed to generate preview:', error);
         setPreviewHTML('<div style="padding: 40px; text-align: center; color: #dc2626;">Fout bij laden van voorbeeld</div>');
       }
     };
@@ -180,7 +205,7 @@ export const InvoicePreview = ({
           Live Voorbeeld
           {selectedTemplate && (
             <span className="text-xs text-gray-500">
-              ({selectedTemplate.name} - ID: {selectedTemplate.id.substring(0, 8)}...)
+              ({selectedTemplate.name})
             </span>
           )}
         </h3>

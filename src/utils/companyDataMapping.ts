@@ -30,7 +30,7 @@ export interface CompanyData {
 
 export const loadCompanyData = async (organizationId: string): Promise<Record<string, string>> => {
   try {
-    console.log('Loading company data for organization:', organizationId);
+    console.log('🏢 Loading company data for organization:', organizationId);
     
     const { data, error } = await supabase
       .from('organization_settings')
@@ -39,16 +39,16 @@ export const loadCompanyData = async (organizationId: string): Promise<Record<st
       .maybeSingle();
 
     if (error) {
-      console.error('Error loading company data:', error);
+      console.error('❌ Error loading company data:', error);
       return {};
     }
 
     if (!data) {
-      console.log('No company data found');
+      console.log('⚠️ No company data found');
       return {};
     }
 
-    console.log('Company data loaded:', data);
+    console.log('✅ Company data loaded:', data);
 
     // Map database fields to placeholder keys
     const mappedData: Record<string, string> = {};
@@ -60,14 +60,25 @@ export const loadCompanyData = async (organizationId: string): Promise<Record<st
       }
     });
 
+    // Add logo support - check multiple possible logo fields
+    const logoUrl = data.company_logo || data.logo || data.bedrijfslogo;
+    if (logoUrl) {
+      mappedData['logo'] = logoUrl;
+      mappedData['bedrijfslogo'] = logoUrl;
+      mappedData['company_logo'] = logoUrl;
+      console.log('🖼️ Logo found:', logoUrl);
+    } else {
+      console.log('⚠️ No logo found in company data');
+    }
+
     // Add some computed fields
     mappedData['datum'] = new Date().toLocaleDateString('nl-NL');
     mappedData['referentie'] = `REF-${Date.now()}`;
 
-    console.log('Mapped company data:', mappedData);
+    console.log('🔄 Mapped company data with logo:', mappedData);
     return mappedData;
   } catch (error) {
-    console.error('Error in loadCompanyData:', error);
+    console.error('❌ Error in loadCompanyData:', error);
     return {};
   }
 };
