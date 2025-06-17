@@ -92,10 +92,9 @@ export const useInvoiceTemplateManager = () => {
     }
   }, [sortedTemplates, selectedTemplate]);
 
-  const handleTemplateSelect = (templateId: string) => {
-    const template = sortedTemplates.find(t => t.id === templateId);
-    console.log('🎯 TEMPLATE MANAGER: User selected template:', template?.name, 'ID:', templateId);
-    setSelectedTemplate(template || null);
+  const handleTemplateSelect = (template: DocumentTemplateWithLabels) => {
+    console.log('🎯 TEMPLATE MANAGER: User selected template:', template?.name, 'ID:', template?.id);
+    setSelectedTemplate(template);
   };
 
   // Clear any old localStorage entries that might conflict
