@@ -29,7 +29,7 @@ export const generateInvoicePreviewDocument = (content: string, title: string = 
       overflow-x: hidden;
     }
     
-    /* INVOICE-SPECIFIC LOGO STYLING - NO CONFLICTS */
+    /* WORKING LOGO STYLING - Simple and effective */
     .company-logo, .bedrijfslogo, 
     img[src*="logo"], img[alt*="logo"], 
     img[alt*="Logo"], .logo, 
@@ -37,6 +37,7 @@ export const generateInvoicePreviewDocument = (content: string, title: string = 
       max-width: 200px !important;
       max-height: 100px !important;
       height: auto !important;
+      width: auto !important;
       object-fit: contain !important;
       display: block !important;
     }
