@@ -103,9 +103,9 @@ export const replaceAllPlaceholders = async (
       processedHTML = processedHTML.replace(/{{#if notities}}[\s\S]*?{{\/if}}/g, '');
     }
 
-    // Logo conditional blocks - enhanced checking
-    const hasLogo = companyData && companyData.logo;
-    console.log('🖼️ UNIVERSAL PLACEHOLDER: Logo check result:', { hasLogo, logoValue: companyData?.logo });
+    // Logo conditional blocks - enhanced checking with safe property access
+    const hasLogo = companyData && typeof companyData === 'object' && 'logo' in companyData && companyData.logo;
+    console.log('🖼️ UNIVERSAL PLACEHOLDER: Logo check result:', { hasLogo, logoValue: companyData && 'logo' in companyData ? (companyData as any).logo : 'undefined' });
     
     if (hasLogo) {
       console.log('✅ UNIVERSAL PLACEHOLDER: Processing template with logo');
