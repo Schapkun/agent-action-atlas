@@ -7,7 +7,7 @@ export const useInvoiceTemplateManager = () => {
   const { templates: allTemplates, loading: templatesLoading } = useDocumentTemplates();
   const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplateWithLabels | null>(null);
 
-  // Filter templates with "Factuur" label
+  // Filter templates ONLY with "Factuur" label (no more type filtering)
   const invoiceTemplates = allTemplates.filter(template => 
     template.labels?.some(label => label.name.toLowerCase() === 'factuur')
   );
@@ -16,7 +16,7 @@ export const useInvoiceTemplateManager = () => {
   const sortedTemplates = [...invoiceTemplates].sort((a, b) => {
     if (a.is_default && !b.is_default) return -1;
     if (!a.is_default && b.is_default) return 1;
-    // Changed to newest first instead of oldest first
+    // Newest first for better UX
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
@@ -24,7 +24,7 @@ export const useInvoiceTemplateManager = () => {
   useEffect(() => {
     if (sortedTemplates.length > 0 && !selectedTemplate) {
       const defaultTemplate = sortedTemplates.find(t => t.is_default) || sortedTemplates[0];
-      console.log('🎯 CENTRAAL: Auto-selecting template (newest first):', defaultTemplate.name);
+      console.log('🎯 CENTRAAL: Auto-selecting template (label-based only):', defaultTemplate.name);
       setSelectedTemplate(defaultTemplate);
     }
   }, [sortedTemplates, selectedTemplate]);
@@ -41,11 +41,12 @@ export const useInvoiceTemplateManager = () => {
     localStorage.removeItem('favoriteTemplate');
   }, []);
 
-  console.log('🎯 CENTRAAL: Current state:', {
+  console.log('🎯 CENTRAAL: Current state (label-based filtering only):', {
     selectedTemplate: selectedTemplate?.name,
     availableTemplates: sortedTemplates.length,
     loading: templatesLoading,
-    sortOrder: 'newest first'
+    filteringBy: 'Factuur label only',
+    templatesFound: sortedTemplates.map(t => t.name)
   });
 
   return {
