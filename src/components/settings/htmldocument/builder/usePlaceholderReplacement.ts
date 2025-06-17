@@ -31,6 +31,7 @@ export function usePlaceholderReplacement({ placeholderValues, companyData = {} 
     
     console.log('🎨 HTML EDITOR: All values for replacement:', allValues);
     
+    // First handle standard placeholder fields
     PLACEHOLDER_FIELDS.forEach(({ id, type }) => {
       const regex = new RegExp(`{{${id}}}`, "g");
       if (forPreview && type === "image") {
@@ -43,17 +44,17 @@ export function usePlaceholderReplacement({ placeholderValues, companyData = {} 
           );
           replaced = replaced.replace(
             regex,
-            `<img src="${allValues[id]}" alt="Bedrijfslogo" style="width:120px;max-height:75px;object-fit:contain;" />`
+            `<img src="${allValues[id]}" alt="Bedrijfslogo" style="max-width:200px;max-height:100px;object-fit:contain;" />`
           );
         } else {
           console.log(`⚠️ HTML EDITOR: No value found for logo placeholder ${id}`);
           replaced = replaced.replace(
             srcRegex,
-            `src="" style="background:#eee;border:1px dashed #ccc;width:120px;max-height:75px;object-fit:contain;"`
+            `src="" style="background:#eee;border:1px dashed #ccc;width:200px;max-height:100px;object-fit:contain;"`
           );
           replaced = replaced.replace(
             regex,
-            `<span style="color:#ddd;">[Logo]</span>`
+            `<div style="background:#eee;border:1px dashed #ccc;width:200px;max-height:100px;display:flex;align-items:center;justify-content:center;color:#999;">[Logo]</div>`
           );
         }
       } else {
@@ -64,7 +65,7 @@ export function usePlaceholderReplacement({ placeholderValues, companyData = {} 
       }
     });
     
-    // Also replace common logo placeholders that might not be in PLACEHOLDER_FIELDS
+    // Handle comprehensive logo placeholders - ensuring all variations are covered
     const logoPlaceholders = ['logo', 'bedrijfslogo', 'company_logo', 'LOGO', 'BEDRIJFSLOGO'];
     logoPlaceholders.forEach(logoField => {
       const logoRegex = new RegExp(`{{${logoField}}}`, 'g');
@@ -92,10 +93,24 @@ export function usePlaceholderReplacement({ placeholderValues, companyData = {} 
         );
       }
     });
+
+    // Handle conditional logo blocks similar to invoiceTemplateUtils
+    const hasLogo = allValues && typeof allValues === 'object' && 'logo' in allValues && allValues.logo;
+    if (forPreview) {
+      if (hasLogo) {
+        console.log('🖼️ HTML EDITOR: Processing conditional logo blocks - logo found');
+        replaced = replaced.replace(/{{#if logo}}([\s\S]*?){{else}}[\s\S]*?{{\/if}}/g, '$1');
+        replaced = replaced.replace(/{{#if logo}}([\s\S]*?){{\/if}}/g, '$1');
+      } else {
+        console.log('⚠️ HTML EDITOR: Processing conditional logo blocks - no logo');
+        replaced = replaced.replace(/{{#if logo}}[\s\S]*?{{else}}([\s\S]*?){{\/if}}/g, '$1');
+        replaced = replaced.replace(/{{#if logo}}[\s\S]*?{{\/if}}/g, '');
+      }
+    }
     
-    // Also replace any other placeholders that might exist in the content
+    // Replace any other placeholders that might exist in the content
     const remainingPlaceholders = content.match(/{{([^}]+)}}/g);
-    if (remainingPlaceholders) {
+    if (remainingPlaceholders && forPreview) {
       remainingPlaceholders.forEach(placeholder => {
         const key = placeholder.replace(/[{}]/g, '');
         if (allValues[key]) {

@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { usePlaceholderReplacement } from './usePlaceholderReplacement';
+import { useOrganization } from '@/contexts/OrganizationContext';
+import { loadCompanyData } from '@/utils/companyDataMapping';
 
 interface DocumentPreviewProps {
   htmlContent: string;
@@ -12,14 +14,39 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   placeholderValues 
 }) => {
   const [processedHtml, setProcessedHtml] = useState('');
+  const [companyData, setCompanyData] = useState<Record<string, string>>({});
+  const { selectedOrganization } = useOrganization();
+  
   const { getScaledHtmlContent } = usePlaceholderReplacement({ 
     placeholderValues,
-    companyData: {} 
+    companyData 
   });
+
+  // Load company data when organization changes
+  useEffect(() => {
+    const loadData = async () => {
+      if (selectedOrganization?.id) {
+        console.log('🏢 DOCUMENT PREVIEW: Loading company data for organization:', selectedOrganization.id);
+        try {
+          const data = await loadCompanyData(selectedOrganization.id);
+          console.log('🏢 DOCUMENT PREVIEW: Company data loaded:', data);
+          setCompanyData(data);
+        } catch (error) {
+          console.error('❌ DOCUMENT PREVIEW: Error loading company data:', error);
+          setCompanyData({});
+        }
+      }
+    };
+    
+    loadData();
+  }, [selectedOrganization?.id]);
 
   useEffect(() => {
     const processHtml = async () => {
-      console.log('🎨 DOCUMENT PREVIEW: Processing HTML with placeholders');
+      console.log('🎨 DOCUMENT PREVIEW: Processing HTML with placeholders and company data');
+      console.log('🔍 DOCUMENT PREVIEW: Company data keys:', Object.keys(companyData));
+      console.log('🔍 DOCUMENT PREVIEW: Placeholder values keys:', Object.keys(placeholderValues));
+      
       try {
         const processed = await getScaledHtmlContent(htmlContent);
         console.log('✅ DOCUMENT PREVIEW: HTML processed successfully');
@@ -30,15 +57,24 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       }
     };
 
-    if (htmlContent) {
+    if (htmlContent && Object.keys(companyData).length > 0) {
+      processHtml();
+    } else if (htmlContent && Object.keys(companyData).length === 0) {
+      // Process even without company data, but log it
+      console.log('⚠️ DOCUMENT PREVIEW: Processing without company data');
       processHtml();
     }
-  }, [htmlContent, placeholderValues, getScaledHtmlContent]);
+  }, [htmlContent, placeholderValues, companyData, getScaledHtmlContent]);
 
   return (
     <div className="w-1/2 flex flex-col">
       <div className="p-4 border-b">
         <h3 className="font-semibold">Document Preview</h3>
+        {selectedOrganization && (
+          <p className="text-xs text-gray-500">
+            Organisatie: {selectedOrganization.name}
+          </p>
+        )}
       </div>
       <div className="flex-1 p-4 overflow-hidden flex items-center justify-center bg-gray-50">
         <div className="w-full h-full flex items-center justify-center">

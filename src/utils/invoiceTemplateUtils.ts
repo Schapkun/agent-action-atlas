@@ -47,7 +47,7 @@ export const generatePreviewHTML = async (
     const companyData = organizationId ? await loadCompanyData(organizationId) : {};
     console.log('🏢 TEMPLATE UTILS: Company data loaded:', companyData);
 
-    // Create placeholder replacements
+    // Create comprehensive placeholder replacements
     const placeholders = {
       // Invoice data
       factuurnummer: invoiceNumber || 'CONCEPT',
@@ -62,7 +62,7 @@ export const generatePreviewHTML = async (
       klant_plaats: formData.client_city || '[Plaats]',
       klant_land: formData.client_country || 'Nederland',
       
-      // Company data (from database)
+      // Company data (from database) - this now includes extensive logo mappings
       ...companyData,
       
       // Totals
@@ -77,9 +77,13 @@ export const generatePreviewHTML = async (
       datum: new Date().toLocaleDateString('nl-NL')
     };
 
-    console.log('🔄 TEMPLATE UTILS: All placeholders including LOGO:', placeholders);
+    console.log('🔄 TEMPLATE UTILS: All placeholders including LOGO:', {
+      ...placeholders,
+      logoKeys: Object.keys(placeholders).filter(key => 
+        key.toLowerCase().includes('logo'))
+    });
 
-    // Replace all placeholders
+    // Replace all placeholders including the extensive logo variations
     Object.entries(placeholders).forEach(([key, value]) => {
       const regex = new RegExp(`{{${key}}}`, 'g');
       processedHTML = processedHTML.replace(regex, String(value || ''));
@@ -118,12 +122,16 @@ export const generatePreviewHTML = async (
       processedHTML = processedHTML.replace(/{{#if notities}}[\s\S]*?{{\/if}}/g, '');
     }
 
-    // Handle logo conditional blocks - safely access logo property
+    // Handle logo conditional blocks with enhanced checking
     const hasLogo = companyData && typeof companyData === 'object' && 'logo' in companyData && companyData.logo;
+    console.log('🖼️ TEMPLATE UTILS: Logo check result:', { hasLogo, logoValue: companyData?.logo });
+    
     if (hasLogo) {
+      console.log('✅ TEMPLATE UTILS: Processing template with logo');
       processedHTML = processedHTML.replace(/{{#if logo}}([\s\S]*?){{else}}[\s\S]*?{{\/if}}/g, '$1');
       processedHTML = processedHTML.replace(/{{#if logo}}([\s\S]*?){{\/if}}/g, '$1');
     } else {
+      console.log('⚠️ TEMPLATE UTILS: Processing template without logo');
       processedHTML = processedHTML.replace(/{{#if logo}}[\s\S]*?{{else}}([\s\S]*?){{\/if}}/g, '$1');
       processedHTML = processedHTML.replace(/{{#if logo}}[\s\S]*?{{\/if}}/g, '');
     }
@@ -131,7 +139,7 @@ export const generatePreviewHTML = async (
     // Clean up any remaining unfilled placeholders
     processedHTML = processedHTML.replace(/{{[^}]+}}/g, '');
 
-    console.log('✅ TEMPLATE UTILS: HTML generation completed with LOGO SUPPORT');
+    console.log('✅ TEMPLATE UTILS: HTML generation completed with enhanced LOGO SUPPORT');
     return processedHTML;
 
   } catch (error) {

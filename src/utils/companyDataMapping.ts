@@ -23,14 +23,14 @@ export const loadCompanyData = async (organizationId: string) => {
 
     console.log('✅ Company data loaded:', data);
 
-    // Add logo logging
+    // Add comprehensive logo logging
     if (data.company_logo) {
       console.log('🖼️ Logo found:', data.company_logo);
     } else {
       console.log('⚠️ No logo found in company data');
     }
 
-    // Create a comprehensive mapping with multiple logo field variations
+    // Create a comprehensive mapping with extensive logo field variations for maximum compatibility
     const mappedData = {
       // Company info
       bedrijfsnaam: data.company_name || '',
@@ -44,19 +44,28 @@ export const loadCompanyData = async (organizationId: string) => {
       kvk_nummer: data.company_kvk || '',
       banknummer: data.company_bank || '',
       
-      // Logo variations - multiple field names for maximum compatibility
+      // Extensive logo variations - covering all possible naming conventions
       logo: data.company_logo || '',
       bedrijfslogo: data.company_logo || '',
       company_logo: data.company_logo || '',
       LOGO: data.company_logo || '',
       BEDRIJFSLOGO: data.company_logo || '',
+      Logo: data.company_logo || '',
+      CompanyLogo: data.company_logo || '',
+      logoUrl: data.company_logo || '',
+      logoURL: data.company_logo || '',
       
       // Current date and reference
       datum: new Date().toLocaleDateString('nl-NL'),
       referentie: `REF-${Date.now()}`
     };
 
-    console.log('🔄 Mapped company data with logo support:', mappedData);
+    console.log('🔄 Mapped company data with extensive logo support:', {
+      ...mappedData,
+      logoVariationsCount: Object.keys(mappedData).filter(key => 
+        key.toLowerCase().includes('logo')).length
+    });
+    
     return mappedData;
 
   } catch (error) {
