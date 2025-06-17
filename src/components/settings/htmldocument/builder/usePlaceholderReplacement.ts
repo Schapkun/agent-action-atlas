@@ -1,6 +1,7 @@
+
 import { PLACEHOLDER_FIELDS } from './htmlDocumentConstants';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { replaceAllPlaceholders } from '@/utils/universalPlaceholderReplacement';
+import { replaceAllPlaceholders } from '@/utils/newUniversalPlaceholderReplacement';
 
 interface UsePlaceholderReplacementProps {
   placeholderValues: Record<string, string>;
@@ -11,25 +12,23 @@ export function usePlaceholderReplacement({ placeholderValues, companyData = {} 
   const { selectedOrganization } = useOrganization();
 
   const replacePlaceholders = async (content: string, forPreview = false) => {
-    console.log('🎨 HTML EDITOR: Using universal placeholder replacement system');
+    console.log('🎨 HTML EDITOR: Using NEW SYSTEM');
     console.log('🔍 HTML EDITOR: Preview mode:', forPreview);
     console.log('🔍 HTML EDITOR: Organization:', selectedOrganization?.name);
     
     if (forPreview) {
-      // Use the universal system for preview
       try {
         const processed = await replaceAllPlaceholders(content, {
           organizationId: selectedOrganization?.id,
           placeholderValues: { ...companyData, ...placeholderValues }
         });
-        console.log('✅ HTML EDITOR: Universal replacement completed');
+        console.log('✅ HTML EDITOR: NEW SYSTEM completed');
         return processed;
       } catch (error) {
-        console.error('❌ HTML EDITOR: Universal replacement failed:', error);
+        console.error('❌ HTML EDITOR: NEW SYSTEM failed:', error);
         return content;
       }
     } else {
-      // For editor mode, keep placeholders intact
       console.log('📝 HTML EDITOR: Editor mode - keeping placeholders intact');
       return content;
     }
