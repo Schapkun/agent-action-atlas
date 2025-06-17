@@ -1,11 +1,13 @@
+
 import { useState } from 'react';
 import { useInvoiceForm } from './useInvoiceForm';
 import { useDocumentTemplates } from './useDocumentTemplates';
 import { useToast } from './use-toast';
+import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 
 export const useInvoiceFormHandlers = () => {
   const { templates: documentTemplates, loading: templatesLoading } = useDocumentTemplates();
-  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+  const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplateWithLabels | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
@@ -69,13 +71,11 @@ export const useInvoiceFormHandlers = () => {
   };
 
   const handlePreview = () => {
-    console.log('🎨 PREVIEW: Opening preview with company data integration');
-    console.log('🎨 PREVIEW: Data:', {
-      formData,
-      lineItems,
-      invoiceNumber,
-      selectedTemplate
-    });
+    console.log('🎨 PREVIEW: Opening preview with selected template object');
+    console.log('🎨 PREVIEW: Template:', selectedTemplate ? {
+      id: selectedTemplate.id,
+      name: selectedTemplate.name
+    } : null);
     setShowPreview(true);
   };
 

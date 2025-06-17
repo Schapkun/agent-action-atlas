@@ -52,39 +52,24 @@ export const CreateInvoiceForm = () => {
   // Auto-select default template when available
   useEffect(() => {
     if (defaultTemplate && !selectedTemplate) {
-      setSelectedTemplate(defaultTemplate.id);
+      setSelectedTemplate(defaultTemplate);
     }
   }, [defaultTemplate, selectedTemplate, setSelectedTemplate]);
-
-  // Find the actual template object from the selectedTemplate ID (selectedTemplate is always a string)
-  const selectedTemplateObject = selectedTemplate 
-    ? documentTemplates.find(t => t.id === selectedTemplate) || null
-    : null;
-
-  // Handle template change by converting the object to ID for the hook
-  const handleTemplateChange = (template: any) => {
-    if (template && typeof template === 'object') {
-      setSelectedTemplate(template.id);
-    } else {
-      setSelectedTemplate(template);
-    }
-  };
 
   // Get template manager components
   const templateManager = InvoiceTemplateManager({
     documentTemplates,
     templatesLoading,
-    selectedTemplate: selectedTemplateObject,
-    setSelectedTemplate: handleTemplateChange
+    selectedTemplate,
+    setSelectedTemplate
   });
 
   const { subtotal, vatAmount, total } = calculateTotals();
 
-  console.log('🎨 CreateInvoiceForm: Template sync check:', {
-    selectedTemplate,
-    selectedTemplateObject: selectedTemplateObject ? {
-      id: selectedTemplateObject.id,
-      name: selectedTemplateObject.name
+  console.log('🎨 CreateInvoiceForm: Consistent template object usage:', {
+    selectedTemplate: selectedTemplate ? {
+      id: selectedTemplate.id,
+      name: selectedTemplate.name
     } : null,
     availableTemplatesCount: documentTemplates.length
   });
@@ -151,7 +136,7 @@ export const CreateInvoiceForm = () => {
       <InvoiceFormPreview
         showPreview={showPreview}
         setShowPreview={setShowPreview}
-        selectedTemplateObject={selectedTemplateObject}
+        selectedTemplateObject={selectedTemplate}
         formData={formData}
         lineItems={lineItems}
         invoiceNumber={invoiceNumber}
