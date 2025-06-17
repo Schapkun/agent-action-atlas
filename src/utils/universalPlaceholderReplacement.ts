@@ -34,36 +34,68 @@ export const replaceAllPlaceholders = async (
 ): Promise<string> => {
   const { organizationId, placeholderValues = {}, invoiceData = {}, lineItems = [] } = options;
   
+  console.log('🔄 UNIVERSAL PLACEHOLDER: Starting replacement with options:', {
+    hasOrganizationId: !!organizationId,
+    placeholderKeysCount: Object.keys(placeholderValues).length,
+    hasInvoiceData: Object.keys(invoiceData).length > 0,
+    lineItemsCount: lineItems.length
+  });
+
   let processedHTML = htmlContent;
 
   try {
-    // Load company data
+    // Load company data including logo with enhanced debugging
     const companyData = organizationId ? await loadCompanyData(organizationId) : {};
+    console.log('🏢 UNIVERSAL PLACEHOLDER: Company data loaded:', {
+      hasData: Object.keys(companyData).length > 0,
+      logoKeys: Object.keys(companyData).filter(key => key.toLowerCase().includes('logo')),
+      primaryLogo: (companyData as any).logo || 'EMPTY',
+      logoLength: (companyData as any).logo ? String((companyData as any).logo).length : 0
+    });
 
-    // Build complete replacement map
+    // DEBUG: Log the actual logo URL that will be used
+    const logoUrl = (companyData as any).logo;
+    if (logoUrl) {
+      console.log('🖼️ LOGO DEBUG: Found logo URL:', logoUrl.substring(0, 100) + '...');
+      console.log('🖼️ LOGO DEBUG: Logo URL type:', typeof logoUrl);
+      console.log('🖼️ LOGO DEBUG: Logo URL starts with http:', logoUrl.startsWith('http'));
+    } else {
+      console.log('⚠️ LOGO DEBUG: NO LOGO URL FOUND - this is why logo is missing!');
+    }
+
+    // Combine all data sources with proper typing
     const allPlaceholders: Record<string, any> = {
+      // Company data (includes extensive logo mappings)
       ...companyData,
+      // User-provided placeholder values
       ...placeholderValues,
+      // Invoice-specific data
       ...invoiceData,
+      // Current date
       datum: new Date().toLocaleDateString('nl-NL')
     };
 
-    // SIMPLE LOGO REPLACEMENT FIRST
-    if (allPlaceholders.logo && String(allPlaceholders.logo).trim().length > 0) {
-      const logoValue = String(allPlaceholders.logo);
-      console.log('🖼️ Replacing {{logo}} with:', logoValue.substring(0, 50) + '...');
-      processedHTML = processedHTML.replace(/\{\{logo\}\}/g, logoValue);
-    }
+    console.log('🎨 UNIVERSAL PLACEHOLDER: All placeholders prepared:', {
+      totalPlaceholders: Object.keys(allPlaceholders).length,
+      logoKeys: Object.keys(allPlaceholders).filter(key => 
+        key.toLowerCase().includes('logo')),
+      logoValue: allPlaceholders.logo ? 'HAS_VALUE' : 'EMPTY',
+      logoLength: allPlaceholders.logo ? String(allPlaceholders.logo).length : 0
+    });
 
-    // Replace all other placeholders
+    // Replace all standard placeholders
     Object.entries(allPlaceholders).forEach(([key, value]) => {
-      if (key !== 'logo') {
-        const regex = new RegExp(`{{${key}}}`, 'g');
-        processedHTML = processedHTML.replace(regex, String(value || ''));
+      const regex = new RegExp(`{{${key}}}`, 'g');
+      const beforeCount = (processedHTML.match(regex) || []).length;
+      processedHTML = processedHTML.replace(regex, String(value || ''));
+      const afterCount = (processedHTML.match(regex) || []).length;
+      
+      if (key.toLowerCase().includes('logo') && beforeCount > 0) {
+        console.log(`🖼️ LOGO REPLACEMENT: ${key}: ${beforeCount} -> ${afterCount} (value: ${value ? String(value).substring(0, 50) + '...' : 'EMPTY'})`);
       }
     });
 
-    // Handle line items
+    // Handle line items table generation (Handlebars-style {{#each}} replacement)
     if (lineItems.length > 0) {
       const lineItemsHTML = lineItems.map(item => `
         <tr>
@@ -87,29 +119,45 @@ export const replaceAllPlaceholders = async (
     }
 
     // Handle conditional blocks
+    // Notes conditional
     if (invoiceData.notities && invoiceData.notities.trim()) {
       processedHTML = processedHTML.replace(/{{#if notities}}([\s\S]*?){{\/if}}/g, '$1');
     } else {
       processedHTML = processedHTML.replace(/{{#if notities}}[\s\S]*?{{\/if}}/g, '');
     }
 
-    // Logo conditional blocks
-    const hasValidLogo = allPlaceholders.logo && String(allPlaceholders.logo).trim().length > 0;
+    // IMPROVED Logo conditional blocks - more robust checking with safe property access
+    const logoValue = allPlaceholders.logo;
+    const hasValidLogo = logoValue && String(logoValue).trim().length > 0;
+    
+    console.log('🖼️ UNIVERSAL PLACEHOLDER: Logo conditional check:', { 
+      hasValidLogo, 
+      logoValue: logoValue ? String(logoValue).substring(0, 50) + '...' : 'NONE',
+      logoConditionalBlocks: (processedHTML.match(/{{#if logo}}/g) || []).length
+    });
+    
     if (hasValidLogo) {
+      console.log('✅ UNIVERSAL PLACEHOLDER: Processing template WITH logo');
       processedHTML = processedHTML.replace(/{{#if logo}}([\s\S]*?){{else}}[\s\S]*?{{\/if}}/g, '$1');
       processedHTML = processedHTML.replace(/{{#if logo}}([\s\S]*?){{\/if}}/g, '$1');
     } else {
+      console.log('⚠️ UNIVERSAL PLACEHOLDER: Processing template WITHOUT logo');
       processedHTML = processedHTML.replace(/{{#if logo}}[\s\S]*?{{else}}([\s\S]*?){{\/if}}/g, '$1');
       processedHTML = processedHTML.replace(/{{#if logo}}[\s\S]*?{{\/if}}/g, '');
     }
 
-    // Clean up remaining placeholders
+    // Clean up any remaining unfilled placeholders
+    const remainingPlaceholders = processedHTML.match(/{{[^}]+}}/g) || [];
+    if (remainingPlaceholders.length > 0) {
+      console.log('🧹 UNIVERSAL PLACEHOLDER: Cleaning remaining placeholders:', remainingPlaceholders.slice(0, 5));
+    }
     processedHTML = processedHTML.replace(/{{[^}]+}}/g, '');
-    
+
+    console.log('✅ UNIVERSAL PLACEHOLDER: Replacement completed successfully');
     return processedHTML;
 
   } catch (error) {
-    console.error('❌ Error during placeholder replacement:', error);
-    return htmlContent;
+    console.error('❌ UNIVERSAL PLACEHOLDER: Error during replacement:', error);
+    return htmlContent; // Return original content on error
   }
 };
