@@ -49,51 +49,73 @@ export const LineItemsTable = ({
       const isInList = currentLineText.startsWith('• ');
       const isEmptyListItem = currentLineText.trim() === '•' || currentLineText.trim() === '';
       
-      let newText = '';
-      let newCursorPosition = 0;
-      
       if (isInList && isEmptyListItem) {
         // Double Enter: remove empty bullet and exit list
         lines[currentLineIndex] = '';
-        newText = lines.join('\n');
-        newCursorPosition = cursorPosition;
+        const newText = lines.join('\n');
+        element.textContent = newText;
+        
+        // Position cursor where the empty bullet was
+        const range2 = document.createRange();
+        const sel = window.getSelection();
+        
+        if (sel && element.firstChild) {
+          range2.setStart(element.firstChild, cursorPosition);
+          range2.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range2);
+        }
+        
+        onUpdateLineItem(index, 'description', newText);
       } else if (isInList) {
         // Single Enter in list: create new bullet
         lines.splice(currentLineIndex + 1, 0, '• ');
-        newText = lines.join('\n');
-        // Position cursor after the new bullet (• )
+        const newText = lines.join('\n');
+        element.textContent = newText;
+        
+        // Position cursor after the new bullet
         let targetPosition = 0;
         for (let i = 0; i <= currentLineIndex; i++) {
           targetPosition += lines[i].length + 1; // +1 for newline
         }
-        newCursorPosition = targetPosition + 2; // +2 for "• "
+        targetPosition += 2; // +2 for "• "
+        
+        const range2 = document.createRange();
+        const sel = window.getSelection();
+        
+        if (sel && element.firstChild) {
+          const safePosition = Math.min(targetPosition, element.firstChild.textContent?.length || 0);
+          range2.setStart(element.firstChild, safePosition);
+          range2.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range2);
+        }
+        
+        onUpdateLineItem(index, 'description', newText);
       } else {
-        // Normal Enter: just add new line
+        // Normal Enter: laat contentEditable gewoon zijn werk doen
         const beforeCursor = currentText.substring(0, cursorPosition);
         const afterCursor = currentText.substring(cursorPosition);
-        newText = beforeCursor + '\n' + afterCursor;
-        // Position cursor at the beginning of the new line
-        newCursorPosition = cursorPosition + 1; // +1 for the newline character
-      }
-      
-      element.textContent = newText;
-      
-      // Position cursor at the calculated position
-      const range2 = document.createRange();
-      const sel = window.getSelection();
-      
-      if (sel && element.firstChild) {
-        const textNode = element.firstChild;
-        const safePosition = Math.min(newCursorPosition, textNode.textContent?.length || 0);
+        const newText = beforeCursor + '\n' + afterCursor;
         
-        range2.setStart(textNode, safePosition);
-        range2.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(range2);
+        element.textContent = newText;
+        
+        // Cursor aan het einde van de nieuwe regel (na de \n)
+        const newCursorPosition = beforeCursor.length + 1;
+        
+        const range2 = document.createRange();
+        const sel = window.getSelection();
+        
+        if (sel && element.firstChild) {
+          const safePosition = Math.min(newCursorPosition, element.firstChild.textContent?.length || 0);
+          range2.setStart(element.firstChild, safePosition);
+          range2.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range2);
+        }
+        
+        onUpdateLineItem(index, 'description', newText);
       }
-      
-      // Update the content
-      onUpdateLineItem(index, 'description', newText);
     }
   };
 
