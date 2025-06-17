@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { InvoicePreviewDialog } from './InvoicePreviewDialog';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { usePlaceholderReplacement } from '@/components/settings/htmldocument/builder/usePlaceholderReplacement';
+import { loadCompanyData } from '@/utils/companyDataMapping';
 
 interface InvoiceFormPreviewProps {
   showPreview: boolean;
@@ -48,7 +49,7 @@ export const InvoiceFormPreview = ({
 
     setIsLoading(true);
     try {
-      console.log('🎨 Generating invoice preview with new system');
+      console.log('🎨 Generating invoice preview with consistent system');
       
       // Find the selected template
       const template = templates.find(t => t.id === selectedTemplate);
@@ -57,36 +58,29 @@ export const InvoiceFormPreview = ({
         return;
       }
 
-      // Prepare company data from organization
-      const companyData = {
-        bedrijfsnaam: selectedOrganization.name || '',
-        adres: selectedOrganization.address || '',
-        postcode: selectedOrganization.postal_code || '',
-        plaats: selectedOrganization.city || '',
-        telefoon: selectedOrganization.phone || '',
-        email: selectedOrganization.email || '',
-        website: selectedOrganization.website || '',
-        kvk: selectedOrganization.kvk_number || '',
-        btw: selectedOrganization.vat_number || '',
-        iban: selectedOrganization.iban || '',
-        
-        // Company data met hoofdletters (voor compatibiliteit)
-        COMPANY_NAME: selectedOrganization.name || '',
-        COMPANY_ADDRESS: selectedOrganization.address || '',
-        COMPANY_POSTAL_CODE: selectedOrganization.postal_code || '',
-        COMPANY_CITY: selectedOrganization.city || '',
-        COMPANY_PHONE: selectedOrganization.phone || '',
-        COMPANY_EMAIL: selectedOrganization.email || '',
-        COMPANY_WEBSITE: selectedOrganization.website || '',
-        COMPANY_KVK: selectedOrganization.kvk_number || '',
-        COMPANY_VAT: selectedOrganization.vat_number || '',
-        COMPANY_IBAN: selectedOrganization.iban || ''
+      // Load company data using the same system as HTML builder
+      const companyData = await loadCompanyData(selectedOrganization.id);
+      console.log('📊 Loaded company data:', companyData);
+
+      // Add additional company data mappings for uppercase placeholders (compatibility)
+      const extendedCompanyData = {
+        ...companyData,
+        COMPANY_NAME: companyData.bedrijfsnaam || selectedOrganization.name || '',
+        COMPANY_ADDRESS: companyData.adres || '',
+        COMPANY_POSTAL_CODE: companyData.postcode || '',
+        COMPANY_CITY: companyData.plaats || '',
+        COMPANY_PHONE: companyData.telefoon || '',
+        COMPANY_EMAIL: companyData.email || '',
+        COMPANY_WEBSITE: companyData.website || '',
+        COMPANY_KVK: companyData.kvk_nummer || '',
+        COMPANY_VAT: companyData.btw_nummer || '',
+        COMPANY_IBAN: companyData.banknummer || ''
       };
 
       // Prepare placeholder values from form and contact data
       const placeholderValues = {
-        // Company data
-        ...companyData,
+        // Company data from loadCompanyData
+        ...extendedCompanyData,
         
         // Document data
         datum: formData.invoice_date || new Date().toLocaleDateString('nl-NL'),
@@ -110,19 +104,19 @@ export const InvoiceFormPreview = ({
         
         // Footer
         footer_tekst: 'Betaling binnen 30 dagen na factuurdatum.',
-        footer_contact: `Voor vragen kunt u contact opnemen via ${selectedOrganization.email || 'info@bedrijf.nl'}`
+        footer_contact: `Voor vragen kunt u contact opnemen via ${extendedCompanyData.COMPANY_EMAIL || 'info@bedrijf.nl'}`
       };
 
       // Use the same placeholder replacement system as HTML builder
       const { replacePlaceholders } = usePlaceholderReplacement({ 
         placeholderValues, 
-        companyData 
+        companyData: extendedCompanyData 
       });
 
       // Replace placeholders in the template
       const htmlWithValues = replacePlaceholders(template.html_content, true);
       
-      console.log('🎨 Generated preview HTML with consistent system');
+      console.log('🎨 Generated preview HTML with consistent company data system');
       setPreviewHTML(htmlWithValues);
       
     } catch (error) {
