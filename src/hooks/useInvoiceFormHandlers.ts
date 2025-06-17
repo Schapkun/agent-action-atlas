@@ -6,6 +6,7 @@ import { useToast } from './use-toast';
 export const useInvoiceFormHandlers = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [currentInvoiceNumber, setCurrentInvoiceNumber] = useState<string>('');
   const { toast } = useToast();
 
   const {
@@ -38,9 +39,12 @@ export const useInvoiceFormHandlers = () => {
         try {
           const defaultNumber = await getDefaultInvoiceNumber();
           setInvoiceNumber(defaultNumber);
+          setCurrentInvoiceNumber(defaultNumber);
         } catch (error) {
           console.error('Failed to initialize invoice number:', error);
         }
+      } else {
+        setCurrentInvoiceNumber(invoiceNumber);
       }
     };
 
@@ -59,6 +63,7 @@ export const useInvoiceFormHandlers = () => {
       try {
         const defaultNumber = await getDefaultInvoiceNumber();
         setInvoiceNumber(defaultNumber);
+        setCurrentInvoiceNumber(defaultNumber);
       } catch (error) {
         console.error('Failed to get default invoice number:', error);
       }
@@ -71,6 +76,10 @@ export const useInvoiceFormHandlers = () => {
 
   const getDisplayInvoiceNumber = () => {
     return invoiceNumber || '';
+  };
+
+  const getPlaceholderInvoiceNumber = () => {
+    return currentInvoiceNumber || '';
   };
 
   const handleContactClear = () => {
@@ -124,6 +133,7 @@ export const useInvoiceFormHandlers = () => {
     handleInvoiceNumberFocus,
     handleInvoiceNumberBlur,
     getDisplayInvoiceNumber,
+    getPlaceholderInvoiceNumber,
     handleContactSelectOnly,
     handleContactClear,
     handleFormSubmit,

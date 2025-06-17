@@ -17,6 +17,21 @@ export const LineItemsTable = ({
   onUpdateLineItem,
   onRemoveLineItem
 }: LineItemsTableProps) => {
+  const applyListFormatting = (index: number) => {
+    const currentDescription = lineItems[index].description;
+    const lines = currentDescription.split('\n').filter(line => line.trim() !== '');
+    const formattedLines = lines.map(line => {
+      const trimmedLine = line.trim();
+      // If line doesn't start with bullet, add it
+      if (!trimmedLine.startsWith('•') && !trimmedLine.startsWith('-') && !trimmedLine.startsWith('*')) {
+        return `• ${trimmedLine}`;
+      }
+      return trimmedLine;
+    });
+    const newDescription = formattedLines.join('\n');
+    onUpdateLineItem(index, 'description', newDescription);
+  };
+
   return (
     <Card>
       <CardHeader className="p-2">
@@ -32,7 +47,7 @@ export const LineItemsTable = ({
       <CardContent className="p-2">
         <div className="space-y-2">
           {lineItems.map((item, index) => (
-            <div key={index} className="grid grid-cols-12 gap-2 items-center">
+            <div key={index} className="grid grid-cols-12 gap-2 items-start">
               <div className="col-span-1">
                 <Input
                   type="number"
@@ -100,12 +115,7 @@ export const LineItemsTable = ({
                       variant="ghost" 
                       size="sm" 
                       className="h-6 w-6 p-0"
-                      onClick={() => {
-                        const selection = window.getSelection();
-                        if (selection && selection.rangeCount > 0) {
-                          document.execCommand('insertUnorderedList', false);
-                        }
-                      }}
+                      onClick={() => applyListFormatting(index)}
                     >
                       <List className="h-3 w-3" />
                     </Button>

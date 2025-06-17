@@ -56,6 +56,18 @@ export const InvoiceDetailsCard = ({
     return fullNumber;
   };
 
+  const getPlaceholderNumber = () => {
+    const placeholder = getPlaceholderInvoiceNumber();
+    const prefix = invoiceSettings.invoice_prefix || '2025-';
+    
+    // If placeholder already includes prefix, extract just the number part
+    if (placeholder.startsWith(prefix)) {
+      return placeholder.substring(prefix.length);
+    }
+    
+    return placeholder;
+  };
+
   const handleInvoiceNumberChange = (value: string) => {
     const prefix = invoiceSettings.invoice_prefix || '2025-';
     const fullNumber = prefix + value;
@@ -88,7 +100,7 @@ export const InvoiceDetailsCard = ({
                 <Input 
                   className="rounded-l-none border-l-0 text-xs h-8 w-20" 
                   value={getCurrentInvoiceNumber()}
-                  placeholder="001"
+                  placeholder={getPlaceholderNumber()}
                   onChange={(e) => handleInvoiceNumberChange(e.target.value)}
                   onFocus={onInvoiceNumberFocus}
                   onBlur={onInvoiceNumberBlur}
