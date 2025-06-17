@@ -49,8 +49,19 @@ export const replaceAllPlaceholders = async (
     console.log('🏢 UNIVERSAL PLACEHOLDER: Company data loaded:', {
       hasData: Object.keys(companyData).length > 0,
       logoKeys: Object.keys(companyData).filter(key => key.toLowerCase().includes('logo')),
-      primaryLogo: (companyData as any).logo || 'EMPTY'
+      primaryLogo: (companyData as any).logo || 'EMPTY',
+      logoLength: (companyData as any).logo ? String((companyData as any).logo).length : 0
     });
+
+    // DEBUG: Log the actual logo URL that will be used
+    const logoUrl = (companyData as any).logo;
+    if (logoUrl) {
+      console.log('🖼️ LOGO DEBUG: Found logo URL:', logoUrl.substring(0, 100) + '...');
+      console.log('🖼️ LOGO DEBUG: Logo URL type:', typeof logoUrl);
+      console.log('🖼️ LOGO DEBUG: Logo URL starts with http:', logoUrl.startsWith('http'));
+    } else {
+      console.log('⚠️ LOGO DEBUG: NO LOGO URL FOUND - this is why logo is missing!');
+    }
 
     // Combine all data sources with proper typing
     const allPlaceholders: Record<string, any> = {
@@ -80,7 +91,7 @@ export const replaceAllPlaceholders = async (
       const afterCount = (processedHTML.match(regex) || []).length;
       
       if (key.toLowerCase().includes('logo') && beforeCount > 0) {
-        console.log(`🖼️ LOGO REPLACEMENT: ${key}: ${beforeCount} -> ${afterCount} (value: ${value ? 'HAS_VALUE' : 'EMPTY'})`);
+        console.log(`🖼️ LOGO REPLACEMENT: ${key}: ${beforeCount} -> ${afterCount} (value: ${value ? String(value).substring(0, 50) + '...' : 'EMPTY'})`);
       }
     });
 

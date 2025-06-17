@@ -69,7 +69,7 @@ export const LivePreview = ({ htmlContent, layoutId }: LivePreviewProps) => {
       overflow: hidden !important;
     }
     
-    .preview-container {
+    .a4-container {
       width: 100% !important;
       height: 100% !important;
       background: white !important;
@@ -77,7 +77,7 @@ export const LivePreview = ({ htmlContent, layoutId }: LivePreviewProps) => {
       padding: 20px !important;
     }
     
-    .preview-content {
+    .a4-content {
       width: 100% !important;
       min-height: calc(100% - 40px) !important;
       font-size: 12px !important;
@@ -88,14 +88,14 @@ export const LivePreview = ({ htmlContent, layoutId }: LivePreviewProps) => {
     }
 
     /* UNIFIED: Table styling - IDENTICAL to InvoicePreview */
-    .preview-content table, table {
+    .a4-content table, table {
       width: 100% !important;
       border-collapse: collapse !important;
       margin: 16px 0 !important;
       font-size: 12px !important;
     }
     
-    .preview-content th, th {
+    .a4-content th, th {
       background: #f8f9fa !important;
       font-weight: 600 !important;
       padding: 8px 6px !important;
@@ -104,7 +104,7 @@ export const LivePreview = ({ htmlContent, layoutId }: LivePreviewProps) => {
       font-size: 12px !important;
     }
     
-    .preview-content td, td {
+    .a4-content td, td {
       padding: 6px 6px !important;
       text-align: left !important;
       border-bottom: 1px solid #e9ecef !important;
@@ -112,27 +112,27 @@ export const LivePreview = ({ htmlContent, layoutId }: LivePreviewProps) => {
     }
 
     /* UNIFIED: Typography - IDENTICAL to InvoicePreview */
-    .preview-content h1, .preview-content h2, .preview-content h3, h1, h2, h3 {
+    .a4-content h1, .a4-content h2, .a4-content h3, h1, h2, h3 {
       color: #212529 !important;
       font-weight: 600 !important;
       margin: 16px 0 8px 0 !important;
     }
     
-    .preview-content h1, h1 { font-size: 18px !important; }
-    .preview-content h2, h2 { font-size: 16px !important; }
-    .preview-content h3, h3 { font-size: 14px !important; }
+    .a4-content h1, h1 { font-size: 18px !important; }
+    .a4-content h2, h2 { font-size: 16px !important; }
+    .a4-content h3, h3 { font-size: 14px !important; }
     
-    .preview-content p, p {
+    .a4-content p, p {
       font-size: 12px !important;
       margin: 6px 0 !important;
       color: #495057 !important;
     }
 
     /* CRITICAL: Logo styling with MAXIMUM specificity to override template CSS */
-    .preview-content .company-logo, .preview-content .bedrijfslogo, 
-    .preview-content img[src*="logo"], .preview-content img[alt*="logo"], 
-    .preview-content img[alt*="Logo"], .preview-content .logo, 
-    .preview-content .Logo, .preview-content .LOGO,
+    .a4-content .company-logo, .a4-content .bedrijfslogo, 
+    .a4-content img[src*="logo"], .a4-content img[alt*="logo"], 
+    .a4-content img[alt*="Logo"], .a4-content .logo, 
+    .a4-content .Logo, .a4-content .LOGO,
     .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], 
     img[alt*="Logo"], .logo, .Logo, .LOGO {
       max-width: 200px !important;
@@ -145,20 +145,20 @@ export const LivePreview = ({ htmlContent, layoutId }: LivePreviewProps) => {
     }
 
     /* UNIFIED: Override template font sizes */
-    .preview-content div, .preview-content span, .preview-content li {
+    .a4-content div, .a4-content span, .a4-content li {
       font-size: 12px !important;
     }
 
     /* UNIFIED: Prevent content overflow */
-    .preview-content *, .preview-content *:before, .preview-content *:after {
+    .a4-content *, .a4-content *:before, .a4-content *:after {
       max-width: 100% !important;
       overflow-wrap: break-word !important;
     }
   </style>
 </head>
 <body>
-  <div class="preview-container">
-    <div class="preview-content">
+  <div class="a4-container">
+    <div class="a4-content">
       ${bodyContent}
     </div>
   </div>
