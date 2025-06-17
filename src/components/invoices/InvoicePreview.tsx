@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, ZoomIn, ZoomOut } from 'lucide-react';
@@ -91,7 +92,6 @@ export const InvoicePreview = ({
     .a4-content {
       width: 100%;
       min-height: 100%;
-      padding: 20mm;
       font-size: 12px;
       line-height: 1.4;
       color: #333;
