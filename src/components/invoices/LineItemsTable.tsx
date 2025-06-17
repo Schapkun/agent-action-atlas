@@ -19,32 +19,63 @@ export const LineItemsTable = ({
   onRemoveLineItem
 }: LineItemsTableProps) => {
   const applyListFormatting = (index: number) => {
-    const currentDescription = lineItems[index].description;
-    
     // Get the contentEditable element
     const element = document.querySelector(`[data-description-index="${index}"]`) as HTMLElement;
     if (!element) return;
     
-    // Get clean text content
-    const cleanText = element.textContent || element.innerText || '';
+    // Get the current selection or cursor position
+    const selection = window.getSelection();
+    const range = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
     
-    // Split into lines and format each line
-    const lines = cleanText.split('\n').filter(line => line.trim() !== '');
+    // If there's selected text, format only that part
+    if (range && !range.collapsed) {
+      const selectedText = range.toString().trim();
+      if (selectedText) {
+        // Create bullet point for selected text
+        const bulletText = selectedText.startsWith('• ') ? selectedText : `• ${selectedText}`;
+        range.deleteContents();
+        const textNode = document.createTextNode(bulletText);
+        range.insertNode(textNode);
+        
+        // Update the state with new content
+        onUpdateLineItem(index, 'description', element.innerHTML);
+        return;
+      }
+    }
+    
+    // If no selection, format the current line or all content
+    const cursorPosition = range ? range.startOffset : 0;
+    const textContent = element.textContent || '';
+    
+    // Split content into lines
+    const lines = textContent.split('\n');
     const formattedLines = lines.map(line => {
       const trimmedLine = line.trim();
-      // If line doesn't start with bullet, add it
-      if (!trimmedLine.startsWith('•') && !trimmedLine.startsWith('-') && !trimmedLine.startsWith('*')) {
+      if (trimmedLine && !trimmedLine.startsWith('• ')) {
         return `• ${trimmedLine}`;
       }
       return trimmedLine;
-    });
+    }).filter(line => line); // Remove empty lines
     
-    // Update the content with proper HTML formatting
-    const newDescription = formattedLines.join('<br>');
-    element.innerHTML = newDescription;
+    // Update the element content
+    const newContent = formattedLines.join('\n');
+    element.textContent = newContent;
     
     // Update the state
-    onUpdateLineItem(index, 'description', newDescription);
+    onUpdateLineItem(index, 'description', element.innerHTML);
+    
+    // Restore cursor position (approximately)
+    if (range) {
+      const newRange = document.createRange();
+      newRange.setStart(element.firstChild || element, Math.min(cursorPosition, newContent.length));
+      newRange.collapse(true);
+      selection?.removeAllRanges();
+      selection?.addRange(newRange);
+    }
+  };
+
+  const formatText = (command: string) => {
+    document.execCommand(command, false);
   };
 
   return (
@@ -89,12 +120,7 @@ export const LineItemsTable = ({
                       variant="ghost" 
                       size="sm" 
                       className="h-6 w-6 p-0"
-                      onClick={() => {
-                        const selection = window.getSelection();
-                        if (selection && selection.rangeCount > 0) {
-                          document.execCommand('bold', false);
-                        }
-                      }}
+                      onClick={() => formatText('bold')}
                     >
                       <Bold className="h-3 w-3" />
                     </Button>
@@ -103,12 +129,7 @@ export const LineItemsTable = ({
                       variant="ghost" 
                       size="sm" 
                       className="h-6 w-6 p-0"
-                      onClick={() => {
-                        const selection = window.getSelection();
-                        if (selection && selection.rangeCount > 0) {
-                          document.execCommand('italic', false);
-                        }
-                      }}
+                      onClick={() => formatText('italic')}
                     >
                       <Italic className="h-3 w-3" />
                     </Button>
@@ -117,12 +138,7 @@ export const LineItemsTable = ({
                       variant="ghost" 
                       size="sm" 
                       className="h-6 w-6 p-0"
-                      onClick={() => {
-                        const selection = window.getSelection();
-                        if (selection && selection.rangeCount > 0) {
-                          document.execCommand('underline', false);
-                        }
-                      }}
+                      onClick={() => formatText('underline')}
                     >
                       <Underline className="h-3 w-3" />
                     </Button>

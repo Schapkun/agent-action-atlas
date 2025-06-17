@@ -65,7 +65,8 @@ export const InvoiceDetailsCard = ({
       return placeholder.substring(prefix.length);
     }
     
-    return placeholder || '';
+    // Always show a placeholder number (current invoice number or fallback)
+    return placeholder || '001';
   };
 
   const handleInvoiceNumberChange = (value: string) => {
