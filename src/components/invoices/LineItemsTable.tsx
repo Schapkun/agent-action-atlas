@@ -1,3 +1,4 @@
+
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -19,8 +20,6 @@ export const LineItemsTable = ({
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, index: number) => {
     if (event.key === 'Enter') {
-      event.preventDefault();
-      
       const element = event.currentTarget;
       const currentText = element.textContent || '';
       const selection = window.getSelection();
@@ -49,78 +48,57 @@ export const LineItemsTable = ({
       const isInList = currentLineText.startsWith('• ');
       const isEmptyListItem = currentLineText.trim() === '•' || currentLineText.trim() === '';
       
-      if (isInList && isEmptyListItem) {
-        // Double Enter: remove empty bullet and exit list
-        lines[currentLineIndex] = '';
-        const newText = lines.join('\n');
-        element.textContent = newText;
-        onUpdateLineItem(index, 'description', newText);
-        
-        // Let browser handle cursor positioning naturally
-        setTimeout(() => {
-          const range2 = document.createRange();
-          const sel = window.getSelection();
-          if (sel && element.firstChild) {
-            range2.setStart(element.firstChild, Math.min(cursorPosition, element.firstChild.textContent?.length || 0));
-            range2.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(range2);
-          }
-        }, 0);
-        
-      } else if (isInList) {
-        // Single Enter in list: create new bullet
-        lines.splice(currentLineIndex + 1, 0, '• ');
-        const newText = lines.join('\n');
-        element.textContent = newText;
-        onUpdateLineItem(index, 'description', newText);
-        
-        // Position cursor after the new bullet
-        setTimeout(() => {
-          let targetPosition = 0;
-          for (let i = 0; i <= currentLineIndex; i++) {
-            targetPosition += lines[i].length + 1; // +1 for newline
-          }
-          targetPosition += 2; // +2 for "• "
-          
-          const range2 = document.createRange();
-          const sel = window.getSelection();
-          if (sel && element.firstChild) {
-            const safePosition = Math.min(targetPosition, element.firstChild.textContent?.length || 0);
-            range2.setStart(element.firstChild, safePosition);
-            range2.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(range2);
-          }
-        }, 0);
-        
-      } else {
-        // Normal Enter: let contentEditable do its job naturally
-        // Don't prevent default, don't manipulate text
+      // Only prevent default and use custom logic for list items
+      if (isInList) {
         event.preventDefault();
         
-        // Insert a line break at cursor position
-        const beforeCursor = currentText.substring(0, cursorPosition);
-        const afterCursor = currentText.substring(cursorPosition);
-        const newText = beforeCursor + '\n' + afterCursor;
-        
-        element.textContent = newText;
-        onUpdateLineItem(index, 'description', newText);
-        
-        // Position cursor at the end of the new line (after the newline)
-        setTimeout(() => {
-          const range2 = document.createRange();
-          const sel = window.getSelection();
-          if (sel && element.firstChild) {
-            const newCursorPosition = beforeCursor.length + 1;
-            const safePosition = Math.min(newCursorPosition, element.firstChild.textContent?.length || 0);
-            range2.setStart(element.firstChild, safePosition);
-            range2.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(range2);
-          }
-        }, 0);
+        if (isEmptyListItem) {
+          // Double Enter: remove empty bullet and exit list
+          lines[currentLineIndex] = '';
+          const newText = lines.join('\n');
+          element.textContent = newText;
+          onUpdateLineItem(index, 'description', newText);
+          
+          // Let browser handle cursor positioning naturally
+          setTimeout(() => {
+            const range2 = document.createRange();
+            const sel = window.getSelection();
+            if (sel && element.firstChild) {
+              range2.setStart(element.firstChild, Math.min(cursorPosition, element.firstChild.textContent?.length || 0));
+              range2.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(range2);
+            }
+          }, 0);
+          
+        } else {
+          // Single Enter in list: create new bullet
+          lines.splice(currentLineIndex + 1, 0, '• ');
+          const newText = lines.join('\n');
+          element.textContent = newText;
+          onUpdateLineItem(index, 'description', newText);
+          
+          // Position cursor after the new bullet
+          setTimeout(() => {
+            let targetPosition = 0;
+            for (let i = 0; i <= currentLineIndex; i++) {
+              targetPosition += lines[i].length + 1; // +1 for newline
+            }
+            targetPosition += 2; // +2 for "• "
+            
+            const range2 = document.createRange();
+            const sel = window.getSelection();
+            if (sel && element.firstChild) {
+              const safePosition = Math.min(targetPosition, element.firstChild.textContent?.length || 0);
+              range2.setStart(element.firstChild, safePosition);
+              range2.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(range2);
+            }
+          }, 0);
+        }
       }
+      // For normal text: do nothing, let browser handle Enter naturally
     }
   };
 
@@ -128,31 +106,63 @@ export const LineItemsTable = ({
     const element = document.querySelector(`[data-description-index="${index}"]`) as HTMLElement;
     if (!element) return;
     
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    
+    const range = selection.getRangeAt(0);
+    const cursorPosition = range.startOffset;
     const textContent = element.textContent || '';
-    if (textContent.trim()) {
-      const lines = textContent.split('\n').filter(line => line.trim());
-      const formattedLines = lines.map(line => {
+    
+    if (selection.toString().trim()) {
+      // If there's selected text, format only the selection
+      const selectedText = selection.toString();
+      const beforeSelection = textContent.substring(0, range.startOffset);
+      const afterSelection = textContent.substring(range.endOffset);
+      
+      const formattedSelection = selectedText.split('\n').map(line => {
         const trimmed = line.trim();
         if (trimmed && !trimmed.startsWith('• ')) {
           return `• ${trimmed}`;
         }
-        return trimmed;
-      });
+        return line;
+      }).join('\n');
       
-      const newText = formattedLines.join('\n');
+      const newText = beforeSelection + formattedSelection + afterSelection;
       element.textContent = newText;
       onUpdateLineItem(index, 'description', newText);
+    } else {
+      // If no selection, add bullet at current cursor position/line
+      const lines = textContent.split('\n');
+      let charCount = 0;
+      let currentLineIndex = 0;
       
-      // Position cursor at end
-      const range = document.createRange();
-      const sel = window.getSelection();
-      
-      if (sel) {
-        range.selectNodeContents(element);
-        range.collapse(false);
-        sel.removeAllRanges();
-        sel.addRange(range);
+      for (let i = 0; i < lines.length; i++) {
+        const lineLength = lines[i].length + (i < lines.length - 1 ? 1 : 0);
+        if (cursorPosition <= charCount + lineLength) {
+          currentLineIndex = i;
+          break;
+        }
+        charCount += lineLength;
       }
+      
+      const currentLine = lines[currentLineIndex];
+      if (currentLine && currentLine.trim() && !currentLine.startsWith('• ')) {
+        lines[currentLineIndex] = `• ${currentLine.trim()}`;
+        const newText = lines.join('\n');
+        element.textContent = newText;
+        onUpdateLineItem(index, 'description', newText);
+      }
+    }
+    
+    // Position cursor at end
+    const range2 = document.createRange();
+    const sel = window.getSelection();
+    
+    if (sel) {
+      range2.selectNodeContents(element);
+      range2.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range2);
     }
   };
 
