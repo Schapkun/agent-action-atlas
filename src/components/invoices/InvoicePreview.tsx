@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, ZoomIn, ZoomOut } from 'lucide-react';
 import { DocumentTemplateWithLabels } from '@/types/documentLabels';
@@ -23,27 +23,34 @@ export const InvoicePreview = ({
   className = ""
 }: InvoicePreviewProps) => {
   const [zoom, setZoom] = React.useState(0.8);
-  const { currentOrganization } = useOrganization();
+  const [previewHTML, setPreviewHTML] = useState('<div style="padding: 40px; text-align: center; color: #6b7280;">Geen template geselecteerd</div>');
+  const { selectedOrganization } = useOrganization();
 
-  const previewHTML = useMemo(async () => {
-    if (!selectedTemplate) {
-      return '<div style="padding: 40px; text-align: center; color: #6b7280;">Geen template geselecteerd</div>';
-    }
+  useEffect(() => {
+    const generatePreview = async () => {
+      if (!selectedTemplate) {
+        setPreviewHTML('<div style="padding: 40px; text-align: center; color: #6b7280;">Geen template geselecteerd</div>');
+        return;
+      }
 
-    try {
-      return await generatePreviewHTML(
-        [selectedTemplate],
-        selectedTemplate.id,
-        formData,
-        lineItems,
-        invoiceNumber,
-        currentOrganization?.id
-      );
-    } catch (error) {
-      console.error('Error generating preview:', error);
-      return '<div style="padding: 40px; text-align: center; color: #dc2626;">Fout bij laden van voorbeeld</div>';
-    }
-  }, [selectedTemplate, formData, lineItems, invoiceNumber, currentOrganization?.id]);
+      try {
+        const html = await generatePreviewHTML(
+          [selectedTemplate],
+          selectedTemplate.id,
+          formData,
+          lineItems,
+          invoiceNumber,
+          selectedOrganization?.id
+        );
+        setPreviewHTML(html);
+      } catch (error) {
+        console.error('Error generating preview:', error);
+        setPreviewHTML('<div style="padding: 40px; text-align: center; color: #dc2626;">Fout bij laden van voorbeeld</div>');
+      }
+    };
+
+    generatePreview();
+  }, [selectedTemplate, formData, lineItems, invoiceNumber, selectedOrganization?.id]);
 
   const getA4PreviewDocument = (content: string) => {
     return `<!DOCTYPE html>
