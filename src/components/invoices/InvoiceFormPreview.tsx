@@ -7,8 +7,7 @@ import { loadCompanyData } from '@/utils/companyDataMapping';
 interface InvoiceFormPreviewProps {
   showPreview: boolean;
   setShowPreview: (show: boolean) => void;
-  availableTemplates: any[];
-  selectedTemplate: string;
+  selectedTemplateObject: any | null;
   formData: any;
   lineItems: any[];
   invoiceNumber: string;
@@ -19,8 +18,7 @@ interface InvoiceFormPreviewProps {
 export const InvoiceFormPreview = ({
   showPreview,
   setShowPreview,
-  availableTemplates,
-  selectedTemplate,
+  selectedTemplateObject,
   formData,
   lineItems,
   invoiceNumber,
@@ -36,7 +34,7 @@ export const InvoiceFormPreview = ({
     if (showPreview) {
       generatePreview();
     }
-  }, [showPreview, selectedTemplate, formData, lineItems, invoiceNumber, selectedContact, selectedOrganization]);
+  }, [showPreview, selectedTemplateObject, formData, lineItems, invoiceNumber, selectedContact, selectedOrganization]);
 
   const generatePreview = async () => {
     if (!selectedOrganization?.id) {
@@ -46,19 +44,19 @@ export const InvoiceFormPreview = ({
 
     setIsLoading(true);
     try {
-      console.log('🎨 Generating invoice preview with selected template from dropdown');
-      console.log('📋 Selected template ID:', selectedTemplate);
-      console.log('📋 Available templates:', availableTemplates?.length);
+      console.log('🎨 Generating invoice preview with EXACT template object from dropdown');
+      console.log('📋 Selected template object:', selectedTemplateObject ? {
+        id: selectedTemplateObject.id,
+        name: selectedTemplateObject.name
+      } : null);
       
-      // Find the EXACT template object that was selected in the dropdown
-      const templateObject = availableTemplates.find(t => t.id === selectedTemplate);
-      if (!templateObject?.html_content) {
-        console.error('❌ Template niet gevonden in availableTemplates:', selectedTemplate);
-        setPreviewHTML('<p>Geselecteerde template niet gevonden</p>');
+      if (!selectedTemplateObject?.html_content) {
+        console.error('❌ Geen template object beschikbaar voor preview');
+        setPreviewHTML('<p>Geen template geselecteerd voor preview</p>');
         return;
       }
 
-      console.log('✅ Found template:', templateObject.name);
+      console.log('✅ Using exact template from dropdown:', selectedTemplateObject.name);
 
       // Load company data using the same system as HTML builder
       const companyData = await loadCompanyData(selectedOrganization.id);
@@ -115,8 +113,8 @@ export const InvoiceFormPreview = ({
         footer_contact: `Voor vragen kunt u contact opnemen via ${companyData.email || 'info@bedrijf.nl'}`
       };
 
-      // Direct placeholder replacement (same logic as HTML builder)
-      let htmlWithValues = templateObject.html_content;
+      // Direct placeholder replacement using the EXACT template object
+      let htmlWithValues = selectedTemplateObject.html_content;
       
       // Replace all placeholders
       Object.entries(placeholderValues).forEach(([key, value]) => {
@@ -125,8 +123,9 @@ export const InvoiceFormPreview = ({
         htmlWithValues = htmlWithValues.replace(regex, value || `[${key}]`);
       });
       
-      console.log('🎨 Generated preview HTML using selected template from dropdown');
-      console.log('📊 Template used:', templateObject.name);
+      console.log('🎨 Generated preview HTML using EXACT template object from dropdown');
+      console.log('📊 Template used:', selectedTemplateObject.name);
+      console.log('📊 Template ID:', selectedTemplateObject.id);
       console.log('📊 Replaced placeholders:', Object.keys(placeholderValues).length);
       setPreviewHTML(htmlWithValues);
       

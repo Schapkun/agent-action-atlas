@@ -80,6 +80,15 @@ export const CreateInvoiceForm = () => {
 
   const { subtotal, vatAmount, total } = calculateTotals();
 
+  console.log('🎨 CreateInvoiceForm: Template sync check:', {
+    selectedTemplate,
+    selectedTemplateObject: selectedTemplateObject ? {
+      id: selectedTemplateObject.id,
+      name: selectedTemplateObject.name
+    } : null,
+    availableTemplatesCount: documentTemplates.length
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <InvoiceHeader
@@ -142,8 +151,7 @@ export const CreateInvoiceForm = () => {
       <InvoiceFormPreview
         showPreview={showPreview}
         setShowPreview={setShowPreview}
-        availableTemplates={templateManager.availableTemplates}
-        selectedTemplate={selectedTemplate || ''}
+        selectedTemplateObject={selectedTemplateObject}
         formData={formData}
         lineItems={lineItems}
         invoiceNumber={invoiceNumber}
