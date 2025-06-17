@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, ZoomIn, ZoomOut } from 'lucide-react';
@@ -28,23 +27,27 @@ export const InvoicePreview = ({
 
   useEffect(() => {
     const generatePreview = async () => {
+      console.log('🎨 PREVIEW: Generating preview for template:', selectedTemplate?.name, 'ID:', selectedTemplate?.id);
+      
       if (!selectedTemplate) {
+        console.log('🎨 PREVIEW: No template selected');
         setPreviewHTML('<div style="padding: 40px; text-align: center; color: #6b7280;">Geen template geselecteerd</div>');
         return;
       }
 
       try {
+        // Use the template's html_content directly instead of searching through array
         const html = await generatePreviewHTML(
-          [selectedTemplate],
-          selectedTemplate.id,
+          selectedTemplate.html_content, // Pass html_content directly
           formData,
           lineItems,
           invoiceNumber,
           selectedOrganization?.id
         );
+        console.log('🎨 PREVIEW: Successfully generated HTML for template:', selectedTemplate.name);
         setPreviewHTML(html);
       } catch (error) {
-        console.error('Error generating preview:', error);
+        console.error('🎨 PREVIEW ERROR: Failed to generate preview for template:', selectedTemplate.name, error);
         setPreviewHTML('<div style="padding: 40px; text-align: center; color: #dc2626;">Fout bij laden van voorbeeld</div>');
       }
     };

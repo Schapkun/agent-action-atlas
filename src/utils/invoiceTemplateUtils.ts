@@ -2,17 +2,20 @@
 import { loadCompanyData } from '@/utils/companyDataMapping';
 
 export const generatePreviewHTML = async (
-  availableTemplates: any[],
-  selectedTemplate: string,
+  templateHtml: string, // Changed: now accepts HTML content directly
   formData: any,
   lineItems: any[],
   invoiceNumber: string,
   organizationId?: string
 ) => {
-  const template = availableTemplates.find(t => t.id === selectedTemplate);
-  if (!template) return '<p>Geen template geselecteerd</p>';
+  console.log('🎨 UTILS: generatePreviewHTML called with templateHtml length:', templateHtml?.length);
+  
+  if (!templateHtml || typeof templateHtml !== 'string') {
+    console.error('🎨 UTILS: Invalid template HTML provided:', templateHtml);
+    return '<p>Geen geldige template inhoud beschikbaar</p>';
+  }
 
-  let html = template.html_content || '<p>Geen template inhoud beschikbaar</p>';
+  let html = templateHtml;
 
   // Load company data from database
   let companyData: Record<string, string> = {};
@@ -208,8 +211,7 @@ export const generatePreviewHTML = async (
   html = html.replace(/%TABEL_HEADER%/g, tableHeader);
   html = html.replace(/{{tabel_header}}/g, tableHeader);
 
-  console.log('🎨 PREVIEW: HTML generated with company data integration');
-  console.log('🎨 PREVIEW: Replaced', Object.keys(replacements).length, 'placeholder types');
+  console.log('🎨 UTILS: Preview HTML generated successfully with enhanced direct template usage');
 
   return html;
 };
