@@ -1,12 +1,14 @@
 
 import { Button } from '@/components/ui/button';
-import { RotateCcw, RotateCw, Save, Send } from 'lucide-react';
+import { RotateCcw, RotateCw, Save, Send, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface InvoiceHeaderProps {
   loading: boolean;
   sendLoading: boolean;
   clientEmail: string;
+  showPreview: boolean;
+  onTogglePreview: () => void;
   onConvertToQuote: () => void;
   onSubmit: () => void;
   onSaveAndSend: () => void;
@@ -16,6 +18,8 @@ export const InvoiceHeader = ({
   loading,
   sendLoading,
   clientEmail,
+  showPreview,
+  onTogglePreview,
   onConvertToQuote,
   onSubmit,
   onSaveAndSend
@@ -35,6 +39,15 @@ export const InvoiceHeader = ({
           </Button>
           <Button variant="outline" size="sm" className="text-xs px-2 py-1">
             <RotateCw className="h-3 w-3" />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onTogglePreview}
+            className={`flex items-center gap-1 text-xs px-2 py-1 ${showPreview ? 'bg-blue-50 text-blue-600 border-blue-200' : ''}`}
+          >
+            {showPreview ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+            {showPreview ? 'Verberg' : 'Voorbeeld'}
           </Button>
           <Button variant="outline" size="sm" onClick={onConvertToQuote} className="flex items-center gap-1 text-xs px-2 py-1">
             ⚙️ Naar offerte

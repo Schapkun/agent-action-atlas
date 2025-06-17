@@ -1,11 +1,14 @@
-
 import { useState } from 'react';
 import { useInvoiceForm } from './useInvoiceForm';
+import { useInvoicePreview } from './useInvoicePreview';
 import { useToast } from './use-toast';
 
 export const useInvoiceFormHandlers = () => {
   const [showSettings, setShowSettings] = useState(false);
   const { toast } = useToast();
+
+  // Preview functionality
+  const previewState = useInvoicePreview();
 
   const {
     formData,
@@ -83,6 +86,9 @@ export const useInvoiceFormHandlers = () => {
     // State
     showSettings,
     setShowSettings,
+    
+    // Preview state
+    ...previewState,
     
     // Form data
     formData,
