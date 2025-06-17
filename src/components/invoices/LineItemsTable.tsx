@@ -50,46 +50,44 @@ export const LineItemsTable = ({
       const isEmptyListItem = currentLineText.trim() === '•' || currentLineText.trim() === '';
       
       let newText = '';
+      let newCursorPosition = 0;
       
       if (isInList && isEmptyListItem) {
         // Double Enter: remove empty bullet and exit list
         lines[currentLineIndex] = '';
         newText = lines.join('\n');
+        newCursorPosition = cursorPosition;
       } else if (isInList) {
         // Single Enter in list: create new bullet
         lines.splice(currentLineIndex + 1, 0, '• ');
         newText = lines.join('\n');
+        // Position cursor after the new bullet (• )
+        let targetPosition = 0;
+        for (let i = 0; i <= currentLineIndex; i++) {
+          targetPosition += lines[i].length + 1; // +1 for newline
+        }
+        newCursorPosition = targetPosition + 2; // +2 for "• "
       } else {
         // Normal Enter: just add new line
         const beforeCursor = currentText.substring(0, cursorPosition);
         const afterCursor = currentText.substring(cursorPosition);
         newText = beforeCursor + '\n' + afterCursor;
+        // Position cursor at the beginning of the new line
+        newCursorPosition = cursorPosition + 1; // +1 for the newline character
       }
       
       element.textContent = newText;
       
-      // Position cursor appropriately
+      // Position cursor at the calculated position
       const range2 = document.createRange();
       const sel = window.getSelection();
       
-      if (sel) {
-        if (isInList && !isEmptyListItem) {
-          // Position cursor after the new bullet
-          const newLines = newText.split('\n');
-          let targetPosition = 0;
-          for (let i = 0; i <= currentLineIndex; i++) {
-            targetPosition += newLines[i].length + 1; // +1 for newline
-          }
-          targetPosition += 2; // Position after "• "
-          
-          range2.setStart(element.firstChild || element, Math.min(targetPosition, newText.length));
-          range2.collapse(true);
-        } else {
-          // Position at end for other cases
-          range2.selectNodeContents(element);
-          range2.collapse(false);
-        }
+      if (sel && element.firstChild) {
+        const textNode = element.firstChild;
+        const safePosition = Math.min(newCursorPosition, textNode.textContent?.length || 0);
         
+        range2.setStart(textNode, safePosition);
+        range2.collapse(true);
         sel.removeAllRanges();
         sel.addRange(range2);
       }
