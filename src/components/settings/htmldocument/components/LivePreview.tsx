@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Eye } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { replaceAllPlaceholders } from '@/utils/newUniversalPlaceholderReplacement';
+import { replaceAllPlaceholders } from '@/utils/universalPlaceholderReplacement';
 
 interface LivePreviewProps {
   htmlContent: string;
@@ -16,16 +15,16 @@ export const LivePreview = ({ htmlContent, layoutId }: LivePreviewProps) => {
 
   React.useEffect(() => {
     const processContent = async () => {
-      console.log('🎨 LIVE PREVIEW: Processing with NEW SYSTEM');
+      console.log('🎨 LIVE PREVIEW: Processing with ORIGINAL SYSTEM');
       
       try {
         const processed = await replaceAllPlaceholders(htmlContent, {
           organizationId: selectedOrganization?.id
         });
-        console.log('✅ LIVE PREVIEW: NEW SYSTEM completed');
+        console.log('✅ LIVE PREVIEW: ORIGINAL SYSTEM completed');
         setProcessedHtml(processed);
       } catch (error) {
-        console.error('❌ LIVE PREVIEW: NEW SYSTEM error:', error);
+        console.error('❌ LIVE PREVIEW: ORIGINAL SYSTEM error:', error);
         setProcessedHtml(htmlContent);
       }
     };
@@ -178,7 +177,7 @@ export const LivePreview = ({ htmlContent, layoutId }: LivePreviewProps) => {
         <div className="flex items-center gap-2">
           <Eye className="h-4 w-4" />
           <span className="text-sm font-medium">Live Preview</span>
-          <span className="text-xs text-gray-500">NEW System</span>
+          <span className="text-xs text-gray-500">ORIGINAL System</span>
         </div>
       </CardHeader>
       

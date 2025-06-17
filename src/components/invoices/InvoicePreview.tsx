@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, ZoomIn, ZoomOut } from 'lucide-react';
 import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 import { InvoiceFormData, LineItem } from '@/types/invoiceTypes';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { replaceAllPlaceholders } from '@/utils/newUniversalPlaceholderReplacement';
+import { replaceAllPlaceholders } from '@/utils/universalPlaceholderReplacement';
 
 interface InvoicePreviewProps {
   selectedTemplate: DocumentTemplateWithLabels | null;
@@ -28,7 +27,7 @@ export const InvoicePreview = ({
 
   useEffect(() => {
     const generatePreview = async () => {
-      console.log('🎨 INVOICE PREVIEW: Starting with NEW SYSTEM');
+      console.log('🎨 INVOICE PREVIEW: Starting with ORIGINAL SYSTEM');
       
       if (!selectedTemplate) {
         console.log('⚠️ INVOICE PREVIEW: No template selected');
@@ -53,7 +52,7 @@ export const InvoicePreview = ({
           notities: formData.notes || ''
         };
 
-        console.log('🔄 INVOICE PREVIEW: Using NEW SYSTEM');
+        console.log('🔄 INVOICE PREVIEW: Using ORIGINAL SYSTEM');
         
         const processedHTML = await replaceAllPlaceholders(selectedTemplate.html_content, {
           organizationId: selectedOrganization?.id,
@@ -61,10 +60,10 @@ export const InvoicePreview = ({
           lineItems
         });
 
-        console.log('✅ INVOICE PREVIEW: NEW SYSTEM completed successfully');
+        console.log('✅ INVOICE PREVIEW: ORIGINAL SYSTEM completed successfully');
         setPreviewHTML(processedHTML);
       } catch (error) {
-        console.error('❌ INVOICE PREVIEW: NEW SYSTEM error:', error);
+        console.error('❌ INVOICE PREVIEW: ORIGINAL SYSTEM error:', error);
         setPreviewHTML('<div style="padding: 40px; text-align: center; color: #dc2626;">Fout bij laden van voorbeeld</div>');
       }
     };
@@ -269,7 +268,7 @@ export const InvoicePreview = ({
       </div>
 
       <div className="flex-shrink-0 h-[40px] px-4 py-2 bg-gray-100 border-t border-l text-xs text-gray-600 flex items-center justify-between">
-        <span>A4 Formaat • NEW System</span>
+        <span>A4 Formaat • ORIGINAL System</span>
         <span>{lineItems.length} regel{lineItems.length !== 1 ? 's' : ''}</span>
       </div>
     </div>

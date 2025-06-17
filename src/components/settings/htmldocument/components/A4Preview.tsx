@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Eye, Download, FileText } from 'lucide-react';
 import { useExportOperations } from '../builder/useExportOperations';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { replaceAllPlaceholders } from '@/utils/newUniversalPlaceholderReplacement';
+import { replaceAllPlaceholders } from '@/utils/universalPlaceholderReplacement';
 
 interface A4PreviewProps {
   htmlContent: string;
@@ -17,17 +16,17 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
 
   React.useEffect(() => {
     const processContent = async () => {
-      console.log('🎨 A4 PREVIEW: Processing with NEW SYSTEM');
+      console.log('🎨 A4 PREVIEW: Processing with ORIGINAL SYSTEM');
       
       try {
         const processed = await replaceAllPlaceholders(htmlContent, {
           organizationId: selectedOrganization?.id,
           placeholderValues
         });
-        console.log('✅ A4 PREVIEW: NEW SYSTEM completed');
+        console.log('✅ A4 PREVIEW: ORIGINAL SYSTEM completed');
         setFinalHtml(processed);
       } catch (error) {
-        console.error('❌ A4 PREVIEW: NEW SYSTEM error:', error);
+        console.error('❌ A4 PREVIEW: ORIGINAL SYSTEM error:', error);
         setFinalHtml(htmlContent);
       }
     };
@@ -222,7 +221,7 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       <div className="flex-shrink-0 h-[5px]" />
       
       <div className="flex-shrink-0 h-[40px] px-4 py-2 bg-gray-100 border-t text-xs text-gray-600 flex items-center justify-between">
-        <span>A4 Formaat (210×297mm) • NEW System</span>
+        <span>A4 Formaat (210×297mm) • ORIGINAL System</span>
         <span>{Object.keys(placeholderValues).length} variabelen vervangen</span>
       </div>
     </div>
