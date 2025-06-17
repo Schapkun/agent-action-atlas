@@ -27,7 +27,11 @@ export const InvoicePreview = ({
 
   useEffect(() => {
     const generatePreview = async () => {
-      console.log('🎨 PREVIEW: Generating preview for template:', selectedTemplate?.name, 'ID:', selectedTemplate?.id);
+      console.log('🎨 PREVIEW: Generating preview for template AFTER CLEANUP:', {
+        templateName: selectedTemplate?.name,
+        templateId: selectedTemplate?.id,
+        templateIdShort: selectedTemplate?.id?.substring(0, 8) + '...'
+      });
       
       if (!selectedTemplate) {
         console.log('🎨 PREVIEW: No template selected');
@@ -44,10 +48,10 @@ export const InvoicePreview = ({
           invoiceNumber,
           selectedOrganization?.id
         );
-        console.log('🎨 PREVIEW: Successfully generated HTML for template:', selectedTemplate.name);
+        console.log('🎨 PREVIEW: Successfully generated HTML for template:', selectedTemplate.name, selectedTemplate.id);
         setPreviewHTML(html);
       } catch (error) {
-        console.error('🎨 PREVIEW ERROR: Failed to generate preview for template:', selectedTemplate.name, error);
+        console.error('🎨 PREVIEW ERROR: Failed to generate preview for template:', selectedTemplate.name, selectedTemplate.id, error);
         setPreviewHTML('<div style="padding: 40px; text-align: center; color: #dc2626;">Fout bij laden van voorbeeld</div>');
       }
     };
@@ -159,7 +163,9 @@ export const InvoicePreview = ({
           <FileText className="h-4 w-4" />
           Live Voorbeeld
           {selectedTemplate && (
-            <span className="text-xs text-gray-500">({selectedTemplate.name})</span>
+            <span className="text-xs text-gray-500">
+              ({selectedTemplate.name} - ID: {selectedTemplate.id.substring(0, 8)}...)
+            </span>
           )}
         </h3>
         <div className="flex items-center gap-2">

@@ -7,20 +7,21 @@ export const useInvoiceTemplateManager = () => {
   const { templates: allTemplates, loading: templatesLoading } = useDocumentTemplates();
   const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplateWithLabels | null>(null);
 
-  // Enhanced filtering with strict null/undefined checking
+  // Enhanced filtering with strict null/undefined checking + detailed debugging
   const invoiceTemplates = allTemplates.filter(template => {
-    console.log('🔍 FILTER CHECK for template:', template.name, {
+    console.log('🔍 FILTER CHECK for template:', template.name, template.id, {
       hasLabelsProperty: 'labels' in template,
       labelsValue: template.labels,
       labelsType: typeof template.labels,
       labelsIsArray: Array.isArray(template.labels),
       labelsLength: template.labels?.length,
-      labelNames: template.labels?.map(l => l.name)
+      labelNames: template.labels?.map(l => l.name),
+      isActive: template.is_active
     });
 
     // Strict check: labels must exist, be an array, and have at least one item
     if (!template.labels || !Array.isArray(template.labels) || template.labels.length === 0) {
-      console.log('❌ FILTER REJECT:', template.name, 'no valid labels array');
+      console.log('❌ FILTER REJECT:', template.name, template.id, 'no valid labels array');
       return false;
     }
     
@@ -35,24 +36,34 @@ export const useInvoiceTemplateManager = () => {
       return isFactuur;
     });
 
-    console.log(hasFactuurLabel ? '✅ FILTER ACCEPT:' : '❌ FILTER REJECT:', template.name, 'hasFactuurLabel:', hasFactuurLabel);
+    console.log(hasFactuurLabel ? '✅ FILTER ACCEPT:' : '❌ FILTER REJECT:', template.name, template.id, 'hasFactuurLabel:', hasFactuurLabel);
     return hasFactuurLabel;
   });
 
-  console.log('🎯 TEMPLATE MANAGER: DETAILED FILTERING RESULTS:', {
+  console.log('🎯 TEMPLATE MANAGER: DETAILED FILTERING RESULTS AFTER CLEANUP:', {
     totalTemplates: allTemplates.length,
+    activeTemplates: allTemplates.filter(t => t.is_active).length,
+    inactiveTemplates: allTemplates.filter(t => !t.is_active).length,
     templatesWithLabels: allTemplates.filter(t => t.labels && Array.isArray(t.labels) && t.labels.length > 0).length,
     templatesWithoutLabels: allTemplates.filter(t => !t.labels || !Array.isArray(t.labels) || t.labels.length === 0).length,
     factuurTemplatesFound: invoiceTemplates.length,
+    removedTemplateIds: ['ba93f2fa...', 'a1bdecb8...', 'a2ba9239...'],
     allTemplateAnalysis: allTemplates.map(t => ({
+      id: t.id.substring(0, 8) + '...',
       name: t.name,
+      isActive: t.is_active,
       hasValidLabels: !!(t.labels && Array.isArray(t.labels) && t.labels.length > 0),
       labelCount: t.labels?.length || 0,
       labels: t.labels?.map(l => l?.name || 'INVALID_LABEL') || [],
       hasFactuurLabel: t.labels && Array.isArray(t.labels) && t.labels.some(l => l?.name?.toLowerCase() === 'factuur'),
       passesFilter: t.labels && Array.isArray(t.labels) && t.labels.length > 0 && t.labels.some(l => l?.name?.toLowerCase() === 'factuur')
     })),
-    acceptedTemplateNames: invoiceTemplates.map(t => t.name)
+    acceptedTemplateDetails: invoiceTemplates.map(t => ({
+      id: t.id.substring(0, 8) + '...',
+      name: t.name,
+      isDefault: t.is_default,
+      labels: t.labels?.map(l => l.name)
+    }))
   });
 
   // Sort templates: favorite first, then by creation date (NEWEST FIRST)
@@ -72,9 +83,9 @@ export const useInvoiceTemplateManager = () => {
       // If no default is found, use the newest template (first in sorted array)
       if (!defaultTemplate) {
         defaultTemplate = sortedTemplates[0];
-        console.log('🎯 TEMPLATE MANAGER: No default template found, using newest:', defaultTemplate.name);
+        console.log('🎯 TEMPLATE MANAGER: No default template found, using newest:', defaultTemplate.name, defaultTemplate.id);
       } else {
-        console.log('🎯 TEMPLATE MANAGER: Using marked default template:', defaultTemplate.name);
+        console.log('🎯 TEMPLATE MANAGER: Using marked default template:', defaultTemplate.name, defaultTemplate.id);
       }
       
       setSelectedTemplate(defaultTemplate);
@@ -93,9 +104,10 @@ export const useInvoiceTemplateManager = () => {
     localStorage.removeItem('favoriteTemplate');
   }, []);
 
-  console.log('🎯 TEMPLATE MANAGER: FINAL STATE WITH ENHANCED FILTERING:', {
+  console.log('🎯 TEMPLATE MANAGER: FINAL STATE AFTER TEMPLATE CLEANUP:', {
     selectedTemplate: selectedTemplate ? {
-      id: selectedTemplate.id,
+      id: selectedTemplate.id.substring(0, 8) + '...',
+      fullId: selectedTemplate.id,
       name: selectedTemplate.name,
       labels: selectedTemplate.labels?.map(l => l.name)
     } : null,
@@ -103,7 +115,8 @@ export const useInvoiceTemplateManager = () => {
     loading: templatesLoading,
     filterRule: 'STRICT: Only templates with valid labels array AND containing "Factuur" label',
     finalTemplateList: sortedTemplates.map(t => ({
-      id: t.id,
+      id: t.id.substring(0, 8) + '...',
+      fullId: t.id,
       name: t.name,
       isDefault: t.is_default,
       labels: t.labels?.map(l => l.name)
