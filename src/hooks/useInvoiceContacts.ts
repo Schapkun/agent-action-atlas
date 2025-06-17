@@ -29,11 +29,11 @@ export const useInvoiceContacts = (
         client_country: contact.country || 'Nederland'
       });
       
-      // NIEUWE FUNCTIONALITEIT: Update ook de klant placeholders voor document templates
+      // Update placeholders voor document templates (consistent met HTML builder)
       const updateEvent = new CustomEvent('contactSelectedForDocuments', {
         detail: {
           klant_naam: contact.name,
-          klant_bedrijf: contact.name, // Als het een bedrijf is
+          klant_bedrijf: contact.name,
           klant_adres: contact.address || '',
           klant_postcode: contact.postal_code || '',
           klant_plaats: contact.city || '',
@@ -56,7 +56,7 @@ export const useInvoiceContacts = (
         client_country: 'Nederland'
       });
       
-      // Clear ook de klant placeholders
+      // Clear placeholders
       const clearEvent = new CustomEvent('contactSelectedForDocuments', {
         detail: {
           klant_naam: '',
