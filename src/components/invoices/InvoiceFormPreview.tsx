@@ -3,7 +3,6 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { useState, useEffect } from 'react';
 import { InvoicePreviewDialog } from './InvoicePreviewDialog';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
-import { usePlaceholderReplacement } from '@/components/settings/htmldocument/builder/usePlaceholderReplacement';
 import { loadCompanyData } from '@/utils/companyDataMapping';
 
 interface InvoiceFormPreviewProps {
@@ -49,7 +48,7 @@ export const InvoiceFormPreview = ({
 
     setIsLoading(true);
     try {
-      console.log('🎨 Generating invoice preview with consistent system');
+      console.log('🎨 Generating invoice preview with direct placeholder replacement');
       
       // Find the selected template
       const template = templates.find(t => t.id === selectedTemplate);
@@ -62,10 +61,22 @@ export const InvoiceFormPreview = ({
       const companyData = await loadCompanyData(selectedOrganization.id);
       console.log('📊 Loaded company data:', companyData);
 
-      // Add additional company data mappings for uppercase placeholders (compatibility)
-      const extendedCompanyData = {
-        ...companyData,
-        COMPANY_NAME: companyData.bedrijfsnaam || selectedOrganization.name || '',
+      // Create comprehensive placeholder values
+      const placeholderValues = {
+        // Company data (both lowercase and uppercase for compatibility)
+        bedrijfsnaam: companyData.bedrijfsnaam || selectedOrganization.name || 'Uw Bedrijf B.V.',
+        adres: companyData.adres || '',
+        postcode: companyData.postcode || '',
+        plaats: companyData.plaats || '',
+        telefoon: companyData.telefoon || '',
+        email: companyData.email || '',
+        website: companyData.website || '',
+        kvk_nummer: companyData.kvk_nummer || '',
+        btw_nummer: companyData.btw_nummer || '',
+        banknummer: companyData.banknummer || '',
+        
+        // Uppercase variants
+        COMPANY_NAME: companyData.bedrijfsnaam || selectedOrganization.name || 'Uw Bedrijf B.V.',
         COMPANY_ADDRESS: companyData.adres || '',
         COMPANY_POSTAL_CODE: companyData.postcode || '',
         COMPANY_CITY: companyData.plaats || '',
@@ -74,13 +85,7 @@ export const InvoiceFormPreview = ({
         COMPANY_WEBSITE: companyData.website || '',
         COMPANY_KVK: companyData.kvk_nummer || '',
         COMPANY_VAT: companyData.btw_nummer || '',
-        COMPANY_IBAN: companyData.banknummer || ''
-      };
-
-      // Prepare placeholder values from form and contact data
-      const placeholderValues = {
-        // Company data from loadCompanyData
-        ...extendedCompanyData,
+        COMPANY_IBAN: companyData.banknummer || '',
         
         // Document data
         datum: formData.invoice_date || new Date().toLocaleDateString('nl-NL'),
@@ -104,19 +109,21 @@ export const InvoiceFormPreview = ({
         
         // Footer
         footer_tekst: 'Betaling binnen 30 dagen na factuurdatum.',
-        footer_contact: `Voor vragen kunt u contact opnemen via ${extendedCompanyData.COMPANY_EMAIL || 'info@bedrijf.nl'}`
+        footer_contact: `Voor vragen kunt u contact opnemen via ${companyData.email || 'info@bedrijf.nl'}`
       };
 
-      // Use the same placeholder replacement system as HTML builder
-      const { replacePlaceholders } = usePlaceholderReplacement({ 
-        placeholderValues, 
-        companyData: extendedCompanyData 
-      });
-
-      // Replace placeholders in the template
-      const htmlWithValues = replacePlaceholders(template.html_content, true);
+      // Direct placeholder replacement (same logic as HTML builder)
+      let htmlWithValues = template.html_content;
       
-      console.log('🎨 Generated preview HTML with consistent company data system');
+      // Replace all placeholders
+      Object.entries(placeholderValues).forEach(([key, value]) => {
+        const placeholder = `{{${key}}}`;
+        const regex = new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+        htmlWithValues = htmlWithValues.replace(regex, value || `[${key}]`);
+      });
+      
+      console.log('🎨 Generated preview HTML with direct replacement');
+      console.log('📊 Replaced placeholders:', Object.keys(placeholderValues).length);
       setPreviewHTML(htmlWithValues);
       
     } catch (error) {
