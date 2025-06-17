@@ -1,4 +1,3 @@
-
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -120,9 +119,8 @@ export const LineItemsTable = ({
       const afterSelection = textContent.substring(range.endOffset);
       
       const formattedSelection = selectedText.split('\n').map(line => {
-        const trimmed = line.trim();
-        if (trimmed && !trimmed.startsWith('• ')) {
-          return `• ${trimmed}`;
+        if (line && !line.startsWith('• ')) {
+          return `• ${line}`;
         }
         return line;
       }).join('\n');
@@ -130,6 +128,20 @@ export const LineItemsTable = ({
       const newText = beforeSelection + formattedSelection + afterSelection;
       element.textContent = newText;
       onUpdateLineItem(index, 'description', newText);
+      
+      // Keep cursor at the end of the formatted selection
+      setTimeout(() => {
+        const newCursorPosition = beforeSelection.length + formattedSelection.length;
+        const range2 = document.createRange();
+        const sel = window.getSelection();
+        if (sel && element.firstChild) {
+          const safePosition = Math.min(newCursorPosition, element.firstChild.textContent?.length || 0);
+          range2.setStart(element.firstChild, safePosition);
+          range2.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range2);
+        }
+      }, 0);
     } else {
       // If no selection, add bullet at current cursor position/line
       const lines = textContent.split('\n');
@@ -146,23 +158,34 @@ export const LineItemsTable = ({
       }
       
       const currentLine = lines[currentLineIndex];
-      if (currentLine && currentLine.trim() && !currentLine.startsWith('• ')) {
-        lines[currentLineIndex] = `• ${currentLine.trim()}`;
+      if (currentLine !== undefined && !currentLine.startsWith('• ')) {
+        // Add bullet to current line without trimming (preserve spacing)
+        lines[currentLineIndex] = `• ${currentLine}`;
         const newText = lines.join('\n');
         element.textContent = newText;
         onUpdateLineItem(index, 'description', newText);
+        
+        // Keep cursor at its relative position in the current line
+        setTimeout(() => {
+          let targetPosition = 0;
+          for (let i = 0; i < currentLineIndex; i++) {
+            targetPosition += lines[i].length + 1; // +1 for newline
+          }
+          // Add 2 for the bullet and space, plus the relative cursor position in the original line
+          const relativePosition = cursorPosition - charCount;
+          targetPosition += 2 + relativePosition;
+          
+          const range2 = document.createRange();
+          const sel = window.getSelection();
+          if (sel && element.firstChild) {
+            const safePosition = Math.min(targetPosition, element.firstChild.textContent?.length || 0);
+            range2.setStart(element.firstChild, safePosition);
+            range2.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range2);
+          }
+        }, 0);
       }
-    }
-    
-    // Position cursor at end
-    const range2 = document.createRange();
-    const sel = window.getSelection();
-    
-    if (sel) {
-      range2.selectNodeContents(element);
-      range2.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(range2);
     }
   };
 
