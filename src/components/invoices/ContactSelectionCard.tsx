@@ -83,8 +83,6 @@ export const ContactSelectionCard = ({
               <ContactSelector
                 selectedContact={selectedContact}
                 onContactSelect={onContactSelect}
-                placeholder="Selecteer contact..."
-                className="text-xs"
               />
             </div>
 
@@ -130,8 +128,8 @@ export const ContactSelectionCard = ({
       </Card>
 
       <ContactCreateDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
+        isOpen={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
         onContactCreated={handleContactCreated}
       />
 
