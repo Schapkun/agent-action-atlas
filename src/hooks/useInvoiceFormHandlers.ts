@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useInvoiceForm } from './useInvoiceForm';
 import { useToast } from './use-toast';
@@ -35,21 +34,20 @@ export const useInvoiceFormHandlers = () => {
   // Initialize invoice number on component mount if not already set
   useEffect(() => {
     const initializeInvoiceNumber = async () => {
-      if (!invoiceNumber) {
-        try {
-          const defaultNumber = await getDefaultInvoiceNumber();
+      try {
+        const defaultNumber = await getDefaultInvoiceNumber();
+        setCurrentInvoiceNumber(defaultNumber);
+        
+        if (!invoiceNumber) {
           setInvoiceNumber(defaultNumber);
-          setCurrentInvoiceNumber(defaultNumber);
-        } catch (error) {
-          console.error('Failed to initialize invoice number:', error);
         }
-      } else {
-        setCurrentInvoiceNumber(invoiceNumber);
+      } catch (error) {
+        console.error('Failed to initialize invoice number:', error);
       }
     };
 
     initializeInvoiceNumber();
-  }, [invoiceNumber, getDefaultInvoiceNumber, setInvoiceNumber]);
+  }, []);
 
   const togglePreview = () => setShowPreview(!showPreview);
 

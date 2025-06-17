@@ -20,11 +20,15 @@ export const LineItemsTable = ({
 }: LineItemsTableProps) => {
   const applyListFormatting = (index: number) => {
     const currentDescription = lineItems[index].description;
-    // Remove any existing HTML formatting and get clean text
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = currentDescription;
-    const cleanText = tempDiv.textContent || tempDiv.innerText || '';
     
+    // Get the contentEditable element
+    const element = document.querySelector(`[data-description-index="${index}"]`) as HTMLElement;
+    if (!element) return;
+    
+    // Get clean text content
+    const cleanText = element.textContent || element.innerText || '';
+    
+    // Split into lines and format each line
     const lines = cleanText.split('\n').filter(line => line.trim() !== '');
     const formattedLines = lines.map(line => {
       const trimmedLine = line.trim();
@@ -34,7 +38,12 @@ export const LineItemsTable = ({
       }
       return trimmedLine;
     });
+    
+    // Update the content with proper HTML formatting
     const newDescription = formattedLines.join('<br>');
+    element.innerHTML = newDescription;
+    
+    // Update the state
     onUpdateLineItem(index, 'description', newDescription);
   };
 
@@ -66,6 +75,7 @@ export const LineItemsTable = ({
               <div className="col-span-6">
                 <div className="space-y-1">
                   <div
+                    data-description-index={index}
                     contentEditable
                     className="min-h-[32px] p-2 text-xs focus:outline-none border rounded"
                     style={{ direction: 'ltr', textAlign: 'left' }}

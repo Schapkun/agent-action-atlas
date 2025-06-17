@@ -65,7 +65,7 @@ export const InvoiceDetailsCard = ({
       return placeholder.substring(prefix.length);
     }
     
-    return placeholder || '001';
+    return placeholder || '';
   };
 
   const handleInvoiceNumberChange = (value: string) => {
