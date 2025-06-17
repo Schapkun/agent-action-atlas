@@ -44,9 +44,13 @@ export const replaceAllPlaceholders = async (
   let processedHTML = htmlContent;
 
   try {
-    // Load company data including logo
+    // Load company data including logo with enhanced debugging
     const companyData = organizationId ? await loadCompanyData(organizationId) : {};
-    console.log('🏢 UNIVERSAL PLACEHOLDER: Company data loaded:', companyData);
+    console.log('🏢 UNIVERSAL PLACEHOLDER: Company data loaded:', {
+      hasData: Object.keys(companyData).length > 0,
+      logoKeys: Object.keys(companyData).filter(key => key.toLowerCase().includes('logo')),
+      primaryLogo: companyData && 'logo' in companyData ? !!companyData.logo : false
+    });
 
     // Combine all data sources
     const allPlaceholders = {
@@ -60,16 +64,23 @@ export const replaceAllPlaceholders = async (
       datum: new Date().toLocaleDateString('nl-NL')
     };
 
-    console.log('🎨 UNIVERSAL PLACEHOLDER: All placeholders:', {
-      ...allPlaceholders,
+    console.log('🎨 UNIVERSAL PLACEHOLDER: All placeholders prepared:', {
+      totalPlaceholders: Object.keys(allPlaceholders).length,
       logoKeys: Object.keys(allPlaceholders).filter(key => 
-        key.toLowerCase().includes('logo'))
+        key.toLowerCase().includes('logo')),
+      hasMainLogo: !!allPlaceholders.logo
     });
 
     // Replace all standard placeholders
     Object.entries(allPlaceholders).forEach(([key, value]) => {
       const regex = new RegExp(`{{${key}}}`, 'g');
+      const beforeCount = (processedHTML.match(regex) || []).length;
       processedHTML = processedHTML.replace(regex, String(value || ''));
+      const afterCount = (processedHTML.match(regex) || []).length;
+      
+      if (key.toLowerCase().includes('logo') && beforeCount > 0) {
+        console.log(`🖼️ LOGO REPLACEMENT: ${key}: ${beforeCount} -> ${afterCount} (value: ${value ? 'present' : 'empty'})`);
+      }
     });
 
     // Handle line items table generation (Handlebars-style {{#each}} replacement)
@@ -103,21 +114,29 @@ export const replaceAllPlaceholders = async (
       processedHTML = processedHTML.replace(/{{#if notities}}[\s\S]*?{{\/if}}/g, '');
     }
 
-    // Logo conditional blocks - enhanced checking with safe property access
+    // Logo conditional blocks - enhanced checking with safe property access and better debugging
     const hasLogo = companyData && typeof companyData === 'object' && 'logo' in companyData && companyData.logo;
-    console.log('🖼️ UNIVERSAL PLACEHOLDER: Logo check result:', { hasLogo, logoValue: companyData && 'logo' in companyData ? (companyData as any).logo : 'undefined' });
+    console.log('🖼️ UNIVERSAL PLACEHOLDER: Logo conditional check:', { 
+      hasLogo, 
+      logoValue: companyData && 'logo' in companyData ? (companyData as any).logo : 'undefined',
+      logoConditionalBlocks: (processedHTML.match(/{{#if logo}}/g) || []).length
+    });
     
     if (hasLogo) {
-      console.log('✅ UNIVERSAL PLACEHOLDER: Processing template with logo');
+      console.log('✅ UNIVERSAL PLACEHOLDER: Processing template WITH logo');
       processedHTML = processedHTML.replace(/{{#if logo}}([\s\S]*?){{else}}[\s\S]*?{{\/if}}/g, '$1');
       processedHTML = processedHTML.replace(/{{#if logo}}([\s\S]*?){{\/if}}/g, '$1');
     } else {
-      console.log('⚠️ UNIVERSAL PLACEHOLDER: Processing template without logo');
+      console.log('⚠️ UNIVERSAL PLACEHOLDER: Processing template WITHOUT logo');
       processedHTML = processedHTML.replace(/{{#if logo}}[\s\S]*?{{else}}([\s\S]*?){{\/if}}/g, '$1');
       processedHTML = processedHTML.replace(/{{#if logo}}[\s\S]*?{{\/if}}/g, '');
     }
 
     // Clean up any remaining unfilled placeholders
+    const remainingPlaceholders = processedHTML.match(/{{[^}]+}}/g) || [];
+    if (remainingPlaceholders.length > 0) {
+      console.log('🧹 UNIVERSAL PLACEHOLDER: Cleaning remaining placeholders:', remainingPlaceholders.slice(0, 5));
+    }
     processedHTML = processedHTML.replace(/{{[^}]+}}/g, '');
 
     console.log('✅ UNIVERSAL PLACEHOLDER: Replacement completed successfully');

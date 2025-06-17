@@ -33,21 +33,154 @@ export const LivePreview = ({ htmlContent, layoutId }: LivePreviewProps) => {
     processContent();
   }, [htmlContent, selectedOrganization?.id]);
 
+  // Enhanced HTML wrapper with consistent styling
+  const getEnhancedPreviewDocument = (content: string) => {
+    // Extract body content if it's a complete HTML document
+    let bodyContent = content;
+    const bodyMatch = content.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    if (bodyMatch) {
+      bodyContent = bodyMatch[1];
+    } else if (content.includes('<!DOCTYPE html>')) {
+      const afterBodyMatch = content.match(/<body[^>]*>([\s\S]*)/i);
+      if (afterBodyMatch) {
+        bodyContent = afterBodyMatch[1].replace(/<\/body>[\s\S]*$/i, '');
+      }
+    }
+
+    return `<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Preview</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background: white;
+      padding: 20px;
+    }
+    
+    .preview-container {
+      width: 100%;
+      height: 100%;
+      background: white;
+    }
+    
+    .preview-content {
+      width: 100%;
+      min-height: 100%;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #333;
+    }
+
+    /* Enhanced table styling matching invoice preview */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    
+    th {
+      background: #f8f9fa;
+      font-weight: 600;
+      padding: 12px 8px;
+      text-align: left;
+      border-bottom: 2px solid #e9ecef;
+    }
+    
+    td {
+      padding: 10px 8px;
+      text-align: left;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    /* Typography matching invoice preview */
+    h1, h2, h3 {
+      color: #212529;
+      font-weight: 600;
+      margin: 20px 0 12px 0;
+    }
+    
+    h1 { font-size: 24px; }
+    h2 { font-size: 20px; }
+    h3 { font-size: 16px; }
+    
+    p {
+      font-size: 14px;
+      margin: 8px 0;
+      color: #495057;
+    }
+
+    /* Logo styling - consistent with invoice preview and A4 preview */
+    .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], img[alt*="Logo"] {
+      max-width: 200px;
+      max-height: 100px;
+      height: auto;
+      object-fit: contain;
+    }
+
+    /* Additional logo variations */
+    .logo, .Logo, .LOGO {
+      max-width: 200px;
+      max-height: 100px;
+      height: auto;
+      object-fit: contain;
+    }
+
+    /* Responsive scaling for live preview */
+    @media (max-width: 768px) {
+      html, body {
+        padding: 10px;
+      }
+      
+      .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], img[alt*="Logo"],
+      .logo, .Logo, .LOGO {
+        max-width: 150px;
+        max-height: 75px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="preview-container">
+    <div class="preview-content">
+      ${bodyContent}
+    </div>
+  </div>
+</body>
+</html>`;
+  };
+
   return (
     <div className="h-full flex flex-col bg-white">
       <CardHeader className="py-3 px-4 border-b">
         <div className="flex items-center gap-2">
           <Eye className="h-4 w-4" />
           <span className="text-sm font-medium">Live Preview</span>
-          <span className="text-xs text-gray-500">Universal System</span>
+          <span className="text-xs text-gray-500">Enhanced Universal System</span>
         </div>
       </CardHeader>
       
       <CardContent className="flex-1 p-0 overflow-auto">
-        <div className="p-4">
-          <div 
-            className="bg-white border rounded-lg shadow-sm min-h-96"
-            dangerouslySetInnerHTML={{ __html: processedHtml }}
+        <div className="h-full">
+          <iframe
+            srcDoc={getEnhancedPreviewDocument(processedHtml)}
+            className="w-full h-full border-0"
+            title="Enhanced Live Preview"
+            style={{
+              background: 'white',
+              minHeight: '400px'
+            }}
           />
         </div>
       </CardContent>

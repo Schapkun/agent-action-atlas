@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export const loadCompanyData = async (organizationId: string) => {
-  console.log('🏢 Loading company data for organization:', organizationId);
+  console.log('🏢 COMPANY DATA: Loading for organization:', organizationId);
   
   try {
     const { data, error } = await supabase
@@ -12,25 +12,33 @@ export const loadCompanyData = async (organizationId: string) => {
       .single();
 
     if (error) {
-      console.error('Error loading company data:', error);
+      console.error('❌ COMPANY DATA: Error loading:', error);
       return {};
     }
 
     if (!data) {
-      console.log('No company data found for organization');
+      console.log('⚠️ COMPANY DATA: No data found for organization');
       return {};
     }
 
-    console.log('✅ Company data loaded:', data);
+    console.log('✅ COMPANY DATA: Raw data loaded:', {
+      company_name: data.company_name,
+      has_logo: !!data.company_logo,
+      logo_length: data.company_logo ? data.company_logo.length : 0
+    });
 
-    // Add comprehensive logo logging
+    // Enhanced logo logging and validation
     if (data.company_logo) {
-      console.log('🖼️ Logo found:', data.company_logo);
+      console.log('🖼️ LOGO FOUND:', {
+        logoUrl: data.company_logo.substring(0, 50) + '...',
+        isValidUrl: data.company_logo.startsWith('http'),
+        logoType: data.company_logo.includes('data:') ? 'base64' : 'url'
+      });
     } else {
-      console.log('⚠️ No logo found in company data');
+      console.log('⚠️ NO LOGO: Company logo field is empty or null');
     }
 
-    // Create a comprehensive mapping with extensive logo field variations for maximum compatibility
+    // Create a comprehensive mapping with extensive logo field variations
     const mappedData = {
       // Company info
       bedrijfsnaam: data.company_name || '',
@@ -60,16 +68,18 @@ export const loadCompanyData = async (organizationId: string) => {
       referentie: `REF-${Date.now()}`
     };
 
-    console.log('🔄 Mapped company data with extensive logo support:', {
-      ...mappedData,
+    console.log('🔄 COMPANY DATA: Final mapped data:', {
+      bedrijfsnaam: mappedData.bedrijfsnaam,
+      hasLogo: !!mappedData.logo,
       logoVariationsCount: Object.keys(mappedData).filter(key => 
-        key.toLowerCase().includes('logo')).length
+        key.toLowerCase().includes('logo')).length,
+      totalFields: Object.keys(mappedData).length
     });
     
     return mappedData;
 
   } catch (error) {
-    console.error('Error in loadCompanyData:', error);
+    console.error('❌ COMPANY DATA: Exception in loadCompanyData:', error);
     return {};
   }
 };

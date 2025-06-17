@@ -47,7 +47,7 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
     htmlContent: finalHtml
   });
 
-  // Create complete HTML document for A4 preview
+  // Create complete HTML document with enhanced styling matching invoice preview
   const getA4PreviewDocument = (content: string) => {
     // Extract body content if it's a complete HTML document
     let bodyContent = content;
@@ -79,21 +79,77 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       height: 100%;
       font-family: Arial, sans-serif;
       background: white;
+      overflow: hidden;
     }
     
     .a4-container {
       width: 100%;
       height: 100%;
       background: white;
+      overflow: auto;
     }
     
     .a4-content {
       width: 100%;
-      height: 100%;
-      padding: 15mm;
+      min-height: 100%;
       font-size: 12px;
       line-height: 1.4;
       color: #333;
+    }
+
+    /* Enhanced table styling matching invoice preview */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    
+    th {
+      background: #f8f9fa;
+      font-weight: 600;
+      padding: 12px 8px;
+      text-align: left;
+      border-bottom: 2px solid #e9ecef;
+    }
+    
+    td {
+      padding: 10px 8px;
+      text-align: left;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    /* Typography matching invoice preview */
+    h1, h2, h3 {
+      color: #212529;
+      font-weight: 600;
+      margin: 20px 0 12px 0;
+    }
+    
+    h1 { font-size: 24px; }
+    h2 { font-size: 20px; }
+    h3 { font-size: 16px; }
+    
+    p {
+      font-size: 14px;
+      margin: 8px 0;
+      color: #495057;
+    }
+
+    /* Logo styling - consistent with invoice preview */
+    .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], img[alt*="Logo"] {
+      max-width: 200px;
+      max-height: 100px;
+      height: auto;
+      object-fit: contain;
+    }
+
+    /* Additional logo variations */
+    .logo, .Logo, .LOGO {
+      max-width: 200px;
+      max-height: 100px;
+      height: auto;
+      object-fit: contain;
     }
   </style>
 </head>
@@ -168,7 +224,7 @@ export const A4Preview = ({ htmlContent, placeholderValues }: A4PreviewProps) =>
       
       {/* Footer - 40px hoog */}
       <div className="flex-shrink-0 h-[40px] px-4 py-2 bg-gray-100 border-t text-xs text-gray-600 flex items-center justify-between">
-        <span>A4 Formaat (210×297mm) - Universal Preview System</span>
+        <span>A4 Formaat (210×297mm) - Enhanced Preview System</span>
         <span>{Object.keys(placeholderValues).length} variabelen vervangen</span>
       </div>
     </div>
