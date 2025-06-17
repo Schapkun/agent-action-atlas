@@ -17,19 +17,45 @@ export const LineItemsTable = ({
   onUpdateLineItem,
   onRemoveLineItem
 }: LineItemsTableProps) => {
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, index: number) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      
+      const element = event.currentTarget;
+      const selection = window.getSelection();
+      
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        
+        // Insert line break with bullet point
+        const br = document.createElement('br');
+        const bulletSpan = document.createElement('span');
+        bulletSpan.innerHTML = '• ';
+        bulletSpan.style.marginLeft = '1em';
+        
+        range.deleteContents();
+        range.insertNode(br);
+        range.collapse(false);
+        range.insertNode(bulletSpan);
+        
+        // Position cursor after bullet
+        range.setStartAfter(bulletSpan);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
+        // Update the content
+        onUpdateLineItem(index, 'description', element.innerHTML);
+      }
+    }
+  };
+
   const applyListFormatting = (index: number) => {
     const element = document.querySelector(`[data-description-index="${index}"]`) as HTMLElement;
     if (!element) return;
     
     console.log('Applying list formatting to element:', element);
-    
-    // Get current HTML content
-    const currentHTML = element.innerHTML;
-    console.log('Current HTML:', currentHTML);
-    
-    // Convert to text to work with lines
-    const textContent = element.textContent || '';
-    console.log('Text content:', textContent);
     
     // Get current selection
     const selection = window.getSelection();
@@ -45,38 +71,34 @@ export const LineItemsTable = ({
       }
     }
     
-    let newHTML = '';
-    
     if (hasSelection && selectedText) {
       // Format only selected text
       if (!selectedText.startsWith('• ')) {
-        const bulletText = `• ${selectedText}`;
+        const bulletText = `<span style="margin-left: 1em;">• ${selectedText}</span>`;
         // Replace the selected text with bullet version
-        newHTML = currentHTML.replace(selectedText, bulletText);
-      } else {
-        newHTML = currentHTML;
+        const currentHTML = element.innerHTML;
+        const newHTML = currentHTML.replace(selectedText, bulletText);
+        element.innerHTML = newHTML;
       }
     } else {
-      // Format all lines
-      const lines = textContent.split('\n').filter(line => line.trim());
-      const formattedLines = lines.map(line => {
-        const trimmed = line.trim();
-        if (trimmed && !trimmed.startsWith('• ')) {
-          return `• ${trimmed}`;
-        }
-        return trimmed;
-      });
-      
-      newHTML = formattedLines.join('<br>');
+      // Format all content as a list
+      const textContent = element.textContent || '';
+      if (textContent.trim()) {
+        const lines = textContent.split('\n').filter(line => line.trim());
+        const formattedLines = lines.map(line => {
+          const trimmed = line.trim();
+          if (trimmed && !trimmed.startsWith('• ')) {
+            return `<span style="margin-left: 1em;">• ${trimmed}</span>`;
+          }
+          return `<span style="margin-left: 1em;">${trimmed}</span>`;
+        });
+        
+        element.innerHTML = formattedLines.join('<br>');
+      }
     }
     
-    console.log('New HTML:', newHTML);
-    
-    // Update the element
-    element.innerHTML = newHTML;
-    
     // Update the state
-    onUpdateLineItem(index, 'description', newHTML);
+    onUpdateLineItem(index, 'description', element.innerHTML);
     
     // Clear selection and set cursor at end
     if (selection) {
@@ -125,6 +147,7 @@ export const LineItemsTable = ({
                     className="min-h-[32px] p-2 text-xs focus:outline-none border rounded"
                     style={{ direction: 'ltr', textAlign: 'left' }}
                     onBlur={(e) => onUpdateLineItem(index, 'description', e.currentTarget.innerHTML || '')}
+                    onKeyDown={(e) => handleKeyDown(e, index)}
                     dangerouslySetInnerHTML={{ __html: item.description }}
                     suppressContentEditableWarning
                   />

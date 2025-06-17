@@ -104,27 +104,41 @@ export const useInvoices = () => {
 
   const generateInvoiceNumber = async () => {
     try {
-      // Simple fallback invoice number generation since the RPC function has issues
       const currentYear = new Date().getFullYear();
       
-      // Get the count of invoices for this organization this year
+      // Get all invoice numbers for this organization this year
       const { data: existingInvoices, error } = await supabase
         .from('invoices')
         .select('invoice_number')
         .eq('organization_id', selectedOrganization?.id)
         .gte('created_at', `${currentYear}-01-01`)
-        .order('created_at', { ascending: false });
+        .order('invoice_number', { ascending: false });
 
       if (error) throw error;
 
-      const nextNumber = (existingInvoices?.length || 0) + 1;
+      let highestNumber = 0;
+      
+      // Parse existing invoice numbers to find the highest number
+      if (existingInvoices && existingInvoices.length > 0) {
+        for (const invoice of existingInvoices) {
+          const numberPart = invoice.invoice_number.split('-')[1];
+          if (numberPart && !isNaN(parseInt(numberPart))) {
+            const num = parseInt(numberPart);
+            if (num > highestNumber) {
+              highestNumber = num;
+            }
+          }
+        }
+      }
+
+      const nextNumber = highestNumber + 1;
       const invoiceNumber = `${currentYear}-${String(nextNumber).padStart(3, '0')}`;
       
       console.log('Generated invoice number:', invoiceNumber);
       return invoiceNumber;
     } catch (error) {
       console.error('Error generating invoice number:', error);
-      const fallbackNumber = `${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+      const fallbackNumber = `${new Date().getFullYear()}-001`;
       console.log('Using fallback invoice number:', fallbackNumber);
       return fallbackNumber;
     }

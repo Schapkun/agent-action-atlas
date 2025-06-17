@@ -57,7 +57,7 @@ export const InvoiceDetailsCard = ({
   };
 
   const getPlaceholderNumber = () => {
-    // Get the full placeholder number (e.g., "2025-113")
+    // Get the full placeholder number (e.g., "2025-041")
     const placeholderFull = getPlaceholderInvoiceNumber();
     const prefix = invoiceSettings.invoice_prefix || '2025-';
     
@@ -71,7 +71,7 @@ export const InvoiceDetailsCard = ({
       return numberPart;
     }
     
-    // If no valid placeholder, return the full placeholder or fallback
+    // If no valid placeholder, try to parse as standalone number
     return placeholderFull || '001';
   };
 
