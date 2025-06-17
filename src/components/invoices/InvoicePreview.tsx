@@ -6,7 +6,6 @@ import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 import { InvoiceFormData, LineItem } from '@/types/invoiceTypes';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { replaceAllPlaceholders } from '@/utils/universalPlaceholderReplacement';
-import { generatePreviewDocument } from '@/utils/documentPreviewStyles';
 
 interface InvoicePreviewProps {
   selectedTemplate: DocumentTemplateWithLabels | null;
@@ -29,7 +28,9 @@ export const InvoicePreview = ({
 
   useEffect(() => {
     const generatePreview = async () => {
-      console.log('🎨 INVOICE PREVIEW: Starting with ORIGINAL SYSTEM');
+      console.log('🎨 INVOICE PREVIEW: Starting preview generation');
+      console.log('🎨 Template:', selectedTemplate?.name);
+      console.log('🎨 Organization:', selectedOrganization?.name, selectedOrganization?.id);
       
       if (!selectedTemplate) {
         console.log('⚠️ INVOICE PREVIEW: No template selected');
@@ -54,18 +55,55 @@ export const InvoicePreview = ({
           notities: formData.notes || ''
         };
 
-        console.log('🔄 INVOICE PREVIEW: Using ORIGINAL SYSTEM');
-        
+        console.log('🔍 INVOICE PREVIEW: Before placeholder replacement - checking template content');
+        console.log('Template contains {{logo}}:', selectedTemplate.html_content.includes('{{logo}}'));
+        console.log('Organization ID being passed:', selectedOrganization?.id);
+
         const processedHTML = await replaceAllPlaceholders(selectedTemplate.html_content, {
           organizationId: selectedOrganization?.id,
           invoiceData,
           lineItems
         });
 
-        console.log('✅ INVOICE PREVIEW: ORIGINAL SYSTEM completed successfully');
-        setPreviewHTML(processedHTML);
+        console.log('🔍 INVOICE PREVIEW: After placeholder replacement - checking for logo');
+        console.log('Processed HTML contains {{logo}}:', processedHTML.includes('{{logo}}'));
+        console.log('Processed HTML contains img tags:', processedHTML.includes('<img'));
+
+        // Create a simple document with the template's original styling intact
+        const finalHTML = `<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Factuur Voorbeeld</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: white;
+      max-width: 794px;
+      margin: 0 auto;
+    }
+    
+    /* Minimal logo styling - let template handle the rest */
+    .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], 
+    img[alt*="Logo"], .logo, .Logo, .LOGO {
+      max-width: 200px !important;
+      height: auto !important;
+      object-fit: contain !important;
+    }
+  </style>
+</head>
+<body>
+  ${processedHTML}
+</body>
+</html>`;
+
+        console.log('✅ INVOICE PREVIEW: Final HTML prepared');
+        setPreviewHTML(finalHTML);
       } catch (error) {
-        console.error('❌ INVOICE PREVIEW: ORIGINAL SYSTEM error:', error);
+        console.error('❌ INVOICE PREVIEW: Error:', error);
         setPreviewHTML('<div style="padding: 40px; text-align: center; color: #dc2626;">Fout bij laden van voorbeeld</div>');
       }
     };
@@ -144,7 +182,7 @@ export const InvoicePreview = ({
             }
           >
             <iframe
-              srcDoc={generatePreviewDocument(previewHTML, 'Factuur Voorbeeld')}
+              srcDoc={previewHTML}
               className="w-full h-full border-0"
               title="Factuur Voorbeeld"
               style={{
@@ -157,7 +195,7 @@ export const InvoicePreview = ({
       </div>
 
       <div className="flex-shrink-0 h-[40px] px-4 py-2 bg-gray-100 border-t border-l text-xs text-gray-600 flex items-center justify-between">
-        <span>A4 Formaat • ORIGINAL System</span>
+        <span>A4 Formaat • Debug Mode</span>
         <span>{lineItems.length} regel{lineItems.length !== 1 ? 's' : ''}</span>
       </div>
     </div>

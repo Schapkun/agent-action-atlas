@@ -1,111 +1,103 @@
 
 export const getDocumentPreviewStyles = () => `
-  * {
-    margin: 0 !important;
-    padding: 0 !important;
-    box-sizing: border-box !important;
-  }
-  
   html, body {
-    width: 100% !important;
-    height: 100% !important;
-    font-family: Arial, sans-serif !important;
-    background: white !important;
-    overflow: hidden !important;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: white;
+    overflow: auto;
   }
   
   .preview-container {
-    width: 100% !important;
-    height: 100% !important;
-    background: white !important;
-    overflow: auto !important;
-    padding: 20px !important;
-    max-width: 794px !important;
-    margin: 0 auto !important;
+    width: 100%;
+    min-height: 100vh;
+    background: white;
+    padding: 20px;
+    max-width: 794px;
+    margin: 0 auto;
+    box-sizing: border-box;
   }
   
   .preview-content {
-    width: 100% !important;
-    min-height: calc(100% - 40px) !important;
-    font-size: 12px !important;
-    line-height: 1.4 !important;
-    color: #333 !important;
-    max-width: 100% !important;
-    overflow-wrap: break-word !important;
+    width: 100%;
+    min-height: calc(100% - 40px);
+    font-size: 12px;
+    line-height: 1.4;
+    color: #333;
+    overflow-wrap: break-word;
   }
 
-  .preview-content table, table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    margin: 16px 0 !important;
-    font-size: 12px !important;
+  /* Only apply minimal table styling if no existing styles */
+  .preview-content table:not([style*="border"]) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 12px;
   }
   
-  .preview-content th, th {
-    background: #f8f9fa !important;
-    font-weight: 600 !important;
-    padding: 8px 6px !important;
-    text-align: left !important;
-    border-bottom: 2px solid #e9ecef !important;
-    font-size: 12px !important;
+  .preview-content th:not([style*="background"]):not([style*="padding"]) {
+    background: #f8f9fa;
+    font-weight: 600;
+    padding: 8px 6px;
+    text-align: left;
+    border-bottom: 2px solid #e9ecef;
+    font-size: 12px;
   }
   
-  .preview-content td, td {
-    padding: 6px 6px !important;
-    text-align: left !important;
-    border-bottom: 1px solid #e9ecef !important;
-    font-size: 12px !important;
+  .preview-content td:not([style*="padding"]) {
+    padding: 6px 6px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+    font-size: 12px;
   }
 
-  .preview-content h1, .preview-content h2, .preview-content h3, h1, h2, h3 {
-    color: #212529 !important;
-    font-weight: 600 !important;
-    margin: 16px 0 8px 0 !important;
+  /* Only apply heading styles if no existing styles */
+  .preview-content h1:not([style]), .preview-content h2:not([style]), .preview-content h3:not([style]) {
+    color: #212529;
+    font-weight: 600;
+    margin: 16px 0 8px 0;
   }
   
-  .preview-content h1, h1 { font-size: 18px !important; }
-  .preview-content h2, h2 { font-size: 16px !important; }
-  .preview-content h3, h3 { font-size: 14px !important; }
+  .preview-content h1:not([style]) { font-size: 18px; }
+  .preview-content h2:not([style]) { font-size: 16px; }
+  .preview-content h3:not([style]) { font-size: 14px; }
   
-  .preview-content p, p {
-    font-size: 12px !important;
-    margin: 6px 0 !important;
-    color: #495057 !important;
+  .preview-content p:not([style]) {
+    font-size: 12px;
+    margin: 6px 0;
+    color: #495057;
   }
 
-  /* CONSISTENT LOGO STYLING - 180x90px for all previews */
+  /* LOGO STYLING - consistent across all previews */
   .preview-content .company-logo, .preview-content .bedrijfslogo, 
   .preview-content img[src*="logo"], .preview-content img[alt*="logo"], 
   .preview-content img[alt*="Logo"], .preview-content .logo, 
   .preview-content .Logo, .preview-content .LOGO,
   .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], 
   img[alt*="Logo"], .logo, .Logo, .LOGO {
-    max-width: 180px !important;
-    max-height: 90px !important;
-    height: auto !important;
-    object-fit: contain !important;
-    display: block !important;
+    max-width: 200px;
+    max-height: 100px;
+    height: auto;
+    object-fit: contain;
+    display: block;
   }
 
-  .preview-content *, .preview-content *:before, .preview-content *:after {
-    max-width: 100% !important;
-    overflow-wrap: break-word !important;
-  }
-
-  .preview-content div, .preview-content span, .preview-content li {
-    font-size: 12px !important;
+  /* Ensure images don't break layout */
+  .preview-content img {
+    max-width: 100%;
+    height: auto;
   }
 
   @media (max-width: 768px) {
     .preview-container {
-      padding: 10px !important;
-      max-width: 100% !important;
+      padding: 10px;
+      max-width: 100%;
     }
     
     .company-logo, .bedrijfslogo, img[src*="logo"], img[alt*="logo"], img[alt*="Logo"],
     .logo, .Logo, .LOGO {
-      max-width: 140px !important;
-      max-height: 70px !important;
+      max-width: 160px;
+      max-height: 80px;
     }
   }
 `;
