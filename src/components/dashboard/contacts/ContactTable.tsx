@@ -1,7 +1,7 @@
 
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
-import { StandardContactCard } from '@/components/contacts/StandardContactCard';
+import { ContactTableRow } from './ContactTableRow';
 import { useContactManager } from './useContactManager';
 import { useState } from 'react';
 import { ContactEditDialog } from './ContactEditDialog';
@@ -53,6 +53,21 @@ export const ContactTable = () => {
     }
   };
 
+  const handleToggleStatus = async (contactId: string, currentStatus: boolean) => {
+    // Implementation for status toggle
+    console.log('Toggle status for contact:', contactId, !currentStatus);
+  };
+
+  const handleContactsUpdated = () => {
+    // Refresh contacts when updated
+    console.log('Contacts updated, refresh needed');
+  };
+
+  const handleFilterByLabels = (contact: any) => {
+    // Implementation for label filtering
+    console.log('Filter by labels for contact:', contact.name);
+  };
+
   if (loading) {
     return (
       <Card>
@@ -67,67 +82,83 @@ export const ContactTable = () => {
     <>
       <Card>
         <CardContent className="p-0">
-          {/* Header met bulk selectie */}
-          <div className="p-4 border-b bg-muted/30">
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={isAllSelected}
-                ref={(el) => {
-                  if (el) el.indeterminate = isIndeterminate;
-                }}
-                onChange={(e) => handleSelectAll(e.target.checked)}
-                className="rounded"
-              />
-              <span className="text-sm font-medium">
-                {selectedContacts.size > 0 
-                  ? `${selectedContacts.size} contact(en) geselecteerd`
-                  : `${filteredContacts.length} contact(en)`
-                }
-              </span>
-              
-              {selectedContacts.size > 0 && (
-                <button
-                  onClick={handleBulkDelete}
-                  className="ml-auto px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
-                >
-                  Verwijderen
-                </button>
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b">
+                <TableHead className="w-8 p-2">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isIndeterminate;
+                    }}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    className="rounded h-4 w-4"
+                  />
+                </TableHead>
+                <TableHead className="p-2 text-xs font-semibold w-16">Klantnr</TableHead>
+                <TableHead className="p-2 text-xs font-semibold">Klant</TableHead>
+                {columnVisibility.email && (
+                  <TableHead className="p-2 text-xs font-semibold">E-mail</TableHead>
+                )}
+                {columnVisibility.address && (
+                  <TableHead className="p-2 text-xs font-semibold">Adres</TableHead>
+                )}
+                {columnVisibility.phone && (
+                  <TableHead className="p-2 text-xs font-semibold">Telefoon</TableHead>
+                )}
+                {columnVisibility.mobile && (
+                  <TableHead className="p-2 text-xs font-semibold">Mobiel</TableHead>
+                )}
+                {columnVisibility.postal_code && (
+                  <TableHead className="p-2 text-xs font-semibold">Postcode</TableHead>
+                )}
+                {columnVisibility.city && (
+                  <TableHead className="p-2 text-xs font-semibold">Plaats</TableHead>
+                )}
+                {columnVisibility.country && (
+                  <TableHead className="p-2 text-xs font-semibold">Land</TableHead>
+                )}
+                {columnVisibility.labels && (
+                  <TableHead className="p-2 text-xs font-semibold">Labels</TableHead>
+                )}
+                {columnVisibility.openstaand && (
+                  <TableHead className="p-2 text-xs font-semibold text-right">Openstaand</TableHead>
+                )}
+                {columnVisibility.omzet && (
+                  <TableHead className="p-2 text-xs font-semibold text-right">Omzet</TableHead>
+                )}
+                {columnVisibility.actief && (
+                  <TableHead className="p-2 text-xs font-semibold text-center">Actief</TableHead>
+                )}
+                <TableHead className="p-2 text-xs font-semibold w-20">Acties</TableHead>
+              </TableRow>
+            </TableHeader>
+            
+            <TableBody>
+              {filteredContacts.length === 0 ? (
+                <TableRow>
+                  <td colSpan={20} className="text-center py-8 text-muted-foreground">
+                    Geen contacten gevonden
+                  </td>
+                </TableRow>
+              ) : (
+                filteredContacts.map((contact) => (
+                  <ContactTableRow
+                    key={contact.id}
+                    contact={contact}
+                    isSelected={selectedContacts.has(contact.id)}
+                    columnVisibility={columnVisibility}
+                    onSelect={handleSelectContact}
+                    onToggleStatus={handleToggleStatus}
+                    onContactsUpdated={handleContactsUpdated}
+                    onFilterByLabels={handleFilterByLabels}
+                    onEditContact={setEditingContact}
+                  />
+                ))
               )}
-            </div>
-          </div>
-
-          {/* Contact lijst */}
-          <div className="divide-y">
-            {filteredContacts.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Geen contacten gevonden
-              </div>
-            ) : (
-              filteredContacts.map((contact) => (
-                <div key={contact.id} className="p-3">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={selectedContacts.has(contact.id)}
-                      onChange={(e) => handleSelectContact(contact.id, e.target.checked)}
-                      className="rounded"
-                    />
-                    <div className="flex-1">
-                      <StandardContactCard
-                        contact={contact}
-                        variant="compact"
-                        showActions={true}
-                        onEdit={setEditingContact}
-                        onView={setEditingContact}
-                        onContactsUpdated={() => {}}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
