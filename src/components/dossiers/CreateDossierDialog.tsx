@@ -1,77 +1,109 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FolderOpen, Plus } from 'lucide-react';
-import { useDossiers } from '@/hooks/useDossiers';
-import { useContactData } from '@/components/contacts/useContactData';
+import { Plus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
-interface CreateDossierDialogProps {
-  children?: React.ReactNode;
-}
-
-export const CreateDossierDialog = ({ children }: CreateDossierDialogProps) => {
+export const CreateDossierDialog = () => {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const { selectedOrganization, selectedWorkspace } = useOrganization();
+  
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    client_id: '',
     category: 'algemeen'
   });
-  
-  const { createDossier } = useDossiers();
-  const { contacts } = useContactData();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const result = await createDossier({
-      name: formData.name,
-      description: formData.description || undefined,
-      client_id: formData.client_id || undefined,
-      category: formData.category
-    });
+    if (!selectedOrganization) {
+      toast({
+        title: "Geen organisatie geselecteerd",
+        description: "Selecteer eerst een organisatie",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    if (result) {
-      setOpen(false);
+    if (!formData.name.trim()) {
+      toast({
+        title: "Naam is verplicht",
+        description: "Voer een naam in voor het dossier",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('dossiers')
+        .insert({
+          name: formData.name.trim(),
+          description: formData.description.trim() || null,
+          category: formData.category,
+          organization_id: selectedOrganization.id,
+          workspace_id: selectedWorkspace?.id || null,
+          status: 'active'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Dossier aangemaakt",
+        description: `Dossier "${formData.name}" is succesvol aangemaakt`
+      });
+
+      // Reset form
       setFormData({
         name: '',
         description: '',
-        client_id: '',
         category: 'algemeen'
       });
+      setOpen(false);
+    } catch (error) {
+      console.error('Error creating dossier:', error);
+      toast({
+        title: "Fout bij aanmaken",
+        description: "Er is een fout opgetreden bij het aanmaken van het dossier",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {children || (
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Nieuw Dossier
-          </Button>
-        )}
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          Nieuw Dossier
+        </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FolderOpen className="h-5 w-5" />
-            Nieuw Dossier Aanmaken
-          </DialogTitle>
+          <DialogTitle>Nieuw Dossier Aanmaken</DialogTitle>
         </DialogHeader>
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="name">Dossier Naam *</Label>
+            <Label htmlFor="name">Naam *</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Naam van het dossier"
+              placeholder="Dossiernaam"
               required
             />
           </div>
@@ -88,34 +120,21 @@ export const CreateDossierDialog = ({ children }: CreateDossierDialogProps) => {
           </div>
 
           <div>
-            <Label htmlFor="client">Koppel aan Klant (optioneel)</Label>
-            <Select value={formData.client_id} onValueChange={(value) => setFormData(prev => ({ ...prev, client_id: value }))}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecteer een klant" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Geen klant</SelectItem>
-                {contacts.map((contact) => (
-                  <SelectItem key={contact.id} value={contact.id}>
-                    {contact.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
             <Label htmlFor="category">Categorie</Label>
-            <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
+            <Select 
+              value={formData.category} 
+              onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+            >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Selecteer categorie" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="algemeen">Algemeen</SelectItem>
                 <SelectItem value="juridisch">Juridisch</SelectItem>
-                <SelectItem value="belasting">Belasting</SelectItem>
-                <SelectItem value="contract">Contract</SelectItem>
-                <SelectItem value="compliance">Compliance</SelectItem>
+                <SelectItem value="financieel">Financieel</SelectItem>
+                <SelectItem value="hr">HR</SelectItem>
+                <SelectItem value="project">Project</SelectItem>
+                <SelectItem value="klacht">Klacht</SelectItem>
                 <SelectItem value="onderzoek">Onderzoek</SelectItem>
               </SelectContent>
             </Select>
@@ -125,8 +144,8 @@ export const CreateDossierDialog = ({ children }: CreateDossierDialogProps) => {
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Annuleren
             </Button>
-            <Button type="submit" disabled={!formData.name.trim()}>
-              Dossier Aanmaken
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Bezig...' : 'Aanmaken'}
             </Button>
           </div>
         </form>
