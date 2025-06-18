@@ -1,3 +1,4 @@
+
 import { InvoiceHeader } from './InvoiceHeader';
 import { ContactSelectionCard } from './ContactSelectionCard';
 import { InvoiceDetailsCard } from './InvoiceDetailsCard';
@@ -50,6 +51,12 @@ export const CreateInvoiceForm = () => {
   } = useInvoiceFormHandlers();
 
   const { subtotal, vatAmount, total } = calculateTotals();
+
+  const handleDocumentSettingsChange = (settings: any) => {
+    console.log('Document settings changed:', settings);
+    // Here you can integrate the settings with your form data or calculations
+    // For example, update VAT calculations based on vatDisplay setting
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -116,8 +123,7 @@ export const CreateInvoiceForm = () => {
       <InvoiceSettingsSidebar
         show={showSettings}
         onClose={() => setShowSettings(false)}
-        selectedContact={selectedContact}
-        onContactUpdated={handleContactSelectOnly}
+        onSettingsChange={handleDocumentSettingsChange}
       />
 
       <InvoicePreviewPopup
