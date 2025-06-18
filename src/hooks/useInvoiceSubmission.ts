@@ -13,7 +13,7 @@ export const useInvoiceSubmission = (
 ) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { createInvoice } = useInvoices();
+  const { createInvoice, saveInvoiceLines } = useInvoices();
   const [loading, setLoading] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
 
@@ -50,6 +50,12 @@ export const useInvoiceSubmission = (
 
       console.log('✅ EXPLICIT: Calling createInvoice with EXPLICIT_USER_ACTION');
       const invoice = await createInvoice(invoiceData, 'EXPLICIT_USER_ACTION');
+      
+      // Save line items after invoice creation
+      if (invoice && lineItems.length > 0) {
+        console.log('💾 Saving line items for draft invoice:', invoice.id);
+        await saveInvoiceLines(invoice.id, lineItems);
+      }
       
       clearFormData();
       navigate('/facturen');
@@ -96,6 +102,12 @@ export const useInvoiceSubmission = (
 
       console.log('✅ EXPLICIT: Calling createInvoice with EXPLICIT_USER_ACTION for Save & Send');
       const invoice = await createInvoice(invoiceData, 'EXPLICIT_USER_ACTION');
+      
+      // Save line items after invoice creation
+      if (invoice && lineItems.length > 0) {
+        console.log('💾 Saving line items for sent invoice:', invoice.id);
+        await saveInvoiceLines(invoice.id, lineItems);
+      }
       
       clearFormData();
       navigate('/facturen');

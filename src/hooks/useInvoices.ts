@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { LineItem } from '@/types/invoiceTypes';
 
 export interface Invoice {
   id: string;
@@ -248,6 +249,52 @@ export const useInvoices = () => {
     }
   };
 
+  const saveInvoiceLines = async (invoiceId: string, lineItems: LineItem[]) => {
+    try {
+      console.log('💾 Saving invoice lines for invoice:', invoiceId);
+      console.log('💾 Line items to save:', lineItems);
+
+      if (!lineItems || lineItems.length === 0) {
+        console.log('⚠️ No line items to save');
+        return;
+      }
+
+      // Prepare line items data for database insertion
+      const lineItemsData = lineItems.map((item, index) => ({
+        invoice_id: invoiceId,
+        description: item.description || '',
+        quantity: item.quantity || 1,
+        unit_price: item.unit_price || 0,
+        vat_rate: item.vat_rate || 21,
+        line_total: item.line_total || 0,
+        sort_order: index
+      }));
+
+      console.log('💾 Prepared line items data:', lineItemsData);
+
+      const { data, error } = await supabase
+        .from('invoice_lines')
+        .insert(lineItemsData)
+        .select();
+
+      if (error) {
+        console.error('❌ Error saving invoice lines:', error);
+        throw error;
+      }
+
+      console.log('✅ Invoice lines saved successfully:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Error in saveInvoiceLines:', error);
+      toast({
+        title: "Fout",
+        description: "Kon factuurregels niet opslaan",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
   const updateInvoice = async (id: string, updates: Partial<Invoice>) => {
     try {
       const { data, error } = await supabase
@@ -314,6 +361,7 @@ export const useInvoices = () => {
     loading,
     fetchInvoices,
     createInvoice,
+    saveInvoiceLines,
     updateInvoice,
     deleteInvoice,
     generateInvoiceNumber
