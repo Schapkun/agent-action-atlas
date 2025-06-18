@@ -1,7 +1,9 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ContactTableFilters } from './contacts/ContactTableFilters';
 import { ContactTable } from './contacts/ContactTable';
+import { ContactDialog } from '@/components/contacts/ContactDialog';
 import { useContactManager } from './contacts/useContactManager';
 
 interface Contact {
@@ -22,6 +24,8 @@ interface Contact {
 
 export const ContactManager = () => {
   const [labelFilter, setLabelFilter] = useState<Array<{ id: string; name: string; color: string; }>>([]);
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [showContactDialog, setShowContactDialog] = useState(false);
   
   const {
     searchTerm,
@@ -139,6 +143,22 @@ export const ContactManager = () => {
     setLabelFilter([]);
   };
 
+  const handleEditContact = (contact: Contact) => {
+    setEditingContact(contact);
+    setShowContactDialog(true);
+  };
+
+  const handleContactSaved = (savedContact: Contact) => {
+    handleContactsUpdated();
+    setEditingContact(null);
+    setShowContactDialog(false);
+  };
+
+  const handleCloseContactDialog = () => {
+    setEditingContact(null);
+    setShowContactDialog(false);
+  };
+
   console.log('🔵 ContactManager: Rendering with data:', {
     selectedOrganization: selectedOrganization?.name,
     selectedWorkspace: selectedWorkspace?.name,
@@ -163,6 +183,7 @@ export const ContactManager = () => {
               contextInfo={getContextInfo()}
               labelFilter={labelFilter}
               onRemoveLabelFilter={handleRemoveLabelFilter}
+              onContactsUpdated={handleContactsUpdated}
             />
           )}
         </CardHeader>
@@ -185,9 +206,17 @@ export const ContactManager = () => {
             onBulkDelete={handleBulkDelete}
             onContactsUpdated={handleContactsUpdated}
             onFilterByLabels={handleFilterByLabels}
+            onEditContact={handleEditContact}
           />
         </CardContent>
       </Card>
+
+      <ContactDialog
+        isOpen={showContactDialog}
+        onClose={handleCloseContactDialog}
+        contact={editingContact}
+        onContactSaved={handleContactSaved}
+      />
     </div>
   );
 };

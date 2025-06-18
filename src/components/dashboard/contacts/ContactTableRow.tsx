@@ -1,16 +1,11 @@
 
+import { TableCell, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Check, Edit, ChevronDown } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Switch } from '@/components/ui/switch';
+import { ContactActions } from '@/components/contacts/ContactActions';
+import { Eye, Edit } from 'lucide-react';
 
 interface Contact {
   id: string;
@@ -22,7 +17,6 @@ interface Contact {
   country?: string;
   phone?: string;
   mobile?: string;
-  contact_number?: string;
   type?: string;
   payment_terms?: number;
   is_active?: boolean;
@@ -45,208 +39,179 @@ interface ColumnVisibility {
 
 interface ContactTableRowProps {
   contact: Contact;
-  index: number;
   isSelected: boolean;
   columnVisibility: ColumnVisibility;
-  onSelectContact: (contactId: string, checked: boolean) => void;
+  onSelect: (contactId: string, checked: boolean) => void;
   onToggleStatus: (contactId: string, currentStatus: boolean) => void;
+  onContactsUpdated: () => void;
+  onFilterByLabels: (contact: Contact) => void;
   onEditContact?: (contact: Contact) => void;
-  onViewInvoices?: (contact: Contact) => void;
-  onViewQuotes?: (contact: Contact) => void;
-  onCreateInvoice?: (contact: Contact) => void;
-  onCreateQuote?: (contact: Contact) => void;
-  onSendEmail?: (contact: Contact) => void;
-  onDeleteContact?: (contact: Contact) => void;
-  onManageLabels?: (contact: Contact) => void;
-  onFilterByLabels?: (contact: Contact) => void;
 }
 
 export const ContactTableRow = ({
   contact,
-  index,
   isSelected,
   columnVisibility,
-  onSelectContact,
+  onSelect,
   onToggleStatus,
-  onEditContact,
-  onViewInvoices,
-  onViewQuotes,
-  onCreateInvoice,
-  onCreateQuote,
-  onSendEmail,
-  onDeleteContact,
-  onManageLabels,
-  onFilterByLabels
+  onContactsUpdated,
+  onFilterByLabels,
+  onEditContact
 }: ContactTableRowProps) => {
-  const formatAddress = (contact: Contact) => {
-    const parts = [];
-    if (contact.address) parts.push(contact.address);
-    if (contact.postal_code) parts.push(contact.postal_code);
-    if (contact.city) parts.push(contact.city);
-    return parts.join(', ') || '-';
+  const getContactNumber = () => {
+    return contact.id.slice(-6).toUpperCase();
+  };
+
+  const handleEdit = () => {
+    if (onEditContact) {
+      onEditContact(contact);
+    }
   };
 
   return (
-    <TableRow className="h-10 hover:bg-gray-50 border-b group">
-      <TableCell className="p-2 w-8">
+    <TableRow className="border-b hover:bg-gray-50">
+      <TableCell className="w-8 p-2">
         <Checkbox
           checked={isSelected}
-          onCheckedChange={(checked) => onSelectContact(contact.id, checked as boolean)}
+          onCheckedChange={(checked) => onSelect(contact.id, checked as boolean)}
           className="h-4 w-4"
         />
       </TableCell>
-      <TableCell className="p-2 text-xs text-blue-600 font-medium w-16">
-        {contact.contact_number || `${4000 + index + 1}`}
+      
+      <TableCell className="p-2 text-xs w-16">
+        {getContactNumber()}
       </TableCell>
-      <TableCell className="p-2">
-        <div className="text-xs font-medium text-gray-900">{contact.name}</div>
-        {contact.email && (
-          <div className="text-xs text-muted-foreground">{contact.email}</div>
-        )}
+      
+      <TableCell className="p-2 text-xs font-medium">
+        <div className="truncate max-w-[150px]" title={contact.name}>
+          {contact.name}
+        </div>
       </TableCell>
+
       {columnVisibility.email && (
-        <TableCell className="p-2 text-xs text-muted-foreground">
-          {contact.email || '-'}
-        </TableCell>
-      )}
-      {columnVisibility.address && (
-        <TableCell className="p-2 text-xs text-muted-foreground">
-          {formatAddress(contact)}
-        </TableCell>
-      )}
-      {columnVisibility.phone && (
-        <TableCell className="p-2 text-xs text-muted-foreground">
-          {contact.phone || '-'}
-        </TableCell>
-      )}
-      {columnVisibility.mobile && (
-        <TableCell className="p-2 text-xs text-muted-foreground">
-          {contact.mobile || '-'}
-        </TableCell>
-      )}
-      {columnVisibility.postal_code && (
-        <TableCell className="p-2 text-xs text-muted-foreground">
-          {contact.postal_code || '-'}
-        </TableCell>
-      )}
-      {columnVisibility.city && (
-        <TableCell className="p-2 text-xs text-muted-foreground">
-          {contact.city || '-'}
-        </TableCell>
-      )}
-      {columnVisibility.country && (
-        <TableCell className="p-2 text-xs text-muted-foreground">
-          {contact.country || '-'}
-        </TableCell>
-      )}
-      {/* Only show labels column when Labels column IS visible */}
-      {columnVisibility.labels && (
-        <TableCell className="p-2">
-          {contact.labels && contact.labels.length > 0 ? (
-            <div className="flex gap-1 flex-wrap">
-              {contact.labels.slice(0, 2).map((label) => (
-                <Badge
-                  key={label.id}
-                  style={{ backgroundColor: label.color, color: 'white' }}
-                  className="text-xs px-2 py-1 h-5 border-0"
-                >
-                  {label.name}
-                </Badge>
-              ))}
-              {contact.labels.length > 2 && (
-                <Badge variant="outline" className="text-xs px-2 py-1 h-5">
-                  +{contact.labels.length - 2}
-                </Badge>
-              )}
-            </div>
-          ) : (
-            <span className="text-xs text-muted-foreground">-</span>
-          )}
-        </TableCell>
-      )}
-      {columnVisibility.openstaand && (
-        <TableCell className="p-2 text-xs text-right font-mono">
-          €0,00
-        </TableCell>
-      )}
-      {columnVisibility.omzet && (
-        <TableCell className="p-2 text-xs text-right font-mono">
-          €0,00
-        </TableCell>
-      )}
-      {columnVisibility.actief && (
-        <TableCell className="p-2">
-          <div className="flex items-center justify-center">
-            <button
-              onClick={() => onToggleStatus(contact.id, contact.is_active ?? true)}
-              className="transition-colors hover:opacity-80 focus:outline-none"
-            >
-              <div className={`h-4 w-4 rounded-sm flex items-center justify-center border ${
-                contact.is_active !== false 
-                  ? 'bg-green-500 border-green-500' 
-                  : 'bg-white border-gray-300'
-              }`}>
-                {contact.is_active !== false && (
-                  <Check className="h-3 w-3 text-white" />
-                )}
-              </div>
-            </button>
+        <TableCell className="p-2 text-xs text-gray-600">
+          <div className="truncate max-w-[120px]" title={contact.email}>
+            {contact.email || '-'}
           </div>
         </TableCell>
       )}
-      <TableCell className="p-2">
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 px-1 text-xs"
-            onClick={() => onEditContact?.(contact)}
-          >
-            <Edit className="h-3 w-3" />
-          </Button>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 bg-white">
-              <DropdownMenuItem onClick={() => onViewInvoices?.(contact)}>
-                Facturen bekijken
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onViewQuotes?.(contact)}>
-                Periodieken bekijken
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onViewQuotes?.(contact)}>
-                Offertes bekijken
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onCreateInvoice?.(contact)}>
-                Factuur maken
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onCreateQuote?.(contact)}>
-                Offerte maken
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onManageLabels?.(contact)}>
-                Labels
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onFilterByLabels?.(contact)}>
-                Filter op deze labels
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSendEmail?.(contact)}>
-                E-mail versturen
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={() => onDeleteContact?.(contact)}
-                className="text-red-600"
+
+      {columnVisibility.address && (
+        <TableCell className="p-2 text-xs text-gray-600">
+          <div className="truncate max-w-[120px]" title={contact.address}>
+            {contact.address || '-'}
+          </div>
+        </TableCell>
+      )}
+
+      {columnVisibility.phone && (
+        <TableCell className="p-2 text-xs text-gray-600">
+          {contact.phone || '-'}
+        </TableCell>
+      )}
+
+      {columnVisibility.mobile && (
+        <TableCell className="p-2 text-xs text-gray-600">
+          {contact.mobile || '-'}
+        </TableCell>
+      )}
+
+      {columnVisibility.postal_code && (
+        <TableCell className="p-2 text-xs text-gray-600">
+          {contact.postal_code || '-'}
+        </TableCell>
+      )}
+
+      {columnVisibility.city && (
+        <TableCell className="p-2 text-xs text-gray-600">
+          <div className="truncate max-w-[100px]" title={contact.city}>
+            {contact.city || '-'}
+          </div>
+        </TableCell>
+      )}
+
+      {columnVisibility.country && (
+        <TableCell className="p-2 text-xs text-gray-600">
+          {contact.country || '-'}
+        </TableCell>
+      )}
+
+      {columnVisibility.labels && (
+        <TableCell className="p-2">
+          <div className="flex flex-wrap gap-1 max-w-[120px]">
+            {contact.labels && contact.labels.length > 0 ? (
+              contact.labels.slice(0, 2).map((label, index) => (
+                <Badge
+                  key={label.id}
+                  variant="secondary"
+                  className="text-xs px-1 py-0 h-5 cursor-pointer"
+                  style={{
+                    backgroundColor: label.color + '20',
+                    color: label.color,
+                    border: `1px solid ${label.color}40`
+                  }}
+                  onClick={() => onFilterByLabels(contact)}
+                  title={`Filter op: ${label.name}`}
+                >
+                  {label.name}
+                </Badge>
+              ))
+            ) : (
+              <span className="text-gray-400 text-xs">-</span>
+            )}
+            {contact.labels && contact.labels.length > 2 && (
+              <Badge
+                variant="secondary"
+                className="text-xs px-1 py-0 h-5 cursor-pointer"
+                onClick={() => onFilterByLabels(contact)}
+                title="Bekijk alle labels"
               >
-                Verwijder
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                +{contact.labels.length - 2}
+              </Badge>
+            )}
+          </div>
+        </TableCell>
+      )}
+
+      {columnVisibility.openstaand && (
+        <TableCell className="p-2 text-xs text-right text-gray-600">
+          € 0,00
+        </TableCell>
+      )}
+
+      {columnVisibility.omzet && (
+        <TableCell className="p-2 text-xs text-right text-gray-600">
+          € 0,00
+        </TableCell>
+      )}
+
+      {columnVisibility.actief && (
+        <TableCell className="p-2 text-center">
+          <Switch
+            checked={contact.is_active !== false}
+            onCheckedChange={() => onToggleStatus(contact.id, contact.is_active !== false)}
+            className="h-4 w-8"
+          />
+        </TableCell>
+      )}
+
+      <TableCell className="p-2 w-20">
+        <div className="flex items-center gap-1">
+          {onEditContact && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleEdit}
+              className="h-6 w-6 p-0"
+              title="Contact bewerken"
+            >
+              <Edit className="h-3 w-3" />
+            </Button>
+          )}
+          <ContactActions
+            contact={contact}
+            onContactsUpdated={onContactsUpdated}
+          />
         </div>
       </TableCell>
     </TableRow>

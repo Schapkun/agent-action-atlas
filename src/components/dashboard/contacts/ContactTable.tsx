@@ -1,13 +1,8 @@
-import { useState } from 'react';
+
 import { Table, TableBody } from '@/components/ui/table';
 import { ContactTableHeader } from './ContactTableHeader';
 import { ContactTableRow } from './ContactTableRow';
 import { ContactEmptyState } from './ContactEmptyState';
-import { ContactInvoicesDialog } from './ContactInvoicesDialog';
-import { ContactQuotesDialog } from './ContactQuotesDialog';
-import { ContactEmailDialog } from './ContactEmailDialog';
-import { ContactLabelsDialog } from './ContactLabelsDialog';
-import { useNavigate } from 'react-router-dom';
 
 interface Contact {
   id: string;
@@ -54,8 +49,9 @@ interface ContactTableProps {
   onToggleStatus: (contactId: string, currentStatus: boolean) => void;
   onColumnVisibilityChange: (column: keyof ColumnVisibility, checked: boolean) => void;
   onBulkDelete: () => void;
-  onContactsUpdated?: () => void;
-  onFilterByLabels?: (contact: Contact) => void;
+  onContactsUpdated: () => void;
+  onFilterByLabels: (contact: Contact) => void;
+  onEditContact?: (contact: Contact) => void;
 }
 
 export const ContactTable = ({
@@ -74,160 +70,68 @@ export const ContactTable = ({
   onColumnVisibilityChange,
   onBulkDelete,
   onContactsUpdated,
-  onFilterByLabels
+  onFilterByLabels,
+  onEditContact
 }: ContactTableProps) => {
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  const [invoicesDialogOpen, setInvoicesDialogOpen] = useState(false);
-  const [quotesDialogOpen, setQuotesDialogOpen] = useState(false);
-  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
-  const [labelsDialogOpen, setLabelsDialogOpen] = useState(false);
-  const navigate = useNavigate();
-
-  console.log('🔵 ContactTable: Rendering with props:', {
+  console.log('🔵 ContactTable: Rendering with data:', {
+    totalContacts: contacts.length,
+    filteredContacts: filteredContacts.length,
+    selectedCount: selectedContacts.size,
     hasOrganizationSelected,
-    loading,
-    contactsLength: contacts.length,
-    filteredContactsLength: filteredContacts.length
+    loading
   });
 
-  const showEmptyState = !hasOrganizationSelected || loading || filteredContacts.length === 0;
+  if (loading) {
+    return (
+      <div className="p-8 text-center text-gray-500">
+        Contacten laden...
+      </div>
+    );
+  }
 
-  if (showEmptyState) {
+  if (!hasOrganizationSelected) {
+    return (
+      <div className="p-8 text-center text-gray-500">
+        Selecteer een organisatie of werkruimte om contacten te bekijken
+      </div>
+    );
+  }
+
+  if (filteredContacts.length === 0) {
     return (
       <ContactEmptyState
-        hasOrganizationSelected={hasOrganizationSelected}
-        loading={loading}
-        hasContacts={contacts.length > 0}
-        hasFilteredContacts={filteredContacts.length > 0}
         canInviteUsers={canInviteUsers}
+        onContactsUpdated={onContactsUpdated}
       />
     );
   }
 
-  const handleViewInvoices = (contact: Contact) => {
-    console.log('🔵 ContactTable: View invoices for:', contact.name);
-    setSelectedContact(contact);
-    setInvoicesDialogOpen(true);
-  };
-
-  const handleViewQuotes = (contact: Contact) => {
-    console.log('🔵 ContactTable: View quotes for:', contact.name);
-    setSelectedContact(contact);
-    setQuotesDialogOpen(true);
-  };
-
-  const handleCreateInvoice = (contact: Contact) => {
-    console.log('🔵 ContactTable: Create invoice for:', contact.name);
-    navigate('/facturen/nieuw', { 
-      state: { 
-        preSelectedContact: {
-          name: contact.name,
-          email: contact.email,
-          address: contact.address,
-          postal_code: contact.postal_code,
-          city: contact.city,
-          country: contact.country
-        }
-      }
-    });
-  };
-
-  const handleCreateQuote = (contact: Contact) => {
-    console.log('🔵 ContactTable: Create quote for:', contact.name);
-    navigate('/offertes/nieuw', { 
-      state: { 
-        preSelectedContact: {
-          name: contact.name,
-          email: contact.email,
-          address: contact.address,
-          postal_code: contact.postal_code,
-          city: contact.city,
-          country: contact.country
-        }
-      }
-    });
-  };
-
-  const handleSendEmail = (contact: Contact) => {
-    console.log('🔵 ContactTable: Send email to:', contact.name);
-    setSelectedContact(contact);
-    setEmailDialogOpen(true);
-  };
-
-  const handleDeleteContact = (contact: Contact) => {
-    console.log('🔵 ContactTable: Delete contact:', contact.name);
-    // TODO: Implement delete confirmation and action
-  };
-
-  const handleManageLabels = (contact: Contact) => {
-    console.log('🔵 ContactTable: Manage labels for:', contact.name);
-    setSelectedContact(contact);
-    setLabelsDialogOpen(true);
-  };
-
   return (
-    <>
-      <Table>
-        <ContactTableHeader
-          isAllSelected={isAllSelected}
-          isIndeterminate={isIndeterminate}
-          selectedContactsCount={selectedContacts.size}
-          columnVisibility={columnVisibility}
-          onSelectAll={onSelectAll}
-          onColumnVisibilityChange={onColumnVisibilityChange}
-          onBulkDelete={onBulkDelete}
-        />
-        <TableBody>
-          {filteredContacts.map((contact, index) => (
-            <ContactTableRow
-              key={contact.id}
-              contact={contact}
-              index={index}
-              isSelected={selectedContacts.has(contact.id)}
-              columnVisibility={columnVisibility}
-              onSelectContact={onSelectContact}
-              onToggleStatus={onToggleStatus}
-              onViewInvoices={handleViewInvoices}
-              onViewQuotes={handleViewQuotes}
-              onCreateInvoice={handleCreateInvoice}
-              onCreateQuote={handleCreateQuote}
-              onSendEmail={handleSendEmail}
-              onDeleteContact={handleDeleteContact}
-              onManageLabels={handleManageLabels}
-              onFilterByLabels={onFilterByLabels}
-            />
-          ))}
-        </TableBody>
-      </Table>
-
-      {/* Dialogs */}
-      <ContactInvoicesDialog
-        isOpen={invoicesDialogOpen}
-        onClose={() => setInvoicesDialogOpen(false)}
-        contact={selectedContact}
+    <Table>
+      <ContactTableHeader
+        isAllSelected={isAllSelected}
+        isIndeterminate={isIndeterminate}
+        selectedContactsCount={selectedContacts.size}
+        columnVisibility={columnVisibility}
+        onSelectAll={onSelectAll}
+        onColumnVisibilityChange={onColumnVisibilityChange}
+        onBulkDelete={onBulkDelete}
       />
-
-      <ContactQuotesDialog
-        isOpen={quotesDialogOpen}
-        onClose={() => setQuotesDialogOpen(false)}
-        contact={selectedContact}
-      />
-
-      <ContactEmailDialog
-        isOpen={emailDialogOpen}
-        onClose={() => setEmailDialogOpen(false)}
-        contact={selectedContact}
-      />
-
-      <ContactLabelsDialog
-        isOpen={labelsDialogOpen}
-        onClose={() => setLabelsDialogOpen(false)}
-        contact={selectedContact}
-        onLabelsUpdated={() => {
-          onContactsUpdated?.();
-          setLabelsDialogOpen(false);
-        }}
-      />
-    </>
+      <TableBody>
+        {filteredContacts.map((contact) => (
+          <ContactTableRow
+            key={contact.id}
+            contact={contact}
+            isSelected={selectedContacts.has(contact.id)}
+            columnVisibility={columnVisibility}
+            onSelect={onSelectContact}
+            onToggleStatus={onToggleStatus}
+            onContactsUpdated={onContactsUpdated}
+            onFilterByLabels={onFilterByLabels}
+            onEditContact={onEditContact}
+          />
+        ))}
+      </TableBody>
+    </Table>
   );
 };
