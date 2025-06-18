@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { ContactSearch } from './ContactSearch';
 import { ContactDropdown } from './ContactDropdown';
-import { ContactActions } from './ContactActions';
+import { StandardContactCard } from './StandardContactCard';
 import { useContactData } from './useContactData';
 
 interface Contact {
@@ -52,7 +52,6 @@ export const ContactSelector = ({
   const handleContactSelect = (contact: Contact) => {
     console.log('📋 ContactSelector - selecting contact (NO SUBMIT):', contact.name);
     
-    // CRITICAL: Only call onContactSelect, do NOT trigger any form submission
     onContactSelect(contact);
     setSearchTerm(contact.name);
     setIsDropdownOpen(false);
@@ -68,7 +67,6 @@ export const ContactSelector = ({
     setSearchTerm(value);
     setIsDropdownOpen(true);
     
-    // Als het zoekveld leeg wordt, clear de selectie
     if (!value.trim()) {
       onContactSelect(null);
     }
@@ -76,7 +74,6 @@ export const ContactSelector = ({
 
   const handleSearchFocus = () => {
     setIsDropdownOpen(true);
-    // Refresh contacten als dropdown wordt geopend
     refreshContacts();
   };
 
@@ -89,33 +86,34 @@ export const ContactSelector = ({
   };
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex-1">
-        <div className="flex gap-2 relative">
-          <ContactSearch
-            searchTerm={searchTerm}
-            selectedContact={selectedContact}
-            onSearchChange={handleSearchChange}
-            onFocus={handleSearchFocus}
-            onClear={handleContactClear}
-          />
-          
-          <ContactDropdown
-            isOpen={isDropdownOpen}
-            loading={loading}
-            contacts={filteredContacts}
-            onContactSelect={handleContactSelect}
-            onClose={handleDropdownClose}
-          />
-          
-          {selectedContact && (
-            <ContactActions
-              contact={selectedContact}
-              onContactsUpdated={handleContactsUpdated}
-            />
-          )}
-        </div>
+    <div className="space-y-3">
+      {/* Search en dropdown */}
+      <div className="relative">
+        <ContactSearch
+          searchTerm={searchTerm}
+          selectedContact={selectedContact}
+          onSearchChange={handleSearchChange}
+          onFocus={handleSearchFocus}
+          onClear={handleContactClear}
+        />
+        
+        <ContactDropdown
+          isOpen={isDropdownOpen}
+          loading={loading}
+          contacts={filteredContacts}
+          onContactSelect={handleContactSelect}
+          onClose={handleDropdownClose}
+        />
       </div>
+
+      {/* Selected contact display */}
+      {selectedContact && (
+        <StandardContactCard
+          contact={selectedContact}
+          variant="compact"
+          showActions={false}
+        />
+      )}
     </div>
   );
 };
