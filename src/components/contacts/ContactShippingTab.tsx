@@ -1,8 +1,8 @@
 
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 
 interface ContactShippingTabProps {
   formData: any;
@@ -10,19 +10,61 @@ interface ContactShippingTabProps {
 }
 
 export const ContactShippingTab = ({ formData, setFormData }: ContactShippingTabProps) => {
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev: any) => ({ ...prev, [field]: value }));
+  };
+
   return (
     <div className="space-y-4 p-1">
+      <div className="text-sm text-gray-600 mb-4">
+        Verzending en betalingsinstellingen worden overgenomen van de standaard instellingen, 
+        maar kunnen hier per contact worden aangepast.
+      </div>
+
+      <div>
+        <Label className="text-sm font-medium">Afwijkend factuuradres</Label>
+        <Textarea
+          value={formData.billing_address || ''}
+          onChange={(e) => handleInputChange('billing_address', e.target.value)}
+          placeholder="Laat leeg om het standaard adres te gebruiken"
+          className="mt-1 resize-none"
+          rows={3}
+        />
+      </div>
+
+      <div>
+        <Label className="text-sm font-medium">Afwijkend afleveradres</Label>
+        <Textarea
+          value={formData.shipping_address || ''}
+          onChange={(e) => handleInputChange('shipping_address', e.target.value)}
+          placeholder="Laat leeg om het factuuradres te gebruiken"
+          className="mt-1 resize-none"
+          rows={3}
+        />
+      </div>
+
+      <div>
+        <Label className="text-sm font-medium">Speciale verzendingsinstructies</Label>
+        <Textarea
+          value={formData.shipping_instructions || ''}
+          onChange={(e) => handleInputChange('shipping_instructions', e.target.value)}
+          placeholder="Bijvoorbeeld: Alleen op werkdagen bezorgen"
+          className="mt-1 resize-none"
+          rows={2}
+        />
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label className="text-xs">Verzendmethode</Label>
+          <Label className="text-sm font-medium">Verzendmethode</Label>
           <Select
-            value={formData.shippingMethod}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, shippingMethod: value }))}
+            value={formData.shipping_method || 'E-mail'}
+            onValueChange={(value) => handleInputChange('shipping_method', value)}
           >
-            <SelectTrigger className="text-xs h-7">
+            <SelectTrigger className="mt-1">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-white border shadow-lg z-50">
+            <SelectContent>
               <SelectItem value="E-mail">E-mail</SelectItem>
               <SelectItem value="Post">Post</SelectItem>
               <SelectItem value="Geen">Geen</SelectItem>
@@ -31,76 +73,14 @@ export const ContactShippingTab = ({ formData, setFormData }: ContactShippingTab
         </div>
 
         <div>
-          <Label className="text-xs">Standaard e-mailtekst</Label>
-          <Select
-            value={formData.standardEmailText}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, standardEmailText: value }))}
-          >
-            <SelectTrigger className="text-xs h-7">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-white border shadow-lg z-50">
-              <SelectItem value="geen">geen</SelectItem>
-              <SelectItem value="standaard">Standaard</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div>
-        <Label className="text-xs">Herinnering e-mail</Label>
-        <Input
-          value={formData.reminderEmail}
-          onChange={(e) => setFormData(prev => ({ ...prev, reminderEmail: e.target.value }))}
-          className="text-xs h-7"
-          placeholder="E-mailadres voor herinneringen"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label className="text-xs">Betalingstermijn</Label>
-          <div className="flex items-center gap-1">
-            <Input
-              type="number"
-              value={formData.paymentTerms}
-              onChange={(e) => setFormData(prev => ({ ...prev, paymentTerms: parseInt(e.target.value) || 14 }))}
-              className="text-xs h-7 w-16"
-            />
-            <span className="text-xs">dagen</span>
-          </div>
-        </div>
-
-        <div>
-          <Label className="text-xs">IBAN</Label>
+          <Label className="text-sm font-medium">E-mail voor herinneringen</Label>
           <Input
-            value={formData.iban}
-            onChange={(e) => setFormData(prev => ({ ...prev, iban: e.target.value }))}
-            className="text-xs h-7"
-            placeholder="NL00 BANK 0000 0000 00"
+            value={formData.reminder_email || ''}
+            onChange={(e) => handleInputChange('reminder_email', e.target.value)}
+            placeholder="E-mailadres voor herinneringen"
+            className="mt-1"
           />
         </div>
-      </div>
-
-      <div>
-        <Label className="text-xs">BIC</Label>
-        <Input
-          value={formData.bic}
-          onChange={(e) => setFormData(prev => ({ ...prev, bic: e.target.value }))}
-          className="text-xs h-7"
-          placeholder="BANKNL2A"
-        />
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="automaticCollection"
-          checked={formData.automaticCollection}
-          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, automaticCollection: checked }))}
-        />
-        <Label htmlFor="automaticCollection" className="text-xs">
-          Automatische incasso
-        </Label>
       </div>
     </div>
   );
