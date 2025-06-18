@@ -32,9 +32,9 @@ export const useDashboardStats = () => {
       console.log('📊 Fetching dashboard stats for organization:', selectedOrganization.id);
 
       // Build base queries with organization filter
-      let baseFilter = { organization_id: selectedOrganization.id };
+      let baseFilter: any = { organization_id: selectedOrganization.id };
       if (selectedWorkspace) {
-        baseFilter = { ...baseFilter, workspace_id: selectedWorkspace.id };
+        baseFilter.workspace_id = selectedWorkspace.id;
       }
 
       // Fetch all stats in parallel

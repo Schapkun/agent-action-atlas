@@ -5,10 +5,6 @@ import { ContactTableRowFixed } from './ContactTableRowFixed';
 import { useContactManager } from './useContactManager';
 import { useState } from 'react';
 import { ContactEditDialog } from './ContactEditDialog';
-import { ContactInvoicesDialog } from './ContactInvoicesDialog';
-import { ContactQuotesDialog } from './ContactQuotesDialog';
-import { ContactEmailDialog } from './ContactEmailDialog';
-import { ContactLabelsDialog } from './ContactLabelsDialog';
 
 export const ContactTable = () => {
   const {
@@ -23,11 +19,6 @@ export const ContactTable = () => {
   } = useContactManager();
 
   const [editingContact, setEditingContact] = useState(null);
-  const [viewingContactId, setViewingContactId] = useState(null);
-  const [emailContactId, setEmailContactId] = useState(null);
-  const [invoicesContactId, setInvoicesContactId] = useState(null);
-  const [quotesContactId, setQuotesContactId] = useState(null);
-  const [labelsContactId, setLabelsContactId] = useState(null);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
