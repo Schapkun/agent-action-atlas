@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Settings, UserPlus, Edit } from 'lucide-react';
 import { ContactSelector } from '@/components/contacts/ContactSelector';
-import { ContactCreateDialog } from '@/components/contacts/ContactCreateDialog';
+import { ContactDialog } from '@/components/contacts/ContactDialog';
 import { ContactEditDialog } from '@/components/contacts/ContactEditDialog';
 
 interface ContactSelectionCardProps {
@@ -24,7 +24,7 @@ export const ContactSelectionCard = ({
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
-  const handleContactCreated = (newContact: any) => {
+  const handleContactSaved = (newContact: any) => {
     onContactSelect(newContact);
     setShowCreateDialog(false);
   };
@@ -117,10 +117,11 @@ export const ContactSelectionCard = ({
         </CardContent>
       </Card>
 
-      <ContactCreateDialog
+      <ContactDialog
         isOpen={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
-        onContactCreated={handleContactCreated}
+        contact={null}
+        onContactSaved={handleContactSaved}
       />
 
       <ContactEditDialog
