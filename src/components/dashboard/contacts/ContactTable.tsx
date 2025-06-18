@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Table, TableBody } from '@/components/ui/table';
 import { ContactTableHeader } from './ContactTableHeader';
@@ -54,7 +53,6 @@ interface ContactTableProps {
   onSelectContact: (contactId: string, checked: boolean) => void;
   onToggleStatus: (contactId: string, currentStatus: boolean) => void;
   onColumnVisibilityChange: (column: keyof ColumnVisibility, checked: boolean) => void;
-  onBulkArchive: () => void;
   onBulkDelete: () => void;
   onContactsUpdated?: () => void;
   onFilterByLabels?: (contact: Contact) => void;
@@ -74,7 +72,6 @@ export const ContactTable = ({
   onSelectContact,
   onToggleStatus,
   onColumnVisibilityChange,
-  onBulkArchive,
   onBulkDelete,
   onContactsUpdated,
   onFilterByLabels
@@ -178,7 +175,6 @@ export const ContactTable = ({
           columnVisibility={columnVisibility}
           onSelectAll={onSelectAll}
           onColumnVisibilityChange={onColumnVisibilityChange}
-          onBulkArchive={onBulkArchive}
           onBulkDelete={onBulkDelete}
         />
         <TableBody>

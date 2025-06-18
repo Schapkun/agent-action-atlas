@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -210,6 +209,37 @@ export const useContactManager = () => {
     }
   }, [selectedOrganization, selectedWorkspace]);
 
+  const bulkDeleteContacts = async (contactIds: Set<string>) => {
+    if (contactIds.size === 0) return;
+
+    try {
+      console.log('🗑️ Bulk deleting contacts:', Array.from(contactIds));
+      
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .in('id', Array.from(contactIds));
+
+      if (error) throw error;
+
+      // Remove from local state
+      setContacts(prev => prev.filter(contact => !contactIds.has(contact.id)));
+      
+      toast({
+        title: "Contacten verwijderd",
+        description: `${contactIds.size} contact(en) succesvol verwijderd`
+      });
+    } catch (error) {
+      console.error('Error bulk deleting contacts:', error);
+      toast({
+        title: "Fout",
+        description: "Kon contacten niet verwijderen",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
   const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -247,7 +277,8 @@ export const useContactManager = () => {
     setSelectedContacts,
     setColumnVisibility,
     toast,
-    fetchContacts
+    fetchContacts,
+    bulkDeleteContacts
   };
 };
 

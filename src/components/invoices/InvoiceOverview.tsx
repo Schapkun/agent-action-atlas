@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +21,8 @@ import {
   Loader2,
   CheckCircle,
   FileEdit,
-  ArrowRight
+  ArrowRight,
+  Checkbox
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -80,6 +80,7 @@ export const InvoiceOverview = () => {
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
   
   const { invoices, loading, deleteInvoice, updateInvoice, generateInvoiceNumber } = useInvoices();
   const { toast } = useToast();
@@ -107,6 +108,55 @@ export const InvoiceOverview = () => {
       case 'paid': return 'Betaalde Facturen';
       case 'overdue': return 'Vervallen Facturen';
       default: return 'Alle Facturen';
+    }
+  };
+
+  // Selection handlers
+  const isAllSelected = filteredInvoices.length > 0 && selectedInvoices.size === filteredInvoices.length;
+  const isIndeterminate = selectedInvoices.size > 0 && selectedInvoices.size < filteredInvoices.length;
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedInvoices(new Set(filteredInvoices.map(invoice => invoice.id)));
+    } else {
+      setSelectedInvoices(new Set());
+    }
+  };
+
+  const handleSelectInvoice = (invoiceId: string, checked: boolean) => {
+    const newSelected = new Set(selectedInvoices);
+    if (checked) {
+      newSelected.add(invoiceId);
+    } else {
+      newSelected.delete(invoiceId);
+    }
+    setSelectedInvoices(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedInvoices.size === 0) return;
+
+    const invoiceType = statusFilter === 'draft' ? 'concepten' : 'facturen';
+    if (confirm(`Weet je zeker dat je ${selectedInvoices.size} ${invoiceType} wilt verwijderen?`)) {
+      try {
+        // Delete each selected invoice
+        const deletePromises = Array.from(selectedInvoices).map(id => deleteInvoice(id));
+        await Promise.all(deletePromises);
+        
+        setSelectedInvoices(new Set());
+        
+        toast({
+          title: "Verwijderd",
+          description: `${selectedInvoices.size} ${invoiceType} succesvol verwijderd`
+        });
+      } catch (error) {
+        console.error('Error bulk deleting invoices:', error);
+        toast({
+          title: "Fout",
+          description: `Kon ${invoiceType} niet verwijderen`,
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -558,18 +608,50 @@ Uw administratie`
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-8">
+                    <Checkbox
+                      checked={isAllSelected}
+                      ref={(el) => {
+                        if (el) el.indeterminate = isIndeterminate;
+                      }}
+                      onCheckedChange={handleSelectAll}
+                      className="h-4 w-4"
+                    />
+                  </TableHead>
                   <TableHead>Factuurnummer</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Factuurdatum</TableHead>
                   <TableHead>Vervaldatum</TableHead>
                   <TableHead>Factuurbedrag</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Acties</TableHead>
+                  <TableHead className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      {selectedInvoices.size > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleBulkDelete}
+                          className="h-6 px-1 text-red-600 hover:text-red-700"
+                          title={`Geselecteerde ${statusFilter === 'draft' ? 'concepten' : 'facturen'} verwijderen`}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                      Acties
+                    </div>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredInvoices.map((invoice) => (
                   <TableRow key={invoice.id} className="hover:bg-gray-50">
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedInvoices.has(invoice.id)}
+                        onCheckedChange={(checked) => handleSelectInvoice(invoice.id, checked as boolean)}
+                        className="h-4 w-4"
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">
                       {invoice.status === 'draft' ? (
                         <span className="text-gray-500 italic">CONCEPT</span>

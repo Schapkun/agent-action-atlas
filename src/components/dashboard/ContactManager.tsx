@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ContactTableFilters } from './contacts/ContactTableFilters';
@@ -41,7 +40,8 @@ export const ContactManager = () => {
     setSelectedContacts,
     setColumnVisibility,
     toast,
-    fetchContacts
+    fetchContacts,
+    bulkDeleteContacts
   } = useContactManager();
 
   const getContextInfo = () => {
@@ -107,46 +107,13 @@ export const ContactManager = () => {
   const handleBulkDelete = async () => {
     if (selectedContacts.size === 0) return;
 
-    try {
-      setContacts(prev => prev.filter(contact => !selectedContacts.has(contact.id)));
-      setSelectedContacts(new Set());
-      
-      toast({
-        title: "Contacten verwijderd",
-        description: `${selectedContacts.size} contact(en) verwijderd`
-      });
-    } catch (error) {
-      console.error('Error deleting contacts:', error);
-      toast({
-        title: "Fout",
-        description: "Kon contacten niet verwijderen",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleBulkArchive = async () => {
-    if (selectedContacts.size === 0) return;
-
-    try {
-      setContacts(prev => prev.map(contact => 
-        selectedContacts.has(contact.id)
-          ? { ...contact, is_active: false }
-          : contact
-      ));
-      setSelectedContacts(new Set());
-      
-      toast({
-        title: "Contacten gearchiveerd",
-        description: `${selectedContacts.size} contact(en) gearchiveerd`
-      });
-    } catch (error) {
-      console.error('Error archiving contacts:', error);
-      toast({
-        title: "Fout",
-        description: "Kon contacten niet archiveren",
-        variant: "destructive"
-      });
+    if (confirm(`Weet je zeker dat je ${selectedContacts.size} contact(en) wilt verwijderen?`)) {
+      try {
+        await bulkDeleteContacts(selectedContacts);
+        setSelectedContacts(new Set());
+      } catch (error) {
+        // Error handling is done in bulkDeleteContacts
+      }
     }
   };
 
@@ -215,7 +182,6 @@ export const ContactManager = () => {
             onSelectContact={handleSelectContact}
             onToggleStatus={toggleContactStatus}
             onColumnVisibilityChange={handleColumnVisibilityChange}
-            onBulkArchive={handleBulkArchive}
             onBulkDelete={handleBulkDelete}
             onContactsUpdated={handleContactsUpdated}
             onFilterByLabels={handleFilterByLabels}
