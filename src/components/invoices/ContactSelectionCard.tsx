@@ -49,7 +49,9 @@ export const ContactSelectionCard = ({
   const handleSettingsClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    onShowSettings();
+    if (selectedContact) {
+      onShowSettings();
+    }
   };
 
   return (
@@ -107,6 +109,7 @@ export const ContactSelectionCard = ({
                 variant="outline"
                 size="sm"
                 onClick={handleSettingsClick}
+                disabled={!selectedContact}
                 className="text-xs h-8 px-2"
               >
                 <Settings className="h-3 w-3 mr-1" />
