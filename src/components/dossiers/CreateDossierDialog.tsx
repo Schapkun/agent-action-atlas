@@ -11,7 +11,11 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 
-export const CreateDossierDialog = () => {
+interface CreateDossierDialogProps {
+  children?: React.ReactNode;
+}
+
+export const CreateDossierDialog = ({ children }: CreateDossierDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -86,10 +90,12 @@ export const CreateDossierDialog = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Nieuw Dossier
-        </Button>
+        {children || (
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Nieuw Dossier
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
