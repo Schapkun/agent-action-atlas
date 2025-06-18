@@ -27,6 +27,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useInvoices, Invoice } from '@/hooks/useInvoices';
 import { useInvoiceLines } from '@/hooks/useInvoiceLines';
 import { useInvoiceTemplates } from '@/hooks/useInvoiceTemplates';
@@ -347,7 +355,7 @@ Uw administratie`
         </CardContent>
       </Card>
 
-      {/* Invoices List */}
+      {/* Invoices Table */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Facturen ({filteredInvoices.length})</CardTitle>
@@ -370,119 +378,128 @@ Uw administratie`
               </Button>
             </div>
           ) : (
-            <div className="divide-y">
-              {filteredInvoices.map((invoice) => (
-                <div key={invoice.id} className="p-4 hover:bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold text-gray-900">
-                          {invoice.invoice_number}
-                        </h3>
-                        <Badge className={getStatusColor(invoice.status)}>
-                          {getStatusLabel(invoice.status)}
-                        </Badge>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                        <div>
-                          <span className="font-medium">Klant:</span> {invoice.client_name}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          {format(new Date(invoice.invoice_date), 'dd MMM yyyy', { locale: nl })}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Euro className="h-4 w-4" />
-                          €{invoice.total_amount.toFixed(2)}
-                        </div>
-                        <div>
-                          <span className="font-medium">Vervaldatum:</span> {' '}
-                          {format(new Date(invoice.due_date), 'dd MMM yyyy', { locale: nl })}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleView(invoice)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDownload(invoice)}
-                        disabled={downloadingId === invoice.id}
-                        className="h-8 w-8 p-0"
-                      >
-                        {downloadingId === invoice.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Download className="h-4 w-4" />
-                        )}
-                      </Button>
-                      
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Factuurnummer</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Factuurdatum</TableHead>
+                  <TableHead>Vervaldatum</TableHead>
+                  <TableHead>Factuurbedrag</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Acties</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredInvoices.map((invoice) => (
+                  <TableRow key={invoice.id} className="hover:bg-gray-50">
+                    <TableCell className="font-medium">
+                      {invoice.invoice_number}
+                    </TableCell>
+                    <TableCell>
+                      {invoice.client_name}
+                    </TableCell>
+                    <TableCell>
+                      {format(new Date(invoice.invoice_date), 'dd MMM yyyy', { locale: nl })}
+                    </TableCell>
+                    <TableCell>
+                      {format(new Date(invoice.due_date), 'dd MMM yyyy', { locale: nl })}
+                    </TableCell>
+                    <TableCell>
+                      €{invoice.total_amount.toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(invoice.status)}>
+                        {getStatusLabel(invoice.status)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleView(invoice)}
+                          className="h-8 w-8 p-0"
+                          title="Bekijken"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        {invoice.status !== 'paid' && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0"
+                            onClick={() => handleMarkAsPaid(invoice)}
+                            className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                            title="Markeer als betaald"
                           >
-                            <MoreVertical className="h-4 w-4" />
+                            <CheckCircle className="h-4 w-4" />
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {invoice.status !== 'paid' && (
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDownload(invoice)}
+                          disabled={downloadingId === invoice.id}
+                          className="h-8 w-8 p-0"
+                          title="Download PDF"
+                        >
+                          {downloadingId === invoice.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Download className="h-4 w-4" />
+                          )}
+                        </Button>
+                        
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              title="Meer opties"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
                             <DropdownMenuItem
-                              onClick={() => handleMarkAsPaid(invoice)}
+                              onClick={() => handleResend(invoice)}
+                              disabled={!invoice.client_email}
                               className="flex items-center gap-2"
                             >
-                              <CheckCircle className="h-4 w-4" />
-                              Markeer als betaald
+                              <Mail className="h-4 w-4" />
+                              Email opnieuw versturen
                             </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem
-                            onClick={() => handleResend(invoice)}
-                            disabled={!invoice.client_email}
-                            className="flex items-center gap-2"
-                          >
-                            <Mail className="h-4 w-4" />
-                            Email opnieuw versturen
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleReminder(invoice)}
-                            disabled={!invoice.client_email}
-                            className="flex items-center gap-2"
-                          >
-                            <Clock className="h-4 w-4" />
-                            Herinnering versturen
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleEdit(invoice)}
-                            className="flex items-center gap-2"
-                          >
-                            <Edit className="h-4 w-4" />
-                            Bewerken
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDelete(invoice)}
-                            className="flex items-center gap-2 text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Verwijderen
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                            <DropdownMenuItem
+                              onClick={() => handleReminder(invoice)}
+                              disabled={!invoice.client_email}
+                              className="flex items-center gap-2"
+                            >
+                              <Clock className="h-4 w-4" />
+                              Herinnering versturen
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleEdit(invoice)}
+                              className="flex items-center gap-2"
+                            >
+                              <Edit className="h-4 w-4" />
+                              Bewerken
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDelete(invoice)}
+                              className="flex items-center gap-2 text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Verwijderen
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
