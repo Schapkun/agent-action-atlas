@@ -84,6 +84,10 @@ export const ContactSelector = ({
     setIsDropdownOpen(false);
   };
 
+  const handleContactsUpdated = () => {
+    refreshContacts();
+  };
+
   return (
     <div className="flex items-center gap-3">
       <div className="flex-1">
@@ -104,9 +108,12 @@ export const ContactSelector = ({
             onClose={handleDropdownClose}
           />
           
-          <ContactActions
-            selectedContact={selectedContact}
-          />
+          {selectedContact && (
+            <ContactActions
+              contact={selectedContact}
+              onContactsUpdated={handleContactsUpdated}
+            />
+          )}
         </div>
       </div>
     </div>
