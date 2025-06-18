@@ -51,7 +51,12 @@ export const ContactTableHeader = ({
           <Checkbox
             checked={isAllSelected}
             ref={(el) => {
-              if (el) el.indeterminate = isIndeterminate;
+              if (el) {
+                const inputElement = el.querySelector('input') as HTMLInputElement;
+                if (inputElement) {
+                  inputElement.indeterminate = isIndeterminate;
+                }
+              }
             }}
             onCheckedChange={onSelectAll}
             className="h-4 w-4"

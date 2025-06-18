@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Plus, 
   Search, 
@@ -21,8 +22,7 @@ import {
   Loader2,
   CheckCircle,
   FileEdit,
-  ArrowRight,
-  Checkbox
+  ArrowRight
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -612,7 +612,12 @@ Uw administratie`
                     <Checkbox
                       checked={isAllSelected}
                       ref={(el) => {
-                        if (el) el.indeterminate = isIndeterminate;
+                        if (el) {
+                          const inputElement = el.querySelector('input') as HTMLInputElement;
+                          if (inputElement) {
+                            inputElement.indeterminate = isIndeterminate;
+                          }
+                        }
                       }}
                       onCheckedChange={handleSelectAll}
                       className="h-4 w-4"
