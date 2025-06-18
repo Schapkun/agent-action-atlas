@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +20,9 @@ import {
   Clock,
   MoreVertical,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  FileEdit,
+  ArrowRight
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -70,25 +73,42 @@ const getStatusLabel = (status: string) => {
 };
 
 export const InvoiceOverview = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   
-  const { invoices, loading, deleteInvoice, updateInvoice } = useInvoices();
+  const { invoices, loading, deleteInvoice, updateInvoice, generateInvoiceNumber } = useInvoices();
   const { toast } = useToast();
 
+  // Get status filter from URL parameters
+  const urlParams = new URLSearchParams(location.search);
+  const statusFilter = urlParams.get('status') || '';
+
+  // Filter invoices based on URL parameter and search term
   const filteredInvoices = invoices.filter(invoice => {
     const matchesSearch = searchTerm === '' || 
-      invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (invoice.invoice_number && invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase())) ||
       invoice.client_name.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = selectedStatus === '' || invoice.status === selectedStatus;
+    const matchesStatus = statusFilter === '' || invoice.status === statusFilter;
     
     return matchesSearch && matchesStatus;
   });
+
+  // Determine page title based on status filter
+  const getPageTitle = () => {
+    switch (statusFilter) {
+      case 'draft': return 'Conceptfacturen';
+      case 'sent': return 'Verzonden Facturen';
+      case 'paid': return 'Betaalde Facturen';
+      case 'overdue': return 'Vervallen Facturen';
+      default: return 'Alle Facturen';
+    }
+  };
 
   const handleEdit = (invoice: Invoice) => {
     setEditingInvoice(invoice);
@@ -97,6 +117,33 @@ export const InvoiceOverview = () => {
 
   const handleView = (invoice: Invoice) => {
     setViewingInvoice(invoice);
+  };
+
+  const handleConvertToInvoice = async (invoice: Invoice) => {
+    try {
+      console.log('Converting draft to invoice:', invoice.id);
+      
+      // Generate new invoice number for the draft
+      const invoiceNumber = await generateInvoiceNumber();
+      
+      // Update the invoice status to 'sent' and assign invoice number
+      await updateInvoice(invoice.id, { 
+        status: 'sent',
+        invoice_number: invoiceNumber
+      });
+      
+      toast({
+        title: "Factuur Verzonden",
+        description: `Concept is omgezet naar factuur ${invoiceNumber} en verzonden.`
+      });
+    } catch (error) {
+      console.error('Error converting draft to invoice:', error);
+      toast({
+        title: "Fout",
+        description: "Er is een fout opgetreden bij het omzetten van het concept.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleDownload = async (invoice: Invoice) => {
@@ -293,7 +340,7 @@ Uw administratie`
   };
 
   const handleDelete = async (invoice: Invoice) => {
-    if (confirm(`Weet je zeker dat je factuur ${invoice.invoice_number} wilt verwijderen?`)) {
+    if (confirm(`Weet je zeker dat je ${invoice.status === 'draft' ? 'concept' : 'factuur'} ${invoice.invoice_number || 'zonder nummer'} wilt verwijderen?`)) {
       await deleteInvoice(invoice.id);
     }
   };
@@ -307,13 +354,157 @@ Uw administratie`
     setViewingInvoice(null);
   };
 
+  // Render action buttons based on invoice status
+  const renderActionButtons = (invoice: Invoice) => {
+    if (invoice.status === 'draft') {
+      // Draft invoice actions
+      return (
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEdit(invoice)}
+            className="h-8 w-8 p-0"
+            title="Bewerken"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleConvertToInvoice(invoice)}
+            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
+            title="Omzetten naar factuur en versturen"
+          >
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                title="Meer opties"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => navigate('/offertes/opstellen')}
+                className="flex items-center gap-2"
+              >
+                <FileEdit className="h-4 w-4" />
+                Omzetten naar offerte
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleDelete(invoice)}
+                className="flex items-center gap-2 text-red-600 hover:text-red-700"
+              >
+                <Trash2 className="h-4 w-4" />
+                Verwijderen
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      );
+    } else {
+      // Sent/Paid invoice actions
+      return (
+        <div className="flex items-center justify-end gap-2">
+          {invoice.status !== 'paid' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleMarkAsPaid(invoice)}
+              className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+              title="Markeer als betaald"
+            >
+              <CheckCircle className="h-4 w-4" />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleView(invoice)}
+            className="h-8 w-8 p-0"
+            title="Bekijken"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDownload(invoice)}
+            disabled={downloadingId === invoice.id}
+            className="h-8 w-8 p-0"
+            title="Download PDF"
+          >
+            {downloadingId === invoice.id ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                title="Meer opties"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => handleResend(invoice)}
+                disabled={!invoice.client_email}
+                className="flex items-center gap-2"
+              >
+                <Mail className="h-4 w-4" />
+                Email opnieuw versturen
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleReminder(invoice)}
+                disabled={!invoice.client_email}
+                className="flex items-center gap-2"
+              >
+                <Clock className="h-4 w-4" />
+                Herinnering versturen
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleEdit(invoice)}
+                className="flex items-center gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Bewerken
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleDelete(invoice)}
+                className="flex items-center gap-2 text-red-600 hover:text-red-700"
+              >
+                <Trash2 className="h-4 w-4" />
+                Verwijderen
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      );
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Facturen</h1>
-          <p className="text-gray-600">Beheer je facturen en bekijk de status</p>
+          <h1 className="text-2xl font-bold text-gray-900">{getPageTitle()}</h1>
+          <p className="text-gray-600">
+            {statusFilter === 'draft' ? 'Beheer je conceptfacturen en zet ze om naar verzonden facturen' : 'Beheer je facturen en bekijk de status'}
+          </p>
         </div>
         <Button onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
@@ -321,36 +512,20 @@ Uw administratie`
         </Button>
       </div>
 
-      {/* Filters */}
+      {/* Search */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Filters</CardTitle>
+          <CardTitle className="text-lg">Zoeken</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Zoek op factuurnummer of klant..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-3 py-2 border border-input bg-background rounded-md text-sm"
-            >
-              <option value="">Alle statussen</option>
-              <option value="draft">Concept</option>
-              <option value="sent">Verzonden</option>
-              <option value="paid">Betaald</option>
-              <option value="overdue">Vervallen</option>
-              <option value="cancelled">Geannuleerd</option>
-            </select>
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Zoek op factuurnummer of klant..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
         </CardContent>
       </Card>
@@ -358,7 +533,7 @@ Uw administratie`
       {/* Invoices Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Facturen ({filteredInvoices.length})</CardTitle>
+          <CardTitle className="text-lg">{getPageTitle()} ({filteredInvoices.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -368,13 +543,15 @@ Uw administratie`
           ) : filteredInvoices.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="mb-2">Geen facturen gevonden</p>
+              <p className="mb-2">
+                {statusFilter === 'draft' ? 'Geen conceptfacturen gevonden' : 'Geen facturen gevonden'}
+              </p>
               <Button 
                 variant="outline" 
                 onClick={() => setIsCreateDialogOpen(true)}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Maak je eerste factuur
+                {statusFilter === 'draft' ? 'Maak je eerste concept' : 'Maak je eerste factuur'}
               </Button>
             </div>
           ) : (
@@ -394,7 +571,11 @@ Uw administratie`
                 {filteredInvoices.map((invoice) => (
                   <TableRow key={invoice.id} className="hover:bg-gray-50">
                     <TableCell className="font-medium">
-                      {invoice.invoice_number}
+                      {invoice.status === 'draft' ? (
+                        <span className="text-gray-500 italic">CONCEPT</span>
+                      ) : (
+                        invoice.invoice_number
+                      )}
                     </TableCell>
                     <TableCell>
                       {invoice.client_name}
@@ -414,87 +595,7 @@ Uw administratie`
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {invoice.status !== 'paid' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleMarkAsPaid(invoice)}
-                            className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
-                            title="Markeer als betaald"
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleView(invoice)}
-                          className="h-8 w-8 p-0"
-                          title="Bekijken"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDownload(invoice)}
-                          disabled={downloadingId === invoice.id}
-                          className="h-8 w-8 p-0"
-                          title="Download PDF"
-                        >
-                          {downloadingId === invoice.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Download className="h-4 w-4" />
-                          )}
-                        </Button>
-                        
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              title="Meer opties"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => handleResend(invoice)}
-                              disabled={!invoice.client_email}
-                              className="flex items-center gap-2"
-                            >
-                              <Mail className="h-4 w-4" />
-                              Email opnieuw versturen
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleReminder(invoice)}
-                              disabled={!invoice.client_email}
-                              className="flex items-center gap-2"
-                            >
-                              <Clock className="h-4 w-4" />
-                              Herinnering versturen
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleEdit(invoice)}
-                              className="flex items-center gap-2"
-                            >
-                              <Edit className="h-4 w-4" />
-                              Bewerken
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDelete(invoice)}
-                              className="flex items-center gap-2 text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Verwijderen
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                      {renderActionButtons(invoice)}
                     </TableCell>
                   </TableRow>
                 ))}

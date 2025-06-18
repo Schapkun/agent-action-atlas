@@ -107,11 +107,12 @@ export const useInvoices = () => {
     try {
       const currentYear = new Date().getFullYear();
       
-      // Get all invoice numbers for this organization this year
+      // Get all invoice numbers for this organization this year (excluding drafts)
       const { data: existingInvoices, error } = await supabase
         .from('invoices')
         .select('invoice_number')
         .eq('organization_id', selectedOrganization?.id)
+        .neq('status', 'draft') // Exclude draft invoices from numbering
         .gte('created_at', `${currentYear}-01-01`)
         .order('invoice_number', { ascending: false });
 
@@ -122,11 +123,13 @@ export const useInvoices = () => {
       // Parse existing invoice numbers to find the highest number
       if (existingInvoices && existingInvoices.length > 0) {
         for (const invoice of existingInvoices) {
-          const numberPart = invoice.invoice_number.split('-')[1];
-          if (numberPart && !isNaN(parseInt(numberPart))) {
-            const num = parseInt(numberPart);
-            if (num > highestNumber) {
-              highestNumber = num;
+          if (invoice.invoice_number) {
+            const numberPart = invoice.invoice_number.split('-')[1];
+            if (numberPart && !isNaN(parseInt(numberPart))) {
+              const num = parseInt(numberPart);
+              if (num > highestNumber) {
+                highestNumber = num;
+              }
             }
           }
         }
@@ -186,12 +189,13 @@ export const useInvoices = () => {
     try {
       console.log('Creating invoice with data:', invoiceData);
       
-      const invoiceNumber = await generateInvoiceNumber();
+      // Only generate invoice number for non-draft invoices
+      const invoiceNumber = invoiceData.status === 'draft' ? null : await generateInvoiceNumber();
       const defaultTemplate = await getDefaultTemplate();
       
       // Ensure required fields are present and properly formatted
       const insertData = {
-        invoice_number: invoiceNumber,
+        invoice_number: invoiceNumber, // Will be null for drafts
         organization_id: selectedOrganization?.id || '',
         workspace_id: selectedWorkspace?.id || null,
         template_id: defaultTemplate,
@@ -231,9 +235,13 @@ export const useInvoices = () => {
       const newInvoice = castToInvoice(data);
       setInvoices(prev => [newInvoice, ...prev]);
       
+      const successMessage = invoiceData.status === 'draft' 
+        ? `Concept succesvol aangemaakt`
+        : `Factuur ${invoiceNumber} succesvol aangemaakt`;
+      
       toast({
         title: "Succes",
-        description: `Factuur ${invoiceNumber} succesvol aangemaakt`
+        description: successMessage
       });
 
       console.log('✅✅✅ EXPLICIT CREATION COMPLETE: Invoice was successfully created via explicit action');

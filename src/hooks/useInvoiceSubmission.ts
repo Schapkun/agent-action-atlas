@@ -13,12 +13,12 @@ export const useInvoiceSubmission = (
 ) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { createInvoice, saveInvoiceLines } = useInvoices();
+  const { createInvoice, saveInvoiceLines, updateInvoice, generateInvoiceNumber } = useInvoices();
   const [loading, setLoading] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
 
   const handleSubmit = async () => {
-    console.log('✅ EXPLICIT USER ACTION: handleSubmit called - USER CLICKED SAVE');
+    console.log('✅ EXPLICIT USER ACTION: handleSubmit called - USER CLICKED SAVE AS DRAFT');
     
     if (!formData.client_name.trim()) {
       console.log('❌ BLOCKING SAVE: No client name provided');
@@ -45,10 +45,10 @@ export const useInvoiceSubmission = (
         vat_amount: vatAmount,
         total_amount: total,
         vat_percentage: lineItems[0]?.vat_rate || 21,
-        status: 'draft' as const
+        status: 'draft' as const // Always save as draft
       };
 
-      console.log('✅ EXPLICIT: Calling createInvoice with EXPLICIT_USER_ACTION');
+      console.log('✅ EXPLICIT: Calling createInvoice with EXPLICIT_USER_ACTION for DRAFT');
       const invoice = await createInvoice(invoiceData, 'EXPLICIT_USER_ACTION');
       
       // Save line items after invoice creation
@@ -58,7 +58,7 @@ export const useInvoiceSubmission = (
       }
       
       clearFormData();
-      navigate('/facturen');
+      navigate('/facturen?status=draft');
       return invoice;
     } catch (error) {
       console.error('✅ EXPLICIT ERROR:', error);
@@ -110,7 +110,7 @@ export const useInvoiceSubmission = (
       }
       
       clearFormData();
-      navigate('/facturen');
+      navigate('/facturen?status=sent');
     } catch (error) {
       console.error('✅ EXPLICIT ERROR in Save & Send:', error);
       throw error;
