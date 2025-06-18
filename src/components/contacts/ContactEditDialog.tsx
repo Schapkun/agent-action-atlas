@@ -25,6 +25,20 @@ interface ContactEditDialogProps {
     vat_number?: string;
     contact_person?: string;
     website?: string;
+    payment_terms?: number;
+    payment_method?: string;
+    iban?: string;
+    notes?: string;
+    default_discount?: number;
+    discount_type?: string;
+    products_display?: string;
+    invoice_reference?: string;
+    hide_notes_on_invoice?: boolean;
+    billing_address?: string;
+    shipping_address?: string;
+    shipping_instructions?: string;
+    shipping_method?: string;
+    reminder_email?: string;
   } | null;
   onContactUpdated: (updatedContact: any) => void;
 }
@@ -48,7 +62,21 @@ export const ContactEditDialog = ({
     country: contact?.country || 'Nederland',
     vat_number: contact?.vat_number || '',
     contact_person: contact?.contact_person || '',
-    website: contact?.website || ''
+    website: contact?.website || '',
+    payment_terms: contact?.payment_terms || 30,
+    payment_method: contact?.payment_method || 'bankoverschrijving',
+    iban: contact?.iban || '',
+    notes: contact?.notes || '',
+    default_discount: contact?.default_discount || 0,
+    discount_type: contact?.discount_type || 'percentage',
+    products_display: contact?.products_display || 'incl_btw',
+    invoice_reference: contact?.invoice_reference || '',
+    hide_notes_on_invoice: contact?.hide_notes_on_invoice || false,
+    billing_address: contact?.billing_address || '',
+    shipping_address: contact?.shipping_address || '',
+    shipping_instructions: contact?.shipping_instructions || '',
+    shipping_method: contact?.shipping_method || 'E-mail',
+    reminder_email: contact?.reminder_email || ''
   });
 
   React.useEffect(() => {
@@ -64,12 +92,26 @@ export const ContactEditDialog = ({
         country: contact.country || 'Nederland',
         vat_number: contact.vat_number || '',
         contact_person: contact.contact_person || '',
-        website: contact.website || ''
+        website: contact.website || '',
+        payment_terms: contact.payment_terms || 30,
+        payment_method: contact.payment_method || 'bankoverschrijving',
+        iban: contact.iban || '',
+        notes: contact.notes || '',
+        default_discount: contact.default_discount || 0,
+        discount_type: contact.discount_type || 'percentage',
+        products_display: contact.products_display || 'incl_btw',
+        invoice_reference: contact.invoice_reference || '',
+        hide_notes_on_invoice: contact.hide_notes_on_invoice || false,
+        billing_address: contact.billing_address || '',
+        shipping_address: contact.shipping_address || '',
+        shipping_instructions: contact.shipping_instructions || '',
+        shipping_method: contact.shipping_method || 'E-mail',
+        reminder_email: contact.reminder_email || ''
       });
     }
   }, [contact]);
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -102,6 +144,20 @@ export const ContactEditDialog = ({
           vat_number: formData.vat_number.trim() || null,
           contact_person: formData.contact_person.trim() || null,
           website: formData.website.trim() || null,
+          payment_terms: formData.payment_terms || 30,
+          payment_method: formData.payment_method || 'bankoverschrijving',
+          iban: formData.iban.trim() || null,
+          notes: formData.notes.trim() || null,
+          default_discount: formData.default_discount || 0,
+          discount_type: formData.discount_type || 'percentage',
+          products_display: formData.products_display || 'incl_btw',
+          invoice_reference: formData.invoice_reference.trim() || null,
+          hide_notes_on_invoice: formData.hide_notes_on_invoice || false,
+          billing_address: formData.billing_address.trim() || null,
+          shipping_address: formData.shipping_address.trim() || null,
+          shipping_instructions: formData.shipping_instructions.trim() || null,
+          shipping_method: formData.shipping_method || 'E-mail',
+          reminder_email: formData.reminder_email.trim() || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', contact.id)
@@ -133,7 +189,7 @@ export const ContactEditDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Contact bewerken</DialogTitle>
         </DialogHeader>
@@ -270,6 +326,70 @@ export const ContactEditDialog = ({
               onChange={(e) => handleInputChange('website', e.target.value)}
               placeholder="https://www.bedrijf.nl"
               className="mt-1"
+            />
+          </div>
+
+          {/* Betalingstermijn */}
+          <div>
+            <Label htmlFor="payment_terms">Betalingstermijn (dagen)</Label>
+            <Input
+              id="payment_terms"
+              type="number"
+              value={formData.payment_terms}
+              onChange={(e) => handleInputChange('payment_terms', parseInt(e.target.value) || 30)}
+              placeholder="30"
+              className="mt-1"
+            />
+          </div>
+
+          {/* IBAN */}
+          <div>
+            <Label htmlFor="iban">IBAN</Label>
+            <Input
+              id="iban"
+              value={formData.iban}
+              onChange={(e) => handleInputChange('iban', e.target.value)}
+              placeholder="NL91ABNA0417164300"
+              className="mt-1"
+            />
+          </div>
+
+          {/* Standaard korting */}
+          <div>
+            <Label htmlFor="default_discount">Standaard korting (%)</Label>
+            <Input
+              id="default_discount"
+              type="number"
+              step="0.01"
+              value={formData.default_discount}
+              onChange={(e) => handleInputChange('default_discount', parseFloat(e.target.value) || 0)}
+              placeholder="0"
+              className="mt-1"
+            />
+          </div>
+
+          {/* Factuurverwijzing */}
+          <div>
+            <Label htmlFor="invoice_reference">Factuurverwijzing</Label>
+            <Input
+              id="invoice_reference"
+              value={formData.invoice_reference}
+              onChange={(e) => handleInputChange('invoice_reference', e.target.value)}
+              placeholder="Projectcode of referentie"
+              className="mt-1"
+            />
+          </div>
+
+          {/* Notities */}
+          <div className="md:col-span-2">
+            <Label htmlFor="notes">Notities</Label>
+            <Textarea
+              id="notes"
+              value={formData.notes}
+              onChange={(e) => handleInputChange('notes', e.target.value)}
+              placeholder="Aanvullende informatie"
+              className="mt-1"
+              rows={3}
             />
           </div>
         </div>
