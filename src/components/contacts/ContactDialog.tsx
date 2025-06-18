@@ -126,7 +126,7 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
         name: formData.name.trim(),
         email: formData.email?.trim() || null,
         phone: formData.phone?.trim() || null,
-mobile: formData.mobile?.trim() || null,
+        mobile: formData.mobile?.trim() || null,
         address: formData.address?.trim() || null,
         postal_code: formData.postal_code?.trim() || null,
         city: formData.city?.trim() || null,
@@ -187,7 +187,7 @@ mobile: formData.mobile?.trim() || null,
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-lg">
             {contact ? 'Contact bewerken' : 'Nieuw Contact'}
@@ -202,7 +202,7 @@ mobile: formData.mobile?.trim() || null,
               <TabsTrigger value="verzending">Verzending en betaling</TabsTrigger>
             </TabsList>
 
-            <div className="mt-4 h-[400px] overflow-y-auto">
+            <div className="mt-4 h-[600px] overflow-y-auto">
               <TabsContent value="klant" className="mt-0">
                 <ContactKlantTab formData={formData} setFormData={setFormData} />
               </TabsContent>
