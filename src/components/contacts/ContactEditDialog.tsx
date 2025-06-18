@@ -17,11 +17,14 @@ interface ContactEditDialogProps {
     name: string;
     email?: string;
     phone?: string;
+    mobile?: string;
     address?: string;
     postal_code?: string;
     city?: string;
     country?: string;
     vat_number?: string;
+    contact_person?: string;
+    website?: string;
   } | null;
   onContactUpdated: (updatedContact: any) => void;
 }
@@ -38,11 +41,14 @@ export const ContactEditDialog = ({
     name: contact?.name || '',
     email: contact?.email || '',
     phone: contact?.phone || '',
+    mobile: contact?.mobile || '',
     address: contact?.address || '',
     postal_code: contact?.postal_code || '',
     city: contact?.city || '',
     country: contact?.country || 'Nederland',
-    vat_number: contact?.vat_number || ''
+    vat_number: contact?.vat_number || '',
+    contact_person: contact?.contact_person || '',
+    website: contact?.website || ''
   });
 
   React.useEffect(() => {
@@ -51,11 +57,14 @@ export const ContactEditDialog = ({
         name: contact.name || '',
         email: contact.email || '',
         phone: contact.phone || '',
+        mobile: contact.mobile || '',
         address: contact.address || '',
         postal_code: contact.postal_code || '',
         city: contact.city || '',
         country: contact.country || 'Nederland',
-        vat_number: contact.vat_number || ''
+        vat_number: contact.vat_number || '',
+        contact_person: contact.contact_person || '',
+        website: contact.website || ''
       });
     }
   }, [contact]);
@@ -85,11 +94,14 @@ export const ContactEditDialog = ({
           name: formData.name.trim(),
           email: formData.email.trim() || null,
           phone: formData.phone.trim() || null,
+          mobile: formData.mobile.trim() || null,
           address: formData.address.trim() || null,
           postal_code: formData.postal_code.trim() || null,
           city: formData.city.trim() || null,
           country: formData.country.trim() || null,
           vat_number: formData.vat_number.trim() || null,
+          contact_person: formData.contact_person.trim() || null,
+          website: formData.website.trim() || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', contact.id)
@@ -152,6 +164,18 @@ export const ContactEditDialog = ({
             />
           </div>
 
+          {/* Contactpersoon */}
+          <div>
+            <Label htmlFor="contact_person">Contactpersoon</Label>
+            <Input
+              id="contact_person"
+              value={formData.contact_person}
+              onChange={(e) => handleInputChange('contact_person', e.target.value)}
+              placeholder="Jan Janssen"
+              className="mt-1"
+            />
+          </div>
+
           {/* Telefoon */}
           <div>
             <Label htmlFor="phone">Telefoon</Label>
@@ -159,6 +183,18 @@ export const ContactEditDialog = ({
               id="phone"
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
+              placeholder="020-1234567"
+              className="mt-1"
+            />
+          </div>
+
+          {/* Mobiel */}
+          <div>
+            <Label htmlFor="mobile">Mobiel</Label>
+            <Input
+              id="mobile"
+              value={formData.mobile}
+              onChange={(e) => handleInputChange('mobile', e.target.value)}
               placeholder="06-12345678"
               className="mt-1"
             />
@@ -221,6 +257,18 @@ export const ContactEditDialog = ({
               value={formData.vat_number}
               onChange={(e) => handleInputChange('vat_number', e.target.value)}
               placeholder="NL123456789B01"
+              className="mt-1"
+            />
+          </div>
+
+          {/* Website */}
+          <div className="md:col-span-2">
+            <Label htmlFor="website">Website</Label>
+            <Input
+              id="website"
+              value={formData.website}
+              onChange={(e) => handleInputChange('website', e.target.value)}
+              placeholder="https://www.bedrijf.nl"
               className="mt-1"
             />
           </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -178,6 +177,16 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
         payment_method: formData.payment_method || 'bankoverschrijving',
         iban: formData.iban?.trim() || null,
         notes: formData.notes?.trim() || null,
+        default_discount: formData.default_discount || 0,
+        discount_type: formData.discount_type || 'percentage',
+        products_display: formData.products_display || 'incl_btw',
+        invoice_reference: formData.invoice_reference?.trim() || null,
+        hide_notes_on_invoice: formData.hide_notes_on_invoice || false,
+        billing_address: formData.billing_address?.trim() || null,
+        shipping_address: formData.shipping_address?.trim() || null,
+        shipping_instructions: formData.shipping_instructions?.trim() || null,
+        shipping_method: formData.shipping_method || 'E-mail',
+        reminder_email: formData.reminder_email?.trim() || null,
         organization_id: selectedOrganization.id,
         workspace_id: selectedWorkspace?.id || null,
         updated_at: new Date().toISOString()

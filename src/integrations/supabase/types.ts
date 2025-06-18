@@ -12,53 +12,104 @@ export type Database = {
       clients: {
         Row: {
           address: string | null
+          billing_address: string | null
           city: string | null
           contact_number: string | null
+          contact_person: string | null
           country: string | null
           created_at: string
           created_by: string | null
+          default_discount: number | null
+          discount_type: string | null
           email: string | null
+          hide_notes_on_invoice: boolean | null
+          iban: string | null
           id: string
+          invoice_reference: string | null
+          mobile: string | null
           name: string
+          notes: string | null
           organization_id: string
+          payment_method: string | null
+          payment_terms: number | null
           phone: string | null
           postal_code: string | null
+          products_display: string | null
+          reminder_email: string | null
+          shipping_address: string | null
+          shipping_instructions: string | null
+          shipping_method: string | null
           updated_at: string
           vat_number: string | null
+          website: string | null
           workspace_id: string | null
         }
         Insert: {
           address?: string | null
+          billing_address?: string | null
           city?: string | null
           contact_number?: string | null
+          contact_person?: string | null
           country?: string | null
           created_at?: string
           created_by?: string | null
+          default_discount?: number | null
+          discount_type?: string | null
           email?: string | null
+          hide_notes_on_invoice?: boolean | null
+          iban?: string | null
           id?: string
+          invoice_reference?: string | null
+          mobile?: string | null
           name: string
+          notes?: string | null
           organization_id: string
+          payment_method?: string | null
+          payment_terms?: number | null
           phone?: string | null
           postal_code?: string | null
+          products_display?: string | null
+          reminder_email?: string | null
+          shipping_address?: string | null
+          shipping_instructions?: string | null
+          shipping_method?: string | null
           updated_at?: string
           vat_number?: string | null
+          website?: string | null
           workspace_id?: string | null
         }
         Update: {
           address?: string | null
+          billing_address?: string | null
           city?: string | null
           contact_number?: string | null
+          contact_person?: string | null
           country?: string | null
           created_at?: string
           created_by?: string | null
+          default_discount?: number | null
+          discount_type?: string | null
           email?: string | null
+          hide_notes_on_invoice?: boolean | null
+          iban?: string | null
           id?: string
+          invoice_reference?: string | null
+          mobile?: string | null
           name?: string
+          notes?: string | null
           organization_id?: string
+          payment_method?: string | null
+          payment_terms?: number | null
           phone?: string | null
           postal_code?: string | null
+          products_display?: string | null
+          reminder_email?: string | null
+          shipping_address?: string | null
+          shipping_instructions?: string | null
+          shipping_method?: string | null
           updated_at?: string
           vat_number?: string | null
+          website?: string | null
           workspace_id?: string | null
         }
         Relationships: [
