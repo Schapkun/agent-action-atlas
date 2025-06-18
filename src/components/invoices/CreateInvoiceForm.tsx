@@ -1,4 +1,3 @@
-
 import { InvoiceHeader } from './InvoiceHeader';
 import { ContactSelectionCard } from './ContactSelectionCard';
 import { InvoiceDetailsCard } from './InvoiceDetailsCard';
@@ -117,6 +116,8 @@ export const CreateInvoiceForm = () => {
       <InvoiceSettingsSidebar
         show={showSettings}
         onClose={() => setShowSettings(false)}
+        selectedContact={selectedContact}
+        onContactUpdated={handleContactSelectOnly}
       />
 
       <InvoicePreviewPopup
