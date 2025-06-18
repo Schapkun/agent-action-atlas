@@ -13,6 +13,24 @@ interface Contact {
   country?: string;
   payment_terms?: number;
   contact_number?: string;
+  contact_person?: string;
+  vat_number?: string;
+  website?: string;
+  phone?: string;
+  mobile?: string;
+  payment_method?: string;
+  iban?: string;
+  notes?: string;
+  default_discount?: number;
+  discount_type?: string;
+  products_display?: string;
+  invoice_reference?: string;
+  hide_notes_on_invoice?: boolean;
+  billing_address?: string;
+  shipping_address?: string;
+  shipping_instructions?: string;
+  shipping_method?: string;
+  reminder_email?: string;
 }
 
 export const useContactData = () => {
@@ -61,8 +79,26 @@ export const useContactData = () => {
         postal_code: client.postal_code || undefined,
         city: client.city || undefined,
         country: client.country || 'Nederland',
-        payment_terms: 30, // Default payment terms
-        contact_number: client.contact_number || undefined
+        payment_terms: client.payment_terms || 30,
+        contact_number: client.contact_number || undefined,
+        contact_person: client.contact_person || undefined,
+        vat_number: client.vat_number || undefined,
+        website: client.website || undefined,
+        phone: client.phone || undefined,
+        mobile: client.mobile || undefined,
+        payment_method: client.payment_method || 'bankoverschrijving',
+        iban: client.iban || undefined,
+        notes: client.notes || undefined,
+        default_discount: client.default_discount || 0,
+        discount_type: client.discount_type || 'percentage',
+        products_display: client.products_display || 'incl_btw',
+        invoice_reference: client.invoice_reference || undefined,
+        hide_notes_on_invoice: client.hide_notes_on_invoice || false,
+        billing_address: client.billing_address || undefined,
+        shipping_address: client.shipping_address || undefined,
+        shipping_instructions: client.shipping_instructions || undefined,
+        shipping_method: client.shipping_method || 'E-mail',
+        reminder_email: client.reminder_email || undefined
       })) || [];
 
       setContacts(formattedContacts);

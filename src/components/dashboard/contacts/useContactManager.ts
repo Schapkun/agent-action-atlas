@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -15,8 +16,24 @@ interface Contact {
   phone?: string;
   mobile?: string;
   contact_number?: string;
-  type?: string;
+  contact_person?: string;
+  vat_number?: string;
+  website?: string;
   payment_terms?: number;
+  payment_method?: string;
+  iban?: string;
+  notes?: string;
+  default_discount?: number;
+  discount_type?: string;
+  products_display?: string;
+  invoice_reference?: string;
+  hide_notes_on_invoice?: boolean;
+  billing_address?: string;
+  shipping_address?: string;
+  shipping_instructions?: string;
+  shipping_method?: string;
+  reminder_email?: string;
+  type?: string;
   is_active?: boolean;
   labels?: Array<{ id: string; name: string; color: string; }>;
 }
@@ -181,14 +198,30 @@ export const useContactManager = () => {
         city: client.city || undefined,
         country: client.country || undefined,
         phone: client.phone || undefined,
-        mobile: undefined,
+        mobile: client.mobile || undefined,
         contact_number: client.contact_number || undefined,
-        payment_terms: 30,
+        contact_person: client.contact_person || undefined,
+        vat_number: client.vat_number || undefined,
+        website: client.website || undefined,
+        payment_terms: client.payment_terms || 30,
+        payment_method: client.payment_method || 'bankoverschrijving',
+        iban: client.iban || undefined,
+        notes: client.notes || undefined,
+        default_discount: client.default_discount || 0,
+        discount_type: client.discount_type || 'percentage',
+        products_display: client.products_display || 'incl_btw',
+        invoice_reference: client.invoice_reference || undefined,
+        hide_notes_on_invoice: client.hide_notes_on_invoice || false,
+        billing_address: client.billing_address || undefined,
+        shipping_address: client.shipping_address || undefined,
+        shipping_instructions: client.shipping_instructions || undefined,
+        shipping_method: client.shipping_method || 'E-mail',
+        reminder_email: client.reminder_email || undefined,
         is_active: true,
         labels: client.contact_label_assignments?.map((assignment: any) => assignment.contact_labels).filter(Boolean) || []
       }));
 
-      console.log('🔵 useContactManager: Mapped contacts:', mappedContacts);
+      console.log('🔵 useContactManager: Mapped contacts with all fields:', mappedContacts);
       setContacts(mappedContacts);
     } catch (error) {
       console.error('Error fetching contacts:', error);
