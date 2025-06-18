@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,8 @@ import {
   Mail,
   Clock,
   MoreVertical,
-  Loader2
+  Loader2,
+  CheckCircle
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -67,7 +69,7 @@ export const InvoiceOverview = () => {
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   
-  const { invoices, loading, deleteInvoice } = useInvoices();
+  const { invoices, loading, deleteInvoice, updateInvoice } = useInvoices();
   const { toast } = useToast();
 
   const filteredInvoices = invoices.filter(invoice => {
@@ -262,6 +264,26 @@ Uw administratie`
     }
   };
 
+  const handleMarkAsPaid = async (invoice: Invoice) => {
+    try {
+      console.log('Markeren als betaald:', invoice.invoice_number);
+      
+      await updateInvoice(invoice.id, { status: 'paid' });
+      
+      toast({
+        title: "Status Bijgewerkt",
+        description: `Factuur ${invoice.invoice_number} is gemarkeerd als betaald.`
+      });
+    } catch (error) {
+      console.error('Error marking invoice as paid:', error);
+      toast({
+        title: "Fout",
+        description: "Er is een fout opgetreden bij het bijwerken van de factuurstatus.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleDelete = async (invoice: Invoice) => {
     if (confirm(`Weet je zeker dat je factuur ${invoice.invoice_number} wilt verwijderen?`)) {
       await deleteInvoice(invoice.id);
@@ -415,6 +437,15 @@ Uw administratie`
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          {invoice.status !== 'paid' && (
+                            <DropdownMenuItem
+                              onClick={() => handleMarkAsPaid(invoice)}
+                              className="flex items-center gap-2"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                              Markeer als betaald
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem
                             onClick={() => handleResend(invoice)}
                             disabled={!invoice.client_email}
