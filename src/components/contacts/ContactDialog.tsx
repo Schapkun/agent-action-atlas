@@ -28,6 +28,16 @@ interface Contact {
   contact_person?: string;
   website?: string;
   notes?: string;
+  default_discount?: number;
+  discount_type?: string;
+  products_display?: string;
+  invoice_reference?: string;
+  hide_notes_on_invoice?: boolean;
+  billing_address?: string;
+  shipping_address?: string;
+  shipping_instructions?: string;
+  shipping_method?: string;
+  reminder_email?: string;
 }
 
 interface ContactDialogProps {
@@ -58,7 +68,17 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
     iban: '',
     contact_person: '',
     website: '',
-    notes: ''
+    notes: '',
+    default_discount: 0,
+    discount_type: 'percentage',
+    products_display: 'incl_btw',
+    invoice_reference: '',
+    hide_notes_on_invoice: false,
+    billing_address: '',
+    shipping_address: '',
+    shipping_instructions: '',
+    shipping_method: 'E-mail',
+    reminder_email: ''
   });
 
   useEffect(() => {
@@ -78,7 +98,17 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
         iban: contact.iban || '',
         contact_person: contact.contact_person || '',
         website: contact.website || '',
-        notes: contact.notes || ''
+        notes: contact.notes || '',
+        default_discount: contact.default_discount || 0,
+        discount_type: contact.discount_type || 'percentage',
+        products_display: contact.products_display || 'incl_btw',
+        invoice_reference: contact.invoice_reference || '',
+        hide_notes_on_invoice: contact.hide_notes_on_invoice || false,
+        billing_address: contact.billing_address || '',
+        shipping_address: contact.shipping_address || '',
+        shipping_instructions: contact.shipping_instructions || '',
+        shipping_method: contact.shipping_method || 'E-mail',
+        reminder_email: contact.reminder_email || ''
       });
     } else {
       setFormData({
@@ -96,7 +126,17 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
         iban: '',
         contact_person: '',
         website: '',
-        notes: ''
+        notes: '',
+        default_discount: 0,
+        discount_type: 'percentage',
+        products_display: 'incl_btw',
+        invoice_reference: '',
+        hide_notes_on_invoice: false,
+        billing_address: '',
+        shipping_address: '',
+        shipping_instructions: '',
+        shipping_method: 'E-mail',
+        reminder_email: ''
       });
     }
   }, [contact]);
@@ -134,10 +174,16 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
         vat_number: formData.vat_number?.trim() || null,
         contact_person: formData.contact_person?.trim() || null,
         website: formData.website?.trim() || null,
+        payment_terms: formData.payment_terms || 30,
+        payment_method: formData.payment_method || 'bankoverschrijving',
+        iban: formData.iban?.trim() || null,
+        notes: formData.notes?.trim() || null,
         organization_id: selectedOrganization.id,
         workspace_id: selectedWorkspace?.id || null,
         updated_at: new Date().toISOString()
       };
+
+      console.log('Saving contact with data:', contactData);
 
       if (contact?.id) {
         const { data, error } = await supabase
