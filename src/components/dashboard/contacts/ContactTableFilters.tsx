@@ -4,7 +4,7 @@ import { Search, Plus, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ContactCreateDialog } from '@/components/contacts/ContactCreateDialog';
+import { ContactDialog } from '@/components/contacts/ContactDialog';
 
 interface ContactTableFiltersProps {
   searchTerm: string;
@@ -27,10 +27,11 @@ export const ContactTableFilters = ({
 }: ContactTableFiltersProps) => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  const handleContactCreated = () => {
+  const handleContactSaved = () => {
     if (onContactsUpdated) {
       onContactsUpdated();
     }
+    setIsCreateDialogOpen(false);
   };
 
   return (
@@ -84,10 +85,11 @@ export const ContactTableFilters = ({
         Context: {contextInfo}
       </div>
 
-      <ContactCreateDialog
+      <ContactDialog
         isOpen={isCreateDialogOpen}
         onClose={() => setIsCreateDialogOpen(false)}
-        onContactCreated={handleContactCreated}
+        contact={null}
+        onContactSaved={handleContactSaved}
       />
     </div>
   );
