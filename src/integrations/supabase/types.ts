@@ -9,6 +9,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_actions: {
+        Row: {
+          category: string
+          client_name: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          document_id: string | null
+          dossier_name: string | null
+          id: string
+          organization_id: string
+          status: string
+          title: string
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          category: string
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          document_id?: string | null
+          dossier_name?: string | null
+          id?: string
+          organization_id: string
+          status?: string
+          title: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          category?: string
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          document_id?: string | null
+          dossier_name?: string | null
+          id?: string
+          organization_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null
@@ -26,6 +74,7 @@ export type Database = {
           iban: string | null
           id: string
           invoice_reference: string | null
+          is_active: boolean | null
           mobile: string | null
           name: string
           notes: string | null
@@ -60,6 +109,7 @@ export type Database = {
           iban?: string | null
           id?: string
           invoice_reference?: string | null
+          is_active?: boolean | null
           mobile?: string | null
           name: string
           notes?: string | null
@@ -94,6 +144,7 @@ export type Database = {
           iban?: string | null
           id?: string
           invoice_reference?: string | null
+          is_active?: boolean | null
           mobile?: string | null
           name?: string
           notes?: string | null
@@ -320,6 +371,125 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dossiers: {
+        Row: {
+          category: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          organization_id: string
+          status: string
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          status?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          status?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dossiers_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emails: {
+        Row: {
+          client_id: string | null
+          content: string | null
+          created_at: string
+          created_by: string | null
+          dossier_id: string | null
+          from_email: string | null
+          has_attachments: boolean | null
+          id: string
+          organization_id: string
+          priority: string
+          status: string
+          subject: string
+          to_email: string | null
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          dossier_id?: string | null
+          from_email?: string | null
+          has_attachments?: boolean | null
+          id?: string
+          organization_id: string
+          priority?: string
+          status?: string
+          subject: string
+          to_email?: string | null
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          dossier_id?: string | null
+          from_email?: string | null
+          has_attachments?: boolean | null
+          id?: string
+          organization_id?: string
+          priority?: string
+          status?: string
+          subject?: string
+          to_email?: string | null
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emails_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emails_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
             referencedColumns: ["id"]
           },
         ]
@@ -679,6 +849,138 @@ export type Database = {
           users?: Json | null
         }
         Relationships: []
+      }
+      pending_tasks: {
+        Row: {
+          assigned_to: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          dossier_id: string | null
+          due_date: string | null
+          id: string
+          organization_id: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          dossier_id?: string | null
+          due_date?: string | null
+          id?: string
+          organization_id: string
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          dossier_id?: string | null
+          due_date?: string | null
+          id?: string
+          organization_id?: string
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_tasks_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      phone_calls: {
+        Row: {
+          call_type: string
+          client_id: string | null
+          contact_name: string
+          created_at: string
+          created_by: string | null
+          dossier_id: string | null
+          duration: number | null
+          id: string
+          notes: string | null
+          organization_id: string
+          phone_number: string | null
+          status: string
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          call_type?: string
+          client_id?: string | null
+          contact_name: string
+          created_at?: string
+          created_by?: string | null
+          dossier_id?: string | null
+          duration?: number | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+          phone_number?: string | null
+          status?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          call_type?: string
+          client_id?: string | null
+          contact_name?: string
+          created_at?: string
+          created_by?: string | null
+          dossier_id?: string | null
+          duration?: number | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          phone_number?: string | null
+          status?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_calls_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_calls_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

@@ -1,8 +1,8 @@
 
-import { ActionOverview } from '@/components/dashboard/ActionOverview';
+import { AiActionsManager } from '@/components/dashboard/AiActionsManager';
 
 const Actions = () => {
-  return <ActionOverview />;
+  return <AiActionsManager />;
 };
 
 export default Actions;

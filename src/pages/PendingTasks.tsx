@@ -1,8 +1,8 @@
 
-import { PendingTasks as PendingTasksComponent } from '@/components/dashboard/PendingTasks';
+import { PendingTasksManager } from '@/components/dashboard/PendingTasksManager';
 
 const PendingTasks = () => {
-  return <PendingTasksComponent />;
+  return <PendingTasksManager />;
 };
 
 export default PendingTasks;

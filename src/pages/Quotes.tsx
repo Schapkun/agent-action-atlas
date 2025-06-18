@@ -1,9 +1,8 @@
 
-import { InvoiceManager } from '@/components/dashboard/InvoiceManager';
+import { QuoteOverview } from '@/components/quotes/QuoteOverview';
 
 const Quotes = () => {
-  // Use the same InvoiceManager component but for quotes context
-  return <InvoiceManager />;
+  return <QuoteOverview />;
 };
 
 export default Quotes;

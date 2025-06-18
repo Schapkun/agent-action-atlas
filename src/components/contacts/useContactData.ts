@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -31,6 +30,7 @@ interface Contact {
   shipping_instructions?: string;
   shipping_method?: string;
   reminder_email?: string;
+  is_active?: boolean;
 }
 
 export const useContactData = () => {
@@ -98,7 +98,8 @@ export const useContactData = () => {
         shipping_address: client.shipping_address || undefined,
         shipping_instructions: client.shipping_instructions || undefined,
         shipping_method: client.shipping_method || 'E-mail',
-        reminder_email: client.reminder_email || undefined
+        reminder_email: client.reminder_email || undefined,
+        is_active: client.is_active !== false
       })) || [];
 
       setContacts(formattedContacts);

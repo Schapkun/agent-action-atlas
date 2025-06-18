@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -217,7 +216,7 @@ export const useContactManager = () => {
         shipping_instructions: client.shipping_instructions || undefined,
         shipping_method: client.shipping_method || 'E-mail',
         reminder_email: client.reminder_email || undefined,
-        is_active: true,
+        is_active: client.is_active !== false, // Add this line to handle the new field
         labels: client.contact_label_assignments?.map((assignment: any) => assignment.contact_labels).filter(Boolean) || []
       }));
 
