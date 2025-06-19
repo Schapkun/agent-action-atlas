@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { ContactSearch } from './ContactSearch';
 import { ContactDropdown } from './ContactDropdown';
-import { StandardContactCard } from './StandardContactCard';
 import { useContactData } from './useContactData';
 
 interface Contact {
@@ -86,34 +85,22 @@ export const ContactSelector = ({
   };
 
   return (
-    <div className="space-y-3">
-      {/* Search en dropdown */}
-      <div className="relative">
-        <ContactSearch
-          searchTerm={searchTerm}
-          selectedContact={selectedContact}
-          onSearchChange={handleSearchChange}
-          onFocus={handleSearchFocus}
-          onClear={handleContactClear}
-        />
-        
-        <ContactDropdown
-          isOpen={isDropdownOpen}
-          loading={loading}
-          contacts={filteredContacts}
-          onContactSelect={handleContactSelect}
-          onClose={handleDropdownClose}
-        />
-      </div>
-
-      {/* Selected contact display */}
-      {selectedContact && (
-        <StandardContactCard
-          contact={selectedContact}
-          variant="compact"
-          showActions={false}
-        />
-      )}
+    <div className="relative">
+      <ContactSearch
+        searchTerm={searchTerm}
+        selectedContact={selectedContact}
+        onSearchChange={handleSearchChange}
+        onFocus={handleSearchFocus}
+        onClear={handleContactClear}
+      />
+      
+      <ContactDropdown
+        isOpen={isDropdownOpen}
+        loading={loading}
+        contacts={filteredContacts}
+        onContactSelect={handleContactSelect}
+        onClose={handleDropdownClose}
+      />
     </div>
   );
 };

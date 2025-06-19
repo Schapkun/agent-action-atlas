@@ -102,16 +102,47 @@ export const useQuotes = () => {
 
   const generateQuoteNumber = async () => {
     try {
-      const { data, error } = await supabase.rpc('generate_quote_number', {
-        org_id: selectedOrganization?.id,
-        workspace_id: selectedWorkspace?.id
-      });
+      const currentYear = new Date().getFullYear();
+      
+      // Get all existing quote numbers for this organization this year (including drafts)
+      const { data: existingQuotes, error } = await supabase
+        .from('quotes')
+        .select('quote_number')
+        .eq('organization_id', selectedOrganization?.id)
+        .gte('created_at', `${currentYear}-01-01`)
+        .not('quote_number', 'is', null)
+        .order('quote_number', { ascending: true });
 
       if (error) throw error;
-      return data;
+
+      // Find the lowest available number starting from 1
+      let nextNumber = 1;
+      const usedNumbers = new Set<number>();
+      
+      if (existingQuotes && existingQuotes.length > 0) {
+        for (const quote of existingQuotes) {
+          if (quote.quote_number) {
+            const numberPart = quote.quote_number.split('-')[1];
+            if (numberPart && !isNaN(parseInt(numberPart))) {
+              usedNumbers.add(parseInt(numberPart));
+            }
+          }
+        }
+        
+        // Find first available number
+        while (usedNumbers.has(nextNumber)) {
+          nextNumber++;
+        }
+      }
+
+      const quoteNumber = `${currentYear}-${String(nextNumber).padStart(3, '0')}`;
+      
+      console.log('Generated quote number:', quoteNumber);
+      return quoteNumber;
     } catch (error) {
       console.error('Error generating quote number:', error);
-      const fallbackNumber = `${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+      const fallbackNumber = `${new Date().getFullYear()}-001`;
+      console.log('Using fallback quote number:', fallbackNumber);
       return fallbackNumber;
     }
   };

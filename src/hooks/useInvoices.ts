@@ -107,35 +107,37 @@ export const useInvoices = () => {
     try {
       const currentYear = new Date().getFullYear();
       
-      // Get all invoice numbers for this organization this year (excluding drafts)
+      // Get all existing invoice numbers for this organization this year (including drafts)
       const { data: existingInvoices, error } = await supabase
         .from('invoices')
         .select('invoice_number')
         .eq('organization_id', selectedOrganization?.id)
-        .neq('status', 'draft') // Exclude draft invoices from numbering
         .gte('created_at', `${currentYear}-01-01`)
-        .order('invoice_number', { ascending: false });
+        .not('invoice_number', 'is', null)
+        .order('invoice_number', { ascending: true });
 
       if (error) throw error;
 
-      let highestNumber = 0;
+      // Find the lowest available number starting from 1
+      let nextNumber = 1;
+      const usedNumbers = new Set<number>();
       
-      // Parse existing invoice numbers to find the highest number
       if (existingInvoices && existingInvoices.length > 0) {
         for (const invoice of existingInvoices) {
           if (invoice.invoice_number) {
             const numberPart = invoice.invoice_number.split('-')[1];
             if (numberPart && !isNaN(parseInt(numberPart))) {
-              const num = parseInt(numberPart);
-              if (num > highestNumber) {
-                highestNumber = num;
-              }
+              usedNumbers.add(parseInt(numberPart));
             }
           }
         }
+        
+        // Find first available number
+        while (usedNumbers.has(nextNumber)) {
+          nextNumber++;
+        }
       }
 
-      const nextNumber = highestNumber + 1;
       const invoiceNumber = `${currentYear}-${String(nextNumber).padStart(3, '0')}`;
       
       console.log('Generated invoice number:', invoiceNumber);

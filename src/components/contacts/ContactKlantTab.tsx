@@ -2,7 +2,6 @@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 
 interface ContactKlantTabProps {
   formData: any;
@@ -57,8 +56,8 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="prive">Privé</SelectItem>
-                  <SelectItem value="bedrijf">Bedrijf</SelectItem>
+                  <SelectItem value="prive">Particulier</SelectItem>
+                  <SelectItem value="bedrijf">Zakelijk</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -72,6 +71,18 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 className="text-sm h-8"
                 placeholder="Naam"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">Contactpersoon</Label>
+            <div className="col-span-2">
+              <Input
+                value={formData.contact_person}
+                onChange={(e) => handleInputChange('contact_person', e.target.value)}
+                className="text-sm h-8"
+                placeholder="Jan Janssen"
               />
             </div>
           </div>
@@ -154,7 +165,7 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
         </div>
       </div>
 
-      {/* Right column - Contact informatie */}
+      {/* Right column - Contact informatie in nieuwe volgorde */}
       <div>
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4 items-center">
@@ -170,14 +181,13 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
           </div>
 
           <div className="grid grid-cols-3 gap-4 items-center">
-            <Label className="text-sm">E-mail</Label>
+            <Label className="text-sm">Aanhef</Label>
             <div className="col-span-2">
               <Input
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
+                value={formData.salutation || ''}
+                onChange={(e) => handleInputChange('salutation', e.target.value)}
                 className="text-sm h-8"
-                placeholder="email@example.com"
+                placeholder="Geachte heer/mevrouw"
               />
             </div>
           </div>
@@ -207,13 +217,27 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
           </div>
 
           <div className="grid grid-cols-3 gap-4 items-center">
-            <Label className="text-sm">Contactpersoon</Label>
+            <Label className="text-sm">E-mail</Label>
             <div className="col-span-2">
               <Input
-                value={formData.contact_person}
-                onChange={(e) => handleInputChange('contact_person', e.target.value)}
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
                 className="text-sm h-8"
-                placeholder="Jan Janssen"
+                placeholder="email@example.com"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">E-mail factuur</Label>
+            <div className="col-span-2">
+              <Input
+                type="email"
+                value={formData.invoice_email || ''}
+                onChange={(e) => handleInputChange('invoice_email', e.target.value)}
+                className="text-sm h-8"
+                placeholder="factuur@example.com"
               />
             </div>
           </div>
@@ -227,29 +251,6 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
                 className="text-sm h-8"
                 placeholder="https://www.example.com"
               />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4 items-center">
-            <Label className="text-sm">Aanhef</Label>
-            <div className="col-span-2">
-              <Input
-                value={formData.salutation || ''}
-                onChange={(e) => handleInputChange('salutation', e.target.value)}
-                className="text-sm h-8"
-                placeholder="Geachte heer/mevrouw"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4 items-center">
-            <Label className="text-sm">Contactnaam op factuur</Label>
-            <div className="col-span-2 flex items-center gap-2">
-              <Checkbox 
-                checked={formData.contact_name_on_invoice || false}
-                onCheckedChange={(checked) => handleInputChange('contact_name_on_invoice', checked)}
-              />
-              <span className="text-sm">Ja</span>
             </div>
           </div>
         </div>
