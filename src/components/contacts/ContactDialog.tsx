@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -284,25 +283,25 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
           </button>
         </div>
 
-        {/* Tab navigation - exact 48px */}
-        <div className="bg-white border-b flex-shrink-0 h-12">
+        {/* GEFIXTE Tab navigation - exact 40px (was 48px) */}
+        <div className="bg-white border-b flex-shrink-0 h-10">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full">
-            <TabsList className="grid w-full grid-cols-3 bg-transparent h-12 border-b">
+            <TabsList className="grid w-full grid-cols-3 bg-transparent h-10 border-b p-0">
               <TabsTrigger 
                 value="klant" 
-                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none h-full text-sm"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none h-full text-sm px-3"
               >
                 Klant
               </TabsTrigger>
               <TabsTrigger 
                 value="document" 
-                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none h-full text-sm"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none h-full text-sm px-3"
               >
                 Document
               </TabsTrigger>
               <TabsTrigger 
                 value="verzending" 
-                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none h-full text-sm"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none h-full text-sm px-3"
               >
                 Verzending en betaling
               </TabsTrigger>
@@ -310,8 +309,8 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
           </Tabs>
         </div>
 
-        {/* Content area - remaining height minus header (48px) + tabs (48px) + footer (60px) = 644px */}
-        <div className="flex-1 overflow-hidden">
+        {/* Content area - herberekende hoogte (800px - 48px header - 40px tabs - 60px footer = 652px) */}
+        <div className="flex-1 overflow-hidden" style={{ height: '652px' }}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
             <TabsContent value="klant" className="mt-0 p-6 h-full overflow-y-auto">
               <ContactKlantTab formData={formData} setFormData={setFormData} />
@@ -327,8 +326,8 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
           </Tabs>
         </div>
 
-        {/* Footer - exact 60px */}
-        <div className="bg-gray-50 px-6 py-3 flex items-center justify-end gap-3 border-t flex-shrink-0 h-15">
+        {/* Footer - exact 60px met verbeterde z-index voor zichtbaarheid */}
+        <div className="bg-gray-50 px-6 py-3 flex items-center justify-end gap-3 border-t flex-shrink-0 h-15 relative z-10">
           <Button 
             type="button" 
             onClick={onClose}

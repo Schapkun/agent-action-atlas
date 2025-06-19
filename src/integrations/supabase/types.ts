@@ -843,6 +843,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          organization_number: number | null
           slug: string
           updated_at: string
           users: Json | null
@@ -851,6 +852,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          organization_number?: number | null
           slug: string
           updated_at?: string
           users?: Json | null
@@ -859,6 +861,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          organization_number?: number | null
           slug?: string
           updated_at?: string
           users?: Json | null
@@ -1333,6 +1336,7 @@ export type Database = {
           slug: string
           updated_at: string
           users: Json | null
+          workspace_number: number | null
         }
         Insert: {
           created_at?: string
@@ -1343,6 +1347,7 @@ export type Database = {
           slug: string
           updated_at?: string
           users?: Json | null
+          workspace_number?: number | null
         }
         Update: {
           created_at?: string
@@ -1353,6 +1358,7 @@ export type Database = {
           slug?: string
           updated_at?: string
           users?: Json | null
+          workspace_number?: number | null
         }
         Relationships: [
           {
@@ -1378,6 +1384,10 @@ export type Database = {
     Functions: {
       generate_contact_number: {
         Args: { org_id: string }
+        Returns: string
+      }
+      generate_hierarchical_contact_number: {
+        Args: { org_id: string; workspace_id?: string }
         Returns: string
       }
       generate_invoice_number: {

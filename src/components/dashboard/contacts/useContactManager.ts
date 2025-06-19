@@ -88,6 +88,26 @@ const saveColumnVisibility = (visibility: ColumnVisibility) => {
   }
 };
 
+// Nieuwe functie voor hiërarchische contactnummer display
+const formatContactNumberForDisplay = (contactNumber: string, selectedOrganization: any, selectedWorkspace: any): string => {
+  if (!contactNumber) return '';
+  
+  const parts = contactNumber.split('-');
+  
+  // Als er een workspace geselecteerd is, toon alleen het contact nummer (laatste deel)
+  if (selectedWorkspace && parts.length === 3) {
+    return parts[2]; // "001"
+  }
+  
+  // Als alleen organisatie geselecteerd is, toon workspace-contact formaat
+  if (selectedOrganization && !selectedWorkspace && parts.length === 3) {
+    return `${parts[1]}-${parts[2]}`; // "001-001"
+  }
+  
+  // Anders toon het volledige nummer
+  return contactNumber; // "001-001-001"
+};
+
 export const useContactManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -150,6 +170,7 @@ export const useContactManager = () => {
   const fetchContacts = async () => {
     if (!selectedOrganization) {
       console.log('🔵 useContactManager: No organization selected, skipping fetch');
+      setContacts([]);
       return;
     }
 
@@ -175,14 +196,12 @@ export const useContactManager = () => {
         .eq('organization_id', selectedOrganization.id)
         .order('contact_number', { ascending: true });
 
-      // Alleen workspace filter toepassen als er een workspace is geselecteerd
+      // GEFIXTE workspace filtering logica - toon alle contacten voor organisatie als geen workspace geselecteerd
       if (selectedWorkspace) {
         query = query.eq('workspace_id', selectedWorkspace.id);
         console.log('🔵 useContactManager: Adding workspace filter:', selectedWorkspace.id);
-      } else {
-        // Als geen workspace geselecteerd, haal dan alle contacten op (inclusief die zonder workspace)
-        console.log('🔵 useContactManager: No workspace selected, fetching all contacts');
       }
+      // Als geen workspace geselecteerd, haal alle contacten van de organisatie op (inclusief workspace contacten)
 
       const { data, error } = await query;
 
@@ -204,7 +223,7 @@ export const useContactManager = () => {
         country: client.country || undefined,
         phone: client.phone || undefined,
         mobile: client.mobile || undefined,
-        contact_number: client.contact_number || undefined,
+        contact_number: formatContactNumberForDisplay(client.contact_number, selectedOrganization, selectedWorkspace),
         contact_person: client.contact_person || undefined,
         vat_number: client.vat_number || undefined,
         website: client.website || undefined,
