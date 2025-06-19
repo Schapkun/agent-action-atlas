@@ -15,135 +15,185 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
   };
 
   return (
-    <div className="space-y-4">
-      {/* Client selection section */}
-      <div className="bg-white rounded p-3 shadow-sm">
-        <div>
-          <Label className="text-sm font-medium">Naam *</Label>
-          <Input
-            value={formData.name}
-            onChange={(e) => handleInputChange('name', e.target.value)}
-            placeholder="Bedrijfsnaam of persoonsnaam"
-            className="mt-1 h-8 text-sm"
-          />
+    <div className="grid grid-cols-2 gap-8">
+      {/* Left column - Debiteur */}
+      <div>
+        <h3 className="text-green-600 font-medium mb-4 text-sm">Debiteur</h3>
+        
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">Nummer</Label>
+            <div className="col-span-2 flex items-center gap-2">
+              <Input className="text-sm h-8" placeholder="304" />
+              <span className="text-blue-500 cursor-pointer">ℹ️</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">Type</Label>
+            <div className="col-span-2">
+              <Select defaultValue="prive">
+                <SelectTrigger className="text-sm h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="prive">Privé</SelectItem>
+                  <SelectItem value="bedrijf">Bedrijf</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">Land</Label>
+            <div className="col-span-2">
+              <Select value={formData.country} onValueChange={(value) => handleInputChange('country', value)}>
+                <SelectTrigger className="text-sm h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Nederland">Nederland</SelectItem>
+                  <SelectItem value="België">België</SelectItem>
+                  <SelectItem value="Duitsland">Duitsland</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">Naam</Label>
+            <div className="col-span-2">
+              <Input
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                className="text-sm h-8"
+                placeholder="Naam"
+              />
+            </div>
+          </div>
+        </div>
+
+        <h3 className="text-green-600 font-medium mb-4 mt-8 text-sm">Adres</h3>
+        
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">Postcode</Label>
+            <div className="col-span-2">
+              <Input
+                value={formData.postal_code}
+                onChange={(e) => handleInputChange('postal_code', e.target.value)}
+                className="text-sm h-8"
+                placeholder="1234 AB"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">Adres</Label>
+            <div className="col-span-2">
+              <Input
+                value={formData.address}
+                onChange={(e) => handleInputChange('address', e.target.value)}
+                className="text-sm h-8"
+                placeholder="Straatnaam 123"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">Extra adresregel</Label>
+            <div className="col-span-2">
+              <Input className="text-sm h-8" placeholder="" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">Plaats</Label>
+            <div className="col-span-2">
+              <Input
+                value={formData.city}
+                onChange={(e) => handleInputChange('city', e.target.value)}
+                className="text-sm h-8"
+                placeholder="Amsterdam"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Contact details section */}
-      <div className="bg-white rounded p-3 shadow-sm">
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <div>
-            <Label className="text-sm font-medium">E-mailadres</Label>
-            <Input
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              placeholder="voorbeeld@bedrijf.nl"
-              className="mt-1 h-8 text-sm"
-            />
+      {/* Right column - Contact */}
+      <div>
+        <h3 className="text-green-600 font-medium mb-4 text-sm">Contact</h3>
+        
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">Afdeling</Label>
+            <div className="col-span-2">
+              <Input className="text-sm h-8" placeholder="" />
+            </div>
           </div>
-          <div>
-            <Label className="text-sm font-medium">Contactpersoon</Label>
-            <Input
-              value={formData.contact_person}
-              onChange={(e) => handleInputChange('contact_person', e.target.value)}
-              placeholder="Jan Janssen"
-              className="mt-1 h-8 text-sm"
-            />
-          </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="text-sm font-medium">Telefoon</Label>
-            <Input
-              value={formData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              placeholder="020-1234567"
-              className="mt-1 h-8 text-sm"
-            />
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm flex items-center gap-1">
+              E-mail
+              <span className="text-blue-500 cursor-pointer">ℹ️</span>
+            </Label>
+            <div className="col-span-2">
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                className="text-sm h-8"
+                placeholder="email@example.com"
+              />
+            </div>
           </div>
-          <div>
-            <Label className="text-sm font-medium">Mobiel</Label>
-            <Input
-              value={formData.mobile}
-              onChange={(e) => handleInputChange('mobile', e.target.value)}
-              placeholder="06-12345678"
-              className="mt-1 h-8 text-sm"
-            />
-          </div>
-        </div>
-      </div>
 
-      {/* Address section */}
-      <div className="bg-white rounded p-3 shadow-sm">
-        <div className="mb-3">
-          <Label className="text-sm font-medium">Adres</Label>
-          <Textarea
-            value={formData.address}
-            onChange={(e) => handleInputChange('address', e.target.value)}
-            placeholder="Straatnaam en huisnummer"
-            className="mt-1 h-16 text-sm resize-none"
-            rows={2}
-          />
-        </div>
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">Telefoon</Label>
+            <div className="col-span-2">
+              <Input
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                className="text-sm h-8"
+                placeholder="020-1234567"
+              />
+            </div>
+          </div>
 
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <Label className="text-sm font-medium">Postcode</Label>
-            <Input
-              value={formData.postal_code}
-              onChange={(e) => handleInputChange('postal_code', e.target.value)}
-              placeholder="1234 AB"
-              className="mt-1 h-8 text-sm"
-            />
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">Mobiel</Label>
+            <div className="col-span-2">
+              <Input
+                value={formData.mobile}
+                onChange={(e) => handleInputChange('mobile', e.target.value)}
+                className="text-sm h-8"
+                placeholder="06-12345678"
+              />
+            </div>
           </div>
-          <div>
-            <Label className="text-sm font-medium">Plaats</Label>
-            <Input
-              value={formData.city}
-              onChange={(e) => handleInputChange('city', e.target.value)}
-              placeholder="Amsterdam"
-              className="mt-1 h-8 text-sm"
-            />
-          </div>
-          <div>
-            <Label className="text-sm font-medium">Land</Label>
-            <Select value={formData.country} onValueChange={(value) => handleInputChange('country', value)}>
-              <SelectTrigger className="mt-1 h-8 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Nederland">Nederland</SelectItem>
-                <SelectItem value="België">België</SelectItem>
-                <SelectItem value="Duitsland">Duitsland</SelectItem>
-                <SelectItem value="Frankrijk">Frankrijk</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
 
-      {/* Additional details section */}
-      <div className="bg-white rounded p-3 shadow-sm">
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="text-sm font-medium">BTW-nummer</Label>
-            <Input
-              value={formData.vat_number}
-              onChange={(e) => handleInputChange('vat_number', e.target.value)}
-              placeholder="NL123456789B01"
-              className="mt-1 h-8 text-sm"
-            />
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm flex items-center gap-1">
+              Aanhef
+              <span className="text-blue-500 cursor-pointer">ℹ️</span>
+            </Label>
+            <div className="col-span-2">
+              <Input
+                value={formData.contact_person}
+                onChange={(e) => handleInputChange('contact_person', e.target.value)}
+                className="text-sm h-8"
+                placeholder="Geachte heer/mevrouw"
+              />
+            </div>
           </div>
-          <div>
-            <Label className="text-sm font-medium">Website</Label>
-            <Input
-              value={formData.website}
-              onChange={(e) => handleInputChange('website', e.target.value)}
-              placeholder="https://www.bedrijf.nl"
-              className="mt-1 h-8 text-sm"
-            />
+
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">Contactnaam op factuur</Label>
+            <div className="col-span-2 flex items-center gap-2">
+              <input type="checkbox" className="rounded" />
+              <span className="text-sm">Ja</span>
+            </div>
           </div>
         </div>
       </div>

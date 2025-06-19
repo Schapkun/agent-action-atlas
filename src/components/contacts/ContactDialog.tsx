@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ContactKlantTab } from './ContactKlantTab';
 import { ContactDocumentTab } from './ContactDocumentTab';
 import { ContactShippingTab } from './ContactShippingTab';
-import { Save, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface Contact {
   id?: string;
@@ -192,8 +193,6 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
         updated_at: new Date().toISOString()
       };
 
-      console.log('Saving contact with data:', contactData);
-
       if (contact?.id) {
         const { data, error } = await supabase
           .from('clients')
@@ -242,101 +241,73 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col overflow-hidden p-0">
-        {/* Compact header like invoice */}
-        <div className="bg-white border-b px-4 py-3 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg font-medium text-green-600">
-              {contact ? 'Contact bewerken' : 'Nieuw Contact'}
-            </h2>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">📋</Button>
-            <Button variant="outline" size="sm">❌</Button>
-            <Button variant="outline" size="sm">↶</Button>
-            <Button variant="outline" size="sm">↷</Button>
-          </div>
+      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col overflow-hidden p-0">
+        {/* Blue header bar */}
+        <div className="bg-blue-500 text-white px-6 py-3 flex items-center justify-between">
+          <h2 className="text-lg font-medium">Contacten</h2>
+          <button onClick={onClose} className="text-white hover:text-gray-200">
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
-        <div className="flex-1 flex overflow-hidden">
-          {/* Main content area - compact like invoice */}
-          <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-              <TabsList className="grid w-full grid-cols-3 mb-4 bg-gray-100 h-8">
-                <TabsTrigger 
-                  value="klant" 
-                  className="data-[state=active]:bg-white data-[state=active]:text-black font-medium text-sm h-7"
-                >
-                  Klant
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="document" 
-                  className="data-[state=active]:bg-white data-[state=active]:text-black font-medium text-sm h-7"
-                >
-                  Document
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="verzending" 
-                  className="data-[state=active]:bg-white data-[state=active]:text-black font-medium text-sm h-7"
-                >
-                  Verzending en betaling
-                </TabsTrigger>
-              </TabsList>
-
-              <div className="h-[520px] overflow-y-auto">
-                <TabsContent value="klant" className="mt-0">
-                  <ContactKlantTab formData={formData} setFormData={setFormData} />
-                </TabsContent>
-
-                <TabsContent value="document" className="mt-0">
-                  <ContactDocumentTab formData={formData} setFormData={setFormData} />
-                </TabsContent>
-
-                <TabsContent value="verzending" className="mt-0">
-                  <ContactShippingTab formData={formData} setFormData={setFormData} />
-                </TabsContent>
-              </div>
-            </Tabs>
-          </div>
-
-          {/* Compact right sidebar like invoice */}
-          <div className="w-64 bg-white border-l p-4 flex flex-col">
-            <div className="flex-1">
-              {/* Contact info section */}
-              <div className="bg-blue-50 rounded p-3 mb-4">
-                <div className="text-right">
-                  <div className="text-sm font-medium">Contact</div>
-                  <div className="text-lg font-bold text-blue-600">{formData.name || 'Nieuw Contact'}</div>
-                  <div className="text-xs text-gray-500 mt-1">Status: Actief</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="space-y-2 pt-3 border-t">
-              <Button 
-                type="button" 
-                onClick={onClose}
-                variant="outline" 
-                size="sm"
-                className="w-full"
+        {/* Tab navigation */}
+        <div className="bg-white border-b">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 bg-transparent h-auto border-b">
+              <TabsTrigger 
+                value="klant" 
+                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none py-3 text-sm"
               >
-                <X className="h-3 w-3 mr-1" />
-                Annuleren
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={loading || !formData.name.trim()}
-                size="sm"
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                onClick={handleSave}
+                Klant
+              </TabsTrigger>
+              <TabsTrigger 
+                value="document" 
+                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none py-3 text-sm"
               >
-                <Save className="h-3 w-3 mr-1" />
-                {loading ? 'Opslaan...' : contact ? 'Bijwerken' : 'Opslaan'}
-              </Button>
+                Document
+              </TabsTrigger>
+              <TabsTrigger 
+                value="verzending" 
+                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none py-3 text-sm"
+              >
+                Verzending en betaling
+              </TabsTrigger>
+            </TabsList>
+
+            <div className="flex-1 overflow-y-auto">
+              <TabsContent value="klant" className="mt-0 p-6">
+                <ContactKlantTab formData={formData} setFormData={setFormData} />
+              </TabsContent>
+
+              <TabsContent value="document" className="mt-0 p-6">
+                <ContactDocumentTab formData={formData} setFormData={setFormData} />
+              </TabsContent>
+
+              <TabsContent value="verzending" className="mt-0 p-6">
+                <ContactShippingTab formData={formData} setFormData={setFormData} />
+              </TabsContent>
             </div>
-          </div>
+          </Tabs>
+        </div>
+
+        {/* Footer with buttons */}
+        <div className="bg-gray-50 px-6 py-4 flex items-center justify-end gap-3 border-t">
+          <Button 
+            type="button" 
+            onClick={onClose}
+            variant="outline"
+            className="text-sm"
+          >
+            Annuleren
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={loading || !formData.name.trim()}
+            className="bg-blue-500 hover:bg-blue-600 text-sm"
+            onClick={handleSave}
+          >
+            {loading ? 'Opslaan...' : 'Opslaan'}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
