@@ -20,6 +20,7 @@ interface Contact {
   type?: string;
   payment_terms?: number;
   is_active?: boolean;
+  contact_number?: string;
   labels?: Array<{ id: string; name: string; color: string; }>;
 }
 
@@ -59,7 +60,8 @@ export const ContactTableRow = ({
   onEditContact
 }: ContactTableRowProps) => {
   const getContactNumber = () => {
-    return contact.id.slice(-6).toUpperCase();
+    // Gebruik het contact_number veld uit de database, of fallback naar een kort ID
+    return contact.contact_number || contact.id.slice(-6).toUpperCase();
   };
 
   const handleEdit = () => {
@@ -67,6 +69,12 @@ export const ContactTableRow = ({
       onEditContact(contact);
     }
   };
+
+  console.log('🔍 ContactTableRow - contact data:', {
+    id: contact.id,
+    name: contact.name,
+    contact_number: contact.contact_number
+  });
 
   return (
     <TableRow className="border-b hover:bg-gray-50">
@@ -79,7 +87,9 @@ export const ContactTableRow = ({
       </TableCell>
       
       <TableCell className="p-2 text-xs w-16">
-        {getContactNumber()}
+        <div className="font-medium">
+          {getContactNumber()}
+        </div>
       </TableCell>
       
       <TableCell className="p-2 text-xs font-medium">
