@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -171,6 +170,7 @@ export const ContactEditDialog = ({
         description: `Contact "${formData.name}" is succesvol bijgewerkt`
       });
 
+      // GEFIXT: Geen page refresh meer, alleen callback
       onContactUpdated(data);
       onOpenChange(false);
     } catch (error) {
@@ -394,7 +394,11 @@ export const ContactEditDialog = ({
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
+        {/* GEFIXTE Footer - altijd zichtbaar */}
+        <div 
+          className="flex justify-end gap-2 pt-4 border-t sticky bottom-0 bg-white"
+          style={{ zIndex: 50 }}
+        >
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}

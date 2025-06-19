@@ -283,25 +283,31 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
           </button>
         </div>
 
-        {/* GEFIXTE Tab navigation - exact 40px (was 48px) */}
-        <div className="bg-white border-b flex-shrink-0 h-10">
+        {/* GEFIXTE Tab navigation - exact 40px met CSS overrides */}
+        <div className="bg-white border-b flex-shrink-0" style={{ height: '40px' }}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full">
-            <TabsList className="grid w-full grid-cols-3 bg-transparent h-10 border-b p-0">
+            <TabsList 
+              className="grid w-full grid-cols-3 bg-transparent border-b p-0 rounded-none"
+              style={{ height: '40px' }}
+            >
               <TabsTrigger 
                 value="klant" 
-                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none h-full text-sm px-3"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none text-sm px-3"
+                style={{ height: '40px' }}
               >
                 Klant
               </TabsTrigger>
               <TabsTrigger 
                 value="document" 
-                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none h-full text-sm px-3"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none text-sm px-3"
+                style={{ height: '40px' }}
               >
                 Document
               </TabsTrigger>
               <TabsTrigger 
                 value="verzending" 
-                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none h-full text-sm px-3"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none text-sm px-3"
+                style={{ height: '40px' }}
               >
                 Verzending en betaling
               </TabsTrigger>
@@ -326,8 +332,16 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
           </Tabs>
         </div>
 
-        {/* Footer - exact 60px met verbeterde z-index voor zichtbaarheid */}
-        <div className="bg-gray-50 px-6 py-3 flex items-center justify-end gap-3 border-t flex-shrink-0 h-15 relative z-10">
+        {/* GEFIXTE Footer - altijd zichtbaar met sticky positioning */}
+        <div 
+          className="bg-gray-50 px-6 py-3 flex items-center justify-end gap-3 border-t flex-shrink-0 sticky bottom-0"
+          style={{ 
+            height: '60px', 
+            zIndex: 50,
+            position: 'sticky',
+            bottom: 0
+          }}
+        >
           <Button 
             type="button" 
             onClick={onClose}
