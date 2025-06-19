@@ -1430,6 +1430,10 @@ export type Database = {
         Args: { workspace_id: string; user_id: string }
         Returns: boolean
       }
+      renumber_contacts_after_deletion: {
+        Args: { org_id: string; workspace_id?: string }
+        Returns: undefined
+      }
     }
     Enums: {
       user_role: "owner" | "admin" | "member"

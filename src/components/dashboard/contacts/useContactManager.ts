@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -300,12 +299,13 @@ export const useContactManager = () => {
 
       if (error) throw error;
 
-      // Remove from local state
-      setContacts(prev => prev.filter(contact => !contactIds.has(contact.id)));
+      // De database trigger zorgt automatisch voor hernummering
+      // We hoeven alleen de lokale state bij te werken en contacten opnieuw op te halen
+      await fetchContacts(); // Herlaad alle contacten om de nieuwe nummers te krijgen
       
       toast({
         title: "Contacten verwijderd",
-        description: `${contactIds.size} contact(en) succesvol verwijderd`
+        description: `${contactIds.size} contact(en) succesvol verwijderd en hernummerd`
       });
     } catch (error) {
       console.error('Error bulk deleting contacts:', error);

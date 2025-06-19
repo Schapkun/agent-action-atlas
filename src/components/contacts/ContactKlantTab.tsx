@@ -1,3 +1,4 @@
+
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,10 +31,8 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
 
   return (
     <div className="grid grid-cols-2 gap-8 h-full">
-      {/* Left column - Debiteur */}
+      {/* Left column - Gecombineerde debiteur en adres informatie */}
       <div>
-        <h3 className="text-green-600 font-medium mb-4 text-sm">Debiteur</h3>
-        
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4 items-center">
             <Label className="text-sm">Nummer</Label>
@@ -66,22 +65,6 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
           </div>
 
           <div className="grid grid-cols-3 gap-4 items-center">
-            <Label className="text-sm">Land</Label>
-            <div className="col-span-2">
-              <Select value={formData.country} onValueChange={(value) => handleInputChange('country', value)}>
-                <SelectTrigger className="text-sm h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Nederland">Nederland</SelectItem>
-                  <SelectItem value="België">België</SelectItem>
-                  <SelectItem value="Duitsland">Duitsland</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4 items-center">
             <Label className="text-sm">Naam</Label>
             <div className="col-span-2">
               <Input
@@ -93,22 +76,6 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 items-center">
-            <Label className="text-sm">BTW-nummer</Label>
-            <div className="col-span-2">
-              <Input
-                value={formData.vat_number}
-                onChange={(e) => handleInputChange('vat_number', e.target.value)}
-                className="text-sm h-8"
-                placeholder="NL123456789B01"
-              />
-            </div>
-          </div>
-        </div>
-
-        <h3 className="text-green-600 font-medium mb-4 mt-8 text-sm">Adres</h3>
-        
-        <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4 items-center">
             <Label className="text-sm">Postcode</Label>
             <div className="col-span-2">
@@ -156,13 +123,39 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
               />
             </div>
           </div>
+
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">Land</Label>
+            <div className="col-span-2">
+              <Select value={formData.country} onValueChange={(value) => handleInputChange('country', value)}>
+                <SelectTrigger className="text-sm h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Nederland">Nederland</SelectItem>
+                  <SelectItem value="België">België</SelectItem>
+                  <SelectItem value="Duitsland">Duitsland</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">BTW-nummer</Label>
+            <div className="col-span-2">
+              <Input
+                value={formData.vat_number}
+                onChange={(e) => handleInputChange('vat_number', e.target.value)}
+                className="text-sm h-8"
+                placeholder="NL123456789B01"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Right column - Contact */}
+      {/* Right column - Contact informatie */}
       <div>
-        <h3 className="text-green-600 font-medium mb-4 text-sm">Contact</h3>
-        
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4 items-center">
             <Label className="text-sm">Afdeling</Label>
