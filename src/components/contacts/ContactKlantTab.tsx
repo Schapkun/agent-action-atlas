@@ -1,4 +1,3 @@
-
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,6 +7,21 @@ interface ContactKlantTabProps {
   formData: any;
   setFormData: (data: any) => void;
 }
+
+// Helper functie om alleen het laatste deel van het contactnummer te tonen
+const formatContactNumberForDisplay = (contactNumber: string): string => {
+  if (!contactNumber) return '';
+  
+  const parts = contactNumber.split('-');
+  
+  // Als het een hiërarchisch nummer is (bijv. "001-001-002"), toon alleen het laatste deel
+  if (parts.length >= 2) {
+    return parts[parts.length - 1]; // Laatste deel (bijv. "002")
+  }
+  
+  // Anders toon het hele nummer
+  return contactNumber;
+};
 
 export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps) => {
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -25,9 +39,9 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
             <Label className="text-sm">Nummer</Label>
             <div className="col-span-2">
               <Input 
-                className="text-sm h-8" 
-                value={formData.contact_number || ''}
-                onChange={(e) => handleInputChange('contact_number', e.target.value)}
+                className="text-sm h-8 bg-gray-50" 
+                value={formatContactNumberForDisplay(formData.contact_number || '')}
+                readOnly
                 placeholder="Automatisch toegewezen"
               />
             </div>

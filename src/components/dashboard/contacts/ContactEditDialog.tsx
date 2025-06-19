@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ContactDialog } from '@/components/contacts/ContactDialog';
 
@@ -35,17 +34,21 @@ interface ContactEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   contact: Contact | null;
+  onContactUpdated?: (updatedContact: Contact) => void;
 }
 
 export const ContactEditDialog = ({
   open,
   onOpenChange,
-  contact
+  contact,
+  onContactUpdated
 }: ContactEditDialogProps) => {
-  const handleContactSaved = () => {
+  const handleContactSaved = (savedContact: Contact) => {
     onOpenChange(false);
-    // Refresh contacts or trigger update
-    window.location.reload();
+    // GEFIXT: Geen page refresh meer, alleen callback
+    if (onContactUpdated) {
+      onContactUpdated(savedContact);
+    }
   };
 
   return (

@@ -3,6 +3,21 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 
+// Helper functie om alleen het laatste deel van het contactnummer te tonen
+const formatContactNumberForDisplay = (contactNumber: string): string => {
+  if (!contactNumber) return '';
+  
+  const parts = contactNumber.split('-');
+  
+  // Als het een hiërarchisch nummer is (bijv. "001-001-002"), toon alleen het laatste deel
+  if (parts.length >= 2) {
+    return parts[parts.length - 1]; // Laatste deel (bijv. "002")
+  }
+  
+  // Anders toon het hele nummer
+  return contactNumber;
+};
+
 export const useContactNumbering = () => {
   const [nextContactNumber, setNextContactNumber] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -26,7 +41,10 @@ export const useContactNumbering = () => {
         return;
       }
 
-      setNextContactNumber(data || '001');
+      // Toon alleen het laatste deel aan de gebruiker, maar houd het volledige nummer voor opslaan
+      const fullNumber = data || '001';
+      const displayNumber = formatContactNumberForDisplay(fullNumber);
+      setNextContactNumber(fullNumber); // Volledige nummer voor database opslag
     } catch (error) {
       console.error('Error in fetchNextContactNumber:', error);
       setNextContactNumber('001');
@@ -40,7 +58,8 @@ export const useContactNumbering = () => {
   }, [selectedOrganization, selectedWorkspace]);
 
   return {
-    nextContactNumber,
+    nextContactNumber, // Volledige nummer voor database opslag
+    displayContactNumber: formatContactNumberForDisplay(nextContactNumber), // Alleen laatste deel voor display
     loading,
     refreshContactNumber: fetchNextContactNumber
   };
