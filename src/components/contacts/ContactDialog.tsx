@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -241,7 +242,7 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl h-[700px] flex flex-col p-0">
+      <DialogContent className="max-w-5xl h-[800px] flex flex-col p-0">
         {/* Simple header */}
         <div className="bg-white border-b px-6 py-2 flex items-center justify-between flex-shrink-0">
           <h2 className="text-lg font-medium">Contacten</h2>
@@ -256,25 +257,25 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
             <TabsList className="grid w-full grid-cols-3 bg-transparent h-auto border-b">
               <TabsTrigger 
                 value="klant" 
-                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none py-3 text-sm"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none py-2 text-sm"
               >
                 Klant
               </TabsTrigger>
               <TabsTrigger 
                 value="document" 
-                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none py-3 text-sm"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none py-2 text-sm"
               >
                 Document
               </TabsTrigger>
               <TabsTrigger 
                 value="verzending" 
-                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none py-3 text-sm"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none py-2 text-sm"
               >
                 Verzending en betaling
               </TabsTrigger>
             </TabsList>
 
-            <div className="flex-1 h-[540px]">
+            <div className="flex-1 h-[660px]">
               <TabsContent value="klant" className="mt-0 p-6 h-full">
                 <ContactKlantTab formData={formData} setFormData={setFormData} />
               </TabsContent>
@@ -313,3 +314,4 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
     </Dialog>
   );
 };
+
