@@ -1,7 +1,6 @@
 
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface ContactKlantTabProps {
@@ -15,7 +14,7 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
   };
 
   return (
-    <div className="grid grid-cols-2 gap-8">
+    <div className="grid grid-cols-2 gap-8 h-full">
       {/* Left column - Debiteur */}
       <div>
         <h3 className="text-green-600 font-medium mb-4 text-sm">Debiteur</h3>
@@ -23,9 +22,8 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4 items-center">
             <Label className="text-sm">Nummer</Label>
-            <div className="col-span-2 flex items-center gap-2">
+            <div className="col-span-2">
               <Input className="text-sm h-8" placeholder="304" />
-              <span className="text-blue-500 cursor-pointer">ℹ️</span>
             </div>
           </div>
 
@@ -68,6 +66,18 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 className="text-sm h-8"
                 placeholder="Naam"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">BTW-nummer</Label>
+            <div className="col-span-2">
+              <Input
+                value={formData.vat_number}
+                onChange={(e) => handleInputChange('vat_number', e.target.value)}
+                className="text-sm h-8"
+                placeholder="NL123456789B01"
               />
             </div>
           </div>
@@ -134,10 +144,7 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
           </div>
 
           <div className="grid grid-cols-3 gap-4 items-center">
-            <Label className="text-sm flex items-center gap-1">
-              E-mail
-              <span className="text-blue-500 cursor-pointer">ℹ️</span>
-            </Label>
+            <Label className="text-sm">E-mail</Label>
             <div className="col-span-2">
               <Input
                 type="email"
@@ -174,14 +181,33 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
           </div>
 
           <div className="grid grid-cols-3 gap-4 items-center">
-            <Label className="text-sm flex items-center gap-1">
-              Aanhef
-              <span className="text-blue-500 cursor-pointer">ℹ️</span>
-            </Label>
+            <Label className="text-sm">Contactpersoon</Label>
             <div className="col-span-2">
               <Input
                 value={formData.contact_person}
                 onChange={(e) => handleInputChange('contact_person', e.target.value)}
+                className="text-sm h-8"
+                placeholder="Jan Janssen"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">Website</Label>
+            <div className="col-span-2">
+              <Input
+                value={formData.website}
+                onChange={(e) => handleInputChange('website', e.target.value)}
+                className="text-sm h-8"
+                placeholder="https://www.example.com"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <Label className="text-sm">Aanhef</Label>
+            <div className="col-span-2">
+              <Input
                 className="text-sm h-8"
                 placeholder="Geachte heer/mevrouw"
               />
