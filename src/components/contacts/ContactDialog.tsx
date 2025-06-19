@@ -242,42 +242,69 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="text-lg">
-            {contact ? 'Contact bewerken' : 'Nieuw Contact'}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden p-0 bg-white">
+        {/* Blue Header */}
+        <div className="bg-blue-600 text-white p-6">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-white">
+              {contact ? 'Contact bewerken' : 'Nieuw Contact'}
+            </DialogTitle>
+          </DialogHeader>
+        </div>
 
-        <div className="flex-1 overflow-hidden">
+        {/* Content Area */}
+        <div className="flex-1 overflow-hidden p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="klant">Klant</TabsTrigger>
-              <TabsTrigger value="document">Document</TabsTrigger>
-              <TabsTrigger value="verzending">Verzending en betaling</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 mb-6 bg-gray-100">
+              <TabsTrigger 
+                value="klant" 
+                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium"
+              >
+                Klant
+              </TabsTrigger>
+              <TabsTrigger 
+                value="document" 
+                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium"
+              >
+                Document
+              </TabsTrigger>
+              <TabsTrigger 
+                value="verzending" 
+                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium"
+              >
+                Verzending en betaling
+              </TabsTrigger>
             </TabsList>
 
-            <div className="mt-4 h-[600px] overflow-y-auto">
+            <div className="h-[520px] overflow-y-auto pr-2">
               <TabsContent value="klant" className="mt-0">
-                <ContactKlantTab formData={formData} setFormData={setFormData} />
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <ContactKlantTab formData={formData} setFormData={setFormData} />
+                </div>
               </TabsContent>
 
               <TabsContent value="document" className="mt-0">
-                <ContactDocumentTab formData={formData} setFormData={setFormData} />
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <ContactDocumentTab formData={formData} setFormData={setFormData} />
+                </div>
               </TabsContent>
 
               <TabsContent value="verzending" className="mt-0">
-                <ContactShippingTab formData={formData} setFormData={setFormData} />
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <ContactShippingTab formData={formData} setFormData={setFormData} />
+                </div>
               </TabsContent>
             </div>
           </Tabs>
         </div>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
+        {/* Footer with improved styling */}
+        <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
           <Button
             variant="outline"
             onClick={onClose}
             disabled={loading}
+            className="px-6 py-2 border-gray-300 hover:bg-gray-100"
           >
             <X className="h-4 w-4 mr-2" />
             Annuleren
@@ -285,6 +312,7 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
           <Button
             onClick={handleSave}
             disabled={loading || !formData.name.trim()}
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white"
           >
             <Save className="h-4 w-4 mr-2" />
             {loading ? 'Opslaan...' : contact ? 'Bijwerken' : 'Opslaan'}
