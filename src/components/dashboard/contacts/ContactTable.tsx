@@ -17,7 +17,8 @@ export const ContactTable = () => {
     setColumnVisibility,
     isAllSelected,
     isIndeterminate,
-    bulkDeleteContacts
+    bulkDeleteContacts,
+    refreshContacts
   } = useContactManager();
 
   const [editingContact, setEditingContact] = useState(null);
@@ -55,6 +56,7 @@ export const ContactTable = () => {
 
   const handleContactsUpdated = () => {
     console.log('Contacts updated, refresh needed');
+    refreshContacts();
   };
 
   const handleFilterByLabels = (contact: any) => {
@@ -125,6 +127,7 @@ export const ContactTable = () => {
           contact={editingContact}
           open={!!editingContact}
           onOpenChange={(open) => !open && setEditingContact(null)}
+          onContactUpdated={handleContactsUpdated}
         />
       )}
     </>

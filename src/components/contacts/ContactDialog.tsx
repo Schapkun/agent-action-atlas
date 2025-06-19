@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -56,7 +57,7 @@ interface ContactDialogProps {
 export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: ContactDialogProps) => {
   const { toast } = useToast();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
-  const { nextContactNumber } = useContactNumbering();
+  const { nextContactNumber, displayContactNumber } = useContactNumbering();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('klant');
 
@@ -161,10 +162,10 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
         department: '',
         salutation: 'Geachte heer/mevrouw',
         contact_name_on_invoice: false,
-        contact_number: nextContactNumber
+        contact_number: displayContactNumber // Use display number for UI
       });
     }
-  }, [contact, nextContactNumber]);
+  }, [contact, displayContactNumber]);
 
   const handleSave = async () => {
     if (!selectedOrganization) {
@@ -218,7 +219,7 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
         department: formData.department?.trim() || null,
         salutation: formData.salutation || 'Geachte heer/mevrouw',
         contact_name_on_invoice: formData.contact_name_on_invoice || false,
-        contact_number: contact?.id ? formData.contact_number : nextContactNumber,
+        contact_number: contact?.id ? formData.contact_number : nextContactNumber, // Use full number for database
         organization_id: selectedOrganization.id,
         workspace_id: selectedWorkspace?.id || null,
         updated_at: new Date().toISOString()
