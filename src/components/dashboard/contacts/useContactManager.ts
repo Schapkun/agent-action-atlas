@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -95,6 +96,7 @@ export const useContactManager = () => {
   const [loading, setLoading] = useState(false);
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
   const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>(loadColumnVisibility);
+  const [labelFilter, setLabelFilter] = useState<Array<{ id: string; name: string; color: string; }>>([]);
 
   const { user } = useAuth();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
@@ -216,7 +218,7 @@ export const useContactManager = () => {
         shipping_instructions: client.shipping_instructions || undefined,
         shipping_method: client.shipping_method || 'E-mail',
         reminder_email: client.reminder_email || undefined,
-        is_active: client.is_active !== false, // Add this line to handle the new field
+        is_active: client.is_active !== false,
         labels: client.contact_label_assignments?.map((assignment: any) => assignment.contact_labels).filter(Boolean) || []
       }));
 
@@ -272,18 +274,34 @@ export const useContactManager = () => {
     }
   };
 
-  const filteredContacts = contacts.filter(contact =>
-    contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contact.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contact.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contact.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contact.postal_code?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const removeLabelFilter = () => {
+    setLabelFilter([]);
+  };
+
+  const refreshContacts = () => {
+    fetchContacts();
+  };
+
+  const filteredContacts = contacts.filter(contact => {
+    const matchesSearch = contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.postal_code?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesLabelFilter = labelFilter.length === 0 || 
+      (contact.labels && contact.labels.some(label => 
+        labelFilter.some(filterLabel => filterLabel.id === label.id)
+      ));
+
+    return matchesSearch && matchesLabelFilter;
+  });
 
   console.log('🔵 useContactManager: Filtered contacts:', {
     total: contacts.length,
     filtered: filteredContacts.length,
-    searchTerm
+    searchTerm,
+    labelFilter: labelFilter.length
   });
 
   const isAllSelected = filteredContacts.length > 0 && selectedContacts.size === filteredContacts.length;
@@ -302,6 +320,7 @@ export const useContactManager = () => {
     isIndeterminate,
     selectedOrganization,
     selectedWorkspace,
+    labelFilter,
     
     // Actions
     setSearchTerm,
@@ -310,7 +329,9 @@ export const useContactManager = () => {
     setColumnVisibility,
     toast,
     fetchContacts,
-    bulkDeleteContacts
+    bulkDeleteContacts,
+    removeLabelFilter,
+    refreshContacts
   };
 };
 
