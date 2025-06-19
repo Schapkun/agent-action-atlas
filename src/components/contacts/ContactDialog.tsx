@@ -1,11 +1,11 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { useContactNumbering } from '@/hooks/useContactNumbering';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ContactKlantTab } from './ContactKlantTab';
 import { ContactDocumentTab } from './ContactDocumentTab';
@@ -19,6 +19,7 @@ interface Contact {
   phone?: string;
   mobile?: string;
   address?: string;
+  address_line_2?: string;
   postal_code?: string;
   city?: string;
   country?: string;
@@ -39,6 +40,11 @@ interface Contact {
   shipping_instructions?: string;
   shipping_method?: string;
   reminder_email?: string;
+  type?: string;
+  department?: string;
+  salutation?: string;
+  contact_name_on_invoice?: boolean;
+  contact_number?: string;
 }
 
 interface ContactDialogProps {
@@ -51,6 +57,7 @@ interface ContactDialogProps {
 export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: ContactDialogProps) => {
   const { toast } = useToast();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
+  const { nextContactNumber } = useContactNumbering();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('klant');
 
@@ -60,6 +67,7 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
     phone: '',
     mobile: '',
     address: '',
+    address_line_2: '',
     postal_code: '',
     city: '',
     country: 'Nederland',
@@ -79,7 +87,12 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
     shipping_address: '',
     shipping_instructions: '',
     shipping_method: 'E-mail',
-    reminder_email: ''
+    reminder_email: '',
+    type: 'prive',
+    department: '',
+    salutation: 'Geachte heer/mevrouw',
+    contact_name_on_invoice: false,
+    contact_number: ''
   });
 
   useEffect(() => {
@@ -90,6 +103,7 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
         phone: contact.phone || '',
         mobile: contact.mobile || '',
         address: contact.address || '',
+        address_line_2: contact.address_line_2 || '',
         postal_code: contact.postal_code || '',
         city: contact.city || '',
         country: contact.country || 'Nederland',
@@ -109,7 +123,12 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
         shipping_address: contact.shipping_address || '',
         shipping_instructions: contact.shipping_instructions || '',
         shipping_method: contact.shipping_method || 'E-mail',
-        reminder_email: contact.reminder_email || ''
+        reminder_email: contact.reminder_email || '',
+        type: contact.type || 'prive',
+        department: contact.department || '',
+        salutation: contact.salutation || 'Geachte heer/mevrouw',
+        contact_name_on_invoice: contact.contact_name_on_invoice || false,
+        contact_number: contact.contact_number || ''
       });
     } else {
       setFormData({
@@ -118,6 +137,7 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
         phone: '',
         mobile: '',
         address: '',
+        address_line_2: '',
         postal_code: '',
         city: '',
         country: 'Nederland',
@@ -137,10 +157,15 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
         shipping_address: '',
         shipping_instructions: '',
         shipping_method: 'E-mail',
-        reminder_email: ''
+        reminder_email: '',
+        type: 'prive',
+        department: '',
+        salutation: 'Geachte heer/mevrouw',
+        contact_name_on_invoice: false,
+        contact_number: nextContactNumber
       });
     }
-  }, [contact]);
+  }, [contact, nextContactNumber]);
 
   const handleSave = async () => {
     if (!selectedOrganization) {
@@ -169,6 +194,7 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
         phone: formData.phone?.trim() || null,
         mobile: formData.mobile?.trim() || null,
         address: formData.address?.trim() || null,
+        address_line_2: formData.address_line_2?.trim() || null,
         postal_code: formData.postal_code?.trim() || null,
         city: formData.city?.trim() || null,
         country: formData.country || 'Nederland',
@@ -189,10 +215,17 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
         shipping_instructions: formData.shipping_instructions?.trim() || null,
         shipping_method: formData.shipping_method || 'E-mail',
         reminder_email: formData.reminder_email?.trim() || null,
+        type: formData.type || 'prive',
+        department: formData.department?.trim() || null,
+        salutation: formData.salutation || 'Geachte heer/mevrouw',
+        contact_name_on_invoice: formData.contact_name_on_invoice || false,
+        contact_number: contact?.id ? formData.contact_number : nextContactNumber,
         organization_id: selectedOrganization.id,
         workspace_id: selectedWorkspace?.id || null,
         updated_at: new Date().toISOString()
       };
+
+      console.log('💾 Saving contact with data:', contactData);
 
       if (contact?.id) {
         const { data, error } = await supabase
@@ -243,56 +276,59 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl h-[800px] flex flex-col p-0">
-        {/* Simple header */}
-        <div className="bg-white border-b px-6 py-2 flex items-center justify-between flex-shrink-0">
+        {/* Header - exact 48px */}
+        <div className="bg-white border-b px-6 py-3 flex items-center justify-between flex-shrink-0 h-12">
           <h2 className="text-lg font-medium">Contacten</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Tab navigation */}
-        <div className="bg-white border-b flex-shrink-0">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-transparent h-auto border-b">
+        {/* Tab navigation - exact 48px */}
+        <div className="bg-white border-b flex-shrink-0 h-12">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full">
+            <TabsList className="grid w-full grid-cols-3 bg-transparent h-12 border-b">
               <TabsTrigger 
                 value="klant" 
-                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none py-2 text-sm"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none h-full text-sm"
               >
                 Klant
               </TabsTrigger>
               <TabsTrigger 
                 value="document" 
-                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none py-2 text-sm"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none h-full text-sm"
               >
                 Document
               </TabsTrigger>
               <TabsTrigger 
                 value="verzending" 
-                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none py-2 text-sm"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none h-full text-sm"
               >
                 Verzending en betaling
               </TabsTrigger>
             </TabsList>
-
-            <div className="flex-1 h-[660px]">
-              <TabsContent value="klant" className="mt-0 p-6 h-full">
-                <ContactKlantTab formData={formData} setFormData={setFormData} />
-              </TabsContent>
-
-              <TabsContent value="document" className="mt-0 p-6 h-full">
-                <ContactDocumentTab formData={formData} setFormData={setFormData} />
-              </TabsContent>
-
-              <TabsContent value="verzending" className="mt-0 p-6 h-full">
-                <ContactShippingTab formData={formData} setFormData={setFormData} />
-              </TabsContent>
-            </div>
           </Tabs>
         </div>
 
-        {/* Footer with buttons */}
-        <div className="bg-gray-50 px-6 py-3 flex items-center justify-end gap-3 border-t flex-shrink-0">
+        {/* Content area - remaining height minus header (48px) + tabs (48px) + footer (60px) = 644px */}
+        <div className="flex-1 overflow-hidden">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
+            <TabsContent value="klant" className="mt-0 p-6 h-full overflow-y-auto">
+              <ContactKlantTab formData={formData} setFormData={setFormData} />
+            </TabsContent>
+
+            <TabsContent value="document" className="mt-0 p-6 h-full overflow-y-auto">
+              <ContactDocumentTab formData={formData} setFormData={setFormData} />
+            </TabsContent>
+
+            <TabsContent value="verzending" className="mt-0 p-6 h-full overflow-y-auto">
+              <ContactShippingTab formData={formData} setFormData={setFormData} />
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Footer - exact 60px */}
+        <div className="bg-gray-50 px-6 py-3 flex items-center justify-end gap-3 border-t flex-shrink-0 h-15">
           <Button 
             type="button" 
             onClick={onClose}
@@ -314,4 +350,3 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
     </Dialog>
   );
 };
-

@@ -60,14 +60,17 @@ export type Database = {
       clients: {
         Row: {
           address: string | null
+          address_line_2: string | null
           billing_address: string | null
           city: string | null
+          contact_name_on_invoice: boolean | null
           contact_number: string | null
           contact_person: string | null
           country: string | null
           created_at: string
           created_by: string | null
           default_discount: number | null
+          department: string | null
           discount_type: string | null
           email: string | null
           hide_notes_on_invoice: boolean | null
@@ -85,9 +88,11 @@ export type Database = {
           postal_code: string | null
           products_display: string | null
           reminder_email: string | null
+          salutation: string | null
           shipping_address: string | null
           shipping_instructions: string | null
           shipping_method: string | null
+          type: string | null
           updated_at: string
           vat_number: string | null
           website: string | null
@@ -95,14 +100,17 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          address_line_2?: string | null
           billing_address?: string | null
           city?: string | null
+          contact_name_on_invoice?: boolean | null
           contact_number?: string | null
           contact_person?: string | null
           country?: string | null
           created_at?: string
           created_by?: string | null
           default_discount?: number | null
+          department?: string | null
           discount_type?: string | null
           email?: string | null
           hide_notes_on_invoice?: boolean | null
@@ -120,9 +128,11 @@ export type Database = {
           postal_code?: string | null
           products_display?: string | null
           reminder_email?: string | null
+          salutation?: string | null
           shipping_address?: string | null
           shipping_instructions?: string | null
           shipping_method?: string | null
+          type?: string | null
           updated_at?: string
           vat_number?: string | null
           website?: string | null
@@ -130,14 +140,17 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          address_line_2?: string | null
           billing_address?: string | null
           city?: string | null
+          contact_name_on_invoice?: boolean | null
           contact_number?: string | null
           contact_person?: string | null
           country?: string | null
           created_at?: string
           created_by?: string | null
           default_discount?: number | null
+          department?: string | null
           discount_type?: string | null
           email?: string | null
           hide_notes_on_invoice?: boolean | null
@@ -155,9 +168,11 @@ export type Database = {
           postal_code?: string | null
           products_display?: string | null
           reminder_email?: string | null
+          salutation?: string | null
           shipping_address?: string | null
           shipping_instructions?: string | null
           shipping_method?: string | null
+          type?: string | null
           updated_at?: string
           vat_number?: string | null
           website?: string | null

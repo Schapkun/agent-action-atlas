@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -176,9 +175,13 @@ export const useContactManager = () => {
         .eq('organization_id', selectedOrganization.id)
         .order('contact_number', { ascending: true });
 
+      // Alleen workspace filter toepassen als er een workspace is geselecteerd
       if (selectedWorkspace) {
         query = query.eq('workspace_id', selectedWorkspace.id);
         console.log('🔵 useContactManager: Adding workspace filter:', selectedWorkspace.id);
+      } else {
+        // Als geen workspace geselecteerd, haal dan alle contacten op (inclusief die zonder workspace)
+        console.log('🔵 useContactManager: No workspace selected, fetching all contacts');
       }
 
       const { data, error } = await query;
@@ -189,6 +192,7 @@ export const useContactManager = () => {
       }
 
       console.log('🔵 useContactManager: Raw data from database:', data);
+      console.log('🔵 useContactManager: Found', data?.length || 0, 'contacts');
 
       const mappedContacts: Contact[] = (data || []).map(client => ({
         id: client.id,
@@ -219,10 +223,16 @@ export const useContactManager = () => {
         shipping_method: client.shipping_method || 'E-mail',
         reminder_email: client.reminder_email || undefined,
         is_active: client.is_active !== false,
+        type: client.type || 'prive',
+        department: client.department || undefined,
+        salutation: client.salutation || 'Geachte heer/mevrouw',
+        contact_name_on_invoice: client.contact_name_on_invoice || false,
+        address_line_2: client.address_line_2 || undefined,
         labels: client.contact_label_assignments?.map((assignment: any) => assignment.contact_labels).filter(Boolean) || []
       }));
 
       console.log('🔵 useContactManager: Mapped contacts with all fields:', mappedContacts);
+      console.log('🔵 useContactManager: Contact numbers found:', mappedContacts.map(c => c.contact_number));
       setContacts(mappedContacts);
     } catch (error) {
       console.error('Error fetching contacts:', error);
@@ -279,6 +289,7 @@ export const useContactManager = () => {
   };
 
   const refreshContacts = () => {
+    console.log('🔄 useContactManager: Refreshing contacts');
     fetchContacts();
   };
 

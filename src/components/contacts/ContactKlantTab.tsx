@@ -2,6 +2,7 @@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface ContactKlantTabProps {
   formData: any;
@@ -9,7 +10,7 @@ interface ContactKlantTabProps {
 }
 
 export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps) => {
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev: any) => ({ ...prev, [field]: value }));
   };
 
@@ -23,14 +24,22 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
           <div className="grid grid-cols-3 gap-4 items-center">
             <Label className="text-sm">Nummer</Label>
             <div className="col-span-2">
-              <Input className="text-sm h-8" placeholder="304" />
+              <Input 
+                className="text-sm h-8" 
+                value={formData.contact_number || ''}
+                onChange={(e) => handleInputChange('contact_number', e.target.value)}
+                placeholder="Automatisch toegewezen"
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4 items-center">
             <Label className="text-sm">Type</Label>
             <div className="col-span-2">
-              <Select defaultValue="prive">
+              <Select 
+                value={formData.type || 'prive'} 
+                onValueChange={(value) => handleInputChange('type', value)}
+              >
                 <SelectTrigger className="text-sm h-8">
                   <SelectValue />
                 </SelectTrigger>
@@ -113,7 +122,12 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
           <div className="grid grid-cols-3 gap-4 items-center">
             <Label className="text-sm">Extra adresregel</Label>
             <div className="col-span-2">
-              <Input className="text-sm h-8" placeholder="" />
+              <Input 
+                value={formData.address_line_2 || ''}
+                onChange={(e) => handleInputChange('address_line_2', e.target.value)}
+                className="text-sm h-8" 
+                placeholder="Bijvoorbeeld: 2e verdieping"
+              />
             </div>
           </div>
 
@@ -139,7 +153,12 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
           <div className="grid grid-cols-3 gap-4 items-center">
             <Label className="text-sm">Afdeling</Label>
             <div className="col-span-2">
-              <Input className="text-sm h-8" placeholder="" />
+              <Input 
+                value={formData.department || ''}
+                onChange={(e) => handleInputChange('department', e.target.value)}
+                className="text-sm h-8" 
+                placeholder="Bijvoorbeeld: Verkoop"
+              />
             </div>
           </div>
 
@@ -208,6 +227,8 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
             <Label className="text-sm">Aanhef</Label>
             <div className="col-span-2">
               <Input
+                value={formData.salutation || ''}
+                onChange={(e) => handleInputChange('salutation', e.target.value)}
                 className="text-sm h-8"
                 placeholder="Geachte heer/mevrouw"
               />
@@ -217,7 +238,10 @@ export const ContactKlantTab = ({ formData, setFormData }: ContactKlantTabProps)
           <div className="grid grid-cols-3 gap-4 items-center">
             <Label className="text-sm">Contactnaam op factuur</Label>
             <div className="col-span-2 flex items-center gap-2">
-              <input type="checkbox" className="rounded" />
+              <Checkbox 
+                checked={formData.contact_name_on_invoice || false}
+                onCheckedChange={(checked) => handleInputChange('contact_name_on_invoice', checked)}
+              />
               <span className="text-sm">Ja</span>
             </div>
           </div>

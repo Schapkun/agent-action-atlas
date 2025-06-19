@@ -2,74 +2,57 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { useToast } from '@/hooks/use-toast';
 
 export const useContactNumbering = () => {
+  const [nextContactNumber, setNextContactNumber] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const { selectedOrganization } = useOrganization();
-  const { toast } = useToast();
 
-  const generateContactNumber = async () => {
-    if (!selectedOrganization) return null;
-
-    try {
-      const { data, error } = await supabase.rpc('generate_contact_number', {
-        org_id: selectedOrganization.id
-      });
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error generating contact number:', error);
-      return null;
-    }
-  };
-
-  const resetContactNumbering = async () => {
+  const fetchNextContactNumber = async () => {
     if (!selectedOrganization) return;
 
     setLoading(true);
     try {
-      // Reset alle contact nummers vanaf 001 (3 cijfers)
-      const { data: contacts, error: fetchError } = await supabase
+      // Haal de hoogste contact_number op voor deze organisatie
+      const { data: contacts, error } = await supabase
         .from('clients')
-        .select('id')
+        .select('contact_number')
         .eq('organization_id', selectedOrganization.id)
-        .order('created_at', { ascending: true });
+        .not('contact_number', 'is', null)
+        .order('contact_number', { ascending: false })
+        .limit(1);
 
-      if (fetchError) throw fetchError;
-
-      // Update elk contact met nieuwe 3-cijfer nummering
-      for (let i = 0; i < contacts.length; i++) {
-        const contactNumber = String(i + 1).padStart(3, '0'); // 3 cijfers: 001, 002, 003
-        
-        const { error: updateError } = await supabase
-          .from('clients')
-          .update({ contact_number: contactNumber })
-          .eq('id', contacts[i].id);
-
-        if (updateError) throw updateError;
+      if (error) {
+        console.error('Error fetching contact numbers:', error);
+        setNextContactNumber('001');
+        return;
       }
 
-      toast({
-        title: "Contact nummering gereset",
-        description: `${contacts.length} contacten hernummerd vanaf 001`
-      });
+      let nextNumber = 1;
+      if (contacts && contacts.length > 0 && contacts[0].contact_number) {
+        // Extraheer het nummer uit de contact_number string
+        const currentNumber = parseInt(contacts[0].contact_number.replace(/\D/g, ''));
+        nextNumber = isNaN(currentNumber) ? 1 : currentNumber + 1;
+      }
+
+      // Format als 3-digit number met leading zeros
+      const formattedNumber = nextNumber.toString().padStart(3, '0');
+      setNextContactNumber(formattedNumber);
     } catch (error) {
-      console.error('Error resetting contact numbers:', error);
-      toast({
-        title: "Fout bij reset",
-        description: "Kon contact nummering niet resetten",
-        variant: "destructive"
-      });
+      console.error('Error in fetchNextContactNumber:', error);
+      setNextContactNumber('001');
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchNextContactNumber();
+  }, [selectedOrganization]);
+
   return {
-    generateContactNumber,
-    resetContactNumbering,
-    loading
+    nextContactNumber,
+    loading,
+    refreshContactNumber: fetchNextContactNumber
   };
 };
