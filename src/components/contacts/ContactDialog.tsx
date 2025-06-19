@@ -240,7 +240,7 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl h-[600px] flex flex-col overflow-hidden p-0">
+      <DialogContent className="max-w-5xl h-[750px] flex flex-col p-0">
         {/* Blue header bar */}
         <div className="bg-blue-500 text-white px-6 py-3 flex items-center justify-between flex-shrink-0">
           <h2 className="text-lg font-medium">Contacten</h2>
@@ -273,7 +273,7 @@ export const ContactDialog = ({ isOpen, onClose, contact, onContactSaved }: Cont
               </TabsTrigger>
             </TabsList>
 
-            <div className="flex-1 overflow-y-auto h-[400px]">
+            <div className="flex-1 h-[580px]">
               <TabsContent value="klant" className="mt-0 p-6 h-full">
                 <ContactKlantTab formData={formData} setFormData={setFormData} />
               </TabsContent>
