@@ -2,7 +2,7 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye, EyeOff, Trash2 } from 'lucide-react';
+import { Eye, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,7 +58,7 @@ export const ContactTableHeader = ({
                 }
               }
             }}
-            onCheckedChange={onSelectAll}
+            onCheckedChange={(checked) => onSelectAll(!!checked)}
             className="h-4 w-4"
           />
         </TableHead>
@@ -120,67 +120,67 @@ export const ContactTableHeader = ({
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.email}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('email', checked)}
+                  onCheckedChange={(checked) => onColumnVisibilityChange('email', !!checked)}
                 >
                   E-mail
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.address}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('address', checked)}
+                  onCheckedChange={(checked) => onColumnVisibilityChange('address', !!checked)}
                 >
                   Adres
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.phone}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('phone', checked)}
+                  onCheckedChange={(checked) => onColumnVisibilityChange('phone', !!checked)}
                 >
                   Telefoon
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.mobile}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('mobile', checked)}
+                  onCheckedChange={(checked) => onColumnVisibilityChange('mobile', !!checked)}
                 >
                   Mobiel
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.postal_code}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('postal_code', checked)}
+                  onCheckedChange={(checked) => onColumnVisibilityChange('postal_code', !!checked)}
                 >
                   Postcode
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.city}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('city', checked)}
+                  onCheckedChange={(checked) => onColumnVisibilityChange('city', !!checked)}
                 >
                   Plaats
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.country}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('country', checked)}
+                  onCheckedChange={(checked) => onColumnVisibilityChange('country', !!checked)}
                 >
                   Land
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.labels}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('labels', checked)}
+                  onCheckedChange={(checked) => onColumnVisibilityChange('labels', !!checked)}
                 >
                   Labels
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.openstaand}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('openstaand', checked)}
+                  onCheckedChange={(checked) => onColumnVisibilityChange('openstaand', !!checked)}
                 >
                   Openstaand
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.omzet}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('omzet', checked)}
+                  onCheckedChange={(checked) => onColumnVisibilityChange('omzet', !!checked)}
                 >
                   Omzet
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
                   checked={columnVisibility.actief}
-                  onCheckedChange={(checked) => onColumnVisibilityChange('actief', checked)}
+                  onCheckedChange={(checked) => onColumnVisibilityChange('actief', !!checked)}
                 >
                   Actief
                 </DropdownMenuCheckboxItem>

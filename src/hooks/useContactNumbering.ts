@@ -30,7 +30,7 @@ export const useContactNumbering = () => {
 
     setLoading(true);
     try {
-      // Reset alle contact nummers vanaf 0001
+      // Reset alle contact nummers vanaf 001 (3 cijfers)
       const { data: contacts, error: fetchError } = await supabase
         .from('clients')
         .select('id')
@@ -39,9 +39,9 @@ export const useContactNumbering = () => {
 
       if (fetchError) throw fetchError;
 
-      // Update elk contact met nieuwe nummering
+      // Update elk contact met nieuwe 3-cijfer nummering
       for (let i = 0; i < contacts.length; i++) {
-        const contactNumber = String(i + 1).padStart(4, '0');
+        const contactNumber = String(i + 1).padStart(3, '0'); // 3 cijfers: 001, 002, 003
         
         const { error: updateError } = await supabase
           .from('clients')
@@ -53,7 +53,7 @@ export const useContactNumbering = () => {
 
       toast({
         title: "Contact nummering gereset",
-        description: `${contacts.length} contacten hernummerd vanaf 0001`
+        description: `${contacts.length} contacten hernummerd vanaf 001`
       });
     } catch (error) {
       console.error('Error resetting contact numbers:', error);
