@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -24,26 +24,55 @@ export const LabelDropdown = ({
   const { labels, fetchLabels } = useDocumentTemplateLabels();
   const [isOpen, setIsOpen] = useState(false);
   const [isLabelsDialogOpen, setIsLabelsDialogOpen] = useState(false);
+  
+  // Local state to manage selections without triggering parent updates
+  const [localSelectedLabels, setLocalSelectedLabels] = useState<DocumentTemplateLabel[]>(selectedLabels);
+
+  // Reset local state when selectedLabels prop changes or popover opens
+  useEffect(() => {
+    if (isOpen) {
+      setLocalSelectedLabels(selectedLabels);
+    }
+  }, [selectedLabels, isOpen]);
 
   const handleLabelToggle = (label: DocumentTemplateLabel, checked: boolean) => {
-    console.log('[LabelDropdown] Toggling label:', label.name, 'checked:', checked);
+    console.log('[LabelDropdown] Toggling label locally:', label.name, 'checked:', checked);
     
-    let newLabels: DocumentTemplateLabel[];
+    let newLocalLabels: DocumentTemplateLabel[];
     
     if (checked) {
-      // Add label if not already selected
-      if (!selectedLabels.find(l => l.id === label.id)) {
-        newLabels = [...selectedLabels, label];
+      // Add label if not already selected locally
+      if (!localSelectedLabels.find(l => l.id === label.id)) {
+        newLocalLabels = [...localSelectedLabels, label];
       } else {
         return; // Already selected, no change
       }
     } else {
-      // Remove label
-      newLabels = selectedLabels.filter(l => l.id !== label.id);
+      // Remove label locally
+      newLocalLabels = localSelectedLabels.filter(l => l.id !== label.id);
     }
     
-    console.log('[LabelDropdown] Calling onLabelsChange with:', newLabels.map(l => l.name));
-    onLabelsChange(newLabels);
+    console.log('[LabelDropdown] Local labels updated to:', newLocalLabels.map(l => l.name));
+    setLocalSelectedLabels(newLocalLabels);
+  };
+
+  const handlePopoverOpenChange = (open: boolean) => {
+    console.log('[LabelDropdown] Popover open change:', open);
+    setIsOpen(open);
+    
+    if (!open) {
+      // Popover is closing - compare local state with original and update if different
+      const hasChanges = localSelectedLabels.length !== selectedLabels.length ||
+        localSelectedLabels.some(local => !selectedLabels.find(original => original.id === local.id)) ||
+        selectedLabels.some(original => !localSelectedLabels.find(local => local.id === original.id));
+      
+      if (hasChanges) {
+        console.log('[LabelDropdown] Changes detected, updating parent with:', localSelectedLabels.map(l => l.name));
+        onLabelsChange(localSelectedLabels);
+      } else {
+        console.log('[LabelDropdown] No changes detected');
+      }
+    }
   };
 
   const handleEditLabels = () => {
@@ -60,7 +89,7 @@ export const LabelDropdown = ({
 
   return (
     <>
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <Popover open={isOpen} onOpenChange={handlePopoverOpenChange}>
         <PopoverTrigger asChild>
           <Button
             variant="ghost" 
@@ -92,7 +121,7 @@ export const LabelDropdown = ({
             )}
             
             {labels.map((label) => {
-              const isSelected = selectedLabels.some(l => l.id === label.id);
+              const isSelected = localSelectedLabels.some(l => l.id === label.id);
               
               return (
                 <div key={label.id} className="flex items-center space-x-2">
