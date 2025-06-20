@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { DocumentTemplateWithLabels } from '@/types/documentLabels';
+import { DocumentTemplateWithTags } from '@/types/documentTags';
 import { useDocumentTemplatesFetch } from './useDocumentTemplatesFetch';
 import { useDocumentTemplatesCreate } from './useDocumentTemplatesCreate';
 import { useDocumentTemplatesUpdate } from './useDocumentTemplatesUpdate';
@@ -11,7 +11,7 @@ import { useDocumentTemplatesDelete } from './useDocumentTemplatesDelete';
 export type { DocumentTemplate } from './useDocumentTemplatesCreate';
 
 export const useDocumentTemplates = () => {
-  const [templates, setTemplates] = useState<DocumentTemplateWithLabels[]>([]);
+  const [templates, setTemplates] = useState<DocumentTemplateWithTags[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -22,7 +22,6 @@ export const useDocumentTemplates = () => {
   const { updateTemplate: updateTemplateData, setTemplateFavorite: setTemplateFavoriteData } = useDocumentTemplatesUpdate();
   const { deleteTemplate: deleteTemplateData } = useDocumentTemplatesDelete();
 
-  // Memoize the organization ID to prevent unnecessary re-fetches
   const organizationId = useMemo(() => selectedOrganization?.id, [selectedOrganization?.id]);
 
   const fetchTemplates = useCallback(async () => {
@@ -56,7 +55,7 @@ export const useDocumentTemplates = () => {
     }
   }, [organizationId, fetchTemplatesData, toast]);
 
-  const createTemplate = useCallback(async (templateData: Partial<any> & { labelIds?: string[] }) => {
+  const createTemplate = useCallback(async (templateData: Partial<any> & { tags?: string[] }) => {
     try {
       const result = await createTemplateData(templateData);
       await fetchTemplates();
@@ -67,7 +66,7 @@ export const useDocumentTemplates = () => {
     }
   }, [createTemplateData, fetchTemplates]);
 
-  const updateTemplate = useCallback(async (id: string, updates: Partial<any> & { labelIds?: string[] }) => {
+  const updateTemplate = useCallback(async (id: string, updates: Partial<any> & { tags?: string[] }) => {
     try {
       const result = await updateTemplateData(id, updates);
       await fetchTemplates();
@@ -98,7 +97,6 @@ export const useDocumentTemplates = () => {
     }
   }, [setTemplateFavoriteData, fetchTemplates]);
 
-  // Manual refresh function for external use
   const refreshTemplates = useCallback(() => {
     console.log('[useDocumentTemplates] Manual refresh requested');
     return fetchTemplates();

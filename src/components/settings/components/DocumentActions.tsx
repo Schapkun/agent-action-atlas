@@ -1,74 +1,39 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Building, BookOpen } from 'lucide-react';
-import { SimpleLabelFilter } from './SimpleLabelFilter';
-import { CompanySettingsDialog } from './CompanySettingsDialog';
-import { TemplateLibraryManager } from './TemplateLibraryManager';
-import { DocumentTemplateLabel } from '@/types/documentLabels';
+import { Plus } from 'lucide-react';
+import { SimpleTagFilter } from './SimpleTagFilter';
 
 interface DocumentActionsProps {
   onNewDocument: () => void;
-  selectedLabels: DocumentTemplateLabel[];
-  onLabelsChange: (labels: DocumentTemplateLabel[]) => void;
+  selectedTags: string[];
+  onTagsChange: (tags: string[]) => void;
   onClearFilters: () => void;
+  availableTags: string[];
 }
 
-export const DocumentActions = ({ 
+export const DocumentActions = ({
   onNewDocument,
-  selectedLabels,
-  onLabelsChange,
-  onClearFilters
+  selectedTags,
+  onTagsChange,
+  onClearFilters,
+  availableTags
 }: DocumentActionsProps) => {
-  const [isCompanyDialogOpen, setIsCompanyDialogOpen] = useState(false);
-  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
-
   return (
-    <>
-      <div className="flex flex-col gap-4">
-        {/* Action buttons */}
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={onNewDocument} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Nieuw Document Template
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            onClick={() => setIsLibraryOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <BookOpen className="h-4 w-4" />
-            Template Bibliotheek
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            onClick={() => setIsCompanyDialogOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <Building className="h-4 w-4" />
-            Bedrijfsgegevens
-          </Button>
-        </div>
-
-        {/* Simple filter section */}
-        <SimpleLabelFilter
-          selectedLabels={selectedLabels}
-          onLabelsChange={onLabelsChange}
-          onClearFilters={onClearFilters}
-        />
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <Button onClick={onNewDocument} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          Nieuw Document
+        </Button>
       </div>
 
-      <CompanySettingsDialog
-        open={isCompanyDialogOpen}
-        onClose={() => setIsCompanyDialogOpen(false)}
+      <SimpleTagFilter
+        availableTags={availableTags}
+        selectedTags={selectedTags}
+        onTagsChange={onTagsChange}
+        onClearFilters={onClearFilters}
       />
-
-      <TemplateLibraryManager
-        open={isLibraryOpen}
-        onClose={() => setIsLibraryOpen(false)}
-      />
-    </>
+    </div>
   );
 };

@@ -1,12 +1,9 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Save, ArrowLeft, AlertCircle } from 'lucide-react';
-import { LabelDropdown } from '../../components/LabelDropdown';
-import { DocumentTemplateLabel } from '@/types/documentLabels';
-import { useDocumentTemplateLabels } from '@/hooks/useDocumentTemplateLabels';
-import { useDocumentLabels } from '@/hooks/useDocumentLabels';
-import { useToast } from '@/hooks/use-toast';
+import { SimpleTagInput } from '../../components/SimpleTagInput';
 
 interface SimpleDocumentHeaderProps {
   hasUnsavedChanges: boolean;
@@ -16,8 +13,8 @@ interface SimpleDocumentHeaderProps {
   onDocumentNameChange: (name: string) => void;
   onSave: () => void;
   onClose: () => void;
-  selectedLabels: DocumentTemplateLabel[];
-  onLabelsChange: (labels: DocumentTemplateLabel[]) => void;
+  selectedTags: string[];
+  onTagsChange: (tags: string[]) => void;
 }
 
 export const SimpleDocumentHeader = ({ 
@@ -28,50 +25,11 @@ export const SimpleDocumentHeader = ({
   onDocumentNameChange,
   onSave, 
   onClose,
-  selectedLabels,
-  onLabelsChange
+  selectedTags,
+  onTagsChange
 }: SimpleDocumentHeaderProps) => {
   const isNewDocument = !documentId;
   const canSave = documentName.trim().length >= 2;
-  const { toast } = useToast();
-  
-  // Get all available labels to convert IDs back to full objects
-  const { labels: allLabels } = useDocumentTemplateLabels();
-  const { updateDocumentLabels } = useDocumentLabels();
-  
-  // Convert DocumentTemplateLabel[] to string[] for LabelDropdown
-  const selectedLabelIds = selectedLabels.map(label => label.id);
-  
-  // Handle label updates from LabelDropdown
-  const handleLabelsUpdate = async (labelIds: string[]) => {
-    console.log('[SimpleDocumentHeader] Label update requested:', labelIds);
-    
-    // Convert label IDs back to full label objects
-    const newLabels = allLabels.filter(label => labelIds.includes(label.id));
-    console.log('[SimpleDocumentHeader] New labels:', newLabels);
-    
-    // Optimistic update - update UI immediately
-    onLabelsChange(newLabels);
-    
-    // If we have a document ID, also update the database
-    if (documentId) {
-      try {
-        await updateDocumentLabels(documentId, labelIds);
-        console.log('[SimpleDocumentHeader] Database updated successfully');
-      } catch (error) {
-        console.error('[SimpleDocumentHeader] Database update failed:', error);
-        // Revert optimistic update on error
-        onLabelsChange(selectedLabels);
-        toast({
-          title: "Fout bij opslaan labels",
-          description: "Labels konden niet worden opgeslagen",
-          variant: "destructive"
-        });
-      }
-    } else {
-      console.log('[SimpleDocumentHeader] New document - labels will be saved on document save');
-    }
-  };
   
   return (
     <div className="bg-white border-b px-6 py-3 flex-shrink-0">
@@ -104,7 +62,7 @@ export const SimpleDocumentHeader = ({
           )}
         </div>
         
-        {/* Right side - Controls in one line */}
+        {/* Right side - Controls */}
         <div className="flex items-center gap-3">
           <Input
             value={documentName}
@@ -116,12 +74,14 @@ export const SimpleDocumentHeader = ({
             disabled={isSaving}
           />
           
-          <LabelDropdown
-            documentId={documentId || ''}
-            selectedLabelIds={selectedLabelIds}
-            onLabelsUpdate={handleLabelsUpdate}
-            disabled={isSaving}
-          />
+          <div className="w-64">
+            <SimpleTagInput
+              tags={selectedTags}
+              onTagsChange={onTagsChange}
+              placeholder="Tags toevoegen..."
+              disabled={isSaving}
+            />
+          </div>
           
           <Button
             variant="outline"

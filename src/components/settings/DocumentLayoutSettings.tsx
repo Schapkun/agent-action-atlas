@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -5,38 +6,41 @@ import { Loader2, AlertCircle } from 'lucide-react';
 import { SimpleHtmlDocumentBuilder } from './htmldocument/SimpleHtmlDocumentBuilder';
 import { DocumentNameDialog } from './components/DocumentNameDialog';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
-import { useDocumentTemplateLabels } from '@/hooks/useDocumentTemplateLabels';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentActions } from './components/DocumentActions';
 import { DocumentList } from './components/DocumentList';
 import { DocumentProvider } from './contexts/DocumentContext';
-import { DocumentTemplateWithLabels } from '@/types/documentLabels';
-import { DocumentTemplateLabel } from '@/types/documentLabels';
+import { DocumentTemplateWithTags } from '@/types/documentTags';
 
 const DocumentLayoutContent = () => {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
   const [editingDocumentId, setEditingDocumentId] = useState<string | undefined>(undefined);
-  const [duplicatingDocument, setDuplicatingDocument] = useState<DocumentTemplateWithLabels | null>(null);
+  const [duplicatingDocument, setDuplicatingDocument] = useState<DocumentTemplateWithTags | null>(null);
   
-  // Filter states
-  const [selectedFilterLabels, setSelectedFilterLabels] = useState<DocumentTemplateLabel[]>([]);
+  // Tag filter states
+  const [selectedFilterTags, setSelectedFilterTags] = useState<string[]>([]);
   
   const { templates, deleteTemplate, createTemplate, fetchTemplates, loading, error } = useDocumentTemplates();
-  const { labels } = useDocumentTemplateLabels();
   const { toast } = useToast();
 
-  // Filter and sort templates based on selected labels - oldest first
+  // Get all unique tags from templates
+  const availableTags = useMemo(() => {
+    const allTags = templates.flatMap(template => template.tags || []);
+    return [...new Set(allTags)].sort();
+  }, [templates]);
+
+  // Filter and sort templates based on selected tags - oldest first
   const filteredTemplates = useMemo(() => {
     return templates
       .filter(template => {
-        // Label filter - if any labels are selected, the template must have at least one of them
-        if (selectedFilterLabels.length > 0) {
-          const templateLabelIds = template.labels?.map(label => label.id) || [];
-          const hasMatchingLabel = selectedFilterLabels.some(filterLabel => 
-            templateLabelIds.includes(filterLabel.id)
+        // Tag filter - if any tags are selected, the template must have at least one of them
+        if (selectedFilterTags.length > 0) {
+          const templateTags = template.tags || [];
+          const hasMatchingTag = selectedFilterTags.some(filterTag => 
+            templateTags.includes(filterTag)
           );
-          if (!hasMatchingLabel) {
+          if (!hasMatchingTag) {
             return false;
           }
         }
@@ -47,7 +51,7 @@ const DocumentLayoutContent = () => {
         // Sort by creation date (oldest first)
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       });
-  }, [templates, selectedFilterLabels]);
+  }, [templates, selectedFilterTags]);
 
   const handleNewDocument = () => {
     console.log('[Settings] Creating new document');
@@ -55,7 +59,7 @@ const DocumentLayoutContent = () => {
     setIsBuilderOpen(true);
   };
 
-  const handleEditDocument = (document: DocumentTemplateWithLabels) => {
+  const handleEditDocument = (document: DocumentTemplateWithTags) => {
     console.log('[Settings] Opening document for editing:', document.name, document.id);
     setEditingDocumentId(document.id);
     setIsBuilderOpen(true);
@@ -76,7 +80,7 @@ const DocumentLayoutContent = () => {
     }
   };
 
-  const handleDuplicateDocument = (document: DocumentTemplateWithLabels) => {
+  const handleDuplicateDocument = (document: DocumentTemplateWithTags) => {
     setDuplicatingDocument(document);
     setIsNameDialogOpen(true);
   };
@@ -91,7 +95,7 @@ const DocumentLayoutContent = () => {
           placeholder_values: duplicatingDocument.placeholder_values,
           is_active: true,
           is_default: false,
-          labelIds: duplicatingDocument.labels?.map(label => label.id) || []
+          tags: duplicatingDocument.tags || []
         });
         
         setDuplicatingDocument(null);
@@ -110,7 +114,7 @@ const DocumentLayoutContent = () => {
     }
   };
 
-  const handleDeleteDocument = async (document: DocumentTemplateWithLabels) => {
+  const handleDeleteDocument = async (document: DocumentTemplateWithTags) => {
     try {
       await deleteTemplate(document.id);
       if (editingDocumentId === document.id) {
@@ -131,7 +135,7 @@ const DocumentLayoutContent = () => {
   };
 
   const handleClearFilters = () => {
-    setSelectedFilterLabels([]);
+    setSelectedFilterTags([]);
   };
 
   if (loading) {
@@ -168,9 +172,10 @@ const DocumentLayoutContent = () => {
 
         <DocumentActions 
           onNewDocument={handleNewDocument}
-          selectedLabels={selectedFilterLabels}
-          onLabelsChange={setSelectedFilterLabels}
+          selectedTags={selectedFilterTags}
+          onTagsChange={setSelectedFilterTags}
           onClearFilters={handleClearFilters}
+          availableTags={availableTags}
         />
 
         <div className="text-sm text-gray-600">
