@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -66,7 +65,7 @@ export const useDocumentTemplateLabels = () => {
       if (!exists) {
         console.log('[useDocumentTemplateLabels] Creating essential label:', essential.name);
         try {
-          await createLabel(essential, false); // Don't show toast for auto-created labels
+          await createLabel(essential, false);
         } catch (error) {
           console.error('[useDocumentTemplateLabels] Error creating essential label:', essential.name, error);
         }
@@ -92,7 +91,6 @@ export const useDocumentTemplateLabels = () => {
 
       if (error) throw error;
 
-      // Refresh the labels list immediately
       await fetchLabels();
       
       if (showToast) {
@@ -127,7 +125,6 @@ export const useDocumentTemplateLabels = () => {
 
       if (error) throw error;
 
-      // Refresh the labels list immediately
       await fetchLabels();
       
       toast({
@@ -149,21 +146,74 @@ export const useDocumentTemplateLabels = () => {
 
   const deleteLabel = async (id: string) => {
     try {
-      // First check if the label is being used by any templates
+      // Check ALL templates (including inactive ones) that use this label
       const { data: assignments } = await supabase
         .from('document_template_label_assignments')
-        .select('template_id')
+        .select(`
+          template_id,
+          document_templates!inner (
+            id,
+            name,
+            is_active,
+            organization_id
+          )
+        `)
         .eq('label_id', id);
 
+      console.log('[useDocumentTemplateLabels] Label assignments check:', assignments);
+
       if (assignments && assignments.length > 0) {
-        toast({
-          title: "Kan label niet verwijderen",
-          description: `Dit label wordt gebruikt door ${assignments.length} template(s) en kan niet worden verwijderd. Verwijder eerst het label van alle templates.`,
-          variant: "destructive"
-        });
-        return;
+        // Filter for assignments that belong to current organization
+        const orgAssignments = assignments.filter(assignment => 
+          (assignment as any).document_templates?.organization_id === selectedOrganization?.id
+        );
+
+        if (orgAssignments.length > 0) {
+          const activeTemplates = orgAssignments.filter(assignment => 
+            (assignment as any).document_templates?.is_active !== false
+          );
+          
+          const inactiveTemplates = orgAssignments.filter(assignment => 
+            (assignment as any).document_templates?.is_active === false
+          );
+
+          let message = `Dit label wordt gebruikt door ${orgAssignments.length} template(s)`;
+          
+          if (activeTemplates.length > 0) {
+            message += ` (${activeTemplates.length} actief`;
+            if (inactiveTemplates.length > 0) {
+              message += `, ${inactiveTemplates.length} inactief`;
+            }
+            message += ')';
+          } else if (inactiveTemplates.length > 0) {
+            message += ` (allemaal inactief)`;
+          }
+          
+          message += ' en kan niet worden verwijderd. ';
+          
+          if (inactiveTemplates.length > 0) {
+            message += 'Er zijn verborgen/inactieve templates die dit label gebruiken. ';
+          }
+          
+          message += 'Verwijder eerst het label van alle templates.';
+
+          toast({
+            title: "Kan label niet verwijderen",
+            description: message,
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // If there are assignments but none belong to current org, clean them up
+        console.log('[useDocumentTemplateLabels] Found cross-organization assignments, cleaning up...');
+        await supabase
+          .from('document_template_label_assignments')
+          .delete()
+          .eq('label_id', id);
       }
 
+      // Now delete the label
       const { error } = await supabase
         .from('document_template_labels')
         .delete()
@@ -171,7 +221,6 @@ export const useDocumentTemplateLabels = () => {
 
       if (error) throw error;
 
-      // Refresh the labels list immediately
       await fetchLabels();
       
       toast({
