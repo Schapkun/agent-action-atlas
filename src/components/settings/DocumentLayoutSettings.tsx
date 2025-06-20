@@ -24,13 +24,13 @@ const DocumentLayoutContent = () => {
   const { templates, deleteTemplate, createTemplate, fetchTemplates, loading, error } = useDocumentTemplates();
   const { toast } = useToast();
 
-  // Get all unique tags from templates
+  // Get all unique tags from templates - memoized to prevent recalculation
   const availableTags = useMemo(() => {
     const allTags = templates.flatMap(template => template.tags || []);
     return [...new Set(allTags)].sort();
   }, [templates]);
 
-  // Filter and sort templates based on selected tags - oldest first
+  // Filter and sort templates based on selected tags - memoized for performance
   const filteredTemplates = useMemo(() => {
     return templates
       .filter(template => {
@@ -54,20 +54,16 @@ const DocumentLayoutContent = () => {
   }, [templates, selectedFilterTags]);
 
   const handleNewDocument = () => {
-    console.log('[Settings] Creating new document');
     setEditingDocumentId(undefined);
     setIsBuilderOpen(true);
   };
 
   const handleEditDocument = (document: DocumentTemplateWithTags) => {
-    console.log('[Settings] Opening document for editing:', document.name, document.id);
     setEditingDocumentId(document.id);
     setIsBuilderOpen(true);
   };
 
   const handleBuilderComplete = async (success: boolean) => {
-    console.log('[Settings] Builder completed, success:', success);
-    
     setIsBuilderOpen(false);
     setEditingDocumentId(undefined);
     

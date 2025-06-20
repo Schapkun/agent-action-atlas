@@ -9,14 +9,11 @@ export const useQuoteTemplateManager = () => {
   const [availableTemplates, setAvailableTemplates] = useState<DocumentTemplateWithTags[]>([]);
 
   useEffect(() => {
-    console.log('[useQuoteTemplateManager] Processing templates for quotes');
-    
     // Filter templates that have "Offerte" tag
     const quoteTemplates = templates.filter(template => 
       template.tags?.some(tag => tag.toLowerCase() === 'offerte')
     );
     
-    console.log('[useQuoteTemplateManager] Quote templates found:', quoteTemplates.length);
     setAvailableTemplates(quoteTemplates);
     
     // Set default template (first available or default marked template)
@@ -24,7 +21,7 @@ export const useQuoteTemplateManager = () => {
     if (defaultTemplate && !selectedTemplate) {
       setSelectedTemplate(defaultTemplate);
     }
-  }, [templates, selectedTemplate]);
+  }, [templates.length]); // Only depend on length to prevent infinite loops
 
   const handleTemplateSelect = (template: DocumentTemplateWithTags | null) => {
     setSelectedTemplate(template);

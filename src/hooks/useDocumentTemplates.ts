@@ -36,10 +36,8 @@ export const useDocumentTemplates = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('[useDocumentTemplates] Fetching templates for organization:', organizationId);
       
       const templatesData = await fetchTemplatesData();
-      console.log('[useDocumentTemplates] Fetched templates:', templatesData.length);
       setTemplates(templatesData);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Kon templates niet ophalen";
@@ -102,9 +100,12 @@ export const useDocumentTemplates = () => {
     return fetchTemplates();
   }, [fetchTemplates]);
 
+  // Only fetch once when organizationId changes
   useEffect(() => {
-    fetchTemplates();
-  }, [fetchTemplates]);
+    if (organizationId) {
+      fetchTemplates();
+    }
+  }, [organizationId]); // Simplified dependency
 
   return {
     templates,
