@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,11 +27,24 @@ export const DocumentList = ({
   const { updateTemplate } = useDocumentTemplatesUpdate();
   const [libraryTemplate, setLibraryTemplate] = useState<DocumentTemplateWithLabels | null>(null);
   const [localDocuments, setLocalDocuments] = useState<DocumentTemplateWithLabels[]>(documents);
+  const [updatingDocuments, setUpdatingDocuments] = useState<Set<string>>(new Set());
 
-  // Update local state when documents prop changes
+  // Update local state when documents prop changes - but only if not currently updating
   React.useEffect(() => {
-    setLocalDocuments(documents);
-  }, [documents]);
+    console.log('[DocumentList] Documents prop changed, updating local state');
+    // Only update if we're not in the middle of updating specific documents
+    setLocalDocuments(prev => {
+      return documents.map(doc => {
+        // If we're currently updating this document, keep the local version
+        if (updatingDocuments.has(doc.id)) {
+          const localDoc = prev.find(p => p.id === doc.id);
+          console.log('[DocumentList] Keeping local version for updating document:', doc.id);
+          return localDoc || doc;
+        }
+        return doc;
+      });
+    });
+  }, [documents, updatingDocuments]);
 
   const handleShareToLibrary = (document: DocumentTemplateWithLabels) => {
     setLibraryTemplate(document);
@@ -40,8 +52,11 @@ export const DocumentList = ({
 
   const handleLabelsChange = async (documentId: string, labels: any[]) => {
     try {
-      console.log('[DocumentList] Updating labels for document:', documentId);
+      console.log('[DocumentList] Starting label update for document:', documentId);
       console.log('[DocumentList] New labels received:', labels.map((l: any) => l.name));
+      
+      // Mark this document as being updated
+      setUpdatingDocuments(prev => new Set([...prev, documentId]));
       
       // Optimistically update the local state immediately
       setLocalDocuments(prev => prev.map(doc => 
@@ -50,17 +65,31 @@ export const DocumentList = ({
           : doc
       ));
 
-      // Update the database without refreshing all templates
+      // Update the database
       await updateTemplate(documentId, {
         labelIds: labels.map((label: any) => label.id)
       });
       
       console.log('[DocumentList] Database update successful');
       
+      // Remove from updating set after a short delay to allow for state stabilization
+      setTimeout(() => {
+        setUpdatingDocuments(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(documentId);
+          return newSet;
+        });
+      }, 1000);
+      
     } catch (error) {
       console.error('[DocumentList] Error updating document labels:', error);
-      // Revert optimistic update on error
+      // Revert optimistic update on error and stop tracking as updating
       setLocalDocuments(documents);
+      setUpdatingDocuments(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(documentId);
+        return newSet;
+      });
     }
   };
 
