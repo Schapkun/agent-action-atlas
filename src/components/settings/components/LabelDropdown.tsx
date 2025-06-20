@@ -41,25 +41,14 @@ export const LabelDropdown = ({
     }
   };
 
-  const handleOpenChange = (open: boolean) => {
-    console.log('Dropdown open state changed:', open);
-    setIsOpen(open);
-  };
-
-  const handleTriggerClick = () => {
-    console.log('Trigger clicked, current state:', isOpen);
-    setIsOpen(!isOpen);
-  };
-
   return (
-    <Popover open={isOpen} onOpenChange={handleOpenChange}>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="ghost" 
           size="sm"
-          className="h-6 w-6 p-0 hover:bg-gray-100 rounded-full"
+          className="h-5 w-5 p-0 hover:bg-gray-100 rounded-full flex items-center justify-center"
           disabled={disabled}
-          onClick={handleTriggerClick}
           title="Label toevoegen"
         >
           <Plus className="h-3 w-3" />
