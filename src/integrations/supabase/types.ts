@@ -1394,7 +1394,15 @@ export type Database = {
         Args: { org_id: string; workspace_id?: string }
         Returns: string
       }
+      generate_invoice_number_with_gaps: {
+        Args: { org_id: string; workspace_id?: string }
+        Returns: string
+      }
       generate_quote_number: {
+        Args: { org_id: string; workspace_id?: string }
+        Returns: string
+      }
+      generate_quote_number_with_gaps: {
         Args: { org_id: string; workspace_id?: string }
         Returns: string
       }
@@ -1431,6 +1439,14 @@ export type Database = {
         Returns: boolean
       }
       renumber_contacts_after_deletion: {
+        Args: { org_id: string; workspace_id?: string }
+        Returns: undefined
+      }
+      renumber_invoices_after_deletion: {
+        Args: { org_id: string; workspace_id?: string }
+        Returns: undefined
+      }
+      renumber_quotes_after_deletion: {
         Args: { org_id: string; workspace_id?: string }
         Returns: undefined
       }

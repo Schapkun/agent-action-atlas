@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -105,43 +106,15 @@ export const useInvoices = () => {
 
   const generateInvoiceNumber = async () => {
     try {
-      const currentYear = new Date().getFullYear();
-      
-      // Get all existing invoice numbers for this organization this year (including drafts)
-      const { data: existingInvoices, error } = await supabase
-        .from('invoices')
-        .select('invoice_number')
-        .eq('organization_id', selectedOrganization?.id)
-        .gte('created_at', `${currentYear}-01-01`)
-        .not('invoice_number', 'is', null)
-        .order('invoice_number', { ascending: true });
+      const { data, error } = await supabase.rpc('generate_invoice_number_with_gaps', {
+        org_id: selectedOrganization?.id,
+        workspace_id: selectedWorkspace?.id || null
+      });
 
       if (error) throw error;
-
-      // Find the lowest available number starting from 1
-      let nextNumber = 1;
-      const usedNumbers = new Set<number>();
       
-      if (existingInvoices && existingInvoices.length > 0) {
-        for (const invoice of existingInvoices) {
-          if (invoice.invoice_number) {
-            const numberPart = invoice.invoice_number.split('-')[1];
-            if (numberPart && !isNaN(parseInt(numberPart))) {
-              usedNumbers.add(parseInt(numberPart));
-            }
-          }
-        }
-        
-        // Find first available number
-        while (usedNumbers.has(nextNumber)) {
-          nextNumber++;
-        }
-      }
-
-      const invoiceNumber = `${currentYear}-${String(nextNumber).padStart(3, '0')}`;
-      
-      console.log('Generated invoice number:', invoiceNumber);
-      return invoiceNumber;
+      console.log('Generated invoice number:', data);
+      return data;
     } catch (error) {
       console.error('Error generating invoice number:', error);
       const fallbackNumber = `${new Date().getFullYear()}-001`;

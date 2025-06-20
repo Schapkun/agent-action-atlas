@@ -12,7 +12,6 @@ import { useInvoices } from '@/hooks/useInvoices';
 import { useInvoiceSettings } from '@/hooks/useInvoiceSettings';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ContactSelector } from '@/components/contacts/ContactSelector';
 import { VatSelector } from '@/components/ui/vat-selector';
 
@@ -167,7 +166,7 @@ export const CreateQuoteForm = () => {
         status: 'draft' as const
       };
 
-      await createInvoice(invoiceData);
+      await createInvoice(invoiceData, 'EXPLICIT_USER_ACTION');
       navigate('/facturen/opstellen');
     } catch (error) {
       console.error('Error converting to invoice:', error);
@@ -231,7 +230,7 @@ export const CreateQuoteForm = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header identiek aan factuur */}
+      {/* Header exact hetzelfde als factuur */}
       <div className="bg-white border-b px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -293,7 +292,7 @@ export const CreateQuoteForm = () => {
         </div>
       </div>
 
-      {/* Main content identiek aan factuur layout */}
+      {/* Main content exact hetzelfde als factuur layout */}
       <div className="max-w-6xl mx-auto p-3">
         <form onSubmit={handleSubmit} className="space-y-3">
           {/* Contact selectie */}
@@ -320,12 +319,9 @@ export const CreateQuoteForm = () => {
                 <div>
                   <Label className="text-xs font-medium">Offerte</Label>
                   <div className="flex mt-1">
-                    <span className="bg-gray-100 px-2 py-1 rounded-l border text-xs h-8 flex items-center">
-                      {invoiceSettings.quote_prefix}
-                    </span>
                     <Input 
-                      className="rounded-l-none border-l-0 text-xs h-8" 
-                      value={quoteNumber.replace(invoiceSettings.quote_prefix, '')}
+                      className="text-xs h-8" 
+                      value={quoteNumber}
                       readOnly
                     />
                   </div>
@@ -352,7 +348,7 @@ export const CreateQuoteForm = () => {
             </CardContent>
           </Card>
 
-          {/* Line items table - identiek aan factuur */}
+          {/* Line items table - exact hetzelfde als factuur */}
           <Card>
             <CardHeader className="p-2">
               <div className="grid grid-cols-12 gap-3 text-xs font-medium text-gray-700">
@@ -452,7 +448,7 @@ export const CreateQuoteForm = () => {
             </CardContent>
           </Card>
 
-          {/* Totals section - identiek aan factuur */}
+          {/* Totals section - exact hetzelfde als factuur */}
           <Card className="bg-blue-50">
             <CardContent className="p-3">
               <div className="space-y-1 text-right">
