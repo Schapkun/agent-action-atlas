@@ -1,6 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { DocumentTemplateWithLabels } from '@/types/documentLabels';
+import { DocumentTemplateWithTags } from '@/types/documentTags';
 import { useDocumentTemplatesAccess } from './useDocumentTemplatesAccess';
 
 export interface DocumentTemplate {
@@ -16,14 +17,14 @@ export interface DocumentTemplate {
   created_at: string;
   updated_at: string;
   placeholder_values?: Record<string, string> | null;
-  labels?: any[]; // Add labels property to match usage
+  tags?: string[]; // Changed from labels to tags
 }
 
 export const useDocumentTemplatesCreate = () => {
   const { toast } = useToast();
   const { checkUserAccess } = useDocumentTemplatesAccess();
 
-  const createTemplate = async (templateData: Partial<DocumentTemplate> & { labelIds?: string[] }): Promise<DocumentTemplateWithLabels> => {
+  const createTemplate = async (templateData: Partial<DocumentTemplate> & { tags?: string[] }): Promise<DocumentTemplateWithTags> => {
     try {
       console.log('[useDocumentTemplatesCreate] ========= CREATE TEMPLATE START =========');
       console.log('[useDocumentTemplatesCreate] Template data received:', {
@@ -31,7 +32,7 @@ export const useDocumentTemplatesCreate = () => {
         htmlContentLength: templateData.html_content?.length,
         placeholderValuesKeys: templateData.placeholder_values ? Object.keys(templateData.placeholder_values) : [],
         hasDescription: !!templateData.description,
-        labelIds: templateData.labelIds
+        tags: templateData.tags
       });
       
       const { user, organization, workspace } = await checkUserAccess();
@@ -86,6 +87,7 @@ export const useDocumentTemplatesCreate = () => {
         is_default: templateData.is_default || false,
         is_active: true,
         placeholder_values: templateData.placeholder_values || null,
+        tags: templateData.tags || []
       };
 
       console.log('[useDocumentTemplatesCreate] Final insert data:', {
@@ -116,26 +118,14 @@ export const useDocumentTemplatesCreate = () => {
         throw new Error('Template werd aangemaakt maar er werd geen data teruggestuurd');
       }
 
-      // Assign labels if provided
-      if (templateData.labelIds && templateData.labelIds.length > 0) {
-        for (const labelId of templateData.labelIds) {
-          await supabase
-            .from('document_template_label_assignments')
-            .insert({
-              template_id: data.id,
-              label_id: labelId
-            });
-        }
-      }
-
       console.log('[useDocumentTemplatesCreate] Insert successful:', data.id);
 
-      const newTemplate: DocumentTemplateWithLabels = {
+      const newTemplate: DocumentTemplateWithTags = {
         ...data,
         placeholder_values: data.placeholder_values ? 
           (typeof data.placeholder_values === 'object' && data.placeholder_values !== null ? 
             data.placeholder_values as Record<string, string> : null) : null,
-        labels: []
+        tags: Array.isArray(data.tags) ? data.tags : []
       };
       
       toast({

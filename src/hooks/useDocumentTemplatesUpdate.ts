@@ -8,7 +8,7 @@ export const useDocumentTemplatesUpdate = () => {
   const { toast } = useToast();
   const { checkUserAccess } = useDocumentTemplatesAccess();
 
-  const updateTemplate = async (id: string, updates: Partial<DocumentTemplate> & { labelIds?: string[] }) => {
+  const updateTemplate = async (id: string, updates: Partial<DocumentTemplate> & { tags?: string[] }) => {
     try {
       console.log('[useDocumentTemplatesUpdate] Updating template:', id);
       
@@ -27,10 +27,8 @@ export const useDocumentTemplatesUpdate = () => {
         updated_at: new Date().toISOString(),
         placeholder_values: updates.placeholder_values || null,
         type: 'custom',
+        tags: updates.tags || []
       };
-
-      // Remove labelIds from update data as it's not a column
-      delete (updateData as any).labelIds;
 
       const { data, error } = await supabase
         .from('document_templates')
@@ -47,27 +45,6 @@ export const useDocumentTemplatesUpdate = () => {
 
       if (!data) {
         throw new Error('Template niet gevonden of geen toegang');
-      }
-
-      // Update labels if provided
-      if (updates.labelIds !== undefined) {
-        // First remove all existing label assignments
-        await supabase
-          .from('document_template_label_assignments')
-          .delete()
-          .eq('template_id', id);
-
-        // Then add new ones
-        if (updates.labelIds.length > 0) {
-          for (const labelId of updates.labelIds) {
-            await supabase
-              .from('document_template_label_assignments')
-              .insert({
-                template_id: id,
-                label_id: labelId
-              });
-          }
-        }
       }
 
       console.log('[useDocumentTemplatesUpdate] Template updated successfully');

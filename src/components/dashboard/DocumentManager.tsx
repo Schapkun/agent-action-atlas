@@ -26,7 +26,7 @@ interface Document {
   created_at: string;
   updated_at: string;
   created_by?: string;
-  labels?: Array<{ id: string; name: string; color: string; }>;
+  tags?: string[];
 }
 
 export const DocumentManager = () => {
@@ -46,12 +46,17 @@ export const DocumentManager = () => {
       let query = supabase
         .from('document_templates')
         .select(`
-          *,
-          labels:document_template_label_assignments(
-            label:document_template_labels(*)
-          )
+          id,
+          name,
+          description,
+          type,
+          created_at,
+          updated_at,
+          created_by,
+          tags
         `)
         .eq('organization_id', selectedOrganization.id)
+        .eq('is_active', true)
         .order('updated_at', { ascending: false });
 
       if (selectedWorkspace) {
@@ -62,10 +67,10 @@ export const DocumentManager = () => {
 
       if (error) throw error;
 
-      // Transform the data to flatten labels
+      // Transform the data to ensure tags is array
       const transformedData = (data || []).map(doc => ({
         ...doc,
-        labels: doc.labels?.map((l: any) => l.label).filter(Boolean) || []
+        tags: Array.isArray(doc.tags) ? doc.tags : []
       }));
 
       console.log('📄 Documents fetched:', transformedData.length);
@@ -192,17 +197,13 @@ export const DocumentManager = () => {
                         <Badge className={getTypeColor(document.type)}>
                           {document.type}
                         </Badge>
-                        {document.labels && document.labels.map((label) => (
+                        {document.tags && document.tags.map((tag) => (
                           <Badge
-                            key={label.id}
+                            key={tag}
                             variant="outline"
-                            style={{
-                              backgroundColor: `${label.color}20`,
-                              color: label.color,
-                              borderColor: label.color
-                            }}
+                            className="text-xs"
                           >
-                            {label.name}
+                            {tag}
                           </Badge>
                         ))}
                       </div>

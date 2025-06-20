@@ -1,13 +1,13 @@
 
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DocumentTemplateWithLabels } from '@/types/documentLabels';
+import { DocumentTemplateWithTags } from '@/types/documentTags';
 
 interface QuoteTemplateManagerProps {
-  documentTemplates: DocumentTemplateWithLabels[];
+  documentTemplates: DocumentTemplateWithTags[];
   templatesLoading: boolean;
-  selectedTemplate: DocumentTemplateWithLabels | null;
-  setSelectedTemplate: (template: DocumentTemplateWithLabels | null) => void;
+  selectedTemplate: DocumentTemplateWithTags | null;
+  setSelectedTemplate: (template: DocumentTemplateWithTags | null) => void;
 }
 
 export const QuoteTemplateManager = ({
@@ -16,9 +16,9 @@ export const QuoteTemplateManager = ({
   selectedTemplate,
   setSelectedTemplate
 }: QuoteTemplateManagerProps) => {
-  // Filter templates that have "Offerte" label - no type filtering
+  // Filter templates that have "Offerte" tag - no type filtering
   const availableTemplates = documentTemplates.filter(template => 
-    template.labels?.some(label => label.name.toLowerCase() === 'offerte')
+    template.tags?.some(tag => tag.toLowerCase() === 'offerte')
   );
 
   const handleTemplateChange = (templateId: string) => {

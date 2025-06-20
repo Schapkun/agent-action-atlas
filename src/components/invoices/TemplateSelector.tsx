@@ -3,13 +3,13 @@ import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import type { DocumentTemplate } from '@/hooks/useDocumentTemplatesCreate';
-import type { DocumentTemplateWithLabels } from '@/types/documentLabels';
+import type { DocumentTemplateWithTags } from '@/types/documentTags';
 
 interface TemplateSelectorProps {
-  selectedTemplate: DocumentTemplate | DocumentTemplateWithLabels | null;
+  selectedTemplate: DocumentTemplate | DocumentTemplateWithTags | null;
   onTemplateChange?: (template: DocumentTemplate | null) => void;
-  onTemplateSelect?: (template: DocumentTemplateWithLabels) => void;
-  availableTemplates?: DocumentTemplateWithLabels[];
+  onTemplateSelect?: (template: DocumentTemplateWithTags) => void;
+  availableTemplates?: DocumentTemplateWithTags[];
   templatesLoading?: boolean;
 }
 
@@ -31,13 +31,13 @@ export const TemplateSelector = ({
     if (template) {
       // Handle both callback types
       if (onTemplateSelect) {
-        onTemplateSelect(template as DocumentTemplateWithLabels);
+        onTemplateSelect(template as DocumentTemplateWithTags);
       }
       if (onTemplateChange) {
         // Create a compatible DocumentTemplate object
         const compatibleTemplate: DocumentTemplate = {
           ...template,
-          labels: template.labels || [] // Ensure labels property exists
+          tags: template.tags || [] // Use tags instead of labels
         };
         onTemplateChange(compatibleTemplate);
       }

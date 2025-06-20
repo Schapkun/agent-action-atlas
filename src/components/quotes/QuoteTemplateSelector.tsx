@@ -1,13 +1,13 @@
 
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DocumentTemplateWithLabels } from '@/types/documentLabels';
+import { DocumentTemplateWithTags } from '@/types/documentTags';
 
 interface QuoteTemplateSelectorProps {
-  selectedTemplate: DocumentTemplateWithLabels | null;
-  availableTemplates: DocumentTemplateWithLabels[];
+  selectedTemplate: DocumentTemplateWithTags | null;
+  availableTemplates: DocumentTemplateWithTags[];
   templatesLoading: boolean;
-  onTemplateSelect: (template: DocumentTemplateWithLabels | null) => void;
+  onTemplateSelect: (template: DocumentTemplateWithTags | null) => void;
 }
 
 export const QuoteTemplateSelector = ({

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { SimpleDocumentHeader } from './components/SimpleDocumentHeader';
@@ -7,7 +8,6 @@ import { A4Preview } from './components/A4Preview';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { DocumentTemplateLabel } from '@/types/documentLabels';
 
 interface SimpleHtmlDocumentBuilderProps {
   documentId?: string;
@@ -118,7 +118,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
   const [documentName, setDocumentName] = useState('Nieuw Document');
   const [htmlContent, setHtmlContent] = useState(DEFAULT_HTML);
   const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>(DEFAULT_PLACEHOLDERS);
-  const [selectedLabels, setSelectedLabels] = useState<DocumentTemplateLabel[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -231,7 +231,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
             ...DEFAULT_PLACEHOLDERS,
             ...(template.placeholder_values || {})
           });
-          setSelectedLabels(template.labels || []);
+          setSelectedTags(template.tags || []);
           setHasUnsavedChanges(false);
           setError(null);
         } else {
@@ -368,7 +368,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
         description: documentId ? undefined : 'Nieuw document template',
         is_default: false,
         is_active: true,
-        labelIds: selectedLabels.map(label => label.id)
+        tags: selectedTags
       };
       
       console.log('[DocumentBuilder] Saving template data:', {
@@ -376,7 +376,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
         name: templateData.name,
         htmlContentLength: templateData.html_content.length,
         placeholderValuesKeys: Object.keys(templateData.placeholder_values || {}),
-        labelIds: templateData.labelIds
+        tags: templateData.tags
       });
       
       let result;
@@ -422,7 +422,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
       setIsSaving(false);
       console.log('[DocumentBuilder] === SAVE END ===');
     }
-  }, [documentName, htmlContent, placeholderValues, selectedLabels, documentId, checkAccess, templates, updateTemplate, createTemplate, toast, onComplete]);
+  }, [documentName, htmlContent, placeholderValues, selectedTags, documentId, checkAccess, templates, updateTemplate, createTemplate, toast, onComplete]);
 
   const handleCancel = useCallback(() => {
     console.log('[DocumentBuilder] Cancel requested, hasUnsavedChanges:', hasUnsavedChanges);
@@ -478,8 +478,8 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
         onDocumentNameChange={setDocumentName}
         onSave={handleSave}
         onClose={handleCancel}
-        selectedLabels={selectedLabels}
-        onLabelsChange={setSelectedLabels}
+        selectedTags={selectedTags}
+        onTagsChange={setSelectedTags}
       />
 
       {error && (
