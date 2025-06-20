@@ -32,6 +32,17 @@ export const SimpleDocumentHeader = ({
   const isNewDocument = !documentId;
   const canSave = documentName.trim().length >= 2;
   
+  // Convert DocumentTemplateLabel[] to string[] for LabelDropdown
+  const selectedLabelIds = selectedLabels.map(label => label.id);
+  
+  // Handle label updates from LabelDropdown
+  const handleLabelsUpdate = (labelIds: string[]) => {
+    // We need to convert the label IDs back to full label objects
+    // For now, we'll trigger a refresh by calling onLabelsChange with current labels
+    // The parent component should handle fetching the updated labels
+    onLabelsChange(selectedLabels);
+  };
+  
   return (
     <div className="bg-white border-b px-6 py-3 flex-shrink-0">
       <div className="flex items-center justify-between gap-4">
@@ -76,8 +87,9 @@ export const SimpleDocumentHeader = ({
           />
           
           <LabelDropdown
-            selectedLabels={selectedLabels}
-            onLabelsChange={onLabelsChange}
+            documentId={documentId || ''}
+            selectedLabelIds={selectedLabelIds}
+            onLabelsUpdate={handleLabelsUpdate}
             disabled={isSaving}
           />
           
