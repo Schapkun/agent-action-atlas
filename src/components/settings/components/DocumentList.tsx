@@ -27,40 +27,25 @@ export const DocumentList = ({
 }: DocumentListProps) => {
   const { updateTemplate } = useDocumentTemplates();
   const [libraryTemplate, setLibraryTemplate] = useState<DocumentTemplateWithLabels | null>(null);
-  const [updatingLabels, setUpdatingLabels] = useState<string | null>(null);
 
   const handleShareToLibrary = (document: DocumentTemplateWithLabels) => {
     setLibraryTemplate(document);
   };
 
   const handleLabelsChange = async (documentId: string, labels: any[]) => {
-    if (updatingLabels === documentId) {
-      console.log('[DocumentList] Already updating labels for this document, skipping');
-      return;
-    }
-
     try {
-      setUpdatingLabels(documentId);
       console.log('[DocumentList] Updating labels for document:', documentId);
       console.log('[DocumentList] New labels:', labels.map((l: any) => l.name));
       
-      // Update the database
       await updateTemplate(documentId, {
         labelIds: labels.map((label: any) => label.id)
       });
       
       console.log('[DocumentList] Database update successful, triggering refresh');
-      
-      // Small delay to ensure database has updated
-      setTimeout(() => {
-        onLabelUpdate(documentId);
-        setUpdatingLabels(null);
-      }, 100);
+      onLabelUpdate(documentId);
       
     } catch (error) {
       console.error('[DocumentList] Error updating document labels:', error);
-      setUpdatingLabels(null);
-      // Don't throw here to prevent UI from breaking - the parent handles error display
     }
   };
 
@@ -72,7 +57,7 @@ export const DocumentList = ({
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  {/* Title row with labels and + button */}
+                  {/* Title row with plus button on the left, then labels */}
                   <div className="flex items-center gap-3 mb-2">
                     <div className="flex items-center gap-2">
                       <h3 className="font-medium text-lg truncate">{document.name}</h3>
@@ -81,23 +66,25 @@ export const DocumentList = ({
                       )}
                     </div>
                     
-                    {/* Labels display with + button */}
-                    <div className="flex items-center gap-1">
-                      {document.labels?.map((label) => (
-                        <Badge
-                          key={label.id}
-                          style={{ backgroundColor: label.color, color: 'white' }}
-                          className="text-xs"
-                        >
-                          {label.name}
-                        </Badge>
-                      ))}
-                      
+                    {/* Plus button BEFORE labels */}
+                    <div className="flex items-center gap-2">
                       <LabelDropdown
                         selectedLabels={document.labels || []}
                         onLabelsChange={(labels) => handleLabelsChange(document.id, labels)}
-                        disabled={updatingLabels === document.id}
                       />
+                      
+                      {/* Labels display AFTER plus button */}
+                      <div className="flex items-center gap-1">
+                        {document.labels?.map((label) => (
+                          <Badge
+                            key={label.id}
+                            style={{ backgroundColor: label.color, color: 'white' }}
+                            className="text-xs"
+                          >
+                            {label.name}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                   </div>
                   
