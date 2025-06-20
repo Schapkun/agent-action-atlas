@@ -6,6 +6,7 @@ import { useInvoices } from './useInvoices';
 import { useInvoiceSettings } from './useInvoiceSettings';
 import { useToast } from './use-toast';
 import { format } from 'date-fns';
+import { LineItem } from '@/types/invoiceTypes';
 
 interface QuoteFormData {
   client_name: string;
@@ -18,14 +19,6 @@ interface QuoteFormData {
   valid_until: string;
   notes: string;
   vat_percentage: number;
-}
-
-interface LineItem {
-  description: string;
-  quantity: number;
-  unit_price: number;
-  vat_rate: number;
-  line_total: number;
 }
 
 interface Contact {
@@ -67,7 +60,14 @@ export const useQuoteFormHandlers = () => {
   });
 
   const [lineItems, setLineItems] = useState<LineItem[]>([
-    { description: '', quantity: 1, unit_price: 0, vat_rate: 21, line_total: 0 }
+    { 
+      id: crypto.randomUUID(),
+      description: '', 
+      quantity: 1, 
+      unit_price: 0, 
+      vat_rate: 21, 
+      line_total: 0 
+    }
   ]);
 
   // Generate quote number on load
@@ -117,6 +117,7 @@ export const useQuoteFormHandlers = () => {
 
   const addLineItem = () => {
     setLineItems([...lineItems, { 
+      id: crypto.randomUUID(),
       description: '', 
       quantity: 1, 
       unit_price: 0, 
