@@ -1,8 +1,10 @@
+
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { SimpleHtmlDocumentBuilder } from './htmldocument/SimpleHtmlDocumentBuilder';
 import { DocumentNameDialog } from './components/DocumentNameDialog';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
+import { useDocumentTemplateLabels } from '@/hooks/useDocumentTemplateLabels';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentActions } from './components/DocumentActions';
 import { DocumentList } from './components/DocumentList';
@@ -20,6 +22,7 @@ const DocumentLayoutContent = () => {
   const [selectedFilterLabels, setSelectedFilterLabels] = useState<DocumentTemplateLabel[]>([]);
   
   const { templates, deleteTemplate, createTemplate, fetchTemplates } = useDocumentTemplates();
+  const { labels } = useDocumentTemplateLabels();
   const { toast } = useToast();
 
   // Filter and sort templates based on selected labels - oldest first
@@ -44,6 +47,12 @@ const DocumentLayoutContent = () => {
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       });
   }, [templates, selectedFilterLabels]);
+
+  // Watch for label changes and refresh templates when labels change
+  React.useEffect(() => {
+    console.log('[DocumentLayoutSettings] Labels changed, refreshing templates...');
+    fetchTemplates();
+  }, [labels, fetchTemplates]);
 
   const handleNewDocument = () => {
     console.log('[Settings] Creating new document');
