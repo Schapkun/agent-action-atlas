@@ -8,7 +8,7 @@ import { Edit, Copy, Trash2, Star, Share, BookOpen } from 'lucide-react';
 import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 import { LabelDropdown } from './LabelDropdown';
 import { TemplateLibraryManager } from './TemplateLibraryManager';
-import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
+import { useDocumentTemplatesUpdate } from '@/hooks/useDocumentTemplatesUpdate';
 
 interface DocumentListProps {
   documents: DocumentTemplateWithLabels[];
@@ -25,8 +25,14 @@ export const DocumentList = ({
   onDeleteDocument,
   onLabelUpdate
 }: DocumentListProps) => {
-  const { updateTemplate } = useDocumentTemplates();
+  const { updateTemplate } = useDocumentTemplatesUpdate();
   const [libraryTemplate, setLibraryTemplate] = useState<DocumentTemplateWithLabels | null>(null);
+  const [localDocuments, setLocalDocuments] = useState<DocumentTemplateWithLabels[]>(documents);
+
+  // Update local state when documents prop changes
+  React.useEffect(() => {
+    setLocalDocuments(documents);
+  }, [documents]);
 
   const handleShareToLibrary = (document: DocumentTemplateWithLabels) => {
     setLibraryTemplate(document);
@@ -37,6 +43,14 @@ export const DocumentList = ({
       console.log('[DocumentList] Updating labels for document:', documentId);
       console.log('[DocumentList] New labels:', labels.map((l: any) => l.name));
       
+      // Optimistically update the local state immediately
+      setLocalDocuments(prev => prev.map(doc => 
+        doc.id === documentId 
+          ? { ...doc, labels: labels }
+          : doc
+      ));
+
+      // Update the database without refreshing all templates
       await updateTemplate(documentId, {
         labelIds: labels.map((label: any) => label.id)
       });
@@ -45,33 +59,35 @@ export const DocumentList = ({
       
     } catch (error) {
       console.error('[DocumentList] Error updating document labels:', error);
+      // Revert optimistic update on error
+      setLocalDocuments(documents);
     }
   };
 
   return (
     <>
       <div className="space-y-4">
-        {documents.map((document) => (
+        {localDocuments.map((document) => (
           <Card key={document.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  {/* Title row with plus button on the left, then labels */}
+                  {/* Correct order: Title, Plus button, Labels */}
                   <div className="flex items-center gap-3 mb-2">
                     <div className="flex items-center gap-2">
-                      {/* Plus button FIRST - on the left */}
-                      <LabelDropdown
-                        selectedLabels={document.labels || []}
-                        onLabelsChange={(labels) => handleLabelsChange(document.id, labels)}
-                      />
-                      
                       <h3 className="font-medium text-lg truncate">{document.name}</h3>
                       {document.is_default && (
                         <Star className="h-4 w-4 text-yellow-500 fill-current" />
                       )}
+                      
+                      {/* Plus button AFTER title */}
+                      <LabelDropdown
+                        selectedLabels={document.labels || []}
+                        onLabelsChange={(labels) => handleLabelsChange(document.id, labels)}
+                      />
                     </div>
                     
-                    {/* Labels display AFTER title */}
+                    {/* Labels display AFTER plus button */}
                     <div className="flex items-center gap-1">
                       {document.labels?.map((label) => (
                         <Badge
@@ -96,7 +112,7 @@ export const DocumentList = ({
                   </div>
                 </div>
                 
-                {/* Action buttons - right aligned with title */}
+                {/* Action buttons - right aligned */}
                 <div className="flex items-center gap-1 ml-4">
                   <Button
                     variant="ghost"
@@ -161,7 +177,7 @@ export const DocumentList = ({
           </Card>
         ))}
         
-        {documents.length === 0 && (
+        {localDocuments.length === 0 && (
           <Card>
             <CardContent className="p-8 text-center">
               <div className="text-gray-500">

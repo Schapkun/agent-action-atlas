@@ -55,8 +55,12 @@ export const useDocumentTemplates = () => {
 
   const updateTemplate = async (id: string, updates: Partial<any> & { labelIds?: string[] }) => {
     const result = await updateTemplateData(id, updates);
-    // Refresh templates to get updated data with labels
-    await fetchTemplates();
+    
+    // Only refresh if it's not just a label update
+    if (!updates.labelIds || Object.keys(updates).some(key => key !== 'labelIds')) {
+      await fetchTemplates();
+    }
+    
     return result;
   };
 
