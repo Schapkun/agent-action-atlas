@@ -1,8 +1,8 @@
 
-import { CreateQuoteForm } from '@/components/quotes/CreateQuoteForm';
+import { CreateQuote } from '@/components/quotes/CreateQuoteForm';
 
-const CreateQuote = () => {
-  return <CreateQuoteForm />;
+const CreateQuotePage = () => {
+  return <CreateQuote />;
 };
 
-export default CreateQuote;
+export default CreateQuotePage;
