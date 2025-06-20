@@ -27,13 +27,20 @@ export const DocumentList = ({
 }: DocumentListProps) => {
   const { updateTemplate } = useDocumentTemplates();
   const [libraryTemplate, setLibraryTemplate] = useState<DocumentTemplateWithLabels | null>(null);
+  const [updatingLabels, setUpdatingLabels] = useState<string | null>(null);
 
   const handleShareToLibrary = (document: DocumentTemplateWithLabels) => {
     setLibraryTemplate(document);
   };
 
   const handleLabelsChange = async (documentId: string, labels: any[]) => {
+    if (updatingLabels === documentId) {
+      console.log('[DocumentList] Already updating labels for this document, skipping');
+      return;
+    }
+
     try {
+      setUpdatingLabels(documentId);
       console.log('[DocumentList] Updating labels for document:', documentId);
       console.log('[DocumentList] New labels:', labels.map((l: any) => l.name));
       
@@ -44,10 +51,15 @@ export const DocumentList = ({
       
       console.log('[DocumentList] Database update successful, triggering refresh');
       
-      // Notify parent to refresh the templates list
-      onLabelUpdate(documentId);
+      // Small delay to ensure database has updated
+      setTimeout(() => {
+        onLabelUpdate(documentId);
+        setUpdatingLabels(null);
+      }, 100);
+      
     } catch (error) {
       console.error('[DocumentList] Error updating document labels:', error);
+      setUpdatingLabels(null);
       // Don't throw here to prevent UI from breaking - the parent handles error display
     }
   };
@@ -84,6 +96,7 @@ export const DocumentList = ({
                       <LabelDropdown
                         selectedLabels={document.labels || []}
                         onLabelsChange={(labels) => handleLabelsChange(document.id, labels)}
+                        disabled={updatingLabels === document.id}
                       />
                     </div>
                   </div>

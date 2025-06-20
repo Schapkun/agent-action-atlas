@@ -24,28 +24,38 @@ export const LabelDropdown = ({
   const { labels, fetchLabels } = useDocumentTemplateLabels();
   const [isOpen, setIsOpen] = useState(false);
   const [isLabelsDialogOpen, setIsLabelsDialogOpen] = useState(false);
+  
+  // Local state to manage selections while dropdown is open
+  const [localSelectedLabels, setLocalSelectedLabels] = useState<DocumentTemplateLabel[]>(selectedLabels);
+
+  // Update local state when props change
+  React.useEffect(() => {
+    setLocalSelectedLabels(selectedLabels);
+  }, [selectedLabels]);
 
   const handleLabelToggle = (label: DocumentTemplateLabel, checked: boolean) => {
     console.log('[LabelDropdown] Toggling label:', label.name, 'checked:', checked);
-    console.log('[LabelDropdown] Current selected labels:', selectedLabels.map(l => l.name));
     
     let newLabels: DocumentTemplateLabel[];
     
     if (checked) {
       // Add label if not already selected
-      if (!selectedLabels.find(l => l.id === label.id)) {
-        newLabels = [...selectedLabels, label];
+      if (!localSelectedLabels.find(l => l.id === label.id)) {
+        newLabels = [...localSelectedLabels, label];
       } else {
-        newLabels = selectedLabels; // Already selected, no change
+        newLabels = localSelectedLabels; // Already selected, no change
       }
     } else {
       // Remove label
-      newLabels = selectedLabels.filter(l => l.id !== label.id);
+      newLabels = localSelectedLabels.filter(l => l.id !== label.id);
     }
     
-    console.log('[LabelDropdown] New labels:', newLabels.map(l => l.name));
+    console.log('[LabelDropdown] New local labels:', newLabels.map(l => l.name));
     
-    // Call the parent handler - this should handle the actual database update
+    // Update local state immediately for responsive UI
+    setLocalSelectedLabels(newLabels);
+    
+    // Call parent handler to update database
     onLabelsChange(newLabels);
   };
 
@@ -62,9 +72,19 @@ export const LabelDropdown = ({
     await fetchLabels();
   };
 
+  const handleOpenChange = (open: boolean) => {
+    console.log('[LabelDropdown] Dropdown open state changed:', open);
+    setIsOpen(open);
+    
+    if (!open) {
+      // When closing, reset local state to match props
+      setLocalSelectedLabels(selectedLabels);
+    }
+  };
+
   return (
     <>
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <Popover open={isOpen} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <Button
             variant="ghost" 
@@ -96,7 +116,7 @@ export const LabelDropdown = ({
             )}
             
             {labels.map((label) => {
-              const isSelected = selectedLabels.some(l => l.id === label.id);
+              const isSelected = localSelectedLabels.some(l => l.id === label.id);
               
               return (
                 <div key={label.id} className="flex items-center space-x-2">
