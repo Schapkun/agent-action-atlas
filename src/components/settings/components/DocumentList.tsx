@@ -67,115 +67,124 @@ export const DocumentList = ({
   return (
     <>
       <div className="space-y-4">
-        {localDocuments.map((document) => (
-          <Card key={document.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  {/* Correct order: Title first, then Plus button, then Labels */}
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-lg truncate">{document.name}</h3>
-                      {document.is_default && (
-                        <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                      )}
+        {localDocuments.map((document) => {
+          // Create wrapper function for this specific document
+          const handleDocumentLabelsChange = (labels: any[]) => {
+            console.log('[DocumentList] Wrapper function called for document:', document.id);
+            console.log('[DocumentList] Labels from LabelDropdown:', labels.map((l: any) => l.name));
+            handleLabelsChange(document.id, labels);
+          };
+
+          return (
+            <Card key={document.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    {/* Correct order: Title first, then Plus button, then Labels */}
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium text-lg truncate">{document.name}</h3>
+                        {document.is_default && (
+                          <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                        )}
+                        
+                        {/* Plus button AFTER title - using wrapper function */}
+                        <LabelDropdown
+                          selectedLabels={document.labels || []}
+                          onLabelsChange={handleDocumentLabelsChange}
+                        />
+                      </div>
                       
-                      {/* Plus button AFTER title */}
-                      <LabelDropdown
-                        selectedLabels={document.labels || []}
-                        onLabelsChange={(labels) => handleLabelsChange(document.id, labels)}
-                      />
+                      {/* Labels display AFTER plus button */}
+                      <div className="flex items-center gap-1">
+                        {document.labels?.map((label) => (
+                          <Badge
+                            key={label.id}
+                            style={{ backgroundColor: label.color, color: 'white' }}
+                            className="text-xs"
+                          >
+                            {label.name}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                     
-                    {/* Labels display AFTER plus button */}
-                    <div className="flex items-center gap-1">
-                      {document.labels?.map((label) => (
-                        <Badge
-                          key={label.id}
-                          style={{ backgroundColor: label.color, color: 'white' }}
-                          className="text-xs"
-                        >
-                          {label.name}
-                        </Badge>
-                      ))}
+                    {document.description && (
+                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                        {document.description}
+                      </p>
+                    )}
+                    
+                    <div className="text-xs text-gray-500">
+                      Laatst bijgewerkt: {new Date(document.updated_at).toLocaleDateString('nl-NL')}
                     </div>
                   </div>
                   
-                  {document.description && (
-                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                      {document.description}
-                    </p>
-                  )}
-                  
-                  <div className="text-xs text-gray-500">
-                    Laatst bijgewerkt: {new Date(document.updated_at).toLocaleDateString('nl-NL')}
+                  {/* Action buttons - right aligned */}
+                  <div className="flex items-center gap-1 ml-4">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onEditDocument(document)}
+                      title="Bewerken"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onDuplicateDocument(document)}
+                      title="Dupliceren"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleShareToLibrary(document)}
+                      title="Delen in bibliotheek"
+                    >
+                      <Share className="h-4 w-4" />
+                    </Button>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Verwijderen"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Document verwijderen</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Weet je zeker dat je "{document.name}" wilt verwijderen? 
+                            Deze actie kan niet ongedaan worden gemaakt.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => onDeleteDocument(document)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Verwijderen
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
-                
-                {/* Action buttons - right aligned */}
-                <div className="flex items-center gap-1 ml-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEditDocument(document)}
-                    title="Bewerken"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDuplicateDocument(document)}
-                    title="Dupliceren"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleShareToLibrary(document)}
-                    title="Delen in bibliotheek"
-                  >
-                    <Share className="h-4 w-4" />
-                  </Button>
-                  
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        title="Verwijderen"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Document verwijderen</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Weet je zeker dat je "{document.name}" wilt verwijderen? 
-                          Deze actie kan niet ongedaan worden gemaakt.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Annuleren</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={() => onDeleteDocument(document)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Verwijderen
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
         
         {localDocuments.length === 0 && (
           <Card>
