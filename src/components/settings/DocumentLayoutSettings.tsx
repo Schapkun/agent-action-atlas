@@ -1,7 +1,7 @@
-
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { SimpleHtmlDocumentBuilder } from './htmldocument/SimpleHtmlDocumentBuilder';
 import { DocumentNameDialog } from './components/DocumentNameDialog';
@@ -11,6 +11,8 @@ import { DocumentActions } from './components/DocumentActions';
 import { DocumentList } from './components/DocumentList';
 import { DocumentProvider } from './contexts/DocumentContext';
 import { DocumentTemplateWithTags } from '@/types/documentTags';
+import { LabelManager } from './components/LabelManager';
+import { TemplateLibraryNew } from './components/TemplateLibraryNew';
 
 const DocumentLayoutContent = () => {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
@@ -162,29 +164,47 @@ const DocumentLayoutContent = () => {
         <div>
           <h3 className="text-lg font-medium">Document Templates</h3>
           <p className="text-sm text-muted-foreground">
-            Beheer en creëer document templates met HTML editor en A4 preview.
+            Beheer document templates, labels en ontdek nieuwe templates in de bibliotheek.
           </p>
         </div>
 
-        <DocumentActions 
-          onNewDocument={handleNewDocument}
-          selectedTags={selectedFilterTags}
-          onTagsChange={setSelectedFilterTags}
-          onClearFilters={handleClearFilters}
-          availableTags={availableTags}
-        />
+        <Tabs defaultValue="templates" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="templates">Mijn Templates</TabsTrigger>
+            <TabsTrigger value="labels">Labels</TabsTrigger>
+            <TabsTrigger value="library">Bibliotheek</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="templates" className="space-y-6">
+            <DocumentActions 
+              onNewDocument={handleNewDocument}
+              selectedTags={selectedFilterTags}
+              onTagsChange={setSelectedFilterTags}
+              onClearFilters={handleClearFilters}
+              availableTags={availableTags}
+            />
 
-        <div className="text-sm text-gray-600">
-          {filteredTemplates.length} van {templates.length} templates {filteredTemplates.length === 1 ? 'wordt' : 'worden'} getoond
-        </div>
+            <div className="text-sm text-gray-600">
+              {filteredTemplates.length} van {templates.length} templates {filteredTemplates.length === 1 ? 'wordt' : 'worden'} getoond
+            </div>
 
-        <DocumentList
-          documents={filteredTemplates}
-          onEditDocument={handleEditDocument}
-          onDuplicateDocument={handleDuplicateDocument}
-          onDeleteDocument={handleDeleteDocument}
-          onRefreshDocuments={fetchTemplates}
-        />
+            <DocumentList
+              documents={filteredTemplates}
+              onEditDocument={handleEditDocument}
+              onDuplicateDocument={handleDuplicateDocument}
+              onDeleteDocument={handleDeleteDocument}
+              onRefreshDocuments={fetchTemplates}
+            />
+          </TabsContent>
+          
+          <TabsContent value="labels">
+            <LabelManager />
+          </TabsContent>
+          
+          <TabsContent value="library">
+            <TemplateLibraryNew />
+          </TabsContent>
+        </Tabs>
 
         {/* Simple HTML Document Builder Dialog */}
         <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen}>
