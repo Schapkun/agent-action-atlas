@@ -26,41 +26,47 @@ export const LabelDropdown = ({
   const [isLabelsDialogOpen, setIsLabelsDialogOpen] = useState(false);
   
   // Local state to manage selections without triggering parent updates
-  const [localSelectedLabels, setLocalSelectedLabels] = useState<DocumentTemplateLabel[]>(selectedLabels);
+  const [localSelectedLabels, setLocalSelectedLabels] = useState<DocumentTemplateLabel[]>([]);
 
-  // Reset local state when selectedLabels prop changes or popover opens
-  useEffect(() => {
-    console.log('[LabelDropdown] Selected labels prop changed:', selectedLabels.map(l => l.name));
-    setLocalSelectedLabels(selectedLabels);
-  }, [selectedLabels]);
-
+  // Initialize local state when popover opens
   useEffect(() => {
     if (isOpen) {
-      console.log('[LabelDropdown] Popover opened, resetting local state to:', selectedLabels.map(l => l.name));
-      setLocalSelectedLabels(selectedLabels);
+      console.log('[LabelDropdown] Popover opened, initializing local state with:', selectedLabels.map(l => l.name));
+      setLocalSelectedLabels([...selectedLabels]);
     }
   }, [isOpen, selectedLabels]);
 
-  const handleLabelToggle = (label: DocumentTemplateLabel, checked: boolean) => {
-    console.log('[LabelDropdown] Toggling label:', label.name, 'checked:', checked);
-    
-    let newLocalLabels: DocumentTemplateLabel[];
-    
-    if (checked) {
-      // Add label if not already selected locally
-      if (!localSelectedLabels.find(l => l.id === label.id)) {
-        newLocalLabels = [...localSelectedLabels, label];
-      } else {
-        console.log('[LabelDropdown] Label already selected locally, no change');
-        return;
-      }
-    } else {
-      // Remove label locally
-      newLocalLabels = localSelectedLabels.filter(l => l.id !== label.id);
+  // Also sync when selectedLabels changes and popover is closed
+  useEffect(() => {
+    if (!isOpen) {
+      console.log('[LabelDropdown] Syncing with external state:', selectedLabels.map(l => l.name));
+      setLocalSelectedLabels([...selectedLabels]);
     }
+  }, [selectedLabels, isOpen]);
+
+  const handleLabelToggle = (label: DocumentTemplateLabel, checked: boolean) => {
+    console.log('[LabelDropdown] Toggle label:', label.name, 'checked:', checked);
+    console.log('[LabelDropdown] Current local state before toggle:', localSelectedLabels.map(l => l.name));
     
-    console.log('[LabelDropdown] Updating local labels to:', newLocalLabels.map(l => l.name));
-    setLocalSelectedLabels(newLocalLabels);
+    setLocalSelectedLabels(prev => {
+      let newLabels: DocumentTemplateLabel[];
+      
+      if (checked) {
+        // Add label if not already selected
+        if (!prev.find(l => l.id === label.id)) {
+          newLabels = [...prev, label];
+        } else {
+          console.log('[LabelDropdown] Label already selected, no change');
+          return prev;
+        }
+      } else {
+        // Remove label
+        newLabels = prev.filter(l => l.id !== label.id);
+      }
+      
+      console.log('[LabelDropdown] New local state after toggle:', newLabels.map(l => l.name));
+      return newLabels;
+    });
   };
 
   const handlePopoverOpenChange = (open: boolean) => {
@@ -75,7 +81,7 @@ export const LabelDropdown = ({
       
       if (hasChanges) {
         console.log('[LabelDropdown] Changes detected, calling onLabelsChange with:', localSelectedLabels.map(l => l.name));
-        onLabelsChange(localSelectedLabels);
+        onLabelsChange([...localSelectedLabels]);
       } else {
         console.log('[LabelDropdown] No changes detected');
       }
@@ -129,20 +135,20 @@ export const LabelDropdown = ({
             
             {labels.map((label) => {
               const isSelected = localSelectedLabels.some(l => l.id === label.id);
-              console.log('[LabelDropdown] Rendering label:', label.name, 'isSelected:', isSelected);
+              console.log('[LabelDropdown] Rendering label:', label.name, 'isSelected:', isSelected, 'localState:', localSelectedLabels.map(l => l.name));
               
               return (
                 <div key={label.id} className="flex items-center space-x-2">
                   <Checkbox
-                    id={label.id}
+                    id={`label-${label.id}`}
                     checked={isSelected}
                     onCheckedChange={(checked) => {
-                      console.log('[LabelDropdown] Checkbox changed for', label.name, 'to:', checked);
+                      console.log('[LabelDropdown] Checkbox onCheckedChange for', label.name, 'to:', checked);
                       handleLabelToggle(label, checked as boolean);
                     }}
                   />
                   <label
-                    htmlFor={label.id}
+                    htmlFor={`label-${label.id}`}
                     className="flex items-center gap-2 text-sm cursor-pointer flex-1"
                   >
                     <div
