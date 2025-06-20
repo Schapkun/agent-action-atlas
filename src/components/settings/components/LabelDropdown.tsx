@@ -24,32 +24,49 @@ export const LabelDropdown = ({
   const [isOpen, setIsOpen] = useState(false);
 
   const handleLabelToggle = (label: DocumentTemplateLabel, checked: boolean) => {
+    console.log('Toggling label:', label.name, 'checked:', checked);
+    
     if (checked) {
       // Add label if not already selected
       if (!selectedLabels.find(l => l.id === label.id)) {
-        onLabelsChange([...selectedLabels, label]);
+        const newLabels = [...selectedLabels, label];
+        console.log('Adding label, new labels:', newLabels);
+        onLabelsChange(newLabels);
       }
     } else {
       // Remove label
-      onLabelsChange(selectedLabels.filter(l => l.id !== label.id));
+      const newLabels = selectedLabels.filter(l => l.id !== label.id);
+      console.log('Removing label, new labels:', newLabels);
+      onLabelsChange(newLabels);
     }
   };
 
+  const handleOpenChange = (open: boolean) => {
+    console.log('Dropdown open state changed:', open);
+    setIsOpen(open);
+  };
+
+  const handleTriggerClick = () => {
+    console.log('Trigger clicked, current state:', isOpen);
+    setIsOpen(!isOpen);
+  };
+
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           variant="outline" 
           size="sm"
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-white hover:bg-gray-50 border border-gray-300"
           disabled={disabled}
+          onClick={handleTriggerClick}
         >
           <Plus className="h-3 w-3" />
           {triggerText}
           <ChevronDown className="h-3 w-3" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-3">
+      <PopoverContent className="w-64 p-3 bg-white border border-gray-200 shadow-lg z-50">
         <div className="space-y-2">
           <h4 className="font-medium text-sm">Beschikbare labels</h4>
           

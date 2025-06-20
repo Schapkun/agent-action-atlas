@@ -37,6 +37,8 @@ export const DocumentListItem = ({
 
   const handleLabelsChange = async (labels: any[]) => {
     try {
+      console.log('Updating labels for document:', document.id, labels);
+      
       // Update local state immediately for instant feedback
       setCurrentLabels(labels);
       
@@ -44,6 +46,8 @@ export const DocumentListItem = ({
       await updateTemplate(document.id, {
         labelIds: labels.map(label => label.id)
       });
+      
+      console.log('Labels updated successfully');
       
       // Trigger eventual refresh if needed
       if (onLabelUpdate) {
@@ -94,6 +98,7 @@ export const DocumentListItem = ({
         <LabelDropdown
           selectedLabels={currentLabels || []}
           onLabelsChange={handleLabelsChange}
+          triggerText="+"
         />
         
         <Button

@@ -19,8 +19,14 @@ export const LabelSelector = ({
   const { assignLabelToTemplate, removeLabelFromTemplate } = useDocumentTemplateLabels();
 
   const removeLabel = (labelToRemove: DocumentTemplateLabel) => {
+    console.log('Removing label:', labelToRemove.name);
     const updatedLabels = selectedLabels.filter(label => label.id !== labelToRemove.id);
     onLabelsChange(updatedLabels);
+  };
+
+  const handleLabelsChange = (labels: DocumentTemplateLabel[]) => {
+    console.log('Labels changed:', labels);
+    onLabelsChange(labels);
   };
 
   return (
@@ -29,7 +35,7 @@ export const LabelSelector = ({
         <span className="text-sm font-medium">Labels:</span>
         <LabelDropdown
           selectedLabels={selectedLabels}
-          onLabelsChange={onLabelsChange}
+          onLabelsChange={handleLabelsChange}
           triggerText="Label toevoegen"
         />
       </div>
