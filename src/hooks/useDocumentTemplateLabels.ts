@@ -19,6 +19,7 @@ export const useDocumentTemplateLabels = () => {
 
     try {
       setLoading(true);
+      console.log('[useDocumentTemplateLabels] Fetching labels for organization:', selectedOrganization.id);
       
       const { data, error } = await supabase
         .from('document_template_labels')
@@ -26,9 +27,16 @@ export const useDocumentTemplateLabels = () => {
         .eq('organization_id', selectedOrganization.id)
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error('[useDocumentTemplateLabels] Fetch error:', error);
+        throw error;
+      }
       
+      console.log('[useDocumentTemplateLabels] Fetched labels:', data?.length || 0, data);
       setLabels(data || []);
+
+      // Auto-create essential labels if they don't exist
+      await ensureEssentialLabels(data || []);
     } catch (error) {
       console.error('Error fetching document template labels:', error);
       toast({
@@ -41,7 +49,31 @@ export const useDocumentTemplateLabels = () => {
     }
   };
 
-  const createLabel = async (labelData: { name: string; color: string }) => {
+  const ensureEssentialLabels = async (existingLabels: DocumentTemplateLabel[]) => {
+    if (!selectedOrganization) return;
+
+    const essentialLabels = [
+      { name: 'Factuur', color: '#3B82F6' },
+      { name: 'Offerte', color: '#10B981' }
+    ];
+
+    for (const essential of essentialLabels) {
+      const exists = existingLabels.some(label => 
+        label.name.toLowerCase() === essential.name.toLowerCase()
+      );
+
+      if (!exists) {
+        console.log('[useDocumentTemplateLabels] Creating essential label:', essential.name);
+        try {
+          await createLabel(essential, false); // Don't show toast for auto-created labels
+        } catch (error) {
+          console.error('[useDocumentTemplateLabels] Error creating essential label:', essential.name, error);
+        }
+      }
+    }
+  };
+
+  const createLabel = async (labelData: { name: string; color: string }, showToast = true) => {
     if (!selectedOrganization) {
       throw new Error('Geen organisatie geselecteerd');
     }
@@ -62,19 +94,23 @@ export const useDocumentTemplateLabels = () => {
       // Refresh the labels list immediately
       await fetchLabels();
       
-      toast({
-        title: "Label aangemaakt",
-        description: `Label "${labelData.name}" is aangemaakt`
-      });
+      if (showToast) {
+        toast({
+          title: "Label aangemaakt",
+          description: `Label "${labelData.name}" is aangemaakt`
+        });
+      }
 
       return data;
     } catch (error) {
       console.error('Error creating label:', error);
-      toast({
-        title: "Fout bij aanmaken",
-        description: "Kon label niet aanmaken",
-        variant: "destructive"
-      });
+      if (showToast) {
+        toast({
+          title: "Fout bij aanmaken",
+          description: "Kon label niet aanmaken",
+          variant: "destructive"
+        });
+      }
       throw error;
     }
   };
@@ -112,6 +148,21 @@ export const useDocumentTemplateLabels = () => {
 
   const deleteLabel = async (id: string) => {
     try {
+      // First check if the label is being used by any templates
+      const { data: assignments } = await supabase
+        .from('document_template_label_assignments')
+        .select('template_id')
+        .eq('label_id', id);
+
+      if (assignments && assignments.length > 0) {
+        toast({
+          title: "Kan label niet verwijderen",
+          description: "Dit label wordt gebruikt door templates en kan niet worden verwijderd",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('document_template_labels')
         .delete()
@@ -139,6 +190,19 @@ export const useDocumentTemplateLabels = () => {
 
   const assignLabelToTemplate = async (templateId: string, labelId: string) => {
     try {
+      // Check if assignment already exists
+      const { data: existing } = await supabase
+        .from('document_template_label_assignments')
+        .select('id')
+        .eq('template_id', templateId)
+        .eq('label_id', labelId)
+        .single();
+
+      if (existing) {
+        console.log('[useDocumentTemplateLabels] Label already assigned to template');
+        return;
+      }
+
       const { error } = await supabase
         .from('document_template_label_assignments')
         .insert({

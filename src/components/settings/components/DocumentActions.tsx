@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Building, Tags } from 'lucide-react';
+import { Plus, Building, Tags, BookOpen } from 'lucide-react';
 import { SimpleLabelFilter } from './SimpleLabelFilter';
 import { CompanySettingsDialog } from './CompanySettingsDialog';
 import { DocumentTemplateLabelsDialog } from './DocumentTemplateLabelsDialog';
+import { TemplateLibraryManager } from './TemplateLibraryManager';
 import { DocumentTemplateLabel } from '@/types/documentLabels';
 
 interface DocumentActionsProps {
@@ -22,6 +23,7 @@ export const DocumentActions = ({
 }: DocumentActionsProps) => {
   const [isCompanyDialogOpen, setIsCompanyDialogOpen] = useState(false);
   const [isLabelDialogOpen, setIsLabelDialogOpen] = useState(false);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
 
   return (
     <>
@@ -39,7 +41,16 @@ export const DocumentActions = ({
             className="flex items-center gap-2"
           >
             <Tags className="h-4 w-4" />
-            Label toevoegen
+            Labels beheren
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={() => setIsLibraryOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <BookOpen className="h-4 w-4" />
+            Template Bibliotheek
           </Button>
           
           <Button 
@@ -68,6 +79,11 @@ export const DocumentActions = ({
       <DocumentTemplateLabelsDialog
         open={isLabelDialogOpen}
         onClose={() => setIsLabelDialogOpen(false)}
+      />
+
+      <TemplateLibraryManager
+        open={isLibraryOpen}
+        onClose={() => setIsLibraryOpen(false)}
       />
     </>
   );

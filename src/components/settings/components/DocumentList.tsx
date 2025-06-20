@@ -1,50 +1,156 @@
 
-import React from 'react';
-import { FileText } from 'lucide-react';
-import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
-import { DocumentListItem } from './DocumentListItem';
+import React, { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Edit, Copy, Trash2, Star, Share, BookOpen } from 'lucide-react';
+import { DocumentTemplateWithLabels } from '@/types/documentLabels';
+import { LabelSelector } from './LabelSelector';
+import { TemplateLibraryManager } from './TemplateLibraryManager';
 
 interface DocumentListProps {
-  documents: DocumentTemplate[];
-  onEditDocument: (document: DocumentTemplate) => void;
-  onDuplicateDocument: (document: DocumentTemplate) => void;
-  onDeleteDocument: (document: DocumentTemplate) => void;
-  onLabelUpdate?: (documentId: string) => void;
+  documents: DocumentTemplateWithLabels[];
+  onEditDocument: (document: DocumentTemplateWithLabels) => void;
+  onDuplicateDocument: (document: DocumentTemplateWithLabels) => void;
+  onDeleteDocument: (document: DocumentTemplateWithLabels) => void;
+  onLabelUpdate: (documentId: string) => void;
 }
 
-export const DocumentList = ({ 
-  documents, 
-  onEditDocument, 
-  onDuplicateDocument, 
+export const DocumentList = ({
+  documents,
+  onEditDocument,
+  onDuplicateDocument,
   onDeleteDocument,
   onLabelUpdate
 }: DocumentListProps) => {
-  if (documents.length === 0) {
-    return (
-      <div className="rounded-lg border">
-        <div className="text-center py-12 text-muted-foreground">
-          <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>Geen templates gevonden</p>
-          <p className="text-sm">Klik op "Nieuw Document Template" om te beginnen</p>
-        </div>
-      </div>
-    );
-  }
+  const [libraryTemplate, setLibraryTemplate] = useState<DocumentTemplateWithLabels | null>(null);
+
+  const handleShareToLibrary = (document: DocumentTemplateWithLabels) => {
+    setLibraryTemplate(document);
+  };
 
   return (
-    <div className="rounded-lg border">
-      <div className="divide-y">
+    <>
+      <div className="space-y-4">
         {documents.map((document) => (
-          <DocumentListItem
-            key={document.id}
-            document={document}
-            onEdit={onEditDocument}
-            onDuplicate={onDuplicateDocument}
-            onDelete={onDeleteDocument}
-            onLabelUpdate={onLabelUpdate}
-          />
+          <Card key={document.id} className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-medium text-lg truncate">{document.name}</h3>
+                    {document.is_default && (
+                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                    )}
+                  </div>
+                  
+                  {document.description && (
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                      {document.description}
+                    </p>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <LabelSelector
+                      selectedLabels={document.labels || []}
+                      onLabelsChange={async (labels) => {
+                        // This would need to be implemented to update template labels
+                        console.log('Update labels for template:', document.id, labels);
+                        onLabelUpdate(document.id);
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between mt-4">
+                    <span className="text-xs text-gray-500">
+                      Laatst bijgewerkt: {new Date(document.updated_at).toLocaleDateString('nl-NL')}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-1 ml-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEditDocument(document)}
+                    title="Bewerken"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDuplicateDocument(document)}
+                    title="Dupliceren"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleShareToLibrary(document)}
+                    title="Delen in bibliotheek"
+                  >
+                    <Share className="h-4 w-4" />
+                  </Button>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Verwijderen"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Document verwijderen</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Weet je zeker dat je "{document.name}" wilt verwijderen? 
+                          Deze actie kan niet ongedaan worden gemaakt.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={() => onDeleteDocument(document)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Verwijderen
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         ))}
+        
+        {documents.length === 0 && (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <div className="text-gray-500">
+                <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium mb-2">Geen templates gevonden</p>
+                <p className="text-sm">Maak een nieuw template aan om te beginnen</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
-    </div>
+
+      <TemplateLibraryManager
+        open={!!libraryTemplate}
+        onClose={() => setLibraryTemplate(null)}
+        currentTemplate={libraryTemplate || undefined}
+      />
+    </>
   );
 };
