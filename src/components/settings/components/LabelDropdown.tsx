@@ -26,13 +26,13 @@ export const LabelDropdown = ({
   const [isLabelsDialogOpen, setIsLabelsDialogOpen] = useState(false);
   const [workingLabels, setWorkingLabels] = useState<DocumentTemplateLabel[]>([]);
 
-  // Initialize working labels when popover opens
+  // Initialize working labels ONLY when popover opens - no selectedLabels dependency!
   useEffect(() => {
     if (isOpen) {
       console.log('[LabelDropdown] Popover opened - initializing working labels:', selectedLabels.map(l => l.name));
       setWorkingLabels([...selectedLabels]);
     }
-  }, [isOpen, selectedLabels]);
+  }, [isOpen]); // REMOVED selectedLabels dependency to prevent reset after save
 
   const isLabelSelected = (labelId: string): boolean => {
     const selected = workingLabels.some(l => l.id === labelId);
