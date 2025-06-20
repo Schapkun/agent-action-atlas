@@ -53,14 +53,18 @@ export const DocumentList = ({
                   </div>
                   
                   {document.description && (
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">
                       {document.description}
                     </p>
                   )}
                   
-                  <div className="flex items-center justify-between mt-4">
+                  <div className="text-xs text-gray-500 mb-3">
+                    Laatst bijgewerkt: {new Date(document.updated_at).toLocaleDateString('nl-NL')}
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    {/* Labels section - links van de iconen */}
                     <div className="flex items-center gap-2">
-                      {/* Labels section - moved to the left */}
                       <div className="flex items-center gap-1">
                         {document.labels?.map((label) => (
                           <Badge
@@ -83,70 +87,67 @@ export const DocumentList = ({
                       </div>
                     </div>
                     
-                    <span className="text-xs text-gray-500">
-                      Laatst bijgewerkt: {new Date(document.updated_at).toLocaleDateString('nl-NL')}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-1 ml-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEditDocument(document)}
-                    title="Bewerken"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDuplicateDocument(document)}
-                    title="Dupliceren"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleShareToLibrary(document)}
-                    title="Delen in bibliotheek"
-                  >
-                    <Share className="h-4 w-4" />
-                  </Button>
-                  
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
+                    {/* Action buttons - rechts */}
+                    <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
                         size="sm"
-                        title="Verwijderen"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => onEditDocument(document)}
+                        title="Bewerken"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Edit className="h-4 w-4" />
                       </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Document verwijderen</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Weet je zeker dat je "{document.name}" wilt verwijderen? 
-                          Deze actie kan niet ongedaan worden gemaakt.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Annuleren</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={() => onDeleteDocument(document)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Verwijderen
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onDuplicateDocument(document)}
+                        title="Dupliceren"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleShareToLibrary(document)}
+                        title="Delen in bibliotheek"
+                      >
+                        <Share className="h-4 w-4" />
+                      </Button>
+                      
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            title="Verwijderen"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Document verwijderen</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Weet je zeker dat je "{document.name}" wilt verwijderen? 
+                              Deze actie kan niet ongedaan worden gemaakt.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => onDeleteDocument(document)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Verwijderen
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
                 </div>
               </div>
               

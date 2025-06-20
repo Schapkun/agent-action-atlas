@@ -1,94 +1,82 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChevronDown, Tags, X } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ChevronDown, Plus } from 'lucide-react';
 import { useDocumentTemplateLabels } from '@/hooks/useDocumentTemplateLabels';
 import { DocumentTemplateLabel } from '@/types/documentLabels';
 
 interface LabelDropdownProps {
   selectedLabels: DocumentTemplateLabel[];
   onLabelsChange: (labels: DocumentTemplateLabel[]) => void;
-  disabled?: boolean;
+  triggerText?: string;
 }
 
-export const LabelDropdown = ({ selectedLabels, onLabelsChange, disabled }: LabelDropdownProps) => {
+export const LabelDropdown = ({
+  selectedLabels,
+  onLabelsChange,
+  triggerText = "Labels"
+}: LabelDropdownProps) => {
+  const { labels } = useDocumentTemplateLabels();
   const [isOpen, setIsOpen] = useState(false);
-  const { labels, loading } = useDocumentTemplateLabels();
 
-  const handleLabelToggle = async (label: DocumentTemplateLabel) => {
-    const isSelected = selectedLabels.some(l => l.id === label.id);
-    
-    if (isSelected) {
-      onLabelsChange(selectedLabels.filter(l => l.id !== label.id));
+  const handleLabelToggle = (label: DocumentTemplateLabel, checked: boolean) => {
+    if (checked) {
+      // Add label if not already selected
+      if (!selectedLabels.find(l => l.id === label.id)) {
+        onLabelsChange([...selectedLabels, label]);
+      }
     } else {
-      onLabelsChange([...selectedLabels, label]);
+      // Remove label
+      onLabelsChange(selectedLabels.filter(l => l.id !== label.id));
     }
-    
-    // Keep popover open for multiple selections
-    // User can close it manually or it will close when clicking outside
   };
 
-  // Create a key that changes when selectedLabels change to force re-render
-  const selectedLabelsKey = selectedLabels.map(l => l.id).sort().join(',');
-
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen} key={selectedLabelsKey}>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" disabled={disabled} className="flex items-center gap-2">
-          <Tags className="h-4 w-4" />
-          {selectedLabels.length === 0 ? (
-            'Labels'
-          ) : (
-            `${selectedLabels.length} label(s)`
-          )}
-          <ChevronDown className="h-4 w-4" />
+        <Button
+          variant="outline" 
+          size="sm"
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-3 w-3" />
+          {triggerText}
+          <ChevronDown className="h-3 w-3" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64" align="start">
+      <PopoverContent className="w-64 p-3">
         <div className="space-y-2">
-          <h4 className="font-medium text-sm">Beschikbare Labels</h4>
+          <h4 className="font-medium text-sm">Beschikbare labels</h4>
           
-          {loading ? (
-            <div className="text-sm text-gray-500">Labels laden...</div>
-          ) : labels.length === 0 ? (
-            <p className="text-sm text-gray-500">Geen labels beschikbaar</p>
-          ) : (
-            <div className="space-y-1 max-h-48 overflow-y-auto">
-              {labels.map((label) => {
-                const isSelected = selectedLabels.some(l => l.id === label.id);
-                return (
-                  <button
-                    key={label.id}
-                    className={`w-full text-left p-2 rounded-md text-sm transition-colors ${
-                      isSelected 
-                        ? 'bg-blue-50 border border-blue-200' 
-                        : 'hover:bg-gray-50 border border-transparent'
-                    }`}
-                    onClick={() => handleLabelToggle(label)}
-                    disabled={disabled}
-                  >
-                    <div className="flex items-center justify-between">
-                      <Badge
-                        variant="secondary"
-                        style={{ 
-                          backgroundColor: label.color, 
-                          color: 'white',
-                          border: 'none'
-                        }}
-                      >
-                        {label.name}
-                      </Badge>
-                      {isSelected && (
-                        <span className="text-blue-600 font-bold">✓</span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+          {labels.length === 0 && (
+            <p className="text-xs text-gray-500">Geen labels beschikbaar</p>
           )}
+          
+          {labels.map((label) => {
+            const isSelected = selectedLabels.some(l => l.id === label.id);
+            
+            return (
+              <div key={label.id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={label.id}
+                  checked={isSelected}
+                  onCheckedChange={(checked) => handleLabelToggle(label, checked as boolean)}
+                />
+                <label
+                  htmlFor={label.id}
+                  className="flex items-center gap-2 text-sm cursor-pointer flex-1"
+                >
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: label.color }}
+                  />
+                  {label.name}
+                </label>
+              </div>
+            );
+          })}
         </div>
       </PopoverContent>
     </Popover>
