@@ -1,6 +1,7 @@
-
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { SimpleHtmlDocumentBuilder } from './htmldocument/SimpleHtmlDocumentBuilder';
 import { DocumentNameDialog } from './components/DocumentNameDialog';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
@@ -21,7 +22,7 @@ const DocumentLayoutContent = () => {
   // Filter states
   const [selectedFilterLabels, setSelectedFilterLabels] = useState<DocumentTemplateLabel[]>([]);
   
-  const { templates, deleteTemplate, createTemplate, fetchTemplates } = useDocumentTemplates();
+  const { templates, deleteTemplate, createTemplate, fetchTemplates, loading, error } = useDocumentTemplates();
   const { labels } = useDocumentTemplateLabels();
   const { toast } = useToast();
 
@@ -132,6 +133,28 @@ const DocumentLayoutContent = () => {
   const handleClearFilters = () => {
     setSelectedFilterLabels([]);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>Templates laden...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Fout bij laden van templates: {error}
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <DocumentProvider>
