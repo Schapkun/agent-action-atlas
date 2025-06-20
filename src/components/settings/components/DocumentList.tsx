@@ -41,7 +41,7 @@ export const DocumentList = ({
   const handleLabelsChange = async (documentId: string, labels: any[]) => {
     try {
       console.log('[DocumentList] Updating labels for document:', documentId);
-      console.log('[DocumentList] New labels:', labels.map((l: any) => l.name));
+      console.log('[DocumentList] New labels received:', labels.map((l: any) => l.name));
       
       // Optimistically update the local state immediately
       setLocalDocuments(prev => prev.map(doc => 
@@ -72,7 +72,7 @@ export const DocumentList = ({
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  {/* Correct order: Title, Plus button, Labels */}
+                  {/* Correct order: Title first, then Plus button, then Labels */}
                   <div className="flex items-center gap-3 mb-2">
                     <div className="flex items-center gap-2">
                       <h3 className="font-medium text-lg truncate">{document.name}</h3>
