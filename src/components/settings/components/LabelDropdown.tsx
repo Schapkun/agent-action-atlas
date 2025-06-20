@@ -24,48 +24,30 @@ export const LabelDropdown = ({
   const { labels, fetchLabels } = useDocumentTemplateLabels();
   const [isOpen, setIsOpen] = useState(false);
   const [isLabelsDialogOpen, setIsLabelsDialogOpen] = useState(false);
-  const [workingLabels, setWorkingLabels] = useState<DocumentTemplateLabel[]>([]);
-
-  // Initialize working labels ONLY when popover opens - no selectedLabels dependency!
-  useEffect(() => {
-    if (isOpen) {
-      console.log('[LabelDropdown] Popover opened - initializing working labels:', selectedLabels.map(l => l.name));
-      setWorkingLabels([...selectedLabels]);
-    }
-  }, [isOpen]); // REMOVED selectedLabels dependency to prevent reset after save
 
   const isLabelSelected = (labelId: string): boolean => {
-    const selected = workingLabels.some(l => l.id === labelId);
-    console.log('[LabelDropdown] Checking if label is selected:', labelId, '=', selected);
-    return selected;
+    return selectedLabels.some(l => l.id === labelId);
   };
 
   const handleLabelToggle = (label: DocumentTemplateLabel, checked: boolean) => {
     console.log('[LabelDropdown] Toggling label:', label.name, 'to checked:', checked);
     
-    setWorkingLabels(currentLabels => {
-      const isCurrentlySelected = currentLabels.some(l => l.id === label.id);
-      console.log('[LabelDropdown] Currently selected:', isCurrentlySelected);
-      
-      let newLabels: DocumentTemplateLabel[];
-      
-      if (checked && !isCurrentlySelected) {
-        newLabels = [...currentLabels, label];
-        console.log('[LabelDropdown] Adding label - new working list:', newLabels.map(l => l.name));
-      } else if (!checked && isCurrentlySelected) {
-        newLabels = currentLabels.filter(l => l.id !== label.id);
-        console.log('[LabelDropdown] Removing label - new working list:', newLabels.map(l => l.name));
+    let newLabels: DocumentTemplateLabel[];
+    
+    if (checked) {
+      // Add label if not already present
+      if (!selectedLabels.some(l => l.id === label.id)) {
+        newLabels = [...selectedLabels, label];
       } else {
-        console.log('[LabelDropdown] No change needed');
-        return currentLabels;
+        newLabels = selectedLabels;
       }
-      
-      // IMMEDIATELY call onLabelsChange with the new labels
-      console.log('[LabelDropdown] IMMEDIATELY calling onLabelsChange with:', newLabels.map(l => l.name));
-      onLabelsChange(newLabels);
-      
-      return newLabels;
-    });
+    } else {
+      // Remove label
+      newLabels = selectedLabels.filter(l => l.id !== label.id);
+    }
+    
+    console.log('[LabelDropdown] Calling onLabelsChange with:', newLabels.map(l => l.name));
+    onLabelsChange(newLabels);
   };
 
   const handlePopoverOpenChange = (open: boolean) => {
@@ -120,7 +102,6 @@ export const LabelDropdown = ({
             
             {labels.map((label) => {
               const checked = isLabelSelected(label.id);
-              console.log('[LabelDropdown] Rendering checkbox for', label.name, 'checked:', checked);
               
               return (
                 <div key={label.id} className="flex items-center space-x-2">

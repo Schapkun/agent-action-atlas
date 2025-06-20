@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,25 +27,7 @@ export const DocumentList = ({
 }: DocumentListProps) => {
   const { updateTemplate } = useDocumentTemplatesUpdate();
   const [libraryTemplate, setLibraryTemplate] = useState<DocumentTemplateWithLabels | null>(null);
-  const [localDocuments, setLocalDocuments] = useState<DocumentTemplateWithLabels[]>(documents);
-  const [updatingDocuments, setUpdatingDocuments] = useState<Set<string>>(new Set());
-
-  // Update local state when documents prop changes - but only if not currently updating
-  React.useEffect(() => {
-    console.log('[DocumentList] Documents prop changed, updating local state');
-    // Only update if we're not in the middle of updating specific documents
-    setLocalDocuments(prev => {
-      return documents.map(doc => {
-        // If we're currently updating this document, keep the local version
-        if (updatingDocuments.has(doc.id)) {
-          const localDoc = prev.find(p => p.id === doc.id);
-          console.log('[DocumentList] Keeping local version for updating document:', doc.id);
-          return localDoc || doc;
-        }
-        return doc;
-      });
-    });
-  }, [documents, updatingDocuments]);
+  const [isUpdating, setIsUpdating] = useState<string | null>(null);
 
   const handleShareToLibrary = (document: DocumentTemplateWithLabels) => {
     setLibraryTemplate(document);
@@ -55,48 +38,29 @@ export const DocumentList = ({
       console.log('[DocumentList] Starting label update for document:', documentId);
       console.log('[DocumentList] New labels received:', labels.map((l: any) => l.name));
       
-      // Mark this document as being updated
-      setUpdatingDocuments(prev => new Set([...prev, documentId]));
+      setIsUpdating(documentId);
       
-      // Optimistically update the local state immediately
-      setLocalDocuments(prev => prev.map(doc => 
-        doc.id === documentId 
-          ? { ...doc, labels: labels }
-          : doc
-      ));
-
-      // Update the database
+      // Update the database with new labels
       await updateTemplate(documentId, {
         labelIds: labels.map((label: any) => label.id)
       });
       
       console.log('[DocumentList] Database update successful');
       
-      // Remove from updating set after a short delay to allow for state stabilization
-      setTimeout(() => {
-        setUpdatingDocuments(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(documentId);
-          return newSet;
-        });
-      }, 1000);
+      // Notify parent component about the update
+      onLabelUpdate(documentId);
       
     } catch (error) {
       console.error('[DocumentList] Error updating document labels:', error);
-      // Revert optimistic update on error and stop tracking as updating
-      setLocalDocuments(documents);
-      setUpdatingDocuments(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(documentId);
-        return newSet;
-      });
+    } finally {
+      setIsUpdating(null);
     }
   };
 
   return (
     <>
       <div className="space-y-4">
-        {localDocuments.map((document) => {
+        {documents.map((document) => {
           // Create wrapper function for this specific document
           const handleDocumentLabelsChange = (labels: any[]) => {
             console.log('[DocumentList] Wrapper function called for document:', document.id);
@@ -121,6 +85,7 @@ export const DocumentList = ({
                         <LabelDropdown
                           selectedLabels={document.labels || []}
                           onLabelsChange={handleDocumentLabelsChange}
+                          disabled={isUpdating === document.id}
                         />
                       </div>
                       
@@ -215,7 +180,7 @@ export const DocumentList = ({
           );
         })}
         
-        {localDocuments.length === 0 && (
+        {documents.length === 0 && (
           <Card>
             <CardContent className="p-8 text-center">
               <div className="text-gray-500">

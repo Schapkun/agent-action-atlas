@@ -56,13 +56,8 @@ export const useDocumentTemplates = () => {
   const updateTemplate = async (id: string, updates: Partial<any> & { labelIds?: string[] }) => {
     const result = await updateTemplateData(id, updates);
     
-    // For label updates, don't refresh immediately to prevent state conflicts
-    if (updates.labelIds && Object.keys(updates).length === 1) {
-      console.log('[useDocumentTemplates] Label-only update, skipping immediate refresh');
-      return result;
-    }
-    
-    // Only refresh for non-label updates
+    // For all updates including label updates, refresh to ensure data consistency
+    console.log('[useDocumentTemplates] Refreshing templates after update');
     await fetchTemplates();
     return result;
   };
