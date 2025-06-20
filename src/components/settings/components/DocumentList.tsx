@@ -8,14 +8,14 @@ import { Edit, Copy, Trash2, Star, Share, BookOpen } from 'lucide-react';
 import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 import { LabelDropdown } from './LabelDropdown';
 import { TemplateLibraryManager } from './TemplateLibraryManager';
-import { useDocumentTemplatesUpdate } from '@/hooks/useDocumentTemplatesUpdate';
+import { useDocumentLabels } from '@/hooks/useDocumentLabels';
 
 interface DocumentListProps {
   documents: DocumentTemplateWithLabels[];
   onEditDocument: (document: DocumentTemplateWithLabels) => void;
   onDuplicateDocument: (document: DocumentTemplateWithLabels) => void;
   onDeleteDocument: (document: DocumentTemplateWithLabels) => void;
-  onLabelUpdate: (documentId: string) => void;
+  onRefreshDocuments: () => void;
 }
 
 export const DocumentList = ({
@@ -23,37 +23,35 @@ export const DocumentList = ({
   onEditDocument,
   onDuplicateDocument,
   onDeleteDocument,
-  onLabelUpdate
+  onRefreshDocuments
 }: DocumentListProps) => {
-  const { updateTemplate } = useDocumentTemplatesUpdate();
+  const { updateDocumentLabels } = useDocumentLabels();
   const [libraryTemplate, setLibraryTemplate] = useState<DocumentTemplateWithLabels | null>(null);
-  const [isUpdating, setIsUpdating] = useState<string | null>(null);
+  const [updatingDocuments, setUpdatingDocuments] = useState<Set<string>>(new Set());
 
   const handleShareToLibrary = (document: DocumentTemplateWithLabels) => {
     setLibraryTemplate(document);
   };
 
-  const handleLabelsChange = async (documentId: string, labels: any[]) => {
+  const handleLabelsUpdate = async (documentId: string, labelIds: string[]) => {
     try {
-      console.log('[DocumentList] Starting label update for document:', documentId);
-      console.log('[DocumentList] New labels received:', labels.map((l: any) => l.name));
+      console.log('[DocumentList] Updating labels for document:', documentId);
       
-      setIsUpdating(documentId);
+      setUpdatingDocuments(prev => new Set(prev).add(documentId));
       
-      // Update the database with new labels
-      await updateTemplate(documentId, {
-        labelIds: labels.map((label: any) => label.id)
-      });
+      await updateDocumentLabels(documentId, labelIds);
       
-      console.log('[DocumentList] Database update successful');
-      
-      // Notify parent component about the update
-      onLabelUpdate(documentId);
+      // Refresh the documents to show updated labels
+      onRefreshDocuments();
       
     } catch (error) {
       console.error('[DocumentList] Error updating document labels:', error);
     } finally {
-      setIsUpdating(null);
+      setUpdatingDocuments(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(documentId);
+        return newSet;
+      });
     }
   };
 
@@ -61,19 +59,14 @@ export const DocumentList = ({
     <>
       <div className="space-y-4">
         {documents.map((document) => {
-          // Create wrapper function for this specific document
-          const handleDocumentLabelsChange = (labels: any[]) => {
-            console.log('[DocumentList] Wrapper function called for document:', document.id);
-            console.log('[DocumentList] Labels from LabelDropdown:', labels.map((l: any) => l.name));
-            handleLabelsChange(document.id, labels);
-          };
+          const isUpdating = updatingDocuments.has(document.id);
+          const currentLabelIds = document.labels?.map(label => label.id) || [];
 
           return (
             <Card key={document.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    {/* Correct order: Title first, then Plus button, then Labels */}
                     <div className="flex items-center gap-3 mb-2">
                       <div className="flex items-center gap-2">
                         <h3 className="font-medium text-lg truncate">{document.name}</h3>
@@ -81,15 +74,14 @@ export const DocumentList = ({
                           <Star className="h-4 w-4 text-yellow-500 fill-current" />
                         )}
                         
-                        {/* Plus button AFTER title - using wrapper function */}
                         <LabelDropdown
-                          selectedLabels={document.labels || []}
-                          onLabelsChange={handleDocumentLabelsChange}
-                          disabled={isUpdating === document.id}
+                          documentId={document.id}
+                          selectedLabelIds={currentLabelIds}
+                          onLabelsUpdate={(labelIds) => handleLabelsUpdate(document.id, labelIds)}
+                          disabled={isUpdating}
                         />
                       </div>
                       
-                      {/* Labels display AFTER plus button */}
                       <div className="flex items-center gap-1">
                         {document.labels?.map((label) => (
                           <Badge
@@ -100,6 +92,11 @@ export const DocumentList = ({
                             {label.name}
                           </Badge>
                         ))}
+                        {isUpdating && (
+                          <Badge variant="secondary" className="text-xs">
+                            Bezig...
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     
@@ -114,7 +111,6 @@ export const DocumentList = ({
                     </div>
                   </div>
                   
-                  {/* Action buttons - right aligned */}
                   <div className="flex items-center gap-1 ml-4">
                     <Button
                       variant="ghost"

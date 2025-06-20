@@ -14,7 +14,7 @@ export const useDocumentTemplates = () => {
   const [templates, setTemplates] = useState<DocumentTemplateWithLabels[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { selectedOrganization, selectedWorkspace } = useOrganization();
+  const { selectedOrganization } = useOrganization();
 
   const { fetchTemplates: fetchTemplatesData } = useDocumentTemplatesFetch();
   const { createTemplate: createTemplateData } = useDocumentTemplatesCreate();
@@ -33,6 +33,7 @@ export const useDocumentTemplates = () => {
       setLoading(true);
       console.log('[useDocumentTemplates] Fetching templates for organization:', selectedOrganization.id);
       const templatesData = await fetchTemplatesData();
+      console.log('[useDocumentTemplates] Fetched templates:', templatesData.length);
       setTemplates(templatesData);
     } catch (error) {
       console.error('[useDocumentTemplates] Error fetching templates:', error);
@@ -48,30 +49,31 @@ export const useDocumentTemplates = () => {
 
   const createTemplate = async (templateData: Partial<any> & { labelIds?: string[] }) => {
     const result = await createTemplateData(templateData);
-    // Refresh templates to get updated data with labels
     await fetchTemplates();
     return result;
   };
 
   const updateTemplate = async (id: string, updates: Partial<any> & { labelIds?: string[] }) => {
     const result = await updateTemplateData(id, updates);
-    
-    // For all updates including label updates, refresh to ensure data consistency
-    console.log('[useDocumentTemplates] Refreshing templates after update');
     await fetchTemplates();
     return result;
   };
 
   const deleteTemplate = async (id: string) => {
     await deleteTemplateData(id);
-    setTemplates(prev => prev.filter(t => t.id !== id));
+    await fetchTemplates();
   };
 
   const setTemplateFavorite = async (templateId: string, isFavorite: boolean) => {
     await setTemplateFavoriteData(templateId, isFavorite);
-    // Refresh templates to show updated favorite status
     await fetchTemplates();
   };
+
+  // Manual refresh function for external use
+  const refreshTemplates = useCallback(() => {
+    console.log('[useDocumentTemplates] Manual refresh requested');
+    return fetchTemplates();
+  }, [fetchTemplates]);
 
   useEffect(() => {
     fetchTemplates();
@@ -80,7 +82,7 @@ export const useDocumentTemplates = () => {
   return {
     templates,
     loading,
-    fetchTemplates,
+    fetchTemplates: refreshTemplates,
     createTemplate,
     updateTemplate,
     deleteTemplate,

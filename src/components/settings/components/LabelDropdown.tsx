@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -9,67 +9,51 @@ import { DocumentTemplateLabel } from '@/types/documentLabels';
 import { DocumentTemplateLabelsDialog } from './DocumentTemplateLabelsDialog';
 
 interface LabelDropdownProps {
-  selectedLabels: DocumentTemplateLabel[];
-  onLabelsChange: (labels: DocumentTemplateLabel[]) => void;
-  triggerText?: string;
+  documentId: string;
+  selectedLabelIds: string[];
+  onLabelsUpdate: (labelIds: string[]) => void;
   disabled?: boolean;
 }
 
 export const LabelDropdown = ({
-  selectedLabels,
-  onLabelsChange,
-  triggerText,
+  documentId,
+  selectedLabelIds,
+  onLabelsUpdate,
   disabled = false
 }: LabelDropdownProps) => {
-  const { labels, fetchLabels } = useDocumentTemplateLabels();
+  const { labels } = useDocumentTemplateLabels();
   const [isOpen, setIsOpen] = useState(false);
   const [isLabelsDialogOpen, setIsLabelsDialogOpen] = useState(false);
 
-  const isLabelSelected = (labelId: string): boolean => {
-    return selectedLabels.some(l => l.id === labelId);
-  };
-
   const handleLabelToggle = (label: DocumentTemplateLabel, checked: boolean) => {
-    console.log('[LabelDropdown] Toggling label:', label.name, 'to checked:', checked);
+    console.log('[LabelDropdown] Toggling label:', label.name, 'checked:', checked);
     
-    let newLabels: DocumentTemplateLabel[];
+    let newLabelIds: string[];
     
     if (checked) {
       // Add label if not already present
-      if (!selectedLabels.some(l => l.id === label.id)) {
-        newLabels = [...selectedLabels, label];
+      if (!selectedLabelIds.includes(label.id)) {
+        newLabelIds = [...selectedLabelIds, label.id];
       } else {
-        newLabels = selectedLabels;
+        newLabelIds = selectedLabelIds;
       }
     } else {
       // Remove label
-      newLabels = selectedLabels.filter(l => l.id !== label.id);
+      newLabelIds = selectedLabelIds.filter(id => id !== label.id);
     }
     
-    console.log('[LabelDropdown] Calling onLabelsChange with:', newLabels.map(l => l.name));
-    onLabelsChange(newLabels);
-  };
-
-  const handlePopoverOpenChange = (open: boolean) => {
-    console.log('[LabelDropdown] Popover state changing to:', open);
-    setIsOpen(open);
+    console.log('[LabelDropdown] New label IDs:', newLabelIds);
+    onLabelsUpdate(newLabelIds);
   };
 
   const handleEditLabels = () => {
-    console.log('[LabelDropdown] Opening labels management dialog');
     setIsOpen(false);
     setIsLabelsDialogOpen(true);
   };
 
-  const handleLabelsDialogClose = async () => {
-    console.log('[LabelDropdown] Labels dialog closed, refreshing labels');
-    setIsLabelsDialogOpen(false);
-    await fetchLabels();
-  };
-
   return (
     <>
-      <Popover open={isOpen} onOpenChange={handlePopoverOpenChange}>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="ghost" 
@@ -101,7 +85,7 @@ export const LabelDropdown = ({
             )}
             
             {labels.map((label) => {
-              const checked = isLabelSelected(label.id);
+              const checked = selectedLabelIds.includes(label.id);
               
               return (
                 <div key={label.id} className="flex items-center space-x-2">
@@ -109,7 +93,6 @@ export const LabelDropdown = ({
                     id={`label-${label.id}`}
                     checked={checked}
                     onCheckedChange={(newChecked) => {
-                      console.log('[LabelDropdown] Checkbox onCheckedChange for', label.name, 'new value:', newChecked);
                       handleLabelToggle(label, newChecked as boolean);
                     }}
                   />
@@ -132,7 +115,7 @@ export const LabelDropdown = ({
 
       <DocumentTemplateLabelsDialog
         open={isLabelsDialogOpen}
-        onClose={handleLabelsDialogClose}
+        onClose={() => setIsLabelsDialogOpen(false)}
       />
     </>
   );

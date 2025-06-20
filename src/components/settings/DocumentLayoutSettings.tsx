@@ -43,7 +43,7 @@ const DocumentLayoutContent = () => {
         return true;
       })
       .sort((a, b) => {
-        // Sort by creation date (oldest first) - this is already handled in the hook
+        // Sort by creation date (oldest first)
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       });
   }, [templates, selectedFilterLabels]);
@@ -129,11 +129,6 @@ const DocumentLayoutContent = () => {
     }
   };
 
-  const handleLabelUpdate = async (documentId: string) => {
-    console.log('[Settings] Label updated for document:', documentId);
-    // Templates are automatically refreshed after database updates via the hook
-  };
-
   const handleClearFilters = () => {
     setSelectedFilterLabels([]);
   };
@@ -164,7 +159,7 @@ const DocumentLayoutContent = () => {
           onEditDocument={handleEditDocument}
           onDuplicateDocument={handleDuplicateDocument}
           onDeleteDocument={handleDeleteDocument}
-          onLabelUpdate={handleLabelUpdate}
+          onRefreshDocuments={fetchTemplates}
         />
 
         {/* Simple HTML Document Builder Dialog */}
