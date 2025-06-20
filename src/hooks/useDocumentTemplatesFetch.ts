@@ -8,31 +8,16 @@ export const useDocumentTemplatesFetch = () => {
 
   const fetchTemplates = async (): Promise<DocumentTemplateWithLabels[]> => {
     try {
-      console.log('[useDocumentTemplatesFetch] Fetching templates...');
+      console.log('[useDocumentTemplatesFetch] Fetching templates with optimized JOIN query...');
       
       const { organization } = await checkUserAccess();
       
-      // First get the templates - sorted by created_at ASC (oldest first)
-      const { data: templatesData, error: templatesError } = await supabase
+      // Single optimized query using JOIN to get templates with their labels
+      const { data: templatesWithLabels, error } = await supabase
         .from('document_templates')
-        .select('*')
-        .eq('is_active', true)
-        .eq('organization_id', organization.id)
-        .order('created_at', { ascending: true });
-
-      if (templatesError) {
-        console.error('[useDocumentTemplatesFetch] Fetch error:', templatesError);
-        throw templatesError;
-      }
-
-      // Get labels for each template
-      const templatesWithLabels: DocumentTemplateWithLabels[] = [];
-      
-      for (const template of templatesData || []) {
-        const { data: labelAssignments } = await supabase
-          .from('document_template_label_assignments')
-          .select(`
-            label_id,
+        .select(`
+          *,
+          document_template_label_assignments!inner (
             document_template_labels (
               id,
               name,
@@ -42,22 +27,63 @@ export const useDocumentTemplatesFetch = () => {
               created_at,
               updated_at
             )
-          `)
-          .eq('template_id', template.id);
+          )
+        `)
+        .eq('is_active', true)
+        .eq('organization_id', organization.id)
+        .order('created_at', { ascending: true });
 
-        const labels = labelAssignments?.map(assignment => assignment.document_template_labels).filter(Boolean) || [];
+      if (error) {
+        console.error('[useDocumentTemplatesFetch] JOIN query error:', error);
+        throw error;
+      }
 
-        templatesWithLabels.push({
+      // Also get templates without any labels
+      const { data: templatesWithoutLabels, error: templatesError } = await supabase
+        .from('document_templates')
+        .select('*')
+        .eq('is_active', true)
+        .eq('organization_id', organization.id)
+        .not('id', 'in', `(${(templatesWithLabels || []).map(t => `'${t.id}'`).join(',') || "''"})`)
+        .order('created_at', { ascending: true });
+
+      if (templatesError) {
+        console.error('[useDocumentTemplatesFetch] Templates without labels error:', templatesError);
+        throw templatesError;
+      }
+
+      // Process templates with labels
+      const processedTemplatesWithLabels: DocumentTemplateWithLabels[] = (templatesWithLabels || []).map(template => {
+        // Extract labels from the nested structure
+        const labels = template.document_template_label_assignments
+          ?.map((assignment: any) => assignment.document_template_labels)
+          .filter(Boolean) || [];
+
+        return {
           ...template,
           placeholder_values: template.placeholder_values ? 
             (typeof template.placeholder_values === 'object' && template.placeholder_values !== null ? 
               template.placeholder_values as Record<string, string> : null) : null,
-          labels: labels as any[]
-        });
-      }
+          labels: labels,
+          document_template_label_assignments: undefined // Remove the nested structure
+        };
+      });
+
+      // Process templates without labels
+      const processedTemplatesWithoutLabels: DocumentTemplateWithLabels[] = (templatesWithoutLabels || []).map(template => ({
+        ...template,
+        placeholder_values: template.placeholder_values ? 
+          (typeof template.placeholder_values === 'object' && template.placeholder_values !== null ? 
+            template.placeholder_values as Record<string, string> : null) : null,
+        labels: []
+      }));
+
+      // Combine and sort all templates
+      const allTemplates = [...processedTemplatesWithLabels, ...processedTemplatesWithoutLabels]
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
       
-      console.log('[useDocumentTemplatesFetch] Templates fetched:', templatesWithLabels.length);
-      return templatesWithLabels;
+      console.log('[useDocumentTemplatesFetch] Templates fetched with optimized query:', allTemplates.length);
+      return allTemplates;
     } catch (error) {
       console.error('[useDocumentTemplatesFetch] Error fetching templates:', error);
       throw error;
