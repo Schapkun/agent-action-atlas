@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -279,11 +278,12 @@ export const InvoiceViewDialog = ({ open, onClose, invoice }: InvoiceViewDialogP
         </DialogContent>
       </Dialog>
 
-      {/* PDF Preview Dialog */}
+      {/* PDF Preview Dialog - Fixed prop name */}
       <InvoicePDFDialog
-        isOpen={isPDFPreviewOpen}
+        open={isPDFPreviewOpen}
         onClose={() => setIsPDFPreviewOpen(false)}
-        invoice={invoice}
+        invoiceData={invoice}
+        selectedTemplate={defaultTemplate}
       />
     </>
   );

@@ -3,27 +3,44 @@ import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import type { DocumentTemplate } from '@/hooks/useDocumentTemplatesCreate';
+import type { DocumentTemplateWithLabels } from '@/types/documentLabels';
 
 interface TemplateSelectorProps {
-  selectedTemplate: DocumentTemplate | null;
-  onTemplateChange: (template: DocumentTemplate | null) => void;
+  selectedTemplate: DocumentTemplate | DocumentTemplateWithLabels | null;
+  onTemplateChange?: (template: DocumentTemplate | null) => void;
+  onTemplateSelect?: (template: DocumentTemplateWithLabels) => void;
+  availableTemplates?: DocumentTemplateWithLabels[];
+  templatesLoading?: boolean;
 }
 
 export const TemplateSelector = ({
   selectedTemplate,
-  onTemplateChange
+  onTemplateChange,
+  onTemplateSelect,
+  availableTemplates,
+  templatesLoading: propTemplatesLoading
 }: TemplateSelectorProps) => {
-  const { templates, loading: templatesLoading } = useDocumentTemplates();
+  const { templates: hookTemplates, loading: hookTemplatesLoading } = useDocumentTemplates();
+
+  // Use provided templates or fallback to hook templates
+  const templates = availableTemplates || hookTemplates;
+  const templatesLoading = propTemplatesLoading !== undefined ? propTemplatesLoading : hookTemplatesLoading;
 
   const handleTemplateChange = (templateId: string) => {
     const template = templates.find(t => t.id === templateId);
     if (template) {
-      // Create a compatible DocumentTemplate object
-      const compatibleTemplate: DocumentTemplate = {
-        ...template,
-        labels: template.labels || [] // Ensure labels property exists
-      };
-      onTemplateChange(compatibleTemplate);
+      // Handle both callback types
+      if (onTemplateSelect) {
+        onTemplateSelect(template as DocumentTemplateWithLabels);
+      }
+      if (onTemplateChange) {
+        // Create a compatible DocumentTemplate object
+        const compatibleTemplate: DocumentTemplate = {
+          ...template,
+          labels: template.labels || [] // Ensure labels property exists
+        };
+        onTemplateChange(compatibleTemplate);
+      }
     }
   };
 
