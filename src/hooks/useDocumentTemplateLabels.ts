@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -157,7 +158,7 @@ export const useDocumentTemplateLabels = () => {
       if (assignments && assignments.length > 0) {
         toast({
           title: "Kan label niet verwijderen",
-          description: "Dit label wordt gebruikt door templates en kan niet worden verwijderd",
+          description: `Dit label wordt gebruikt door ${assignments.length} template(s) en kan niet worden verwijderd. Verwijder eerst het label van alle templates.`,
           variant: "destructive"
         });
         return;
@@ -189,7 +190,29 @@ export const useDocumentTemplateLabels = () => {
   };
 
   const assignLabelToTemplate = async (templateId: string, labelId: string) => {
+    if (!selectedOrganization) {
+      throw new Error('Geen organisatie geselecteerd');
+    }
+
     try {
+      // Verify that both template and label belong to the same organization
+      const { data: templateData } = await supabase
+        .from('document_templates')
+        .select('organization_id')
+        .eq('id', templateId)
+        .single();
+
+      const { data: labelData } = await supabase
+        .from('document_template_labels')
+        .select('organization_id')
+        .eq('id', labelId)
+        .single();
+
+      if (templateData?.organization_id !== labelData?.organization_id || 
+          templateData?.organization_id !== selectedOrganization.id) {
+        throw new Error('Template en label moeten van dezelfde organisatie zijn');
+      }
+
       // Check if assignment already exists
       const { data: existing } = await supabase
         .from('document_template_label_assignments')

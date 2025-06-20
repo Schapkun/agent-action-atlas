@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Edit, Copy, Trash2, Star, Share, BookOpen } from 'lucide-react';
+import { Edit, Copy, Trash2, Star, Share, BookOpen, Plus } from 'lucide-react';
 import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 import { LabelSelector } from './LabelSelector';
 import { TemplateLibraryManager } from './TemplateLibraryManager';
@@ -25,9 +25,16 @@ export const DocumentList = ({
   onLabelUpdate
 }: DocumentListProps) => {
   const [libraryTemplate, setLibraryTemplate] = useState<DocumentTemplateWithLabels | null>(null);
+  const [editingLabels, setEditingLabels] = useState<string | null>(null);
 
   const handleShareToLibrary = (document: DocumentTemplateWithLabels) => {
     setLibraryTemplate(document);
+  };
+
+  const handleLabelsUpdate = async (documentId: string, labels: any[]) => {
+    console.log('Update labels for template:', documentId, labels);
+    setEditingLabels(null);
+    onLabelUpdate(documentId);
   };
 
   return (
@@ -51,18 +58,31 @@ export const DocumentList = ({
                     </p>
                   )}
                   
-                  <div className="space-y-2">
-                    <LabelSelector
-                      selectedLabels={document.labels || []}
-                      onLabelsChange={async (labels) => {
-                        // This would need to be implemented to update template labels
-                        console.log('Update labels for template:', document.id, labels);
-                        onLabelUpdate(document.id);
-                      }}
-                    />
-                  </div>
-                  
                   <div className="flex items-center justify-between mt-4">
+                    <div className="flex items-center gap-2">
+                      {/* Labels section - moved to the left */}
+                      <div className="flex items-center gap-1">
+                        {document.labels?.map((label) => (
+                          <Badge
+                            key={label.id}
+                            style={{ backgroundColor: label.color, color: 'white' }}
+                            className="text-xs"
+                          >
+                            {label.name}
+                          </Badge>
+                        ))}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingLabels(document.id)}
+                          className="h-6 w-6 p-0 hover:bg-gray-100"
+                          title="Label toevoegen"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                    
                     <span className="text-xs text-gray-500">
                       Laatst bijgewerkt: {new Date(document.updated_at).toLocaleDateString('nl-NL')}
                     </span>
@@ -129,6 +149,25 @@ export const DocumentList = ({
                   </AlertDialog>
                 </div>
               </div>
+              
+              {/* Label editing section */}
+              {editingLabels === document.id && (
+                <div className="mt-4 p-3 border rounded-lg bg-gray-50">
+                  <LabelSelector
+                    selectedLabels={document.labels || []}
+                    onLabelsChange={(labels) => handleLabelsUpdate(document.id, labels)}
+                  />
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setEditingLabels(null)}
+                    >
+                      Annuleren
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
