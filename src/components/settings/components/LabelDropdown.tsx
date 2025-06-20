@@ -24,17 +24,15 @@ export const LabelDropdown = ({
   const { labels, fetchLabels } = useDocumentTemplateLabels();
   const [isOpen, setIsOpen] = useState(false);
   const [isLabelsDialogOpen, setIsLabelsDialogOpen] = useState(false);
-  
-  // Simple local state that mirrors the prop - no complex sync needed
   const [workingLabels, setWorkingLabels] = useState<DocumentTemplateLabel[]>([]);
 
-  // Simple sync when popover opens
+  // Initialize working labels when popover opens
   useEffect(() => {
     if (isOpen) {
-      console.log('[LabelDropdown] Popover opened - setting working labels to:', selectedLabels.map(l => l.name));
+      console.log('[LabelDropdown] Popover opened - initializing working labels:', selectedLabels.map(l => l.name));
       setWorkingLabels([...selectedLabels]);
     }
-  }, [isOpen]);
+  }, [isOpen, selectedLabels]);
 
   const isLabelSelected = (labelId: string): boolean => {
     const selected = workingLabels.some(l => l.id === labelId);
@@ -53,14 +51,18 @@ export const LabelDropdown = ({
       
       if (checked && !isCurrentlySelected) {
         newLabels = [...currentLabels, label];
-        console.log('[LabelDropdown] Adding label - new list:', newLabels.map(l => l.name));
+        console.log('[LabelDropdown] Adding label - new working list:', newLabels.map(l => l.name));
       } else if (!checked && isCurrentlySelected) {
         newLabels = currentLabels.filter(l => l.id !== label.id);
-        console.log('[LabelDropdown] Removing label - new list:', newLabels.map(l => l.name));
+        console.log('[LabelDropdown] Removing label - new working list:', newLabels.map(l => l.name));
       } else {
         console.log('[LabelDropdown] No change needed');
         return currentLabels;
       }
+      
+      // IMMEDIATELY call onLabelsChange with the new labels
+      console.log('[LabelDropdown] IMMEDIATELY calling onLabelsChange with:', newLabels.map(l => l.name));
+      onLabelsChange(newLabels);
       
       return newLabels;
     });
@@ -69,22 +71,6 @@ export const LabelDropdown = ({
   const handlePopoverOpenChange = (open: boolean) => {
     console.log('[LabelDropdown] Popover state changing to:', open);
     setIsOpen(open);
-    
-    if (!open) {
-      // Closing - check if we need to save changes
-      const hasChanges = workingLabels.length !== selectedLabels.length ||
-        workingLabels.some(working => !selectedLabels.find(selected => selected.id === working.id)) ||
-        selectedLabels.some(selected => !workingLabels.find(working => working.id === selected.id));
-      
-      console.log('[LabelDropdown] Popover closing - has changes:', hasChanges);
-      console.log('[LabelDropdown] Working labels:', workingLabels.map(l => l.name));
-      console.log('[LabelDropdown] Selected labels:', selectedLabels.map(l => l.name));
-      
-      if (hasChanges) {
-        console.log('[LabelDropdown] Saving changes via onLabelsChange');
-        onLabelsChange([...workingLabels]);
-      }
-    }
   };
 
   const handleEditLabels = () => {
@@ -142,7 +128,7 @@ export const LabelDropdown = ({
                     id={`label-${label.id}`}
                     checked={checked}
                     onCheckedChange={(newChecked) => {
-                      console.log('[LabelDropdown] Checkbox clicked for', label.name, 'new value:', newChecked);
+                      console.log('[LabelDropdown] Checkbox onCheckedChange for', label.name, 'new value:', newChecked);
                       handleLabelToggle(label, newChecked as boolean);
                     }}
                   />
