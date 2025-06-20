@@ -11,12 +11,14 @@ interface LabelDropdownProps {
   selectedLabels: DocumentTemplateLabel[];
   onLabelsChange: (labels: DocumentTemplateLabel[]) => void;
   triggerText?: string;
+  disabled?: boolean;
 }
 
 export const LabelDropdown = ({
   selectedLabels,
   onLabelsChange,
-  triggerText = "Labels"
+  triggerText = "Labels",
+  disabled = false
 }: LabelDropdownProps) => {
   const { labels } = useDocumentTemplateLabels();
   const [isOpen, setIsOpen] = useState(false);
@@ -40,6 +42,7 @@ export const LabelDropdown = ({
           variant="outline" 
           size="sm"
           className="flex items-center gap-2"
+          disabled={disabled}
         >
           <Plus className="h-3 w-3" />
           {triggerText}
