@@ -1,13 +1,15 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import type { DocumentTemplate } from '@/hooks/useDocumentTemplatesCreate';
 
 interface InvoicePreviewDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  previewHTML: string;
+  onClose: () => void;
+  invoiceData: any;
+  selectedTemplate: DocumentTemplate | null;
 }
 
-export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: InvoicePreviewDialogProps) => {
+export const InvoicePreviewDialog = ({ open, onClose, invoiceData, selectedTemplate }: InvoicePreviewDialogProps) => {
   // Create enhanced A4-formatted HTML content with proper page breaks and content management
   const getA4FormattedContent = (content: string) => {
     const a4Styles = `
@@ -228,6 +230,29 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
       </style>
     `;
     
+    // Create basic invoice HTML from the template and data
+    const invoiceHTML = selectedTemplate?.html_content || `
+      <div class="invoice-container">
+        <h1>Factuur ${invoiceData.invoice_number}</h1>
+        <div class="invoice-details">
+          <p><strong>Datum:</strong> ${new Date(invoiceData.invoice_date).toLocaleDateString('nl-NL')}</p>
+          <p><strong>Vervaldatum:</strong> ${new Date(invoiceData.due_date).toLocaleDateString('nl-NL')}</p>
+        </div>
+        <div class="client-info">
+          <h3>Klant:</h3>
+          <p>${invoiceData.client_name}</p>
+          ${invoiceData.client_email ? `<p>${invoiceData.client_email}</p>` : ''}
+          ${invoiceData.client_address ? `<p>${invoiceData.client_address}</p>` : ''}
+          ${invoiceData.client_postal_code && invoiceData.client_city ? `<p>${invoiceData.client_postal_code} ${invoiceData.client_city}</p>` : ''}
+        </div>
+        <div class="invoice-totals">
+          <p><strong>Subtotaal:</strong> €${Number(invoiceData.subtotal || 0).toFixed(2)}</p>
+          <p><strong>BTW:</strong> €${Number(invoiceData.vat_amount || 0).toFixed(2)}</p>
+          <p><strong>Totaal:</strong> €${Number(invoiceData.total_amount || 0).toFixed(2)}</p>
+        </div>
+      </div>
+    `;
+    
     // Wrap content in A4 page structure with content area
     const wrappedContent = `
       <!DOCTYPE html>
@@ -242,7 +267,7 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
         <div class="a4-page">
           <div class="page-content">
             <div class="content-area">
-              ${content}
+              ${invoiceHTML}
             </div>
           </div>
         </div>
@@ -253,8 +278,10 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
     return wrappedContent;
   };
 
+  const previewHTML = getA4FormattedContent('');
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl w-[95vw] h-[90vh] flex flex-col p-0">
         <DialogHeader className="flex-shrink-0 px-6 py-4 border-b bg-white">
           <DialogTitle className="text-lg font-semibold text-gray-900">
@@ -265,7 +292,7 @@ export const InvoicePreviewDialog = ({ open, onOpenChange, previewHTML }: Invoic
         <div className="flex-1 bg-gray-50 p-6 min-h-0 overflow-auto">
           <div className="max-w-full mx-auto">
             <iframe
-              srcDoc={getA4FormattedContent(previewHTML)}
+              srcDoc={previewHTML}
               className="w-full h-full border-0 rounded-lg shadow-sm"
               title="Invoice Preview"
               style={{ 

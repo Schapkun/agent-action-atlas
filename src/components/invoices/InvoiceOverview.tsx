@@ -50,15 +50,6 @@ export const InvoiceOverview = ({
   const statusVariant = invoiceData.status === 'sent' ? 'default' : 
                        invoiceData.status === 'paid' ? 'secondary' : 'outline';
 
-  const handleTemplateSelect = (template: any) => {
-    // Create a compatible DocumentTemplate object
-    const compatibleTemplate: DocumentTemplate = {
-      ...template,
-      labels: template.labels || [] // Ensure labels property exists
-    };
-    onTemplateChange(compatibleTemplate);
-  };
-
   return (
     <>
       <Card>
@@ -103,7 +94,7 @@ export const InvoiceOverview = ({
             <h3 className="text-lg font-medium">Template</h3>
             <TemplateSelector
               selectedTemplate={selectedTemplate}
-              onTemplateChange={handleTemplateSelect}
+              onTemplateChange={onTemplateChange}
             />
           </div>
 

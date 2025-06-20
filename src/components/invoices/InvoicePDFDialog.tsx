@@ -8,16 +8,18 @@ import { useInvoiceLines } from '@/hooks/useInvoiceLines';
 import { useInvoiceTemplates } from '@/hooks/useInvoiceTemplates';
 import { InvoicePDFGenerator } from '@/utils/InvoicePDFGenerator';
 import { useToast } from '@/hooks/use-toast';
+import type { DocumentTemplate } from '@/hooks/useDocumentTemplatesCreate';
 
 interface InvoicePDFDialogProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
-  invoice: Invoice;
+  invoiceData: any;
+  selectedTemplate: DocumentTemplate | null;
 }
 
 type PreviewType = 'pdf' | 'image' | 'text' | 'error';
 
-export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogProps) => {
+export const InvoicePDFDialog = ({ open, onClose, invoiceData, selectedTemplate }: InvoicePDFDialogProps) => {
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [previewType, setPreviewType] = useState<PreviewType>('pdf');
   const [loading, setLoading] = useState(false);
@@ -25,7 +27,7 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
   const [error, setError] = useState<string>('');
   const [dataReady, setDataReady] = useState(false);
   
-  const { lines, loading: linesLoading } = useInvoiceLines(invoice.id);
+  const { lines, loading: linesLoading } = useInvoiceLines(invoiceData.id);
   const { defaultTemplate, loading: templateLoading } = useInvoiceTemplates();
   const { toast } = useToast();
 
@@ -38,11 +40,11 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
 
   // Generate preview when dialog opens and data is ready
   useEffect(() => {
-    if (isOpen && dataReady) {
+    if (open && dataReady) {
       console.log('Dialog opened and data ready, generating preview...');
       generatePreview();
     }
-  }, [isOpen, dataReady]);
+  }, [open, dataReady]);
 
   const generatePreview = async () => {
     if (!dataReady) {
@@ -59,9 +61,9 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
       console.log('Starting size-aware PDF preview generation...');
 
       const pdfData = {
-        invoice,
+        invoice: invoiceData,
         lines,
-        template: defaultTemplate,
+        template: selectedTemplate || defaultTemplate,
         companyInfo: {
           name: 'Uw Bedrijf B.V.',
           address: 'Voorbeeldstraat 123',
@@ -72,7 +74,7 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
           kvk: '12345678',
           vat: 'NL123456789B01',
           iban: 'NL91ABNA0417164300',
-          bic: 'ABNANL2A'
+          bic: 'AB NAL2A'
         }
       };
 
@@ -127,9 +129,9 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
       console.log('Starting PDF download...');
 
       const pdfData = {
-        invoice,
+        invoice: invoiceData,
         lines,
-        template: defaultTemplate,
+        template: selectedTemplate || defaultTemplate,
         companyInfo: {
           name: 'Uw Bedrijf B.V.',
           address: 'Voorbeeldstraat 123',
@@ -145,13 +147,13 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
       };
 
       await InvoicePDFGenerator.generatePDF(pdfData, {
-        filename: `factuur-${invoice.invoice_number}.pdf`,
+        filename: `factuur-${invoiceData.invoice_number}.pdf`,
         download: true
       });
 
       toast({
         title: "PDF Download",
-        description: `Factuur ${invoice.invoice_number} is gedownload`
+        description: `Factuur ${invoiceData.invoice_number} is gedownload`
       });
     } catch (error: any) {
       console.error('PDF download error:', error);
@@ -217,12 +219,12 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
         return (
           <div className="flex flex-col items-center justify-center h-full text-gray-600 p-8">
             <FileText className="h-16 w-16 mb-4 text-gray-400" />
-            <h3 className="text-lg font-semibold mb-2">Factuur {invoice.invoice_number}</h3>
+            <h3 className="text-lg font-semibold mb-2">Factuur {invoiceData.invoice_number}</h3>
             <div className="space-y-2 text-center max-w-md">
-              <p><strong>Klant:</strong> {invoice.client_name}</p>
-              <p><strong>Datum:</strong> {new Date(invoice.invoice_date).toLocaleDateString('nl-NL')}</p>
-              <p><strong>Vervaldatum:</strong> {new Date(invoice.due_date).toLocaleDateString('nl-NL')}</p>
-              <p><strong>Totaal:</strong> €{invoice.total_amount.toFixed(2)}</p>
+              <p><strong>Klant:</strong> {invoiceData.client_name}</p>
+              <p><strong>Datum:</strong> {new Date(invoiceData.invoice_date).toLocaleDateString('nl-NL')}</p>
+              <p><strong>Vervaldatum:</strong> {new Date(invoiceData.due_date).toLocaleDateString('nl-NL')}</p>
+              <p><strong>Totaal:</strong> €{invoiceData.total_amount.toFixed(2)}</p>
             </div>
             <p className="text-sm text-red-600 mt-4">{error}</p>
             <Button onClick={handleRetry} variant="outline" className="mt-4">
@@ -244,11 +246,11 @@ export const InvoicePDFDialog = ({ isOpen, onClose, invoice }: InvoicePDFDialogP
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
         <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle className="flex items-center justify-between">
-            <span>PDF Preview - Factuur {invoice.invoice_number}</span>
+            <span>PDF Preview - Factuur {invoiceData.invoice_number}</span>
             <Button
               onClick={onClose}
               variant="ghost"

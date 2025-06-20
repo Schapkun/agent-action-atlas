@@ -15,9 +15,9 @@ import { useInvoiceTemplates } from '@/hooks/useInvoiceTemplates';
 import { useToast } from '@/hooks/use-toast';
 
 interface InvoiceViewDialogProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
-  invoice: Invoice;
+  invoice: any;
 }
 
 const getStatusColor = (status: string) => {
@@ -42,7 +42,7 @@ const getStatusLabel = (status: string) => {
   }
 };
 
-export const InvoiceViewDialog = ({ isOpen, onClose, invoice }: InvoiceViewDialogProps) => {
+export const InvoiceViewDialog = ({ open, onClose, invoice }: InvoiceViewDialogProps) => {
   const [isPDFPreviewOpen, setIsPDFPreviewOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
   
@@ -109,7 +109,7 @@ export const InvoiceViewDialog = ({ isOpen, onClose, invoice }: InvoiceViewDialo
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
           <DialogHeader className="px-6 py-4 border-b">
             <DialogTitle className="flex items-center gap-3">
