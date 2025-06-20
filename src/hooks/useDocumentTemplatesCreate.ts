@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentTemplateWithLabels } from '@/types/documentLabels';
@@ -17,6 +16,7 @@ export interface DocumentTemplate {
   created_at: string;
   updated_at: string;
   placeholder_values?: Record<string, string> | null;
+  labels?: any[]; // Add labels property to match usage
 }
 
 export const useDocumentTemplatesCreate = () => {

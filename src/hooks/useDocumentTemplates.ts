@@ -1,14 +1,13 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 import { useDocumentTemplatesFetch } from './useDocumentTemplatesFetch';
-import { useDocumentTemplatesCreate, DocumentTemplate } from './useDocumentTemplatesCreate';
+import { useDocumentTemplatesCreate } from './useDocumentTemplatesCreate';
 import { useDocumentTemplatesUpdate } from './useDocumentTemplatesUpdate';
 import { useDocumentTemplatesDelete } from './useDocumentTemplatesDelete';
 
-export { DocumentTemplate } from './useDocumentTemplatesCreate';
+export type { DocumentTemplate } from './useDocumentTemplatesCreate';
 
 export const useDocumentTemplates = () => {
   const [templates, setTemplates] = useState<DocumentTemplateWithLabels[]>([]);
@@ -38,14 +37,14 @@ export const useDocumentTemplates = () => {
     }
   };
 
-  const createTemplate = async (templateData: Partial<DocumentTemplate> & { labelIds?: string[] }) => {
+  const createTemplate = async (templateData: Partial<any> & { labelIds?: string[] }) => {
     const result = await createTemplateData(templateData);
     // Refresh templates to get updated data with labels
     await fetchTemplates();
     return result;
   };
 
-  const updateTemplate = async (id: string, updates: Partial<DocumentTemplate> & { labelIds?: string[] }) => {
+  const updateTemplate = async (id: string, updates: Partial<any> & { labelIds?: string[] }) => {
     const result = await updateTemplateData(id, updates);
     // Refresh templates to get updated data with labels
     await fetchTemplates();

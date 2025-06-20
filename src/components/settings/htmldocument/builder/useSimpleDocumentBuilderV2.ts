@@ -1,5 +1,5 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { DocumentTemplate } from '@/hooks/useDocumentTemplates';
 import { useDocumentData } from '../hooks/useDocumentData';
 import { 
   DocumentTypeUI,
@@ -7,6 +7,9 @@ import {
   DEFAULT_PLACEHOLDER_VALUES,
   schapkunTemplate
 } from './htmlDocumentConstants';
+
+// Import the DocumentTemplate type
+import type { DocumentTemplate } from '@/hooks/useDocumentTemplatesCreate';
 
 interface UseSimpleDocumentBuilderV2Props {
   documentId?: string;
@@ -59,7 +62,7 @@ export function useSimpleDocumentBuilderV2({
     if (document) {
       console.log('[Builder V2] Initializing from document data:', forceRefreshKey);
       
-      const newType = getDocumentTypeFromLabels(document.labels);
+      const newType = getDocumentTypeFromLabels((document as any).labels);
       const newPlaceholderValues = {
         ...DEFAULT_PLACEHOLDER_VALUES,
         ...(document.placeholder_values || {})

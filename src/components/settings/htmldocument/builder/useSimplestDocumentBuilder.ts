@@ -1,5 +1,6 @@
+
 import { useState, useEffect, useCallback } from 'react';
-import { DocumentTemplate, useDocumentTemplates } from '@/hooks/useDocumentTemplates';
+import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   DocumentTypeUI,
@@ -9,6 +10,9 @@ import {
   PLACEHOLDER_FIELDS,
   schapkunTemplate
 } from './htmlDocumentConstants';
+
+// Import the DocumentTemplate type
+import type { DocumentTemplate } from '@/hooks/useDocumentTemplatesCreate';
 
 interface UseSimplestDocumentBuilderProps {
   documentId?: string;
