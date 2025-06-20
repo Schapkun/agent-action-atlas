@@ -2,9 +2,10 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Copy, Trash2 } from 'lucide-react';
+import { Edit, Copy, Trash2, Share } from 'lucide-react';
 import { DocumentTemplateWithLabels } from '@/types/documentLabels';
 import { LabelDropdown } from './LabelDropdown';
+import { TemplateLibraryManager } from './TemplateLibraryManager';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 
 interface DocumentListItemProps {
@@ -26,6 +27,7 @@ export const DocumentListItem = ({
   
   // Local state for immediate label updates
   const [currentLabels, setCurrentLabels] = useState(document.labels || []);
+  const [libraryTemplate, setLibraryTemplate] = useState<DocumentTemplateWithLabels | null>(null);
 
   const handleEdit = () => onEdit(document);
   const handleDuplicate = () => onDuplicate(document);
@@ -33,6 +35,10 @@ export const DocumentListItem = ({
     if (window.confirm(`Weet je zeker dat je "${document.name}" wilt verwijderen?`)) {
       onDelete(document);
     }
+  };
+
+  const handleShareToLibrary = () => {
+    setLibraryTemplate(document);
   };
 
   const handleLabelsChange = async (labels: any[]) => {
@@ -61,73 +67,96 @@ export const DocumentListItem = ({
   };
 
   return (
-    <div className="flex items-center justify-between p-4 hover:bg-gray-50">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-3 mb-2">
-          <h4 className="text-sm font-medium text-gray-900 truncate">
-            {document.name}
-          </h4>
-        </div>
-        
-        <div className="text-xs text-gray-500">
-          Bijgewerkt: {new Date(document.updated_at).toLocaleDateString('nl-NL')}
-        </div>
-      </div>
-      
-      <div className="flex items-center gap-2 ml-4">
-        {/* Labels display with current labels */}
-        {currentLabels && currentLabels.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {currentLabels.map((label) => (
-              <Badge
-                key={label.id}
-                variant="secondary"
-                style={{ 
-                  backgroundColor: label.color, 
-                  color: 'white',
-                  border: 'none'
-                }}
-                className="text-xs"
-              >
-                {label.name}
-              </Badge>
-            ))}
+    <>
+      <div className="flex items-start justify-between p-4 hover:bg-gray-50">
+        <div className="flex-1 min-w-0">
+          {/* Title row with labels and + button */}
+          <div className="flex items-center gap-3 mb-2">
+            <h4 className="text-sm font-medium text-gray-900 truncate">
+              {document.name}
+            </h4>
+            
+            {/* Labels display */}
+            <div className="flex items-center gap-1">
+              {currentLabels && currentLabels.length > 0 && (
+                <>
+                  {currentLabels.map((label) => (
+                    <Badge
+                      key={label.id}
+                      variant="secondary"
+                      style={{ 
+                        backgroundColor: label.color, 
+                        color: 'white',
+                        border: 'none'
+                      }}
+                      className="text-xs"
+                    >
+                      {label.name}
+                    </Badge>
+                  ))}
+                </>
+              )}
+              
+              {/* Add label button */}
+              <LabelDropdown
+                selectedLabels={currentLabels || []}
+                onLabelsChange={handleLabelsChange}
+              />
+            </div>
           </div>
-        )}
+          
+          {/* Updated date */}
+          <div className="text-xs text-gray-500">
+            Bijgewerkt: {new Date(document.updated_at).toLocaleDateString('nl-NL')}
+          </div>
+        </div>
         
-        <LabelDropdown
-          selectedLabels={currentLabels || []}
-          onLabelsChange={handleLabelsChange}
-          triggerText="+"
-        />
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleDelete}
-          className="hover:bg-red-50 text-red-600"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleDuplicate}
-          className="hover:bg-green-50"
-        >
-          <Copy className="h-4 w-4" />
-        </Button>
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleEdit}
-          className="hover:bg-blue-50"
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
+        {/* Action buttons - aligned with title */}
+        <div className="flex items-center gap-2 ml-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleShareToLibrary}
+            className="hover:bg-blue-50"
+            title="Delen in bibliotheek"
+          >
+            <Share className="h-4 w-4" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDelete}
+            className="hover:bg-red-50 text-red-600"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDuplicate}
+            className="hover:bg-green-50"
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleEdit}
+            className="hover:bg-blue-50"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
-    </div>
+
+      <TemplateLibraryManager
+        open={!!libraryTemplate}
+        onClose={() => setLibraryTemplate(null)}
+        currentTemplate={libraryTemplate || undefined}
+      />
+    </>
   );
 };

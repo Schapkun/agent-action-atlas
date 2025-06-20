@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ChevronDown, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useDocumentTemplateLabels } from '@/hooks/useDocumentTemplateLabels';
 import { DocumentTemplateLabel } from '@/types/documentLabels';
 
@@ -17,7 +17,7 @@ interface LabelDropdownProps {
 export const LabelDropdown = ({
   selectedLabels,
   onLabelsChange,
-  triggerText = "Labels",
+  triggerText,
   disabled = false
 }: LabelDropdownProps) => {
   const { labels } = useDocumentTemplateLabels();
@@ -55,15 +55,14 @@ export const LabelDropdown = ({
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
-          variant="outline" 
+          variant="ghost" 
           size="sm"
-          className="flex items-center gap-2 bg-white hover:bg-gray-50 border border-gray-300"
+          className="h-6 w-6 p-0 hover:bg-gray-100 rounded-full"
           disabled={disabled}
           onClick={handleTriggerClick}
+          title="Label toevoegen"
         >
           <Plus className="h-3 w-3" />
-          {triggerText}
-          <ChevronDown className="h-3 w-3" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-3 bg-white border border-gray-200 shadow-lg z-50">
