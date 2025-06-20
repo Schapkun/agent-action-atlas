@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { supabase } from '@/integrations/supabase/client';
@@ -105,7 +104,7 @@ export function useSimplestDocumentBuilder({
           const doc: DocumentTemplate = {
             ...data,
             placeholder_values: parsePlaceholderValues(data.placeholder_values),
-            labels: [] // Add empty labels for compatibility
+            tags: Array.isArray(data.tags) ? data.tags : [] // Use tags instead of labels
           };
 
           // Use default type since we no longer store type

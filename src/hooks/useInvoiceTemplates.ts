@@ -1,16 +1,17 @@
 
 import { useState, useEffect } from 'react';
-import { useDocumentTemplates, DocumentTemplate } from './useDocumentTemplates';
+import { useDocumentTemplates } from './useDocumentTemplates';
+import { DocumentTemplateWithTags } from '@/types/documentTags';
 
 export const useInvoiceTemplates = () => {
   const { templates, loading } = useDocumentTemplates();
-  const [invoiceTemplates, setInvoiceTemplates] = useState<DocumentTemplate[]>([]);
-  const [defaultTemplate, setDefaultTemplate] = useState<DocumentTemplate | null>(null);
+  const [invoiceTemplates, setInvoiceTemplates] = useState<DocumentTemplateWithTags[]>([]);
+  const [defaultTemplate, setDefaultTemplate] = useState<DocumentTemplateWithTags | null>(null);
   
   useEffect(() => {
-    // Filter templates ONLY with "Factuur" label (removed type filtering)
+    // Filter templates ONLY with "Factuur" tag (removed type filtering)
     const factuurTemplates = templates.filter(t => 
-      t.labels?.some(label => label.name.toLowerCase() === 'factuur')
+      t.tags?.some(tag => tag.toLowerCase() === 'factuur')
     );
     
     // Sort templates: favorite first, then by creation date (newest first)

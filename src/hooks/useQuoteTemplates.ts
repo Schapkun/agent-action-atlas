@@ -1,16 +1,17 @@
 
 import { useState, useEffect } from 'react';
-import { useDocumentTemplates, DocumentTemplate } from './useDocumentTemplates';
+import { useDocumentTemplates } from './useDocumentTemplates';
+import { DocumentTemplateWithTags } from '@/types/documentTags';
 
 export const useQuoteTemplates = () => {
   const { templates, loading } = useDocumentTemplates();
-  const [quoteTemplates, setQuoteTemplates] = useState<DocumentTemplate[]>([]);
-  const [defaultTemplate, setDefaultTemplate] = useState<DocumentTemplate | null>(null);
+  const [quoteTemplates, setQuoteTemplates] = useState<DocumentTemplateWithTags[]>([]);
+  const [defaultTemplate, setDefaultTemplate] = useState<DocumentTemplateWithTags | null>(null);
   
   useEffect(() => {
-    // Filter templates that have "Offerte" label
+    // Filter templates that have "Offerte" tag
     const offerteTemplates = templates.filter(t => 
-      t.labels?.some(label => label.name.toLowerCase() === 'offerte')
+      t.tags?.some(tag => tag.toLowerCase() === 'offerte')
     );
     setQuoteTemplates(offerteTemplates);
     
