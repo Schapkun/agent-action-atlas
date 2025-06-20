@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -10,7 +10,7 @@ export const useDocumentTemplateLabels = () => {
   const { toast } = useToast();
   const { selectedOrganization } = useOrganization();
 
-  const fetchLabels = async () => {
+  const fetchLabels = useCallback(async () => {
     if (!selectedOrganization) {
       setLabels([]);
       setLoading(false);
@@ -32,7 +32,7 @@ export const useDocumentTemplateLabels = () => {
         throw error;
       }
       
-      console.log('[useDocumentTemplateLabels] Fetched labels:', data?.length || 0, data);
+      console.log('[useDocumentTemplateLabels] Fetched labels:', data?.length || 0);
       setLabels(data || []);
 
       // Auto-create essential labels if they don't exist
@@ -47,7 +47,7 @@ export const useDocumentTemplateLabels = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedOrganization, toast]);
 
   const ensureEssentialLabels = async (existingLabels: DocumentTemplateLabel[]) => {
     if (!selectedOrganization) return;
@@ -306,7 +306,7 @@ export const useDocumentTemplateLabels = () => {
 
   useEffect(() => {
     fetchLabels();
-  }, [selectedOrganization]);
+  }, [fetchLabels]);
 
   return {
     labels,

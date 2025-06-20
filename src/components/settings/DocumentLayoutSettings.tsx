@@ -48,12 +48,6 @@ const DocumentLayoutContent = () => {
       });
   }, [templates, selectedFilterLabels]);
 
-  // Watch for label changes and refresh templates when labels change
-  React.useEffect(() => {
-    console.log('[DocumentLayoutSettings] Labels changed, refreshing templates...');
-    fetchTemplates();
-  }, [labels, fetchTemplates]);
-
   const handleNewDocument = () => {
     console.log('[Settings] Creating new document');
     setEditingDocumentId(undefined);
@@ -137,8 +131,7 @@ const DocumentLayoutContent = () => {
 
   const handleLabelUpdate = async (documentId: string) => {
     console.log('[Settings] Label updated for document:', documentId);
-    // Refresh templates to show updated labels immediately
-    await fetchTemplates();
+    // Templates are automatically refreshed after database updates via the hook
   };
 
   const handleClearFilters = () => {

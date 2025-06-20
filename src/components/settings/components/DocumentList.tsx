@@ -41,8 +41,7 @@ export const DocumentList = ({
         labelIds: labels.map((label: any) => label.id)
       });
       
-      console.log('[DocumentList] Database update successful, triggering refresh');
-      onLabelUpdate(documentId);
+      console.log('[DocumentList] Database update successful');
       
     } catch (error) {
       console.error('[DocumentList] Error updating document labels:', error);
@@ -60,31 +59,29 @@ export const DocumentList = ({
                   {/* Title row with plus button on the left, then labels */}
                   <div className="flex items-center gap-3 mb-2">
                     <div className="flex items-center gap-2">
+                      {/* Plus button FIRST - on the left */}
+                      <LabelDropdown
+                        selectedLabels={document.labels || []}
+                        onLabelsChange={(labels) => handleLabelsChange(document.id, labels)}
+                      />
+                      
                       <h3 className="font-medium text-lg truncate">{document.name}</h3>
                       {document.is_default && (
                         <Star className="h-4 w-4 text-yellow-500 fill-current" />
                       )}
                     </div>
                     
-                    {/* Plus button BEFORE labels */}
-                    <div className="flex items-center gap-2">
-                      <LabelDropdown
-                        selectedLabels={document.labels || []}
-                        onLabelsChange={(labels) => handleLabelsChange(document.id, labels)}
-                      />
-                      
-                      {/* Labels display AFTER plus button */}
-                      <div className="flex items-center gap-1">
-                        {document.labels?.map((label) => (
-                          <Badge
-                            key={label.id}
-                            style={{ backgroundColor: label.color, color: 'white' }}
-                            className="text-xs"
-                          >
-                            {label.name}
-                          </Badge>
-                        ))}
-                      </div>
+                    {/* Labels display AFTER title */}
+                    <div className="flex items-center gap-1">
+                      {document.labels?.map((label) => (
+                        <Badge
+                          key={label.id}
+                          style={{ backgroundColor: label.color, color: 'white' }}
+                          className="text-xs"
+                        >
+                          {label.name}
+                        </Badge>
+                      ))}
                     </div>
                   </div>
                   

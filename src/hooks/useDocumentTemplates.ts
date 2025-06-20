@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { DocumentTemplateWithLabels } from '@/types/documentLabels';
@@ -20,9 +21,17 @@ export const useDocumentTemplates = () => {
   const { updateTemplate: updateTemplateData, setTemplateFavorite: setTemplateFavoriteData } = useDocumentTemplatesUpdate();
   const { deleteTemplate: deleteTemplateData } = useDocumentTemplatesDelete();
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
+    if (!selectedOrganization) {
+      console.log('[useDocumentTemplates] No organization selected, clearing templates');
+      setTemplates([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
+      console.log('[useDocumentTemplates] Fetching templates for organization:', selectedOrganization.id);
       const templatesData = await fetchTemplatesData();
       setTemplates(templatesData);
     } catch (error) {
@@ -35,7 +44,7 @@ export const useDocumentTemplates = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedOrganization, fetchTemplatesData, toast]);
 
   const createTemplate = async (templateData: Partial<any> & { labelIds?: string[] }) => {
     const result = await createTemplateData(templateData);
@@ -63,15 +72,8 @@ export const useDocumentTemplates = () => {
   };
 
   useEffect(() => {
-    if (selectedOrganization) {
-      console.log('[useDocumentTemplates] Organization changed, fetching templates');
-      fetchTemplates();
-    } else {
-      console.log('[useDocumentTemplates] No organization selected, clearing templates');
-      setTemplates([]);
-      setLoading(false);
-    }
-  }, [selectedOrganization, selectedWorkspace]);
+    fetchTemplates();
+  }, [fetchTemplates]);
 
   return {
     templates,
