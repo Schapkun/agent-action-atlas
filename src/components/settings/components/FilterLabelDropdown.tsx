@@ -8,44 +8,42 @@ import { useDocumentTemplateLabels } from '@/hooks/useDocumentTemplateLabels';
 import { DocumentTemplateLabel } from '@/types/documentLabels';
 import { DocumentTemplateLabelsDialog } from './DocumentTemplateLabelsDialog';
 
-interface LabelDropdownProps {
-  documentId: string;
-  selectedLabelIds: string[];
-  onLabelsUpdate: (labelIds: string[]) => void;
+interface FilterLabelDropdownProps {
+  selectedLabels: DocumentTemplateLabel[];
+  onLabelsChange: (labels: DocumentTemplateLabel[]) => void;
+  triggerText?: string;
   disabled?: boolean;
 }
 
-export const LabelDropdown = ({
-  documentId,
-  selectedLabelIds = [], // Default to empty array to prevent undefined errors
-  onLabelsUpdate,
+export const FilterLabelDropdown = ({
+  selectedLabels = [],
+  onLabelsChange,
+  triggerText = "Label selecteren",
   disabled = false
-}: LabelDropdownProps) => {
+}: FilterLabelDropdownProps) => {
   const { labels } = useDocumentTemplateLabels();
   const [isOpen, setIsOpen] = useState(false);
   const [isLabelsDialogOpen, setIsLabelsDialogOpen] = useState(false);
 
   const handleLabelToggle = (label: DocumentTemplateLabel, checked: boolean) => {
-    console.log('[LabelDropdown] Toggling label:', label.name, 'checked:', checked);
+    console.log('[FilterLabelDropdown] Toggling label:', label.name, 'checked:', checked);
     
-    // Ensure selectedLabelIds is always an array
-    const currentIds = selectedLabelIds || [];
-    let newLabelIds: string[];
+    let newLabels: DocumentTemplateLabel[];
     
     if (checked) {
       // Add label if not already present
-      if (!currentIds.includes(label.id)) {
-        newLabelIds = [...currentIds, label.id];
+      if (!selectedLabels.some(l => l.id === label.id)) {
+        newLabels = [...selectedLabels, label];
       } else {
-        newLabelIds = currentIds;
+        newLabels = selectedLabels;
       }
     } else {
       // Remove label
-      newLabelIds = currentIds.filter(id => id !== label.id);
+      newLabels = selectedLabels.filter(l => l.id !== label.id);
     }
     
-    console.log('[LabelDropdown] New label IDs:', newLabelIds);
-    onLabelsUpdate(newLabelIds);
+    console.log('[FilterLabelDropdown] New labels:', newLabels);
+    onLabelsChange(newLabels);
   };
 
   const handleEditLabels = () => {
@@ -53,21 +51,18 @@ export const LabelDropdown = ({
     setIsLabelsDialogOpen(true);
   };
 
-  // Ensure selectedLabelIds is always an array for safety
-  const safeSelectedLabelIds = selectedLabelIds || [];
-
   return (
     <>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
-            variant="ghost" 
+            variant="outline"
             size="sm"
-            className="h-5 w-5 p-0 hover:bg-gray-100 rounded-full flex items-center justify-center"
             disabled={disabled}
-            title="Label toevoegen"
+            className="text-sm"
           >
-            <Plus className="h-3 w-3" />
+            <Plus className="h-3 w-3 mr-1" />
+            {triggerText}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-64 p-3 bg-white border border-gray-200 shadow-lg z-50">
@@ -90,19 +85,19 @@ export const LabelDropdown = ({
             )}
             
             {labels.map((label) => {
-              const checked = safeSelectedLabelIds.includes(label.id);
+              const checked = selectedLabels.some(l => l.id === label.id);
               
               return (
                 <div key={label.id} className="flex items-center space-x-2">
                   <Checkbox
-                    id={`label-${label.id}`}
+                    id={`filter-label-${label.id}`}
                     checked={checked}
                     onCheckedChange={(newChecked) => {
                       handleLabelToggle(label, newChecked as boolean);
                     }}
                   />
                   <label
-                    htmlFor={`label-${label.id}`}
+                    htmlFor={`filter-label-${label.id}`}
                     className="flex items-center gap-2 text-sm cursor-pointer flex-1"
                   >
                     <div

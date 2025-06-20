@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { useDocumentTemplateLabels } from '@/hooks/useDocumentTemplateLabels';
 import { DocumentTemplateLabel } from '@/types/documentLabels';
-import { LabelDropdown } from './LabelDropdown';
+import { FilterLabelDropdown } from './FilterLabelDropdown';
 
 interface LabelSelectorProps {
   selectedLabels: DocumentTemplateLabel[];
@@ -33,7 +33,7 @@ export const LabelSelector = ({
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium">Labels:</span>
-        <LabelDropdown
+        <FilterLabelDropdown
           selectedLabels={selectedLabels}
           onLabelsChange={handleLabelsChange}
           triggerText="Label toevoegen"

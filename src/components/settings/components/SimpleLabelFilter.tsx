@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { X, Filter } from 'lucide-react';
 import { DocumentTemplateLabel } from '@/types/documentLabels';
-import { LabelDropdown } from './LabelDropdown';
+import { FilterLabelDropdown } from './FilterLabelDropdown';
 
 interface SimpleLabelFilterProps {
   selectedLabels: DocumentTemplateLabel[];
@@ -30,7 +30,7 @@ export const SimpleLabelFilter = ({
       </div>
       
       <div className="flex items-center gap-2 flex-1">
-        <LabelDropdown
+        <FilterLabelDropdown
           selectedLabels={selectedLabels}
           onLabelsChange={onLabelsChange}
           triggerText="Label selecteren"
