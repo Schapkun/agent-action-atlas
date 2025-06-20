@@ -21,7 +21,7 @@ export const LabelDropdown = ({
   triggerText,
   disabled = false
 }: LabelDropdownProps) => {
-  const { labels } = useDocumentTemplateLabels();
+  const { labels, fetchLabels } = useDocumentTemplateLabels();
   const [isOpen, setIsOpen] = useState(false);
   const [isLabelsDialogOpen, setIsLabelsDialogOpen] = useState(false);
 
@@ -46,6 +46,12 @@ export const LabelDropdown = ({
   const handleEditLabels = () => {
     setIsOpen(false); // Close the dropdown
     setIsLabelsDialogOpen(true); // Open the labels dialog
+  };
+
+  const handleLabelsDialogClose = async () => {
+    setIsLabelsDialogOpen(false);
+    // Refresh labels when the dialog closes
+    await fetchLabels();
   };
 
   return (
@@ -110,7 +116,7 @@ export const LabelDropdown = ({
 
       <DocumentTemplateLabelsDialog
         open={isLabelsDialogOpen}
-        onClose={() => setIsLabelsDialogOpen(false)}
+        onClose={handleLabelsDialogClose}
       />
     </>
   );

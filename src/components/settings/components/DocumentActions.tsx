@@ -1,10 +1,9 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Building, Tags, BookOpen } from 'lucide-react';
+import { Plus, Building, BookOpen } from 'lucide-react';
 import { SimpleLabelFilter } from './SimpleLabelFilter';
 import { CompanySettingsDialog } from './CompanySettingsDialog';
-import { DocumentTemplateLabelsDialog } from './DocumentTemplateLabelsDialog';
 import { TemplateLibraryManager } from './TemplateLibraryManager';
 import { DocumentTemplateLabel } from '@/types/documentLabels';
 
@@ -22,7 +21,6 @@ export const DocumentActions = ({
   onClearFilters
 }: DocumentActionsProps) => {
   const [isCompanyDialogOpen, setIsCompanyDialogOpen] = useState(false);
-  const [isLabelDialogOpen, setIsLabelDialogOpen] = useState(false);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
 
   return (
@@ -33,15 +31,6 @@ export const DocumentActions = ({
           <Button onClick={onNewDocument} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Nieuw Document Template
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            onClick={() => setIsLabelDialogOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <Tags className="h-4 w-4" />
-            Labels beheren
           </Button>
           
           <Button 
@@ -74,11 +63,6 @@ export const DocumentActions = ({
       <CompanySettingsDialog
         open={isCompanyDialogOpen}
         onClose={() => setIsCompanyDialogOpen(false)}
-      />
-      
-      <DocumentTemplateLabelsDialog
-        open={isLabelDialogOpen}
-        onClose={() => setIsLabelDialogOpen(false)}
       />
 
       <TemplateLibraryManager
