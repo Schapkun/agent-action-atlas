@@ -34,16 +34,21 @@ export const DocumentList = ({
 
   const handleLabelsChange = async (documentId: string, labels: any[]) => {
     try {
-      console.log('Updating labels for document:', documentId, labels);
+      console.log('[DocumentList] Updating labels for document:', documentId);
+      console.log('[DocumentList] New labels:', labels.map((l: any) => l.name));
       
+      // Update the database
       await updateTemplate(documentId, {
-        labelIds: labels.map(label => label.id)
+        labelIds: labels.map((label: any) => label.id)
       });
       
-      console.log('Labels updated successfully');
+      console.log('[DocumentList] Database update successful, triggering refresh');
+      
+      // Notify parent to refresh the templates list
       onLabelUpdate(documentId);
     } catch (error) {
-      console.error('Error updating document labels:', error);
+      console.error('[DocumentList] Error updating document labels:', error);
+      // Don't throw here to prevent UI from breaking - the parent handles error display
     }
   };
 

@@ -26,31 +26,39 @@ export const LabelDropdown = ({
   const [isLabelsDialogOpen, setIsLabelsDialogOpen] = useState(false);
 
   const handleLabelToggle = (label: DocumentTemplateLabel, checked: boolean) => {
-    console.log('Toggling label:', label.name, 'checked:', checked);
+    console.log('[LabelDropdown] Toggling label:', label.name, 'checked:', checked);
+    console.log('[LabelDropdown] Current selected labels:', selectedLabels.map(l => l.name));
+    
+    let newLabels: DocumentTemplateLabel[];
     
     if (checked) {
       // Add label if not already selected
       if (!selectedLabels.find(l => l.id === label.id)) {
-        const newLabels = [...selectedLabels, label];
-        console.log('Adding label, new labels:', newLabels);
-        onLabelsChange(newLabels);
+        newLabels = [...selectedLabels, label];
+      } else {
+        newLabels = selectedLabels; // Already selected, no change
       }
     } else {
       // Remove label
-      const newLabels = selectedLabels.filter(l => l.id !== label.id);
-      console.log('Removing label, new labels:', newLabels);
-      onLabelsChange(newLabels);
+      newLabels = selectedLabels.filter(l => l.id !== label.id);
     }
+    
+    console.log('[LabelDropdown] New labels:', newLabels.map(l => l.name));
+    
+    // Call the parent handler - this should handle the actual database update
+    onLabelsChange(newLabels);
   };
 
   const handleEditLabels = () => {
+    console.log('[LabelDropdown] Opening labels management dialog');
     setIsOpen(false); // Close the dropdown
     setIsLabelsDialogOpen(true); // Open the labels dialog
   };
 
   const handleLabelsDialogClose = async () => {
+    console.log('[LabelDropdown] Labels dialog closed, refreshing labels');
     setIsLabelsDialogOpen(false);
-    // Refresh labels when the dialog closes
+    // Refresh labels when the dialog closes to show newly created labels
     await fetchLabels();
   };
 
