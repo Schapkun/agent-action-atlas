@@ -1,37 +1,8 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
-
-interface Contact {
-  id: string;
-  name: string;
-  email?: string;
-  address?: string;
-  postal_code?: string;
-  city?: string;
-  country?: string;
-  payment_terms?: number;
-  contact_number?: string;
-  contact_person?: string;
-  vat_number?: string;
-  website?: string;
-  phone?: string;
-  mobile?: string;
-  payment_method?: string;
-  iban?: string;
-  notes?: string;
-  default_discount?: number;
-  discount_type?: string;
-  products_display?: string;
-  invoice_reference?: string;
-  hide_notes_on_invoice?: boolean;
-  billing_address?: string;
-  shipping_address?: string;
-  shipping_instructions?: string;
-  shipping_method?: string;
-  reminder_email?: string;
-  is_active?: boolean;
-}
+import { Contact } from '@/types/contacts';
 
 export const useContactData = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -75,31 +46,17 @@ export const useContactData = () => {
         id: client.id,
         name: client.name,
         email: client.email || undefined,
+        phone: client.phone || undefined,
         address: client.address || undefined,
         postal_code: client.postal_code || undefined,
         city: client.city || undefined,
         country: client.country || 'Nederland',
-        payment_terms: client.payment_terms || 30,
         contact_number: client.contact_number || undefined,
-        contact_person: client.contact_person || undefined,
-        vat_number: client.vat_number || undefined,
-        website: client.website || undefined,
-        phone: client.phone || undefined,
-        mobile: client.mobile || undefined,
-        payment_method: client.payment_method || 'bankoverschrijving',
-        iban: client.iban || undefined,
-        notes: client.notes || undefined,
-        default_discount: client.default_discount || 0,
-        discount_type: client.discount_type || 'percentage',
-        products_display: client.products_display || 'incl_btw',
-        invoice_reference: client.invoice_reference || undefined,
-        hide_notes_on_invoice: client.hide_notes_on_invoice || false,
-        billing_address: client.billing_address || undefined,
-        shipping_address: client.shipping_address || undefined,
-        shipping_instructions: client.shipping_instructions || undefined,
-        shipping_method: client.shipping_method || 'E-mail',
-        reminder_email: client.reminder_email || undefined,
-        is_active: client.is_active !== false
+        type: client.type || 'prive',
+        organization_id: client.organization_id,
+        workspace_id: client.workspace_id || undefined,
+        created_at: client.created_at,
+        updated_at: client.updated_at
       })) || [];
 
       setContacts(formattedContacts);
