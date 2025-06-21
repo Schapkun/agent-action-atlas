@@ -11,29 +11,12 @@ import { ContactSelector } from '@/components/contacts/ContactSelector';
 import { ArrowLeft, Save, Send, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-
-// Using the client type from the database instead of a separate contact type
-interface Client {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  postal_code?: string;
-  country?: string;
-  contact_number?: string;
-  type?: 'prive' | 'zakelijk';
-  organization_id: string;
-  workspace_id?: string;
-  created_at: string;
-  updated_at: string;
-}
+import { Contact } from '@/types/contacts';
 
 export const CreateDocumentForm = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [selectedContact, setSelectedContact] = useState<Client | null>(null);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const [documentType, setDocumentType] = useState<string>('');
   const [showPreview, setShowPreview] = useState(false);
