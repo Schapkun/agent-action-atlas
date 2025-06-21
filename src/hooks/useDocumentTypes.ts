@@ -20,21 +20,14 @@ export const useDocumentTypes = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { selectedOrganization } = useOrganization();
-  const { session, user } = useAuth();
+  const { user } = useAuth();
 
   const fetchDocumentTypes = useCallback(async () => {
-    if (!selectedOrganization?.id) {
-      console.log('[useDocumentTypes] No organization selected, clearing document types');
+    if (!selectedOrganization?.id || !user?.id) {
+      console.log('[useDocumentTypes] Missing requirements - org:', !!selectedOrganization?.id, 'user:', !!user?.id);
       setDocumentTypes([]);
       setLoading(false);
       setError(null);
-      return;
-    }
-
-    if (!user) {
-      console.log('[useDocumentTypes] No user found, cannot fetch document types');
-      setLoading(false);
-      setError('Geen gebruiker gevonden');
       return;
     }
 
@@ -43,8 +36,6 @@ export const useDocumentTypes = () => {
       setError(null);
       
       console.log('[useDocumentTypes] Fetching document types for organization:', selectedOrganization.id);
-      console.log('[useDocumentTypes] Current session exists:', !!session);
-      console.log('[useDocumentTypes] Current user ID:', user.id);
       
       const { data, error } = await supabase
         .from('document_types')
@@ -67,21 +58,16 @@ export const useDocumentTypes = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedOrganization?.id, session, user]);
+  }, [selectedOrganization?.id, user?.id]);
 
   const createDocumentType = async (name: string, label: string) => {
-    if (!selectedOrganization?.id) {
-      console.error('[useDocumentTypes] Cannot create document type: no organization selected');
-      return false;
-    }
-
-    if (!user) {
-      console.error('[useDocumentTypes] Cannot create document type: no user');
+    if (!selectedOrganization?.id || !user?.id) {
+      console.error('[useDocumentTypes] Cannot create document type: missing requirements');
       return false;
     }
 
     try {
-      console.log('[useDocumentTypes] Creating document type:', { name, label, organization_id: selectedOrganization.id });
+      console.log('[useDocumentTypes] Creating document type:', { name, label });
       
       const { data, error } = await supabase
         .from('document_types')
@@ -99,7 +85,7 @@ export const useDocumentTypes = () => {
         throw error;
       }
 
-      console.log('[useDocumentTypes] Document type created successfully:', data);
+      console.log('[useDocumentTypes] Document type created successfully');
       await fetchDocumentTypes();
       return true;
     } catch (error) {
@@ -109,7 +95,7 @@ export const useDocumentTypes = () => {
   };
 
   const updateDocumentType = async (id: string, name: string, label: string) => {
-    if (!user) {
+    if (!user?.id) {
       console.error('[useDocumentTypes] Cannot update document type: no user');
       return false;
     }
@@ -117,19 +103,17 @@ export const useDocumentTypes = () => {
     try {
       console.log('[useDocumentTypes] Updating document type:', { id, name, label });
       
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('document_types')
         .update({ name, label })
-        .eq('id', id)
-        .select()
-        .single();
+        .eq('id', id);
 
       if (error) {
         console.error('[useDocumentTypes] Update error:', error);
         throw error;
       }
 
-      console.log('[useDocumentTypes] Document type updated successfully:', data);
+      console.log('[useDocumentTypes] Document type updated successfully');
       await fetchDocumentTypes();
       return true;
     } catch (error) {
@@ -139,7 +123,7 @@ export const useDocumentTypes = () => {
   };
 
   const deleteDocumentType = async (id: string) => {
-    if (!user) {
+    if (!user?.id) {
       console.error('[useDocumentTypes] Cannot delete document type: no user');
       return false;
     }
@@ -147,34 +131,17 @@ export const useDocumentTypes = () => {
     try {
       console.log('[useDocumentTypes] Deleting document type:', id);
       
-      // Try soft delete first
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('document_types')
         .update({ is_active: false })
-        .eq('id', id)
-        .select()
-        .single();
+        .eq('id', id);
 
       if (error) {
-        console.error('[useDocumentTypes] Soft delete error:', error);
-        console.log('[useDocumentTypes] Trying hard delete instead...');
-        
-        // If soft delete fails, try hard delete
-        const { error: deleteError } = await supabase
-          .from('document_types')
-          .delete()
-          .eq('id', id);
-
-        if (deleteError) {
-          console.error('[useDocumentTypes] Hard delete error:', deleteError);
-          throw deleteError;
-        }
-        
-        console.log('[useDocumentTypes] Document type hard deleted successfully');
-      } else {
-        console.log('[useDocumentTypes] Document type soft deleted successfully:', data);
+        console.error('[useDocumentTypes] Delete error:', error);
+        throw error;
       }
 
+      console.log('[useDocumentTypes] Document type deleted successfully');
       await fetchDocumentTypes();
       return true;
     } catch (error) {
@@ -183,16 +150,9 @@ export const useDocumentTypes = () => {
     }
   };
 
-  // Only fetch when we have both organization and user
   useEffect(() => {
-    if (selectedOrganization?.id && user) {
-      fetchDocumentTypes();
-    } else if (!selectedOrganization?.id) {
-      setDocumentTypes([]);
-      setLoading(false);
-      setError(null);
-    }
-  }, [selectedOrganization?.id, user?.id]); // Simplified dependencies
+    fetchDocumentTypes();
+  }, [fetchDocumentTypes]);
 
   return {
     documentTypes,

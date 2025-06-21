@@ -27,32 +27,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
-
-  const updateSession = async (newSession: Session | null) => {
-    console.log('[AuthContext] Updating session:', newSession ? 'Session found' : 'No session');
-    setSession(newSession);
-    setUser(newSession?.user ?? null);
-    
-    if (newSession) {
-      console.log('[AuthContext] User ID:', newSession.user.id);
-      console.log('[AuthContext] Access token available:', !!newSession.access_token);
-      
-      try {
-        await supabase.auth.setSession({
-          access_token: newSession.access_token,
-          refresh_token: newSession.refresh_token
-        });
-        console.log('[AuthContext] Session set successfully on Supabase client');
-      } catch (error) {
-        console.error('[AuthContext] Error setting session on Supabase client:', error);
-      }
-    }
-  };
 
   const refreshSession = async () => {
-    if (!initialized) return;
-    
     console.log('[AuthContext] Manually refreshing session...');
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -60,7 +36,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('[AuthContext] Error refreshing session:', error);
         return;
       }
-      await updateSession(session);
+      console.log('[AuthContext] Session refreshed:', session ? 'Found' : 'Not found');
+      setSession(session);
+      setUser(session?.user ?? null);
     } catch (error) {
       console.error('[AuthContext] Error in refreshSession:', error);
     }
@@ -69,36 +47,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log('[AuthContext] Initializing auth state...');
     
+    // Get initial session
+    const getInitialSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('[AuthContext] Initial session:', session ? 'Found' : 'Not found');
+        setSession(session);
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error('[AuthContext] Error getting initial session:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getInitialSession();
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('[AuthContext] Auth state changed:', event, session ? 'Session exists' : 'No session');
-        await updateSession(session);
-        
-        if (!initialized) {
-          setLoading(false);
-          setInitialized(true);
-        }
+      (event, session) => {
+        console.log('[AuthContext] Auth state changed:', event);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
       }
     );
-
-    // Check for existing session only once
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('[AuthContext] Initial session check:', session ? 'Session found' : 'No session');
-      await updateSession(session);
-      setLoading(false);
-      setInitialized(true);
-    }).catch((error) => {
-      console.error('[AuthContext] Error getting initial session:', error);
-      setLoading(false);
-      setInitialized(true);
-    });
 
     return () => {
       console.log('[AuthContext] Cleaning up auth subscription');
       subscription.unsubscribe();
     };
-  }, []); // Only run once on mount
+  }, []); // Empty dependency array
 
   const signIn = async (email: string, password: string) => {
     console.log('[AuthContext] Signing in user:', email);
@@ -108,8 +87,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     
     if (data.session) {
-      console.log('[AuthContext] Sign in successful, updating session');
-      await updateSession(data.session);
+      console.log('[AuthContext] Sign in successful');
+      setSession(data.session);
+      setUser(data.session.user);
     }
     
     return { error };
@@ -131,8 +111,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     
     if (data.session) {
-      console.log('[AuthContext] Sign up successful, updating session');
-      await updateSession(data.session);
+      console.log('[AuthContext] Sign up successful');
+      setSession(data.session);
+      setUser(data.session.user);
     }
     
     return { error };
@@ -141,7 +122,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     console.log('[AuthContext] Signing out user');
     await supabase.auth.signOut();
-    await updateSession(null);
+    setSession(null);
+    setUser(null);
   };
 
   const value: AuthContextType = {
