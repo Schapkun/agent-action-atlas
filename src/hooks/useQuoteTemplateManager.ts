@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useDocumentTemplates } from './useDocumentTemplates';
 import { useDocumentTemplatesWithLabels } from './useDocumentTemplatesWithLabels';
@@ -11,16 +10,12 @@ export const useQuoteTemplateManager = () => {
   const { defaultQuoteLabel, loading: defaultsLoading } = useInvoiceSettingsDefaults();
   const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplateWithTags | null>(null);
 
-  // Filter templates by "Offerte" tag first
-  const quoteTemplates = allTemplates.filter(template => 
-    template.tags?.some(tag => tag.toLowerCase() === 'offerte')
-  );
-
   // Filter templates by default label if one is set in settings
   const getFilteredTemplates = () => {
     if (!defaultQuoteLabel) {
-      // If no default label is set, return all quote templates
-      return quoteTemplates;
+      // If no default label is set, return empty array to show "no label configured" message
+      console.log('⚠️ Geen default quote label ingesteld in instellingen');
+      return [];
     }
 
     // Get template IDs that have the default label
@@ -28,8 +23,8 @@ export const useQuoteTemplateManager = () => {
       .filter(template => template.labels?.some(label => label.id === defaultQuoteLabel.id))
       .map(template => template.id);
 
-    // Filter quote templates to only include those with the default label
-    const filtered = quoteTemplates.filter(template => templateIdsWithLabel.includes(template.id));
+    // Filter all templates to only include those with the default label
+    const filtered = allTemplates.filter(template => templateIdsWithLabel.includes(template.id));
     
     console.log('🏷️ Default quote label:', defaultQuoteLabel.name);
     console.log('🏷️ Templates with label:', templateIdsWithLabel.length);
@@ -39,6 +34,7 @@ export const useQuoteTemplateManager = () => {
   };
 
   const filteredTemplates = getFilteredTemplates();
+  const noLabelConfigured = !defaultQuoteLabel;
 
   // Sort templates: favorite first, then by creation date (newest first)
   const sortedTemplates = [...filteredTemplates].sort((a, b) => {
@@ -59,10 +55,14 @@ export const useQuoteTemplateManager = () => {
         }
       } else {
         setSelectedTemplate(null);
-        console.log('⚠️ No quote templates available for selected label');
+        if (noLabelConfigured) {
+          console.log('⚠️ Geen quote label geconfigureerd in instellingen');
+        } else {
+          console.log('⚠️ No quote templates available for selected label');
+        }
       }
     }
-  }, [sortedTemplates.length, defaultQuoteLabel?.id, templatesLoading, labelsLoading, defaultsLoading]);
+  }, [sortedTemplates.length, defaultQuoteLabel?.id, templatesLoading, labelsLoading, defaultsLoading, noLabelConfigured]);
 
   const handleTemplateSelect = (template: DocumentTemplateWithTags | null) => {
     setSelectedTemplate(template);
@@ -76,6 +76,7 @@ export const useQuoteTemplateManager = () => {
     selectedLabel: defaultQuoteLabel,
     availableTemplates: sortedTemplates,
     templatesLoading: templatesLoading || labelsLoading || defaultsLoading,
+    noLabelConfigured,
     handleTemplateSelect,
     // Keep these for backward compatibility but they won't be used
     handleLabelSelect: () => {}

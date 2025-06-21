@@ -11,6 +11,7 @@ interface TemplateSelectorProps {
   onTemplateSelect?: (template: DocumentTemplateWithTags) => void;
   availableTemplates?: DocumentTemplateWithTags[];
   templatesLoading?: boolean;
+  noLabelConfigured?: boolean;
 }
 
 export const TemplateSelector = ({
@@ -18,7 +19,8 @@ export const TemplateSelector = ({
   onTemplateChange,
   onTemplateSelect,
   availableTemplates,
-  templatesLoading: propTemplatesLoading
+  templatesLoading: propTemplatesLoading,
+  noLabelConfigured = false
 }: TemplateSelectorProps) => {
   const { templates: hookTemplates, loading: hookTemplatesLoading } = useDocumentTemplates();
 
@@ -43,6 +45,15 @@ export const TemplateSelector = ({
       }
     }
   };
+
+  // Show message when no label is configured
+  if (noLabelConfigured && !templatesLoading) {
+    return (
+      <div className="h-8 px-3 py-2 text-xs text-gray-500 bg-gray-100 rounded-md border">
+        Stel eerst een label in bij instellingen
+      </div>
+    );
+  }
 
   return (
     <Select

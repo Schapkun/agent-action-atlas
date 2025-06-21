@@ -11,16 +11,12 @@ export const useInvoiceTemplateManager = () => {
   const { defaultInvoiceLabel, loading: defaultsLoading } = useInvoiceSettingsDefaults();
   const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplateWithTags | null>(null);
 
-  // Filter templates by "Factuur" tag first
-  const invoiceTemplates = allTemplates.filter(template => {
-    return template.tags?.some(tag => tag.toLowerCase() === 'factuur');
-  });
-
   // Filter templates by default label if one is set in settings
   const getFilteredTemplates = () => {
     if (!defaultInvoiceLabel) {
-      // If no default label is set, return all invoice templates
-      return invoiceTemplates;
+      // If no default label is set, return empty array to show "no label configured" message
+      console.log('⚠️ Geen default invoice label ingesteld in instellingen');
+      return [];
     }
 
     // Get template IDs that have the default label
@@ -28,8 +24,8 @@ export const useInvoiceTemplateManager = () => {
       .filter(template => template.labels?.some(label => label.id === defaultInvoiceLabel.id))
       .map(template => template.id);
 
-    // Filter invoice templates to only include those with the default label
-    const filtered = invoiceTemplates.filter(template => templateIdsWithLabel.includes(template.id));
+    // Filter all templates to only include those with the default label
+    const filtered = allTemplates.filter(template => templateIdsWithLabel.includes(template.id));
     
     console.log('🏷️ Default invoice label:', defaultInvoiceLabel.name);
     console.log('🏷️ Templates with label:', templateIdsWithLabel.length);
@@ -39,6 +35,7 @@ export const useInvoiceTemplateManager = () => {
   };
 
   const filteredTemplates = getFilteredTemplates();
+  const noLabelConfigured = !defaultInvoiceLabel;
 
   // Sort templates: favorite first, then by creation date (newest first)
   const sortedTemplates = [...filteredTemplates].sort((a, b) => {
@@ -59,10 +56,14 @@ export const useInvoiceTemplateManager = () => {
         }
       } else {
         setSelectedTemplate(null);
-        console.log('⚠️ No templates available for selected label');
+        if (noLabelConfigured) {
+          console.log('⚠️ Geen label geconfigureerd in instellingen');
+        } else {
+          console.log('⚠️ No templates available for selected label');
+        }
       }
     }
-  }, [sortedTemplates.length, defaultInvoiceLabel?.id, templatesLoading, labelsLoading, defaultsLoading]);
+  }, [sortedTemplates.length, defaultInvoiceLabel?.id, templatesLoading, labelsLoading, defaultsLoading, noLabelConfigured]);
 
   const handleTemplateSelect = (template: DocumentTemplateWithTags) => {
     setSelectedTemplate(template);
@@ -74,6 +75,7 @@ export const useInvoiceTemplateManager = () => {
     selectedLabel: defaultInvoiceLabel,
     availableTemplates: sortedTemplates,
     templatesLoading: templatesLoading || labelsLoading || defaultsLoading,
+    noLabelConfigured,
     handleTemplateSelect,
     // Keep these for backward compatibility but they won't be used
     handleLabelSelect: () => {}

@@ -16,6 +16,7 @@ export const CreateInvoiceForm = () => {
     selectedTemplate,
     availableTemplates,
     templatesLoading,
+    noLabelConfigured,
     handleTemplateSelect
   } = useInvoiceTemplateManager();
 
@@ -77,6 +78,7 @@ export const CreateInvoiceForm = () => {
                 selectedTemplate={selectedTemplate}
                 availableTemplates={availableTemplates}
                 templatesLoading={templatesLoading}
+                noLabelConfigured={noLabelConfigured}
                 onTemplateSelect={handleTemplateSelect}
               />
             }
