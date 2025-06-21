@@ -1,4 +1,3 @@
-
 import { InvoiceHeader } from './InvoiceHeader';
 import { ContactSelectionCard } from './ContactSelectionCard';
 import { InvoiceDetailsCard } from './InvoiceDetailsCard';
@@ -8,19 +7,16 @@ import { InvoiceSettingsSidebar } from './InvoiceSettingsSidebar';
 import { InvoiceFormActions } from './InvoiceFormActions';
 import { TemplateSelector } from './TemplateSelector';
 import { InvoicePreviewPopup } from './InvoicePreviewPopup';
-import { DocumentLabelSelector } from '@/components/shared/DocumentLabelSelector';
 import { useInvoiceFormHandlers } from '@/hooks/useInvoiceFormHandlers';
 import { useInvoiceTemplateManager } from '@/hooks/useInvoiceTemplateManager';
 
 export const CreateInvoiceForm = () => {
-  // Centralized template management with label filtering
+  // Centralized template management with default label from settings
   const {
     selectedTemplate,
-    selectedLabel,
     availableTemplates,
     templatesLoading,
-    handleTemplateSelect,
-    handleLabelSelect
+    handleTemplateSelect
   } = useInvoiceTemplateManager();
 
   // Form handlers with preview functionality
@@ -76,13 +72,6 @@ export const CreateInvoiceForm = () => {
         <form onSubmit={handleFormSubmit} className="space-y-3">
           <ContactSelectionCard
             selectedContact={selectedContact}
-            labelSelector={
-              <DocumentLabelSelector
-                selectedLabel={selectedLabel}
-                onLabelSelect={handleLabelSelect}
-                disabled={templatesLoading}
-              />
-            }
             templateSelector={
               <TemplateSelector
                 selectedTemplate={selectedTemplate}

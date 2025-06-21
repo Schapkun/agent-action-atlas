@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -94,18 +93,9 @@ export const ContactSelectionCard = ({
               </div>
             </div>
 
-            {/* Template section - with optional label selector */}
+            {/* Template section */}
             <div className="flex-1">
-              <div className="flex gap-2">
-                {labelSelector && (
-                  <div className="flex-1">
-                    {labelSelector}
-                  </div>
-                )}
-                <div className="flex-1">
-                  {templateSelector}
-                </div>
-              </div>
+              {templateSelector}
             </div>
 
             {/* Settings button */}

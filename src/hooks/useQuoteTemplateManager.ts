@@ -1,30 +1,29 @@
-
 import { useState, useEffect } from 'react';
 import { useDocumentTemplates } from './useDocumentTemplates';
 import { useDocumentTemplatesWithLabels } from './useDocumentTemplatesWithLabels';
+import { useInvoiceSettingsDefaults } from './useInvoiceSettingsDefaults';
 import { DocumentTemplateWithTags } from '@/types/documentTags';
-import { DocumentTemplateWithLabels, DocumentTemplateLabel } from '@/types/documentTemplateLabels';
 
 export const useQuoteTemplateManager = () => {
   const { templates: allTemplates, loading: templatesLoading } = useDocumentTemplates();
   const { templates: templatesWithLabels, loading: labelsLoading } = useDocumentTemplatesWithLabels();
+  const { defaultQuoteLabel, loading: defaultsLoading } = useInvoiceSettingsDefaults();
   const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplateWithTags | null>(null);
-  const [selectedLabel, setSelectedLabel] = useState<DocumentTemplateLabel | null>(null);
 
   // Filter templates by "Offerte" tag
   const quoteTemplates = allTemplates.filter(template => 
     template.tags?.some(tag => tag.toLowerCase() === 'offerte')
   );
 
-  // Filter templates by selected label if one is chosen
+  // Filter templates by default label if one is set in settings
   const getFilteredTemplates = () => {
-    if (!selectedLabel) {
+    if (!defaultQuoteLabel) {
       return quoteTemplates;
     }
 
-    // Get template IDs that have the selected label
+    // Get template IDs that have the default label
     const templateIdsWithLabel = templatesWithLabels
-      .filter(template => template.labels?.some(label => label.id === selectedLabel.id))
+      .filter(template => template.labels?.some(label => label.id === defaultQuoteLabel.id))
       .map(template => template.id);
 
     return quoteTemplates.filter(template => templateIdsWithLabel.includes(template.id));
@@ -50,22 +49,19 @@ export const useQuoteTemplateManager = () => {
     } else if (sortedTemplates.length === 0) {
       setSelectedTemplate(null);
     }
-  }, [sortedTemplates.length, selectedLabel?.id]);
+  }, [sortedTemplates.length, defaultQuoteLabel?.id]);
 
   const handleTemplateSelect = (template: DocumentTemplateWithTags | null) => {
     setSelectedTemplate(template);
   };
 
-  const handleLabelSelect = (label: DocumentTemplateLabel | null) => {
-    setSelectedLabel(label);
-  };
-
   return {
     selectedTemplate,
-    selectedLabel,
+    selectedLabel: defaultQuoteLabel,
     availableTemplates: sortedTemplates,
-    templatesLoading: templatesLoading || labelsLoading,
+    templatesLoading: templatesLoading || labelsLoading || defaultsLoading,
     handleTemplateSelect,
-    handleLabelSelect
+    // Keep these for backward compatibility but they won't be used
+    handleLabelSelect: () => {}
   };
 };

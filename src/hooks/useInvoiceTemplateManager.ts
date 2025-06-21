@@ -1,30 +1,29 @@
-
 import { useState, useEffect } from 'react';
 import { useDocumentTemplates } from './useDocumentTemplates';
 import { useDocumentTemplatesWithLabels } from './useDocumentTemplatesWithLabels';
+import { useInvoiceSettingsDefaults } from './useInvoiceSettingsDefaults';
 import { DocumentTemplateWithTags } from '@/types/documentTags';
-import { DocumentTemplateWithLabels, DocumentTemplateLabel } from '@/types/documentTemplateLabels';
 
 export const useInvoiceTemplateManager = () => {
   const { templates: allTemplates, loading: templatesLoading } = useDocumentTemplates();
   const { templates: templatesWithLabels, loading: labelsLoading } = useDocumentTemplatesWithLabels();
+  const { defaultInvoiceLabel, loading: defaultsLoading } = useInvoiceSettingsDefaults();
   const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplateWithTags | null>(null);
-  const [selectedLabel, setSelectedLabel] = useState<DocumentTemplateLabel | null>(null);
 
   // Filter templates by "Factuur" tag
   const invoiceTemplates = allTemplates.filter(template => {
     return template.tags?.some(tag => tag.toLowerCase() === 'factuur');
   });
 
-  // Filter templates by selected label if one is chosen
+  // Filter templates by default label if one is set in settings
   const getFilteredTemplates = () => {
-    if (!selectedLabel) {
+    if (!defaultInvoiceLabel) {
       return invoiceTemplates;
     }
 
-    // Get template IDs that have the selected label
+    // Get template IDs that have the default label
     const templateIdsWithLabel = templatesWithLabels
-      .filter(template => template.labels?.some(label => label.id === selectedLabel.id))
+      .filter(template => template.labels?.some(label => label.id === defaultInvoiceLabel.id))
       .map(template => template.id);
 
     return invoiceTemplates.filter(template => templateIdsWithLabel.includes(template.id));
@@ -50,22 +49,19 @@ export const useInvoiceTemplateManager = () => {
     } else if (sortedTemplates.length === 0) {
       setSelectedTemplate(null);
     }
-  }, [sortedTemplates.length, selectedLabel?.id]);
+  }, [sortedTemplates.length, defaultInvoiceLabel?.id]);
 
   const handleTemplateSelect = (template: DocumentTemplateWithTags) => {
     setSelectedTemplate(template);
   };
 
-  const handleLabelSelect = (label: DocumentTemplateLabel | null) => {
-    setSelectedLabel(label);
-  };
-
   return {
     selectedTemplate,
-    selectedLabel,
+    selectedLabel: defaultInvoiceLabel,
     availableTemplates: sortedTemplates,
-    templatesLoading: templatesLoading || labelsLoading,
+    templatesLoading: templatesLoading || labelsLoading || defaultsLoading,
     handleTemplateSelect,
-    handleLabelSelect
+    // Keep these for backward compatibility but they won't be used
+    handleLabelSelect: () => {}
   };
 };
