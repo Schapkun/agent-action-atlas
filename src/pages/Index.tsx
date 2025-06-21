@@ -23,7 +23,7 @@ const Index = ({ children }: IndexProps) => {
     if (path === '/') return 'overview';
     if (path === '/openstaande-taken') return 'pending-tasks';
     if (path === '/ai-acties') return 'actions';
-    if (path === '/documenten') return 'documents';
+    if (path === '/documenten' || path.startsWith('/documenten/')) return 'documents';
     if (path === '/actieve-dossiers') return 'active-dossiers';
     if (path === '/gesloten-dossiers') return 'closed-dossiers';
     if (path === '/facturen' || path.startsWith('/facturen/')) return 'invoices';

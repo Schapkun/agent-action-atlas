@@ -50,6 +50,7 @@ const App = () => (
               <Route path="/ai-acties" element={<Index><Actions /></Index>} />
               <Route path="/documenten" element={<Index><Documents /></Index>} />
               <Route path="/documenten/nieuw" element={<Index><CreateDocument /></Index>} />
+              <Route path="/documenten/opstellen" element={<Navigate to="/documenten/nieuw" replace />} />
               <Route path="/actieve-dossiers" element={<Index><ActiveDossiers /></Index>} />
               <Route path="/gesloten-dossiers" element={<Index><ClosedDossiers /></Index>} />
               <Route path="/facturen" element={<Index><Invoices /></Index>} />

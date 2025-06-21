@@ -1,8 +1,8 @@
 
-import { CreateDocumentForm } from '@/components/documents/CreateDocumentForm';
+import { DocumentOverview } from '@/components/documents/DocumentOverview';
 
 const Documents = () => {
-  return <CreateDocumentForm />;
+  return <DocumentOverview />;
 };
 
 export default Documents;
