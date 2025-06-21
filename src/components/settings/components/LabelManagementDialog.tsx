@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit2 } from 'lucide-react';
+import { Plus, Edit2, Loader2 } from 'lucide-react';
 import { useDocumentTemplateLabels } from '@/hooks/useDocumentTemplateLabels';
 import { useDocumentTemplatesWithLabels } from '@/hooks/useDocumentTemplatesWithLabels';
 import { DocumentTemplateWithLabels, DocumentTemplateLabel } from '@/types/documentTemplateLabels';
@@ -25,30 +25,29 @@ interface LabelManagementDialogProps {
 
 export const LabelManagementDialog = ({ open, onClose, template, onTemplateUpdate }: LabelManagementDialogProps) => {
   const { labels, createLabel, updateLabel } = useDocumentTemplateLabels();
-  const { assignLabelToTemplate, removeLabelFromTemplate } = useDocumentTemplatesWithLabels();
+  const { templates, assignLabelToTemplate, removeLabelFromTemplate, refetch } = useDocumentTemplatesWithLabels();
   
   const [isCreatingLabel, setIsCreatingLabel] = useState(false);
   const [editingLabel, setEditingLabel] = useState<DocumentTemplateLabel | null>(null);
   const [newLabelName, setNewLabelName] = useState('');
   const [newLabelColor, setNewLabelColor] = useState('#3B82F6');
-  const [currentTemplate, setCurrentTemplate] = useState(template);
 
-  // Update local template state when prop changes
-  useEffect(() => {
-    setCurrentTemplate(template);
-  }, [template]);
-
-  const templateLabelIds = currentTemplate.labels?.map(label => label.id) || [];
+  // Find the current template with labels from the fetched templates
+  const currentTemplateWithLabels = templates.find(t => t.id === template.id);
+  const templateLabelIds = currentTemplateWithLabels?.labels?.map(label => label.id) || [];
 
   const handleLabelToggle = async (labelId: string, isChecked: boolean) => {
     try {
       if (isChecked) {
-        await assignLabelToTemplate(currentTemplate.id, labelId);
+        await assignLabelToTemplate(template.id, labelId);
       } else {
-        await removeLabelFromTemplate(currentTemplate.id, labelId);
+        await removeLabelFromTemplate(template.id, labelId);
       }
       
-      // Notify parent component to refresh its data - this will update the template prop
+      // Refresh the templates data to get updated labels
+      await refetch();
+      
+      // Notify parent component to refresh its data
       onTemplateUpdate?.();
     } catch (error) {
       console.error('Error toggling label:', error);
@@ -95,20 +94,39 @@ export const LabelManagementDialog = ({ open, onClose, template, onTemplateUpdat
     setNewLabelColor('#3B82F6');
   };
 
+  // Show loading state if template data is not yet available
+  if (!currentTemplateWithLabels) {
+    return (
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Labels beheren voor "{template.name}"</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center p-8">
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span>Template data laden...</span>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Labels beheren voor "{currentTemplate.name}"</DialogTitle>
+          <DialogTitle>Labels beheren voor "{currentTemplateWithLabels.name}"</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Current template labels */}
-          {currentTemplate.labels && currentTemplate.labels.length > 0 && (
+          {currentTemplateWithLabels.labels && currentTemplateWithLabels.labels.length > 0 && (
             <div>
               <Label className="text-sm font-medium">Huidige labels:</Label>
               <div className="flex flex-wrap gap-2 mt-2">
-                {currentTemplate.labels.map((label) => (
+                {currentTemplateWithLabels.labels.map((label) => (
                   <Badge
                     key={label.id}
                     style={{ backgroundColor: label.color, color: 'white' }}
