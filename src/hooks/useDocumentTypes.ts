@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface DocumentType {
   id: string;
@@ -20,23 +21,31 @@ export const useDocumentTypes = () => {
 
   const fetchDocumentTypes = useCallback(async () => {
     if (!selectedOrganization?.id) {
+      console.log('[useDocumentTypes] No organization selected, clearing document types');
       setDocumentTypes([]);
       setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch(`https://rybezhoovslkutsugzvv.supabase.co/rest/v1/document_types?organization_id=eq.${selectedOrganization.id}&is_active=eq.true&select=*&order=created_at.desc`, {
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA'
-        }
-      });
+      console.log('[useDocumentTypes] Fetching document types for organization:', selectedOrganization.id);
+      
+      const { data, error } = await supabase
+        .from('document_types')
+        .select('*')
+        .eq('organization_id', selectedOrganization.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
 
-      const data = await response.json();
+      if (error) {
+        console.error('[useDocumentTypes] Fetch error:', error);
+        throw error;
+      }
+
+      console.log('[useDocumentTypes] Fetched document types:', data?.length || 0);
       setDocumentTypes(data || []);
     } catch (error) {
-      console.error('Error fetching document types:', error);
+      console.error('[useDocumentTypes] Error fetching document types:', error);
       setDocumentTypes([]);
     } finally {
       setLoading(false);
@@ -44,77 +53,100 @@ export const useDocumentTypes = () => {
   }, [selectedOrganization?.id]);
 
   const createDocumentType = async (name: string, label: string) => {
-    if (!selectedOrganization?.id) return;
+    if (!selectedOrganization?.id) {
+      console.error('[useDocumentTypes] Cannot create document type: no organization selected');
+      return false;
+    }
 
     try {
-      const response = await fetch('https://rybezhoovslkutsugzvv.supabase.co/rest/v1/document_types', {
-        method: 'POST',
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+      console.log('[useDocumentTypes] Creating document type:', { name, label, organization_id: selectedOrganization.id });
+      
+      const { data, error } = await supabase
+        .from('document_types')
+        .insert({
           name,
           label,
           organization_id: selectedOrganization.id,
           is_active: true
         })
-      });
+        .select()
+        .single();
 
-      if (response.ok) {
-        await fetchDocumentTypes();
-        return true;
+      if (error) {
+        console.error('[useDocumentTypes] Create error:', error);
+        throw error;
       }
-      return false;
+
+      console.log('[useDocumentTypes] Document type created successfully:', data);
+      await fetchDocumentTypes();
+      return true;
     } catch (error) {
-      console.error('Error creating document type:', error);
+      console.error('[useDocumentTypes] Error creating document type:', error);
       return false;
     }
   };
 
   const updateDocumentType = async (id: string, name: string, label: string) => {
     try {
-      const response = await fetch(`https://rybezhoovslkutsugzvv.supabase.co/rest/v1/document_types?id=eq.${id}`, {
-        method: 'PATCH',
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name, label })
-      });
+      console.log('[useDocumentTypes] Updating document type:', { id, name, label });
+      
+      const { data, error } = await supabase
+        .from('document_types')
+        .update({ name, label })
+        .eq('id', id)
+        .select()
+        .single();
 
-      if (response.ok) {
-        await fetchDocumentTypes();
-        return true;
+      if (error) {
+        console.error('[useDocumentTypes] Update error:', error);
+        throw error;
       }
-      return false;
+
+      console.log('[useDocumentTypes] Document type updated successfully:', data);
+      await fetchDocumentTypes();
+      return true;
     } catch (error) {
-      console.error('Error updating document type:', error);
+      console.error('[useDocumentTypes] Error updating document type:', error);
       return false;
     }
   };
 
   const deleteDocumentType = async (id: string) => {
     try {
-      const response = await fetch(`https://rybezhoovslkutsugzvv.supabase.co/rest/v1/document_types?id=eq.${id}`, {
-        method: 'PATCH',
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ is_active: false })
-      });
+      console.log('[useDocumentTypes] Deleting document type:', id);
+      
+      // First try soft delete (set is_active to false)
+      const { data, error } = await supabase
+        .from('document_types')
+        .update({ is_active: false })
+        .eq('id', id)
+        .select()
+        .single();
 
-      if (response.ok) {
-        await fetchDocumentTypes();
-        return true;
+      if (error) {
+        console.error('[useDocumentTypes] Soft delete error:', error);
+        console.log('[useDocumentTypes] Trying hard delete instead...');
+        
+        // If soft delete fails, try hard delete
+        const { error: deleteError } = await supabase
+          .from('document_types')
+          .delete()
+          .eq('id', id);
+
+        if (deleteError) {
+          console.error('[useDocumentTypes] Hard delete error:', deleteError);
+          throw deleteError;
+        }
+        
+        console.log('[useDocumentTypes] Document type hard deleted successfully');
+      } else {
+        console.log('[useDocumentTypes] Document type soft deleted successfully:', data);
       }
-      return false;
+
+      await fetchDocumentTypes();
+      return true;
     } catch (error) {
-      console.error('Error deleting document type:', error);
+      console.error('[useDocumentTypes] Error deleting document type:', error);
       return false;
     }
   };

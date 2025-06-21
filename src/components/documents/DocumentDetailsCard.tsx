@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useDocumentTypes } from '@/hooks/useDocumentTypes';
 
 interface DocumentDetailsCardProps {
   formData: {
@@ -17,16 +18,6 @@ interface DocumentDetailsCardProps {
   onContentChange: (content: string) => void;
 }
 
-const documentTypes = [
-  { value: 'contract', label: 'Contract' },
-  { value: 'brief', label: 'Brief' },
-  { value: 'rapport', label: 'Rapport' },
-  { value: 'overeenkomst', label: 'Overeenkomst' },
-  { value: 'notitie', label: 'Notitie' },
-  { value: 'factuur', label: 'Factuur' },
-  { value: 'offerte', label: 'Offerte' }
-];
-
 export const DocumentDetailsCard = ({
   formData,
   documentType,
@@ -35,19 +26,21 @@ export const DocumentDetailsCard = ({
   onDocumentTypeChange,
   onContentChange
 }: DocumentDetailsCardProps) => {
+  const { documentTypes, loading: documentTypesLoading } = useDocumentTypes();
+
   return (
     <Card>
       <CardContent className="p-3">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
             <Label htmlFor="documentType" className="text-xs font-medium">Document type *</Label>
-            <Select value={documentType} onValueChange={onDocumentTypeChange}>
+            <Select value={documentType} onValueChange={onDocumentTypeChange} disabled={documentTypesLoading}>
               <SelectTrigger className="h-8 text-sm">
-                <SelectValue placeholder="Selecteer type" />
+                <SelectValue placeholder={documentTypesLoading ? "Laden..." : "Selecteer type"} />
               </SelectTrigger>
               <SelectContent>
                 {documentTypes.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
+                  <SelectItem key={type.id} value={type.name}>
                     {type.label}
                   </SelectItem>
                 ))}
