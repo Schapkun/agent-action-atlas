@@ -22,7 +22,7 @@ const DocumentLayoutContent = () => {
   // Tag filter states (keeping existing functionality)
   const [selectedFilterTags, setSelectedFilterTags] = useState<string[]>([]);
   
-  const { templates, loading, error, refetch } = useDocumentTemplatesWithLabels();
+  const { templates, loading, refetch } = useDocumentTemplatesWithLabels();
   const { toast } = useToast();
 
   // Get all unique tags from templates - memoized to prevent recalculation
