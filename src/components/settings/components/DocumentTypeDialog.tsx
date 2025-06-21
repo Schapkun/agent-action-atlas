@@ -4,12 +4,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DocumentType } from '@/hooks/useDocumentTypes';
+import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 
 interface DocumentTypeDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (name: string, label: string) => Promise<boolean>;
+  onSave: (name: string, label: string, templateId?: string) => Promise<boolean>;
   documentType?: DocumentType;
   existingNames: string[];
 }
@@ -23,108 +25,130 @@ export const DocumentTypeDialog = ({
 }: DocumentTypeDialogProps) => {
   const [name, setName] = useState('');
   const [label, setLabel] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ name?: string; label?: string }>({});
+  const [templateId, setTemplateId] = useState<string>('');
+  const [nameError, setNameError] = useState('');
+
+  const { templates } = useDocumentTemplates();
 
   useEffect(() => {
-    if (open) {
-      setName(documentType?.name || '');
-      setLabel(documentType?.label || '');
-      setErrors({});
+    if (documentType) {
+      setName(documentType.name);
+      setLabel(documentType.label);
+      setTemplateId(documentType.default_template_id || '');
+    } else {
+      setName('');
+      setLabel('');
+      setTemplateId('');
     }
-  }, [open, documentType]);
+    setNameError('');
+  }, [documentType, open]);
 
-  const validateForm = () => {
-    const newErrors: { name?: string; label?: string } = {};
-
-    if (!name.trim()) {
-      newErrors.name = 'Naam is verplicht';
-    } else if (name.length < 2) {
-      newErrors.name = 'Naam moet minimaal 2 karakters lang zijn';
-    } else if (!/^[a-z_]+$/.test(name)) {
-      newErrors.name = 'Naam mag alleen kleine letters en underscores bevatten';
-    } else if (existingNames.includes(name) && name !== documentType?.name) {
-      newErrors.name = 'Deze naam bestaat al';
+  const validateName = (value: string) => {
+    if (!value.trim()) {
+      setNameError('Naam is verplicht');
+      return false;
     }
-
-    if (!label.trim()) {
-      newErrors.label = 'Label is verplicht';
-    } else if (label.length < 2) {
-      newErrors.label = 'Label moet minimaal 2 karakters lang zijn';
+    
+    const isDuplicate = existingNames.some(existing => 
+      existing.toLowerCase() === value.toLowerCase() && 
+      (!documentType || existing !== documentType.name)
+    );
+    
+    if (isDuplicate) {
+      setNameError('Deze naam bestaat al');
+      return false;
     }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    
+    setNameError('');
+    return true;
   };
 
   const handleSave = async () => {
-    if (!validateForm()) return;
+    if (!validateName(name) || !label.trim()) return;
 
-    setLoading(true);
-    try {
-      const success = await onSave(name.trim(), label.trim());
-      if (success) {
-        onClose();
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleClose = () => {
-    if (!loading) {
+    const success = await onSave(name.trim(), label.trim(), templateId || undefined);
+    if (success) {
       onClose();
     }
   };
 
+  const handleNameChange = (value: string) => {
+    setName(value);
+    if (nameError) {
+      validateName(value);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
             {documentType ? 'Document Type Bewerken' : 'Nieuw Document Type'}
           </DialogTitle>
         </DialogHeader>
-
-        <div className="space-y-4">
+        
+        <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Naam (technische naam)</Label>
+            <Label htmlFor="name">Naam (technisch) *</Label>
             <Input
               id="name"
               value={name}
-              onChange={(e) => setName(e.target.value.toLowerCase().replace(/[^a-z_]/g, ''))}
-              placeholder="bijv. contract"
-              disabled={loading}
+              onChange={(e) => handleNameChange(e.target.value)}
+              placeholder="bijv. contract, brief, rapport"
+              className={nameError ? 'border-red-500' : ''}
+              disabled={!!documentType}
             />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name}</p>
+            {nameError && (
+              <p className="text-sm text-red-500">{nameError}</p>
             )}
-            <p className="text-xs text-muted-foreground">
-              Alleen kleine letters en underscores toegestaan
-            </p>
+            {documentType && (
+              <p className="text-xs text-muted-foreground">
+                De technische naam kan niet worden gewijzigd
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="label">Label (weergavenaam)</Label>
+            <Label htmlFor="label">Label (weergave) *</Label>
             <Input
               id="label"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              placeholder="bijv. Contracten"
-              disabled={loading}
+              placeholder="bijv. Contracten, Brieven, Rapporten"
             />
-            {errors.label && (
-              <p className="text-sm text-destructive">{errors.label}</p>
-            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="template">Standaard Template</Label>
+            <Select value={templateId} onValueChange={setTemplateId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecteer een template (optioneel)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Geen template</SelectItem>
+                {templates.map((template) => (
+                  <SelectItem key={template.id} value={template.id}>
+                    {template.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Deze template wordt automatisch geselecteerd bij het aanmaken van dit document type
+            </p>
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 mt-6">
-          <Button variant="outline" onClick={handleClose} disabled={loading}>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose}>
             Annuleren
           </Button>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? 'Opslaan...' : 'Opslaan'}
+          <Button 
+            onClick={handleSave}
+            disabled={!name.trim() || !label.trim() || !!nameError}
+          >
+            {documentType ? 'Bijwerken' : 'Aanmaken'}
           </Button>
         </div>
       </DialogContent>

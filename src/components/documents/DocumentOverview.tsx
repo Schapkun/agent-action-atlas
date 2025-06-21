@@ -25,7 +25,6 @@ interface Document {
   created_at: string;
   updated_at: string;
   created_by?: string;
-  tags?: string[];
   is_active: boolean;
 }
 
@@ -54,7 +53,6 @@ export const DocumentOverview = () => {
           created_at,
           updated_at,
           created_by,
-          tags,
           is_active
         `)
         .eq('organization_id', selectedOrganization.id)
@@ -69,13 +67,8 @@ export const DocumentOverview = () => {
 
       if (error) throw error;
 
-      const transformedData = (data || []).map(doc => ({
-        ...doc,
-        tags: Array.isArray(doc.tags) ? doc.tags : []
-      }));
-
-      console.log('📄 Documents fetched:', transformedData.length);
-      setDocuments(transformedData);
+      console.log('📄 Documents fetched:', data?.length || 0);
+      setDocuments(data || []);
     } catch (error) {
       console.error('Error fetching documents:', error);
       toast({
@@ -212,15 +205,6 @@ export const DocumentOverview = () => {
                         <Badge className={getTypeColor(document.type)}>
                           {document.type}
                         </Badge>
-                        {document.tags && document.tags.map((tag) => (
-                          <Badge
-                            key={tag}
-                            variant="outline"
-                            className="text-xs"
-                          >
-                            {tag}
-                          </Badge>
-                        ))}
                       </div>
                       
                       {document.description && (

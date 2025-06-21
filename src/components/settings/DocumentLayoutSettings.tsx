@@ -9,11 +9,10 @@ import { useToast } from '@/hooks/use-toast';
 import { DocumentActions } from './components/DocumentActions';
 import { DocumentList } from './components/DocumentList';
 import { DocumentProvider } from './contexts/DocumentContext';
-import { DocumentTemplateWithLabels } from '@/types/documentTemplateLabels';
+import { DocumentTemplateWithTags } from '@/types/documentTags';
 import { TemplateLibraryNew } from './components/TemplateLibraryNew';
-import { useDocumentTemplatesWithLabels } from '@/hooks/useDocumentTemplatesWithLabels';
+import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { DocumentSettings } from './DocumentSettings';
-import { LabelManager } from './components/LabelManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const DocumentLayoutContent = () => {
@@ -21,25 +20,21 @@ const DocumentLayoutContent = () => {
   const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [editingDocumentId, setEditingDocumentId] = useState<string | undefined>(undefined);
-  const [duplicatingDocument, setDuplicatingDocument] = useState<DocumentTemplateWithLabels | null>(null);
+  const [duplicatingDocument, setDuplicatingDocument] = useState<DocumentTemplateWithTags | null>(null);
   
-  // Tag filter states (keeping existing functionality)
   const [selectedFilterTags, setSelectedFilterTags] = useState<string[]>([]);
   
-  const { templates: templatesWithLabels, loading, refetch: fetchTemplates } = useDocumentTemplatesWithLabels();
+  const { templates, loading, fetchTemplates } = useDocumentTemplates();
   const { toast } = useToast();
 
-  // Get all unique tags from templates - memoized to prevent recalculation
   const availableTags = useMemo(() => {
-    const allTags = templatesWithLabels.flatMap(template => template.tags || []);
+    const allTags = templates.flatMap(template => template.tags || []);
     return [...new Set(allTags)].sort();
-  }, [templatesWithLabels]);
+  }, [templates]);
 
-  // Filter and sort templates based on selected tags - memoized for performance
   const filteredTemplates = useMemo(() => {
-    return templatesWithLabels
+    return templates
       .filter(template => {
-        // Tag filter - if any tags are selected, the template must have at least one of them
         if (selectedFilterTags.length > 0) {
           const templateTags = template.tags || [];
           const hasMatchingTag = selectedFilterTags.some(filterTag => 
@@ -53,10 +48,9 @@ const DocumentLayoutContent = () => {
         return true;
       })
       .sort((a, b) => {
-        // Sort by creation date (newest first)
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
-  }, [templatesWithLabels, selectedFilterTags]);
+  }, [templates, selectedFilterTags]);
 
   const handleNewDocument = () => {
     setEditingDocumentId(undefined);
@@ -67,7 +61,7 @@ const DocumentLayoutContent = () => {
     setIsLibraryOpen(true);
   };
 
-  const handleEditDocument = (document: DocumentTemplateWithLabels) => {
+  const handleEditDocument = (document: DocumentTemplateWithTags) => {
     setEditingDocumentId(document.id);
     setIsBuilderOpen(true);
   };
@@ -85,7 +79,7 @@ const DocumentLayoutContent = () => {
     }
   };
 
-  const handleDuplicateDocument = (document: DocumentTemplateWithLabels) => {
+  const handleDuplicateDocument = (document: DocumentTemplateWithTags) => {
     setDuplicatingDocument(document);
     setIsNameDialogOpen(true);
   };
@@ -93,9 +87,7 @@ const DocumentLayoutContent = () => {
   const handleDuplicateSave = async (name: string, description: string) => {
     if (duplicatingDocument) {
       try {
-        // Note: You'll need to add createTemplate function to the labels hook or use the existing hook
-        // For now, using a placeholder - this would need to be implemented
-        console.log('Duplicate template functionality needs to be implemented with label support');
+        console.log('Duplicate template functionality needs to be implemented');
         
         setDuplicatingDocument(null);
         toast({
@@ -113,10 +105,9 @@ const DocumentLayoutContent = () => {
     }
   };
 
-  const handleDeleteDocument = async (document: DocumentTemplateWithLabels) => {
+  const handleDeleteDocument = async (document: DocumentTemplateWithTags) => {
     try {
-      // Note: You'll need deleteTemplate function in the labels hook
-      console.log('Delete template functionality needs to be implemented with label support');
+      console.log('Delete template functionality needs to be implemented');
       
       if (editingDocumentId === document.id) {
         setEditingDocumentId(undefined);
@@ -156,14 +147,13 @@ const DocumentLayoutContent = () => {
         <div>
           <h3 className="text-lg font-medium">Template Beheer</h3>
           <p className="text-sm text-muted-foreground">
-            Beheer document templates, labels en instellingen.
+            Beheer document templates en instellingen.
           </p>
         </div>
 
         <Tabs defaultValue="templates" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="templates">Document Templates</TabsTrigger>
-            <TabsTrigger value="labels">Labels</TabsTrigger>
             <TabsTrigger value="settings">Document Types</TabsTrigger>
           </TabsList>
 
@@ -178,7 +168,7 @@ const DocumentLayoutContent = () => {
             />
 
             <div className="text-sm text-gray-600">
-              {filteredTemplates.length} van {templatesWithLabels.length} templates {filteredTemplates.length === 1 ? 'wordt' : 'worden'} getoond
+              {filteredTemplates.length} van {templates.length} templates {filteredTemplates.length === 1 ? 'wordt' : 'worden'} getoond
             </div>
 
             <DocumentList
@@ -190,16 +180,11 @@ const DocumentLayoutContent = () => {
             />
           </TabsContent>
 
-          <TabsContent value="labels" className="space-y-6">
-            <LabelManager />
-          </TabsContent>
-
           <TabsContent value="settings" className="space-y-6">
             <DocumentSettings />
           </TabsContent>
         </Tabs>
 
-        {/* Simple HTML Document Builder Dialog */}
         <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen}>
           <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 flex flex-col">
             <DialogTitle className="sr-only">Document Builder</DialogTitle>
@@ -210,7 +195,6 @@ const DocumentLayoutContent = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Library Dialog */}
         <Dialog open={isLibraryOpen} onOpenChange={setIsLibraryOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh]">
             <DialogTitle className="sr-only">Template Bibliotheek</DialogTitle>
@@ -218,7 +202,6 @@ const DocumentLayoutContent = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Duplicate Name Dialog */}
         <DocumentNameDialog
           open={isNameDialogOpen}
           onClose={() => {
@@ -226,7 +209,7 @@ const DocumentLayoutContent = () => {
             setDuplicatingDocument(null);
           }}
           onSave={handleDuplicateSave}
-          existingNames={templatesWithLabels.map(d => d.name)}
+          existingNames={templates.map(d => d.name)}
           initialName={duplicatingDocument ? `${duplicatingDocument.name} (kopie)` : ''}
           initialDescription={duplicatingDocument?.description || ''}
         />

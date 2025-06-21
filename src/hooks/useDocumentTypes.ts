@@ -11,6 +11,7 @@ export interface DocumentType {
   organization_id: string;
   workspace_id?: string;
   is_active: boolean;
+  default_template_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -68,14 +69,14 @@ export const useDocumentTypes = () => {
     fetchDocumentTypes();
   }, [fetchDocumentTypes]);
 
-  const createDocumentType = async (name: string, label: string) => {
+  const createDocumentType = async (name: string, label: string, templateId?: string) => {
     if (!selectedOrganization?.id || !user?.id) {
       console.error('[useDocumentTypes] Cannot create: missing requirements');
       return false;
     }
 
     try {
-      console.log('[useDocumentTypes] Creating:', { name, label });
+      console.log('[useDocumentTypes] Creating:', { name, label, templateId });
       
       const { data, error } = await supabase
         .from('document_types')
@@ -83,6 +84,7 @@ export const useDocumentTypes = () => {
           name,
           label,
           organization_id: selectedOrganization.id,
+          default_template_id: templateId || null,
           is_active: true
         })
         .select()
@@ -102,18 +104,22 @@ export const useDocumentTypes = () => {
     }
   };
 
-  const updateDocumentType = async (id: string, name: string, label: string) => {
+  const updateDocumentType = async (id: string, name: string, label: string, templateId?: string) => {
     if (!user?.id) {
       console.error('[useDocumentTypes] Cannot update: no user');
       return false;
     }
 
     try {
-      console.log('[useDocumentTypes] Updating:', { id, name, label });
+      console.log('[useDocumentTypes] Updating:', { id, name, label, templateId });
       
       const { error } = await supabase
         .from('document_types')
-        .update({ name, label })
+        .update({ 
+          name, 
+          label,
+          default_template_id: templateId || null
+        })
         .eq('id', id);
 
       if (error) {
@@ -139,7 +145,6 @@ export const useDocumentTypes = () => {
     try {
       console.log('[useDocumentTypes] Deleting:', id);
       
-      // First, remove from local state immediately for optimistic UI
       setDocumentTypes(prev => prev.filter(dt => dt.id !== id));
       
       const { error } = await supabase
@@ -149,13 +154,11 @@ export const useDocumentTypes = () => {
 
       if (error) {
         console.error('[useDocumentTypes] Delete error:', error);
-        // Revert optimistic update on error
         await fetchDocumentTypes();
         throw error;
       }
 
       console.log('[useDocumentTypes] Deleted successfully');
-      // Force a fresh fetch to ensure consistency
       setTimeout(() => {
         fetchDocumentTypes();
       }, 100);

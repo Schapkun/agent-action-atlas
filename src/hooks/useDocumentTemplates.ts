@@ -53,7 +53,7 @@ export const useDocumentTemplates = () => {
     }
   }, [organizationId, fetchTemplatesData, toast]);
 
-  const createTemplate = useCallback(async (templateData: Partial<any> & { tags?: string[] }) => {
+  const createTemplate = useCallback(async (templateData: Partial<any>) => {
     try {
       const result = await createTemplateData(templateData);
       await fetchTemplates();
@@ -64,7 +64,7 @@ export const useDocumentTemplates = () => {
     }
   }, [createTemplateData, fetchTemplates]);
 
-  const updateTemplate = useCallback(async (id: string, updates: Partial<any> & { tags?: string[] }) => {
+  const updateTemplate = useCallback(async (id: string, updates: Partial<any>) => {
     try {
       const result = await updateTemplateData(id, updates);
       await fetchTemplates();
@@ -100,12 +100,11 @@ export const useDocumentTemplates = () => {
     return fetchTemplates();
   }, [fetchTemplates]);
 
-  // Only fetch once when organizationId changes
   useEffect(() => {
     if (organizationId) {
       fetchTemplates();
     }
-  }, [organizationId]); // Simplified dependency
+  }, [organizationId]);
 
   return {
     templates,

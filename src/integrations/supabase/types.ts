@@ -261,114 +261,6 @@ export type Database = {
         }
         Relationships: []
       }
-      document_settings: {
-        Row: {
-          created_at: string
-          default_label_id: string | null
-          document_type_id: string
-          id: string
-          organization_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          default_label_id?: string | null
-          document_type_id: string
-          id?: string
-          organization_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          default_label_id?: string | null
-          document_type_id?: string
-          id?: string
-          organization_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "document_settings_default_label_id_fkey"
-            columns: ["default_label_id"]
-            isOneToOne: false
-            referencedRelation: "document_template_labels"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "document_settings_document_type_id_fkey"
-            columns: ["document_type_id"]
-            isOneToOne: false
-            referencedRelation: "document_types"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      document_template_label_assignments: {
-        Row: {
-          created_at: string | null
-          id: string
-          label_id: string
-          template_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          label_id: string
-          template_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          label_id?: string
-          template_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "document_template_label_assignments_label_id_fkey"
-            columns: ["label_id"]
-            isOneToOne: false
-            referencedRelation: "document_template_labels"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "document_template_label_assignments_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "document_templates"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      document_template_labels: {
-        Row: {
-          color: string
-          created_at: string | null
-          id: string
-          name: string
-          organization_id: string
-          updated_at: string | null
-          workspace_id: string | null
-        }
-        Insert: {
-          color?: string
-          created_at?: string | null
-          id?: string
-          name: string
-          organization_id: string
-          updated_at?: string | null
-          workspace_id?: string | null
-        }
-        Update: {
-          color?: string
-          created_at?: string | null
-          id?: string
-          name?: string
-          organization_id?: string
-          updated_at?: string | null
-          workspace_id?: string | null
-        }
-        Relationships: []
-      }
       document_templates: {
         Row: {
           created_at: string
@@ -381,7 +273,6 @@ export type Database = {
           name: string
           organization_id: string | null
           placeholder_values: Json | null
-          tags: string[] | null
           type: string
           updated_at: string
           workspace_id: string | null
@@ -397,7 +288,6 @@ export type Database = {
           name: string
           organization_id?: string | null
           placeholder_values?: Json | null
-          tags?: string[] | null
           type: string
           updated_at?: string
           workspace_id?: string | null
@@ -413,7 +303,6 @@ export type Database = {
           name?: string
           organization_id?: string | null
           placeholder_values?: Json | null
-          tags?: string[] | null
           type?: string
           updated_at?: string
           workspace_id?: string | null
@@ -438,6 +327,7 @@ export type Database = {
       document_types: {
         Row: {
           created_at: string
+          default_template_id: string | null
           id: string
           is_active: boolean
           label: string
@@ -448,6 +338,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          default_template_id?: string | null
           id?: string
           is_active?: boolean
           label: string
@@ -458,6 +349,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          default_template_id?: string | null
           id?: string
           is_active?: boolean
           label?: string
@@ -466,7 +358,15 @@ export type Database = {
           updated_at?: string
           workspace_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "document_types_default_template_id_fkey"
+            columns: ["default_template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dossiers: {
         Row: {
@@ -842,9 +742,7 @@ export type Database = {
           created_at: string
           customer_prefix: string | null
           customer_start_number: number | null
-          default_invoice_label_id: string | null
           default_payment_terms: number | null
-          default_quote_label_id: string | null
           default_vat_rate: number | null
           id: string
           invoice_prefix: string | null
@@ -871,9 +769,7 @@ export type Database = {
           created_at?: string
           customer_prefix?: string | null
           customer_start_number?: number | null
-          default_invoice_label_id?: string | null
           default_payment_terms?: number | null
-          default_quote_label_id?: string | null
           default_vat_rate?: number | null
           id?: string
           invoice_prefix?: string | null
@@ -900,9 +796,7 @@ export type Database = {
           created_at?: string
           customer_prefix?: string | null
           customer_start_number?: number | null
-          default_invoice_label_id?: string | null
           default_payment_terms?: number | null
-          default_quote_label_id?: string | null
           default_vat_rate?: number | null
           id?: string
           invoice_prefix?: string | null
@@ -913,20 +807,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "organization_settings_default_invoice_label_id_fkey"
-            columns: ["default_invoice_label_id"]
-            isOneToOne: false
-            referencedRelation: "document_template_labels"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "organization_settings_default_quote_label_id_fkey"
-            columns: ["default_quote_label_id"]
-            isOneToOne: false
-            referencedRelation: "document_template_labels"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "organization_settings_organization_id_fkey"
             columns: ["organization_id"]
