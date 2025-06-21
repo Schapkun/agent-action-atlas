@@ -8,16 +8,19 @@ import { QuoteTotals } from './QuoteTotals';
 import { QuoteSettingsSidebar } from './QuoteSettingsSidebar';
 import { QuoteTemplateSelector } from './QuoteTemplateSelector';
 import { QuotePreviewPopup } from './QuotePreviewPopup';
+import { DocumentLabelSelector } from '@/components/shared/DocumentLabelSelector';
 import { useQuoteFormHandlers } from '@/hooks/useQuoteFormHandlers';
 import { useQuoteTemplateManager } from '@/hooks/useQuoteTemplateManager';
 
 export const CreateQuote = () => {
-  // Centralized template management
+  // Centralized template management with label filtering
   const {
     selectedTemplate,
+    selectedLabel,
     availableTemplates,
     templatesLoading,
-    handleTemplateSelect
+    handleTemplateSelect,
+    handleLabelSelect
   } = useQuoteTemplateManager();
 
   // Form handlers with preview functionality
@@ -68,6 +71,13 @@ export const CreateQuote = () => {
         <form onSubmit={handleFormSubmit} className="space-y-3">
           <ContactSelectionCard
             selectedContact={selectedContact}
+            labelSelector={
+              <DocumentLabelSelector
+                selectedLabel={selectedLabel}
+                onLabelSelect={handleLabelSelect}
+                disabled={templatesLoading}
+              />
+            }
             templateSelector={
               <QuoteTemplateSelector
                 selectedTemplate={selectedTemplate}

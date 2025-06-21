@@ -8,16 +8,19 @@ import { InvoiceSettingsSidebar } from './InvoiceSettingsSidebar';
 import { InvoiceFormActions } from './InvoiceFormActions';
 import { TemplateSelector } from './TemplateSelector';
 import { InvoicePreviewPopup } from './InvoicePreviewPopup';
+import { DocumentLabelSelector } from '@/components/shared/DocumentLabelSelector';
 import { useInvoiceFormHandlers } from '@/hooks/useInvoiceFormHandlers';
 import { useInvoiceTemplateManager } from '@/hooks/useInvoiceTemplateManager';
 
 export const CreateInvoiceForm = () => {
-  // Centralized template management
+  // Centralized template management with label filtering
   const {
     selectedTemplate,
+    selectedLabel,
     availableTemplates,
     templatesLoading,
-    handleTemplateSelect
+    handleTemplateSelect,
+    handleLabelSelect
   } = useInvoiceTemplateManager();
 
   // Form handlers with preview functionality
@@ -54,8 +57,6 @@ export const CreateInvoiceForm = () => {
 
   const handleDocumentSettingsChange = (settings: any) => {
     console.log('Document settings changed:', settings);
-    // Here you can integrate the settings with your form data or calculations
-    // For example, update VAT calculations based on vatDisplay setting
   };
 
   return (
@@ -75,6 +76,13 @@ export const CreateInvoiceForm = () => {
         <form onSubmit={handleFormSubmit} className="space-y-3">
           <ContactSelectionCard
             selectedContact={selectedContact}
+            labelSelector={
+              <DocumentLabelSelector
+                selectedLabel={selectedLabel}
+                onLabelSelect={handleLabelSelect}
+                disabled={templatesLoading}
+              />
+            }
             templateSelector={
               <TemplateSelector
                 selectedTemplate={selectedTemplate}

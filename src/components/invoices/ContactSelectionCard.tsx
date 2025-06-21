@@ -11,13 +11,15 @@ import { ContactEditDialog } from '@/components/contacts/ContactEditDialog';
 interface ContactSelectionCardProps {
   selectedContact: any;
   templateSelector: React.ReactNode;
+  labelSelector?: React.ReactNode;
   onContactSelect: (contact: any) => void;
   onShowSettings: () => void;
 }
 
 export const ContactSelectionCard = ({ 
   selectedContact, 
-  templateSelector, 
+  templateSelector,
+  labelSelector, 
   onContactSelect, 
   onShowSettings 
 }: ContactSelectionCardProps) => {
@@ -56,7 +58,6 @@ export const ContactSelectionCard = ({
     <>
       <Card>
         <CardContent className="p-3">
-          {/* Single row layout - no labels */}
           <div className="flex items-center gap-3">
             {/* Contact section - wider */}
             <div className="flex-[2]">
@@ -93,14 +94,21 @@ export const ContactSelectionCard = ({
               </div>
             </div>
 
-            {/* Template section - narrower */}
+            {/* Template section - with optional label selector */}
             <div className="flex-1">
-              <div className="w-full">
-                {templateSelector}
+              <div className="flex gap-2">
+                {labelSelector && (
+                  <div className="flex-1">
+                    {labelSelector}
+                  </div>
+                )}
+                <div className="flex-1">
+                  {templateSelector}
+                </div>
               </div>
             </div>
 
-            {/* Settings button - now always enabled */}
+            {/* Settings button */}
             <div>
               <Button
                 type="button"
