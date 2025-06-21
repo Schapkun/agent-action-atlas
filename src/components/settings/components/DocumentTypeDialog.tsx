@@ -25,7 +25,7 @@ export const DocumentTypeDialog = ({
 }: DocumentTypeDialogProps) => {
   const [name, setName] = useState('');
   const [label, setLabel] = useState('');
-  const [templateId, setTemplateId] = useState<string>('');
+  const [templateId, setTemplateId] = useState<string>('no-template');
   const [nameError, setNameError] = useState('');
 
   const { templates } = useDocumentTemplates();
@@ -34,11 +34,11 @@ export const DocumentTypeDialog = ({
     if (documentType) {
       setName(documentType.name);
       setLabel(documentType.label);
-      setTemplateId(documentType.default_template_id || '');
+      setTemplateId(documentType.default_template_id || 'no-template');
     } else {
       setName('');
       setLabel('');
-      setTemplateId('');
+      setTemplateId('no-template');
     }
     setNameError('');
   }, [documentType, open]);
@@ -66,7 +66,8 @@ export const DocumentTypeDialog = ({
   const handleSave = async () => {
     if (!validateName(name) || !label.trim()) return;
 
-    const success = await onSave(name.trim(), label.trim(), templateId || undefined);
+    const finalTemplateId = templateId === 'no-template' ? undefined : templateId;
+    const success = await onSave(name.trim(), label.trim(), finalTemplateId);
     if (success) {
       onClose();
     }
@@ -126,7 +127,7 @@ export const DocumentTypeDialog = ({
                 <SelectValue placeholder="Selecteer een template (optioneel)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Geen template</SelectItem>
+                <SelectItem value="no-template">Geen template</SelectItem>
                 {templates.map((template) => (
                   <SelectItem key={template.id} value={template.id}>
                     {template.name}
