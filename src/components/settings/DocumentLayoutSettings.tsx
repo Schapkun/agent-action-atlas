@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -11,7 +10,7 @@ import { DocumentList } from './components/DocumentList';
 import { DocumentProvider } from './contexts/DocumentContext';
 import { DocumentTemplateWithLabels } from '@/types/documentTemplateLabels';
 import { TemplateLibraryNew } from './components/TemplateLibraryNew';
-import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
+import { useDocumentTemplatesWithLabels } from '@/hooks/useDocumentTemplatesWithLabels';
 
 const DocumentLayoutContent = () => {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
@@ -23,16 +22,8 @@ const DocumentLayoutContent = () => {
   // Tag filter states (keeping existing functionality)
   const [selectedFilterTags, setSelectedFilterTags] = useState<string[]>([]);
   
-  const { templates, loading, fetchTemplates } = useDocumentTemplates();
+  const { templates: templatesWithLabels, loading, refetch: fetchTemplates } = useDocumentTemplatesWithLabels();
   const { toast } = useToast();
-
-  // Convert templates to the expected format with empty labels array
-  const templatesWithLabels: DocumentTemplateWithLabels[] = useMemo(() => {
-    return templates.map(template => ({
-      ...template,
-      labels: [] // Add empty labels array for now
-    }));
-  }, [templates]);
 
   // Get all unique tags from templates - memoized to prevent recalculation
   const availableTags = useMemo(() => {
