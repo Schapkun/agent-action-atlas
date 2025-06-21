@@ -27,6 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   const updateSession = async (newSession: Session | null) => {
     console.log('[AuthContext] Updating session:', newSession ? 'Session found' : 'No session');
@@ -37,7 +38,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('[AuthContext] User ID:', newSession.user.id);
       console.log('[AuthContext] Access token available:', !!newSession.access_token);
       
-      // Explicitly set the session on the Supabase client
       try {
         await supabase.auth.setSession({
           access_token: newSession.access_token,
@@ -51,6 +51,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refreshSession = async () => {
+    if (!initialized) return;
+    
     console.log('[AuthContext] Manually refreshing session...');
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -72,22 +74,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async (event, session) => {
         console.log('[AuthContext] Auth state changed:', event, session ? 'Session exists' : 'No session');
         await updateSession(session);
-        setLoading(false);
+        
+        if (!initialized) {
+          setLoading(false);
+          setInitialized(true);
+        }
       }
     );
 
-    // Check for existing session
+    // Check for existing session only once
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       console.log('[AuthContext] Initial session check:', session ? 'Session found' : 'No session');
       await updateSession(session);
       setLoading(false);
+      setInitialized(true);
+    }).catch((error) => {
+      console.error('[AuthContext] Error getting initial session:', error);
+      setLoading(false);
+      setInitialized(true);
     });
 
     return () => {
       console.log('[AuthContext] Cleaning up auth subscription');
       subscription.unsubscribe();
     };
-  }, []);
+  }, []); // Only run once on mount
 
   const signIn = async (email: string, password: string) => {
     console.log('[AuthContext] Signing in user:', email);
