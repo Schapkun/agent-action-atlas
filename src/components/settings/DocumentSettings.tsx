@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -134,16 +133,24 @@ export const DocumentSettings = () => {
 
   const handleDeleteDocumentType = async (documentType: DocumentType) => {
     if (window.confirm(`Weet je zeker dat je "${documentType.label}" wilt verwijderen?`)) {
+      console.log('[DocumentSettings] Attempting to delete document type:', documentType.id);
+      
       const success = await deleteDocumentType(documentType.id);
+      
       if (success) {
         toast({
           title: "Document type verwijderd",
-          description: `"${documentType.label}" is verwijderd.`
+          description: `"${documentType.label}" is succesvol verwijderd.`
         });
+        
+        // Force refresh of settings after successful delete
+        setTimeout(() => {
+          fetchSettings();
+        }, 200);
       } else {
         toast({
-          title: "Fout",
-          description: "Kon document type niet verwijderen",
+          title: "Fout bij verwijderen",
+          description: "Kon document type niet verwijderen. Probeer het opnieuw.",
           variant: "destructive"
         });
       }
@@ -170,6 +177,12 @@ export const DocumentSettings = () => {
         return true;
       }
     }
+    
+    toast({
+      title: "Fout",
+      description: "Kon document type niet opslaan. Probeer het opnieuw.",
+      variant: "destructive"
+    });
     return false;
   };
 

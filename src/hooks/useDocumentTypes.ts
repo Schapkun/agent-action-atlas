@@ -139,6 +139,9 @@ export const useDocumentTypes = () => {
     try {
       console.log('[useDocumentTypes] Deleting:', id);
       
+      // First, remove from local state immediately for optimistic UI
+      setDocumentTypes(prev => prev.filter(dt => dt.id !== id));
+      
       const { error } = await supabase
         .from('document_types')
         .update({ is_active: false })
@@ -146,11 +149,17 @@ export const useDocumentTypes = () => {
 
       if (error) {
         console.error('[useDocumentTypes] Delete error:', error);
+        // Revert optimistic update on error
+        await fetchDocumentTypes();
         throw error;
       }
 
       console.log('[useDocumentTypes] Deleted successfully');
-      await fetchDocumentTypes();
+      // Force a fresh fetch to ensure consistency
+      setTimeout(() => {
+        fetchDocumentTypes();
+      }, 100);
+      
       return true;
     } catch (error) {
       console.error('[useDocumentTypes] Delete failed:', error);

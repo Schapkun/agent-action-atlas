@@ -1548,6 +1548,10 @@ export type Database = {
         Args: { org_id: string; workspace_id?: string }
         Returns: undefined
       }
+      user_has_org_access: {
+        Args: { org_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       user_role: "owner" | "admin" | "member"
