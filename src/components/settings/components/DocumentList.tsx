@@ -1,19 +1,18 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Edit, Copy, Trash2, Star, Share, BookOpen, Plus } from 'lucide-react';
-import { DocumentTemplateWithLabels } from '@/types/documentTemplateLabels';
-import { TemplateLibraryManager } from './TemplateLibraryManager';
-import { LabelManagementDialog } from './LabelManagementDialog';
+import { FileText, Edit, Copy, Trash2, Star, StarOff } from 'lucide-react';
+import { DocumentTemplateWithTags } from '@/types/documentTags';
+import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface DocumentListProps {
-  documents: DocumentTemplateWithLabels[];
-  onEditDocument: (document: DocumentTemplateWithLabels) => void;
-  onDuplicateDocument: (document: DocumentTemplateWithLabels) => void;
-  onDeleteDocument: (document: DocumentTemplateWithLabels) => void;
+  documents: DocumentTemplateWithTags[];
+  onEditDocument: (document: DocumentTemplateWithTags) => void;
+  onDuplicateDocument: (document: DocumentTemplateWithTags) => void;
+  onDeleteDocument: (document: DocumentTemplateWithTags) => void;
   onRefreshDocuments: () => void;
 }
 
@@ -24,175 +23,112 @@ export const DocumentList = ({
   onDeleteDocument,
   onRefreshDocuments
 }: DocumentListProps) => {
-  const [libraryTemplate, setLibraryTemplate] = useState<DocumentTemplateWithLabels | null>(null);
-  const [labelManagementTemplate, setLabelManagementTemplate] = useState<DocumentTemplateWithLabels | null>(null);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleShareToLibrary = (document: DocumentTemplateWithLabels) => {
-    setLibraryTemplate(document);
+  const handleFavoriteToggle = async (document: DocumentTemplateWithTags) => {
+    setLoading(true);
+    try {
+      // Implement favorite toggle logic here
+      console.log('Toggle favorite for document:', document.id);
+      await onRefreshDocuments();
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast({
+        title: "Fout",
+        description: "Kon favoriet status niet wijzigen",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleManageLabels = (document: DocumentTemplateWithLabels) => {
-    setLabelManagementTemplate(document);
-  };
+  if (documents.length === 0) {
+    return (
+      <Alert>
+        <FileText className="h-4 w-4" />
+        <AlertDescription>
+          Geen documenten gevonden. Maak je eerste document aan om te beginnen.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
-    <>
-      <div className="space-y-4">
-        {documents.map((document) => (
-          <Card key={document.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-lg truncate">{document.name}</h3>
-                      {document.is_default && (
-                        <Star className="h-4 w-4 text-yellow-500 fill-current flex-shrink-0" />
-                      )}
-                    </div>
-                    
-                    {/* Labels display - positioned on the right side of the title row */}
-                    {document.labels && document.labels.length > 0 && (
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        {document.labels.map((label) => (
-                          <Badge
-                            key={label.id}
-                            style={{ backgroundColor: label.color, color: 'white' }}
-                            className="text-xs"
-                          >
-                            {label.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Tags display (keeping existing functionality) */}
-                  {document.tags && document.tags.length > 0 && (
-                    <div className="flex items-center gap-1 mb-2">
-                      {document.tags.map((tag) => (
-                        <Badge
-                          key={tag}
-                          variant="secondary"
-                          className="text-xs"
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
+    <div className="space-y-4">
+      {documents.map((document) => (
+        <Card key={document.id} className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className="h-4 w-4 text-gray-500" />
+                  <h3 className="font-medium">{document.name}</h3>
+                  <Badge variant="secondary" className="text-xs">
+                    {document.type}
+                  </Badge>
+                  {document.is_default && (
+                    <Badge variant="default" className="text-xs">
+                      Standaard
+                    </Badge>
                   )}
-                  
-                  {document.description && (
-                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                      {document.description}
-                    </p>
-                  )}
-                  
-                  <div className="text-xs text-gray-500">
-                    Laatst bijgewerkt: {new Date(document.updated_at).toLocaleDateString('nl-NL')}
-                  </div>
                 </div>
                 
-                <div className="flex items-center gap-1 ml-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleManageLabels(document)}
-                    title="Labels beheren"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEditDocument(document)}
-                    title="Bewerken"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDuplicateDocument(document)}
-                    title="Dupliceren"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleShareToLibrary(document)}
-                    title="Delen in bibliotheek"
-                  >
-                    <Share className="h-4 w-4" />
-                  </Button>
-                  
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        title="Verwijderen"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Document verwijderen</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Weet je zeker dat je "{document.name}" wilt verwijderen? 
-                          Deze actie kan niet ongedaan worden gemaakt.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Annuleren</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={() => onDeleteDocument(document)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Verwijderen
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
+                {document.description && (
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {document.description}
+                  </p>
+                )}
+                
+                <p className="text-xs text-muted-foreground">
+                  Laatst bijgewerkt: {new Date(document.updated_at).toLocaleDateString('nl-NL')}
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-        
-        {documents.length === 0 && (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <div className="text-gray-500">
-                <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium mb-2">Geen templates gevonden</p>
-                <p className="text-sm">Maak een nieuw template aan om te beginnen</p>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleFavoriteToggle(document)}
+                  disabled={loading}
+                >
+                  {document.is_default ? (
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  ) : (
+                    <StarOff className="h-4 w-4" />
+                  )}
+                </Button>
+                
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onEditDocument(document)}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onDuplicateDocument(document)}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+                
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onDeleteDocument(document)}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      <TemplateLibraryManager
-        open={!!libraryTemplate}
-        onClose={() => setLibraryTemplate(null)}
-        currentTemplate={libraryTemplate || undefined}
-      />
-
-      {labelManagementTemplate && (
-        <LabelManagementDialog
-          open={!!labelManagementTemplate}
-          onClose={() => setLabelManagementTemplate(null)}
-          template={labelManagementTemplate}
-          onTemplateUpdate={onRefreshDocuments}
-        />
-      )}
-    </>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 };

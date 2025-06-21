@@ -103,8 +103,7 @@ export function useSimplestDocumentBuilder({
 
           const doc: DocumentTemplate = {
             ...data,
-            placeholder_values: parsePlaceholderValues(data.placeholder_values),
-            tags: Array.isArray(data.tags) ? data.tags : [] // Use tags instead of labels
+            placeholder_values: parsePlaceholderValues(data.placeholder_values)
           };
 
           // Use default type since we no longer store type

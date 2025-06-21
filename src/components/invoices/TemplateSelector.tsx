@@ -38,8 +38,7 @@ export const TemplateSelector = ({
       if (onTemplateChange) {
         // Create a compatible DocumentTemplate object
         const compatibleTemplate: DocumentTemplate = {
-          ...template,
-          tags: template.tags || [] // Use tags instead of labels
+          ...template
         };
         onTemplateChange(compatibleTemplate);
       }

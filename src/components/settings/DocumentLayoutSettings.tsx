@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -27,30 +26,14 @@ const DocumentLayoutContent = () => {
   const { templates, loading, fetchTemplates } = useDocumentTemplates();
   const { toast } = useToast();
 
-  const availableTags = useMemo(() => {
-    const allTags = templates.flatMap(template => template.tags || []);
-    return [...new Set(allTags)].sort();
-  }, [templates]);
+  // Since tags are removed, we don't need tag filtering anymore
+  const availableTags: string[] = [];
 
   const filteredTemplates = useMemo(() => {
-    return templates
-      .filter(template => {
-        if (selectedFilterTags.length > 0) {
-          const templateTags = template.tags || [];
-          const hasMatchingTag = selectedFilterTags.some(filterTag => 
-            templateTags.includes(filterTag)
-          );
-          if (!hasMatchingTag) {
-            return false;
-          }
-        }
-        
-        return true;
-      })
-      .sort((a, b) => {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
-  }, [templates, selectedFilterTags]);
+    return templates.sort((a, b) => {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  }, [templates]);
 
   const handleNewDocument = () => {
     setEditingDocumentId(undefined);

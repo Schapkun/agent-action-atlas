@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,7 +25,6 @@ interface Document {
   created_at: string;
   updated_at: string;
   created_by?: string;
-  tags?: string[];
 }
 
 export const DocumentManager = () => {
@@ -52,8 +50,7 @@ export const DocumentManager = () => {
           type,
           created_at,
           updated_at,
-          created_by,
-          tags
+          created_by
         `)
         .eq('organization_id', selectedOrganization.id)
         .eq('is_active', true)
@@ -67,14 +64,8 @@ export const DocumentManager = () => {
 
       if (error) throw error;
 
-      // Transform the data to ensure tags is array
-      const transformedData = (data || []).map(doc => ({
-        ...doc,
-        tags: Array.isArray(doc.tags) ? doc.tags : []
-      }));
-
-      console.log('📄 Documents fetched:', transformedData.length);
-      setDocuments(transformedData);
+      console.log('📄 Documents fetched:', data?.length || 0);
+      setDocuments(data || []);
     } catch (error) {
       console.error('Error fetching documents:', error);
       toast({
@@ -197,15 +188,6 @@ export const DocumentManager = () => {
                         <Badge className={getTypeColor(document.type)}>
                           {document.type}
                         </Badge>
-                        {document.tags && document.tags.map((tag) => (
-                          <Badge
-                            key={tag}
-                            variant="outline"
-                            className="text-xs"
-                          >
-                            {tag}
-                          </Badge>
-                        ))}
                       </div>
                       
                       {document.description && (

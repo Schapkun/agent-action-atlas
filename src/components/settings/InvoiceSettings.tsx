@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,8 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { DocumentLabelSelector } from '@/components/shared/DocumentLabelSelector';
-import { DocumentTemplateLabel } from '@/types/documentTemplateLabels';
 
 interface InvoiceSettings {
   default_payment_terms: number;
@@ -16,8 +15,6 @@ interface InvoiceSettings {
   invoice_start_number: number;
   quote_prefix: string;
   quote_start_number: number;
-  default_invoice_label_id?: string;
-  default_quote_label_id?: string;
 }
 
 export const InvoiceSettings = () => {
@@ -31,8 +28,6 @@ export const InvoiceSettings = () => {
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [defaultInvoiceLabel, setDefaultInvoiceLabel] = useState<DocumentTemplateLabel | null>(null);
-  const [defaultQuoteLabel, setDefaultQuoteLabel] = useState<DocumentTemplateLabel | null>(null);
   const { selectedOrganization } = useOrganization();
   const { toast } = useToast();
 
@@ -49,11 +44,7 @@ export const InvoiceSettings = () => {
       
       const { data, error } = await supabase
         .from('organization_settings')
-        .select(`
-          *,
-          default_invoice_label:document_template_labels!default_invoice_label_id(*),
-          default_quote_label:document_template_labels!default_quote_label_id(*)
-        `)
+        .select('*')
         .eq('organization_id', selectedOrganization.id)
         .maybeSingle();
 
@@ -70,12 +61,7 @@ export const InvoiceSettings = () => {
           invoice_start_number: data.invoice_start_number || 1,
           quote_prefix: data.quote_prefix || 'OFF-2025-',
           quote_start_number: data.quote_start_number || 1,
-          default_invoice_label_id: data.default_invoice_label_id || undefined,
-          default_quote_label_id: data.default_quote_label_id || undefined,
         });
-        
-        setDefaultInvoiceLabel(data.default_invoice_label || null);
-        setDefaultQuoteLabel(data.default_quote_label || null);
         
         console.log('📊 Instellingen succesvol opgehaald:', data);
       } else {
@@ -117,8 +103,6 @@ export const InvoiceSettings = () => {
         invoice_start_number: settings.invoice_start_number,
         quote_prefix: settings.quote_prefix,
         quote_start_number: settings.quote_start_number,
-        default_invoice_label_id: settings.default_invoice_label_id || null,
-        default_quote_label_id: settings.default_quote_label_id || null,
         updated_at: new Date().toISOString()
       };
 
@@ -157,16 +141,6 @@ export const InvoiceSettings = () => {
 
   const handleInputChange = (field: keyof InvoiceSettings, value: string | number) => {
     setSettings(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleInvoiceLabelChange = (label: DocumentTemplateLabel | null) => {
-    setDefaultInvoiceLabel(label);
-    setSettings(prev => ({ ...prev, default_invoice_label_id: label?.id }));
-  };
-
-  const handleQuoteLabelChange = (label: DocumentTemplateLabel | null) => {
-    setDefaultQuoteLabel(label);
-    setSettings(prev => ({ ...prev, default_quote_label_id: label?.id }));
   };
 
   return (
@@ -239,37 +213,6 @@ export const InvoiceSettings = () => {
                 onChange={(e) => handleInputChange('quote_start_number', parseInt(e.target.value) || 1)}
               />
               <p className="text-xs text-gray-500 mt-1">Volgende offerte krijgt dit nummer</p>
-            </div>
-          </div>
-
-          {/* Template Label Settings */}
-          <div className="space-y-4 pt-4 border-t">
-            <h3 className="text-lg font-medium">Standaard Template Labels</h3>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="default_invoice_label">Standaard factuur label</Label>
-                <DocumentLabelSelector
-                  selectedLabel={defaultInvoiceLabel}
-                  onLabelSelect={handleInvoiceLabelChange}
-                  disabled={loading}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Templates met dit label worden standaard geselecteerd bij facturen
-                </p>
-              </div>
-              
-              <div>
-                <Label htmlFor="default_quote_label">Standaard offerte label</Label>
-                <DocumentLabelSelector
-                  selectedLabel={defaultQuoteLabel}
-                  onLabelSelect={handleQuoteLabelChange}
-                  disabled={loading}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Templates met dit label worden standaard geselecteerd bij offertes
-                </p>
-              </div>
             </div>
           </div>
 

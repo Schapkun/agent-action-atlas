@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { SimpleDocumentHeader } from './components/SimpleDocumentHeader';
@@ -231,7 +230,7 @@ export const SimpleHtmlDocumentBuilder = ({ documentId, onComplete }: SimpleHtml
             ...DEFAULT_PLACEHOLDERS,
             ...(template.placeholder_values || {})
           });
-          setSelectedTags(template.tags || []);
+          setSelectedTags([]); // No tags anymore
           setHasUnsavedChanges(false);
           setError(null);
         } else {

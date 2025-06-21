@@ -17,22 +17,20 @@ export interface DocumentTemplate {
   created_at: string;
   updated_at: string;
   placeholder_values?: Record<string, string> | null;
-  tags?: string[]; // Changed from labels to tags
 }
 
 export const useDocumentTemplatesCreate = () => {
   const { toast } = useToast();
   const { checkUserAccess } = useDocumentTemplatesAccess();
 
-  const createTemplate = async (templateData: Partial<DocumentTemplate> & { tags?: string[] }): Promise<DocumentTemplateWithTags> => {
+  const createTemplate = async (templateData: Partial<DocumentTemplate>): Promise<DocumentTemplateWithTags> => {
     try {
       console.log('[useDocumentTemplatesCreate] ========= CREATE TEMPLATE START =========');
       console.log('[useDocumentTemplatesCreate] Template data received:', {
         name: templateData.name,
         htmlContentLength: templateData.html_content?.length,
         placeholderValuesKeys: templateData.placeholder_values ? Object.keys(templateData.placeholder_values) : [],
-        hasDescription: !!templateData.description,
-        tags: templateData.tags
+        hasDescription: !!templateData.description
       });
       
       const { user, organization, workspace } = await checkUserAccess();
@@ -86,8 +84,7 @@ export const useDocumentTemplatesCreate = () => {
         created_by: user.id,
         is_default: templateData.is_default || false,
         is_active: true,
-        placeholder_values: templateData.placeholder_values || null,
-        tags: templateData.tags || []
+        placeholder_values: templateData.placeholder_values || null
       };
 
       console.log('[useDocumentTemplatesCreate] Final insert data:', {
@@ -124,8 +121,7 @@ export const useDocumentTemplatesCreate = () => {
         ...data,
         placeholder_values: data.placeholder_values ? 
           (typeof data.placeholder_values === 'object' && data.placeholder_values !== null ? 
-            data.placeholder_values as Record<string, string> : null) : null,
-        tags: Array.isArray(data.tags) ? data.tags : []
+            data.placeholder_values as Record<string, string> : null) : null
       };
       
       toast({

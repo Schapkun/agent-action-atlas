@@ -17,7 +17,7 @@ export const useDocumentTemplatesFetch = () => {
         return [];
       }
 
-      // Simple query without complex joins
+      // Simple query without the removed tags column
       const { data: templateData, error } = await supabase
         .from('document_templates')
         .select(`
@@ -33,8 +33,7 @@ export const useDocumentTemplatesFetch = () => {
           workspace_id,
           created_by,
           created_at,
-          updated_at,
-          tags
+          updated_at
         `)
         .eq('is_active', true)
         .eq('organization_id', organization.id)
@@ -45,7 +44,7 @@ export const useDocumentTemplatesFetch = () => {
         throw error;
       }
 
-      // Transform to ensure tags is always an array
+      // Transform to DocumentTemplateWithTags format
       const templatesWithTags: DocumentTemplateWithTags[] = (templateData || []).map(template => ({
         id: template.id,
         name: template.name,
@@ -61,8 +60,7 @@ export const useDocumentTemplatesFetch = () => {
         workspace_id: template.workspace_id,
         created_by: template.created_by,
         created_at: template.created_at,
-        updated_at: template.updated_at,
-        tags: Array.isArray(template.tags) ? template.tags : []
+        updated_at: template.updated_at
       }));
       
       console.log('[useDocumentTemplatesFetch] Templates fetched:', templatesWithTags.length);

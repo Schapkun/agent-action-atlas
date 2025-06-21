@@ -16,10 +16,8 @@ export const QuoteTemplateManager = ({
   selectedTemplate,
   setSelectedTemplate
 }: QuoteTemplateManagerProps) => {
-  // Filter templates that have "Offerte" tag - no type filtering
-  const availableTemplates = documentTemplates.filter(template => 
-    template.tags?.some(tag => tag.toLowerCase() === 'offerte')
-  );
+  // Use all available templates since we no longer have tag filtering
+  const availableTemplates = documentTemplates;
 
   const handleTemplateChange = (templateId: string) => {
     const template = availableTemplates.find(t => t.id === templateId);
