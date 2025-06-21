@@ -162,9 +162,9 @@ const DocumentLayoutContent = () => {
 
         <Tabs defaultValue="templates" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsTrigger value="templates">Document Templates</TabsTrigger>
             <TabsTrigger value="labels">Labels</TabsTrigger>
-            <TabsTrigger value="settings">Instellingen</TabsTrigger>
+            <TabsTrigger value="settings">Document Types</TabsTrigger>
           </TabsList>
 
           <TabsContent value="templates" className="space-y-6">

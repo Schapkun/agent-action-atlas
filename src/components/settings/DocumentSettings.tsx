@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -124,65 +124,54 @@ export const DocumentSettings = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Document Instellingen</h2>
-        <p className="text-muted-foreground">
-          Stel default template labels in voor verschillende document types.
-        </p>
+      <div className="text-sm text-gray-600">
+        Stel default template labels in voor verschillende document types.
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Standaard Template Labels</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Selecteer welke labels standaard gebruikt worden voor elk document type.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-4">
-            {settings.map((setting) => (
-              <div key={setting.documentType} className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <Label className="text-base font-medium">{setting.label}</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Standaard label voor {setting.label.toLowerCase()}
-                  </p>
-                </div>
-                <div className="w-64">
-                  <Select
-                    value={setting.defaultLabelId || 'none'}
-                    onValueChange={(value) => handleLabelChange(setting.documentType, value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecteer label" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Geen label</SelectItem>
-                      {labels.map((label) => (
-                        <SelectItem key={label.id} value={label.id}>
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className="w-3 h-3 rounded-full" 
-                              style={{ backgroundColor: label.color }}
-                            />
-                            {label.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+      <div className="grid gap-4">
+        {settings.map((setting) => (
+          <Card key={setting.documentType} className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-base font-medium">{setting.label}</Label>
+                <p className="text-sm text-muted-foreground">
+                  Standaard label voor {setting.label.toLowerCase()}
+                </p>
               </div>
-            ))}
-          </div>
+              <div className="w-64">
+                <Select
+                  value={setting.defaultLabelId || 'none'}
+                  onValueChange={(value) => handleLabelChange(setting.documentType, value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecteer label" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Geen label</SelectItem>
+                    {labels.map((label) => (
+                      <SelectItem key={label.id} value={label.id}>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: label.color }}
+                          />
+                          {label.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
 
-          <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={loading}>
-              {loading ? 'Opslaan...' : 'Instellingen opslaan'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex justify-end">
+        <Button onClick={handleSave} disabled={loading}>
+          {loading ? 'Opslaan...' : 'Instellingen opslaan'}
+        </Button>
+      </div>
     </div>
   );
 };
