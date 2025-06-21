@@ -10,6 +10,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  refreshSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,38 +28,87 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const updateSession = async (newSession: Session | null) => {
+    console.log('[AuthContext] Updating session:', newSession ? 'Session found' : 'No session');
+    setSession(newSession);
+    setUser(newSession?.user ?? null);
+    
+    if (newSession) {
+      console.log('[AuthContext] User ID:', newSession.user.id);
+      console.log('[AuthContext] Access token available:', !!newSession.access_token);
+      
+      // Explicitly set the session on the Supabase client
+      try {
+        await supabase.auth.setSession({
+          access_token: newSession.access_token,
+          refresh_token: newSession.refresh_token
+        });
+        console.log('[AuthContext] Session set successfully on Supabase client');
+      } catch (error) {
+        console.error('[AuthContext] Error setting session on Supabase client:', error);
+      }
+    }
+  };
+
+  const refreshSession = async () => {
+    console.log('[AuthContext] Manually refreshing session...');
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('[AuthContext] Error refreshing session:', error);
+        return;
+      }
+      await updateSession(session);
+    } catch (error) {
+      console.error('[AuthContext] Error in refreshSession:', error);
+    }
+  };
+
   useEffect(() => {
+    console.log('[AuthContext] Initializing auth state...');
+    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      async (event, session) => {
+        console.log('[AuthContext] Auth state changed:', event, session ? 'Session exists' : 'No session');
+        await updateSession(session);
         setLoading(false);
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log('[AuthContext] Initial session check:', session ? 'Session found' : 'No session');
+      await updateSession(session);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('[AuthContext] Cleaning up auth subscription');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    console.log('[AuthContext] Signing in user:', email);
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    
+    if (data.session) {
+      console.log('[AuthContext] Sign in successful, updating session');
+      await updateSession(data.session);
+    }
+    
     return { error };
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
+    console.log('[AuthContext] Signing up user:', email);
     const redirectUrl = `${window.location.origin}/`;
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -68,11 +118,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       },
     });
+    
+    if (data.session) {
+      console.log('[AuthContext] Sign up successful, updating session');
+      await updateSession(data.session);
+    }
+    
     return { error };
   };
 
   const signOut = async () => {
+    console.log('[AuthContext] Signing out user');
     await supabase.auth.signOut();
+    await updateSession(null);
   };
 
   const value: AuthContextType = {
@@ -82,6 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signUp,
     signOut,
+    refreshSession,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

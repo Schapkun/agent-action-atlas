@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface DocumentType {
@@ -18,6 +19,14 @@ export const useDocumentTypes = () => {
   const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
   const [loading, setLoading] = useState(true);
   const { selectedOrganization } = useOrganization();
+  const { session, refreshSession } = useAuth();
+
+  const ensureAuth = async () => {
+    if (!session) {
+      console.log('[useDocumentTypes] No session found, attempting to refresh...');
+      await refreshSession();
+    }
+  };
 
   const fetchDocumentTypes = useCallback(async () => {
     if (!selectedOrganization?.id) {
@@ -27,8 +36,11 @@ export const useDocumentTypes = () => {
       return;
     }
 
+    await ensureAuth();
+
     try {
       console.log('[useDocumentTypes] Fetching document types for organization:', selectedOrganization.id);
+      console.log('[useDocumentTypes] Current session exists:', !!session);
       
       const { data, error } = await supabase
         .from('document_types')
@@ -50,7 +62,7 @@ export const useDocumentTypes = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedOrganization?.id]);
+  }, [selectedOrganization?.id, session]);
 
   const createDocumentType = async (name: string, label: string) => {
     if (!selectedOrganization?.id) {
@@ -58,8 +70,11 @@ export const useDocumentTypes = () => {
       return false;
     }
 
+    await ensureAuth();
+
     try {
       console.log('[useDocumentTypes] Creating document type:', { name, label, organization_id: selectedOrganization.id });
+      console.log('[useDocumentTypes] Current session exists:', !!session);
       
       const { data, error } = await supabase
         .from('document_types')
@@ -87,8 +102,11 @@ export const useDocumentTypes = () => {
   };
 
   const updateDocumentType = async (id: string, name: string, label: string) => {
+    await ensureAuth();
+
     try {
       console.log('[useDocumentTypes] Updating document type:', { id, name, label });
+      console.log('[useDocumentTypes] Current session exists:', !!session);
       
       const { data, error } = await supabase
         .from('document_types')
@@ -112,8 +130,11 @@ export const useDocumentTypes = () => {
   };
 
   const deleteDocumentType = async (id: string) => {
+    await ensureAuth();
+
     try {
       console.log('[useDocumentTypes] Deleting document type:', id);
+      console.log('[useDocumentTypes] Current session exists:', !!session);
       
       // First try soft delete (set is_active to false)
       const { data, error } = await supabase
