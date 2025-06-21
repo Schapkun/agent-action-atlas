@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -79,6 +78,15 @@ export const useDocumentTypes = () => {
     console.log('User:', user);
     console.log('Session:', session);
     console.log('Organization ID:', selectedOrganization.id);
+
+    // CRITICAL: Check auth.uid() right before the query
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+    console.log('PRE-INSERT auth check:', {
+      authUser: authUser?.id,
+      authError,
+      sessionExists: !!session,
+      userExists: !!user
+    });
 
     try {
       const { data, error } = await supabase

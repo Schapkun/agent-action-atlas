@@ -32,19 +32,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('AuthProvider - Auth state changed:', { event, session });
         console.log('AuthProvider - Session user:', session?.user);
         console.log('AuthProvider - Session expires at:', session?.expires_at);
         
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // CRITICAL: Ensure Supabase client has the session
+        if (session) {
+          console.log('AuthProvider - Setting session on supabase client');
+          await supabase.auth.setSession({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token
+          });
+        }
+        
         setLoading(false);
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       console.log('AuthProvider - Initial session check:', { session, error });
       console.log('AuthProvider - Initial session user:', session?.user);
       
@@ -54,6 +64,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // CRITICAL: Ensure Supabase client has the session
+      if (session) {
+        console.log('AuthProvider - Setting initial session on supabase client');
+        await supabase.auth.setSession({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token
+        });
+      }
+      
       setLoading(false);
     });
 
@@ -63,13 +83,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // Debug current auth state
+  // Debug current auth state and verify auth.uid()
   useEffect(() => {
+    const checkAuthUid = async () => {
+      if (session) {
+        const { data: { user: currentUser }, error } = await supabase.auth.getUser();
+        console.log('AuthProvider - Current auth.uid() check:', {
+          sessionUser: session.user?.id,
+          currentUser: currentUser?.id,
+          error: error
+        });
+      }
+    };
+    
     console.log('AuthProvider - Current state:', {
       user: user?.id ? `${user.email} (${user.id})` : null,
       session: session ? 'exists' : 'null',
       loading
     });
+    
+    checkAuthUid();
   }, [user, session, loading]);
 
   const signIn = async (email: string, password: string) => {
