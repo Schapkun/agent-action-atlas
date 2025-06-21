@@ -25,28 +25,10 @@ export const useInvoiceSettingsDefaults = (): InvoiceSettingsDefaults => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('organization_settings')
-        .select(`
-          default_invoice_label_id,
-          default_quote_label_id,
-          default_invoice_label:document_template_labels!default_invoice_label_id(*),
-          default_quote_label:document_template_labels!default_quote_label_id(*)
-        `)
-        .eq('organization_id', selectedOrganization.id)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
-
-      if (data) {
-        setDefaultInvoiceLabel(data.default_invoice_label || null);
-        setDefaultQuoteLabel(data.default_quote_label || null);
-      } else {
-        setDefaultInvoiceLabel(null);
-        setDefaultQuoteLabel(null);
-      }
+      // Since we removed the label system, these will always be null
+      // This hook is kept for backward compatibility but returns null values
+      setDefaultInvoiceLabel(null);
+      setDefaultQuoteLabel(null);
     } catch (error) {
       console.error('Error fetching invoice settings defaults:', error);
       setDefaultInvoiceLabel(null);

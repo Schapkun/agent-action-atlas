@@ -9,9 +9,9 @@ export const useQuoteTemplates = () => {
   const [defaultTemplate, setDefaultTemplate] = useState<DocumentTemplateWithTags | null>(null);
   
   useEffect(() => {
-    // Filter templates that have "Offerte" tag
+    // Filter templates by type or name since we removed tags
     const offerteTemplates = templates.filter(t => 
-      t.tags?.some(tag => tag.toLowerCase() === 'offerte')
+      t.type === 'quote' || t.name.toLowerCase().includes('offerte')
     );
     setQuoteTemplates(offerteTemplates);
     

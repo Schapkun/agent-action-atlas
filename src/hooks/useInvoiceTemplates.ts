@@ -9,9 +9,9 @@ export const useInvoiceTemplates = () => {
   const [defaultTemplate, setDefaultTemplate] = useState<DocumentTemplateWithTags | null>(null);
   
   useEffect(() => {
-    // Filter templates ONLY with "Factuur" tag (removed type filtering)
+    // Filter templates by type or name since we removed tags
     const factuurTemplates = templates.filter(t => 
-      t.tags?.some(tag => tag.toLowerCase() === 'factuur')
+      t.type === 'invoice' || t.name.toLowerCase().includes('factuur')
     );
     
     // Sort templates: favorite first, then by creation date (newest first)

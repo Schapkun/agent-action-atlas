@@ -1,43 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useDocumentTemplates } from './useDocumentTemplates';
-import { useDocumentTemplatesWithLabels } from './useDocumentTemplatesWithLabels';
-import { useInvoiceSettingsDefaults } from './useInvoiceSettingsDefaults';
 import { DocumentTemplateWithTags } from '@/types/documentTags';
 
 export const useQuoteTemplateManager = () => {
   const { templates: allTemplates, loading: templatesLoading } = useDocumentTemplates();
-  const { templates: templatesWithLabels, loading: labelsLoading } = useDocumentTemplatesWithLabels();
-  const { defaultQuoteLabel, loading: defaultsLoading } = useInvoiceSettingsDefaults();
   const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplateWithTags | null>(null);
 
-  // Filter templates by default label if one is set in settings
-  const getFilteredTemplates = () => {
-    if (!defaultQuoteLabel) {
-      // If no default label is set, return empty array to show "no label configured" message
-      console.log('⚠️ Geen default quote label ingesteld in instellingen');
-      return [];
-    }
-
-    // Get template IDs that have the default label
-    const templateIdsWithLabel = templatesWithLabels
-      .filter(template => template.labels?.some(label => label.id === defaultQuoteLabel.id))
-      .map(template => template.id);
-
-    // Filter all templates to only include those with the default label
-    const filtered = allTemplates.filter(template => templateIdsWithLabel.includes(template.id));
-    
-    console.log('🏷️ Default quote label:', defaultQuoteLabel.name);
-    console.log('🏷️ Templates with label:', templateIdsWithLabel.length);
-    console.log('🏷️ Filtered quote templates:', filtered.length);
-    
-    return filtered;
-  };
-
-  const filteredTemplates = getFilteredTemplates();
-  const noLabelConfigured = !defaultQuoteLabel;
+  // Since we removed the label system, we'll filter by template type instead
+  const quoteTemplates = allTemplates.filter(template => 
+    template.type === 'quote' || template.name.toLowerCase().includes('offerte')
+  );
 
   // Sort templates: favorite first, then by creation date (newest first)
-  const sortedTemplates = [...filteredTemplates].sort((a, b) => {
+  const sortedTemplates = [...quoteTemplates].sort((a, b) => {
     if (a.is_default && !b.is_default) return -1;
     if (!a.is_default && b.is_default) return 1;
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
@@ -45,7 +20,7 @@ export const useQuoteTemplateManager = () => {
 
   // Auto-select template when filtered templates change
   useEffect(() => {
-    if (!templatesLoading && !labelsLoading && !defaultsLoading) {
+    if (!templatesLoading) {
       if (sortedTemplates.length > 0) {
         // If current selection is not in filtered list, select first available
         if (!selectedTemplate || !sortedTemplates.find(t => t.id === selectedTemplate.id)) {
@@ -55,14 +30,10 @@ export const useQuoteTemplateManager = () => {
         }
       } else {
         setSelectedTemplate(null);
-        if (noLabelConfigured) {
-          console.log('⚠️ Geen quote label geconfigureerd in instellingen');
-        } else {
-          console.log('⚠️ No quote templates available for selected label');
-        }
+        console.log('⚠️ No quote templates available');
       }
     }
-  }, [sortedTemplates.length, defaultQuoteLabel?.id, templatesLoading, labelsLoading, defaultsLoading, noLabelConfigured]);
+  }, [sortedTemplates.length, templatesLoading]);
 
   const handleTemplateSelect = (template: DocumentTemplateWithTags | null) => {
     setSelectedTemplate(template);
@@ -73,10 +44,10 @@ export const useQuoteTemplateManager = () => {
 
   return {
     selectedTemplate,
-    selectedLabel: defaultQuoteLabel,
+    selectedLabel: null, // No longer used
     availableTemplates: sortedTemplates,
-    templatesLoading: templatesLoading || labelsLoading || defaultsLoading,
-    noLabelConfigured,
+    templatesLoading,
+    noLabelConfigured: false, // No longer relevant
     handleTemplateSelect,
     // Keep these for backward compatibility but they won't be used
     handleLabelSelect: () => {}

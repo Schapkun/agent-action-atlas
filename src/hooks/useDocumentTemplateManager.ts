@@ -1,26 +1,41 @@
 
 import { useState, useEffect } from 'react';
-import { useOrganization } from '@/contexts/OrganizationContext';
 import { useDocumentTemplates } from './useDocumentTemplates';
+import { DocumentTemplateWithTags } from '@/types/documentTags';
 
-export const useDocumentTemplateManager = () => {
-  const { selectedOrganization } = useOrganization();
-  const { templates, loading, error, fetchTemplates } = useDocumentTemplates();
-  
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
+export const useDocumentTemplateManager = (documentType?: string) => {
+  const { templates, loading } = useDocumentTemplates();
+  const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplateWithTags | null>(null);
 
+  // Filter templates by document type if provided
+  const filteredTemplates = documentType 
+    ? templates.filter(template => template.type === documentType)
+    : templates;
+
+  // Sort templates: favorite first, then by creation date (newest first)
+  const sortedTemplates = [...filteredTemplates].sort((a, b) => {
+    if (a.is_default && !b.is_default) return -1;
+    if (!a.is_default && b.is_default) return 1;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  // Auto-select first template when templates are loaded
   useEffect(() => {
-    if (selectedOrganization?.id) {
-      fetchTemplates();
+    if (!loading && sortedTemplates.length > 0 && !selectedTemplate) {
+      const defaultTemplate = sortedTemplates.find(t => t.is_default) || sortedTemplates[0];
+      setSelectedTemplate(defaultTemplate);
     }
-  }, [selectedOrganization?.id, fetchTemplates]);
+  }, [sortedTemplates.length, loading]);
+
+  const handleTemplateSelect = (template: DocumentTemplateWithTags) => {
+    setSelectedTemplate(template);
+  };
 
   return {
-    templates,
-    loading,
-    error,
     selectedTemplate,
-    setSelectedTemplate,
-    refetchTemplates: fetchTemplates
+    availableTemplates: sortedTemplates,
+    templatesLoading: loading,
+    noLabelConfigured: false, // No longer relevant since we removed labels
+    handleTemplateSelect
   };
 };
