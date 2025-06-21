@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -11,6 +12,7 @@ import Register from '@/pages/Register';
 import PendingTasks from '@/pages/PendingTasks';
 import Actions from '@/pages/Actions';
 import Documents from '@/pages/Documents';
+import CreateDocument from '@/pages/CreateDocument';
 import ActiveDossiers from '@/pages/ActiveDossiers';
 import ClosedDossiers from '@/pages/ClosedDossiers';
 import Invoices from '@/pages/Invoices';
@@ -39,6 +41,7 @@ function App() {
               <Route path="/openstaande-taken" element={<Index><PendingTasks /></Index>} />
               <Route path="/ai-acties" element={<Index><Actions /></Index>} />
               <Route path="/documenten" element={<Index><Documents /></Index>} />
+              <Route path="/documenten/opstellen" element={<Index><CreateDocument /></Index>} />
               <Route path="/actieve-dossiers" element={<Index><ActiveDossiers /></Index>} />
               <Route path="/gesloten-dossiers" element={<Index><ClosedDossiers /></Index>} />
               <Route path="/facturen" element={<Index><Invoices /></Index>} />

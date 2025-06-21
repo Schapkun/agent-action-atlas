@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -6,6 +7,7 @@ import { OrganizationWorkspaceView } from './OrganizationWorkspaceView';
 import { UserProfileSettings } from './UserProfileSettings';
 import { HistoryLogs } from './HistoryLogs';
 import { DocumentLayoutSettings } from './DocumentLayoutSettings';
+import { DocumentSettings } from './DocumentSettings';
 import { EmailTemplateSettings } from './EmailTemplateSettings';
 import { InvoiceSettings } from './InvoiceSettings';
 import { RoleGuard } from '@/components/auth/RoleGuard';
@@ -103,8 +105,8 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
       <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList className={`grid w-full gap-1 h-auto p-1 ${
           isMobile 
-            ? 'grid-cols-3 grid-rows-2' 
-            : 'grid-cols-6 grid-rows-1'
+            ? 'grid-cols-3 grid-rows-3' 
+            : 'grid-cols-7 grid-rows-1'
         }`}>
           <TabsTrigger 
             value="organizations" 
@@ -129,6 +131,12 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
             className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
           >
             Documenten
+          </TabsTrigger>
+          <TabsTrigger 
+            value="templates" 
+            className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
+          >
+            Templates
           </TabsTrigger>
           <TabsTrigger 
             value="emails" 
@@ -169,6 +177,19 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
         </TabsContent>
 
         <TabsContent value="documents">
+          <Card>
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
+              <RoleGuard 
+                requiredRoles={['admin', 'eigenaar']} 
+                userRole={userRole}
+              >
+                <DocumentSettings />
+              </RoleGuard>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="templates">
           <Card>
             <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
               <RoleGuard 

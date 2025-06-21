@@ -7,11 +7,11 @@ import { useState } from 'react';
 import { 
   LayoutDashboard, 
   Activity, 
-  FolderOpen, 
+  FileText, 
   Settings, 
   ChevronLeft,
   Scale,
-  FileText,
+  FolderOpen,
   FolderX,
   CreditCard,
   Phone,
@@ -66,6 +66,9 @@ export const Sidebar = ({
     if (parentId === 'quotes') {
       return location.pathname.startsWith('/offertes');
     }
+    if (parentId === 'documents') {
+      return location.pathname.startsWith('/documenten');
+    }
     return false;
   };
 
@@ -73,9 +76,19 @@ export const Sidebar = ({
     { id: 'overview' as ViewType, label: 'Dashboard', icon: LayoutDashboard, path: '/' },
     { id: 'pending-tasks' as ViewType, label: 'Openstaande Taken', icon: Clock, badge: pendingTasksCount, path: '/openstaande-taken' },
     { id: 'actions' as ViewType, label: 'AI Acties', icon: Activity, path: '/ai-acties' },
-    { id: 'documents' as ViewType, label: 'Documenten', icon: FolderOpen, path: '/documenten' },
-    { id: 'active-dossiers' as ViewType, label: 'Actieve Dossiers', icon: FileText, path: '/actieve-dossiers' },
+    { id: 'active-dossiers' as ViewType, label: 'Actieve Dossiers', icon: FolderOpen, path: '/actieve-dossiers' },
     { id: 'closed-dossiers' as ViewType, label: 'Gesloten Dossiers', icon: FolderX, path: '/gesloten-dossiers' },
+    { 
+      id: 'documents' as ViewType, 
+      label: 'Documenten', 
+      icon: FileText, 
+      path: '/documenten/opstellen',
+      hasSubmenu: true,
+      submenu: [
+        { id: 'new-document', label: 'Opstellen', icon: Plus, path: '/documenten/opstellen' },
+        { id: 'document-list', label: 'Overzicht', icon: FileCheck, path: '/documenten' },
+      ]
+    },
     { 
       id: 'invoices' as ViewType, 
       label: 'Facturen', 
