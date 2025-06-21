@@ -28,7 +28,7 @@ export interface DocumentTemplateWithLabels {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  placeholder_values?: Record<string, string> | null;
+  placeholder_values?: any | null;
   type?: string | null;
   tags?: string[];
   labels?: DocumentTemplateLabel[];

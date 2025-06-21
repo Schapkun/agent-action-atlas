@@ -35,8 +35,21 @@ export const useDocumentTemplatesWithLabels = () => {
 
       // Transform the data to include labels
       const templatesWithLabels: DocumentTemplateWithLabels[] = (templatesData || []).map(template => ({
-        ...template,
-        labels: template.document_template_label_assignments?.map((assignment: any) => assignment.document_template_labels) || []
+        id: template.id,
+        name: template.name,
+        description: template.description,
+        html_content: template.html_content,
+        organization_id: template.organization_id,
+        workspace_id: template.workspace_id,
+        created_by: template.created_by,
+        is_default: template.is_default,
+        is_active: template.is_active,
+        created_at: template.created_at,
+        updated_at: template.updated_at,
+        placeholder_values: template.placeholder_values,
+        type: template.type,
+        tags: template.tags || [],
+        labels: (template as any).document_template_label_assignments?.map((assignment: any) => assignment.document_template_labels) || []
       }));
 
       setTemplates(templatesWithLabels);
