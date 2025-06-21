@@ -13,14 +13,17 @@ export const DocumentSettings = () => {
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDocumentType, setEditingDocumentType] = useState<DocumentType | undefined>();
+  const [baseDocumentType, setBaseDocumentType] = useState<DocumentType | undefined>();
 
   const handleNewDocumentType = () => {
     setEditingDocumentType(undefined);
+    setBaseDocumentType(undefined);
     setIsDialogOpen(true);
   };
 
-  const handleEditDocumentType = (documentType: DocumentType) => {
+  const handleEditDocumentType = (documentType: DocumentType, baseType?: DocumentType) => {
     setEditingDocumentType(documentType);
+    setBaseDocumentType(baseType);
     setIsDialogOpen(true);
   };
 
@@ -74,6 +77,12 @@ export const DocumentSettings = () => {
     return false;
   };
 
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingDocumentType(undefined);
+    setBaseDocumentType(undefined);
+  };
+
   if (documentTypesLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -108,9 +117,10 @@ export const DocumentSettings = () => {
 
       <DocumentTypeDialog
         open={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
+        onClose={handleCloseDialog}
         onSave={handleSaveDocumentType}
         documentType={editingDocumentType}
+        baseDocumentType={baseDocumentType}
         existingNames={documentTypes.map(dt => dt.name)}
       />
     </div>
