@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,27 +44,27 @@ export const DocumentList = ({
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
                       <h3 className="font-medium text-lg truncate">{document.name}</h3>
                       {document.is_default && (
                         <Star className="h-4 w-4 text-yellow-500 fill-current flex-shrink-0" />
                       )}
-                      
-                      {/* Labels display - now on the same line as title */}
-                      {document.labels && document.labels.length > 0 && (
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          {document.labels.map((label) => (
-                            <Badge
-                              key={label.id}
-                              style={{ backgroundColor: label.color, color: 'white' }}
-                              className="text-xs"
-                            >
-                              {label.name}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
                     </div>
+                    
+                    {/* Labels display - positioned on the right side of the title row */}
+                    {document.labels && document.labels.length > 0 && (
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {document.labels.map((label) => (
+                          <Badge
+                            key={label.id}
+                            style={{ backgroundColor: label.color, color: 'white' }}
+                            className="text-xs"
+                          >
+                            {label.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Tags display (keeping existing functionality) */}
