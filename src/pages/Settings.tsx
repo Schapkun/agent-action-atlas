@@ -17,6 +17,11 @@ const Settings = () => {
     if (!searchParams.get('tab')) {
       setSearchParams({ tab: 'organizations' });
     }
+    
+    // Redirect old 'documents' tab to 'templates'
+    if (searchParams.get('tab') === 'documents') {
+      setSearchParams({ tab: 'templates' });
+    }
   }, [searchParams, setSearchParams]);
 
   return <SettingsLayout currentTab={currentTab} onTabChange={handleTabChange} />;
