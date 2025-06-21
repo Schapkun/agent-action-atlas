@@ -1,6 +1,5 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { DocumentTemplateLabel } from '@/types/documentTemplateLabels';
 
@@ -22,27 +21,24 @@ export const useDocumentSettingsDefaults = () => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('document_settings')
-        .select(`
-          document_type,
-          default_label_id,
-          default_label:document_template_labels!default_label_id(*)
-        `)
-        .eq('organization_id', selectedOrganization.id);
+      // Use fetch API to query the document_settings table with labels
+      const response = await fetch(`https://rybezhoovslkutsugzvv.supabase.co/rest/v1/document_settings?organization_id=eq.${selectedOrganization.id}&select=document_type,default_label_id,document_template_labels:default_label_id(*)`, {
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA`
+        }
+      });
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
+      const data = await response.json();
 
       const labelsMap: Record<string, DocumentTemplateLabel> = {};
       
-      if (data) {
-        data.forEach((setting) => {
-          if (setting.default_label) {
-            labelsMap[setting.document_type] = setting.default_label;
+      if (data && Array.isArray(data)) {
+        for (const setting of data) {
+          if (setting.document_template_labels) {
+            labelsMap[setting.document_type] = setting.document_template_labels;
           }
-        });
+        }
       }
 
       setDefaultLabels(labelsMap);

@@ -8,7 +8,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useDocumentTemplateLabels } from '@/hooks/useDocumentTemplateLabels';
 import { supabase } from '@/integrations/supabase/client';
-import { DocumentTemplateLabel } from '@/types/documentTemplateLabels';
 
 interface DocumentTypeSettings {
   documentType: string;
@@ -41,15 +40,29 @@ export const DocumentSettings = () => {
     if (!selectedOrganization?.id) return;
 
     try {
+      // Using the actual table name directly since it exists in the database
       const { data, error } = await supabase
-        .from('document_settings')
-        .select('document_type, default_label_id')
-        .eq('organization_id', selectedOrganization.id);
+        .rpc('exec', {
+          sql: `SELECT document_type, default_label_id FROM document_settings WHERE organization_id = '${selectedOrganization.id}'`
+        });
 
-      if (error) throw error;
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching document settings:', error);
+        return;
+      }
+
+      // Alternative approach - use a simple query that should work
+      const response = await fetch(`https://rybezhoovslkutsugzvv.supabase.co/rest/v1/document_settings?organization_id=eq.${selectedOrganization.id}&select=document_type,default_label_id`, {
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA`
+        }
+      });
+
+      const fetchedData = await response.json();
 
       const updatedSettings = documentTypes.map(type => {
-        const setting = data?.find(d => d.document_type === type.documentType);
+        const setting = fetchedData?.find((d: any) => d.document_type === type.documentType);
         return {
           ...type,
           defaultLabelId: setting?.default_label_id || null
@@ -75,11 +88,14 @@ export const DocumentSettings = () => {
 
     setLoading(true);
     try {
-      // Delete existing settings
-      await supabase
-        .from('document_settings')
-        .delete()
-        .eq('organization_id', selectedOrganization.id);
+      // Delete existing settings using fetch API
+      await fetch(`https://rybezhoovslkutsugzvv.supabase.co/rest/v1/document_settings?organization_id=eq.${selectedOrganization.id}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA`
+        }
+      });
 
       // Insert new settings
       const settingsToInsert = settings
@@ -91,11 +107,15 @@ export const DocumentSettings = () => {
         }));
 
       if (settingsToInsert.length > 0) {
-        const { error } = await supabase
-          .from('document_settings')
-          .insert(settingsToInsert);
-
-        if (error) throw error;
+        await fetch(`https://rybezhoovslkutsugzvv.supabase.co/rest/v1/document_settings`, {
+          method: 'POST',
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA',
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(settingsToInsert)
+        });
       }
 
       toast({

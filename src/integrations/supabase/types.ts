@@ -261,6 +261,41 @@ export type Database = {
         }
         Relationships: []
       }
+      document_settings: {
+        Row: {
+          created_at: string
+          default_label_id: string | null
+          document_type: string
+          id: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_label_id?: string | null
+          document_type: string
+          id?: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_label_id?: string | null
+          document_type?: string
+          id?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_settings_default_label_id_fkey"
+            columns: ["default_label_id"]
+            isOneToOne: false
+            referencedRelation: "document_template_labels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_template_label_assignments: {
         Row: {
           created_at: string | null
