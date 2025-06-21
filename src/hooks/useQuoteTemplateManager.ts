@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useDocumentTemplates } from './useDocumentTemplates';
 import { useDocumentTemplatesWithLabels } from './useDocumentTemplatesWithLabels';
@@ -10,7 +11,7 @@ export const useQuoteTemplateManager = () => {
   const { defaultQuoteLabel, loading: defaultsLoading } = useInvoiceSettingsDefaults();
   const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplateWithTags | null>(null);
 
-  // Filter templates by "Offerte" tag
+  // Filter templates by "Offerte" tag first
   const quoteTemplates = allTemplates.filter(template => 
     template.tags?.some(tag => tag.toLowerCase() === 'offerte')
   );
@@ -18,6 +19,7 @@ export const useQuoteTemplateManager = () => {
   // Filter templates by default label if one is set in settings
   const getFilteredTemplates = () => {
     if (!defaultQuoteLabel) {
+      // If no default label is set, return all quote templates
       return quoteTemplates;
     }
 
@@ -26,7 +28,14 @@ export const useQuoteTemplateManager = () => {
       .filter(template => template.labels?.some(label => label.id === defaultQuoteLabel.id))
       .map(template => template.id);
 
-    return quoteTemplates.filter(template => templateIdsWithLabel.includes(template.id));
+    // Filter quote templates to only include those with the default label
+    const filtered = quoteTemplates.filter(template => templateIdsWithLabel.includes(template.id));
+    
+    console.log('🏷️ Default quote label:', defaultQuoteLabel.name);
+    console.log('🏷️ Templates with label:', templateIdsWithLabel.length);
+    console.log('🏷️ Filtered quote templates:', filtered.length);
+    
+    return filtered;
   };
 
   const filteredTemplates = getFilteredTemplates();
@@ -40,19 +49,26 @@ export const useQuoteTemplateManager = () => {
 
   // Auto-select template when filtered templates change
   useEffect(() => {
-    if (sortedTemplates.length > 0) {
-      // If current selection is not in filtered list, select first available
-      if (!selectedTemplate || !sortedTemplates.find(t => t.id === selectedTemplate.id)) {
-        const defaultTemplate = sortedTemplates.find(t => t.is_default) || sortedTemplates[0];
-        setSelectedTemplate(defaultTemplate);
+    if (!templatesLoading && !labelsLoading && !defaultsLoading) {
+      if (sortedTemplates.length > 0) {
+        // If current selection is not in filtered list, select first available
+        if (!selectedTemplate || !sortedTemplates.find(t => t.id === selectedTemplate.id)) {
+          const defaultTemplate = sortedTemplates.find(t => t.is_default) || sortedTemplates[0];
+          setSelectedTemplate(defaultTemplate);
+          console.log('🎯 Auto-selected quote template:', defaultTemplate?.name);
+        }
+      } else {
+        setSelectedTemplate(null);
+        console.log('⚠️ No quote templates available for selected label');
       }
-    } else if (sortedTemplates.length === 0) {
-      setSelectedTemplate(null);
     }
-  }, [sortedTemplates.length, defaultQuoteLabel?.id]);
+  }, [sortedTemplates.length, defaultQuoteLabel?.id, templatesLoading, labelsLoading, defaultsLoading]);
 
   const handleTemplateSelect = (template: DocumentTemplateWithTags | null) => {
     setSelectedTemplate(template);
+    if (template) {
+      console.log('✅ Quote template selected:', template.name);
+    }
   };
 
   return {

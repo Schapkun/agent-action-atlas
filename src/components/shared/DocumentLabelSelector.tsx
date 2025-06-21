@@ -19,27 +19,27 @@ export const DocumentLabelSelector = ({
   const { labels, loading } = useDocumentTemplateLabels();
 
   const handleLabelChange = (labelId: string) => {
-    if (labelId === 'all') {
-      onLabelSelect(null);
-    } else {
-      const label = labels.find(l => l.id === labelId);
-      onLabelSelect(label || null);
-    }
+    const label = labels.find(l => l.id === labelId);
+    onLabelSelect(label || null);
   };
+
+  // Auto-select first label if none is selected and labels are available
+  React.useEffect(() => {
+    if (!selectedLabel && labels.length > 0 && !loading) {
+      onLabelSelect(labels[0]);
+    }
+  }, [labels, selectedLabel, loading, onLabelSelect]);
 
   return (
     <Select
-      value={selectedLabel?.id || 'all'}
+      value={selectedLabel?.id || ''}
       onValueChange={handleLabelChange}
       disabled={disabled || loading}
     >
       <SelectTrigger className="h-8 text-xs">
-        <SelectValue placeholder={loading ? "Laden..." : "Alle templates"} />
+        <SelectValue placeholder={loading ? "Laden..." : labels.length === 0 ? "Geen labels beschikbaar" : "Selecteer label"} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="all">
-          <span className="text-xs">Alle templates</span>
-        </SelectItem>
         {labels.map((label) => (
           <SelectItem key={label.id} value={label.id}>
             <div className="flex items-center gap-2">
@@ -52,6 +52,11 @@ export const DocumentLabelSelector = ({
             </div>
           </SelectItem>
         ))}
+        {labels.length === 0 && !loading && (
+          <SelectItem value="" disabled>
+            <span className="text-xs text-gray-500">Geen labels beschikbaar</span>
+          </SelectItem>
+        )}
       </SelectContent>
     </Select>
   );

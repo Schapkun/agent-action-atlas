@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -19,12 +18,12 @@ export const useDocumentTemplatesWithLabels = () => {
     }
 
     try {
-      // Fetch templates with their labels
+      // Fetch all templates with their labels using LEFT JOIN
       const { data: templatesData, error: templatesError } = await supabase
         .from('document_templates')
         .select(`
           *,
-          document_template_label_assignments!inner(
+          document_template_label_assignments(
             document_template_labels(*)
           )
         `)
@@ -49,7 +48,7 @@ export const useDocumentTemplatesWithLabels = () => {
         placeholder_values: template.placeholder_values,
         type: template.type,
         tags: template.tags || [],
-        labels: (template as any).document_template_label_assignments?.map((assignment: any) => assignment.document_template_labels) || []
+        labels: (template as any).document_template_label_assignments?.map((assignment: any) => assignment.document_template_labels).filter(Boolean) || []
       }));
 
       setTemplates(templatesWithLabels);
