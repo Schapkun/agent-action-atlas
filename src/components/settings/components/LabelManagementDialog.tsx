@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -43,24 +44,11 @@ export const LabelManagementDialog = ({ open, onClose, template, onTemplateUpdat
     try {
       if (isChecked) {
         await assignLabelToTemplate(currentTemplate.id, labelId);
-        // Add the label to local state immediately
-        const labelToAdd = labels.find(l => l.id === labelId);
-        if (labelToAdd) {
-          setCurrentTemplate(prev => ({
-            ...prev,
-            labels: [...(prev.labels || []), labelToAdd]
-          }));
-        }
       } else {
         await removeLabelFromTemplate(currentTemplate.id, labelId);
-        // Remove the label from local state immediately
-        setCurrentTemplate(prev => ({
-          ...prev,
-          labels: (prev.labels || []).filter(l => l.id !== labelId)
-        }));
       }
       
-      // Notify parent component to refresh its data
+      // Notify parent component to refresh its data - this will update the template prop
       onTemplateUpdate?.();
     } catch (error) {
       console.error('Error toggling label:', error);
