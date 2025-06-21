@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useDocumentTemplateLabels } from '@/hooks/useDocumentTemplateLabels';
-import { supabase } from '@/integrations/supabase/client';
 
 interface DocumentTypeSettings {
   documentType: string;
@@ -40,18 +39,6 @@ export const DocumentSettings = () => {
     if (!selectedOrganization?.id) return;
 
     try {
-      // Using the actual table name directly since it exists in the database
-      const { data, error } = await supabase
-        .rpc('exec', {
-          sql: `SELECT document_type, default_label_id FROM document_settings WHERE organization_id = '${selectedOrganization.id}'`
-        });
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching document settings:', error);
-        return;
-      }
-
-      // Alternative approach - use a simple query that should work
       const response = await fetch(`https://rybezhoovslkutsugzvv.supabase.co/rest/v1/document_settings?organization_id=eq.${selectedOrganization.id}&select=document_type,default_label_id`, {
         headers: {
           'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA',
