@@ -29,65 +29,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   const refreshSession = async () => {
-    console.log('[AuthContext] Manually refreshing session...');
+    console.log('[AuthContext] Manual session refresh');
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error) {
-        console.error('[AuthContext] Error refreshing session:', error);
+        console.error('[AuthContext] Refresh error:', error);
         return;
       }
-      console.log('[AuthContext] Session refreshed:', session ? 'Found' : 'Not found');
+      console.log('[AuthContext] Session refreshed');
       setSession(session);
       setUser(session?.user ?? null);
     } catch (error) {
-      console.error('[AuthContext] Error in refreshSession:', error);
+      console.error('[AuthContext] Refresh failed:', error);
     }
   };
 
   useEffect(() => {
-    console.log('[AuthContext] Initializing auth state...');
+    console.log('[AuthContext] Setting up auth');
+    let mounted = true;
     
-    // Get initial session
-    const getInitialSession = async () => {
+    const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log('[AuthContext] Initial session:', session ? 'Found' : 'Not found');
-        setSession(session);
-        setUser(session?.user ?? null);
+        // Get initial session
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
+        if (error) {
+          console.error('[AuthContext] Initial session error:', error);
+        } else {
+          console.log('[AuthContext] Initial session:', session ? 'found' : 'none');
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
       } catch (error) {
-        console.error('[AuthContext] Error getting initial session:', error);
+        console.error('[AuthContext] Initialize error:', error);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
-    getInitialSession();
-
-    // Set up auth state listener
+    // Set up auth listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('[AuthContext] Auth state changed:', event);
+        if (!mounted) return;
+        
+        console.log('[AuthContext] Auth state change:', event);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
       }
     );
 
+    initializeAuth();
+
     return () => {
-      console.log('[AuthContext] Cleaning up auth subscription');
+      mounted = false;
       subscription.unsubscribe();
     };
-  }, []); // Empty dependency array
+  }, []);
 
   const signIn = async (email: string, password: string) => {
-    console.log('[AuthContext] Signing in user:', email);
+    console.log('[AuthContext] Sign in attempt');
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     
     if (data.session) {
-      console.log('[AuthContext] Sign in successful');
       setSession(data.session);
       setUser(data.session.user);
     }
@@ -96,7 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    console.log('[AuthContext] Signing up user:', email);
+    console.log('[AuthContext] Sign up attempt');
     const redirectUrl = `${window.location.origin}/`;
     
     const { data, error } = await supabase.auth.signUp({
@@ -111,7 +122,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     
     if (data.session) {
-      console.log('[AuthContext] Sign up successful');
       setSession(data.session);
       setUser(data.session.user);
     }
@@ -120,7 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    console.log('[AuthContext] Signing out user');
+    console.log('[AuthContext] Sign out');
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);

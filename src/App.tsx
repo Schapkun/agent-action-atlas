@@ -1,66 +1,75 @@
 
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { OrganizationProvider } from '@/contexts/OrganizationContext';
-import { Toaster } from '@/components/ui/toaster';
-import Index from '@/pages/Index';
-import Dashboard from '@/pages/Dashboard';
-import Auth from '@/pages/Auth';
-import Register from '@/pages/Register';
-import PendingTasks from '@/pages/PendingTasks';
-import Actions from '@/pages/Actions';
-import Documents from '@/pages/Documents';
-import CreateDocument from '@/pages/CreateDocument';
-import ActiveDossiers from '@/pages/ActiveDossiers';
-import ClosedDossiers from '@/pages/ClosedDossiers';
-import Invoices from '@/pages/Invoices';
-import CreateInvoice from '@/pages/CreateInvoice';
-import Quotes from '@/pages/Quotes';
-import CreateQuote from '@/pages/CreateQuote';
-import FactuurSturen from '@/pages/FactuurSturen';
-import PhoneCalls from '@/pages/PhoneCalls';
-import Emails from '@/pages/Emails';
-import Contacts from '@/pages/Contacts';
-import Settings from '@/pages/Settings';
-import NotFound from '@/pages/NotFound';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
+import { AuthProvider } from "./contexts/AuthContext";
+import { OrganizationProvider } from "./contexts/OrganizationContext";
+
+// Import all pages
+import Auth from "./pages/Auth";
+import Register from "./pages/Register";
+import PendingTasks from "./pages/PendingTasks";
+import Actions from "./pages/Actions";
+import Documents from "./pages/Documents";
+import CreateDocument from "./pages/CreateDocument";
+import ActiveDossiers from "./pages/ActiveDossiers";
+import ClosedDossiers from "./pages/ClosedDossiers";
+import Invoices from "./pages/Invoices";
+import CreateInvoice from "./pages/CreateInvoice";
+import FactuurSturen from "./pages/FactuurSturen";
+import Quotes from "./pages/Quotes";
+import CreateQuote from "./pages/CreateQuote";
+import PhoneCalls from "./pages/PhoneCalls";
+import Emails from "./pages/Emails";
+import Contacts from "./pages/Contacts";
+import Settings from "./pages/Settings";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <OrganizationProvider>
-          <Router>
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <OrganizationProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
             <Routes>
+              {/* Auth routes */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/register" element={<Register />} />
+              
+              {/* Main app routes - all wrapped in Index for layout */}
               <Route path="/" element={<Index><Dashboard /></Index>} />
               <Route path="/openstaande-taken" element={<Index><PendingTasks /></Index>} />
               <Route path="/ai-acties" element={<Index><Actions /></Index>} />
               <Route path="/documenten" element={<Index><Documents /></Index>} />
-              <Route path="/documenten/opstellen" element={<Index><CreateDocument /></Index>} />
+              <Route path="/documenten/nieuw" element={<Index><CreateDocument /></Index>} />
               <Route path="/actieve-dossiers" element={<Index><ActiveDossiers /></Index>} />
               <Route path="/gesloten-dossiers" element={<Index><ClosedDossiers /></Index>} />
               <Route path="/facturen" element={<Index><Invoices /></Index>} />
-              <Route path="/facturen/opstellen" element={<Index><CreateInvoice /></Index>} />
+              <Route path="/facturen/nieuw" element={<Index><CreateInvoice /></Index>} />
+              <Route path="/facturen/:id/sturen" element={<Index><FactuurSturen /></Index>} />
               <Route path="/offertes" element={<Index><Quotes /></Index>} />
-              <Route path="/offertes/opstellen" element={<Index><CreateQuote /></Index>} />
-              <Route path="/factuursturen" element={<Index><FactuurSturen /></Index>} />
+              <Route path="/offertes/nieuw" element={<Index><CreateQuote /></Index>} />
               <Route path="/telefoongesprekken" element={<Index><PhoneCalls /></Index>} />
               <Route path="/e-mails" element={<Index><Emails /></Index>} />
               <Route path="/contacten" element={<Index><Contacts /></Index>} />
-              <Route path="/instellingen" element={<Index><Settings /></Index>} />
+              <Route path="/instellingen/*" element={<Index><Settings /></Index>} />
+              
+              {/* 404 route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </Router>
-          <Toaster />
-        </OrganizationProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  );
-}
+          </BrowserRouter>
+        </TooltipProvider>
+      </OrganizationProvider>
+    </AuthProvider>
+  </QueryClientProvider>
+);
 
 export default App;
