@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,7 +55,7 @@ export const InvoiceSettings = () => {
           default_quote_label:document_template_labels!default_quote_label_id(*)
         `)
         .eq('organization_id', selectedOrganization.id)
-        .single();
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         console.error('📊 Database error:', error);
@@ -71,8 +70,8 @@ export const InvoiceSettings = () => {
           invoice_start_number: data.invoice_start_number || 1,
           quote_prefix: data.quote_prefix || 'OFF-2025-',
           quote_start_number: data.quote_start_number || 1,
-          default_invoice_label_id: data.default_invoice_label_id,
-          default_quote_label_id: data.default_quote_label_id,
+          default_invoice_label_id: data.default_invoice_label_id || undefined,
+          default_quote_label_id: data.default_quote_label_id || undefined,
         });
         
         setDefaultInvoiceLabel(data.default_invoice_label || null);

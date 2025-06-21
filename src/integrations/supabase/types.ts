@@ -767,7 +767,9 @@ export type Database = {
           created_at: string
           customer_prefix: string | null
           customer_start_number: number | null
+          default_invoice_label_id: string | null
           default_payment_terms: number | null
+          default_quote_label_id: string | null
           default_vat_rate: number | null
           id: string
           invoice_prefix: string | null
@@ -794,7 +796,9 @@ export type Database = {
           created_at?: string
           customer_prefix?: string | null
           customer_start_number?: number | null
+          default_invoice_label_id?: string | null
           default_payment_terms?: number | null
+          default_quote_label_id?: string | null
           default_vat_rate?: number | null
           id?: string
           invoice_prefix?: string | null
@@ -821,7 +825,9 @@ export type Database = {
           created_at?: string
           customer_prefix?: string | null
           customer_start_number?: number | null
+          default_invoice_label_id?: string | null
           default_payment_terms?: number | null
+          default_quote_label_id?: string | null
           default_vat_rate?: number | null
           id?: string
           invoice_prefix?: string | null
@@ -832,6 +838,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "organization_settings_default_invoice_label_id_fkey"
+            columns: ["default_invoice_label_id"]
+            isOneToOne: false
+            referencedRelation: "document_template_labels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_settings_default_quote_label_id_fkey"
+            columns: ["default_quote_label_id"]
+            isOneToOne: false
+            referencedRelation: "document_template_labels"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "organization_settings_organization_id_fkey"
             columns: ["organization_id"]

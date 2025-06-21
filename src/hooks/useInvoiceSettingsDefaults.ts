@@ -34,7 +34,7 @@ export const useInvoiceSettingsDefaults = (): InvoiceSettingsDefaults => {
           default_quote_label:document_template_labels!default_quote_label_id(*)
         `)
         .eq('organization_id', selectedOrganization.id)
-        .single();
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         throw error;
