@@ -265,7 +265,7 @@ export type Database = {
         Row: {
           created_at: string
           default_label_id: string | null
-          document_type: string
+          document_type_id: string
           id: string
           organization_id: string
           updated_at: string
@@ -273,7 +273,7 @@ export type Database = {
         Insert: {
           created_at?: string
           default_label_id?: string | null
-          document_type: string
+          document_type_id: string
           id?: string
           organization_id: string
           updated_at?: string
@@ -281,7 +281,7 @@ export type Database = {
         Update: {
           created_at?: string
           default_label_id?: string | null
-          document_type?: string
+          document_type_id?: string
           id?: string
           organization_id?: string
           updated_at?: string
@@ -292,6 +292,13 @@ export type Database = {
             columns: ["default_label_id"]
             isOneToOne: false
             referencedRelation: "document_template_labels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_settings_document_type_id_fkey"
+            columns: ["document_type_id"]
+            isOneToOne: false
+            referencedRelation: "document_types"
             referencedColumns: ["id"]
           },
         ]
@@ -427,6 +434,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      document_types: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          name: string
+          organization_id: string
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          name: string
+          organization_id: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          name?: string
+          organization_id?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: []
       }
       dossiers: {
         Row: {
