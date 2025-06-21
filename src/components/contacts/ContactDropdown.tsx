@@ -1,15 +1,5 @@
 
-interface Contact {
-  id: string;
-  name: string;
-  email?: string;
-  address?: string;
-  postal_code?: string;
-  city?: string;
-  country?: string;
-  payment_terms?: number;
-  contact_number?: string;
-}
+import { Contact } from '@/types/contacts';
 
 interface ContactDropdownProps {
   isOpen: boolean;

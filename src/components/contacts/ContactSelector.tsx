@@ -1,20 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { ContactSearch } from './ContactSearch';
 import { ContactDropdown } from './ContactDropdown';
 import { useContactData } from './useContactData';
-
-interface Contact {
-  id: string;
-  name: string;
-  email?: string;
-  address?: string;
-  postal_code?: string;
-  city?: string;
-  country?: string;
-  payment_terms?: number;
-  contact_number?: string;
-}
+import { Contact } from '@/types/contacts';
 
 interface ContactSelectorProps {
   selectedContact?: Contact | null;

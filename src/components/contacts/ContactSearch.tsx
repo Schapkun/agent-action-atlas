@@ -3,17 +3,7 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-
-interface Contact {
-  id: string;
-  name: string;
-  email?: string;
-  address?: string;
-  postal_code?: string;
-  city?: string;
-  country?: string;
-  payment_terms?: number;
-}
+import { Contact } from '@/types/contacts';
 
 interface ContactSearchProps {
   searchTerm: string;
