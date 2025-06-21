@@ -30,6 +30,15 @@ export const DocumentLabelSelector = ({
     }
   }, [labels, selectedLabel, loading, onLabelSelect]);
 
+  // Don't render the selector if no labels are available
+  if (!loading && labels.length === 0) {
+    return (
+      <div className="h-8 px-3 py-2 text-xs text-gray-500 bg-gray-100 rounded-md border">
+        Geen labels beschikbaar
+      </div>
+    );
+  }
+
   return (
     <Select
       value={selectedLabel?.id || ''}
@@ -37,7 +46,7 @@ export const DocumentLabelSelector = ({
       disabled={disabled || loading}
     >
       <SelectTrigger className="h-8 text-xs">
-        <SelectValue placeholder={loading ? "Laden..." : labels.length === 0 ? "Geen labels beschikbaar" : "Selecteer label"} />
+        <SelectValue placeholder={loading ? "Laden..." : "Selecteer label"} />
       </SelectTrigger>
       <SelectContent>
         {labels.map((label) => (
@@ -52,11 +61,6 @@ export const DocumentLabelSelector = ({
             </div>
           </SelectItem>
         ))}
-        {labels.length === 0 && !loading && (
-          <SelectItem value="" disabled>
-            <span className="text-xs text-gray-500">Geen labels beschikbaar</span>
-          </SelectItem>
-        )}
       </SelectContent>
     </Select>
   );
