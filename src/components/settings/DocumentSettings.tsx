@@ -63,9 +63,10 @@ export const DocumentSettings = () => {
   };
 
   const handleLabelChange = (documentType: string, labelId: string | null) => {
+    const actualLabelId = labelId === 'none' ? null : labelId;
     setSettings(prev => prev.map(setting => 
       setting.documentType === documentType 
-        ? { ...setting, defaultLabelId: labelId }
+        ? { ...setting, defaultLabelId: actualLabelId }
         : setting
     ));
   };
@@ -98,7 +99,7 @@ export const DocumentSettings = () => {
           method: 'POST',
           headers: {
             'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA',
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA`,
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5YmV6aG9vdnNsa3V0c3VnenZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjMwNDgsImV4cCI6MjA2NDc5OTA0OH0.JihNgpfEygljiszxH7wYD1NKW6smmg17rgP1fJcMxBA',
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(settingsToInsert)
@@ -149,14 +150,14 @@ export const DocumentSettings = () => {
                 </div>
                 <div className="w-64">
                   <Select
-                    value={setting.defaultLabelId || ''}
-                    onValueChange={(value) => handleLabelChange(setting.documentType, value || null)}
+                    value={setting.defaultLabelId || 'none'}
+                    onValueChange={(value) => handleLabelChange(setting.documentType, value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecteer label" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Geen label</SelectItem>
+                      <SelectItem value="none">Geen label</SelectItem>
                       {labels.map((label) => (
                         <SelectItem key={label.id} value={label.id}>
                           <div className="flex items-center gap-2">
