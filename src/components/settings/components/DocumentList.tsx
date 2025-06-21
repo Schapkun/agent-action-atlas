@@ -1,18 +1,18 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Edit, Copy, Trash2, Star, Share, BookOpen } from 'lucide-react';
-import { DocumentTemplateWithTags } from '@/types/documentTags';
+import { Edit, Copy, Trash2, Star, Share, BookOpen, Plus } from 'lucide-react';
+import { DocumentTemplateWithLabels } from '@/types/documentTemplateLabels';
 import { TemplateLibraryManager } from './TemplateLibraryManager';
+import { LabelManagementDialog } from './LabelManagementDialog';
 
 interface DocumentListProps {
-  documents: DocumentTemplateWithTags[];
-  onEditDocument: (document: DocumentTemplateWithTags) => void;
-  onDuplicateDocument: (document: DocumentTemplateWithTags) => void;
-  onDeleteDocument: (document: DocumentTemplateWithTags) => void;
+  documents: DocumentTemplateWithLabels[];
+  onEditDocument: (document: DocumentTemplateWithLabels) => void;
+  onDuplicateDocument: (document: DocumentTemplateWithLabels) => void;
+  onDeleteDocument: (document: DocumentTemplateWithLabels) => void;
   onRefreshDocuments: () => void;
 }
 
@@ -23,10 +23,15 @@ export const DocumentList = ({
   onDeleteDocument,
   onRefreshDocuments
 }: DocumentListProps) => {
-  const [libraryTemplate, setLibraryTemplate] = React.useState<DocumentTemplateWithTags | null>(null);
+  const [libraryTemplate, setLibraryTemplate] = useState<DocumentTemplateWithLabels | null>(null);
+  const [labelManagementTemplate, setLabelManagementTemplate] = useState<DocumentTemplateWithLabels | null>(null);
 
-  const handleShareToLibrary = (document: DocumentTemplateWithTags) => {
+  const handleShareToLibrary = (document: DocumentTemplateWithLabels) => {
     setLibraryTemplate(document);
+  };
+
+  const handleManageLabels = (document: DocumentTemplateWithLabels) => {
+    setLabelManagementTemplate(document);
   };
 
   return (
@@ -44,9 +49,27 @@ export const DocumentList = ({
                         <Star className="h-4 w-4 text-yellow-500 fill-current" />
                       )}
                     </div>
-                    
-                    <div className="flex items-center gap-1">
-                      {document.tags?.map((tag) => (
+                  </div>
+                  
+                  {/* Labels display */}
+                  {document.labels && document.labels.length > 0 && (
+                    <div className="flex items-center gap-1 mb-2">
+                      {document.labels.map((label) => (
+                        <Badge
+                          key={label.id}
+                          style={{ backgroundColor: label.color, color: 'white' }}
+                          className="text-xs"
+                        >
+                          {label.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Tags display (keeping existing functionality) */}
+                  {document.tags && document.tags.length > 0 && (
+                    <div className="flex items-center gap-1 mb-2">
+                      {document.tags.map((tag) => (
                         <Badge
                           key={tag}
                           variant="secondary"
@@ -56,7 +79,7 @@ export const DocumentList = ({
                         </Badge>
                       ))}
                     </div>
-                  </div>
+                  )}
                   
                   {document.description && (
                     <p className="text-sm text-gray-600 mb-2 line-clamp-2">
@@ -70,6 +93,15 @@ export const DocumentList = ({
                 </div>
                 
                 <div className="flex items-center gap-1 ml-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleManageLabels(document)}
+                    title="Labels beheren"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                  
                   <Button
                     variant="ghost"
                     size="sm"
@@ -151,6 +183,14 @@ export const DocumentList = ({
         onClose={() => setLibraryTemplate(null)}
         currentTemplate={libraryTemplate || undefined}
       />
+
+      {labelManagementTemplate && (
+        <LabelManagementDialog
+          open={!!labelManagementTemplate}
+          onClose={() => setLabelManagementTemplate(null)}
+          template={labelManagementTemplate}
+        />
+      )}
     </>
   );
 };

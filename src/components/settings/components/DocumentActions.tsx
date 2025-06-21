@@ -1,11 +1,12 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Library } from 'lucide-react';
 import { SimpleTagFilter } from './SimpleTagFilter';
 
 interface DocumentActionsProps {
   onNewDocument: () => void;
+  onOpenLibrary: () => void;
   selectedTags: string[];
   onTagsChange: (tags: string[]) => void;
   onClearFilters: () => void;
@@ -14,6 +15,7 @@ interface DocumentActionsProps {
 
 export const DocumentActions = ({
   onNewDocument,
+  onOpenLibrary,
   selectedTags,
   onTagsChange,
   onClearFilters,
@@ -22,10 +24,16 @@ export const DocumentActions = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Button onClick={onNewDocument} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Nieuw Document
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={onNewDocument} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Nieuw Document
+          </Button>
+          <Button onClick={onOpenLibrary} variant="outline" className="flex items-center gap-2">
+            <Library className="h-4 w-4" />
+            Bibliotheek
+          </Button>
+        </div>
       </div>
 
       <SimpleTagFilter
