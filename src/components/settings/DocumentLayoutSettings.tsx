@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -10,7 +11,7 @@ import { DocumentList } from './components/DocumentList';
 import { DocumentProvider } from './contexts/DocumentContext';
 import { DocumentTemplateWithLabels } from '@/types/documentTemplateLabels';
 import { TemplateLibraryNew } from './components/TemplateLibraryNew';
-import { useDocumentTemplatesWithLabels } from '@/hooks/useDocumentTemplatesWithLabels';
+import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 
 const DocumentLayoutContent = () => {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
@@ -22,18 +23,26 @@ const DocumentLayoutContent = () => {
   // Tag filter states (keeping existing functionality)
   const [selectedFilterTags, setSelectedFilterTags] = useState<string[]>([]);
   
-  const { templates, loading, refetch } = useDocumentTemplatesWithLabels();
+  const { templates, loading, fetchTemplates } = useDocumentTemplates();
   const { toast } = useToast();
+
+  // Convert templates to the expected format with empty labels array
+  const templatesWithLabels: DocumentTemplateWithLabels[] = useMemo(() => {
+    return templates.map(template => ({
+      ...template,
+      labels: [] // Add empty labels array for now
+    }));
+  }, [templates]);
 
   // Get all unique tags from templates - memoized to prevent recalculation
   const availableTags = useMemo(() => {
-    const allTags = templates.flatMap(template => template.tags || []);
+    const allTags = templatesWithLabels.flatMap(template => template.tags || []);
     return [...new Set(allTags)].sort();
-  }, [templates]);
+  }, [templatesWithLabels]);
 
   // Filter and sort templates based on selected tags - memoized for performance
   const filteredTemplates = useMemo(() => {
-    return templates
+    return templatesWithLabels
       .filter(template => {
         // Tag filter - if any tags are selected, the template must have at least one of them
         if (selectedFilterTags.length > 0) {
@@ -52,7 +61,7 @@ const DocumentLayoutContent = () => {
         // Sort by creation date (newest first)
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
-  }, [templates, selectedFilterTags]);
+  }, [templatesWithLabels, selectedFilterTags]);
 
   const handleNewDocument = () => {
     setEditingDocumentId(undefined);
@@ -73,7 +82,7 @@ const DocumentLayoutContent = () => {
     setEditingDocumentId(undefined);
     
     if (success) {
-      await refetch();
+      await fetchTemplates();
       toast({
         title: "Succes",
         description: "Document is opgeslagen."
@@ -166,7 +175,7 @@ const DocumentLayoutContent = () => {
         />
 
         <div className="text-sm text-gray-600">
-          {filteredTemplates.length} van {templates.length} templates {filteredTemplates.length === 1 ? 'wordt' : 'worden'} getoond
+          {filteredTemplates.length} van {templatesWithLabels.length} templates {filteredTemplates.length === 1 ? 'wordt' : 'worden'} getoond
         </div>
 
         <DocumentList
@@ -174,7 +183,7 @@ const DocumentLayoutContent = () => {
           onEditDocument={handleEditDocument}
           onDuplicateDocument={handleDuplicateDocument}
           onDeleteDocument={handleDeleteDocument}
-          onRefreshDocuments={refetch}
+          onRefreshDocuments={fetchTemplates}
         />
 
         {/* Simple HTML Document Builder Dialog */}
@@ -204,7 +213,7 @@ const DocumentLayoutContent = () => {
             setDuplicatingDocument(null);
           }}
           onSave={handleDuplicateSave}
-          existingNames={templates.map(d => d.name)}
+          existingNames={templatesWithLabels.map(d => d.name)}
           initialName={duplicatingDocument ? `${duplicatingDocument.name} (kopie)` : ''}
           initialDescription={duplicatingDocument?.description || ''}
         />
