@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,9 +19,10 @@ interface LabelManagementDialogProps {
   open: boolean;
   onClose: () => void;
   template: DocumentTemplateWithLabels;
+  onTemplateUpdate?: () => void;
 }
 
-export const LabelManagementDialog = ({ open, onClose, template }: LabelManagementDialogProps) => {
+export const LabelManagementDialog = ({ open, onClose, template, onTemplateUpdate }: LabelManagementDialogProps) => {
   const { labels, createLabel, updateLabel } = useDocumentTemplateLabels();
   const { assignLabelToTemplate, removeLabelFromTemplate } = useDocumentTemplatesWithLabels();
   
@@ -30,16 +30,38 @@ export const LabelManagementDialog = ({ open, onClose, template }: LabelManageme
   const [editingLabel, setEditingLabel] = useState<DocumentTemplateLabel | null>(null);
   const [newLabelName, setNewLabelName] = useState('');
   const [newLabelColor, setNewLabelColor] = useState('#3B82F6');
+  const [currentTemplate, setCurrentTemplate] = useState(template);
 
-  const templateLabelIds = template.labels?.map(label => label.id) || [];
+  // Update local template state when prop changes
+  useEffect(() => {
+    setCurrentTemplate(template);
+  }, [template]);
+
+  const templateLabelIds = currentTemplate.labels?.map(label => label.id) || [];
 
   const handleLabelToggle = async (labelId: string, isChecked: boolean) => {
     try {
       if (isChecked) {
-        await assignLabelToTemplate(template.id, labelId);
+        await assignLabelToTemplate(currentTemplate.id, labelId);
+        // Add the label to local state immediately
+        const labelToAdd = labels.find(l => l.id === labelId);
+        if (labelToAdd) {
+          setCurrentTemplate(prev => ({
+            ...prev,
+            labels: [...(prev.labels || []), labelToAdd]
+          }));
+        }
       } else {
-        await removeLabelFromTemplate(template.id, labelId);
+        await removeLabelFromTemplate(currentTemplate.id, labelId);
+        // Remove the label from local state immediately
+        setCurrentTemplate(prev => ({
+          ...prev,
+          labels: (prev.labels || []).filter(l => l.id !== labelId)
+        }));
       }
+      
+      // Notify parent component to refresh its data
+      onTemplateUpdate?.();
     } catch (error) {
       console.error('Error toggling label:', error);
     }
@@ -89,16 +111,16 @@ export const LabelManagementDialog = ({ open, onClose, template }: LabelManageme
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Labels beheren voor "{template.name}"</DialogTitle>
+          <DialogTitle>Labels beheren voor "{currentTemplate.name}"</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Current template labels */}
-          {template.labels && template.labels.length > 0 && (
+          {currentTemplate.labels && currentTemplate.labels.length > 0 && (
             <div>
               <Label className="text-sm font-medium">Huidige labels:</Label>
               <div className="flex flex-wrap gap-2 mt-2">
-                {template.labels.map((label) => (
+                {currentTemplate.labels.map((label) => (
                   <Badge
                     key={label.id}
                     style={{ backgroundColor: label.color, color: 'white' }}

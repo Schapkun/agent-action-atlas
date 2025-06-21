@@ -189,6 +189,7 @@ export const DocumentList = ({
           open={!!labelManagementTemplate}
           onClose={() => setLabelManagementTemplate(null)}
           template={labelManagementTemplate}
+          onTemplateUpdate={onRefreshDocuments}
         />
       )}
     </>
