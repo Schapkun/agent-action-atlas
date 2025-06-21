@@ -52,7 +52,7 @@ export const useContactData = () => {
         city: client.city || undefined,
         country: client.country || 'Nederland',
         contact_number: client.contact_number || undefined,
-        type: client.type || 'prive',
+        type: (client.type === 'zakelijk' ? 'zakelijk' : 'prive') as 'prive' | 'zakelijk',
         organization_id: client.organization_id,
         workspace_id: client.workspace_id || undefined,
         created_at: client.created_at,
