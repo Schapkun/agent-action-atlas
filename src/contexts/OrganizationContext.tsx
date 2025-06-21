@@ -26,7 +26,6 @@ interface OrganizationContextType {
   isLoadingOrganizations: boolean;
   getFilteredWorkspaces: () => Workspace[];
   refreshData: () => Promise<void>;
-  isReady: boolean; // Add ready state
 }
 
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
@@ -34,7 +33,6 @@ const OrganizationContext = createContext<OrganizationContextType | undefined>(u
 export const useOrganization = () => {
   const context = useContext(OrganizationContext);
   if (context === undefined) {
-    console.error('useOrganization must be used within an OrganizationProvider');
     throw new Error('useOrganization must be used within an OrganizationProvider');
   }
   return context;
@@ -50,34 +48,19 @@ export const OrganizationProvider = ({ children }: OrganizationProviderProps) =>
   const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null);
   const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null);
   const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(true);
-  const [isReady, setIsReady] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
-    console.log('OrganizationProvider - Auth user changed:', user?.id);
     if (user) {
       fetchOrganizationsAndWorkspaces();
-    } else {
-      // Reset state when user logs out
-      setOrganizations([]);
-      setWorkspaces([]);
-      setSelectedOrganization(null);
-      setSelectedWorkspace(null);
-      setIsLoadingOrganizations(false);
-      setIsReady(true);
     }
   }, [user]);
 
   const fetchOrganizationsAndWorkspaces = async () => {
-    if (!user?.id) {
-      setIsReady(true);
-      return;
-    }
+    if (!user?.id) return;
 
     try {
       setIsLoadingOrganizations(true);
-      console.log('OrganizationProvider - Fetching data for user:', user.id);
-      
       const isAccountOwner = user.email === 'info@schapkun.com';
       
       if (isAccountOwner) {
@@ -168,7 +151,6 @@ export const OrganizationProvider = ({ children }: OrganizationProviderProps) =>
       setWorkspaces([]);
     } finally {
       setIsLoadingOrganizations(false);
-      setIsReady(true);
     }
   };
 
@@ -199,7 +181,6 @@ export const OrganizationProvider = ({ children }: OrganizationProviderProps) =>
     isLoadingOrganizations,
     getFilteredWorkspaces,
     refreshData,
-    isReady,
   };
 
   return (

@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useToast } from './use-toast';
 import { Contact } from '@/types/contacts';
-import { useDocumentTypes } from './useDocumentTypes';
 
 interface DocumentFormData {
   client_name: string;
@@ -24,7 +23,6 @@ export const useDocumentFormHandlers = () => {
   const [documentType, setDocumentType] = useState<string>('');
   const [content, setContent] = useState<string>('');
   const { toast } = useToast();
-  const { documentTypes, loading: documentTypesLoading } = useDocumentTypes();
 
   const [formData, setFormData] = useState<DocumentFormData>({
     client_name: '',
@@ -36,13 +34,6 @@ export const useDocumentFormHandlers = () => {
     title: '',
     description: ''
   });
-
-  // Auto-select first document type when they load
-  useEffect(() => {
-    if (!documentTypesLoading && documentTypes.length > 0 && !documentType) {
-      setDocumentType(documentTypes[0].name);
-    }
-  }, [documentTypes, documentTypesLoading, documentType]);
 
   const togglePreview = () => setShowPreview(!showPreview);
 

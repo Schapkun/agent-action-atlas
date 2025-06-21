@@ -6,19 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 
 export const FilterSelector = () => {
-  // Add error boundary to catch context issues
-  let organizationContext;
-  try {
-    organizationContext = useOrganization();
-  } catch (error) {
-    console.error('FilterSelector: useOrganization hook failed:', error);
-    return (
-      <div className="flex items-center space-x-2">
-        <span className="text-sm text-muted-foreground">Filter niet beschikbaar</span>
-      </div>
-    );
-  }
-
   const { 
     organizations, 
     workspaces, 
@@ -27,8 +14,7 @@ export const FilterSelector = () => {
     setSelectedOrganization, 
     setSelectedWorkspace,
     isLoadingOrganizations 
-  } = organizationContext;
-
+  } = useOrganization();
   const { toast } = useToast();
   const [favoriteFilter, setFavoriteFilter] = useState<string | null>(null);
 
