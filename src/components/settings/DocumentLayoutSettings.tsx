@@ -146,17 +146,6 @@ const DocumentLayoutContent = () => {
     );
   }
 
-  if (error) {
-    return (
-      <Alert variant="destructive" className="mb-4">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Fout bij laden van templates: {error}
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
   return (
     <DocumentProvider>
       <div className="space-y-6">
