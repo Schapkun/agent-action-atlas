@@ -1,3 +1,4 @@
+
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -109,25 +110,6 @@ export const Sidebar = ({
         return true;
       }
       
-      // FALLBACK LOGIC: Handle base routes without parameters
-      // For /facturen (no params) -> highlight "Concepten" (draft status)
-      if (currentPath === '/facturen' && currentSearch === '' && path === '/facturen?status=draft') {
-        console.log('Fallback: highlighting Concepten for base /facturen route');
-        return true;
-      }
-      
-      // For /offertes (no params) -> highlight "Concepten" (draft status)  
-      if (currentPath === '/offertes' && currentSearch === '' && path === '/offertes?status=draft') {
-        console.log('Fallback: highlighting Concepten for base /offertes route');
-        return true;
-      }
-      
-      // For /documenten (no params) -> highlight "Opstellen"
-      if (currentPath === '/documenten' && currentSearch === '' && path === '/documenten/opstellen') {
-        console.log('Fallback: highlighting Opstellen for base /documenten route');
-        return true;
-      }
-      
       return false;
     } catch (error) {
       console.error('Error in isActiveRoute:', error);
@@ -195,7 +177,7 @@ export const Sidebar = ({
       id: 'invoices' as ViewType, 
       label: 'Facturen', 
       icon: CreditCard, 
-      path: '/facturen',
+      path: '/facturen/opstellen',
       hasSubmenu: true,
       submenu: [
         { id: 'new-invoice', label: 'Opstellen', icon: Plus, path: '/facturen/opstellen' },
@@ -207,7 +189,7 @@ export const Sidebar = ({
       id: 'quotes' as ViewType, 
       label: 'Offertes', 
       icon: FileSpreadsheet, 
-      path: '/offertes',
+      path: '/offertes/opstellen',
       hasSubmenu: true,
       submenu: [
         { id: 'new-quote', label: 'Opstellen', icon: Plus, path: '/offertes/opstellen' },
