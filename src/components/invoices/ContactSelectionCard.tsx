@@ -113,7 +113,7 @@ export const ContactSelectionCard = ({
 
             {/* Invoice details - only show if formData is provided */}
             {formData && onFormDataChange && (
-              <div className="flex items-end gap-3">
+              <div className="flex items-center gap-3">
                 <div className="w-32">
                   <Label htmlFor="invoice_number" className="text-xs block mb-1">
                     Factuurnummer
@@ -154,13 +154,13 @@ export const ContactSelectionCard = ({
               </div>
             )}
 
-            {/* Right side: Settings button with ml-auto to push it to the far right */}
+            {/* Settings button - now left-aligned with other elements */}
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={handleSettingsClick}
-              className="text-xs h-8 ml-auto"
+              className="text-xs h-8"
             >
               <Settings className="h-4 w-4 mr-1" />
               Instellingen
