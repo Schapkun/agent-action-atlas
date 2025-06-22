@@ -47,63 +47,121 @@ export const Sidebar = ({
 
   // Auto-expand submenu's based on current route and auto-collapse others
   useEffect(() => {
-    const path = location.pathname;
-    const search = location.search;
-    const newExpandedMenus: string[] = [];
+    try {
+      const path = location.pathname;
+      const search = location.search;
+      const newExpandedMenus: string[] = [];
 
-    // Check if we're on a page that should have its submenu expanded
-    if (path.startsWith('/facturen')) {
-      newExpandedMenus.push('invoices');
-    } else if (path.startsWith('/offertes')) {
-      newExpandedMenus.push('quotes');
-    } else if (path.startsWith('/documenten')) {
-      newExpandedMenus.push('documents');
-    } else if (path.startsWith('/actieve-dossiers') || path.startsWith('/gesloten-dossiers')) {
-      newExpandedMenus.push('dossiers');
+      console.log('Current path:', path, 'Search:', search);
+
+      // Check if we're on a page that should have its submenu expanded
+      if (path.startsWith('/facturen')) {
+        newExpandedMenus.push('invoices');
+      } else if (path.startsWith('/offertes')) {
+        newExpandedMenus.push('quotes');
+      } else if (path.startsWith('/documenten')) {
+        newExpandedMenus.push('documents');
+      } else if (path.startsWith('/actieve-dossiers') || path.startsWith('/gesloten-dossiers')) {
+        newExpandedMenus.push('dossiers');
+      }
+
+      console.log('Expanded menus:', newExpandedMenus);
+
+      // Set only the relevant submenu as expanded (auto-collapse others)
+      setExpandedMenus(newExpandedMenus);
+    } catch (error) {
+      console.error('Error in useEffect:', error);
+      setExpandedMenus([]);
     }
-
-    // Set only the relevant submenu as expanded (auto-collapse others)
-    setExpandedMenus(newExpandedMenus);
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   const isActiveRoute = (path: string) => {
-    // Handle exact path matches
-    if (location.pathname === path) return true;
-    
-    // Handle URL parameter matches for invoices
-    if (path === '/facturen?status=draft' && location.pathname === '/facturen' && location.search === '?status=draft') return true;
-    if (path === '/facturen?status=sent' && location.pathname === '/facturen' && location.search === '?status=sent') return true;
-    
-    // Handle URL parameter matches for quotes
-    if (path === '/offertes?status=draft' && location.pathname === '/offertes' && location.search === '?status=draft') return true;
-    if (path === '/offertes?status=sent' && location.pathname === '/offertes' && location.search === '?status=sent') return true;
-    
-    // Handle URL parameter matches for documents
-    if (path === '/documenten?status=sent' && location.pathname === '/documenten' && location.search === '?status=sent') return true;
-    
-    return false;
+    try {
+      const currentPath = location.pathname;
+      const currentSearch = location.search;
+      
+      console.log('Checking route:', path, 'against current:', currentPath, currentSearch);
+      
+      // Handle exact path matches first
+      if (currentPath === path) {
+        console.log('Exact match found for:', path);
+        return true;
+      }
+      
+      // Handle URL parameter matches for invoices
+      if (path === '/facturen?status=draft' && currentPath === '/facturen' && currentSearch === '?status=draft') {
+        return true;
+      }
+      if (path === '/facturen?status=sent' && currentPath === '/facturen' && currentSearch === '?status=sent') {
+        return true;
+      }
+      
+      // Handle URL parameter matches for quotes
+      if (path === '/offertes?status=draft' && currentPath === '/offertes' && currentSearch === '?status=draft') {
+        return true;
+      }
+      if (path === '/offertes?status=sent' && currentPath === '/offertes' && currentSearch === '?status=sent') {
+        return true;
+      }
+      
+      // Handle URL parameter matches for documents
+      if (path === '/documenten?status=sent' && currentPath === '/documenten' && currentSearch === '?status=sent') {
+        return true;
+      }
+      
+      // FALLBACK LOGIC: Handle base routes without parameters
+      // For /facturen (no params) -> highlight "Concepten" (draft status)
+      if (currentPath === '/facturen' && currentSearch === '' && path === '/facturen?status=draft') {
+        console.log('Fallback: highlighting Concepten for base /facturen route');
+        return true;
+      }
+      
+      // For /offertes (no params) -> highlight "Concepten" (draft status)  
+      if (currentPath === '/offertes' && currentSearch === '' && path === '/offertes?status=draft') {
+        console.log('Fallback: highlighting Concepten for base /offertes route');
+        return true;
+      }
+      
+      // For /documenten (no params) -> highlight "Opstellen"
+      if (currentPath === '/documenten' && currentSearch === '' && path === '/documenten/opstellen') {
+        console.log('Fallback: highlighting Opstellen for base /documenten route');
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error in isActiveRoute:', error);
+      return false;
+    }
   };
 
   const isActiveSubmenu = (parentId: string) => {
-    const path = location.pathname;
-    const search = location.search;
-    
-    if (parentId === 'invoices') {
-      // Check if we're on any invoice-related page
-      return path.startsWith('/facturen');
+    try {
+      const path = location.pathname;
+      const search = location.search;
+      
+      console.log('Checking submenu:', parentId, 'for path:', path);
+      
+      if (parentId === 'invoices') {
+        // Check if we're on any invoice-related page
+        return path.startsWith('/facturen');
+      }
+      if (parentId === 'quotes') {
+        // Check if we're on any quote-related page
+        return path.startsWith('/offertes');
+      }
+      if (parentId === 'documents') {
+        // Check if we're on any document-related page
+        return path.startsWith('/documenten');
+      }
+      if (parentId === 'dossiers') {
+        return path.startsWith('/actieve-dossiers') || path.startsWith('/gesloten-dossiers');
+      }
+      return false;
+    } catch (error) {
+      console.error('Error in isActiveSubmenu:', error);
+      return false;
     }
-    if (parentId === 'quotes') {
-      // Check if we're on any quote-related page
-      return path.startsWith('/offertes');
-    }
-    if (parentId === 'documents') {
-      // Check if we're on any document-related page
-      return path.startsWith('/documenten');
-    }
-    if (parentId === 'dossiers') {
-      return path.startsWith('/actieve-dossiers') || path.startsWith('/gesloten-dossiers');
-    }
-    return false;
   };
 
   const menuItems = [
@@ -164,8 +222,13 @@ export const Sidebar = ({
   ];
 
   const handleMenuClick = (item: any, submenuItem?: any) => {    
-    const path = submenuItem?.path || item.path;
-    navigate(path);
+    try {
+      const path = submenuItem?.path || item.path;
+      console.log('Navigating to:', path);
+      navigate(path);
+    } catch (error) {
+      console.error('Error in handleMenuClick:', error);
+    }
   };
 
   return (
