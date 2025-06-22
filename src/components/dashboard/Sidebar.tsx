@@ -1,9 +1,8 @@
-
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Activity, 
@@ -45,6 +44,31 @@ export const Sidebar = ({
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
 
+  // Auto-expand submenu's based on current route
+  useEffect(() => {
+    const path = location.pathname;
+    const newExpandedMenus: string[] = [];
+
+    // Check if we're on a page that should have its submenu expanded
+    if (path.startsWith('/facturen')) {
+      newExpandedMenus.push('invoices');
+    }
+    if (path.startsWith('/offertes')) {
+      newExpandedMenus.push('quotes');
+    }
+    if (path.startsWith('/documenten')) {
+      newExpandedMenus.push('documents');
+    }
+
+    // Only update if there's a change to prevent unnecessary re-renders
+    if (newExpandedMenus.length > 0) {
+      setExpandedMenus(prev => {
+        const combined = [...new Set([...prev, ...newExpandedMenus])];
+        return combined;
+      });
+    }
+  }, [location.pathname]);
+
   const toggleSubmenu = (menuId: string, event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
@@ -82,7 +106,7 @@ export const Sidebar = ({
       id: 'documents' as ViewType, 
       label: 'Documenten', 
       icon: FileText, 
-      path: '/documenten/opstellen',
+      path: '/documenten',
       hasSubmenu: true,
       submenu: [
         { id: 'new-document', label: 'Opstellen', icon: Plus, path: '/documenten/opstellen' },
@@ -93,7 +117,7 @@ export const Sidebar = ({
       id: 'invoices' as ViewType, 
       label: 'Facturen', 
       icon: CreditCard, 
-      path: '/facturen/opstellen',
+      path: '/facturen',
       hasSubmenu: true,
       submenu: [
         { id: 'new-invoice', label: 'Opstellen', icon: Plus, path: '/facturen/opstellen' },
@@ -105,7 +129,7 @@ export const Sidebar = ({
       id: 'quotes' as ViewType, 
       label: 'Offertes', 
       icon: FileSpreadsheet, 
-      path: '/offertes/opstellen',
+      path: '/offertes',
       hasSubmenu: true,
       submenu: [
         { id: 'new-quote', label: 'Opstellen', icon: Plus, path: '/offertes/opstellen' },
@@ -121,16 +145,12 @@ export const Sidebar = ({
 
   const handleMenuClick = (item: any, submenuItem?: any) => {    
     if (item.hasSubmenu && !submenuItem) {
-      // For main menu items with submenu, navigate to the main path and toggle submenu
+      // For main menu items with submenu, navigate to the main path and ensure submenu is expanded
       navigate(item.path);
-      const event = new MouseEvent('click');
-      toggleSubmenu(item.id, event as any);
+      setExpandedMenus(prev => 
+        prev.includes(item.id) ? prev : [...prev, item.id]
+      );
       return;
-    }
-    
-    // Close all submenus when navigating to a different section
-    if (!item.hasSubmenu) {
-      setExpandedMenus([]);
     }
     
     const path = submenuItem?.path || item.path;
