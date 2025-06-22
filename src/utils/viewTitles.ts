@@ -1,44 +1,47 @@
 
-import type { ViewType } from '@/components/dashboard/Sidebar';
+export const getViewTitle = (path: string): { title: string; description: string } => {
+  // Handle paths with query parameters
+  const [basePath, queryString] = path.split('?');
+  const params = new URLSearchParams(queryString || '');
+  const status = params.get('status');
+  
+  // Dynamic titles based on status parameter
+  if (basePath === '/facturen') {
+    if (status === 'draft') {
+      return { title: 'Concept Facturen', description: 'Beheer uw concept facturen' };
+    }
+    if (status === 'sent') {
+      return { title: 'Verzonden Facturen', description: 'Overzicht van verzonden facturen' };
+    }
+    return { title: 'Facturen', description: 'Beheer al uw facturen' };
+  }
 
-export const getViewTitle = (view: ViewType): string => {
-  const titles = {
-    overview: 'Dashboard',
-    'pending-tasks': 'Openstaande Taken',
-    actions: 'AI Acties',
-    documents: 'Documenten',
-    'active-dossiers': 'Actieve Dossiers',
-    'closed-dossiers': 'Gesloten Dossiers',
-    invoices: 'Facturen',
-    quotes: 'Offertes',
-    factuursturen: 'factuursturen.nl',
-    'phone-calls': 'Telefoongesprekken',
-    emails: 'E-mails',
-    contacts: 'Cliënten',
-    settings: 'Instellingen',
+  if (basePath === '/offertes') {
+    if (status === 'draft') {
+      return { title: 'Concept Offertes', description: 'Beheer uw concept offertes' };
+    }
+    if (status === 'sent') {
+      return { title: 'Verzonden Offertes', description: 'Overzicht van verzonden offertes' };
+    }
+    return { title: 'Offertes', description: 'Beheer al uw offertes' };
+  }
+
+  // Static titles for other paths
+  const viewTitles: Record<string, { title: string; description: string }> = {
+    '/dashboard': { title: 'Dashboard', description: 'Overzicht van uw activiteiten' },
+    '/contacten': { title: 'Cliënten', description: 'Beheer uw cliënten en contactgegevens' },
+    '/facturen/nieuw': { title: 'Nieuwe Factuur', description: 'Maak een nieuwe factuur aan' },
+    '/offertes/nieuw': { title: 'Nieuwe Offerte', description: 'Maak een nieuwe offerte aan' },
+    '/documenten': { title: 'Documenten', description: 'Beheer al uw documenten' },
+    '/documenten/nieuw': { title: 'Nieuw Document', description: 'Maak een nieuw document aan' },
+    '/acties': { title: 'Acties', description: 'Overzicht van uitgevoerde acties' },
+    '/dossiers': { title: 'Actieve Dossiers', description: 'Beheer uw actieve dossiers' },
+    '/dossiers/gesloten': { title: 'Gesloten Dossiers', description: 'Overzicht van gesloten dossiers' },
+    '/taken': { title: 'Openstaande Taken', description: 'Beheer uw openstaande taken' },
+    '/gesprekken': { title: 'Telefoongesprekken', description: 'Beheer telefoongesprekken' },
+    '/emails': { title: 'E-mails', description: 'Beheer e-mailcorrespondentie' },
+    '/instellingen': { title: 'Instellingen', description: 'Configureer uw account en organisatie' }
   };
 
-  return titles[view] || 'Dashboard';
-};
-
-export const getViewTitleFromPath = (path: string): string => {
-  if (path === '/') return 'Dashboard';
-  if (path === '/facturen/opstellen' || path === '/facturen/nieuw') return 'Nieuwe Factuur';
-  if (path === '/offertes/opstellen' || path === '/offertes/nieuw') return 'Nieuwe Offerte';
-  if (path === '/documenten/opstellen' || path === '/documenten/nieuw') return 'Nieuw Document';
-  if (path === '/openstaande-taken') return 'Openstaande Taken';
-  if (path === '/ai-acties') return 'AI Acties';
-  if (path === '/documenten') return 'Documenten';
-  if (path === '/documenten?status=draft') return 'Concepten';
-  if (path === '/documenten?status=sent') return 'Verzonden';
-  if (path === '/actieve-dossiers') return 'Actieve Dossiers';
-  if (path === '/gesloten-dossiers') return 'Gesloten Dossiers';
-  if (path === '/facturen') return 'Facturen';
-  if (path === '/offertes') return 'Offertes';
-  if (path === '/factuursturen') return 'factuursturen.nl';
-  if (path === '/telefoongesprekken') return 'Telefoongesprekken';
-  if (path === '/e-mails') return 'E-mails';
-  if (path === '/clienten' || path === '/contacten') return 'Cliënten';
-  if (path === '/instellingen') return 'Instellingen';
-  return 'Dashboard';
+  return viewTitles[basePath] || { title: 'Overzicht', description: 'Beheer uw gegevens' };
 };

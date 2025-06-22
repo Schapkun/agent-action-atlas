@@ -1,15 +1,13 @@
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
-import { PaymentDialog } from './PaymentDialog';
+import { useLocation } from 'react-router-dom';
 import { 
   Search, 
   FileText, 
@@ -17,11 +15,9 @@ import {
   Eye, 
   Edit, 
   Trash2, 
+  Download,
   Send,
-  Check,
-  Clock,
-  AlertCircle,
-  Calculator
+  DollarSign
 } from 'lucide-react';
 
 interface Invoice {
@@ -29,62 +25,41 @@ interface Invoice {
   invoice_number: string;
   client_name: string;
   client_email?: string;
-  client_address?: string;
-  client_city?: string;
-  client_postal_code?: string;
-  status: string;
+  total_amount: number;
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
   invoice_date: string;
   due_date: string;
-  total_amount: number;
-  paid_amount?: number;
-  outstanding_amount?: number;
   created_at: string;
+  updated_at: string;
 }
 
-export const InvoiceOverview = ({ 
-  invoiceData, 
-  onEdit, 
-  onGeneratePDF, 
-  onSendEmail, 
-  onDuplicate, 
-  onAddLine,
-  selectedTemplate,
-  onTemplateChange 
-}: {
-  invoiceData?: Invoice;
-  onEdit?: () => void;
-  onGeneratePDF?: () => void;
-  onSendEmail?: () => void;
-  onDuplicate?: () => void;
-  onAddLine?: () => void;
-  selectedTemplate?: any;
-  onTemplateChange?: (template: any) => void;
-}) => {
+export const InvoiceOverview = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchParams] = useSearchParams();
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
+  const location = useLocation();
 
-  // Get status from URL parameters (fixed, not changeable)
-  const statusFilter = searchParams.get('status') || 'all';
+  // Get status from URL parameters
+  const urlParams = new URLSearchParams(location.search);
+  const urlStatus = urlParams.get('status');
 
-  const getPageTitle = () => {
-    switch (statusFilter) {
-      case 'draft':
-        return 'Concept Facturen';
-      case 'sent':
-        return 'Verzonden Facturen';
-      case 'paid':
-        return 'Betaalde Facturen';
-      case 'overdue':
-        return 'Achterstallige Facturen';
-      case 'partially_paid':
-        return 'Gedeeltelijk Betaalde Facturen';
-      default:
-        return 'Alle Facturen';
+  // Apply URL status filter
+  useEffect(() => {
+    if (urlStatus && urlStatus !== statusFilter) {
+      setStatusFilter(urlStatus);
     }
+  }, [urlStatus]);
+
+  const getContextInfo = () => {
+    if (selectedWorkspace) {
+      return `Werkruimte: ${selectedWorkspace.name}`;
+    } else if (selectedOrganization) {
+      return `Organisatie: ${selectedOrganization.name}`;
+    }
+    return 'Geen selectie';
   };
 
   const fetchInvoices = async () => {
@@ -92,26 +67,31 @@ export const InvoiceOverview = ({
 
     setLoading(true);
     try {
-      console.log('📋 Fetching invoices for organization:', selectedOrganization.id);
+      console.log('📄 Fetching invoices for organization:', selectedOrganization.id);
 
       let query = supabase
         .from('invoices')
         .select(`
-          *,
-          clients!left (
-            address,
-            city,
-            postal_code
-          )
+          id,
+          invoice_number,
+          client_name,
+          client_email,
+          total_amount,
+          status,
+          invoice_date,
+          due_date,
+          created_at,
+          updated_at
         `)
         .eq('organization_id', selectedOrganization.id)
-        .order('created_at', { ascending: false });
+        .order('updated_at', { ascending: false });
 
       if (selectedWorkspace) {
         query = query.eq('workspace_id', selectedWorkspace.id);
       }
 
-      if (statusFilter !== 'all') {
+      // Apply status filter if specified
+      if (statusFilter && statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
       }
 
@@ -119,7 +99,7 @@ export const InvoiceOverview = ({
 
       if (error) throw error;
 
-      console.log('📋 Invoices fetched:', data?.length || 0);
+      console.log('📄 Invoices fetched:', data?.length || 0);
       setInvoices(data || []);
     } catch (error) {
       console.error('Error fetching invoices:', error);
@@ -133,64 +113,10 @@ export const InvoiceOverview = ({
     }
   };
 
-  const updateInvoiceStatus = async (invoiceId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from('invoices')
-        .update({ status: newStatus })
-        .eq('id', invoiceId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Succes",
-        description: `Factuur status bijgewerkt naar ${newStatus}`
-      });
-
-      fetchInvoices();
-    } catch (error) {
-      console.error('Error updating invoice status:', error);
-      toast({
-        title: "Fout",
-        description: "Kon factuur status niet bijwerken",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const markInvoiceAsPaid = async (invoiceId: string, totalAmount: number) => {
-    try {
-      const { error } = await supabase
-        .from('invoices')
-        .update({ paid_amount: totalAmount })
-        .eq('id', invoiceId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Succes",
-        description: "Factuur gemarkeerd als volledig betaald"
-      });
-
-      fetchInvoices();
-    } catch (error) {
-      console.error('Error marking invoice as paid:', error);
-      toast({
-        title: "Fout",
-        description: "Kon factuur niet als betaald markeren",
-        variant: "destructive"
-      });
-    }
-  };
-
   const deleteInvoice = async (invoiceId: string) => {
     if (!confirm('Weet je zeker dat je deze factuur wilt verwijderen?')) return;
 
     try {
-      // First delete invoice lines
-      await supabase.from('invoice_lines').delete().eq('invoice_id', invoiceId);
-      
-      // Then delete the invoice
       const { error } = await supabase
         .from('invoices')
         .delete()
@@ -218,60 +144,88 @@ export const InvoiceOverview = ({
     fetchInvoices();
   }, [selectedOrganization, selectedWorkspace, statusFilter]);
 
-  const filteredInvoices = invoices.filter(invoice =>
-    invoice.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredInvoices = invoices.filter(invoice => {
+    const matchesSearch = invoice.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         invoice.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         invoice.client_email?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesSearch;
+  });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return <Badge variant="outline" className="text-gray-600"><Clock className="h-3 w-3 mr-1" />Concept</Badge>;
-      case 'sent':
-        return <Badge variant="outline" className="text-blue-600"><Send className="h-3 w-3 mr-1" />Verzonden</Badge>;
-      case 'paid':
-        return <Badge variant="outline" className="text-green-600"><Check className="h-3 w-3 mr-1" />Betaald</Badge>;
-      case 'partially_paid':
-        return <Badge variant="outline" className="text-orange-600"><Calculator className="h-3 w-3 mr-1" />Gedeeltelijk Betaald</Badge>;
-      case 'overdue':
-        return <Badge variant="outline" className="text-red-600"><AlertCircle className="h-3 w-3 mr-1" />Achterstallig</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'draft': return 'bg-gray-100 text-gray-800';
+      case 'sent': return 'bg-blue-100 text-blue-800';
+      case 'paid': return 'bg-green-100 text-green-800';
+      case 'overdue': return 'bg-red-100 text-red-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'draft': return 'Concept';
+      case 'sent': return 'Verzonden';
+      case 'paid': return 'Betaald';
+      case 'overdue': return 'Verlopen';
+      case 'cancelled': return 'Geannuleerd';
+      default: return status;
+    }
+  };
+
+  const uniqueStatuses = [...new Set(invoices.map(invoice => invoice.status))];
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">{getPageTitle()}</h1>
-          <p className="text-muted-foreground">Beheer je facturen</p>
+    <div className="space-y-4 lg:space-y-6 p-4 sm:p-6 lg:p-8">
+      {/* Responsive search and filter controls */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 w-full sm:w-auto">
+            <div className="relative flex-1 w-full sm:max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Zoek facturen..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border rounded-md text-sm w-full sm:w-auto"
+            >
+              <option value="all">Alle statussen</option>
+              {uniqueStatuses.map(status => (
+                <option key={status} value={status}>{getStatusLabel(status)}</option>
+              ))}
+            </select>
+          </div>
+
+          <Button asChild className="w-full sm:w-auto">
+            <a href="/facturen/nieuw">
+              <Plus className="h-4 w-4 mr-2" />
+              Nieuwe Factuur
+            </a>
+          </Button>
         </div>
-        <Button asChild>
-          <a href="/facturen/opstellen">
-            <Plus className="h-4 w-4 mr-2" />
-            Nieuwe Factuur
-          </a>
-        </Button>
+
+        {(selectedOrganization || selectedWorkspace) && (
+          <div className="text-sm text-gray-600">
+            Context: {getContextInfo()}
+          </div>
+        )}
       </div>
 
+      {/* Responsive card layout */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              {getPageTitle()}
-            </CardTitle>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Zoek facturen..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <FileText className="h-5 w-5" />
+            Facturen
+          </CardTitle>
         </CardHeader>
 
         <CardContent>
@@ -281,116 +235,129 @@ export const InvoiceOverview = ({
             <div className="text-center py-8 text-muted-foreground">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Geen facturen gevonden</p>
+              <Button asChild className="mt-4">
+                <a href="/facturen/nieuw">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Maak je eerste factuur
+                </a>
+              </Button>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Factuurnummer</TableHead>
-                  <TableHead>Klant & Adres</TableHead>
-                  <TableHead>Factuurdatum</TableHead>
-                  <TableHead>Vervaldatum</TableHead>
-                  <TableHead>Bedrag</TableHead>
-                  <TableHead>Openstaand Bedrag</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Acties</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredInvoices.map((invoice) => {
-                  const paidAmount = invoice.paid_amount || 0;
-                  const outstandingAmount = invoice.total_amount - paidAmount;
-                  
-                  return (
-                    <TableRow key={invoice.id}>
-                      <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{invoice.client_name}</div>
-                          {invoice.client_address && (
-                            <div className="text-sm text-muted-foreground">
-                              {invoice.client_address}
-                            </div>
-                          )}
-                          {(invoice.client_postal_code || invoice.client_city) && (
-                            <div className="text-sm text-muted-foreground">
-                              {invoice.client_postal_code} {invoice.client_city}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{new Date(invoice.invoice_date).toLocaleDateString('nl-NL')}</TableCell>
-                      <TableCell>{new Date(invoice.due_date).toLocaleDateString('nl-NL')}</TableCell>
-                      <TableCell>€{invoice.total_amount?.toFixed(2) || '0.00'}</TableCell>
-                      <TableCell>
-                        <span className={outstandingAmount > 0 ? 'text-orange-600 font-medium' : 'text-green-600'}>
-                          €{outstandingAmount.toFixed(2)}
-                        </span>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(invoice.status)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          {invoice.status === 'draft' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateInvoiceStatus(invoice.id, 'sent')}
-                              title="Versturen"
-                            >
-                              <Send className="h-4 w-4" />
-                            </Button>
-                          )}
-                          
-                          {(invoice.status === 'sent' || invoice.status === 'partially_paid') && (
-                            <>
-                              <PaymentDialog 
-                                invoiceId={invoice.id}
-                                totalAmount={invoice.total_amount}
-                                paidAmount={paidAmount}
-                                outstandingAmount={outstandingAmount}
-                                onPaymentRegistered={fetchInvoices}
-                              >
-                                <Button size="sm" variant="outline" title="Betaling Registreren">
-                                  <Calculator className="h-4 w-4" />
-                                </Button>
-                              </PaymentDialog>
-                              
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => markInvoiceAsPaid(invoice.id, invoice.total_amount)}
-                                title="Markeer Betaald"
-                              >
-                                <Check className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
+            <div className="space-y-4">
+              {/* Mobile-first responsive layout */}
+              <div className="hidden lg:grid lg:grid-cols-12 gap-4 text-sm font-medium text-gray-500 border-b pb-2">
+                <div className="col-span-2">Factuurnummer</div>
+                <div className="col-span-3">Klant</div>
+                <div className="col-span-2">Bedrag</div>
+                <div className="col-span-2">Status</div>
+                <div className="col-span-2">Datum</div>
+                <div className="col-span-1">Acties</div>
+              </div>
 
-                          <Button size="sm" variant="outline" title="Bekijken">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          
-                          <Button size="sm" variant="outline" asChild title="Bewerken">
-                            <a href={`/facturen/opstellen?edit=${invoice.id}`}>
-                              <Edit className="h-4 w-4" />
-                            </a>
-                          </Button>
-                          
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            onClick={() => deleteInvoice(invoice.id)}
-                            title="Verwijderen"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+              {filteredInvoices.map((invoice) => (
+                <div key={invoice.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                  {/* Mobile layout */}
+                  <div className="lg:hidden space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="font-medium">{invoice.invoice_number || 'Concept'}</div>
+                      <Badge className={getStatusColor(invoice.status)}>
+                        {getStatusLabel(invoice.status)}
+                      </Badge>
+                    </div>
+                    
+                    <div>
+                      <p className="font-medium">{invoice.client_name}</p>
+                      {invoice.client_email && (
+                        <p className="text-sm text-muted-foreground">{invoice.client_email}</p>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="font-medium">€{invoice.total_amount.toFixed(2)}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {new Date(invoice.invoice_date).toLocaleDateString('nl-NL')}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2 border-t">
+                      <Button size="sm" variant="outline">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button size="sm" variant="outline" asChild>
+                        <a href={`/facturen/nieuw?edit=${invoice.id}`}>
+                          <Edit className="h-4 w-4" />
+                        </a>
+                      </Button>
+
+                      <Button size="sm" variant="outline">
+                        <Send className="h-4 w-4" />
+                      </Button>
+
+                      <Button size="sm" variant="outline">
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => deleteInvoice(invoice.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Desktop layout */}
+                  <div className="hidden lg:grid lg:grid-cols-12 gap-4 items-center">
+                    <div className="col-span-2 font-medium">
+                      {invoice.invoice_number || 'Concept'}
+                    </div>
+                    
+                    <div className="col-span-3">
+                      <div className="font-medium">{invoice.client_name}</div>
+                      {invoice.client_email && (
+                        <div className="text-sm text-muted-foreground">{invoice.client_email}</div>
+                      )}
+                    </div>
+                    
+                    <div className="col-span-2 font-medium">
+                      €{invoice.total_amount.toFixed(2)}
+                    </div>
+                    
+                    <div className="col-span-2">
+                      <Badge className={getStatusColor(invoice.status)}>
+                        {getStatusLabel(invoice.status)}
+                      </Badge>
+                    </div>
+                    
+                    <div className="col-span-2 text-sm text-muted-foreground">
+                      {new Date(invoice.invoice_date).toLocaleDateString('nl-NL')}
+                    </div>
+
+                    <div className="col-span-1 flex items-center gap-1">
+                      <Button size="sm" variant="outline">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button size="sm" variant="outline" asChild>
+                        <a href={`/facturen/nieuw?edit=${invoice.id}`}>
+                          <Edit className="h-4 w-4" />
+                        </a>
+                      </Button>
+
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => deleteInvoice(invoice.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

@@ -1,3 +1,4 @@
+
 import { InvoiceHeader } from './InvoiceHeader';
 import { ContactSelectionCard } from './ContactSelectionCard';
 import { InvoiceDetailsCard } from './InvoiceDetailsCard';
@@ -69,53 +70,68 @@ export const CreateInvoiceForm = () => {
         onSaveAndSend={handleSaveAndSend}
       />
 
-      <div className="max-w-6xl mx-auto p-3">
-        <form onSubmit={handleFormSubmit} className="space-y-3">
-          <ContactSelectionCard
-            selectedContact={selectedContact}
-            templateSelector={
-              <TemplateSelector
-                selectedTemplate={selectedTemplate}
-                availableTemplates={availableTemplates}
-                templatesLoading={templatesLoading}
-                noLabelConfigured={noLabelConfigured}
-                onTemplateSelect={handleTemplateSelect}
+      {/* Optimized layout: reduced padding and improved spacing */}
+      <div className="w-full max-w-none mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
+        <form onSubmit={handleFormSubmit} className="space-y-4 lg:space-y-6">
+          {/* Responsive grid layout */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6">
+            {/* Main content area - spans 2 columns on XL screens */}
+            <div className="xl:col-span-2 space-y-4 lg:space-y-6">
+              <ContactSelectionCard
+                selectedContact={selectedContact}
+                templateSelector={
+                  <TemplateSelector
+                    selectedTemplate={selectedTemplate}
+                    availableTemplates={availableTemplates}
+                    templatesLoading={templatesLoading}
+                    noLabelConfigured={noLabelConfigured}
+                    onTemplateSelect={handleTemplateSelect}
+                  />
+                }
+                onContactSelect={handleContactSelectOnly}
+                onShowSettings={() => setShowSettings(true)}
               />
-            }
-            onContactSelect={handleContactSelectOnly}
-            onShowSettings={() => setShowSettings(true)}
-          />
 
-          <InvoiceDetailsCard
-            formData={formData}
-            invoiceNumber={invoiceNumber}
-            invoiceSettings={invoiceSettings}
-            onFormDataChange={(updates) => setFormData(updates)}
-            onInvoiceNumberChange={handleInvoiceNumberChange}
-            onInvoiceNumberFocus={handleInvoiceNumberFocus}
-            onInvoiceNumberBlur={handleInvoiceNumberBlur}
-            getDisplayInvoiceNumber={getDisplayInvoiceNumber}
-            getPlaceholderInvoiceNumber={getPlaceholderInvoiceNumber}
-          />
+              <InvoiceDetailsCard
+                formData={formData}
+                invoiceNumber={invoiceNumber}
+                invoiceSettings={invoiceSettings}
+                onFormDataChange={(updates) => setFormData(updates)}
+                onInvoiceNumberChange={handleInvoiceNumberChange}
+                onInvoiceNumberFocus={handleInvoiceNumberFocus}
+                onInvoiceNumberBlur={handleInvoiceNumberBlur}
+                getDisplayInvoiceNumber={getDisplayInvoiceNumber}
+                getPlaceholderInvoiceNumber={getPlaceholderInvoiceNumber}
+              />
 
-          <LineItemsTable
-            lineItems={lineItems}
-            onUpdateLineItem={handleLineItemUpdate}
-            onRemoveLineItem={handleLineItemRemove}
-          />
+              {/* Responsive table container */}
+              <div className="overflow-x-auto">
+                <LineItemsTable
+                  lineItems={lineItems}
+                  onUpdateLineItem={handleLineItemUpdate}
+                  onRemoveLineItem={handleLineItemRemove}
+                />
+              </div>
 
-          <InvoiceFormActions
-            onAddLineItem={addLineItem}
-            subtotal={subtotal}
-            vatAmount={vatAmount}
-            total={total}
-          />
+              <InvoiceFormActions
+                onAddLineItem={addLineItem}
+                subtotal={subtotal}
+                vatAmount={vatAmount}
+                total={total}
+              />
+            </div>
 
-          <InvoiceTotals
-            subtotal={subtotal}
-            vatAmount={vatAmount}
-            total={total}
-          />
+            {/* Sidebar area - spans 1 column on XL screens, full width on smaller */}
+            <div className="xl:col-span-1">
+              <div className="sticky top-4">
+                <InvoiceTotals
+                  subtotal={subtotal}
+                  vatAmount={vatAmount}
+                  total={total}
+                />
+              </div>
+            </div>
+          </div>
         </form>
       </div>
 
