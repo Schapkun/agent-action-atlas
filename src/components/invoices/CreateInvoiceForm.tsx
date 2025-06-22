@@ -56,11 +56,7 @@ export const CreateInvoiceForm = () => {
 
   const handleDocumentSettingsChange = (settings: any) => {
     console.log('Document settings changed:', settings);
-    // Update VAT settings in the line items hook if available
-    if (handleLineItemUpdate && settings.vatDisplay) {
-      // Force recalculation by triggering a state update
-      setFormData({ vatDisplay: settings.vatDisplay });
-    }
+    // The VAT settings are now handled automatically through localStorage in useInvoiceLineItems
   };
 
   return (
