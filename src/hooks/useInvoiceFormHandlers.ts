@@ -2,11 +2,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useInvoiceForm } from './useInvoiceForm';
 import { useToast } from './use-toast';
+import { useInvoices } from './useInvoices';
 
 export const useInvoiceFormHandlers = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [currentInvoiceNumber, setCurrentInvoiceNumber] = useState<string>('');
   const { toast } = useToast();
+  const { generateInvoiceNumber } = useInvoices();
 
   const {
     formData,
@@ -44,14 +47,42 @@ export const useInvoiceFormHandlers = () => {
     return hasContactInfo && hasValidLineItem;
   }, [formData.client_name, lineItems]);
 
+  // Initialize invoice number on component mount if not already set
+  useEffect(() => {
+    const initializeInvoiceNumber = async () => {
+      try {
+        const defaultNumber = await generateInvoiceNumber();
+        console.log('Initialized invoice number:', defaultNumber);
+        setCurrentInvoiceNumber(defaultNumber);
+        
+        if (!invoiceNumber) {
+          setInvoiceNumber(defaultNumber);
+        }
+      } catch (error) {
+        console.error('Failed to initialize invoice number:', error);
+      }
+    };
+
+    initializeInvoiceNumber();
+  }, []);
+
   const togglePreview = () => setShowPreview(!showPreview);
 
   const handleInvoiceNumberChange = (value: string) => {
     setInvoiceNumber(value);
   };
 
-  const handleInvoiceNumberFocus = () => {
+  const handleInvoiceNumberFocus = async () => {
     setIsInvoiceNumberFocused(true);
+    if (!invoiceNumber) {
+      try {
+        const defaultNumber = await generateInvoiceNumber();
+        setInvoiceNumber(defaultNumber);
+        setCurrentInvoiceNumber(defaultNumber);
+      } catch (error) {
+        console.error('Failed to get default invoice number:', error);
+      }
+    }
   };
 
   const handleInvoiceNumberBlur = () => {
@@ -59,11 +90,18 @@ export const useInvoiceFormHandlers = () => {
   };
 
   const getDisplayInvoiceNumber = () => {
-    return invoiceNumber || 'Wordt automatisch toegewezen';
+    return invoiceNumber || '';
   };
 
   const getPlaceholderInvoiceNumber = async () => {
-    return 'Wordt automatisch toegewezen';
+    try {
+      const freshNumber = await generateInvoiceNumber();
+      console.log('Generated fresh placeholder number:', freshNumber);
+      return freshNumber;
+    } catch (error) {
+      console.error('Failed to generate placeholder number:', error);
+      return '';
+    }
   };
 
   const handleContactClear = () => {
