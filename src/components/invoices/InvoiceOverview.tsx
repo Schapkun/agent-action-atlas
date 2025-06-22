@@ -1,234 +1,308 @@
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Download, FileText, Send, Plus, Edit, Calendar, Building, User, MapPin, Phone, Mail, Hash, CreditCard, CalendarDays, Eye } from 'lucide-react';
-import { TemplateSelector } from './TemplateSelector';
-import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
-import { InvoiceViewDialog } from './InvoiceViewDialog';
-import { InvoicePreviewDialog } from './InvoicePreviewDialog';
-import { InvoicePDFDialog } from './InvoicePDFDialog';
-import type { DocumentTemplate } from '@/hooks/useDocumentTemplatesCreate';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { useOrganization } from '@/contexts/OrganizationContext';
+import { supabase } from '@/integrations/supabase/client';
+import { 
+  Search, 
+  FileText, 
+  Plus, 
+  Eye, 
+  Edit, 
+  Trash2, 
+  Send,
+  Check,
+  Clock,
+  AlertCircle
+} from 'lucide-react';
 
-interface InvoiceOverviewProps {
-  invoiceData: any;
-  onEdit: () => void;
-  onGeneratePDF: () => void;
-  onSendEmail: () => void;
-  onDuplicate: () => void;
-  onAddLine: () => void;
-  selectedTemplate: DocumentTemplate | null;
-  onTemplateChange: (template: DocumentTemplate | null) => void;
+interface Invoice {
+  id: string;
+  invoice_number: string;
+  client_name: string;
+  client_email?: string;
+  status: string;
+  invoice_date: string;
+  due_date: string;
+  total_amount: number;
+  created_at: string;
 }
 
-export const InvoiceOverview = ({
-  invoiceData,
-  onEdit,
-  onGeneratePDF,
-  onSendEmail,
-  onDuplicate,
+export const InvoiceOverview = ({ 
+  invoiceData, 
+  onEdit, 
+  onGeneratePDF, 
+  onSendEmail, 
+  onDuplicate, 
   onAddLine,
   selectedTemplate,
-  onTemplateChange
-}: InvoiceOverviewProps) => {
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
-  const [isPDFDialogOpen, setIsPDFDialogOpen] = useState(false);
-  const { templates, loading: templatesLoading } = useDocumentTemplates();
+  onTemplateChange 
+}: {
+  invoiceData?: Invoice;
+  onEdit?: () => void;
+  onGeneratePDF?: () => void;
+  onSendEmail?: () => void;
+  onDuplicate?: () => void;
+  onAddLine?: () => void;
+  selectedTemplate?: any;
+  onTemplateChange?: (template: any) => void;
+}) => {
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const { selectedOrganization, selectedWorkspace } = useOrganization();
+  const { toast } = useToast();
 
-  // Auto-select first template if none selected
-  useEffect(() => {
-    if (!selectedTemplate && templates.length > 0 && !templatesLoading) {
-      onTemplateChange(templates[0] as DocumentTemplate);
+  const fetchInvoices = async () => {
+    if (!selectedOrganization) return;
+
+    setLoading(true);
+    try {
+      console.log('📋 Fetching invoices for organization:', selectedOrganization.id);
+
+      let query = supabase
+        .from('invoices')
+        .select('*')
+        .eq('organization_id', selectedOrganization.id)
+        .order('created_at', { ascending: false });
+
+      if (selectedWorkspace) {
+        query = query.eq('workspace_id', selectedWorkspace.id);
+      }
+
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      console.log('📋 Invoices fetched:', data?.length || 0);
+      setInvoices(data || []);
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+      toast({
+        title: "Fout",
+        description: "Kon facturen niet ophalen",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-  }, [templates, selectedTemplate, onTemplateChange, templatesLoading]);
+  };
 
-  if (!invoiceData) return null;
+  const updateInvoiceStatus = async (invoiceId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('invoices')
+        .update({ status: newStatus })
+        .eq('id', invoiceId);
 
-  const statusVariant = invoiceData.status === 'sent' ? 'default' : 
-                       invoiceData.status === 'paid' ? 'secondary' : 'outline';
+      if (error) throw error;
+
+      toast({
+        title: "Succes",
+        description: `Factuur status bijgewerkt naar ${newStatus}`
+      });
+
+      fetchInvoices();
+    } catch (error) {
+      console.error('Error updating invoice status:', error);
+      toast({
+        title: "Fout",
+        description: "Kon factuur status niet bijwerken",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteInvoice = async (invoiceId: string) => {
+    if (!confirm('Weet je zeker dat je deze factuur wilt verwijderen?')) return;
+
+    try {
+      // First delete invoice lines
+      await supabase.from('invoice_lines').delete().eq('invoice_id', invoiceId);
+      
+      // Then delete the invoice
+      const { error } = await supabase
+        .from('invoices')
+        .delete()
+        .eq('id', invoiceId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succes",
+        description: "Factuur verwijderd"
+      });
+
+      fetchInvoices();
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
+      toast({
+        title: "Fout",
+        description: "Kon factuur niet verwijderen",
+        variant: "destructive"
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchInvoices();
+  }, [selectedOrganization, selectedWorkspace, statusFilter]);
+
+  const filteredInvoices = invoices.filter(invoice =>
+    invoice.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'draft':
+        return <Badge variant="outline" className="text-gray-600"><Clock className="h-3 w-3 mr-1" />Concept</Badge>;
+      case 'sent':
+        return <Badge variant="outline" className="text-blue-600"><Send className="h-3 w-3 mr-1" />Verzonden</Badge>;
+      case 'paid':
+        return <Badge variant="outline" className="text-green-600"><Check className="h-3 w-3 mr-1" />Betaald</Badge>;
+      case 'overdue':
+        return <Badge variant="outline" className="text-red-600"><AlertCircle className="h-3 w-3 mr-1" />Achterstallig</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
 
   return (
-    <>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Facturen</h1>
+          <p className="text-muted-foreground">Beheer al je facturen</p>
+        </div>
+        <Button asChild>
+          <a href="/facturen/opstellen">
+            <Plus className="h-4 w-4 mr-2" />
+            Nieuwe Factuur
+          </a>
+        </Button>
+      </div>
+
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
-          <div className="flex items-center space-x-4">
-            <CardTitle className="text-2xl font-bold">
-              Factuur {invoiceData.invoice_number}
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Factuur Overzicht
             </CardTitle>
-            <Badge variant={statusVariant} className="text-sm">
-              {invoiceData.status === 'draft' && 'Concept'}
-              {invoiceData.status === 'sent' && 'Verzonden'}
-              {invoiceData.status === 'paid' && 'Betaald'}
-            </Badge>
+            <div className="flex gap-2">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter op status" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border shadow-lg">
+                  <SelectItem value="all">Alle statussen</SelectItem>
+                  <SelectItem value="draft">Concepten</SelectItem>
+                  <SelectItem value="sent">Verzonden</SelectItem>
+                  <SelectItem value="paid">Betaald</SelectItem>
+                  <SelectItem value="overdue">Achterstallig</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" onClick={() => setIsViewDialogOpen(true)}>
-              <Eye className="h-4 w-4 mr-2" />
-              Bekijken
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setIsPreviewDialogOpen(true)}>
-              <FileText className="h-4 w-4 mr-2" />
-              Voorbeeld
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setIsPDFDialogOpen(true)}>
-              <Download className="h-4 w-4 mr-2" />
-              PDF
-            </Button>
-            <Button variant="outline" size="sm" onClick={onSendEmail}>
-              <Send className="h-4 w-4 mr-2" />
-              Versturen
-            </Button>
-            <Button variant="outline" size="sm" onClick={onEdit}>
-              <Edit className="h-4 w-4 mr-2" />
-              Bewerken
-            </Button>
-          </div>
-        </CardHeader>
-        
-        <CardContent className="space-y-6">
-          {/* Template Selector */}
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium">Template</h3>
-            <TemplateSelector
-              selectedTemplate={selectedTemplate}
-              onTemplateChange={onTemplateChange}
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Zoek facturen..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
             />
           </div>
+        </CardHeader>
 
-          <Separator />
-
-          {/* Invoice Details Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Client Information */}
-            <div className="space-y-3">
-              <h3 className="font-medium text-sm text-muted-foreground flex items-center">
-                <Building className="h-4 w-4 mr-2" />
-                Klantgegevens
-              </h3>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{invoiceData.client_name}</span>
-                </div>
-                {invoiceData.client_email && (
-                  <div className="flex items-center space-x-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{invoiceData.client_email}</span>
-                  </div>
-                )}
-                {invoiceData.client_address && (
-                  <div className="flex items-start space-x-2">
-                    <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                    <div className="text-sm">
-                      <div>{invoiceData.client_address}</div>
-                      <div>
-                        {invoiceData.client_postal_code} {invoiceData.client_city}
+        <CardContent>
+          {loading ? (
+            <div className="text-center py-8">Facturen laden...</div>
+          ) : filteredInvoices.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Geen facturen gevonden</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredInvoices.map((invoice) => (
+                <div key={invoice.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-medium">{invoice.invoice_number}</h3>
+                        {getStatusBadge(invoice.status)}
                       </div>
-                      <div>{invoiceData.client_country}</div>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Klant: {invoice.client_name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Bedrag: €{invoice.total_amount?.toFixed(2) || '0.00'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Vervaldatum: {new Date(invoice.due_date).toLocaleDateString('nl-NL')}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {invoice.status === 'draft' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateInvoiceStatus(invoice.id, 'sent')}
+                        >
+                          <Send className="h-4 w-4 mr-1" />
+                          Versturen
+                        </Button>
+                      )}
+                      
+                      {invoice.status === 'sent' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateInvoiceStatus(invoice.id, 'paid')}
+                        >
+                          <Check className="h-4 w-4 mr-1" />
+                          Markeer Betaald
+                        </Button>
+                      )}
+
+                      <Button size="sm" variant="outline">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button size="sm" variant="outline" asChild>
+                        <a href={`/facturen/opstellen?edit=${invoice.id}`}>
+                          <Edit className="h-4 w-4" />
+                        </a>
+                      </Button>
+                      
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => deleteInvoice(invoice.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              ))}
             </div>
-
-            {/* Invoice Details */}
-            <div className="space-y-3">
-              <h3 className="font-medium text-sm text-muted-foreground flex items-center">
-                <Hash className="h-4 w-4 mr-2" />
-                Factuurgegevens
-              </h3>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">
-                    Factuurdatum: {new Date(invoiceData.invoice_date).toLocaleDateString('nl-NL')}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">
-                    Vervaldatum: {new Date(invoiceData.due_date).toLocaleDateString('nl-NL')}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">
-                    Betalingstermijn: {invoiceData.payment_terms} dagen
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Financial Summary */}
-            <div className="space-y-3">
-              <h3 className="font-medium text-sm text-muted-foreground">
-                Financieel overzicht
-              </h3>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Subtotaal:</span>
-                  <span>€{Number(invoiceData.subtotal || 0).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>BTW ({invoiceData.vat_percentage}%):</span>
-                  <span>€{Number(invoiceData.vat_amount || 0).toFixed(2)}</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between font-medium">
-                  <span>Totaal:</span>
-                  <span>€{Number(invoiceData.total_amount || 0).toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Notes Section */}
-          {invoiceData.notes && (
-            <>
-              <Separator />
-              <div className="space-y-2">
-                <h3 className="font-medium text-sm text-muted-foreground">Notities</h3>
-                <p className="text-sm bg-muted p-3 rounded-md">{invoiceData.notes}</p>
-              </div>
-            </>
           )}
-
-          {/* Actions */}
-          <div className="flex flex-wrap gap-2 pt-4">
-            <Button onClick={onAddLine} variant="outline" size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Regel toevoegen
-            </Button>
-            <Button onClick={onDuplicate} variant="outline" size="sm">
-              <FileText className="h-4 w-4 mr-2" />
-              Dupliceren
-            </Button>
-          </div>
         </CardContent>
       </Card>
-
-      <InvoiceViewDialog
-        open={isViewDialogOpen}
-        onClose={() => setIsViewDialogOpen(false)}
-        invoice={invoiceData}
-      />
-
-      <InvoicePreviewDialog
-        open={isPreviewDialogOpen}
-        onClose={() => setIsPreviewDialogOpen(false)}
-        invoiceData={invoiceData}
-        selectedTemplate={selectedTemplate}
-      />
-
-      <InvoicePDFDialog
-        open={isPDFDialogOpen}
-        onClose={() => setIsPDFDialogOpen(false)}
-        invoiceData={invoiceData}
-        selectedTemplate={selectedTemplate}
-      />
-    </>
+    </div>
   );
 };

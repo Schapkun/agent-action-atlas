@@ -59,6 +59,7 @@ const App = () => (
               <Route path="/facturen/:id/sturen" element={<Index><FactuurSturen /></Index>} />
               <Route path="/offertes" element={<Index><Quotes /></Index>} />
               <Route path="/offertes/nieuw" element={<Index><CreateQuote /></Index>} />
+              <Route path="/offertes/opstellen" element={<Navigate to="/offertes/nieuw" replace />} />
               <Route path="/telefoongesprekken" element={<Index><PhoneCalls /></Index>} />
               <Route path="/e-mails" element={<Index><Emails /></Index>} />
               <Route path="/contacten" element={<Index><Contacts /></Index>} />
