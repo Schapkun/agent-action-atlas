@@ -1,5 +1,5 @@
-
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,8 +56,17 @@ export const InvoiceOverview = ({
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchParams] = useSearchParams();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
+
+  // Read status from URL parameters on component mount
+  useEffect(() => {
+    const statusParam = searchParams.get('status');
+    if (statusParam) {
+      setStatusFilter(statusParam);
+    }
+  }, [searchParams]);
 
   const fetchInvoices = async () => {
     if (!selectedOrganization) return;

@@ -1,9 +1,10 @@
-
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,8 +37,17 @@ export const QuoteOverview = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchParams] = useSearchParams();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
+
+  // Read status from URL parameters on component mount
+  useEffect(() => {
+    const statusParam = searchParams.get('status');
+    if (statusParam) {
+      setStatusFilter(statusParam);
+    }
+  }, [searchParams]);
 
   const fetchQuotes = async () => {
     if (!selectedOrganization) return;
@@ -183,18 +193,19 @@ export const QuoteOverview = () => {
               Offerte Overzicht
             </CardTitle>
             <div className="flex gap-2">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-1 border rounded-md text-sm"
-              >
-                <option value="all">Alle statussen</option>
-                <option value="draft">Concept</option>
-                <option value="sent">Verzonden</option>
-                <option value="accepted">Geaccepteerd</option>
-                <option value="rejected">Afgewezen</option>
-                <option value="expired">Verlopen</option>
-              </select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter op status" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border shadow-lg">
+                  <SelectItem value="all">Alle statussen</SelectItem>
+                  <SelectItem value="draft">Concept</SelectItem>
+                  <SelectItem value="sent">Verzonden</SelectItem>
+                  <SelectItem value="accepted">Geaccepteerd</SelectItem>
+                  <SelectItem value="rejected">Afgewezen</SelectItem>
+                  <SelectItem value="expired">Verlopen</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="relative">
