@@ -78,7 +78,7 @@ export const ContactSelectionCard = ({
       <Card>
         <CardContent className="p-3">
           <div className="flex items-center justify-start gap-4">
-            {/* Left side: Contact selector and action buttons */}
+            {/* Contact selector and action buttons */}
             <div className="flex items-center gap-2">
               <div className="w-64">
                 <ContactSelector
@@ -114,23 +114,18 @@ export const ContactSelectionCard = ({
             {/* Invoice details - only show if formData is provided */}
             {formData && onFormDataChange && (
               <div className="flex items-center gap-3">
-                <div className="w-32">
-                  <Label htmlFor="invoice_number" className="text-xs block mb-1">
-                    Factuurnummer
-                  </Label>
+                <div className="w-32 flex flex-col">
                   <Input
                     id="invoice_number"
                     value={getDisplayInvoiceNumber ? getDisplayInvoiceNumber() : invoiceNumber || ''}
                     onChange={(e) => onInvoiceNumberChange && onInvoiceNumberChange(e.target.value)}
                     onFocus={onInvoiceNumberFocus}
                     onBlur={onInvoiceNumberBlur}
+                    placeholder="Factuurnummer"
                     className="h-8 text-xs placeholder:text-xs"
                   />
                 </div>
-                <div className="w-32">
-                  <Label htmlFor="invoice_date" className="text-xs block mb-1">
-                    Factuurdatum
-                  </Label>
+                <div className="w-32 flex flex-col">
                   <Input
                     id="invoice_date"
                     type="date"
@@ -139,10 +134,7 @@ export const ContactSelectionCard = ({
                     className="h-8 text-xs"
                   />
                 </div>
-                <div className="w-32">
-                  <Label htmlFor="due_date" className="text-xs block mb-1">
-                    Vervaldatum
-                  </Label>
+                <div className="w-32 flex flex-col">
                   <Input
                     id="due_date"
                     type="date"
