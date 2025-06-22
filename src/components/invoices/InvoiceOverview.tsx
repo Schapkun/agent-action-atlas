@@ -41,25 +41,7 @@ interface Invoice {
   created_at: string;
 }
 
-export const InvoiceOverview = ({ 
-  invoiceData, 
-  onEdit, 
-  onGeneratePDF, 
-  onSendEmail, 
-  onDuplicate, 
-  onAddLine,
-  selectedTemplate,
-  onTemplateChange 
-}: {
-  invoiceData?: Invoice;
-  onEdit?: () => void;
-  onGeneratePDF?: () => void;
-  onSendEmail?: () => void;
-  onDuplicate?: () => void;
-  onAddLine?: () => void;
-  selectedTemplate?: any;
-  onTemplateChange?: (template: any) => void;
-}) => {
+export const InvoiceOverview = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -96,14 +78,7 @@ export const InvoiceOverview = ({
 
       let query = supabase
         .from('invoices')
-        .select(`
-          *,
-          clients!left (
-            address,
-            city,
-            postal_code
-          )
-        `)
+        .select('*')
         .eq('organization_id', selectedOrganization.id)
         .order('created_at', { ascending: false });
 
@@ -220,7 +195,7 @@ export const InvoiceOverview = ({
 
   const filteredInvoices = invoices.filter(invoice =>
     invoice.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase())
+    invoice.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getStatusBadge = (status: string) => {
@@ -248,7 +223,7 @@ export const InvoiceOverview = ({
           <p className="text-muted-foreground">Beheer je facturen</p>
         </div>
         <Button asChild>
-          <a href="/facturen/opstellen">
+          <a href="/facturen/nieuw">
             <Plus className="h-4 w-4 mr-2" />
             Nieuwe Factuur
           </a>
@@ -303,7 +278,7 @@ export const InvoiceOverview = ({
                   
                   return (
                     <TableRow key={invoice.id}>
-                      <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
+                      <TableCell className="font-medium">{invoice.invoice_number || 'Concept'}</TableCell>
                       <TableCell>
                         <div>
                           <div className="font-medium">{invoice.client_name}</div>
@@ -371,7 +346,7 @@ export const InvoiceOverview = ({
                           </Button>
                           
                           <Button size="sm" variant="outline" asChild title="Bewerken">
-                            <a href={`/facturen/opstellen?edit=${invoice.id}`}>
+                            <a href={`/facturen/nieuw?edit=${invoice.id}`}>
                               <Edit className="h-4 w-4" />
                             </a>
                           </Button>
