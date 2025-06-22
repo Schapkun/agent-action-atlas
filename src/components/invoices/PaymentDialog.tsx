@@ -1,12 +1,11 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Calculator } from 'lucide-react';
 
 interface PaymentDialogProps {
   invoiceId: string;
@@ -17,43 +16,25 @@ interface PaymentDialogProps {
   children: React.ReactNode;
 }
 
-export const PaymentDialog = ({ 
-  invoiceId, 
-  totalAmount, 
-  paidAmount, 
-  outstandingAmount, 
+export const PaymentDialog = ({
+  invoiceId,
+  totalAmount,
+  paidAmount,
+  outstandingAmount,
   onPaymentRegistered,
-  children 
+  children
 }: PaymentDialogProps) => {
   const [open, setOpen] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentAmount, setPaymentAmount] = useState(outstandingAmount);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const handlePaymentSubmit = async () => {
-    const amount = parseFloat(paymentAmount);
-    
-    if (isNaN(amount) || amount <= 0) {
-      toast({
-        title: "Fout",
-        description: "Voer een geldig bedrag in",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (amount > outstandingAmount) {
-      toast({
-        title: "Fout",
-        description: "Bedrag kan niet hoger zijn dan het openstaande bedrag",
-        variant: "destructive"
-      });
-      return;
-    }
-
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
+
     try {
-      const newPaidAmount = paidAmount + amount;
+      const newPaidAmount = paidAmount + paymentAmount;
       
       const { error } = await supabase
         .from('invoices')
@@ -64,11 +45,10 @@ export const PaymentDialog = ({
 
       toast({
         title: "Succes",
-        description: `Betaling van €${amount.toFixed(2)} geregistreerd`
+        description: `Betaling van €${paymentAmount.toFixed(2)} geregistreerd`
       });
 
       setOpen(false);
-      setPaymentAmount('');
       onPaymentRegistered();
     } catch (error) {
       console.error('Error registering payment:', error);
@@ -87,28 +67,29 @@ export const PaymentDialog = ({
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md p-6">
         <DialogHeader>
           <DialogTitle>Betaling Registreren</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="text-muted-foreground">Totaal bedrag:</p>
-              <p className="font-medium">€{totalAmount.toFixed(2)}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Reeds betaald:</p>
-              <p className="font-medium">€{paidAmount.toFixed(2)}</p>
-            </div>
-            <div className="col-span-2">
-              <p className="text-muted-foreground">Openstaand bedrag:</p>
-              <p className="font-medium text-orange-600">€{outstandingAmount.toFixed(2)}</p>
-            </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Totaal bedrag</Label>
+            <div className="text-lg font-medium">€{totalAmount.toFixed(2)}</div>
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="payment-amount">Betaald bedrag</Label>
+            <Label>Reeds betaald</Label>
+            <div className="text-lg">€{paidAmount.toFixed(2)}</div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Openstaand bedrag</Label>
+            <div className="text-lg font-medium text-orange-600">€{outstandingAmount.toFixed(2)}</div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="payment-amount">Betaalbedrag</Label>
             <Input
               id="payment-amount"
               type="number"
@@ -116,20 +97,20 @@ export const PaymentDialog = ({
               min="0"
               max={outstandingAmount}
               value={paymentAmount}
-              onChange={(e) => setPaymentAmount(e.target.value)}
-              placeholder="0.00"
+              onChange={(e) => setPaymentAmount(parseFloat(e.target.value) || 0)}
+              required
             />
           </div>
-
+          
           <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Annuleren
             </Button>
-            <Button onClick={handlePaymentSubmit} disabled={loading}>
+            <Button type="submit" disabled={loading}>
               {loading ? 'Bezig...' : 'Registreren'}
             </Button>
           </div>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

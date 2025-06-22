@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -5,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,6 +47,8 @@ export const InvoiceOverview = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchParams] = useSearchParams();
+  const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
+  const [isAllSelected, setIsAllSelected] = useState(false);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
 
@@ -104,6 +108,64 @@ export const InvoiceOverview = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedInvoices(new Set(filteredInvoices.map(invoice => invoice.id)));
+      setIsAllSelected(true);
+    } else {
+      setSelectedInvoices(new Set());
+      setIsAllSelected(false);
+    }
+  };
+
+  const handleSelectInvoice = (invoiceId: string, checked: boolean) => {
+    const newSelected = new Set(selectedInvoices);
+    if (checked) {
+      newSelected.add(invoiceId);
+    } else {
+      newSelected.delete(invoiceId);
+    }
+    setSelectedInvoices(newSelected);
+    setIsAllSelected(newSelected.size === filteredInvoices.length && filteredInvoices.length > 0);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedInvoices.size === 0) return;
+    
+    if (!confirm(`Weet je zeker dat je ${selectedInvoices.size} facturen wilt verwijderen?`)) return;
+
+    try {
+      // Delete invoice lines first
+      for (const invoiceId of selectedInvoices) {
+        await supabase.from('invoice_lines').delete().eq('invoice_id', invoiceId);
+      }
+      
+      // Then delete the invoices
+      const { error } = await supabase
+        .from('invoices')
+        .delete()
+        .in('id', Array.from(selectedInvoices));
+
+      if (error) throw error;
+
+      toast({
+        title: "Succes",
+        description: `${selectedInvoices.size} facturen verwijderd`
+      });
+
+      setSelectedInvoices(new Set());
+      setIsAllSelected(false);
+      fetchInvoices();
+    } catch (error) {
+      console.error('Error deleting invoices:', error);
+      toast({
+        title: "Fout",
+        description: "Kon facturen niet verwijderen",
+        variant: "destructive"
+      });
     }
   };
 
@@ -227,12 +289,25 @@ export const InvoiceOverview = () => {
           />
         </div>
         
-        <Button asChild>
-          <a href="/facturen/nieuw">
-            <Plus className="h-4 w-4 mr-2" />
-            Nieuwe Factuur
-          </a>
-        </Button>
+        <div className="flex items-center gap-2">
+          {selectedInvoices.size > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBulkDelete}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Verwijder ({selectedInvoices.size})
+            </Button>
+          )}
+          
+          <Button asChild>
+            <a href="/facturen/nieuw">
+              <Plus className="h-4 w-4 mr-2" />
+              Nieuwe Factuur
+            </a>
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -248,8 +323,17 @@ export const InvoiceOverview = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={isAllSelected}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Factuurnummer</TableHead>
-                  <TableHead>Klant & Adres</TableHead>
+                  <TableHead>Cliënt</TableHead>
+                  <TableHead>Adres</TableHead>
+                  <TableHead>Postcode</TableHead>
+                  <TableHead>Woonplaats</TableHead>
                   <TableHead>Factuurdatum</TableHead>
                   <TableHead>Vervaldatum</TableHead>
                   <TableHead>Bedrag</TableHead>
@@ -265,22 +349,17 @@ export const InvoiceOverview = () => {
                   
                   return (
                     <TableRow key={invoice.id}>
-                      <TableCell className="font-medium">{invoice.invoice_number || 'Concept'}</TableCell>
                       <TableCell>
-                        <div>
-                          <div className="font-medium">{invoice.client_name}</div>
-                          {invoice.client_address && (
-                            <div className="text-sm text-muted-foreground">
-                              {invoice.client_address}
-                            </div>
-                          )}
-                          {(invoice.client_postal_code || invoice.client_city) && (
-                            <div className="text-sm text-muted-foreground">
-                              {invoice.client_postal_code} {invoice.client_city}
-                            </div>
-                          )}
-                        </div>
+                        <Checkbox
+                          checked={selectedInvoices.has(invoice.id)}
+                          onCheckedChange={(checked) => handleSelectInvoice(invoice.id, checked as boolean)}
+                        />
                       </TableCell>
+                      <TableCell className="font-medium">{invoice.invoice_number || 'Concept'}</TableCell>
+                      <TableCell>{invoice.client_name}</TableCell>
+                      <TableCell>{invoice.client_address || '-'}</TableCell>
+                      <TableCell>{invoice.client_postal_code || '-'}</TableCell>
+                      <TableCell>{invoice.client_city || '-'}</TableCell>
                       <TableCell>{new Date(invoice.invoice_date).toLocaleDateString('nl-NL')}</TableCell>
                       <TableCell>{new Date(invoice.due_date).toLocaleDateString('nl-NL')}</TableCell>
                       <TableCell>€{invoice.total_amount?.toFixed(2) || '0.00'}</TableCell>
