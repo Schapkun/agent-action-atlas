@@ -49,7 +49,7 @@ export const QuotePreviewDialog = ({
   const { toast } = useToast();
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && formData.client_name) {
       generatePDFPreview();
     }
     
@@ -127,14 +127,15 @@ export const QuotePreviewDialog = ({
           <div className="flex items-center gap-2">
             <Button 
               onClick={handleDownload}
-              className="bg-gray-800 hover:bg-gray-900 text-white"
+              variant="outline"
+              className="bg-transparent hover:bg-gray-50"
             >
               <Download className="h-4 w-4 mr-2" />
               Download PDF
             </Button>
             <Button 
               onClick={handleSend}
-              variant="outline"
+              className="bg-gray-800 hover:bg-gray-900 text-white"
             >
               <Send className="h-4 w-4 mr-2" />
               Versturen
@@ -147,7 +148,7 @@ export const QuotePreviewDialog = ({
         
         <div className="flex-1 min-h-0">
           {loading ? (
-            <div className="flex items-center justify-center h-96">
+            <div className="flex items-center justify-center h-[600px]">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
                 <p>PDF wordt gegenereerd...</p>
@@ -156,11 +157,11 @@ export const QuotePreviewDialog = ({
           ) : pdfUrl ? (
             <iframe
               src={pdfUrl}
-              className="w-full h-96 border rounded-lg"
+              className="w-full h-[600px] border rounded-lg"
               title="PDF Preview"
             />
           ) : (
-            <div className="flex items-center justify-center h-96">
+            <div className="flex items-center justify-center h-[600px]">
               <p className="text-muted-foreground">Kon PDF preview niet laden</p>
             </div>
           )}

@@ -86,7 +86,7 @@ export const QuoteHeader = ({
               className="bg-gray-800 hover:bg-gray-900 text-xs"
             >
               <Send className="h-3 w-3 mr-1" />
-              {sendLoading ? 'Versturen...' : 'Opslaan & Versturen'}
+              {sendLoading ? 'Versturen...' : 'Versturen'}
             </Button>
           </div>
         </div>
