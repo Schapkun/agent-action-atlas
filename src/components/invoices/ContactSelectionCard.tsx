@@ -159,6 +159,20 @@ export const ContactSelectionCard = ({
                   />
                 </div>
                 <div className="w-32 flex flex-col">
+                  <Label htmlFor="payment_terms" className="text-xs block mb-1">
+                    Betaaltermijn
+                  </Label>
+                  <Input
+                    id="payment_terms"
+                    type="number"
+                    min="0"
+                    value={formData.payment_terms || 14}
+                    onChange={(e) => handlePaymentTermsChange(e.target.value)}
+                    className="h-8 text-xs"
+                    placeholder="14"
+                  />
+                </div>
+                <div className="w-32 flex flex-col">
                   <Label htmlFor="invoice_date" className="text-xs block mb-1">
                     Factuurdatum
                   </Label>
@@ -180,20 +194,6 @@ export const ContactSelectionCard = ({
                     value={formData.due_date || format(addDays(new Date(), formData.payment_terms || 14), 'yyyy-MM-dd')}
                     onChange={(e) => onFormDataChange({ due_date: e.target.value })}
                     className="h-8 text-xs"
-                  />
-                </div>
-                <div className="w-24 flex flex-col">
-                  <Label htmlFor="payment_terms" className="text-xs block mb-1">
-                    Dagen
-                  </Label>
-                  <Input
-                    id="payment_terms"
-                    type="number"
-                    min="0"
-                    value={formData.payment_terms || 14}
-                    onChange={(e) => handlePaymentTermsChange(e.target.value)}
-                    className="h-8 text-xs"
-                    placeholder="14"
                   />
                 </div>
               </div>
