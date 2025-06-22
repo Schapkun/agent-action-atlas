@@ -77,7 +77,7 @@ export const ContactSelectionCard = ({
     <>
       <Card>
         <CardContent className="p-3">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-4">
             {/* Left side: Contact selector and action buttons */}
             <div className="flex items-center gap-2">
               <div className="w-64">
@@ -113,7 +113,7 @@ export const ContactSelectionCard = ({
 
             {/* Center: Invoice details - only show if formData is provided */}
             {formData && onFormDataChange && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-end gap-3">
                 <div className="w-32">
                   <Label htmlFor="invoice_number" className="text-xs block mb-1">
                     Factuurnummer

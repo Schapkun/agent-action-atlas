@@ -31,7 +31,7 @@ export const InvoiceHeader = ({
   const navigate = useNavigate();
 
   return (
-    <div className="bg-white border-b px-4">
+    <div className="bg-white border-b px-4 py-2">
       <div className="flex items-center gap-2">
         <Button 
           variant="outline" 
