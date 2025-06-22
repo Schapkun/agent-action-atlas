@@ -186,7 +186,6 @@ export const QuoteOverview = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{getPageTitle()}</h1>
           <p className="text-muted-foreground">Beheer je offertes</p>
         </div>
         <Button asChild>
