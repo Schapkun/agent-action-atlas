@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +16,7 @@ interface InvoiceSettings {
   invoice_start_number: number;
   quote_prefix: string;
   quote_start_number: number;
+  default_footer_text: string;
 }
 
 export const InvoiceSettings = () => {
@@ -25,6 +27,7 @@ export const InvoiceSettings = () => {
     invoice_start_number: 1,
     quote_prefix: 'OFF-2025-',
     quote_start_number: 1,
+    default_footer_text: 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %INVOICE_NUMBER%'
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -61,6 +64,7 @@ export const InvoiceSettings = () => {
           invoice_start_number: data.invoice_start_number || 1,
           quote_prefix: data.quote_prefix || 'OFF-2025-',
           quote_start_number: data.quote_start_number || 1,
+          default_footer_text: data.default_footer_text || 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %INVOICE_NUMBER%'
         });
         
         console.log('📊 Instellingen succesvol opgehaald:', data);
@@ -103,6 +107,7 @@ export const InvoiceSettings = () => {
         invoice_start_number: settings.invoice_start_number,
         quote_prefix: settings.quote_prefix,
         quote_start_number: settings.quote_start_number,
+        default_footer_text: settings.default_footer_text,
         updated_at: new Date().toISOString()
       };
 
@@ -147,7 +152,7 @@ export const InvoiceSettings = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Facturatie Instellingen</CardTitle>
+          <CardTitle className="text-lg">Facturatie Instellingen</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
@@ -214,6 +219,21 @@ export const InvoiceSettings = () => {
               />
               <p className="text-xs text-gray-500 mt-1">Volgende offerte krijgt dit nummer</p>
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="default_footer_text">Standaard footer tekst</Label>
+            <Textarea
+              id="default_footer_text"
+              value={settings.default_footer_text}
+              onChange={(e) => handleInputChange('default_footer_text', e.target.value)}
+              placeholder="Standaard tekst die onderaan facturen verschijnt"
+              className="h-20 resize-none"
+              rows={3}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Gebruik %INVOICE_NUMBER% om het factuurnummer in te voegen
+            </p>
           </div>
 
           <Button onClick={handleSave} disabled={saving || loading}>

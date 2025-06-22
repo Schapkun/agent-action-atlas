@@ -47,24 +47,23 @@ export const useInvoiceFormHandlers = () => {
     return hasContactInfo && hasValidLineItem;
   }, [formData.client_name, lineItems]);
 
-  // Initialize invoice number on component mount if not already set
+  // Initialize invoice number on component mount if not already set - only once
   useEffect(() => {
     const initializeInvoiceNumber = async () => {
-      try {
-        const defaultNumber = await generateInvoiceNumber();
-        console.log('Initialized invoice number:', defaultNumber);
-        setCurrentInvoiceNumber(defaultNumber);
-        
-        if (!invoiceNumber) {
+      if (!currentInvoiceNumber && !invoiceNumber) {
+        try {
+          const defaultNumber = await generateInvoiceNumber();
+          console.log('Initialized invoice number:', defaultNumber);
+          setCurrentInvoiceNumber(defaultNumber);
           setInvoiceNumber(defaultNumber);
+        } catch (error) {
+          console.error('Failed to initialize invoice number:', error);
         }
-      } catch (error) {
-        console.error('Failed to initialize invoice number:', error);
       }
     };
 
     initializeInvoiceNumber();
-  }, []);
+  }, []); // Empty dependency array to run only once
 
   const togglePreview = () => setShowPreview(!showPreview);
 
@@ -72,17 +71,9 @@ export const useInvoiceFormHandlers = () => {
     setInvoiceNumber(value);
   };
 
-  const handleInvoiceNumberFocus = async () => {
+  const handleInvoiceNumberFocus = () => {
     setIsInvoiceNumberFocused(true);
-    if (!invoiceNumber) {
-      try {
-        const defaultNumber = await generateInvoiceNumber();
-        setInvoiceNumber(defaultNumber);
-        setCurrentInvoiceNumber(defaultNumber);
-      } catch (error) {
-        console.error('Failed to get default invoice number:', error);
-      }
-    }
+    // Don't generate new number on focus, use existing one
   };
 
   const handleInvoiceNumberBlur = () => {
@@ -90,10 +81,14 @@ export const useInvoiceFormHandlers = () => {
   };
 
   const getDisplayInvoiceNumber = () => {
-    return invoiceNumber || '';
+    return invoiceNumber || currentInvoiceNumber || '';
   };
 
   const getPlaceholderInvoiceNumber = async () => {
+    // Return existing number instead of generating new one
+    if (currentInvoiceNumber) {
+      return currentInvoiceNumber;
+    }
     try {
       const freshNumber = await generateInvoiceNumber();
       console.log('Generated fresh placeholder number:', freshNumber);
