@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -55,18 +56,27 @@ export const InvoiceOverview = ({
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchParams] = useSearchParams();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
 
-  // Read status from URL parameters on component mount
-  useEffect(() => {
-    const statusParam = searchParams.get('status');
-    if (statusParam) {
-      setStatusFilter(statusParam);
+  // Get status from URL parameters (fixed, not changeable)
+  const statusFilter = searchParams.get('status') || 'all';
+
+  const getPageTitle = () => {
+    switch (statusFilter) {
+      case 'draft':
+        return 'Concept Facturen';
+      case 'sent':
+        return 'Verzonden Facturen';
+      case 'paid':
+        return 'Betaalde Facturen';
+      case 'overdue':
+        return 'Achterstallige Facturen';
+      default:
+        return 'Alle Facturen';
     }
-  }, [searchParams]);
+  };
 
   const fetchInvoices = async () => {
     if (!selectedOrganization) return;
@@ -191,8 +201,8 @@ export const InvoiceOverview = ({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Facturen</h1>
-          <p className="text-muted-foreground">Beheer al je facturen</p>
+          <h1 className="text-2xl font-bold">{getPageTitle()}</h1>
+          <p className="text-muted-foreground">Beheer je facturen</p>
         </div>
         <Button asChild>
           <a href="/facturen/opstellen">
@@ -207,22 +217,8 @@ export const InvoiceOverview = ({
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Factuur Overzicht
+              {getPageTitle()}
             </CardTitle>
-            <div className="flex gap-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filter op status" />
-                </SelectTrigger>
-                <SelectContent className="bg-background border shadow-lg">
-                  <SelectItem value="all">Alle statussen</SelectItem>
-                  <SelectItem value="draft">Concepten</SelectItem>
-                  <SelectItem value="sent">Verzonden</SelectItem>
-                  <SelectItem value="paid">Betaald</SelectItem>
-                  <SelectItem value="overdue">Achterstallig</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -244,71 +240,74 @@ export const InvoiceOverview = ({
               <p>Geen facturen gevonden</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {filteredInvoices.map((invoice) => (
-                <div key={invoice.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-medium">{invoice.invoice_number}</h3>
-                        {getStatusBadge(invoice.status)}
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Factuurnummer</TableHead>
+                  <TableHead>Klant</TableHead>
+                  <TableHead>Factuurdatum</TableHead>
+                  <TableHead>Vervaldatum</TableHead>
+                  <TableHead>Bedrag</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Acties</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredInvoices.map((invoice) => (
+                  <TableRow key={invoice.id}>
+                    <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
+                    <TableCell>{invoice.client_name}</TableCell>
+                    <TableCell>{new Date(invoice.invoice_date).toLocaleDateString('nl-NL')}</TableCell>
+                    <TableCell>{new Date(invoice.due_date).toLocaleDateString('nl-NL')}</TableCell>
+                    <TableCell>€{invoice.total_amount?.toFixed(2) || '0.00'}</TableCell>
+                    <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {invoice.status === 'draft' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateInvoiceStatus(invoice.id, 'sent')}
+                          >
+                            <Send className="h-4 w-4 mr-1" />
+                            Versturen
+                          </Button>
+                        )}
+                        
+                        {invoice.status === 'sent' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateInvoiceStatus(invoice.id, 'paid')}
+                          >
+                            <Check className="h-4 w-4 mr-1" />
+                            Markeer Betaald
+                          </Button>
+                        )}
+
+                        <Button size="sm" variant="outline">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        
+                        <Button size="sm" variant="outline" asChild>
+                          <a href={`/facturen/opstellen?edit=${invoice.id}`}>
+                            <Edit className="h-4 w-4" />
+                          </a>
+                        </Button>
+                        
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => deleteInvoice(invoice.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-1">
-                        Klant: {invoice.client_name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Bedrag: €{invoice.total_amount?.toFixed(2) || '0.00'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Vervaldatum: {new Date(invoice.due_date).toLocaleDateString('nl-NL')}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {invoice.status === 'draft' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateInvoiceStatus(invoice.id, 'sent')}
-                        >
-                          <Send className="h-4 w-4 mr-1" />
-                          Versturen
-                        </Button>
-                      )}
-                      
-                      {invoice.status === 'sent' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateInvoiceStatus(invoice.id, 'paid')}
-                        >
-                          <Check className="h-4 w-4 mr-1" />
-                          Markeer Betaald
-                        </Button>
-                      )}
-
-                      <Button size="sm" variant="outline">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      
-                      <Button size="sm" variant="outline" asChild>
-                        <a href={`/facturen/opstellen?edit=${invoice.id}`}>
-                          <Edit className="h-4 w-4" />
-                        </a>
-                      </Button>
-                      
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => deleteInvoice(invoice.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

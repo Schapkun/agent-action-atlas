@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,18 +37,29 @@ export const QuoteOverview = () => {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchParams] = useSearchParams();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
 
-  // Read status from URL parameters on component mount
-  useEffect(() => {
-    const statusParam = searchParams.get('status');
-    if (statusParam) {
-      setStatusFilter(statusParam);
+  // Get status from URL parameters (fixed, not changeable)
+  const statusFilter = searchParams.get('status') || 'all';
+
+  const getPageTitle = () => {
+    switch (statusFilter) {
+      case 'draft':
+        return 'Concept Offertes';
+      case 'sent':
+        return 'Verzonden Offertes';
+      case 'accepted':
+        return 'Geaccepteerde Offertes';
+      case 'rejected':
+        return 'Afgewezen Offertes';
+      case 'expired':
+        return 'Verlopen Offertes';
+      default:
+        return 'Alle Offertes';
     }
-  }, [searchParams]);
+  };
 
   const fetchQuotes = async () => {
     if (!selectedOrganization) return;
@@ -174,8 +186,8 @@ export const QuoteOverview = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Offertes</h1>
-          <p className="text-muted-foreground">Beheer al je offertes</p>
+          <h1 className="text-2xl font-bold">{getPageTitle()}</h1>
+          <p className="text-muted-foreground">Beheer je offertes</p>
         </div>
         <Button asChild>
           <a href="/offertes/opstellen">
@@ -190,23 +202,8 @@ export const QuoteOverview = () => {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <FileSpreadsheet className="h-5 w-5" />
-              Offerte Overzicht
+              {getPageTitle()}
             </CardTitle>
-            <div className="flex gap-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filter op status" />
-                </SelectTrigger>
-                <SelectContent className="bg-background border shadow-lg">
-                  <SelectItem value="all">Alle statussen</SelectItem>
-                  <SelectItem value="draft">Concept</SelectItem>
-                  <SelectItem value="sent">Verzonden</SelectItem>
-                  <SelectItem value="accepted">Geaccepteerd</SelectItem>
-                  <SelectItem value="rejected">Afgewezen</SelectItem>
-                  <SelectItem value="expired">Verlopen</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -228,71 +225,74 @@ export const QuoteOverview = () => {
               <p>Geen offertes gevonden</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {filteredQuotes.map((quote) => (
-                <div key={quote.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-medium">{quote.quote_number}</h3>
-                        {getStatusBadge(quote.status)}
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Offertenummer</TableHead>
+                  <TableHead>Klant</TableHead>
+                  <TableHead>Datum</TableHead>
+                  <TableHead>Geldig tot</TableHead>
+                  <TableHead>Bedrag</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Acties</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredQuotes.map((quote) => (
+                  <TableRow key={quote.id}>
+                    <TableCell className="font-medium">{quote.quote_number}</TableCell>
+                    <TableCell>{quote.client_name}</TableCell>
+                    <TableCell>{new Date(quote.quote_date).toLocaleDateString('nl-NL')}</TableCell>
+                    <TableCell>{new Date(quote.valid_until).toLocaleDateString('nl-NL')}</TableCell>
+                    <TableCell>€{quote.total_amount?.toFixed(2) || '0.00'}</TableCell>
+                    <TableCell>{getStatusBadge(quote.status)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {quote.status === 'draft' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateQuoteStatus(quote.id, 'sent')}
+                          >
+                            <Send className="h-4 w-4 mr-1" />
+                            Versturen
+                          </Button>
+                        )}
+                        
+                        {quote.status === 'sent' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateQuoteStatus(quote.id, 'accepted')}
+                          >
+                            <Check className="h-4 w-4 mr-1" />
+                            Accepteren
+                          </Button>
+                        )}
+
+                        <Button size="sm" variant="outline">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        
+                        <Button size="sm" variant="outline" asChild>
+                          <a href={`/offertes/opstellen?edit=${quote.id}`}>
+                            <Edit className="h-4 w-4" />
+                          </a>
+                        </Button>
+                        
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => deleteQuote(quote.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-1">
-                        Klant: {quote.client_name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Bedrag: €{quote.total_amount?.toFixed(2) || '0.00'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Geldig tot: {new Date(quote.valid_until).toLocaleDateString('nl-NL')}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {quote.status === 'draft' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateQuoteStatus(quote.id, 'sent')}
-                        >
-                          <Send className="h-4 w-4 mr-1" />
-                          Versturen
-                        </Button>
-                      )}
-                      
-                      {quote.status === 'sent' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateQuoteStatus(quote.id, 'accepted')}
-                        >
-                          <Check className="h-4 w-4 mr-1" />
-                          Accepteren
-                        </Button>
-                      )}
-
-                      <Button size="sm" variant="outline">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      
-                      <Button size="sm" variant="outline" asChild>
-                        <a href={`/offertes/opstellen?edit=${quote.id}`}>
-                          <Edit className="h-4 w-4" />
-                        </a>
-                      </Button>
-                      
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => deleteQuote(quote.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
