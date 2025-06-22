@@ -13,7 +13,6 @@ interface DocumentTypeDialogProps {
   onClose: () => void;
   onSave: (name: string, label: string, templateId?: string) => Promise<boolean>;
   documentType?: DocumentType;
-  baseDocumentType?: DocumentType;
   existingNames: string[];
 }
 
@@ -22,7 +21,6 @@ export const DocumentTypeDialog = ({
   onClose,
   onSave,
   documentType,
-  baseDocumentType,
   existingNames
 }: DocumentTypeDialogProps) => {
   const [name, setName] = useState('');
@@ -38,19 +36,14 @@ export const DocumentTypeDialog = ({
       setName(documentType.name);
       setLabel(documentType.label);
       setTemplateId(documentType.default_template_id || 'no-template');
-    } else if (baseDocumentType) {
-      // Creating new document type based on existing one
-      setName('');
-      setLabel('');
-      setTemplateId(baseDocumentType.default_template_id || 'no-template');
     } else {
-      // Creating completely new document type
+      // Creating new document type
       setName('');
       setLabel('');
       setTemplateId('no-template');
     }
     setNameError('');
-  }, [documentType, baseDocumentType, open]);
+  }, [documentType, open]);
 
   const validateName = (value: string) => {
     if (!value.trim()) {
@@ -90,13 +83,7 @@ export const DocumentTypeDialog = ({
   };
 
   const getDialogTitle = () => {
-    if (documentType) {
-      return 'Document Type Bewerken';
-    } else if (baseDocumentType) {
-      return `Nieuw Document Type (gebaseerd op "${baseDocumentType.label}")`;
-    } else {
-      return 'Nieuw Document Type';
-    }
+    return documentType ? 'Document Type Bewerken' : 'Nieuw Document Type';
   };
 
   return (
@@ -157,11 +144,6 @@ export const DocumentTypeDialog = ({
             <p className="text-xs text-muted-foreground">
               Deze template wordt automatisch geselecteerd bij het aanmaken van dit document type
             </p>
-            {baseDocumentType && (
-              <p className="text-xs text-blue-600">
-                Template overgenomen van "{baseDocumentType.label}"
-              </p>
-            )}
           </div>
         </div>
 

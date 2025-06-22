@@ -1,14 +1,13 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, ChevronDown } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Edit, Trash2 } from 'lucide-react';
 import { DocumentType } from '@/hooks/useDocumentTypes';
 
 interface DocumentTypeListProps {
   documentTypes: DocumentType[];
-  onEditDocumentType: (documentType: DocumentType, baseDocumentType?: DocumentType) => void;
+  onEditDocumentType: (documentType: DocumentType) => void;
   onDeleteDocumentType: (documentType: DocumentType) => void;
 }
 
@@ -17,8 +16,6 @@ export const DocumentTypeList = ({
   onEditDocumentType,
   onDeleteDocumentType
 }: DocumentTypeListProps) => {
-  const [editDropdownOpen, setEditDropdownOpen] = useState<string | null>(null);
-
   if (documentTypes.length === 0) {
     return (
       <div className="text-center py-12">
@@ -29,11 +26,6 @@ export const DocumentTypeList = ({
       </div>
     );
   }
-
-  const handleEditWithBase = (documentType: DocumentType, baseDocumentType?: DocumentType) => {
-    onEditDocumentType(documentType, baseDocumentType);
-    setEditDropdownOpen(null);
-  };
 
   return (
     <div className="grid gap-4">
@@ -52,38 +44,15 @@ export const DocumentTypeList = ({
             </div>
             
             <div className="flex items-center gap-2">
-              {/* Edit dropdown */}
-              <DropdownMenu 
-                open={editDropdownOpen === documentType.id} 
-                onOpenChange={(open) => setEditDropdownOpen(open ? documentType.id : null)}
+              {/* Edit button */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 w-8 p-0"
+                onClick={() => onEditDocumentType(documentType)}
               >
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-background border shadow-lg">
-                  <DropdownMenuItem 
-                    onClick={() => handleEditWithBase(documentType)}
-                    className="cursor-pointer"
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Leeg beginnen
-                  </DropdownMenuItem>
-                  {documentTypes
-                    .filter(dt => dt.id !== documentType.id)
-                    .map((baseType) => (
-                      <DropdownMenuItem 
-                        key={baseType.id}
-                        onClick={() => handleEditWithBase(documentType, baseType)}
-                        className="cursor-pointer"
-                      >
-                        <span className="mr-2">📄</span>
-                        Baseren op "{baseType.label}"
-                      </DropdownMenuItem>
-                    ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                <Edit className="h-4 w-4" />
+              </Button>
 
               {/* Delete button */}
               <Button 
