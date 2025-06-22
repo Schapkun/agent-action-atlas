@@ -1,8 +1,9 @@
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus } from 'lucide-react';
+import { useOrganizationSettings } from '@/hooks/useOrganizationSettings';
 
 interface InvoiceFormActionsProps {
   onAddLineItem: () => void;
@@ -17,6 +18,8 @@ export const InvoiceFormActions = ({
   vatAmount, 
   total 
 }: InvoiceFormActionsProps) => {
+  const { settings } = useOrganizationSettings();
+
   return (
     <>
       {/* Add line button */}
@@ -34,11 +37,15 @@ export const InvoiceFormActions = ({
 
       {/* Footer with payment info */}
       <Card>
-        <CardContent className="p-3">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Betalingsinstructies</CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 pt-0">
           <Textarea 
-            value="Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %INVOICE_NUMBER%"
+            value={settings.default_footer_text}
             className="h-12 resize-none text-xs"
             rows={2}
+            readOnly
           />
         </CardContent>
       </Card>

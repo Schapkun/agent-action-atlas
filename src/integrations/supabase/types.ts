@@ -799,6 +799,7 @@ export type Database = {
           created_at: string
           customer_prefix: string | null
           customer_start_number: number | null
+          default_footer_text: string | null
           default_payment_terms: number | null
           default_vat_rate: number | null
           id: string
@@ -826,6 +827,7 @@ export type Database = {
           created_at?: string
           customer_prefix?: string | null
           customer_start_number?: number | null
+          default_footer_text?: string | null
           default_payment_terms?: number | null
           default_vat_rate?: number | null
           id?: string
@@ -853,6 +855,7 @@ export type Database = {
           created_at?: string
           customer_prefix?: string | null
           customer_start_number?: number | null
+          default_footer_text?: string | null
           default_payment_terms?: number | null
           default_vat_rate?: number | null
           id?: string

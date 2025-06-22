@@ -121,9 +121,7 @@ export const useInvoices = () => {
       return data;
     } catch (error) {
       console.error('❌ Error generating invoice number:', error);
-      const fallbackNumber = `${new Date().getFullYear()}-001`;
-      console.log('🔄 Using fallback invoice number:', fallbackNumber);
-      return fallbackNumber;
+      throw error;
     }
   };
 
