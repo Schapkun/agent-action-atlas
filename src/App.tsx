@@ -48,6 +48,11 @@ const App = () => (
               <Route path="/" element={<Index><Dashboard /></Index>} />
               <Route path="/openstaande-taken" element={<Index><PendingTasks /></Index>} />
               <Route path="/ai-acties" element={<Index><Actions /></Index>} />
+              
+              {/* Client routes - new primary route + redirect from old */}
+              <Route path="/clienten" element={<Index><Contacts /></Index>} />
+              <Route path="/contacten" element={<Navigate to="/clienten" replace />} />
+              
               <Route path="/documenten" element={<Index><Documents /></Index>} />
               <Route path="/documenten/nieuw" element={<Index><CreateDocument /></Index>} />
               <Route path="/documenten/opstellen" element={<Navigate to="/documenten/nieuw" replace />} />
@@ -62,7 +67,6 @@ const App = () => (
               <Route path="/offertes/opstellen" element={<Navigate to="/offertes/nieuw" replace />} />
               <Route path="/telefoongesprekken" element={<Index><PhoneCalls /></Index>} />
               <Route path="/e-mails" element={<Index><Emails /></Index>} />
-              <Route path="/contacten" element={<Index><Contacts /></Index>} />
               <Route path="/instellingen/*" element={<Index><Settings /></Index>} />
               
               {/* 404 route */}

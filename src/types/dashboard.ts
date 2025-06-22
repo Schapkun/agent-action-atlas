@@ -50,12 +50,15 @@ export interface Document {
 export type DocumentStatus = 'draft' | 'final' | 'sent' | 'archived';
 
 export interface DashboardStats {
-  totalActions: number;
   pendingActions: number;
-  completedToday: number;
-  totalDocuments: number;
+  totalActions: number;
+  estimatedHoursSaved: number;
+  weekRevenue: number;
+  monthRevenue: number;
   activeClients: number;
   activeDossiers: number;
+  completedToday: number;
+  totalDocuments: number;
 }
 
 export interface EmailItem {

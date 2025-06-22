@@ -14,7 +14,7 @@ export const getViewTitle = (view: ViewType): string => {
     factuursturen: 'factuursturen.nl',
     'phone-calls': 'Telefoongesprekken',
     emails: 'E-mails',
-    contacts: 'Contacten',
+    contacts: 'Cliënten',
     settings: 'Instellingen',
   };
 
@@ -23,8 +23,9 @@ export const getViewTitle = (view: ViewType): string => {
 
 export const getViewTitleFromPath = (path: string): string => {
   if (path === '/') return 'Dashboard';
-  if (path === '/facturen/opstellen') return 'Nieuwe Factuur';
-  if (path === '/offertes/opstellen') return 'Nieuwe Offerte';
+  if (path === '/facturen/opstellen' || path === '/facturen/nieuw') return 'Nieuwe Factuur';
+  if (path === '/offertes/opstellen' || path === '/offertes/nieuw') return 'Nieuwe Offerte';
+  if (path === '/documenten/opstellen' || path === '/documenten/nieuw') return 'Nieuw Document';
   if (path === '/openstaande-taken') return 'Openstaande Taken';
   if (path === '/ai-acties') return 'AI Acties';
   if (path === '/documenten') return 'Documenten';
@@ -35,7 +36,7 @@ export const getViewTitleFromPath = (path: string): string => {
   if (path === '/factuursturen') return 'factuursturen.nl';
   if (path === '/telefoongesprekken') return 'Telefoongesprekken';
   if (path === '/e-mails') return 'E-mails';
-  if (path === '/contacten') return 'Contacten';
+  if (path === '/clienten' || path === '/contacten') return 'Cliënten';
   if (path === '/instellingen') return 'Instellingen';
   return 'Dashboard';
 };

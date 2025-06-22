@@ -65,6 +65,9 @@ export const Sidebar = ({
         newExpandedMenus.push('documents');
       } else if (path.startsWith('/actieve-dossiers') || path.startsWith('/gesloten-dossiers')) {
         newExpandedMenus.push('dossiers');
+      } else if (path.startsWith('/clienten') || path.startsWith('/contacten')) {
+        // Handle both old and new routes for clients
+        // No submenu expansion needed for clients
       }
 
       console.log('Expanded menus:', newExpandedMenus);
@@ -87,6 +90,11 @@ export const Sidebar = ({
       // Handle exact path matches first
       if (currentPath === path) {
         console.log('Exact match found for:', path);
+        return true;
+      }
+      
+      // Handle client routes (both old and new)
+      if (path === '/clienten' && (currentPath === '/clienten' || currentPath === '/contacten')) {
         return true;
       }
       
@@ -150,7 +158,7 @@ export const Sidebar = ({
   const menuItems = [
     { id: 'overview' as ViewType, label: 'Dashboard', icon: LayoutDashboard, path: '/' },
     { id: 'pending-tasks' as ViewType, label: 'Openstaande Taken', icon: Clock, badge: pendingTasksCount, path: '/openstaande-taken' },
-    { id: 'actions' as ViewType, label: 'AI Acties', icon: Activity, path: '/ai-acties' },
+    { id: 'contacts' as ViewType, label: 'Cliënten', icon: Users, path: '/clienten' },
     { 
       id: 'dossiers' as ViewType, 
       label: 'Dossiers', 
@@ -200,7 +208,6 @@ export const Sidebar = ({
     },
     { id: 'phone-calls' as ViewType, label: 'Telefoongesprekken', icon: Phone, path: '/telefoongesprekken' },
     { id: 'emails' as ViewType, label: 'E-mails', icon: Mail, path: '/e-mails' },
-    { id: 'contacts' as ViewType, label: 'Contacten', icon: Users, path: '/contacten' },
     { id: 'settings' as ViewType, label: 'Instellingen', icon: Settings, path: '/instellingen' },
   ];
 

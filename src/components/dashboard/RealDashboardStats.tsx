@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity, FileText, Users, Briefcase, CheckCircle, Clock } from 'lucide-react';
+import { Activity, FileText, Users, Briefcase, CheckCircle, Clock, Euro, TrendingUp } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 
@@ -10,32 +10,32 @@ export const RealDashboardStats = () => {
 
   const statItems = [
     {
-      title: 'Totaal Acties',
-      value: stats.totalActions.toString(),
-      change: '+12%',
-      icon: Activity,
-      color: 'text-blue-600'
-    },
-    {
       title: 'Openstaande Acties',
       value: stats.pendingActions.toString(),
-      change: '-5%',
+      change: stats.pendingActions > 0 ? `${stats.pendingActions} actief` : 'Geen openstaand',
       icon: Clock,
       color: 'text-orange-600'
     },
     {
-      title: 'Voltooid Vandaag',
-      value: stats.completedToday.toString(),
-      change: '+8%',
-      icon: CheckCircle,
+      title: 'Totaal AI Acties',
+      value: stats.totalActions.toString(),
+      change: `~${stats.estimatedHoursSaved}u bespaard`,
+      icon: Activity,
+      color: 'text-blue-600'
+    },
+    {
+      title: 'Week Omzet',
+      value: `€${stats.weekRevenue.toFixed(0)}`,
+      change: 'Gefactureerd',
+      icon: TrendingUp,
       color: 'text-green-600'
     },
     {
-      title: 'Documenten',
-      value: stats.totalDocuments.toString(),
-      change: '+3%',
-      icon: FileText,
-      color: 'text-purple-600'
+      title: 'Maand Omzet',
+      value: `€${stats.monthRevenue.toFixed(0)}`,
+      change: 'Gefactureerd',
+      icon: Euro,
+      color: 'text-emerald-600'
     },
     {
       title: 'Actieve Cliënten',
@@ -49,7 +49,7 @@ export const RealDashboardStats = () => {
       value: stats.activeDossiers.toString(),
       change: '+7%',
       icon: Briefcase,
-      color: 'text-emerald-600'
+      color: 'text-purple-600'
     }
   ];
 
@@ -103,10 +103,7 @@ export const RealDashboardStats = () => {
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
               <p className="text-xs text-muted-foreground">
-                <span className={stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}>
-                  {stat.change}
-                </span>
-                {' t.o.v. vorige week'}
+                {stat.change}
               </p>
             </CardContent>
           </Card>
