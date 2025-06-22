@@ -1,13 +1,15 @@
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useLocation } from 'react-router-dom';
 import { 
   Search, 
   FileText, 
@@ -15,65 +17,79 @@ import {
   Eye, 
   Edit, 
   Trash2, 
-  Download
+  Send,
+  Clock,
+  CheckCircle,
+  Archive
 } from 'lucide-react';
 
 interface Document {
   id: string;
   name: string;
-  description?: string;
-  type: string;
+  document_type: string;
+  client_name?: string;
+  client_email?: string;
+  client_address?: string;
+  client_city?: string;
+  client_postal_code?: string;
+  status: string;
   created_at: string;
-  updated_at: string;
-  created_by?: string;
-  is_active: boolean;
+  updated_at?: string;
 }
 
 export const DocumentOverview = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [searchParams] = useSearchParams();
+  const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
+  const [isAllSelected, setIsAllSelected] = useState(false);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
-  const location = useLocation();
 
-  // Get status from URL parameters
-  const urlParams = new URLSearchParams(location.search);
-  const statusFilter = urlParams.get('status');
+  const statusFilter = searchParams.get('status') || 'all';
+
+  const getPageTitle = () => {
+    switch (statusFilter) {
+      case 'draft':
+        return 'Concept Documenten';
+      case 'sent':
+        return 'Verzonden Documenten';
+      case 'completed':
+        return 'Voltooide Documenten';
+      case 'archived':
+        return 'Gearchiveerde Documenten';
+      default:
+        return 'Alle Documenten';
+    }
+  };
 
   const fetchDocuments = async () => {
     if (!selectedOrganization) return;
 
     setLoading(true);
     try {
-      console.log('📄 Fetching documents for organization:', selectedOrganization.id);
+      console.log('📋 Fetching documents for organization:', selectedOrganization.id);
 
       let query = supabase
-        .from('document_templates')
-        .select(`
-          id,
-          name,
-          description,
-          type,
-          created_at,
-          updated_at,
-          created_by,
-          is_active
-        `)
+        .from('documents')
+        .select('*')
         .eq('organization_id', selectedOrganization.id)
-        .eq('is_active', true)
-        .order('updated_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (selectedWorkspace) {
         query = query.eq('workspace_id', selectedWorkspace.id);
+      }
+
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
       }
 
       const { data, error } = await query;
 
       if (error) throw error;
 
-      console.log('📄 Documents fetched:', data?.length || 0);
+      console.log('📋 Documents fetched:', data?.length || 0);
       setDocuments(data || []);
     } catch (error) {
       console.error('Error fetching documents:', error);
@@ -87,13 +103,65 @@ export const DocumentOverview = () => {
     }
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedDocuments(new Set(filteredDocuments.map(document => document.id)));
+      setIsAllSelected(true);
+    } else {
+      setSelectedDocuments(new Set());
+      setIsAllSelected(false);
+    }
+  };
+
+  const handleSelectDocument = (documentId: string, checked: boolean) => {
+    const newSelected = new Set(selectedDocuments);
+    if (checked) {
+      newSelected.add(documentId);
+    } else {
+      newSelected.delete(documentId);
+    }
+    setSelectedDocuments(newSelected);
+    setIsAllSelected(newSelected.size === filteredDocuments.length && filteredDocuments.length > 0);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedDocuments.size === 0) return;
+    
+    if (!confirm(`Weet je zeker dat je ${selectedDocuments.size} documenten wilt verwijderen?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('documents')
+        .delete()
+        .in('id', Array.from(selectedDocuments));
+
+      if (error) throw error;
+
+      toast({
+        title: "Succes",
+        description: `${selectedDocuments.size} documenten verwijderd`
+      });
+
+      setSelectedDocuments(new Set());
+      setIsAllSelected(false);
+      fetchDocuments();
+    } catch (error) {
+      console.error('Error deleting documents:', error);
+      toast({
+        title: "Fout",
+        description: "Kon documenten niet verwijderen",
+        variant: "destructive"
+      });
+    }
+  };
+
   const deleteDocument = async (documentId: string) => {
     if (!confirm('Weet je zeker dat je dit document wilt verwijderen?')) return;
 
     try {
       const { error } = await supabase
-        .from('document_templates')
-        .update({ is_active: false })
+        .from('documents')
+        .delete()
         .eq('id', documentId);
 
       if (error) throw error;
@@ -116,62 +184,61 @@ export const DocumentOverview = () => {
 
   useEffect(() => {
     fetchDocuments();
-  }, [selectedOrganization, selectedWorkspace]);
+  }, [selectedOrganization, selectedWorkspace, statusFilter]);
 
-  const filteredDocuments = documents.filter(doc => {
-    const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         doc.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         doc.type.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesType = typeFilter === 'all' || doc.type === typeFilter;
-    
-    return matchesSearch && matchesType;
-  });
+  const filteredDocuments = documents.filter(document =>
+    document.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    document.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    document.document_type?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const getTypeColor = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'invoice': return 'bg-blue-100 text-blue-800';
-      case 'quote': return 'bg-green-100 text-green-800';
-      case 'contract': return 'bg-purple-100 text-purple-800';
-      case 'letter': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'draft':
+        return <Badge variant="outline" className="text-gray-600"><Clock className="h-3 w-3 mr-1" />Concept</Badge>;
+      case 'sent':
+        return <Badge variant="outline" className="text-blue-600"><Send className="h-3 w-3 mr-1" />Verzonden</Badge>;
+      case 'completed':
+        return <Badge variant="outline" className="text-green-600"><CheckCircle className="h-3 w-3 mr-1" />Voltooid</Badge>;
+      case 'archived':
+        return <Badge variant="outline" className="text-gray-500"><Archive className="h-3 w-3 mr-1" />Gearchiveerd</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
-
-  const uniqueTypes = [...new Set(documents.map(doc => doc.type))];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4 flex-1">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Zoek documenten..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-3 py-2 border rounded-md text-sm"
-          >
-            <option value="all">Alle types</option>
-            {uniqueTypes.map(type => (
-              <option key={type} value={type}>{type}</option>
-            ))}
-          </select>
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Zoek documenten..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
         </div>
-
-        <Button asChild>
-          <a href="/documenten/nieuw">
-            <Plus className="h-4 w-4 mr-2" />
-            Nieuw Document
-          </a>
-        </Button>
+        
+        <div className="flex items-center gap-2">
+          {selectedDocuments.size > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBulkDelete}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Verwijder ({selectedDocuments.size})
+            </Button>
+          )}
+          
+          <Button asChild>
+            <a href="/documenten/nieuw">
+              <Plus className="h-4 w-4 mr-2" />
+              Nieuw Document
+            </a>
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -184,56 +251,69 @@ export const DocumentOverview = () => {
               <p>Geen documenten gevonden</p>
             </div>
           ) : (
-            <div className="space-y-4 p-6">
-              {filteredDocuments.map((document) => (
-                <div key={document.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-medium">{document.name}</h3>
-                        <Badge className={getTypeColor(document.type)}>
-                          {document.type}
-                        </Badge>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={isAllSelected}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
+                  <TableHead>Documentnaam</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Cliënt</TableHead>
+                  <TableHead>Adres</TableHead>
+                  <TableHead>Postcode</TableHead>
+                  <TableHead>Woonplaats</TableHead>
+                  <TableHead>Aangemaakt</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Acties</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredDocuments.map((document) => (
+                  <TableRow key={document.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedDocuments.has(document.id)}
+                        onCheckedChange={(checked) => handleSelectDocument(document.id, checked as boolean)}
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">{document.name}</TableCell>
+                    <TableCell>{document.document_type || '-'}</TableCell>
+                    <TableCell>{document.client_name || '-'}</TableCell>
+                    <TableCell>{document.client_address || '-'}</TableCell>
+                    <TableCell>{document.client_postal_code || '-'}</TableCell>
+                    <TableCell>{document.client_city || '-'}</TableCell>
+                    <TableCell>{new Date(document.created_at).toLocaleDateString('nl-NL')}</TableCell>
+                    <TableCell>{getStatusBadge(document.status)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button size="sm" variant="outline" title="Bekijken">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        
+                        <Button size="sm" variant="outline" asChild title="Bewerken">
+                          <a href={`/documenten/nieuw?edit=${document.id}`}>
+                            <Edit className="h-4 w-4" />
+                          </a>
+                        </Button>
+                        
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => deleteDocument(document.id)}
+                          title="Verwijderen"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                      
-                      {document.description && (
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {document.description}
-                        </p>
-                      )}
-                      
-                      <p className="text-xs text-muted-foreground">
-                        Laatst bijgewerkt: {new Date(document.updated_at).toLocaleDateString('nl-NL')}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button size="sm" variant="outline">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      
-                      <Button size="sm" variant="outline" asChild>
-                        <a href={`/documenten/nieuw?edit=${document.id}`}>
-                          <Edit className="h-4 w-4" />
-                        </a>
-                      </Button>
-
-                      <Button size="sm" variant="outline">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => deleteDocument(document.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

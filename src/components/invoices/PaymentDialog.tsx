@@ -67,7 +67,7 @@ export const PaymentDialog = ({
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md p-6">
+      <DialogContent className="sm:max-w-md p-12">
         <DialogHeader>
           <DialogTitle>Betaling Registreren</DialogTitle>
         </DialogHeader>

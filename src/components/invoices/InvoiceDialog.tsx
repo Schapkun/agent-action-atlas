@@ -271,7 +271,7 @@ Uw administratie`
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col overflow-hidden p-6">
+      <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col overflow-hidden p-12">
         {/* Compact header */}
         <div className="bg-white border-b px-4 py-3 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">

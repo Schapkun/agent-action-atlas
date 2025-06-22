@@ -6,19 +6,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Search, 
-  FileSpreadsheet, 
+  FileText, 
   Plus, 
   Eye, 
   Edit, 
   Trash2, 
   Send,
   Check,
-  Clock
+  Clock,
+  AlertCircle
 } from 'lucide-react';
 
 interface Quote {
@@ -26,6 +28,9 @@ interface Quote {
   quote_number: string;
   client_name: string;
   client_email?: string;
+  client_address?: string;
+  client_city?: string;
+  client_postal_code?: string;
   status: string;
   quote_date: string;
   valid_until: string;
@@ -38,11 +43,27 @@ export const QuoteOverview = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchParams] = useSearchParams();
+  const [selectedQuotes, setSelectedQuotes] = useState<Set<string>>(new Set());
+  const [isAllSelected, setIsAllSelected] = useState(false);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
 
-  // Get status from URL parameters (fixed, not changeable)
   const statusFilter = searchParams.get('status') || 'all';
+
+  const getPageTitle = () => {
+    switch (statusFilter) {
+      case 'draft':
+        return 'Concept Offertes';
+      case 'sent':
+        return 'Verzonden Offertes';
+      case 'accepted':
+        return 'Geaccepteerde Offertes';
+      case 'expired':
+        return 'Verlopen Offertes';
+      default:
+        return 'Alle Offertes';
+    }
+  };
 
   const fetchQuotes = async () => {
     if (!selectedOrganization) return;
@@ -83,26 +104,53 @@ export const QuoteOverview = () => {
     }
   };
 
-  const updateQuoteStatus = async (quoteId: string, newStatus: string) => {
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedQuotes(new Set(filteredQuotes.map(quote => quote.id)));
+      setIsAllSelected(true);
+    } else {
+      setSelectedQuotes(new Set());
+      setIsAllSelected(false);
+    }
+  };
+
+  const handleSelectQuote = (quoteId: string, checked: boolean) => {
+    const newSelected = new Set(selectedQuotes);
+    if (checked) {
+      newSelected.add(quoteId);
+    } else {
+      newSelected.delete(quoteId);
+    }
+    setSelectedQuotes(newSelected);
+    setIsAllSelected(newSelected.size === filteredQuotes.length && filteredQuotes.length > 0);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedQuotes.size === 0) return;
+    
+    if (!confirm(`Weet je zeker dat je ${selectedQuotes.size} offertes wilt verwijderen?`)) return;
+
     try {
       const { error } = await supabase
         .from('quotes')
-        .update({ status: newStatus })
-        .eq('id', quoteId);
+        .delete()
+        .in('id', Array.from(selectedQuotes));
 
       if (error) throw error;
 
       toast({
         title: "Succes",
-        description: `Offerte status bijgewerkt naar ${newStatus}`
+        description: `${selectedQuotes.size} offertes verwijderd`
       });
 
+      setSelectedQuotes(new Set());
+      setIsAllSelected(false);
       fetchQuotes();
     } catch (error) {
-      console.error('Error updating quote status:', error);
+      console.error('Error deleting quotes:', error);
       toast({
         title: "Fout",
-        description: "Kon offerte status niet bijwerken",
+        description: "Kon offertes niet verwijderen",
         variant: "destructive"
       });
     }
@@ -112,10 +160,6 @@ export const QuoteOverview = () => {
     if (!confirm('Weet je zeker dat je deze offerte wilt verwijderen?')) return;
 
     try {
-      // First delete quote lines
-      await supabase.from('quote_lines').delete().eq('quote_id', quoteId);
-      
-      // Then delete the quote
       const { error } = await supabase
         .from('quotes')
         .delete()
@@ -145,7 +189,7 @@ export const QuoteOverview = () => {
 
   const filteredQuotes = quotes.filter(quote =>
     quote.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    quote.quote_number.toLowerCase().includes(searchTerm.toLowerCase())
+    quote.quote_number?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getStatusBadge = (status: string) => {
@@ -156,10 +200,8 @@ export const QuoteOverview = () => {
         return <Badge variant="outline" className="text-blue-600"><Send className="h-3 w-3 mr-1" />Verzonden</Badge>;
       case 'accepted':
         return <Badge variant="outline" className="text-green-600"><Check className="h-3 w-3 mr-1" />Geaccepteerd</Badge>;
-      case 'rejected':
-        return <Badge variant="outline" className="text-red-600">Afgewezen</Badge>;
       case 'expired':
-        return <Badge variant="outline" className="text-orange-600">Verlopen</Badge>;
+        return <Badge variant="outline" className="text-red-600"><AlertCircle className="h-3 w-3 mr-1" />Verlopen</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -178,12 +220,25 @@ export const QuoteOverview = () => {
           />
         </div>
         
-        <Button asChild>
-          <a href="/offertes/opstellen">
-            <Plus className="h-4 w-4 mr-2" />
-            Nieuwe Offerte
-          </a>
-        </Button>
+        <div className="flex items-center gap-2">
+          {selectedQuotes.size > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBulkDelete}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Verwijder ({selectedQuotes.size})
+            </Button>
+          )}
+          
+          <Button asChild>
+            <a href="/offertes/nieuw">
+              <Plus className="h-4 w-4 mr-2" />
+              Nieuwe Offerte
+            </a>
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -192,16 +247,25 @@ export const QuoteOverview = () => {
             <div className="text-center py-8">Offertes laden...</div>
           ) : filteredQuotes.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <FileSpreadsheet className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Geen offertes gevonden</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={isAllSelected}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Offertenummer</TableHead>
-                  <TableHead>Klant</TableHead>
-                  <TableHead>Datum</TableHead>
+                  <TableHead>Cliënt</TableHead>
+                  <TableHead>Adres</TableHead>
+                  <TableHead>Postcode</TableHead>
+                  <TableHead>Woonplaats</TableHead>
+                  <TableHead>Offertedatum</TableHead>
                   <TableHead>Geldig tot</TableHead>
                   <TableHead>Bedrag</TableHead>
                   <TableHead>Status</TableHead>
@@ -211,42 +275,29 @@ export const QuoteOverview = () => {
               <TableBody>
                 {filteredQuotes.map((quote) => (
                   <TableRow key={quote.id}>
-                    <TableCell className="font-medium">{quote.quote_number}</TableCell>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedQuotes.has(quote.id)}
+                        onCheckedChange={(checked) => handleSelectQuote(quote.id, checked as boolean)}
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">{quote.quote_number || 'Concept'}</TableCell>
                     <TableCell>{quote.client_name}</TableCell>
+                    <TableCell>{quote.client_address || '-'}</TableCell>
+                    <TableCell>{quote.client_postal_code || '-'}</TableCell>
+                    <TableCell>{quote.client_city || '-'}</TableCell>
                     <TableCell>{new Date(quote.quote_date).toLocaleDateString('nl-NL')}</TableCell>
                     <TableCell>{new Date(quote.valid_until).toLocaleDateString('nl-NL')}</TableCell>
                     <TableCell>€{quote.total_amount?.toFixed(2) || '0.00'}</TableCell>
                     <TableCell>{getStatusBadge(quote.status)}</TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {quote.status === 'draft' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateQuoteStatus(quote.id, 'sent')}
-                          >
-                            <Send className="h-4 w-4 mr-1" />
-                            Versturen
-                          </Button>
-                        )}
-                        
-                        {quote.status === 'sent' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateQuoteStatus(quote.id, 'accepted')}
-                          >
-                            <Check className="h-4 w-4 mr-1" />
-                            Accepteren
-                          </Button>
-                        )}
-
-                        <Button size="sm" variant="outline">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button size="sm" variant="outline" title="Bekijken">
                           <Eye className="h-4 w-4" />
                         </Button>
                         
-                        <Button size="sm" variant="outline" asChild>
-                          <a href={`/offertes/opstellen?edit=${quote.id}`}>
+                        <Button size="sm" variant="outline" asChild title="Bewerken">
+                          <a href={`/offertes/nieuw?edit=${quote.id}`}>
                             <Edit className="h-4 w-4" />
                           </a>
                         </Button>
@@ -255,6 +306,7 @@ export const QuoteOverview = () => {
                           size="sm" 
                           variant="outline" 
                           onClick={() => deleteQuote(quote.id)}
+                          title="Verwijderen"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
