@@ -59,7 +59,7 @@ export const CreateInvoiceForm = () => {
     // Update VAT settings in the line items hook if available
     if (handleLineItemUpdate && settings.vatDisplay) {
       // Force recalculation by triggering a state update
-      setFormData(prev => ({ ...prev, vatDisplay: settings.vatDisplay }));
+      setFormData({ vatDisplay: settings.vatDisplay });
     }
   };
 
