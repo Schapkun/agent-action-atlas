@@ -182,12 +182,6 @@ export const DocumentOverview = () => {
             <div className="text-center py-8 text-muted-foreground">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Geen documenten gevonden</p>
-              <Button asChild className="mt-4">
-                <a href="/documenten/nieuw">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Maak je eerste document
-                </a>
-              </Button>
             </div>
           ) : (
             <div className="space-y-4 p-6">
