@@ -29,6 +29,9 @@ interface Invoice {
   invoice_number: string;
   client_name: string;
   client_email?: string;
+  client_address?: string;
+  client_city?: string;
+  client_postal_code?: string;
   status: string;
   invoice_date: string;
   due_date: string;
@@ -93,7 +96,14 @@ export const InvoiceOverview = ({
 
       let query = supabase
         .from('invoices')
-        .select('*')
+        .select(`
+          *,
+          clients!left (
+            address,
+            city,
+            postal_code
+          )
+        `)
         .eq('organization_id', selectedOrganization.id)
         .order('created_at', { ascending: false });
 
@@ -277,7 +287,7 @@ export const InvoiceOverview = ({
               <TableHeader>
                 <TableRow>
                   <TableHead>Factuurnummer</TableHead>
-                  <TableHead>Klant</TableHead>
+                  <TableHead>Klant & Adres</TableHead>
                   <TableHead>Factuurdatum</TableHead>
                   <TableHead>Vervaldatum</TableHead>
                   <TableHead>Bedrag</TableHead>
@@ -294,7 +304,21 @@ export const InvoiceOverview = ({
                   return (
                     <TableRow key={invoice.id}>
                       <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
-                      <TableCell>{invoice.client_name}</TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{invoice.client_name}</div>
+                          {invoice.client_address && (
+                            <div className="text-sm text-muted-foreground">
+                              {invoice.client_address}
+                            </div>
+                          )}
+                          {(invoice.client_postal_code || invoice.client_city) && (
+                            <div className="text-sm text-muted-foreground">
+                              {invoice.client_postal_code} {invoice.client_city}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>{new Date(invoice.invoice_date).toLocaleDateString('nl-NL')}</TableCell>
                       <TableCell>{new Date(invoice.due_date).toLocaleDateString('nl-NL')}</TableCell>
                       <TableCell>€{invoice.total_amount?.toFixed(2) || '0.00'}</TableCell>
@@ -305,15 +329,15 @@ export const InvoiceOverview = ({
                       </TableCell>
                       <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1">
                           {invoice.status === 'draft' && (
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => updateInvoiceStatus(invoice.id, 'sent')}
+                              title="Versturen"
                             >
-                              <Send className="h-4 w-4 mr-1" />
-                              Versturen
+                              <Send className="h-4 w-4" />
                             </Button>
                           )}
                           
@@ -326,9 +350,8 @@ export const InvoiceOverview = ({
                                 outstandingAmount={outstandingAmount}
                                 onPaymentRegistered={fetchInvoices}
                               >
-                                <Button size="sm" variant="outline">
-                                  <Calculator className="h-4 w-4 mr-1" />
-                                  Betaling Registreren
+                                <Button size="sm" variant="outline" title="Betaling Registreren">
+                                  <Calculator className="h-4 w-4" />
                                 </Button>
                               </PaymentDialog>
                               
@@ -336,18 +359,18 @@ export const InvoiceOverview = ({
                                 size="sm"
                                 variant="outline"
                                 onClick={() => markInvoiceAsPaid(invoice.id, invoice.total_amount)}
+                                title="Markeer Betaald"
                               >
-                                <Check className="h-4 w-4 mr-1" />
-                                Markeer Betaald
+                                <Check className="h-4 w-4" />
                               </Button>
                             </>
                           )}
 
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" title="Bekijken">
                             <Eye className="h-4 w-4" />
                           </Button>
                           
-                          <Button size="sm" variant="outline" asChild>
+                          <Button size="sm" variant="outline" asChild title="Bewerken">
                             <a href={`/facturen/opstellen?edit=${invoice.id}`}>
                               <Edit className="h-4 w-4" />
                             </a>
@@ -357,6 +380,7 @@ export const InvoiceOverview = ({
                             size="sm" 
                             variant="outline" 
                             onClick={() => deleteInvoice(invoice.id)}
+                            title="Verwijderen"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

@@ -23,10 +23,11 @@ import {
   Plus,
   Send,
   FileCheck,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Folder
 } from 'lucide-react';
 
-export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'quotes' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
+export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'dossiers' | 'invoices' | 'quotes' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
 
 interface SidebarProps {
   currentView: ViewType;
@@ -48,6 +49,7 @@ export const Sidebar = ({
   // Auto-expand submenu's based on current route and auto-collapse others
   useEffect(() => {
     const path = location.pathname;
+    const search = location.search;
     const newExpandedMenus: string[] = [];
 
     // Check if we're on a page that should have its submenu expanded
@@ -57,6 +59,8 @@ export const Sidebar = ({
       newExpandedMenus.push('quotes');
     } else if (path.startsWith('/documenten')) {
       newExpandedMenus.push('documents');
+    } else if (path.startsWith('/actieve-dossiers') || path.startsWith('/gesloten-dossiers')) {
+      newExpandedMenus.push('dossiers');
     }
 
     // Set only the relevant submenu as expanded (auto-collapse others)
@@ -64,7 +68,21 @@ export const Sidebar = ({
   }, [location.pathname]);
 
   const isActiveRoute = (path: string) => {
-    return location.pathname === path;
+    // Handle exact path matches
+    if (location.pathname === path) return true;
+    
+    // Handle URL parameter matches for invoices
+    if (path === '/facturen?status=draft' && location.pathname === '/facturen' && location.search === '?status=draft') return true;
+    if (path === '/facturen?status=sent' && location.pathname === '/facturen' && location.search === '?status=sent') return true;
+    
+    // Handle URL parameter matches for quotes
+    if (path === '/offertes?status=draft' && location.pathname === '/offertes' && location.search === '?status=draft') return true;
+    if (path === '/offertes?status=sent' && location.pathname === '/offertes' && location.search === '?status=sent') return true;
+    
+    // Handle URL parameter matches for documents
+    if (path === '/documenten?status=sent' && location.pathname === '/documenten' && location.search === '?status=sent') return true;
+    
+    return false;
   };
 
   const isActiveSubmenu = (parentId: string) => {
@@ -77,6 +95,9 @@ export const Sidebar = ({
     if (parentId === 'documents') {
       return location.pathname.startsWith('/documenten');
     }
+    if (parentId === 'dossiers') {
+      return location.pathname.startsWith('/actieve-dossiers') || location.pathname.startsWith('/gesloten-dossiers');
+    }
     return false;
   };
 
@@ -84,13 +105,22 @@ export const Sidebar = ({
     { id: 'overview' as ViewType, label: 'Dashboard', icon: LayoutDashboard, path: '/' },
     { id: 'pending-tasks' as ViewType, label: 'Openstaande Taken', icon: Clock, badge: pendingTasksCount, path: '/openstaande-taken' },
     { id: 'actions' as ViewType, label: 'AI Acties', icon: Activity, path: '/ai-acties' },
-    { id: 'active-dossiers' as ViewType, label: 'Actieve Dossiers', icon: FolderOpen, path: '/actieve-dossiers' },
-    { id: 'closed-dossiers' as ViewType, label: 'Gesloten Dossiers', icon: FolderX, path: '/gesloten-dossiers' },
+    { 
+      id: 'dossiers' as ViewType, 
+      label: 'Dossiers', 
+      icon: Folder, 
+      path: '/actieve-dossiers',
+      hasSubmenu: true,
+      submenu: [
+        { id: 'active-dossiers', label: 'Actieve Dossiers', icon: FolderOpen, path: '/actieve-dossiers' },
+        { id: 'closed-dossiers', label: 'Gesloten Dossiers', icon: FolderX, path: '/gesloten-dossiers' },
+      ]
+    },
     { 
       id: 'documents' as ViewType, 
       label: 'Documenten', 
       icon: FileText, 
-      path: '/documenten',
+      path: '/documenten/opstellen',
       hasSubmenu: true,
       submenu: [
         { id: 'new-document', label: 'Opstellen', icon: Plus, path: '/documenten/opstellen' },
