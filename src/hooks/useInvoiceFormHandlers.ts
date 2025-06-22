@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useInvoiceForm } from './useInvoiceForm';
 import { useToast } from './use-toast';
 import { useInvoices } from './useInvoices';
@@ -33,6 +33,19 @@ export const useInvoiceFormHandlers = () => {
     handleSubmit,
     handleSaveAndSend
   } = useInvoiceForm();
+
+  // Validation logic to check if form can be sent
+  const canSend = useMemo(() => {
+    // Check if contact info is filled
+    const hasContactInfo = formData.client_name.trim() !== '';
+    
+    // Check if at least one line item has description and price > 0
+    const hasValidLineItem = lineItems.some(item => 
+      item.description.trim() !== '' && item.unit_price > 0
+    );
+    
+    return hasContactInfo && hasValidLineItem;
+  }, [formData.client_name, lineItems]);
 
   // Initialize invoice number on component mount if not already set
   useEffect(() => {
@@ -136,6 +149,7 @@ export const useInvoiceFormHandlers = () => {
     loading,
     sendLoading,
     invoiceSettings,
+    canSend,
     
     // Handlers
     handleInvoiceNumberChange,
