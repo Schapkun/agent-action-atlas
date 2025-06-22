@@ -1,4 +1,5 @@
 
+
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -165,10 +166,10 @@ export const Sidebar = ({
       id: 'documents' as ViewType, 
       label: 'Documenten', 
       icon: FileText, 
-      path: '/documenten/opstellen',
+      path: '/documenten/nieuw',
       hasSubmenu: true,
       submenu: [
-        { id: 'new-document', label: 'Opstellen', icon: Plus, path: '/documenten/opstellen' },
+        { id: 'new-document', label: 'Opstellen', icon: Plus, path: '/documenten/nieuw' },
         { id: 'document-list', label: 'Overzicht', icon: FileCheck, path: '/documenten' },
         { id: 'sent-documents', label: 'Verzonden', icon: Send, path: '/documenten?status=sent' },
       ]
@@ -177,10 +178,10 @@ export const Sidebar = ({
       id: 'invoices' as ViewType, 
       label: 'Facturen', 
       icon: CreditCard, 
-      path: '/facturen/opstellen',
+      path: '/facturen/nieuw',
       hasSubmenu: true,
       submenu: [
-        { id: 'new-invoice', label: 'Opstellen', icon: Plus, path: '/facturen/opstellen' },
+        { id: 'new-invoice', label: 'Opstellen', icon: Plus, path: '/facturen/nieuw' },
         { id: 'concept-invoices', label: 'Concepten', icon: FileCheck, path: '/facturen?status=draft' },
         { id: 'sent-invoices', label: 'Verzonden', icon: Send, path: '/facturen?status=sent' },
       ]
@@ -189,10 +190,10 @@ export const Sidebar = ({
       id: 'quotes' as ViewType, 
       label: 'Offertes', 
       icon: FileSpreadsheet, 
-      path: '/offertes/opstellen',
+      path: '/offertes/nieuw',
       hasSubmenu: true,
       submenu: [
-        { id: 'new-quote', label: 'Opstellen', icon: Plus, path: '/offertes/opstellen' },
+        { id: 'new-quote', label: 'Opstellen', icon: Plus, path: '/offertes/nieuw' },
         { id: 'concept-quotes', label: 'Concepten', icon: FileCheck, path: '/offertes?status=draft' },
         { id: 'sent-quotes', label: 'Verzonden', icon: Send, path: '/offertes?status=sent' },
       ]
@@ -322,3 +323,4 @@ export const Sidebar = ({
     </div>
   );
 };
+
