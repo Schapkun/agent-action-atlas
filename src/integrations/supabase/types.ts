@@ -801,6 +801,7 @@ export type Database = {
           customer_start_number: number | null
           default_footer_text: string | null
           default_payment_terms: number | null
+          default_quote_footer_text: string | null
           default_vat_rate: number | null
           id: string
           invoice_prefix: string | null
@@ -829,6 +830,7 @@ export type Database = {
           customer_start_number?: number | null
           default_footer_text?: string | null
           default_payment_terms?: number | null
+          default_quote_footer_text?: string | null
           default_vat_rate?: number | null
           id?: string
           invoice_prefix?: string | null
@@ -857,6 +859,7 @@ export type Database = {
           customer_start_number?: number | null
           default_footer_text?: string | null
           default_payment_terms?: number | null
+          default_quote_footer_text?: string | null
           default_vat_rate?: number | null
           id?: string
           invoice_prefix?: string | null

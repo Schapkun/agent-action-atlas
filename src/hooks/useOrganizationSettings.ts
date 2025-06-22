@@ -5,12 +5,14 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 
 interface OrganizationSettings {
   default_footer_text: string;
+  default_quote_footer_text: string;
 }
 
 export const useOrganizationSettings = () => {
   const { selectedOrganization } = useOrganization();
   const [settings, setSettings] = useState<OrganizationSettings>({
-    default_footer_text: 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %INVOICE_NUMBER%'
+    default_footer_text: 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %INVOICE_NUMBER%',
+    default_quote_footer_text: 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %QUOTE_NUMBER%'
   });
   const [loading, setLoading] = useState(true);
 
@@ -23,7 +25,7 @@ export const useOrganizationSettings = () => {
     try {
       const { data, error } = await supabase
         .from('organization_settings')
-        .select('default_footer_text')
+        .select('default_footer_text, default_quote_footer_text')
         .eq('organization_id', selectedOrganization.id)
         .single();
 
@@ -33,7 +35,8 @@ export const useOrganizationSettings = () => {
 
       if (data) {
         setSettings({
-          default_footer_text: data.default_footer_text || 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %INVOICE_NUMBER%'
+          default_footer_text: data.default_footer_text || 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %INVOICE_NUMBER%',
+          default_quote_footer_text: data.default_quote_footer_text || 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %QUOTE_NUMBER%'
         });
       }
     } catch (error) {

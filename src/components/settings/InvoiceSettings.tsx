@@ -17,6 +17,7 @@ interface InvoiceSettings {
   quote_prefix: string;
   quote_start_number: number;
   default_footer_text: string;
+  default_quote_footer_text: string;
 }
 
 export const InvoiceSettings = () => {
@@ -27,7 +28,8 @@ export const InvoiceSettings = () => {
     invoice_start_number: 1,
     quote_prefix: 'OFF-2025-',
     quote_start_number: 1,
-    default_footer_text: 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %INVOICE_NUMBER%'
+    default_footer_text: 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %INVOICE_NUMBER%',
+    default_quote_footer_text: 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %QUOTE_NUMBER%'
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -64,7 +66,8 @@ export const InvoiceSettings = () => {
           invoice_start_number: data.invoice_start_number || 1,
           quote_prefix: data.quote_prefix || 'OFF-2025-',
           quote_start_number: data.quote_start_number || 1,
-          default_footer_text: data.default_footer_text || 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %INVOICE_NUMBER%'
+          default_footer_text: data.default_footer_text || 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %INVOICE_NUMBER%',
+          default_quote_footer_text: data.default_quote_footer_text || 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %QUOTE_NUMBER%'
         });
         
         console.log('📊 Instellingen succesvol opgehaald:', data);
@@ -108,6 +111,7 @@ export const InvoiceSettings = () => {
         quote_prefix: settings.quote_prefix,
         quote_start_number: settings.quote_start_number,
         default_footer_text: settings.default_footer_text,
+        default_quote_footer_text: settings.default_quote_footer_text,
         updated_at: new Date().toISOString()
       };
 
@@ -222,7 +226,7 @@ export const InvoiceSettings = () => {
           </div>
 
           <div>
-            <Label htmlFor="default_footer_text">Standaard footer tekst</Label>
+            <Label htmlFor="default_footer_text">Standaard factuur footer tekst</Label>
             <Textarea
               id="default_footer_text"
               value={settings.default_footer_text}
@@ -233,6 +237,21 @@ export const InvoiceSettings = () => {
             />
             <p className="text-xs text-gray-500 mt-1">
               Gebruik %INVOICE_NUMBER% om het factuurnummer in te voegen
+            </p>
+          </div>
+
+          <div>
+            <Label htmlFor="default_quote_footer_text">Standaard offerte footer tekst</Label>
+            <Textarea
+              id="default_quote_footer_text"
+              value={settings.default_quote_footer_text}
+              onChange={(e) => handleInputChange('default_quote_footer_text', e.target.value)}
+              placeholder="Standaard tekst die onderaan offertes verschijnt"
+              className="h-20 resize-none"
+              rows={3}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Gebruik %QUOTE_NUMBER% om het offertenummer in te voegen
             </p>
           </div>
 
