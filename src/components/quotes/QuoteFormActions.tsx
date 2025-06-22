@@ -36,14 +36,14 @@ export const QuoteFormActions = ({
         </Button>
       </div>
 
-      {/* Footer notes */}
+      {/* Footer with payment info */}
       <Card>
         <CardContent className="p-3">
           <Textarea 
-            value={notes}
-            onChange={(e) => onNotesChange(e.target.value)}
+            value="Deze offerte is geldig tot de genoemde datum. Na acceptatie wordt deze offerte omgezet naar een factuur."
             className="h-12 resize-none text-xs"
             rows={2}
+            readOnly
           />
         </CardContent>
       </Card>

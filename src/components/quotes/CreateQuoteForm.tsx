@@ -1,4 +1,3 @@
-
 import { QuoteHeader } from './QuoteHeader';
 import { ContactSelectionCard } from '../invoices/ContactSelectionCard';
 import { QuoteDetailsCard } from './QuoteDetailsCard';
@@ -66,7 +65,7 @@ export const CreateQuote = () => {
         onSaveAndSend={handleSaveAndSend}
       />
 
-      <div className="w-full px-6">
+      <div className="w-full px-6 max-w-none">
         <form onSubmit={handleFormSubmit} className="space-y-3">
           <ContactSelectionCard
             selectedContact={selectedContact}

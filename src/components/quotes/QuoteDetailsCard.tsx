@@ -19,30 +19,12 @@ export const QuoteDetailsCard = ({
 }: QuoteDetailsCardProps) => {
   return (
     <>
-      {/* Notities sectie */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <Label className="text-sm font-medium">Notities</Label>
-            <Button type="button" variant="link" className="text-blue-500 text-xs p-0 h-auto">
-              Bewerk introductie
-            </Button>
-          </div>
-          <Textarea
-            placeholder="Voer hier notities in..."
-            value={formData.notes || ''}
-            onChange={(e) => onFormDataChange({ notes: e.target.value })}
-            className="min-h-[80px]"
-          />
-        </CardContent>
-      </Card>
-
       {/* Kenmerk en Referentie velden */}
       <Card>
         <CardContent className="p-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="kenmerk" className="text-sm font-medium">
+              <Label htmlFor="kenmerk" className="text-xs">
                 Kenmerk
               </Label>
               <Input
@@ -54,7 +36,7 @@ export const QuoteDetailsCard = ({
               />
             </div>
             <div>
-              <Label htmlFor="referentie" className="text-sm font-medium">
+              <Label htmlFor="referentie" className="text-xs">
                 Referentie
               </Label>
               <Input
@@ -69,12 +51,30 @@ export const QuoteDetailsCard = ({
         </CardContent>
       </Card>
 
+      {/* Notities sectie */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <Label className="text-xs">Notities</Label>
+            <Button type="button" variant="link" className="text-blue-500 text-xs p-0 h-auto">
+              Bewerk introductie
+            </Button>
+          </div>
+          <Textarea
+            placeholder="Voer hier notities in..."
+            value={formData.notes || ''}
+            onChange={(e) => onFormDataChange({ notes: e.target.value })}
+            className="min-h-[80px]"
+          />
+        </CardContent>
+      </Card>
+
       {/* Offertedetails */}
       <Card>
         <CardContent className="p-4">
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="quote_number" className="text-sm font-medium">
+              <Label htmlFor="quote_number" className="text-xs">
                 Offertenummer
               </Label>
               <Input
@@ -85,7 +85,7 @@ export const QuoteDetailsCard = ({
               />
             </div>
             <div>
-              <Label htmlFor="quote_date" className="text-sm font-medium">
+              <Label htmlFor="quote_date" className="text-xs">
                 Offertedatum
               </Label>
               <Input
@@ -97,7 +97,7 @@ export const QuoteDetailsCard = ({
               />
             </div>
             <div>
-              <Label htmlFor="valid_until" className="text-sm font-medium">
+              <Label htmlFor="valid_until" className="text-xs">
                 Geldig tot
               </Label>
               <Input

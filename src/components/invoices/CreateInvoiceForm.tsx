@@ -1,4 +1,3 @@
-
 import { InvoiceHeader } from './InvoiceHeader';
 import { ContactSelectionCard } from './ContactSelectionCard';
 import { InvoiceDetailsCard } from './InvoiceDetailsCard';
@@ -72,7 +71,7 @@ export const CreateInvoiceForm = () => {
         onSaveAndSend={handleSaveAndSend}
       />
 
-      <div className="w-full px-6">
+      <div className="w-full px-6 max-w-none">
         <form onSubmit={handleFormSubmit} className="space-y-3">
           <ContactSelectionCard
             selectedContact={selectedContact}

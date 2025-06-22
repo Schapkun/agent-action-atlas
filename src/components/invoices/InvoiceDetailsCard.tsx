@@ -31,30 +31,12 @@ export const InvoiceDetailsCard = ({
 }: InvoiceDetailsCardProps) => {
   return (
     <>
-      {/* Notities sectie */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <Label className="text-sm font-medium">Notities</Label>
-            <Button type="button" variant="link" className="text-blue-500 text-xs p-0 h-auto">
-              Bewerk introductie
-            </Button>
-          </div>
-          <Textarea
-            placeholder="Voer hier notities in..."
-            value={formData.notes || ''}
-            onChange={(e) => onFormDataChange({ notes: e.target.value })}
-            className="min-h-[80px]"
-          />
-        </CardContent>
-      </Card>
-
       {/* Kenmerk en Referentie velden */}
       <Card>
         <CardContent className="p-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="kenmerk" className="text-sm font-medium">
+              <Label htmlFor="kenmerk" className="text-xs">
                 Kenmerk
               </Label>
               <Input
@@ -66,7 +48,7 @@ export const InvoiceDetailsCard = ({
               />
             </div>
             <div>
-              <Label htmlFor="referentie" className="text-sm font-medium">
+              <Label htmlFor="referentie" className="text-xs">
                 Referentie
               </Label>
               <Input
@@ -81,12 +63,30 @@ export const InvoiceDetailsCard = ({
         </CardContent>
       </Card>
 
+      {/* Notities sectie */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <Label className="text-xs">Notities</Label>
+            <Button type="button" variant="link" className="text-blue-500 text-xs p-0 h-auto">
+              Bewerk introductie
+            </Button>
+          </div>
+          <Textarea
+            placeholder="Voer hier notities in..."
+            value={formData.notes || ''}
+            onChange={(e) => onFormDataChange({ notes: e.target.value })}
+            className="min-h-[80px]"
+          />
+        </CardContent>
+      </Card>
+
       {/* Factuurdetails */}
       <Card>
         <CardContent className="p-4">
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="invoice_number" className="text-sm font-medium">
+              <Label htmlFor="invoice_number" className="text-xs">
                 Factuurnummer
               </Label>
               <Input
@@ -99,7 +99,7 @@ export const InvoiceDetailsCard = ({
               />
             </div>
             <div>
-              <Label htmlFor="invoice_date" className="text-sm font-medium">
+              <Label htmlFor="invoice_date" className="text-xs">
                 Factuurdatum
               </Label>
               <Input
@@ -111,7 +111,7 @@ export const InvoiceDetailsCard = ({
               />
             </div>
             <div>
-              <Label htmlFor="due_date" className="text-sm font-medium">
+              <Label htmlFor="due_date" className="text-xs">
                 Vervaldatum
               </Label>
               <Input
