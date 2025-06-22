@@ -26,7 +26,7 @@ export const useInvoiceLineItems = () => {
     }
   }, []);
 
-  // Listen for VAT settings changes
+  // Listen for VAT settings changes from storage and custom events
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'invoice-vat-settings' && e.newValue) {
@@ -40,8 +40,18 @@ export const useInvoiceLineItems = () => {
       }
     };
 
+    const handleCustomVatChange = (e: CustomEvent) => {
+      console.log('Custom VAT event ontvangen:', e.detail);
+      setVatSettings(e.detail);
+    };
+
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('vatSettingsChanged', handleCustomVatChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('vatSettingsChanged', handleCustomVatChange as EventListener);
+    };
   }, []);
 
   const calculateLineTotal = (item: LineItem): number => {
@@ -114,8 +124,11 @@ export const useInvoiceLineItems = () => {
     console.log('VAT instellingen bijgewerkt in line items:', newSettings);
     setVatSettings(newSettings);
     
-    // Also save to localStorage to sync with settings sidebar
+    // Save to localStorage to sync with settings sidebar
     localStorage.setItem('invoice-vat-settings', JSON.stringify(newSettings));
+    
+    // Dispatch custom event for cross-component communication
+    window.dispatchEvent(new CustomEvent('vatSettingsChanged', { detail: newSettings }));
   };
 
   return {

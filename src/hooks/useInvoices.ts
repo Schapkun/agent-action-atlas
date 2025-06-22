@@ -105,7 +105,7 @@ export const useInvoices = () => {
 
   const generateInvoiceNumber = async () => {
     try {
-      console.log('Generating invoice number voor org:', selectedOrganization?.id, 'workspace:', selectedWorkspace?.id);
+      console.log('🔢 Generating invoice number voor org:', selectedOrganization?.id, 'workspace:', selectedWorkspace?.id);
       
       const { data, error } = await supabase.rpc('generate_invoice_number_with_gaps', {
         org_id: selectedOrganization?.id,
@@ -113,16 +113,16 @@ export const useInvoices = () => {
       });
 
       if (error) {
-        console.error('Error from generate_invoice_number_with_gaps:', error);
+        console.error('❌ Error from generate_invoice_number_with_gaps:', error);
         throw error;
       }
       
-      console.log('Generated invoice number via SQL function:', data);
+      console.log('✅ Generated invoice number via SQL function:', data);
       return data;
     } catch (error) {
-      console.error('Error generating invoice number:', error);
+      console.error('❌ Error generating invoice number:', error);
       const fallbackNumber = `${new Date().getFullYear()}-001`;
-      console.log('Using fallback invoice number:', fallbackNumber);
+      console.log('🔄 Using fallback invoice number:', fallbackNumber);
       return fallbackNumber;
     }
   };
@@ -168,13 +168,15 @@ export const useInvoices = () => {
     try {
       console.log('Creating invoice with data:', invoiceData);
       
-      // Only generate invoice number for non-draft invoices
-      const invoiceNumber = invoiceData.status === 'draft' ? null : await generateInvoiceNumber();
+      // Generate a fresh invoice number for ALL invoices (including drafts)
+      const invoiceNumber = await generateInvoiceNumber();
       const defaultTemplate = await getDefaultTemplate();
+      
+      console.log('🔢 Using invoice number:', invoiceNumber, 'for status:', invoiceData.status);
       
       // Ensure required fields are present and properly formatted
       const insertData = {
-        invoice_number: invoiceNumber, // Will be null for drafts
+        invoice_number: invoiceNumber, // Always set the number, even for drafts
         organization_id: selectedOrganization?.id || '',
         workspace_id: selectedWorkspace?.id || null,
         template_id: defaultTemplate,
@@ -215,7 +217,7 @@ export const useInvoices = () => {
       setInvoices(prev => [newInvoice, ...prev]);
       
       const successMessage = invoiceData.status === 'draft' 
-        ? `Concept succesvol aangemaakt`
+        ? `Concept ${invoiceNumber} succesvol aangemaakt`
         : `Factuur ${invoiceNumber} succesvol aangemaakt`;
       
       toast({

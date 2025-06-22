@@ -38,6 +38,9 @@ export const InvoiceSettingsSidebar = ({ show, onClose, onSettingsChange }: Invo
     if (onSettingsChange) {
       onSettingsChange(settings);
     }
+    
+    // Dispatch custom event for cross-component communication
+    window.dispatchEvent(new CustomEvent('vatSettingsChanged', { detail: settings }));
   }, [settings, onSettingsChange]);
 
   if (!show) return null;
