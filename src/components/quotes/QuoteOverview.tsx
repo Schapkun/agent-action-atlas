@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -43,23 +43,6 @@ export const QuoteOverview = () => {
 
   // Get status from URL parameters (fixed, not changeable)
   const statusFilter = searchParams.get('status') || 'all';
-
-  const getPageTitle = () => {
-    switch (statusFilter) {
-      case 'draft':
-        return 'Concept Offertes';
-      case 'sent':
-        return 'Verzonden Offertes';
-      case 'accepted':
-        return 'Geaccepteerde Offertes';
-      case 'rejected':
-        return 'Afgewezen Offertes';
-      case 'expired':
-        return 'Verlopen Offertes';
-      default:
-        return 'Alle Offertes';
-    }
-  };
 
   const fetchQuotes = async () => {
     if (!selectedOrganization) return;
@@ -185,9 +168,16 @@ export const QuoteOverview = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-muted-foreground">Beheer je offertes</p>
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Zoek offertes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
         </div>
+        
         <Button asChild>
           <a href="/offertes/opstellen">
             <Plus className="h-4 w-4 mr-2" />
@@ -197,25 +187,7 @@ export const QuoteOverview = () => {
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <FileSpreadsheet className="h-5 w-5" />
-              {getPageTitle()}
-            </CardTitle>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Zoek offertes..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </CardHeader>
-
-        <CardContent>
+        <CardContent className="p-0">
           {loading ? (
             <div className="text-center py-8">Offertes laden...</div>
           ) : filteredQuotes.length === 0 ? (
