@@ -77,7 +77,7 @@ export const ContactSelectionCard = ({
     <>
       <Card>
         <CardContent className="p-3">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-start gap-4">
             {/* Left side: Contact selector and action buttons */}
             <div className="flex items-center gap-2">
               <div className="w-64">
@@ -111,7 +111,7 @@ export const ContactSelectionCard = ({
               </Button>
             </div>
 
-            {/* Center: Invoice details - only show if formData is provided */}
+            {/* Invoice details - only show if formData is provided */}
             {formData && onFormDataChange && (
               <div className="flex items-end gap-3">
                 <div className="w-32">
@@ -154,13 +154,13 @@ export const ContactSelectionCard = ({
               </div>
             )}
 
-            {/* Right side: Settings button */}
+            {/* Right side: Settings button with ml-auto to push it to the far right */}
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={handleSettingsClick}
-              className="text-xs h-8"
+              className="text-xs h-8 ml-auto"
             >
               <Settings className="h-4 w-4 mr-1" />
               Instellingen
