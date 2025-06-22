@@ -77,54 +77,43 @@ export const ContactSelectionCard = ({
     <>
       <Card>
         <CardContent className="p-3">
-          {/* Single row with all elements */}
-          <div className="flex items-center gap-2">
-            {/* Contact selector - takes most space */}
-            <div className="flex-[2]">
-              <ContactSelector
-                selectedContact={selectedContact}
-                onContactSelect={onContactSelect}
-              />
+          <div className="flex items-center justify-between gap-2">
+            {/* Left side: Contact selector and action buttons */}
+            <div className="flex items-center gap-2">
+              <div className="w-64">
+                <ContactSelector
+                  selectedContact={selectedContact}
+                  onContactSelect={onContactSelect}
+                />
+              </div>
+              
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleCreateClick}
+                className="text-xs h-8"
+              >
+                <UserPlus className="h-4 w-4 mr-1" />
+                Nieuw
+              </Button>
+              
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleEditClick}
+                disabled={!selectedContact}
+                className="text-xs h-8"
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Bewerken
+              </Button>
             </div>
-            
-            {/* Action buttons */}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleCreateClick}
-              className="text-xs"
-            >
-              <UserPlus className="h-4 w-4 mr-1" />
-              Nieuw
-            </Button>
-            
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleEditClick}
-              disabled={!selectedContact}
-              className="text-xs"
-            >
-              <Edit className="h-4 w-4 mr-1" />
-              Bewerken
-            </Button>
-            
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleSettingsClick}
-              className="text-xs"
-            >
-              <Settings className="h-4 w-4 mr-1" />
-              Instellingen
-            </Button>
 
-            {/* Invoice details - only show if formData is provided */}
+            {/* Center: Invoice details - only show if formData is provided */}
             {formData && onFormDataChange && (
-              <>
+              <div className="flex items-center gap-2">
                 <div className="w-32">
                   <Label htmlFor="invoice_number" className="text-xs block mb-1">
                     Factuurnummer
@@ -162,8 +151,20 @@ export const ContactSelectionCard = ({
                     className="h-8 text-xs"
                   />
                 </div>
-              </>
+              </div>
             )}
+
+            {/* Right side: Settings button */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleSettingsClick}
+              className="text-xs h-8"
+            >
+              <Settings className="h-4 w-4 mr-1" />
+              Instellingen
+            </Button>
           </div>
         </CardContent>
       </Card>
