@@ -172,7 +172,7 @@ export const useQuoteFormHandlers = () => {
       };
 
       await createInvoice(invoiceData, 'EXPLICIT_USER_ACTION');
-      navigate('/facturen/opstellen');
+      navigate('/facturen/nieuw');
     } catch (error) {
       console.error('Error converting to invoice:', error);
       toast({
@@ -201,7 +201,7 @@ export const useQuoteFormHandlers = () => {
       };
 
       await createQuote(quoteData);
-      navigate('/offertes');
+      navigate('/offertes?status=draft');
     } catch (error) {
       console.error('Error saving quote:', error);
     } finally {
@@ -223,7 +223,7 @@ export const useQuoteFormHandlers = () => {
       };
 
       await createQuote(quoteData);
-      navigate('/offertes');
+      navigate('/offertes?status=sent');
     } catch (error) {
       console.error('Error saving and sending quote:', error);
     } finally {

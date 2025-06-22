@@ -80,7 +80,7 @@ export const QuoteOverview = () => {
         .from('quotes')
         .select('*')
         .eq('organization_id', selectedOrganization.id)
-        .order('created_at', { ascending: false });
+        .order('quote_number', { ascending: false });
 
       if (selectedWorkspace) {
         query = query.eq('workspace_id', selectedWorkspace.id);
