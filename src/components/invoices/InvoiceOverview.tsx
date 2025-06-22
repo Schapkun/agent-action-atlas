@@ -100,14 +100,7 @@ export const InvoiceOverview = () => {
       if (error) throw error;
 
       console.log('📄 Invoices fetched:', data?.length || 0);
-      
-      // Cast the status to the proper type
-      const typedInvoices = (data || []).map(invoice => ({
-        ...invoice,
-        status: invoice.status as 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled'
-      }));
-      
-      setInvoices(typedInvoices);
+      setInvoices(data || []);
     } catch (error) {
       console.error('Error fetching invoices:', error);
       toast({
