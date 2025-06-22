@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2 } from 'lucide-react';
 import { DocumentType } from '@/hooks/useDocumentTypes';
+import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 
 interface DocumentTypeListProps {
   documentTypes: DocumentType[];
@@ -16,6 +17,8 @@ export const DocumentTypeList = ({
   onEditDocumentType,
   onDeleteDocumentType
 }: DocumentTypeListProps) => {
+  const { templates } = useDocumentTemplates();
+
   if (documentTypes.length === 0) {
     return (
       <div className="text-center py-12">
@@ -27,6 +30,12 @@ export const DocumentTypeList = ({
     );
   }
 
+  const getTemplateName = (templateId?: string) => {
+    if (!templateId) return 'Geen template gekoppeld';
+    const template = templates.find(t => t.id === templateId);
+    return template ? `Template: ${template.name}` : 'Template niet gevonden';
+  };
+
   return (
     <div className="grid gap-4">
       {documentTypes.map((documentType) => (
@@ -37,7 +46,7 @@ export const DocumentTypeList = ({
                 <div>
                   <h3 className="font-medium">{documentType.label}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Naam: {documentType.name}
+                    {getTemplateName(documentType.default_template_id)}
                   </p>
                 </div>
               </div>
