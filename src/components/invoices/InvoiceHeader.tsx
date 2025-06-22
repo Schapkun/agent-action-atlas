@@ -8,6 +8,7 @@ interface InvoiceHeaderProps {
   sendLoading: boolean;
   clientEmail: string;
   showPreview: boolean;
+  canSend: boolean;
   onTogglePreview: () => void;
   onConvertToQuote: () => void;
   onSubmit: () => void;
@@ -19,6 +20,7 @@ export const InvoiceHeader = ({
   sendLoading,
   clientEmail,
   showPreview,
+  canSend,
   onTogglePreview,
   onConvertToQuote,
   onSubmit,
@@ -81,9 +83,9 @@ export const InvoiceHeader = ({
             </Button>
             <Button 
               onClick={onSaveAndSend} 
-              disabled={sendLoading}
+              disabled={sendLoading || !canSend}
               size="sm"
-              className="bg-gray-800 hover:bg-gray-900 text-xs"
+              className="bg-gray-800 hover:bg-gray-900 text-xs disabled:bg-gray-300 disabled:text-gray-500"
             >
               <Send className="h-3 w-3 mr-1" />
               {sendLoading ? 'Versturen...' : 'Versturen'}

@@ -1,3 +1,4 @@
+
 import { InvoiceHeader } from './InvoiceHeader';
 import { ContactSelectionCard } from './ContactSelectionCard';
 import { InvoiceDetailsCard } from './InvoiceDetailsCard';
@@ -34,6 +35,7 @@ export const CreateInvoiceForm = () => {
     loading,
     sendLoading,
     invoiceSettings,
+    canSend,
     handleInvoiceNumberChange,
     handleInvoiceNumberFocus,
     handleInvoiceNumberBlur,
@@ -63,6 +65,7 @@ export const CreateInvoiceForm = () => {
         sendLoading={sendLoading}
         clientEmail={formData.client_email}
         showPreview={showPreview}
+        canSend={canSend}
         onTogglePreview={togglePreview}
         onConvertToQuote={handleConvertToQuote}
         onSubmit={handleSubmit}

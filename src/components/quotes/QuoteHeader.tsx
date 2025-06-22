@@ -8,6 +8,7 @@ interface QuoteHeaderProps {
   sendLoading: boolean;
   clientEmail?: string;
   showPreview: boolean;
+  canSend: boolean;
   onTogglePreview: () => void;
   onConvertToInvoice: () => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -19,6 +20,7 @@ export const QuoteHeader = ({
   sendLoading,
   clientEmail,
   showPreview,
+  canSend,
   onTogglePreview,
   onConvertToInvoice,
   onSubmit,
@@ -81,9 +83,9 @@ export const QuoteHeader = ({
             </Button>
             <Button 
               onClick={onSaveAndSend} 
-              disabled={sendLoading}
+              disabled={sendLoading || !canSend}
               size="sm"
-              className="bg-gray-800 hover:bg-gray-900 text-xs"
+              className="bg-gray-800 hover:bg-gray-900 text-xs disabled:bg-gray-300 disabled:text-gray-500"
             >
               <Send className="h-3 w-3 mr-1" />
               {sendLoading ? 'Versturen...' : 'Versturen'}

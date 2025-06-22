@@ -34,6 +34,7 @@ export const CreateQuote = () => {
     loading,
     sendLoading,
     invoiceSettings,
+    canSend,
     handleContactSelectOnly,
     handleFormSubmit,
     handleLineItemUpdate,
@@ -58,6 +59,7 @@ export const CreateQuote = () => {
         sendLoading={sendLoading}
         clientEmail={formData.client_email}
         showPreview={showPreview}
+        canSend={canSend}
         onTogglePreview={togglePreview}
         onConvertToInvoice={handleConvertToInvoice}
         onSubmit={handleSubmit}
