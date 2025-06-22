@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -219,7 +218,6 @@ export const InvoiceOverview = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{getPageTitle()}</h1>
           <p className="text-muted-foreground">Beheer je facturen</p>
         </div>
         <Button asChild>
