@@ -5,10 +5,6 @@ import { ActionOverview } from '@/components/dashboard/ActionOverview';
 const Dashboard = () => {
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-muted-foreground">Overzicht van uw activiteiten en prestaties</p>
-      </div>
-      
       <DashboardStats />
       
       <div className="space-y-4">

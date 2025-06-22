@@ -198,9 +198,6 @@ export const PendingTasks = () => {
               <Clock className="h-6 w-6 text-orange-500" />
               <div>
                 <CardTitle className="text-lg">Openstaande Taken</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Concepten en taken die goedkeuring nodig hebben
-                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
