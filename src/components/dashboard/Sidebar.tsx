@@ -1,4 +1,3 @@
-
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -86,17 +85,23 @@ export const Sidebar = ({
   };
 
   const isActiveSubmenu = (parentId: string) => {
+    const path = location.pathname;
+    const search = location.search;
+    
     if (parentId === 'invoices') {
-      return location.pathname.startsWith('/facturen');
+      // Check if we're on any invoice-related page
+      return path.startsWith('/facturen');
     }
     if (parentId === 'quotes') {
-      return location.pathname.startsWith('/offertes');
+      // Check if we're on any quote-related page
+      return path.startsWith('/offertes');
     }
     if (parentId === 'documents') {
-      return location.pathname.startsWith('/documenten');
+      // Check if we're on any document-related page
+      return path.startsWith('/documenten');
     }
     if (parentId === 'dossiers') {
-      return location.pathname.startsWith('/actieve-dossiers') || location.pathname.startsWith('/gesloten-dossiers');
+      return path.startsWith('/actieve-dossiers') || path.startsWith('/gesloten-dossiers');
     }
     return false;
   };
