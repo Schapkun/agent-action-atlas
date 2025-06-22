@@ -1,5 +1,5 @@
 
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface InvoiceTotalsProps {
   subtotal: number;
@@ -10,19 +10,22 @@ interface InvoiceTotalsProps {
 export const InvoiceTotals = ({ subtotal, vatAmount, total }: InvoiceTotalsProps) => {
   return (
     <Card className="bg-blue-50">
-      <CardContent className="p-3">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium text-blue-800">Totaaloverzicht</CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0 p-3">
         <div className="space-y-1 text-right">
           <div className="flex justify-between items-center text-xs">
-            <span className="flex-1">Subtotaal:</span>
-            <span className="flex-1 text-right">€ {subtotal.toFixed(2)}</span>
+            <span className="w-20">Subtotaal:</span>
+            <span className="w-24 text-right">€ {subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between items-center text-xs">
-            <span className="flex-1">BTW:</span>
-            <span className="flex-1 text-right">€ {vatAmount.toFixed(2)}</span>
+            <span className="w-20">BTW:</span>
+            <span className="w-24 text-right">€ {vatAmount.toFixed(2)}</span>
           </div>
           <div className="flex justify-between items-center text-sm font-bold text-blue-600 border-t pt-1">
-            <span className="flex-1">Totaal:</span>
-            <span className="flex-1 text-right">€ {total.toFixed(2)}</span>
+            <span className="w-20">Totaal:</span>
+            <span className="w-24 text-right">€ {total.toFixed(2)}</span>
           </div>
         </div>
       </CardContent>

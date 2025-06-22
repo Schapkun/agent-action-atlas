@@ -87,7 +87,7 @@ export const ContactSelectionCard = ({
 
   return (
     <>
-      <Card>
+      <Card className="mb-4">
         <CardContent className="p-3">
           <div className="flex items-start justify-start gap-4">
             {/* Contact selector and action buttons */}
@@ -125,17 +125,6 @@ export const ContactSelectionCard = ({
                   >
                     <Edit className="h-4 w-4 mr-1" />
                     Bewerken
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSettingsClick}
-                    className="text-xs h-8"
-                  >
-                    <Settings className="h-4 w-4 mr-1" />
-                    Instellingen
                   </Button>
                 </div>
               </div>
@@ -195,6 +184,18 @@ export const ContactSelectionCard = ({
                     onChange={(e) => onFormDataChange({ due_date: e.target.value })}
                     className="h-8 text-xs"
                   />
+                </div>
+                <div className="flex flex-col justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSettingsClick}
+                    className="text-xs h-8"
+                  >
+                    <Settings className="h-4 w-4 mr-1" />
+                    Instellingen
+                  </Button>
                 </div>
               </div>
             )}

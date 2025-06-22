@@ -19,7 +19,6 @@ BEGIN
   INTO next_sequence
   FROM public.invoices 
   WHERE organization_id = org_id 
-    AND (workspace_id IS NULL OR public.invoices.workspace_id = generate_invoice_number_with_gaps.workspace_id)
     AND invoice_number LIKE year_part || '-%'
     AND SPLIT_PART(invoice_number, '-', 2) ~ '^\d+$';
   

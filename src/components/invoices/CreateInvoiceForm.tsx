@@ -82,7 +82,7 @@ export const CreateInvoiceForm = () => {
       />
 
       <div className="w-full px-6 max-w-none">
-        <form onSubmit={handleFormSubmit} className="space-y-2">
+        <form onSubmit={handleFormSubmit} className="space-y-4">
           <ContactSelectionCard
             selectedContact={selectedContact}
             formData={formData}
