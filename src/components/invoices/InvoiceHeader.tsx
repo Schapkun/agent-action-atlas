@@ -76,10 +76,10 @@ export const InvoiceHeader = ({
             variant="outline" 
             size="sm" 
             onClick={onTogglePreview}
-            className={`flex items-center gap-1 text-xs px-2 py-1 ${showPreview ? 'bg-blue-50 text-blue-600 border-blue-200' : ''}`}
+            className="flex items-center gap-1 text-xs px-2 py-1"
           >
-            {showPreview ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-            {showPreview ? 'Verberg' : 'Voorbeeld'}
+            <Eye className="h-3 w-3" />
+            {showPreview ? 'Verberg voorbeeld' : 'Voorbeeld'}
           </Button>
           <Button 
             type="button"
@@ -105,8 +105,9 @@ export const InvoiceHeader = ({
               type="button"
               onClick={onSubmit} 
               disabled={loading}
+              variant="outline"
               size="sm"
-              className="bg-gray-800 hover:bg-gray-900 text-xs"
+              className="text-xs"
             >
               <Save className="h-3 w-3 mr-1" />
               {loading ? 'Opslaan...' : 'Opslaan'}
@@ -116,10 +117,10 @@ export const InvoiceHeader = ({
               onClick={onSaveAndSend}
               disabled={sendLoading || !clientEmail}
               size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-xs"
+              className="bg-gray-800 hover:bg-gray-900 text-xs"
             >
               <Send className="h-3 w-3 mr-1" />
-              {sendLoading ? 'Verzenden...' : 'Opslaan & Versturen'}
+              {sendLoading ? 'Versturen...' : 'Versturen'}
             </Button>
           </div>
         </div>
