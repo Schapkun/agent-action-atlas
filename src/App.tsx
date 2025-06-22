@@ -55,6 +55,7 @@ const App = () => (
               <Route path="/gesloten-dossiers" element={<Index><ClosedDossiers /></Index>} />
               <Route path="/facturen" element={<Index><Invoices /></Index>} />
               <Route path="/facturen/nieuw" element={<Index><CreateInvoice /></Index>} />
+              <Route path="/facturen/opstellen" element={<Navigate to="/facturen/nieuw" replace />} />
               <Route path="/facturen/:id/sturen" element={<Index><FactuurSturen /></Index>} />
               <Route path="/offertes" element={<Index><Quotes /></Index>} />
               <Route path="/offertes/nieuw" element={<Index><CreateQuote /></Index>} />
