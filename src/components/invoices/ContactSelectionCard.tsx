@@ -109,7 +109,7 @@ export const ContactSelectionCard = ({
                     variant="outline"
                     size="sm"
                     onClick={handleCreateClick}
-                    className="text-xs h-10"
+                    className="text-xs h-8"
                   >
                     <UserPlus className="h-4 w-4 mr-1" />
                     Nieuw
@@ -121,7 +121,7 @@ export const ContactSelectionCard = ({
                     size="sm"
                     onClick={handleEditClick}
                     disabled={!selectedContact}
-                    className="text-xs h-10"
+                    className="text-xs h-8"
                   >
                     <Edit className="h-4 w-4 mr-1" />
                     Bewerken
@@ -144,7 +144,7 @@ export const ContactSelectionCard = ({
                     onFocus={onInvoiceNumberFocus}
                     onBlur={onInvoiceNumberBlur}
                     placeholder="Factuurnummer"
-                    className="h-10 text-xs placeholder:text-xs"
+                    className="h-8 text-xs placeholder:text-xs"
                   />
                 </div>
                 <div className="w-32 flex flex-col">
@@ -157,7 +157,7 @@ export const ContactSelectionCard = ({
                     min="0"
                     value={formData.payment_terms || 14}
                     onChange={(e) => handlePaymentTermsChange(e.target.value)}
-                    className="h-10 text-xs"
+                    className="h-8 text-xs"
                     placeholder="14"
                   />
                 </div>
@@ -170,7 +170,7 @@ export const ContactSelectionCard = ({
                     type="date"
                     value={formData.invoice_date || format(new Date(), 'yyyy-MM-dd')}
                     onChange={(e) => onFormDataChange({ invoice_date: e.target.value })}
-                    className="h-10 text-xs"
+                    className="h-8 text-xs"
                   />
                 </div>
                 <div className="w-32 flex flex-col">
@@ -182,7 +182,7 @@ export const ContactSelectionCard = ({
                     type="date"
                     value={formData.due_date || format(addDays(new Date(), formData.payment_terms || 14), 'yyyy-MM-dd')}
                     onChange={(e) => onFormDataChange({ due_date: e.target.value })}
-                    className="h-10 text-xs"
+                    className="h-8 text-xs"
                   />
                 </div>
                 <div className="flex flex-col justify-end">
@@ -191,7 +191,7 @@ export const ContactSelectionCard = ({
                     variant="outline"
                     size="sm"
                     onClick={handleSettingsClick}
-                    className="text-xs h-10"
+                    className="text-xs h-8"
                   >
                     <Settings className="h-4 w-4 mr-1" />
                     Instellingen
