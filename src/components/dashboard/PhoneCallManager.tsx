@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -100,76 +101,84 @@ export const PhoneCallManager = () => {
 
   return (
     <>
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Folder Structure */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-lg">Gesprek Categorieën</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {!selectedOrganization && !selectedWorkspace ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Folder className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">Selecteer een organisatie of werkruimte</p>
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 flex-1">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Zoek gesprekken..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Folder className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">Geen categorieën gevonden</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
 
-        {/* Call List */}
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Telefoongesprekken</CardTitle>
-              <Button variant="outline" size="sm" onClick={handleCreateCall}>
+            <div className="flex items-center gap-2">
+              <Button onClick={handleCreateCall}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nieuw Gesprek
               </Button>
             </div>
+          </div>
 
-            {!selectedOrganization && !selectedWorkspace && (
-              <div className="text-sm text-muted-foreground">
-                Selecteer een organisatie of werkruimte om gesprekken te bekijken
-              </div>
-            )}
+          {!selectedOrganization && !selectedWorkspace && (
+            <div className="text-sm text-muted-foreground">
+              Selecteer een organisatie of werkruimte om gesprekken te bekijken
+            </div>
+          )}
 
-            {(selectedOrganization || selectedWorkspace) && (
-              <>
-                <div className="text-sm text-muted-foreground">
-                  Data voor: {getContextInfo()}
+          {(selectedOrganization || selectedWorkspace) && (
+            <div className="text-sm text-gray-600">
+              Context: {getContextInfo()}
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Folder Structure */}
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="text-lg">Gesprek Categorieën</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!selectedOrganization && !selectedWorkspace ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Folder className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Selecteer een organisatie of werkruimte</p>
                 </div>
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Zoek gesprekken..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Folder className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Geen categorieën gevonden</p>
                 </div>
-              </>
-            )}
-          </CardHeader>
+              )}
+            </CardContent>
+          </Card>
 
-          <CardContent>
-            {!selectedOrganization && !selectedWorkspace ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <PhoneCall className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Selecteer een organisatie of werkruimte om gesprekken te bekijken</p>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <PhoneCall className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Geen gesprekken gevonden voor de geselecteerde context</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          {/* Call List */}
+          <Card className="lg:col-span-3">
+            <CardHeader>
+              <CardTitle className="text-lg">Telefoongesprekken</CardTitle>
+            </CardHeader>
+
+            <CardContent>
+              {!selectedOrganization && !selectedWorkspace ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <PhoneCall className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Selecteer een organisatie of werkruimte om gesprekken te bekijken</p>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <PhoneCall className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Geen gesprekken gevonden voor de geselecteerde context</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <WorkspaceSelector

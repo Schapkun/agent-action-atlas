@@ -148,44 +148,63 @@ export const PendingTasksManager = () => {
     return new Date(dueDate) < new Date();
   };
 
+  const getContextInfo = () => {
+    if (selectedWorkspace) {
+      return `Werkruimte: ${selectedWorkspace.name}`;
+    } else if (selectedOrganization) {
+      return `Organisatie: ${selectedOrganization.name}`;
+    }
+    return 'Geen selectie';
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-end">
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Nieuwe Taak
-        </Button>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4 flex-1">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Zoek taken..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              className="px-3 py-2 border rounded-md text-sm"
+            >
+              <option value="all">Alle prioriteiten</option>
+              <option value="high">Hoog</option>
+              <option value="medium">Gemiddeld</option>
+              <option value="low">Laag</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Nieuwe Taak
+            </Button>
+          </div>
+        </div>
+
+        {(selectedOrganization || selectedWorkspace) && (
+          <div className="text-sm text-gray-600">
+            Context: {getContextInfo()}
+          </div>
+        )}
       </div>
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Taken Overzicht
-            </CardTitle>
-            <div className="flex gap-2">
-              <select
-                value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value)}
-                className="px-3 py-1 border rounded-md text-sm"
-              >
-                <option value="all">Alle prioriteiten</option>
-                <option value="high">Hoog</option>
-                <option value="medium">Gemiddeld</option>
-                <option value="low">Laag</option>
-              </select>
-            </div>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Zoek taken..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Clock className="h-5 w-5" />
+            Taken Overzicht
+          </CardTitle>
         </CardHeader>
 
         <CardContent>
