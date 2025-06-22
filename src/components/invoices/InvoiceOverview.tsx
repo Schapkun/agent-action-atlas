@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
+import { PaymentDialog } from './PaymentDialog';
 import { 
   Search, 
   FileText, 
@@ -19,7 +20,8 @@ import {
   Send,
   Check,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Calculator
 } from 'lucide-react';
 
 interface Invoice {
@@ -31,6 +33,8 @@ interface Invoice {
   invoice_date: string;
   due_date: string;
   total_amount: number;
+  paid_amount?: number;
+  outstanding_amount?: number;
   created_at: string;
 }
 
@@ -73,6 +77,8 @@ export const InvoiceOverview = ({
         return 'Betaalde Facturen';
       case 'overdue':
         return 'Achterstallige Facturen';
+      case 'partially_paid':
+        return 'Gedeeltelijk Betaalde Facturen';
       default:
         return 'Alle Facturen';
     }
@@ -142,6 +148,31 @@ export const InvoiceOverview = ({
     }
   };
 
+  const markInvoiceAsPaid = async (invoiceId: string, totalAmount: number) => {
+    try {
+      const { error } = await supabase
+        .from('invoices')
+        .update({ paid_amount: totalAmount })
+        .eq('id', invoiceId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succes",
+        description: "Factuur gemarkeerd als volledig betaald"
+      });
+
+      fetchInvoices();
+    } catch (error) {
+      console.error('Error marking invoice as paid:', error);
+      toast({
+        title: "Fout",
+        description: "Kon factuur niet als betaald markeren",
+        variant: "destructive"
+      });
+    }
+  };
+
   const deleteInvoice = async (invoiceId: string) => {
     if (!confirm('Weet je zeker dat je deze factuur wilt verwijderen?')) return;
 
@@ -190,6 +221,8 @@ export const InvoiceOverview = ({
         return <Badge variant="outline" className="text-blue-600"><Send className="h-3 w-3 mr-1" />Verzonden</Badge>;
       case 'paid':
         return <Badge variant="outline" className="text-green-600"><Check className="h-3 w-3 mr-1" />Betaald</Badge>;
+      case 'partially_paid':
+        return <Badge variant="outline" className="text-orange-600"><Calculator className="h-3 w-3 mr-1" />Gedeeltelijk Betaald</Badge>;
       case 'overdue':
         return <Badge variant="outline" className="text-red-600"><AlertCircle className="h-3 w-3 mr-1" />Achterstallig</Badge>;
       default:
@@ -248,64 +281,90 @@ export const InvoiceOverview = ({
                   <TableHead>Factuurdatum</TableHead>
                   <TableHead>Vervaldatum</TableHead>
                   <TableHead>Bedrag</TableHead>
+                  <TableHead>Openstaand Bedrag</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Acties</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredInvoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
-                    <TableCell>{invoice.client_name}</TableCell>
-                    <TableCell>{new Date(invoice.invoice_date).toLocaleDateString('nl-NL')}</TableCell>
-                    <TableCell>{new Date(invoice.due_date).toLocaleDateString('nl-NL')}</TableCell>
-                    <TableCell>€{invoice.total_amount?.toFixed(2) || '0.00'}</TableCell>
-                    <TableCell>{getStatusBadge(invoice.status)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {invoice.status === 'draft' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateInvoiceStatus(invoice.id, 'sent')}
-                          >
-                            <Send className="h-4 w-4 mr-1" />
-                            Versturen
-                          </Button>
-                        )}
-                        
-                        {invoice.status === 'sent' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateInvoiceStatus(invoice.id, 'paid')}
-                          >
-                            <Check className="h-4 w-4 mr-1" />
-                            Markeer Betaald
-                          </Button>
-                        )}
+                {filteredInvoices.map((invoice) => {
+                  const paidAmount = invoice.paid_amount || 0;
+                  const outstandingAmount = invoice.total_amount - paidAmount;
+                  
+                  return (
+                    <TableRow key={invoice.id}>
+                      <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
+                      <TableCell>{invoice.client_name}</TableCell>
+                      <TableCell>{new Date(invoice.invoice_date).toLocaleDateString('nl-NL')}</TableCell>
+                      <TableCell>{new Date(invoice.due_date).toLocaleDateString('nl-NL')}</TableCell>
+                      <TableCell>€{invoice.total_amount?.toFixed(2) || '0.00'}</TableCell>
+                      <TableCell>
+                        <span className={outstandingAmount > 0 ? 'text-orange-600 font-medium' : 'text-green-600'}>
+                          €{outstandingAmount.toFixed(2)}
+                        </span>
+                      </TableCell>
+                      <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {invoice.status === 'draft' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateInvoiceStatus(invoice.id, 'sent')}
+                            >
+                              <Send className="h-4 w-4 mr-1" />
+                              Versturen
+                            </Button>
+                          )}
+                          
+                          {(invoice.status === 'sent' || invoice.status === 'partially_paid') && (
+                            <>
+                              <PaymentDialog 
+                                invoiceId={invoice.id}
+                                totalAmount={invoice.total_amount}
+                                paidAmount={paidAmount}
+                                outstandingAmount={outstandingAmount}
+                                onPaymentRegistered={fetchInvoices}
+                              >
+                                <Button size="sm" variant="outline">
+                                  <Calculator className="h-4 w-4 mr-1" />
+                                  Betaling Registreren
+                                </Button>
+                              </PaymentDialog>
+                              
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => markInvoiceAsPaid(invoice.id, invoice.total_amount)}
+                              >
+                                <Check className="h-4 w-4 mr-1" />
+                                Markeer Betaald
+                              </Button>
+                            </>
+                          )}
 
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        
-                        <Button size="sm" variant="outline" asChild>
-                          <a href={`/facturen/opstellen?edit=${invoice.id}`}>
-                            <Edit className="h-4 w-4" />
-                          </a>
-                        </Button>
-                        
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => deleteInvoice(invoice.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          <Button size="sm" variant="outline">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          
+                          <Button size="sm" variant="outline" asChild>
+                            <a href={`/facturen/opstellen?edit=${invoice.id}`}>
+                              <Edit className="h-4 w-4" />
+                            </a>
+                          </Button>
+                          
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => deleteInvoice(invoice.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}

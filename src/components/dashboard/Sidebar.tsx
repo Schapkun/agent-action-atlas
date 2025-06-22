@@ -1,3 +1,4 @@
+
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,7 +45,7 @@ export const Sidebar = ({
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
 
-  // Auto-expand submenu's based on current route
+  // Auto-expand submenu's based on current route and auto-collapse others
   useEffect(() => {
     const path = location.pathname;
     const newExpandedMenus: string[] = [];
@@ -52,32 +53,15 @@ export const Sidebar = ({
     // Check if we're on a page that should have its submenu expanded
     if (path.startsWith('/facturen')) {
       newExpandedMenus.push('invoices');
-    }
-    if (path.startsWith('/offertes')) {
+    } else if (path.startsWith('/offertes')) {
       newExpandedMenus.push('quotes');
-    }
-    if (path.startsWith('/documenten')) {
+    } else if (path.startsWith('/documenten')) {
       newExpandedMenus.push('documents');
     }
 
-    // Only update if there's a change to prevent unnecessary re-renders
-    if (newExpandedMenus.length > 0) {
-      setExpandedMenus(prev => {
-        const combined = [...new Set([...prev, ...newExpandedMenus])];
-        return combined;
-      });
-    }
+    // Set only the relevant submenu as expanded (auto-collapse others)
+    setExpandedMenus(newExpandedMenus);
   }, [location.pathname]);
-
-  const toggleSubmenu = (menuId: string, event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setExpandedMenus(prev => 
-      prev.includes(menuId) 
-        ? prev.filter(id => id !== menuId)
-        : [...prev, menuId]
-    );
-  };
 
   const isActiveRoute = (path: string) => {
     return location.pathname === path;
@@ -111,6 +95,7 @@ export const Sidebar = ({
       submenu: [
         { id: 'new-document', label: 'Opstellen', icon: Plus, path: '/documenten/opstellen' },
         { id: 'document-list', label: 'Overzicht', icon: FileCheck, path: '/documenten' },
+        { id: 'sent-documents', label: 'Verzonden', icon: Send, path: '/documenten?status=sent' },
       ]
     },
     { 
@@ -144,15 +129,6 @@ export const Sidebar = ({
   ];
 
   const handleMenuClick = (item: any, submenuItem?: any) => {    
-    if (item.hasSubmenu && !submenuItem) {
-      // For main menu items with submenu, navigate to the main path and ensure submenu is expanded
-      navigate(item.path);
-      setExpandedMenus(prev => 
-        prev.includes(item.id) ? prev : [...prev, item.id]
-      );
-      return;
-    }
-    
     const path = submenuItem?.path || item.path;
     navigate(path);
   };
