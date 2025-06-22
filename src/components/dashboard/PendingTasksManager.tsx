@@ -150,11 +150,7 @@ export const PendingTasksManager = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Openstaande Taken</h1>
-          <p className="text-muted-foreground">Beheer al je openstaande taken</p>
-        </div>
+      <div className="flex items-center justify-end">
         <Button>
           <Plus className="h-4 w-4 mr-2" />
           Nieuwe Taak
