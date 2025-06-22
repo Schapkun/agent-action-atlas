@@ -29,6 +29,8 @@ export const getViewTitleFromPath = (path: string): string => {
   if (path === '/openstaande-taken') return 'Openstaande Taken';
   if (path === '/ai-acties') return 'AI Acties';
   if (path === '/documenten') return 'Documenten';
+  if (path === '/documenten?status=draft') return 'Concepten';
+  if (path === '/documenten?status=sent') return 'Verzonden';
   if (path === '/actieve-dossiers') return 'Actieve Dossiers';
   if (path === '/gesloten-dossiers') return 'Gesloten Dossiers';
   if (path === '/facturen') return 'Facturen';

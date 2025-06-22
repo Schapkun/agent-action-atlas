@@ -1,5 +1,3 @@
-
-
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -178,7 +176,7 @@ export const Sidebar = ({
       hasSubmenu: true,
       submenu: [
         { id: 'new-document', label: 'Opstellen', icon: Plus, path: '/documenten/nieuw' },
-        { id: 'document-list', label: 'Overzicht', icon: FileCheck, path: '/documenten' },
+        { id: 'concept-documents', label: 'Concepten', icon: FileCheck, path: '/documenten?status=draft' },
         { id: 'sent-documents', label: 'Verzonden', icon: Send, path: '/documenten?status=sent' },
       ]
     },
@@ -330,4 +328,3 @@ export const Sidebar = ({
     </div>
   );
 };
-

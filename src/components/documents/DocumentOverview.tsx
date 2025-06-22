@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useLocation } from 'react-router-dom';
 import { 
   Search, 
   FileText, 
@@ -35,6 +35,24 @@ export const DocumentOverview = () => {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
+  const location = useLocation();
+
+  // Get status from URL parameters
+  const urlParams = new URLSearchParams(location.search);
+  const statusFilter = urlParams.get('status');
+
+  // Determine page title based on status
+  const getPageTitle = () => {
+    if (statusFilter === 'draft') return 'Concepten';
+    if (statusFilter === 'sent') return 'Verzonden';
+    return 'Documenten';
+  };
+
+  const getPageDescription = () => {
+    if (statusFilter === 'draft') return 'Beheer uw concept documenten';
+    if (statusFilter === 'sent') return 'Overzicht van verzonden documenten';
+    return 'Beheer al uw documenten';
+  };
 
   const fetchDocuments = async () => {
     if (!selectedOrganization) return;
@@ -138,8 +156,7 @@ export const DocumentOverview = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Documenten</h1>
-          <p className="text-muted-foreground">Beheer al je documenten</p>
+          <p className="text-muted-foreground">{getPageDescription()}</p>
         </div>
         <Button asChild>
           <a href="/documenten/nieuw">
@@ -154,7 +171,7 @@ export const DocumentOverview = () => {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Document Overzicht
+              {getPageTitle()}
             </CardTitle>
             <div className="flex gap-2">
               <select
