@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -41,28 +41,6 @@ export const DocumentOverview = () => {
   // Get status from URL parameters
   const urlParams = new URLSearchParams(location.search);
   const statusFilter = urlParams.get('status');
-
-  // Determine page title based on status
-  const getPageTitle = () => {
-    if (statusFilter === 'draft') return 'Concepten';
-    if (statusFilter === 'sent') return 'Verzonden';
-    return 'Documenten';
-  };
-
-  const getPageDescription = () => {
-    if (statusFilter === 'draft') return 'Beheer uw concept documenten';
-    if (statusFilter === 'sent') return 'Overzicht van verzonden documenten';
-    return 'Beheer al uw documenten';
-  };
-
-  const getContextInfo = () => {
-    if (selectedWorkspace) {
-      return `Werkruimte: ${selectedWorkspace.name}`;
-    } else if (selectedOrganization) {
-      return `Organisatie: ${selectedOrganization.name}`;
-    }
-    return 'Geen selectie';
-  };
 
   const fetchDocuments = async () => {
     if (!selectedOrganization) return;
@@ -164,61 +142,40 @@ export const DocumentOverview = () => {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4 flex-1">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Zoek documenten..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="px-3 py-2 border rounded-md text-sm"
-            >
-              <option value="all">Alle types</option>
-              {uniqueTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4 flex-1">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Zoek documenten..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
-
-          <div className="flex items-center gap-2">
-            <Button asChild>
-              <a href="/documenten/nieuw">
-                <Plus className="h-4 w-4 mr-2" />
-                Nieuw Document
-              </a>
-            </Button>
-          </div>
+          
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="px-3 py-2 border rounded-md text-sm"
+          >
+            <option value="all">Alle types</option>
+            {uniqueTypes.map(type => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+          </select>
         </div>
 
-        <div>
-          <p className="text-muted-foreground">{getPageDescription()}</p>
-        </div>
-
-        {(selectedOrganization || selectedWorkspace) && (
-          <div className="text-sm text-gray-600">
-            Context: {getContextInfo()}
-          </div>
-        )}
+        <Button asChild>
+          <a href="/documenten/nieuw">
+            <Plus className="h-4 w-4 mr-2" />
+            Nieuw Document
+          </a>
+        </Button>
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <FileText className="h-5 w-5" />
-            {getPageTitle()}
-          </CardTitle>
-        </CardHeader>
-
-        <CardContent>
+        <CardContent className="p-0">
           {loading ? (
             <div className="text-center py-8">Documenten laden...</div>
           ) : filteredDocuments.length === 0 ? (
@@ -233,7 +190,7 @@ export const DocumentOverview = () => {
               </Button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 p-6">
               {filteredDocuments.map((document) => (
                 <div key={document.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between">
