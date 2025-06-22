@@ -2,61 +2,24 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Sidebar } from '@/components/dashboard/Sidebar';
-import { Header } from '@/components/dashboard/Header';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
-interface IndexProps {
-  children: React.ReactNode;
-}
-
-const Index = ({ children }: IndexProps) => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const location = useLocation();
-
-  // Calculate pending tasks count - currently 0 since we removed all mock data
-  const pendingTasksCount = 0;
-
-  // Determine current view from URL
-  const getCurrentView = () => {
-    const path = location.pathname;
-    if (path === '/') return 'overview';
-    if (path === '/openstaande-taken') return 'pending-tasks';
-    if (path === '/ai-acties') return 'actions';
-    if (path === '/documenten' || path.startsWith('/documenten/')) return 'documents';
-    if (path === '/actieve-dossiers') return 'active-dossiers';
-    if (path === '/gesloten-dossiers') return 'closed-dossiers';
-    if (path === '/facturen' || path.startsWith('/facturen/')) return 'invoices';
-    if (path === '/offertes' || path.startsWith('/offertes/')) return 'quotes';
-    if (path === '/telefoongesprekken') return 'phone-calls';
-    if (path === '/e-mails') return 'emails';
-    if (path === '/contacten') return 'contacts';
-    if (path === '/instellingen') return 'settings';
-    return 'overview';
-  };
-
-  const currentView = getCurrentView();
-
+const Index = () => {
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-background flex w-full">
-        <Sidebar 
-          currentView={currentView} 
-          collapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-          pendingTasksCount={pendingTasksCount}
-        />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Header 
-            currentView={currentView}
-            onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
-          />
-          <main className="flex-1 overflow-auto p-6">
-            {children}
-          </main>
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-foreground mb-4">Welkom bij InvoiceApp</h1>
+        <p className="text-muted-foreground mb-8">Beheer uw facturen, offertes en klanten eenvoudig</p>
+        <div className="space-x-4">
+          <a href="/auth" className="bg-primary text-primary-foreground px-6 py-3 rounded-md hover:bg-primary/90 transition-colors">
+            Inloggen
+          </a>
+          <a href="/register" className="bg-secondary text-secondary-foreground px-6 py-3 rounded-md hover:bg-secondary/90 transition-colors">
+            Registreren
+          </a>
         </div>
       </div>
-    </ProtectedRoute>
+    </div>
   );
 };
 

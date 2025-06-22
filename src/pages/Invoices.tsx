@@ -1,8 +1,8 @@
 
-import { InvoiceManager } from '@/components/dashboard/InvoiceManager';
+import { InvoiceOverview } from '@/components/invoices/InvoiceOverview';
 
 const Invoices = () => {
-  return <InvoiceManager />;
+  return <InvoiceOverview />;
 };
 
 export default Invoices;
