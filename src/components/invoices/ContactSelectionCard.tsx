@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Settings, UserPlus, Edit } from 'lucide-react';
 import { ContactSelector } from '@/components/contacts/ContactSelector';
 import { ContactDialog } from '@/components/contacts/ContactDialog';
@@ -73,48 +74,75 @@ export const ContactSelectionCard = ({
     onShowSettings();
   };
 
+  const handlePaymentTermsChange = (days: string) => {
+    if (onFormDataChange && formData) {
+      const newDueDate = format(addDays(new Date(formData.invoice_date || new Date()), parseInt(days)), 'yyyy-MM-dd');
+      onFormDataChange({ 
+        payment_terms: parseInt(days),
+        due_date: newDueDate
+      });
+    }
+  };
+
   return (
     <>
       <Card>
         <CardContent className="p-3">
-          <div className="flex items-center justify-start gap-4">
+          <div className="flex items-start justify-start gap-4">
             {/* Contact selector and action buttons */}
-            <div className="flex items-center gap-2">
-              <div className="w-64">
-                <ContactSelector
-                  selectedContact={selectedContact}
-                  onContactSelect={onContactSelect}
-                />
+            <div className="flex flex-col gap-2">
+              <div className="h-4"></div> {/* Spacer for alignment */}
+              <div className="flex items-center gap-2">
+                <div className="w-64">
+                  <ContactSelector
+                    selectedContact={selectedContact}
+                    onContactSelect={onContactSelect}
+                  />
+                </div>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCreateClick}
+                  className="text-xs h-8"
+                >
+                  <UserPlus className="h-4 w-4 mr-1" />
+                  Nieuw
+                </Button>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleEditClick}
+                  disabled={!selectedContact}
+                  className="text-xs h-8"
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  Bewerken
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSettingsClick}
+                  className="text-xs h-8"
+                >
+                  <Settings className="h-4 w-4 mr-1" />
+                  Instellingen
+                </Button>
               </div>
-              
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleCreateClick}
-                className="text-xs h-8"
-              >
-                <UserPlus className="h-4 w-4 mr-1" />
-                Nieuw
-              </Button>
-              
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleEditClick}
-                disabled={!selectedContact}
-                className="text-xs h-8"
-              >
-                <Edit className="h-4 w-4 mr-1" />
-                Bewerken
-              </Button>
             </div>
 
             {/* Invoice details - only show if formData is provided */}
             {formData && onFormDataChange && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-start gap-3">
                 <div className="w-32 flex flex-col">
+                  <Label htmlFor="invoice_number" className="text-xs block mb-1">
+                    Factuurnummer
+                  </Label>
                   <Input
                     id="invoice_number"
                     value={getDisplayInvoiceNumber ? getDisplayInvoiceNumber() : invoiceNumber || ''}
@@ -126,6 +154,9 @@ export const ContactSelectionCard = ({
                   />
                 </div>
                 <div className="w-32 flex flex-col">
+                  <Label htmlFor="invoice_date" className="text-xs block mb-1">
+                    Factuurdatum
+                  </Label>
                   <Input
                     id="invoice_date"
                     type="date"
@@ -135,6 +166,9 @@ export const ContactSelectionCard = ({
                   />
                 </div>
                 <div className="w-32 flex flex-col">
+                  <Label htmlFor="due_date" className="text-xs block mb-1">
+                    Vervaldatum
+                  </Label>
                   <Input
                     id="due_date"
                     type="date"
@@ -143,20 +177,29 @@ export const ContactSelectionCard = ({
                     className="h-8 text-xs"
                   />
                 </div>
+                <div className="w-24 flex flex-col">
+                  <Label htmlFor="payment_terms" className="text-xs block mb-1">
+                    Dagen
+                  </Label>
+                  <Select
+                    value={(formData.payment_terms || invoiceSettings?.default_payment_terms || 30).toString()}
+                    onValueChange={handlePaymentTermsChange}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">Direct</SelectItem>
+                      <SelectItem value="7">7 dagen</SelectItem>
+                      <SelectItem value="14">14 dagen</SelectItem>
+                      <SelectItem value="30">30 dagen</SelectItem>
+                      <SelectItem value="60">60 dagen</SelectItem>
+                      <SelectItem value="90">90 dagen</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             )}
-
-            {/* Settings button - now left-aligned with other elements */}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleSettingsClick}
-              className="text-xs h-8"
-            >
-              <Settings className="h-4 w-4 mr-1" />
-              Instellingen
-            </Button>
           </div>
         </CardContent>
       </Card>
