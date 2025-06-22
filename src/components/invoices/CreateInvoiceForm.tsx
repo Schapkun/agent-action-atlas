@@ -56,6 +56,11 @@ export const CreateInvoiceForm = () => {
 
   const handleDocumentSettingsChange = (settings: any) => {
     console.log('Document settings changed:', settings);
+    // Update VAT settings in the line items hook if available
+    if (handleLineItemUpdate && settings.vatDisplay) {
+      // Force recalculation by triggering a state update
+      setFormData(prev => ({ ...prev, vatDisplay: settings.vatDisplay }));
+    }
   };
 
   return (
@@ -82,7 +87,7 @@ export const CreateInvoiceForm = () => {
       />
 
       <div className="w-full px-6 max-w-none">
-        <form onSubmit={handleFormSubmit} className="space-y-4">
+        <form onSubmit={handleFormSubmit} className="space-y-6">
           <ContactSelectionCard
             selectedContact={selectedContact}
             formData={formData}

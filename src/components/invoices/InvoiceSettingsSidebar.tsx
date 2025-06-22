@@ -43,7 +43,9 @@ export const InvoiceSettingsSidebar = ({ show, onClose, onSettingsChange }: Invo
   if (!show) return null;
 
   const handleSettingChange = (vatDisplay: 'incl_btw' | 'excl_btw') => {
-    setSettings({ vatDisplay });
+    const newSettings = { vatDisplay };
+    setSettings(newSettings);
+    console.log('BTW instelling gewijzigd naar:', vatDisplay);
   };
 
   return (
@@ -89,6 +91,10 @@ export const InvoiceSettingsSidebar = ({ show, onClose, onSettingsChange }: Invo
             <strong>Uitleg:</strong><br/>
             • <strong>Exclusief BTW:</strong> De prijs die u invoert bevat nog geen BTW. BTW wordt er automatisch bij opgeteld.<br/>
             • <strong>Inclusief BTW:</strong> De prijs die u invoert bevat al BTW. BTW wordt uit de prijs berekend.
+          </div>
+          
+          <div className="text-xs text-blue-600 p-3 bg-blue-50 rounded">
+            <strong>Huidige instelling:</strong> {settings.vatDisplay === 'excl_btw' ? 'Exclusief BTW' : 'Inclusief BTW'}
           </div>
         </div>
       </div>

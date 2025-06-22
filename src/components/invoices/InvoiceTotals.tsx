@@ -9,26 +9,30 @@ interface InvoiceTotalsProps {
 
 export const InvoiceTotals = ({ subtotal, vatAmount, total }: InvoiceTotalsProps) => {
   return (
-    <Card className="bg-blue-50">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-blue-800">Totaaloverzicht</CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0 p-3">
-        <div className="space-y-1 text-right">
-          <div className="flex justify-between items-center text-xs">
-            <span className="w-20">Subtotaal:</span>
-            <span className="w-24 text-right">€ {subtotal.toFixed(2)}</span>
+    <div className="space-y-4">
+      <Card className="bg-blue-50">
+        <CardContent className="pt-4 p-4">
+          <div className="space-y-2 text-right">
+            <div className="flex justify-between items-center text-sm">
+              <span>Subtotaal:</span>
+              <span className="w-24 text-right">€ {subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span>BTW:</span>
+              <span className="w-24 text-right">€ {vatAmount.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center text-lg font-bold text-blue-600 border-t pt-2">
+              <span>Totaal:</span>
+              <span className="w-24 text-right">€ {total.toFixed(2)}</span>
+            </div>
           </div>
-          <div className="flex justify-between items-center text-xs">
-            <span className="w-20">BTW:</span>
-            <span className="w-24 text-right">€ {vatAmount.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between items-center text-sm font-bold text-blue-600 border-t pt-1">
-            <span className="w-20">Totaal:</span>
-            <span className="w-24 text-right">€ {total.toFixed(2)}</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+      
+      {/* Footer tekst */}
+      <div className="text-center text-sm text-gray-600 mt-4 p-3 bg-gray-50 rounded">
+        Bedankt voor uw vertrouwen in onze dienstverlening
+      </div>
+    </div>
   );
 };

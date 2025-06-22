@@ -6,10 +6,24 @@ import { useInvoiceStorage } from './useInvoiceStorage';
 export const useInvoiceLineItems = () => {
   const { loadLineItems, saveLineItems } = useInvoiceStorage();
   const [lineItems, setLineItems] = useState<LineItem[]>(loadLineItems);
+  const [vatSettings, setVatSettings] = useState<{ vatDisplay: 'incl_btw' | 'excl_btw' }>({ vatDisplay: 'excl_btw' });
 
   useEffect(() => {
     saveLineItems(lineItems);
   }, [lineItems, saveLineItems]);
+
+  // Load VAT settings from localStorage
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('invoice-vat-settings');
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        setVatSettings(parsed);
+      } catch (error) {
+        console.error('Failed to parse saved VAT settings in line items:', error);
+      }
+    }
+  }, []);
 
   const calculateLineTotal = (item: LineItem): number => {
     const quantity = item.quantity || 0;
@@ -45,13 +59,29 @@ export const useInvoiceLineItems = () => {
     let subtotal = 0;
     let vatAmount = 0;
 
+    console.log('Berekening met VAT instelling:', vatSettings.vatDisplay);
+
     lineItems.forEach(item => {
       const lineTotal = calculateLineTotal(item);
-      subtotal += lineTotal;
-      vatAmount += lineTotal * (item.vat_rate / 100);
+      const vatRate = item.vat_rate / 100;
+      
+      if (vatSettings.vatDisplay === 'incl_btw') {
+        // Prijs is inclusief BTW - BTW moet uit de prijs gehaald worden
+        const priceExclVat = lineTotal / (1 + vatRate);
+        const vatForThisLine = lineTotal - priceExclVat;
+        
+        subtotal += priceExclVat;
+        vatAmount += vatForThisLine;
+      } else {
+        // Prijs is exclusief BTW - BTW moet bij de prijs opgeteld worden
+        subtotal += lineTotal;
+        vatAmount += lineTotal * vatRate;
+      }
     });
 
     const total = subtotal + vatAmount;
+
+    console.log('Berekende totalen:', { subtotal, vatAmount, total, vatDisplay: vatSettings.vatDisplay });
 
     return {
       subtotal,
@@ -60,11 +90,19 @@ export const useInvoiceLineItems = () => {
     };
   };
 
+  // Update VAT settings when they change
+  const updateVatSettings = (newSettings: { vatDisplay: 'incl_btw' | 'excl_btw' }) => {
+    console.log('VAT instellingen bijgewerkt in line items:', newSettings);
+    setVatSettings(newSettings);
+  };
+
   return {
     lineItems,
     updateLineItem,
     addLineItem,
     removeLineItem,
-    calculateTotals
+    calculateTotals,
+    updateVatSettings,
+    vatSettings
   };
 };
