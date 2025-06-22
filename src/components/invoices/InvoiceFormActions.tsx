@@ -38,7 +38,7 @@ export const InvoiceFormActions = ({
       {/* Footer with payment info */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Betalingsinstructies</CardTitle>
+          <CardTitle className="text-lg font-medium">Betalingsinstructies</CardTitle>
         </CardHeader>
         <CardContent className="p-3 pt-0">
           <Textarea 
