@@ -1,3 +1,4 @@
+
 import { InvoiceHeader } from './InvoiceHeader';
 import { ContactSelectionCard } from './ContactSelectionCard';
 import { InvoiceDetailsCard } from './InvoiceDetailsCard';
@@ -65,6 +66,15 @@ export const CreateInvoiceForm = () => {
         clientEmail={formData.client_email}
         showPreview={showPreview}
         canSend={canSend}
+        templateSelector={
+          <TemplateSelector
+            selectedTemplate={selectedTemplate}
+            availableTemplates={availableTemplates}
+            templatesLoading={templatesLoading}
+            noLabelConfigured={noLabelConfigured}
+            onTemplateSelect={handleTemplateSelect}
+          />
+        }
         onTogglePreview={togglePreview}
         onConvertToQuote={handleConvertToQuote}
         onSubmit={handleSubmit}
@@ -72,32 +82,24 @@ export const CreateInvoiceForm = () => {
       />
 
       <div className="w-full px-6 max-w-none">
-        <form onSubmit={handleFormSubmit} className="space-y-3">
+        <form onSubmit={handleFormSubmit} className="space-y-2">
           <ContactSelectionCard
             selectedContact={selectedContact}
-            templateSelector={
-              <TemplateSelector
-                selectedTemplate={selectedTemplate}
-                availableTemplates={availableTemplates}
-                templatesLoading={templatesLoading}
-                noLabelConfigured={noLabelConfigured}
-                onTemplateSelect={handleTemplateSelect}
-              />
-            }
-            onContactSelect={handleContactSelectOnly}
-            onShowSettings={() => setShowSettings(true)}
-          />
-
-          <InvoiceDetailsCard
             formData={formData}
             invoiceNumber={invoiceNumber}
             invoiceSettings={invoiceSettings}
+            onContactSelect={handleContactSelectOnly}
+            onShowSettings={() => setShowSettings(true)}
             onFormDataChange={(updates) => setFormData(updates)}
             onInvoiceNumberChange={handleInvoiceNumberChange}
             onInvoiceNumberFocus={handleInvoiceNumberFocus}
             onInvoiceNumberBlur={handleInvoiceNumberBlur}
             getDisplayInvoiceNumber={getDisplayInvoiceNumber}
-            getPlaceholderInvoiceNumber={getPlaceholderInvoiceNumber}
+          />
+
+          <InvoiceDetailsCard
+            formData={formData}
+            onFormDataChange={(updates) => setFormData(updates)}
           />
 
           <LineItemsTable

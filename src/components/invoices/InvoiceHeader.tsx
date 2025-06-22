@@ -9,6 +9,7 @@ interface InvoiceHeaderProps {
   clientEmail: string;
   showPreview: boolean;
   canSend: boolean;
+  templateSelector: React.ReactNode;
   onTogglePreview: () => void;
   onConvertToQuote: () => void;
   onSubmit: () => void;
@@ -21,6 +22,7 @@ export const InvoiceHeader = ({
   clientEmail,
   showPreview,
   canSend,
+  templateSelector,
   onTogglePreview,
   onConvertToQuote,
   onSubmit,
@@ -29,14 +31,14 @@ export const InvoiceHeader = ({
   const navigate = useNavigate();
 
   return (
-    <div className="bg-white border-b px-4 py-3">
+    <div className="bg-white border-b px-4 py-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button 
             variant="outline" 
             size="sm" 
             onClick={onTogglePreview}
-            className="flex items-center gap-1 text-xs px-2 py-1"
+            className="flex items-center gap-1 text-xs px-2 py-1 h-7"
           >
             <Eye className="h-3 w-3" />
             {showPreview ? 'Verberg voorbeeld' : 'Voorbeeld'}
@@ -46,10 +48,13 @@ export const InvoiceHeader = ({
             size="sm" 
             onClick={onConvertToQuote} 
             disabled={sendLoading}
-            className="flex items-center gap-1 text-xs px-2 py-1"
+            className="flex items-center gap-1 text-xs px-2 py-1 h-7"
           >
             ⚙️ Naar offerte
           </Button>
+          <div className="w-40">
+            {templateSelector}
+          </div>
         </div>
         
         <div className="flex items-center gap-2">
@@ -58,7 +63,7 @@ export const InvoiceHeader = ({
             onClick={() => navigate('/facturen')}
             variant="outline"
             size="sm"
-            className="text-xs"
+            className="text-xs h-7"
           >
             Annuleren
           </Button>
@@ -67,7 +72,7 @@ export const InvoiceHeader = ({
             disabled={loading}
             variant="outline"
             size="sm"
-            className="text-xs"
+            className="text-xs h-7"
           >
             <Save className="h-3 w-3 mr-1" />
             {loading ? 'Opslaan...' : 'Opslaan als concept'}
@@ -76,7 +81,7 @@ export const InvoiceHeader = ({
             onClick={onSaveAndSend} 
             disabled={sendLoading || !canSend}
             size="sm"
-            className="bg-gray-800 hover:bg-gray-900 text-xs disabled:bg-gray-300 disabled:text-gray-500"
+            className="bg-gray-800 hover:bg-gray-900 text-xs disabled:bg-gray-300 disabled:text-gray-500 h-7"
           >
             <Send className="h-3 w-3 mr-1" />
             {sendLoading ? 'Versturen...' : 'Versturen'}

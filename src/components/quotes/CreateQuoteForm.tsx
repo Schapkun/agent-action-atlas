@@ -1,3 +1,4 @@
+
 import { QuoteHeader } from './QuoteHeader';
 import { ContactSelectionCard } from '../invoices/ContactSelectionCard';
 import { QuoteDetailsCard } from './QuoteDetailsCard';
@@ -59,6 +60,14 @@ export const CreateQuote = () => {
         clientEmail={formData.client_email}
         showPreview={showPreview}
         canSend={canSend}
+        templateSelector={
+          <QuoteTemplateSelector
+            selectedTemplate={selectedTemplate}
+            availableTemplates={availableTemplates}
+            templatesLoading={templatesLoading}
+            onTemplateSelect={handleTemplateSelect}
+          />
+        }
         onTogglePreview={togglePreview}
         onConvertToInvoice={handleConvertToInvoice}
         onSubmit={handleSubmit}
@@ -66,17 +75,9 @@ export const CreateQuote = () => {
       />
 
       <div className="w-full px-6 max-w-none">
-        <form onSubmit={handleFormSubmit} className="space-y-3">
+        <form onSubmit={handleFormSubmit} className="space-y-2">
           <ContactSelectionCard
             selectedContact={selectedContact}
-            templateSelector={
-              <QuoteTemplateSelector
-                selectedTemplate={selectedTemplate}
-                availableTemplates={availableTemplates}
-                templatesLoading={templatesLoading}
-                onTemplateSelect={handleTemplateSelect}
-              />
-            }
             onContactSelect={handleContactSelectOnly}
             onShowSettings={() => setShowSettings(true)}
           />
