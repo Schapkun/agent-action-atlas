@@ -1,3 +1,4 @@
+
 import { QuoteHeader } from './QuoteHeader';
 import { ContactSelectionCard } from '../invoices/ContactSelectionCard';
 import { QuoteDetailsCard } from './QuoteDetailsCard';
@@ -6,7 +7,7 @@ import { QuoteFormActions } from './QuoteFormActions';
 import { QuoteTotals } from './QuoteTotals';
 import { QuoteSettingsSidebar } from './QuoteSettingsSidebar';
 import { QuoteTemplateSelector } from './QuoteTemplateSelector';
-import { QuotePreviewPopup } from './QuotePreviewPopup';
+import { QuotePreviewDialog } from './QuotePreviewDialog';
 import { useQuoteFormHandlers } from '@/hooks/useQuoteFormHandlers';
 import { useQuoteTemplateManager } from '@/hooks/useQuoteTemplateManager';
 
@@ -114,7 +115,7 @@ export const CreateQuote = () => {
         onSettingsChange={handleDocumentSettingsChange}
       />
 
-      <QuotePreviewPopup
+      <QuotePreviewDialog
         isOpen={showPreview}
         onClose={() => togglePreview()}
         selectedTemplate={selectedTemplate}

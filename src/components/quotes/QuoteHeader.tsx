@@ -70,23 +70,23 @@ export const QuoteHeader = ({
               Annuleren
             </Button>
             <Button 
-              onClick={onSaveAndSend} 
-              disabled={sendLoading}
+              onClick={onSubmit} 
+              disabled={loading}
               variant="outline"
               size="sm"
               className="text-xs"
             >
-              <Send className="h-3 w-3 mr-1" />
-              {sendLoading ? 'Versturen...' : 'Opslaan & Versturen'}
+              <Save className="h-3 w-3 mr-1" />
+              {loading ? 'Opslaan...' : 'Opslaan als concept'}
             </Button>
             <Button 
-              onClick={onSubmit} 
-              disabled={loading}
+              onClick={onSaveAndSend} 
+              disabled={sendLoading}
               size="sm"
               className="bg-gray-800 hover:bg-gray-900 text-xs"
             >
-              <Save className="h-3 w-3 mr-1" />
-              {loading ? 'Opslaan...' : 'Opslaan als concept'}
+              <Send className="h-3 w-3 mr-1" />
+              {sendLoading ? 'Versturen...' : 'Opslaan & Versturen'}
             </Button>
           </div>
         </div>
