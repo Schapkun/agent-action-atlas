@@ -32,10 +32,6 @@ export const QuoteHeader = ({
     <div className="bg-white border-b px-4 py-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-medium text-green-600">📄 Nieuwe Offerte</h1>
-        </div>
-        
-        <div className="flex items-center gap-2">
           <Button 
             variant="outline" 
             size="sm" 
@@ -54,37 +50,37 @@ export const QuoteHeader = ({
           >
             ⚙️ Naar factuur
           </Button>
-          
-          <div className="flex items-center gap-2 ml-4 border-l pl-4">
-            <Button 
-              type="button" 
-              onClick={() => navigate('/offertes')}
-              variant="outline"
-              size="sm"
-              className="text-xs"
-            >
-              Annuleren
-            </Button>
-            <Button 
-              onClick={onSubmit} 
-              disabled={loading}
-              variant="outline"
-              size="sm"
-              className="text-xs"
-            >
-              <Save className="h-3 w-3 mr-1" />
-              {loading ? 'Opslaan...' : 'Opslaan als concept'}
-            </Button>
-            <Button 
-              onClick={onSaveAndSend} 
-              disabled={sendLoading || !canSend}
-              size="sm"
-              className="bg-gray-800 hover:bg-gray-900 text-xs disabled:bg-gray-300 disabled:text-gray-500"
-            >
-              <Send className="h-3 w-3 mr-1" />
-              {sendLoading ? 'Versturen...' : 'Versturen'}
-            </Button>
-          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button 
+            type="button" 
+            onClick={() => navigate('/offertes')}
+            variant="outline"
+            size="sm"
+            className="text-xs"
+          >
+            Annuleren
+          </Button>
+          <Button 
+            onClick={onSubmit} 
+            disabled={loading}
+            variant="outline"
+            size="sm"
+            className="text-xs"
+          >
+            <Save className="h-3 w-3 mr-1" />
+            {loading ? 'Opslaan...' : 'Opslaan als concept'}
+          </Button>
+          <Button 
+            onClick={onSaveAndSend} 
+            disabled={sendLoading || !canSend}
+            size="sm"
+            className="bg-gray-800 hover:bg-gray-900 text-xs disabled:bg-gray-300 disabled:text-gray-500"
+          >
+            <Send className="h-3 w-3 mr-1" />
+            {sendLoading ? 'Versturen...' : 'Versturen'}
+          </Button>
         </div>
       </div>
     </div>
