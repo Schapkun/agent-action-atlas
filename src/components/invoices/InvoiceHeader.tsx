@@ -38,9 +38,9 @@ export const InvoiceHeader = ({
             variant="outline" 
             size="sm" 
             onClick={onTogglePreview}
-            className="flex items-center gap-1 text-xs px-2 py-1 h-7"
+            className="flex items-center gap-1"
           >
-            <Eye className="h-3 w-3" />
+            <Eye className="h-4 w-4" />
             {showPreview ? 'Verberg voorbeeld' : 'Voorbeeld'}
           </Button>
           <Button 
@@ -48,7 +48,7 @@ export const InvoiceHeader = ({
             size="sm" 
             onClick={onConvertToQuote} 
             disabled={sendLoading}
-            className="flex items-center gap-1 text-xs px-2 py-1 h-7"
+            className="flex items-center gap-1"
           >
             ⚙️ Naar offerte
           </Button>
@@ -63,7 +63,6 @@ export const InvoiceHeader = ({
             onClick={() => navigate('/facturen')}
             variant="outline"
             size="sm"
-            className="text-xs h-7"
           >
             Annuleren
           </Button>
@@ -72,18 +71,17 @@ export const InvoiceHeader = ({
             disabled={loading}
             variant="outline"
             size="sm"
-            className="text-xs h-7"
           >
-            <Save className="h-3 w-3 mr-1" />
+            <Save className="h-4 w-4 mr-1" />
             {loading ? 'Opslaan...' : 'Opslaan als concept'}
           </Button>
           <Button 
             onClick={onSaveAndSend} 
             disabled={sendLoading || !canSend}
             size="sm"
-            className="bg-gray-800 hover:bg-gray-900 text-xs disabled:bg-gray-300 disabled:text-gray-500 h-7"
+            className="bg-gray-800 hover:bg-gray-900 disabled:bg-gray-300 disabled:text-gray-500"
           >
-            <Send className="h-3 w-3 mr-1" />
+            <Send className="h-4 w-4 mr-1" />
             {sendLoading ? 'Versturen...' : 'Versturen'}
           </Button>
         </div>

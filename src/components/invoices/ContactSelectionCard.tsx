@@ -76,99 +76,95 @@ export const ContactSelectionCard = ({
   return (
     <>
       <Card>
-        <CardContent className="p-3 space-y-3">
-          {/* Contact selection row */}
+        <CardContent className="p-3">
+          {/* Single row with all elements */}
           <div className="flex items-center gap-2">
+            {/* Contact selector - takes most space */}
             <div className="flex-[2]">
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
-                  <ContactSelector
-                    selectedContact={selectedContact}
-                    onContactSelect={onContactSelect}
+              <ContactSelector
+                selectedContact={selectedContact}
+                onContactSelect={onContactSelect}
+              />
+            </div>
+            
+            {/* Action buttons */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleCreateClick}
+              className="text-xs"
+            >
+              <UserPlus className="h-4 w-4 mr-1" />
+              Nieuw
+            </Button>
+            
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleEditClick}
+              disabled={!selectedContact}
+              className="text-xs"
+            >
+              <Edit className="h-4 w-4 mr-1" />
+              Bewerken
+            </Button>
+            
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleSettingsClick}
+              className="text-xs"
+            >
+              <Settings className="h-4 w-4 mr-1" />
+              Instellingen
+            </Button>
+
+            {/* Invoice details - only show if formData is provided */}
+            {formData && onFormDataChange && (
+              <>
+                <div className="w-32">
+                  <Label htmlFor="invoice_number" className="text-xs block mb-1">
+                    Factuurnummer
+                  </Label>
+                  <Input
+                    id="invoice_number"
+                    value={getDisplayInvoiceNumber ? getDisplayInvoiceNumber() : invoiceNumber || ''}
+                    onChange={(e) => onInvoiceNumberChange && onInvoiceNumberChange(e.target.value)}
+                    onFocus={onInvoiceNumberFocus}
+                    onBlur={onInvoiceNumberBlur}
+                    className="h-8 text-xs placeholder:text-xs"
                   />
                 </div>
-                <div className="flex gap-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCreateClick}
-                    className="text-xs h-7 px-2"
-                  >
-                    <UserPlus className="h-3 w-3 mr-1" />
-                    Nieuw
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleEditClick}
-                    disabled={!selectedContact}
-                    className="text-xs h-7 px-2"
-                  >
-                    <Edit className="h-3 w-3 mr-1" />
-                    Bewerken
-                  </Button>
+                <div className="w-32">
+                  <Label htmlFor="invoice_date" className="text-xs block mb-1">
+                    Factuurdatum
+                  </Label>
+                  <Input
+                    id="invoice_date"
+                    type="date"
+                    value={formData.invoice_date || format(new Date(), 'yyyy-MM-dd')}
+                    onChange={(e) => onFormDataChange({ invoice_date: e.target.value })}
+                    className="h-8 text-xs"
+                  />
                 </div>
-              </div>
-            </div>
-
-            <div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleSettingsClick}
-                className="text-xs h-7 px-2"
-              >
-                <Settings className="h-3 w-3 mr-1" />
-                Instellingen
-              </Button>
-            </div>
+                <div className="w-32">
+                  <Label htmlFor="due_date" className="text-xs block mb-1">
+                    Vervaldatum
+                  </Label>
+                  <Input
+                    id="due_date"
+                    type="date"
+                    value={formData.due_date || format(addDays(new Date(), invoiceSettings?.default_payment_terms || 30), 'yyyy-MM-dd')}
+                    onChange={(e) => onFormDataChange({ due_date: e.target.value })}
+                    className="h-8 text-xs"
+                  />
+                </div>
+              </>
+            )}
           </div>
-
-          {/* Invoice details row */}
-          {formData && onFormDataChange && (
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <Label htmlFor="invoice_number" className="text-xs">
-                  Factuurnummer
-                </Label>
-                <Input
-                  id="invoice_number"
-                  value={getDisplayInvoiceNumber ? getDisplayInvoiceNumber() : invoiceNumber || ''}
-                  onChange={(e) => onInvoiceNumberChange && onInvoiceNumberChange(e.target.value)}
-                  onFocus={onInvoiceNumberFocus}
-                  onBlur={onInvoiceNumberBlur}
-                  className="mt-1 h-8 text-xs placeholder:text-xs"
-                />
-              </div>
-              <div>
-                <Label htmlFor="invoice_date" className="text-xs">
-                  Factuurdatum
-                </Label>
-                <Input
-                  id="invoice_date"
-                  type="date"
-                  value={formData.invoice_date || format(new Date(), 'yyyy-MM-dd')}
-                  onChange={(e) => onFormDataChange({ invoice_date: e.target.value })}
-                  className="mt-1 h-8 text-xs"
-                />
-              </div>
-              <div>
-                <Label htmlFor="due_date" className="text-xs">
-                  Vervaldatum
-                </Label>
-                <Input
-                  id="due_date"
-                  type="date"
-                  value={formData.due_date || format(addDays(new Date(), invoiceSettings?.default_payment_terms || 30), 'yyyy-MM-dd')}
-                  onChange={(e) => onFormDataChange({ due_date: e.target.value })}
-                  className="mt-1 h-8 text-xs"
-                />
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
