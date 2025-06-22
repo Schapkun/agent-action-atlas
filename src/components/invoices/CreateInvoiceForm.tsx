@@ -10,6 +10,7 @@ import { TemplateSelector } from './TemplateSelector';
 import { InvoicePreviewPopup } from './InvoicePreviewPopup';
 import { useInvoiceFormHandlers } from '@/hooks/useInvoiceFormHandlers';
 import { useInvoiceTemplateManager } from '@/hooks/useInvoiceTemplateManager';
+import { useInvoiceLineItems } from '@/hooks/useInvoiceLineItems';
 
 export const CreateInvoiceForm = () => {
   // Centralized template management with default label from settings
@@ -20,6 +21,9 @@ export const CreateInvoiceForm = () => {
     noLabelConfigured,
     handleTemplateSelect
   } = useInvoiceTemplateManager();
+
+  // Line items management with VAT settings
+  const { updateVatSettings } = useInvoiceLineItems();
 
   // Form handlers with preview functionality
   const {
@@ -56,7 +60,8 @@ export const CreateInvoiceForm = () => {
 
   const handleDocumentSettingsChange = (settings: any) => {
     console.log('Document settings changed:', settings);
-    // The VAT settings are now handled automatically through localStorage in useInvoiceLineItems
+    // Update VAT settings in line items hook
+    updateVatSettings(settings);
   };
 
   return (

@@ -19,10 +19,29 @@ export const useInvoiceLineItems = () => {
       try {
         const parsed = JSON.parse(savedSettings);
         setVatSettings(parsed);
+        console.log('VAT instellingen geladen:', parsed);
       } catch (error) {
         console.error('Failed to parse saved VAT settings in line items:', error);
       }
     }
+  }, []);
+
+  // Listen for VAT settings changes
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'invoice-vat-settings' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setVatSettings(parsed);
+          console.log('VAT instellingen bijgewerkt via storage:', parsed);
+        } catch (error) {
+          console.error('Failed to parse VAT settings from storage:', error);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const calculateLineTotal = (item: LineItem): number => {
@@ -94,6 +113,9 @@ export const useInvoiceLineItems = () => {
   const updateVatSettings = (newSettings: { vatDisplay: 'incl_btw' | 'excl_btw' }) => {
     console.log('VAT instellingen bijgewerkt in line items:', newSettings);
     setVatSettings(newSettings);
+    
+    // Also save to localStorage to sync with settings sidebar
+    localStorage.setItem('invoice-vat-settings', JSON.stringify(newSettings));
   };
 
   return {

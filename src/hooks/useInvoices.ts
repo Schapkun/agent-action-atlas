@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -106,14 +105,19 @@ export const useInvoices = () => {
 
   const generateInvoiceNumber = async () => {
     try {
+      console.log('Generating invoice number voor org:', selectedOrganization?.id, 'workspace:', selectedWorkspace?.id);
+      
       const { data, error } = await supabase.rpc('generate_invoice_number_with_gaps', {
         org_id: selectedOrganization?.id,
         workspace_id: selectedWorkspace?.id || null
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error from generate_invoice_number_with_gaps:', error);
+        throw error;
+      }
       
-      console.log('Generated invoice number:', data);
+      console.log('Generated invoice number via SQL function:', data);
       return data;
     } catch (error) {
       console.error('Error generating invoice number:', error);

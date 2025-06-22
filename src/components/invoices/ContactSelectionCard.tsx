@@ -185,7 +185,10 @@ export const ContactSelectionCard = ({
                     className="h-8 text-xs"
                   />
                 </div>
-                <div className="flex flex-col justify-end">
+                <div className="flex flex-col">
+                  <Label className="text-xs block mb-1 opacity-0">
+                    Spacer
+                  </Label>
                   <Button
                     type="button"
                     variant="outline"
