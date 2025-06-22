@@ -368,6 +368,57 @@ export type Database = {
           },
         ]
       }
+      documents: {
+        Row: {
+          client_address: string | null
+          client_city: string | null
+          client_email: string | null
+          client_name: string | null
+          client_postal_code: string | null
+          created_at: string
+          created_by: string | null
+          document_type: string | null
+          id: string
+          name: string
+          organization_id: string
+          status: string
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          client_address?: string | null
+          client_city?: string | null
+          client_email?: string | null
+          client_name?: string | null
+          client_postal_code?: string | null
+          created_at?: string
+          created_by?: string | null
+          document_type?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          status?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          client_address?: string | null
+          client_city?: string | null
+          client_email?: string | null
+          client_name?: string | null
+          client_postal_code?: string | null
+          created_at?: string
+          created_by?: string | null
+          document_type?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          status?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: []
+      }
       dossiers: {
         Row: {
           category: string | null
