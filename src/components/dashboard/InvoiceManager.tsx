@@ -24,7 +24,8 @@ export const InvoiceManager = () => {
     vat_percentage: 21,
     total_amount: 121,
     status: 'draft',
-    notes: 'Voorbeeld notities'
+    notes: 'Voorbeeld notities',
+    created_at: new Date().toISOString()
   };
 
   const handleEdit = () => {
