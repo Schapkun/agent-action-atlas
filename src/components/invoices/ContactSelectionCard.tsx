@@ -76,9 +76,10 @@ export const ContactSelectionCard = ({
 
   const handlePaymentTermsChange = (days: string) => {
     if (onFormDataChange && formData) {
-      const newDueDate = format(addDays(new Date(formData.invoice_date || new Date()), parseInt(days)), 'yyyy-MM-dd');
+      const daysNumber = parseInt(days) || 14;
+      const newDueDate = format(addDays(new Date(formData.invoice_date || new Date()), daysNumber), 'yyyy-MM-dd');
       onFormDataChange({ 
-        payment_terms: parseInt(days),
+        payment_terms: daysNumber,
         due_date: newDueDate
       });
     }
@@ -91,48 +92,52 @@ export const ContactSelectionCard = ({
           <div className="flex items-start justify-start gap-4">
             {/* Contact selector and action buttons */}
             <div className="flex flex-col gap-2">
-              <div className="h-4"></div> {/* Spacer for alignment */}
-              <div className="flex items-center gap-2">
-                <div className="w-64">
-                  <ContactSelector
-                    selectedContact={selectedContact}
-                    onContactSelect={onContactSelect}
-                  />
-                </div>
-                
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCreateClick}
-                  className="text-xs h-8"
-                >
-                  <UserPlus className="h-4 w-4 mr-1" />
-                  Nieuw
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleEditClick}
-                  disabled={!selectedContact}
-                  className="text-xs h-8"
-                >
-                  <Edit className="h-4 w-4 mr-1" />
-                  Bewerken
-                </Button>
+              <div className="flex flex-col">
+                <Label htmlFor="contact_selector" className="text-xs block mb-1">
+                  Cliënt
+                </Label>
+                <div className="flex items-center gap-2">
+                  <div className="w-64">
+                    <ContactSelector
+                      selectedContact={selectedContact}
+                      onContactSelect={onContactSelect}
+                    />
+                  </div>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCreateClick}
+                    className="text-xs h-8"
+                  >
+                    <UserPlus className="h-4 w-4 mr-1" />
+                    Nieuw
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEditClick}
+                    disabled={!selectedContact}
+                    className="text-xs h-8"
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                    Bewerken
+                  </Button>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSettingsClick}
-                  className="text-xs h-8"
-                >
-                  <Settings className="h-4 w-4 mr-1" />
-                  Instellingen
-                </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSettingsClick}
+                    className="text-xs h-8"
+                  >
+                    <Settings className="h-4 w-4 mr-1" />
+                    Instellingen
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -172,7 +177,7 @@ export const ContactSelectionCard = ({
                   <Input
                     id="due_date"
                     type="date"
-                    value={formData.due_date || format(addDays(new Date(), invoiceSettings?.default_payment_terms || 30), 'yyyy-MM-dd')}
+                    value={formData.due_date || format(addDays(new Date(), formData.payment_terms || 14), 'yyyy-MM-dd')}
                     onChange={(e) => onFormDataChange({ due_date: e.target.value })}
                     className="h-8 text-xs"
                   />
@@ -181,22 +186,15 @@ export const ContactSelectionCard = ({
                   <Label htmlFor="payment_terms" className="text-xs block mb-1">
                     Dagen
                   </Label>
-                  <Select
-                    value={(formData.payment_terms || invoiceSettings?.default_payment_terms || 30).toString()}
-                    onValueChange={handlePaymentTermsChange}
-                  >
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="0">Direct</SelectItem>
-                      <SelectItem value="7">7 dagen</SelectItem>
-                      <SelectItem value="14">14 dagen</SelectItem>
-                      <SelectItem value="30">30 dagen</SelectItem>
-                      <SelectItem value="60">60 dagen</SelectItem>
-                      <SelectItem value="90">90 dagen</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    id="payment_terms"
+                    type="number"
+                    min="0"
+                    value={formData.payment_terms || 14}
+                    onChange={(e) => handlePaymentTermsChange(e.target.value)}
+                    className="h-8 text-xs"
+                    placeholder="14"
+                  />
                 </div>
               </div>
             )}
