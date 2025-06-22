@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
+import { QuoteViewDialog } from './QuoteViewDialog';
 import { 
   Search, 
   FileText, 
@@ -35,6 +35,7 @@ interface Quote {
   quote_date: string;
   valid_until: string;
   total_amount: number;
+  notes?: string;
   created_at: string;
 }
 
@@ -45,8 +46,11 @@ export const QuoteOverview = () => {
   const [searchParams] = useSearchParams();
   const [selectedQuotes, setSelectedQuotes] = useState<Set<string>>(new Set());
   const [isAllSelected, setIsAllSelected] = useState(false);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const statusFilter = searchParams.get('status') || 'all';
 
@@ -183,6 +187,16 @@ export const QuoteOverview = () => {
     }
   };
 
+  const handleViewQuote = (quote: Quote) => {
+    setSelectedQuote(quote);
+    setViewDialogOpen(true);
+  };
+
+  const handleEditQuote = (quoteId: string) => {
+    // Optimized navigation - direct navigation without delay
+    navigate(`/offertes/nieuw?edit=${quoteId}`);
+  };
+
   useEffect(() => {
     fetchQuotes();
   }, [selectedOrganization, selectedWorkspace, statusFilter]);
@@ -292,14 +306,22 @@ export const QuoteOverview = () => {
                     <TableCell>{getStatusBadge(quote.status)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button size="sm" variant="outline" title="Bekijken">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => handleViewQuote(quote)}
+                          title="Bekijken"
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
                         
-                        <Button size="sm" variant="outline" asChild title="Bewerken">
-                          <a href={`/offertes/nieuw?edit=${quote.id}`}>
-                            <Edit className="h-4 w-4" />
-                          </a>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => handleEditQuote(quote.id)}
+                          title="Bewerken"
+                        >
+                          <Edit className="h-4 w-4" />
                         </Button>
                         
                         <Button 
@@ -319,6 +341,13 @@ export const QuoteOverview = () => {
           )}
         </CardContent>
       </Card>
+
+      <QuoteViewDialog
+        isOpen={viewDialogOpen}
+        onClose={() => setViewDialogOpen(false)}
+        quote={selectedQuote}
+        onEdit={handleEditQuote}
+      />
     </div>
   );
 };
