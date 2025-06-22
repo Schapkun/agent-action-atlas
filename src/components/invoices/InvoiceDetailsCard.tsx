@@ -1,16 +1,16 @@
 
 import { Card, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { InvoiceFormData } from '@/hooks/useInvoiceForm';
-import { useEffect, useState } from 'react';
+import { format, addDays } from 'date-fns';
 
 interface InvoiceDetailsCardProps {
-  formData: InvoiceFormData;
+  formData: any;
   invoiceNumber: string;
   invoiceSettings: any;
-  onFormDataChange: (data: Partial<InvoiceFormData>) => void;
+  onFormDataChange: (updates: any) => void;
   onInvoiceNumberChange: (value: string) => void;
   onInvoiceNumberFocus: () => void;
   onInvoiceNumberBlur: () => void;
@@ -29,137 +29,97 @@ export const InvoiceDetailsCard = ({
   getDisplayInvoiceNumber,
   getPlaceholderInvoiceNumber
 }: InvoiceDetailsCardProps) => {
-  const [placeholderNumber, setPlaceholderNumber] = useState<string>('');
-
-  // Load placeholder number on mount
-  useEffect(() => {
-    const loadPlaceholder = async () => {
-      try {
-        const placeholder = await getPlaceholderInvoiceNumber();
-        setPlaceholderNumber(placeholder);
-      } catch (error) {
-        console.error('Failed to load placeholder number:', error);
-      }
-    };
-    
-    loadPlaceholder();
-  }, [getPlaceholderInvoiceNumber]);
-
-  // Automatically calculate due date when payment terms or invoice date change
-  useEffect(() => {
-    if (formData.invoice_date && formData.payment_terms) {
-      const invoiceDate = new Date(formData.invoice_date);
-      const dueDate = new Date(invoiceDate);
-      dueDate.setDate(dueDate.getDate() + formData.payment_terms);
-      
-      const dueDateString = dueDate.toISOString().split('T')[0];
-      if (dueDateString !== formData.due_date) {
-        onFormDataChange({ due_date: dueDateString });
-      }
-    }
-  }, [formData.invoice_date, formData.payment_terms, formData.due_date, onFormDataChange]);
-
-  const getCurrentInvoiceNumber = () => {
-    const fullNumber = invoiceNumber || getDisplayInvoiceNumber();
-    const prefix = invoiceSettings.invoice_prefix || '2025-';
-    
-    // If the full number already includes the prefix, extract just the number part
-    if (fullNumber && fullNumber.startsWith(prefix)) {
-      return fullNumber.substring(prefix.length);
-    }
-    
-    // If it doesn't include the prefix, return the full number (it's just the number part)
-    return fullNumber || '';
-  };
-
-  const getPlaceholderNumber = () => {
-    const prefix = invoiceSettings.invoice_prefix || '2025-';
-    
-    console.log('Placeholder full number:', placeholderNumber);
-    console.log('Prefix:', prefix);
-    
-    // If placeholder includes prefix, extract just the number part
-    if (placeholderNumber && placeholderNumber.startsWith(prefix)) {
-      const numberPart = placeholderNumber.substring(prefix.length);
-      console.log('Extracted number part:', numberPart);
-      return numberPart;
-    }
-    
-    // Return the placeholder as is if it doesn't contain prefix
-    return placeholderNumber || '';
-  };
-
-  const handleInvoiceNumberChange = (value: string) => {
-    const prefix = invoiceSettings.invoice_prefix || '2025-';
-    const fullNumber = prefix + value;
-    onInvoiceNumberChange(fullNumber);
-  };
-
   return (
     <>
-      {/* References section */}
+      {/* Notities sectie */}
       <Card>
-        <CardContent className="p-3">
-          <div className="flex items-center justify-between mb-2">
-            <Label className="text-xs font-medium">Referenties</Label>
-            <Button type="button" variant="link" className="text-blue-500 text-xs p-0 h-auto">Bewerk introductie</Button>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <Label className="text-sm font-medium">Notities</Label>
+            <Button type="button" variant="link" className="text-blue-500 text-xs p-0 h-auto">
+              Bewerk introductie
+            </Button>
           </div>
-          <Input placeholder="Voer hier een factuurreferentie in van maximaal 3 regels." className="text-xs h-8" />
+          <Textarea
+            placeholder="Voer hier notities in..."
+            value={formData.notes || ''}
+            onChange={(e) => onFormDataChange({ notes: e.target.value })}
+            className="min-h-[80px]"
+          />
         </CardContent>
       </Card>
 
-      {/* Invoice details */}
+      {/* Kenmerk en Referentie velden */}
       <Card>
-        <CardContent className="p-3">
-          <div className="grid grid-cols-4 gap-3 items-end">
+        <CardContent className="p-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs font-medium">Factuur</Label>
-              <div className="flex mt-1">
-                <span className="bg-gray-100 px-2 py-1 rounded-l border text-xs h-8 flex items-center">
-                  {invoiceSettings.invoice_prefix || '2025-'}
-                </span>
-                <Input 
-                  className="rounded-l-none border-l-0 text-xs h-8 w-20" 
-                  value={getCurrentInvoiceNumber()}
-                  placeholder={getPlaceholderNumber()}
-                  onChange={(e) => handleInvoiceNumberChange(e.target.value)}
-                  onFocus={onInvoiceNumberFocus}
-                  onBlur={onInvoiceNumberBlur}
-                />
-              </div>
-            </div>
-            <div>
-              <Label className="text-xs font-medium">Datum</Label>
-              <Input 
-                type="date"
-                value={formData.invoice_date}
-                onChange={(e) => onFormDataChange({ invoice_date: e.target.value })}
-                className="mt-1 text-xs h-8 w-32"
+              <Label htmlFor="kenmerk" className="text-sm font-medium">
+                Kenmerk
+              </Label>
+              <Input
+                id="kenmerk"
+                placeholder="Voer kenmerk in"
+                value={formData.kenmerk || ''}
+                onChange={(e) => onFormDataChange({ kenmerk: e.target.value })}
+                className="mt-1"
               />
             </div>
             <div>
-              <Label className="text-xs font-medium">Betalingstermijn</Label>
-              <div className="flex items-center mt-1 gap-1">
-                <Input 
-                  type="number"
-                  value={formData.payment_terms || ''}
-                  placeholder={invoiceSettings.default_payment_terms?.toString() || '30'}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value) || invoiceSettings.default_payment_terms || 30;
-                    onFormDataChange({ payment_terms: value });
-                  }}
-                  className="text-xs h-8 w-16"
-                />
-                <span className="text-xs">dagen</span>
-              </div>
+              <Label htmlFor="referentie" className="text-sm font-medium">
+                Referentie
+              </Label>
+              <Input
+                id="referentie"
+                placeholder="Voer referentie in"
+                value={formData.referentie || ''}
+                onChange={(e) => onFormDataChange({ referentie: e.target.value })}
+                className="mt-1"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Factuurdetails */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="invoice_number" className="text-sm font-medium">
+                Factuurnummer
+              </Label>
+              <Input
+                id="invoice_number"
+                value={getDisplayInvoiceNumber()}
+                onChange={(e) => onInvoiceNumberChange(e.target.value)}
+                onFocus={onInvoiceNumberFocus}
+                onBlur={onInvoiceNumberBlur}
+                className="mt-1"
+              />
             </div>
             <div>
-              <Label className="text-xs font-medium">Vervaldatum</Label>
-              <Input 
+              <Label htmlFor="invoice_date" className="text-sm font-medium">
+                Factuurdatum
+              </Label>
+              <Input
+                id="invoice_date"
                 type="date"
-                value={formData.due_date}
-                readOnly
-                className="mt-1 text-xs h-8 w-32 bg-gray-100"
+                value={formData.invoice_date || format(new Date(), 'yyyy-MM-dd')}
+                onChange={(e) => onFormDataChange({ invoice_date: e.target.value })}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="due_date" className="text-sm font-medium">
+                Vervaldatum
+              </Label>
+              <Input
+                id="due_date"
+                type="date"
+                value={formData.due_date || format(addDays(new Date(), invoiceSettings?.default_payment_terms || 30), 'yyyy-MM-dd')}
+                onChange={(e) => onFormDataChange({ due_date: e.target.value })}
+                className="mt-1"
               />
             </div>
           </div>

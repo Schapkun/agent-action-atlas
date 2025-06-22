@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { RotateCcw, RotateCw, Save, Send, Eye } from 'lucide-react';
+import { Save, Send, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface InvoiceHeaderProps {
@@ -36,12 +36,6 @@ export const InvoiceHeader = ({
         </div>
         
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs px-2 py-1">
-            <RotateCcw className="h-3 w-3" />
-          </Button>
-          <Button variant="outline" size="sm" className="text-xs px-2 py-1">
-            <RotateCw className="h-3 w-3" />
-          </Button>
           <Button 
             variant="outline" 
             size="sm" 
