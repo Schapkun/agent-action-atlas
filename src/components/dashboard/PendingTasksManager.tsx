@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,7 +22,9 @@ import {
   Sparkles,
   Send,
   Settings,
-  Eye
+  Eye,
+  Trash2,
+  FileText
 } from 'lucide-react';
 
 interface PendingTask {
@@ -181,6 +182,31 @@ export const PendingTasksManager = () => {
       toast({
         title: "Fout",
         description: "Kon taak status niet bijwerken",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteTask = async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from('pending_tasks')
+        .delete()
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Taak verwijderd",
+        description: "De AI actie is succesvol geannuleerd"
+      });
+
+      fetchTasks();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast({
+        title: "Fout",
+        description: "Kon taak niet verwijderen",
         variant: "destructive"
       });
     }
@@ -345,83 +371,85 @@ export const PendingTasksManager = () => {
 
         {emailTasks.length > 0 && (
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Mail className="h-5 w-5" />
                 E-mail Antwoorden ({emailTasks.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="grid gap-3">
                 {emailTasks.map((task) => (
-                  <div key={task.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-blue-50">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-medium">{task.title}</h3>
-                          {getStatusBadge(task.status)}
-                          {getPriorityBadge(task.priority)}
-                          {task.ai_generated && (
-                            <Badge variant="outline" className="text-blue-600">
-                              <Sparkles className="h-3 w-3 mr-1" />
-                              AI
-                            </Badge>
-                          )}
-                          {isOverdue(task.due_date) && (
-                            <Badge variant="destructive" className="animate-pulse">
-                              <AlertTriangle className="h-3 w-3 mr-1" />
-                              Verlopen
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        {task.description && (
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {task.description}
-                          </p>
-                        )}
-
-                        {task.reply_to_email && (
-                          <p className="text-sm text-blue-700 mb-2">
-                            <strong>Antwoord naar:</strong> {task.reply_to_email}
-                          </p>
-                        )}
-
-                        {task.emails && (
-                          <div className="text-sm text-gray-600 mb-2">
-                            <strong>Van:</strong> {task.emails.from_email}
+                  <div key={task.id} className="border rounded-lg p-3 hover:shadow-sm transition-all bg-blue-50/50 relative">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Mail className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                          <h3 className="font-medium text-sm truncate">{task.title}</h3>
+                          <div className="flex gap-1 flex-shrink-0">
+                            {getStatusBadge(task.status)}
+                            {getPriorityBadge(task.priority)}
+                            {task.ai_generated && (
+                              <Badge variant="outline" className="text-blue-600 text-xs">
+                                <Sparkles className="h-3 w-3 mr-1" />
+                                AI
+                              </Badge>
+                            )}
                           </div>
-                        )}
-                        
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          {task.clients?.name && (
-                            <span>Klant: {task.clients.name}</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-600">
+                          {task.reply_to_email && (
+                            <div className="flex items-center gap-1">
+                              <span className="font-medium">Antwoord naar:</span>
+                              <span className="truncate">{task.reply_to_email}</span>
+                            </div>
                           )}
-                          {task.dossiers?.name && (
-                            <span>Dossier: {task.dossiers.name}</span>
+                          {task.emails && (
+                            <div className="flex items-center gap-1">
+                              <span className="font-medium">Van:</span>
+                              <span className="truncate">{task.emails.from_email}</span>
+                            </div>
                           )}
                           {task.due_date && (
-                            <span className="flex items-center gap-1">
+                            <div className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              Vervalt: {new Date(task.due_date).toLocaleDateString('nl-NL')}
-                            </span>
+                              <span>Vervalt: {new Date(task.due_date).toLocaleDateString('nl-NL')}</span>
+                            </div>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 flex-shrink-0">
                         {task.status === 'open' && (
                           <Button
                             size="sm"
                             onClick={() => handleManageTask(task)}
-                            className="bg-blue-600 hover:bg-blue-700"
+                            className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 h-7"
                           >
-                            <Settings className="h-4 w-4 mr-1" />
+                            <Settings className="h-3 w-3 mr-1" />
                             Beheer
                           </Button>
                         )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => deleteTask(task.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 h-7 w-7"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
                     </div>
+
+                    {isOverdue(task.due_date) && (
+                      <div className="absolute top-2 right-2">
+                        <Badge variant="destructive" className="animate-pulse text-xs">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          Verlopen
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -430,9 +458,9 @@ export const PendingTasksManager = () => {
         )}
 
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Clock className="h-5 w-5" />
+              <FileText className="h-5 w-5" />
               Algemene Taken ({generalTasks.length})
             </CardTitle>
           </CardHeader>
@@ -442,34 +470,31 @@ export const PendingTasksManager = () => {
               <div className="text-center py-8">Taken laden...</div>
             ) : generalTasks.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>Geen algemene taken gevonden</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid gap-3">
                 {generalTasks.map((task) => (
-                  <div key={task.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-medium">{task.title}</h3>
-                          {getStatusBadge(task.status)}
-                          {getPriorityBadge(task.priority)}
-                          {isOverdue(task.due_date) && (
-                            <Badge variant="destructive" className="animate-pulse">
-                              <AlertTriangle className="h-3 w-3 mr-1" />
-                              Verlopen
-                            </Badge>
-                          )}
+                  <div key={task.id} className="border rounded-lg p-3 hover:shadow-sm transition-all relative">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <FileText className="h-4 w-4 text-gray-600 flex-shrink-0" />
+                          <h3 className="font-medium text-sm truncate">{task.title}</h3>
+                          <div className="flex gap-1 flex-shrink-0">
+                            {getStatusBadge(task.status)}
+                            {getPriorityBadge(task.priority)}
+                          </div>
                         </div>
                         
                         {task.description && (
-                          <p className="text-sm text-muted-foreground mb-2">
+                          <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
                             {task.description}
                           </p>
                         )}
                         
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-gray-600">
                           {task.clients?.name && (
                             <span>Klant: {task.clients.name}</span>
                           )}
@@ -485,14 +510,15 @@ export const PendingTasksManager = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 flex-shrink-0">
                         {task.status === 'open' && (
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => updateTaskStatus(task.id, 'in_progress')}
+                            className="text-xs px-2 py-1 h-7"
                           >
-                            Start Taak
+                            Start
                           </Button>
                         )}
                         
@@ -501,17 +527,40 @@ export const PendingTasksManager = () => {
                             size="sm"
                             variant="outline"
                             onClick={() => updateTaskStatus(task.id, 'completed')}
+                            className="text-xs px-2 py-1 h-7"
                           >
-                            <CheckCircle className="h-4 w-4 mr-1" />
+                            <CheckCircle className="h-3 w-3 mr-1" />
                             Voltooien
                           </Button>
                         )}
                         
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4" />
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="p-1 h-7 w-7"
+                        >
+                          <Eye className="h-3 w-3" />
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => deleteTask(task.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 h-7 w-7"
+                        >
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
+
+                    {isOverdue(task.due_date) && (
+                      <div className="absolute top-2 right-2">
+                        <Badge variant="destructive" className="animate-pulse text-xs">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          Verlopen
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -540,7 +589,7 @@ export const PendingTasksManager = () => {
       />
 
       {selectedTaskForCombined && (
-        <EmailManagementDialog
+        <EnhancedEmailManagementDialog
           task={selectedTaskForCombined}
           isOpen={showCombinedDialog}
           onClose={() => {
@@ -554,7 +603,7 @@ export const PendingTasksManager = () => {
   );
 };
 
-const EmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
+const EnhancedEmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
   task: PendingTask;
   isOpen: boolean;
   onClose: () => void;
@@ -620,8 +669,8 @@ const EmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh]">
-        <DialogHeader>
+      <DialogContent className="max-w-7xl max-h-[90vh] p-0">
+        <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
             E-mail Beheer: {task.title}
@@ -634,78 +683,121 @@ const EmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Originele E-mail</h3>
-            {task.emails ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">
-                    {task.emails.subject || 'Geen onderwerp'}
-                  </CardTitle>
-                  <p className="text-sm text-gray-600">
-                    Van: {task.emails.from_email}
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-48">
-                    <div className="text-sm whitespace-pre-wrap">
-                      {task.emails.body_text || task.emails.content || 'Geen inhoud beschikbaar'}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            ) : (
-              <p className="text-gray-500">Geen originele e-mail beschikbaar</p>
-            )}
-          </div>
-
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">AI Concept Reactie</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Onderwerp</label>
-                <Input
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  placeholder="E-mail onderwerp"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">Inhoud</label>
-                <Textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="E-mail inhoud"
-                  rows={8}
-                  className="min-h-[200px]"
-                />
-              </div>
-
-              {task.ai_generated && (
-                <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
-                  <div className="flex items-center gap-2 text-blue-800 text-sm">
-                    <Sparkles className="h-4 w-4" />
-                    <span className="font-medium">AI Concept</span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 h-[calc(90vh-100px)]">
+          {/* Ontvangen E-mail Panel */}
+          <div className="border-r bg-gray-50 flex flex-col">
+            <div className="px-4 py-3 bg-blue-600 text-white">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                ONTVANGEN E-MAIL
+              </h3>
+            </div>
+            <div className="flex-1 p-4 min-h-0">
+              {task.emails ? (
+                <Card className="h-full">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">
+                      {task.emails.subject || 'Geen onderwerp'}
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">
+                      <strong>Van:</strong> {task.emails.from_email}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      <strong>Ontvangen:</strong> {new Date(task.emails.received_at).toLocaleString('nl-NL')}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="h-full">
+                    <ScrollArea className="h-[400px]">
+                      <div className="text-sm whitespace-pre-wrap bg-white p-3 rounded border">
+                        {task.emails.body_text || task.emails.content || 'Geen inhoud beschikbaar'}
+                      </div>
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="h-full flex items-center justify-center text-gray-500">
+                  <div className="text-center">
+                    <Mail className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>Geen originele e-mail beschikbaar</p>
                   </div>
-                  <p className="text-blue-700 text-sm mt-1">
-                    Dit antwoord is automatisch gegenereerd door AI. Controleer en pas aan waar nodig.
-                  </p>
                 </div>
               )}
+            </div>
+          </div>
 
-              <div className="flex justify-end gap-2 pt-4 border-t">
-                <Button onClick={onClose} variant="outline" disabled={sending}>
-                  Annuleren
-                </Button>
-                <Button 
-                  onClick={handleSendEmail}
-                  disabled={sending || !subject.trim() || !content.trim()}
-                >
-                  {sending ? 'Verzenden...' : 'Verzenden'}
-                </Button>
+          {/* AI Concept Antwoord Panel */}
+          <div className="flex flex-col">
+            <div className="px-4 py-3 bg-orange-600 text-white">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                AI CONCEPT ANTWOORD
+              </h3>
+            </div>
+            <div className="flex-1 p-4 min-h-0">
+              <div className="space-y-4 h-full flex flex-col">
+                <div>
+                  <label className="text-sm font-medium block mb-1">Onderwerp</label>
+                  <Input
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    placeholder="E-mail onderwerp"
+                    className="border-dashed border-2 border-orange-300"
+                  />
+                </div>
+
+                <div className="flex-1 flex flex-col">
+                  <label className="text-sm font-medium block mb-1">Inhoud</label>
+                  <div className="relative flex-1">
+                    <Textarea
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      placeholder="E-mail inhoud"
+                      className="h-full min-h-[300px] border-dashed border-2 border-orange-300 resize-none"
+                    />
+                    {task.ai_generated && (
+                      <div className="absolute top-2 right-2 opacity-30 pointer-events-none">
+                        <div className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-bold transform rotate-12">
+                          CONCEPT
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {task.ai_generated && (
+                  <div className="bg-orange-50 border-2 border-dashed border-orange-200 p-3 rounded-lg">
+                    <div className="flex items-center gap-2 text-orange-800 text-sm">
+                      <Sparkles className="h-4 w-4" />
+                      <span className="font-medium">AI Gegenereerd Concept</span>
+                    </div>
+                    <p className="text-orange-700 text-sm mt-1">
+                      Dit antwoord is automatisch gegenereerd door AI. Controleer en pas aan waar nodig voor verzending.
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  <Button onClick={onClose} variant="outline" disabled={sending}>
+                    Annuleren
+                  </Button>
+                  <Button 
+                    onClick={handleSendEmail}
+                    disabled={sending || !subject.trim() || !content.trim()}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {sending ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Verzenden...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        Verzenden
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
