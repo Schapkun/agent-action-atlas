@@ -60,8 +60,8 @@ export const ContactSelectionCard = ({
         setPlaceholderNumber(placeholder);
         
         // Set the prefix based on document type
+        const currentYear = new Date().getFullYear();
         if (isQuote) {
-          const currentYear = new Date().getFullYear();
           setNumberPrefix(`OFF-${currentYear}-`);
         } else {
           setNumberPrefix(`${currentYear}-`);
