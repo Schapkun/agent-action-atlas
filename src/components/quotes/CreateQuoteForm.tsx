@@ -1,3 +1,4 @@
+
 import { QuoteHeader } from './QuoteHeader';
 import { ContactSelectionCard } from '../invoices/ContactSelectionCard';
 import { QuoteDetailsCard } from './QuoteDetailsCard';
@@ -38,6 +39,7 @@ export const CreateQuote = () => {
     handleQuoteNumberFocus,
     handleQuoteNumberBlur,
     getDisplayQuoteNumber,
+    getPlaceholderQuoteNumber,
     handleContactSelectOnly,
     handleFormSubmit,
     handleLineItemUpdate,
@@ -91,6 +93,7 @@ export const CreateQuote = () => {
             onInvoiceNumberFocus={handleQuoteNumberFocus}
             onInvoiceNumberBlur={handleQuoteNumberBlur}
             getDisplayInvoiceNumber={getDisplayQuoteNumber}
+            getPlaceholderInvoiceNumber={getPlaceholderQuoteNumber}
             isQuote={true}
           />
 

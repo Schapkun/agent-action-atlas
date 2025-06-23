@@ -25,6 +25,7 @@ interface ContactSelectionCardProps {
   onInvoiceNumberFocus?: () => void;
   onInvoiceNumberBlur?: () => void;
   getDisplayInvoiceNumber?: () => Promise<string>;
+  getPlaceholderInvoiceNumber?: () => string;
   // New prop to determine if this is for quotes
   isQuote?: boolean;
 }
@@ -43,28 +44,32 @@ export const ContactSelectionCard = ({
   onInvoiceNumberFocus,
   onInvoiceNumberBlur,
   getDisplayInvoiceNumber,
+  getPlaceholderInvoiceNumber,
   isQuote = false
 }: ContactSelectionCardProps) => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [displayNumber, setDisplayNumber] = useState('');
+  const [placeholderNumber, setPlaceholderNumber] = useState('');
 
-  // Load the next invoice/quote number as placeholder
+  // Load the placeholder number (only sequential part)
   useEffect(() => {
-    const loadDisplayNumber = async () => {
-      if (getDisplayInvoiceNumber) {
-        try {
-          const number = await getDisplayInvoiceNumber();
-          setDisplayNumber(number);
-        } catch (error) {
-          console.error('Error loading display number:', error);
-          setDisplayNumber('');
-        }
+    const loadPlaceholderNumber = () => {
+      if (getPlaceholderInvoiceNumber) {
+        const placeholder = getPlaceholderInvoiceNumber();
+        setPlaceholderNumber(placeholder);
+      } else if (getDisplayInvoiceNumber) {
+        // Fallback for older implementations
+        getDisplayInvoiceNumber().then(number => {
+          setPlaceholderNumber(number);
+        }).catch(error => {
+          console.error('Error loading placeholder number:', error);
+          setPlaceholderNumber('');
+        });
       }
     };
     
-    loadDisplayNumber();
-  }, [getDisplayInvoiceNumber, invoiceNumber]);
+    loadPlaceholderNumber();
+  }, [getPlaceholderInvoiceNumber, getDisplayInvoiceNumber, invoiceNumber]);
 
   const handleContactSaved = (newContact: any) => {
     onContactSelect(newContact);
@@ -173,7 +178,7 @@ export const ContactSelectionCard = ({
                     onChange={(e) => onInvoiceNumberChange && onInvoiceNumberChange(e.target.value)}
                     onFocus={onInvoiceNumberFocus}
                     onBlur={onInvoiceNumberBlur}
-                    placeholder={displayNumber}
+                    placeholder={placeholderNumber}
                     className="h-8 text-xs placeholder:text-xs bg-gray-100"
                   />
                 </div>

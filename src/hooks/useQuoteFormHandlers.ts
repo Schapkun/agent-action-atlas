@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuotes } from './useQuotes';
@@ -90,13 +89,20 @@ export const useQuoteFormHandlers = () => {
     return hasContactInfo && hasValidLineItem;
   }, [formData.client_name, lineItems]);
 
-  // Generate quote number on load
+  // Generate quote number on load - don't set it in state, just cache for placeholder
+  const [nextQuoteNumber, setNextQuoteNumber] = useState('');
+  
   useEffect(() => {
-    const loadQuoteNumber = async () => {
-      const number = await generateQuoteNumber();
-      setQuoteNumber(number);
+    const loadNextQuoteNumber = async () => {
+      try {
+        const number = await generateQuoteNumber();
+        setNextQuoteNumber(number);
+      } catch (error) {
+        console.error('Error loading next quote number:', error);
+        setNextQuoteNumber('');
+      }
     };
-    loadQuoteNumber();
+    loadNextQuoteNumber();
   }, [generateQuoteNumber]);
 
   const togglePreview = () => {
@@ -115,18 +121,25 @@ export const useQuoteFormHandlers = () => {
     setIsQuoteNumberFocused(false);
   };
 
+  // Function to get placeholder quote number (only sequential part)
+  const getPlaceholderQuoteNumber = () => {
+    if (!nextQuoteNumber) return '';
+    // Extract only the sequential part after the last dash
+    const parts = nextQuoteNumber.split('-');
+    return parts[parts.length - 1] || '';
+  };
+
   const getDisplayQuoteNumber = async () => {
-    if (quoteNumber) {
-      return quoteNumber;
-    }
-    // Show only the sequential number part as placeholder
     try {
+      if (quoteNumber) {
+        return quoteNumber;
+      }
+      // For display purposes, show only the sequential part
       const nextNumber = await generateQuoteNumber();
-      // Extract only the part after the last dash (e.g., "002" from "2025-002")
       const parts = nextNumber.split('-');
-      return parts[parts.length - 1];
+      return parts[parts.length - 1] || '';
     } catch (error) {
-      console.error('Error getting next quote number:', error);
+      console.error('Error getting display quote number:', error);
       return '';
     }
   };
@@ -297,6 +310,7 @@ export const useQuoteFormHandlers = () => {
     handleQuoteNumberFocus,
     handleQuoteNumberBlur,
     getDisplayQuoteNumber,
+    getPlaceholderQuoteNumber,
     handleContactSelectOnly,
     handleFormSubmit,
     handleLineItemUpdate,
