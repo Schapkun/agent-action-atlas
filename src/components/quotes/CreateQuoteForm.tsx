@@ -92,10 +92,10 @@ export const CreateQuote = () => {
             lineItems={lineItems}
             onUpdateLineItem={handleLineItemUpdate}
             onRemoveLineItem={handleLineItemRemove}
+            onAddLineItem={addLineItem}
           />
 
           <QuoteFormActions
-            onAddLineItem={addLineItem}
             subtotal={subtotal}
             vatAmount={vatAmount}
             total={total}
