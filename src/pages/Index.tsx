@@ -14,9 +14,6 @@ const Index = ({ children }: IndexProps) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const location = useLocation();
 
-  // Calculate pending tasks count - currently 0 since we removed all mock data
-  const pendingTasksCount = 0;
-
   // Determine current view from URL
   const getCurrentView = () => {
     const path = location.pathname;
@@ -44,7 +41,6 @@ const Index = ({ children }: IndexProps) => {
           currentView={currentView} 
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-          pendingTasksCount={pendingTasksCount}
         />
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header 

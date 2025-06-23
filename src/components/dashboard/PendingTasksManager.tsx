@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { EmailDraftDialog } from './EmailDraftDialog';
+import { EmailViewDialog } from './EmailViewDialog';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -76,6 +78,8 @@ export const PendingTasksManager = () => {
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [showCombinedDialog, setShowCombinedDialog] = useState(false);
   const [selectedTaskForCombined, setSelectedTaskForCombined] = useState<PendingTask | null>(null);
+  const [selectedEmailForView, setSelectedEmailForView] = useState<any>(null);
+  const [showEmailViewDialog, setShowEmailViewDialog] = useState(false);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
 
@@ -197,7 +201,7 @@ export const PendingTasksManager = () => {
           ? task.emails.attachments 
           : (task.emails.attachments ? JSON.parse(task.emails.attachments as string) : [])
       };
-      setSelectedEmail(emailForView);
+      setSelectedEmailForView(emailForView);
       setShowEmailViewDialog(true);
     } else {
       toast({
@@ -524,6 +528,15 @@ export const PendingTasksManager = () => {
           setSelectedEmailTask(null);
         }}
         onEmailSent={() => fetchTasks()}
+      />
+
+      <EmailViewDialog
+        email={selectedEmailForView}
+        isOpen={showEmailViewDialog}
+        onClose={() => {
+          setShowEmailViewDialog(false);
+          setSelectedEmailForView(null);
+        }}
       />
 
       {selectedTaskForCombined && (
