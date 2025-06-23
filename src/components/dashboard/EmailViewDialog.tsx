@@ -11,7 +11,9 @@ import {
   Star,
   StarOff,
   Paperclip,
-  MessageSquare
+  MessageSquare,
+  Reply,
+  Forward
 } from 'lucide-react';
 
 interface Email {
@@ -38,9 +40,11 @@ interface EmailViewDialogProps {
   email: Email | null;
   isOpen: boolean;
   onClose: () => void;
+  onReply?: (email: Email) => void;
+  onForward?: (email: Email) => void;
 }
 
-export const EmailViewDialog = ({ email, isOpen, onClose }: EmailViewDialogProps) => {
+export const EmailViewDialog = ({ email, isOpen, onClose, onReply, onForward }: EmailViewDialogProps) => {
   if (!email) return null;
 
   const formatDate = (dateString: string) => {
@@ -87,13 +91,25 @@ export const EmailViewDialog = ({ email, isOpen, onClose }: EmailViewDialogProps
   const emailContent = email.body_html || email.content || email.body_text || 'Geen inhoud beschikbaar';
   const isHtmlContent = !!email.body_html;
 
+  const handleReply = () => {
+    if (onReply) {
+      onReply(email);
+    }
+  };
+
+  const handleForward = () => {
+    if (onForward) {
+      onForward(email);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
-            E-mail Bekijken
+            {email.subject || 'Geen onderwerp'}
             {email.is_flagged && <Star className="h-4 w-4 text-yellow-500 fill-current" />}
           </DialogTitle>
         </DialogHeader>
@@ -103,12 +119,23 @@ export const EmailViewDialog = ({ email, isOpen, onClose }: EmailViewDialogProps
           <div className="bg-gray-50 p-4 rounded-lg space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Onderwerp:</span>
-                <h3 className="font-semibold text-lg">{email.subject}</h3>
-              </div>
-              <div className="flex items-center gap-2">
                 {getPriorityBadge(email.priority)}
                 {getStatusBadge(email.status)}
+              </div>
+              
+              <div className="flex gap-2">
+                {onReply && (
+                  <Button onClick={handleReply} variant="outline" size="sm">
+                    <Reply className="h-4 w-4 mr-2" />
+                    Antwoorden
+                  </Button>
+                )}
+                {onForward && (
+                  <Button onClick={handleForward} variant="outline" size="sm">
+                    <Forward className="h-4 w-4 mr-2" />
+                    Doorsturen
+                  </Button>
+                )}
               </div>
             </div>
             

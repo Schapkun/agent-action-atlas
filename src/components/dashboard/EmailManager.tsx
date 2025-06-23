@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { WorkspaceSelector } from './WorkspaceSelector';
 import { EmailDetailDialog } from './EmailDetailDialog';
+import { EmailDraftDialog } from './EmailDraftDialog';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -58,6 +59,7 @@ export const EmailManager = () => {
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [showWorkspaceSelector, setShowWorkspaceSelector] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showNewEmailDialog, setShowNewEmailDialog] = useState(false);
   const { selectedOrganization, selectedWorkspace, getFilteredWorkspaces } = useOrganization();
   const { toast } = useToast();
 
@@ -308,24 +310,17 @@ export const EmailManager = () => {
         setShowWorkspaceSelector(true);
         return;
       } else if (workspaces.length === 1) {
-        createEmailInWorkspace(workspaces[0].id);
+        setShowNewEmailDialog(true);
         return;
       }
     }
 
-    if (selectedWorkspace) {
-      createEmailInWorkspace(selectedWorkspace.id);
-    }
+    setShowNewEmailDialog(true);
   };
 
   const createEmailInWorkspace = (workspaceId: string) => {
-    console.log('Creating email in workspace:', workspaceId);
-    console.log('Organization:', selectedOrganization?.name);
-    
-    toast({
-      title: "Nieuwe e-mail",
-      description: "E-mail functionaliteit wordt binnenkort toegevoegd...",
-    });
+    setShowNewEmailDialog(true);
+    setShowWorkspaceSelector(false);
   };
 
   const getPriorityColor = (priority: string) => {
@@ -443,11 +438,6 @@ export const EmailManager = () => {
                               {folderUnreadCount}
                             </Badge>
                           )}
-                          {folderEmails.length > 0 && (
-                            <Badge variant="outline" className="text-xs">
-                              {folderEmails.length}
-                            </Badge>
-                          )}
                         </div>
                       </button>
                     );
@@ -529,11 +519,11 @@ export const EmailManager = () => {
                             )}
                           </button>
                           <div className="text-xs text-gray-400 flex flex-col items-end">
+                            <div>{formatDate(email.received_at || email.created_at)}</div>
                             <div className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
                               {formatTime(email.received_at || email.created_at)}
                             </div>
-                            <div>{formatDate(email.received_at || email.created_at)}</div>
                           </div>
                         </div>
                       </div>
@@ -574,6 +564,16 @@ export const EmailManager = () => {
             title: "Doorsturen", 
             description: `Bezig met voorbereiden van doorsturen: ${email.subject}...`
           });
+        }}
+      />
+
+      <EmailDraftDialog
+        task={null}
+        isOpen={showNewEmailDialog}
+        onClose={() => setShowNewEmailDialog(false)}
+        onEmailSent={() => {
+          setShowNewEmailDialog(false);
+          refreshEmails();
         }}
       />
     </>
