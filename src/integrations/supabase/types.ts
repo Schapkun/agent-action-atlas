@@ -490,6 +490,75 @@ export type Database = {
           },
         ]
       }
+      email_send_logs: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          from_email: string
+          id: string
+          message_id: string | null
+          organization_id: string
+          original_email_id: string | null
+          sent_at: string
+          status: string
+          subject: string
+          task_id: string | null
+          to_email: string
+          workspace_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          from_email: string
+          id?: string
+          message_id?: string | null
+          organization_id: string
+          original_email_id?: string | null
+          sent_at?: string
+          status?: string
+          subject: string
+          task_id?: string | null
+          to_email: string
+          workspace_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          from_email?: string
+          id?: string
+          message_id?: string | null
+          organization_id?: string
+          original_email_id?: string | null
+          sent_at?: string
+          status?: string
+          subject?: string
+          task_id?: string | null
+          to_email?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_send_logs_original_email_id_fkey"
+            columns: ["original_email_id"]
+            isOneToOne: false
+            referencedRelation: "emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_send_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "pending_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_webhooks: {
         Row: {
           created_at: string
@@ -1040,6 +1109,9 @@ export type Database = {
       }
       pending_tasks: {
         Row: {
+          ai_draft_content: string | null
+          ai_draft_subject: string | null
+          ai_generated: boolean | null
           assigned_to: string | null
           client_id: string | null
           created_at: string
@@ -1047,15 +1119,22 @@ export type Database = {
           description: string | null
           dossier_id: string | null
           due_date: string | null
+          email_id: string | null
+          email_thread_id: string | null
           id: string
           organization_id: string
           priority: string
+          reply_to_email: string | null
           status: string
+          task_type: string | null
           title: string
           updated_at: string
           workspace_id: string | null
         }
         Insert: {
+          ai_draft_content?: string | null
+          ai_draft_subject?: string | null
+          ai_generated?: boolean | null
           assigned_to?: string | null
           client_id?: string | null
           created_at?: string
@@ -1063,15 +1142,22 @@ export type Database = {
           description?: string | null
           dossier_id?: string | null
           due_date?: string | null
+          email_id?: string | null
+          email_thread_id?: string | null
           id?: string
           organization_id: string
           priority?: string
+          reply_to_email?: string | null
           status?: string
+          task_type?: string | null
           title: string
           updated_at?: string
           workspace_id?: string | null
         }
         Update: {
+          ai_draft_content?: string | null
+          ai_draft_subject?: string | null
+          ai_generated?: boolean | null
           assigned_to?: string | null
           client_id?: string | null
           created_at?: string
@@ -1079,10 +1165,14 @@ export type Database = {
           description?: string | null
           dossier_id?: string | null
           due_date?: string | null
+          email_id?: string | null
+          email_thread_id?: string | null
           id?: string
           organization_id?: string
           priority?: string
+          reply_to_email?: string | null
           status?: string
+          task_type?: string | null
           title?: string
           updated_at?: string
           workspace_id?: string | null
@@ -1100,6 +1190,13 @@ export type Database = {
             columns: ["dossier_id"]
             isOneToOne: false
             referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_tasks_email_id_fkey"
+            columns: ["email_id"]
+            isOneToOne: false
+            referencedRelation: "emails"
             referencedColumns: ["id"]
           },
         ]

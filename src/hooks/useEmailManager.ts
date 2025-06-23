@@ -221,6 +221,42 @@ export const useEmailManager = () => {
     return `${baseUrl}/functions/v1/make-email-webhook`;
   };
 
+  const sendEmailReply = async (taskId: string, toEmail: string, subject: string, content: string) => {
+    try {
+      if (!selectedOrganization) {
+        throw new Error('Geen organisatie geselecteerd');
+      }
+
+      const { data, error } = await supabase.functions.invoke('send-email-reply', {
+        body: {
+          task_id: taskId,
+          to_email: toEmail,
+          subject: subject,
+          content: content,
+          organization_id: selectedOrganization.id,
+          workspace_id: selectedWorkspace?.id
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "E-mail verzonden",
+        description: "Het antwoord is succesvol verzonden"
+      });
+
+      return data;
+    } catch (error: any) {
+      console.error('Error sending email reply:', error);
+      toast({
+        title: "Fout",
+        description: `Kon e-mail niet verzenden: ${error.message}`,
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
   return {
     emails,
     loading,
@@ -229,6 +265,7 @@ export const useEmailManager = () => {
     toggleStar,
     moveToFolder,
     deleteEmail,
-    getWebhookUrl
+    getWebhookUrl,
+    sendEmailReply
   };
 };
