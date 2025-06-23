@@ -59,17 +59,11 @@ export const CreateQuote = () => {
     console.log('Quote settings changed:', settings);
   };
 
-  // Create sync wrapper functions for the async functions
-  const getDisplayQuoteNumberSync = () => {
-    if (quoteNumber) {
-      return quoteNumber;
-    }
-    return ''; // Return empty string as placeholder for now
-  };
-
-  const getPlaceholderQuoteNumberSync = () => {
-    return ''; // Return empty string as placeholder for now
-  };
+  // Convert QuoteLineItem[] to LineItem[] for compatibility with LineItemsTable
+  const convertedLineItems = lineItems.map((item, index) => ({
+    ...item,
+    id: item.id || index.toString()
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -109,8 +103,8 @@ export const CreateQuote = () => {
               onInvoiceNumberChange={handleQuoteNumberChange}
               onInvoiceNumberFocus={handleQuoteNumberFocus}
               onInvoiceNumberBlur={handleQuoteNumberBlur}
-              getDisplayInvoiceNumber={getDisplayQuoteNumberSync}
-              getPlaceholderInvoiceNumber={getPlaceholderQuoteNumberSync}
+              getDisplayInvoiceNumber={getDisplayQuoteNumber}
+              getPlaceholderInvoiceNumber={getPlaceholderQuoteNumber}
               isQuote={true}
             />
           </div>
@@ -120,9 +114,9 @@ export const CreateQuote = () => {
             onFormDataChange={(updates) => setFormData({ ...formData, ...updates })}
           />
 
-          <div className={lineItems.some(item => item.description || item.unit_price > 0) && isSessionRecovered ? 'ring-2 ring-orange-200 rounded-lg' : ''}>
+          <div className={convertedLineItems.some(item => item.description || item.unit_price > 0) && isSessionRecovered ? 'ring-2 ring-orange-200 rounded-lg' : ''}>
             <LineItemsTable
-              lineItems={lineItems}
+              lineItems={convertedLineItems}
               onUpdateLineItem={handleLineItemUpdate}
               onRemoveLineItem={handleLineItemRemove}
               onAddLineItem={addLineItem}
@@ -154,7 +148,7 @@ export const CreateQuote = () => {
         onClose={() => togglePreview()}
         selectedTemplate={selectedTemplate}
         formData={formData}
-        lineItems={lineItems}
+        lineItems={convertedLineItems}
         quoteNumber={quoteNumber}
       />
     </div>

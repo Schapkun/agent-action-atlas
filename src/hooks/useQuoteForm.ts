@@ -5,6 +5,7 @@ import { useToast } from './use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 
 export interface QuoteLineItem {
+  id?: string;
   description: string;
   quantity: number;
   unit_price: number;
@@ -22,6 +23,7 @@ export interface QuoteFormData {
   quote_date: string;
   valid_until: string;
   notes: string;
+  vat_percentage: number;
 }
 
 export const useQuoteForm = () => {
@@ -39,11 +41,12 @@ export const useQuoteForm = () => {
     client_country: 'Nederland',
     quote_date: new Date().toISOString().split('T')[0],
     valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    notes: ''
+    notes: '',
+    vat_percentage: 21
   });
 
   const [lineItems, setLineItems] = useState<QuoteLineItem[]>([
-    { description: '', quantity: 1, unit_price: 0, vat_rate: 21, line_total: 0 }
+    { id: '1', description: '', quantity: 1, unit_price: 0, vat_rate: 21, line_total: 0 }
   ]);
 
   const [selectedContact, setSelectedContact] = useState<any>(null);
@@ -146,9 +149,10 @@ export const useQuoteForm = () => {
   };
 
   const addLineItem = () => {
+    const newId = (lineItems.length + 1).toString();
     setLineItems(prev => [
       ...prev,
-      { description: '', quantity: 1, unit_price: 0, vat_rate: 21, line_total: 0 }
+      { id: newId, description: '', quantity: 1, unit_price: 0, vat_rate: 21, line_total: 0 }
     ]);
   };
 
@@ -176,9 +180,10 @@ export const useQuoteForm = () => {
       client_country: 'Nederland',
       quote_date: new Date().toISOString().split('T')[0],
       valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      notes: ''
+      notes: '',
+      vat_percentage: 21
     });
-    setLineItems([{ description: '', quantity: 1, unit_price: 0, vat_rate: 21, line_total: 0 }]);
+    setLineItems([{ id: '1', description: '', quantity: 1, unit_price: 0, vat_rate: 21, line_total: 0 }]);
     setSelectedContact(null);
     setQuoteNumber('');
     
