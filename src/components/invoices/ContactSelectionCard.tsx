@@ -50,26 +50,46 @@ export const ContactSelectionCard = ({
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [placeholderNumber, setPlaceholderNumber] = useState('');
+  const [numberPrefix, setNumberPrefix] = useState('');
 
-  // Load the placeholder number (only sequential part)
+  // Load the placeholder number and prefix
   useEffect(() => {
-    const loadPlaceholderNumber = () => {
+    const loadNumberInfo = () => {
       if (getPlaceholderInvoiceNumber) {
         const placeholder = getPlaceholderInvoiceNumber();
         setPlaceholderNumber(placeholder);
+        
+        // Set the prefix based on document type
+        if (isQuote) {
+          const currentYear = new Date().getFullYear();
+          setNumberPrefix(`OFF-${currentYear}-`);
+        } else {
+          setNumberPrefix(`${currentYear}-`);
+        }
       } else if (getDisplayInvoiceNumber) {
         // Fallback for older implementations
         getDisplayInvoiceNumber().then(number => {
-          setPlaceholderNumber(number);
+          // Extract prefix and sequential part
+          const parts = number.split('-');
+          if (parts.length >= 2) {
+            const sequential = parts[parts.length - 1];
+            const prefix = number.substring(0, number.lastIndexOf('-') + 1);
+            setPlaceholderNumber(sequential);
+            setNumberPrefix(prefix);
+          } else {
+            setPlaceholderNumber(number);
+            setNumberPrefix('');
+          }
         }).catch(error => {
           console.error('Error loading placeholder number:', error);
           setPlaceholderNumber('');
+          setNumberPrefix('');
         });
       }
     };
     
-    loadPlaceholderNumber();
-  }, [getPlaceholderInvoiceNumber, getDisplayInvoiceNumber, invoiceNumber]);
+    loadNumberInfo();
+  }, [getPlaceholderInvoiceNumber, getDisplayInvoiceNumber, invoiceNumber, isQuote]);
 
   const handleContactSaved = (newContact: any) => {
     onContactSelect(newContact);
@@ -168,19 +188,27 @@ export const ContactSelectionCard = ({
             {/* Invoice/Quote details - only show if formData is provided */}
             {formData && onFormDataChange && (
               <div className="flex items-start gap-3">
-                <div className="w-32 flex flex-col">
+                <div className="flex flex-col">
                   <Label htmlFor="document_number" className="text-xs block mb-1">
                     {numberLabel}
                   </Label>
-                  <Input
-                    id="document_number"
-                    value={invoiceNumber || ''}
-                    onChange={(e) => onInvoiceNumberChange && onInvoiceNumberChange(e.target.value)}
-                    onFocus={onInvoiceNumberFocus}
-                    onBlur={onInvoiceNumberBlur}
-                    placeholder={placeholderNumber}
-                    className="h-8 text-xs placeholder:text-xs bg-gray-100"
-                  />
+                  <div className="flex items-center">
+                    {/* Prefix display */}
+                    <div className="bg-gray-100 border border-gray-300 border-r-0 px-2 h-8 flex items-center text-xs text-gray-600 rounded-l">
+                      {numberPrefix}
+                    </div>
+                    {/* Sequential number input */}
+                    <Input
+                      id="document_number"
+                      value={invoiceNumber || ''}
+                      onChange={(e) => onInvoiceNumberChange && onInvoiceNumberChange(e.target.value)}
+                      onFocus={onInvoiceNumberFocus}
+                      onBlur={onInvoiceNumberBlur}
+                      placeholder={placeholderNumber}
+                      className="h-8 text-xs placeholder:text-xs bg-gray-100 rounded-l-none border-l-0"
+                      style={{ width: '60px' }}
+                    />
+                  </div>
                 </div>
                 <div className="w-32 flex flex-col">
                   <Label htmlFor="payment_terms" className="text-xs block mb-1">
