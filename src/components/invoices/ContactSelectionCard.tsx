@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -180,21 +181,28 @@ export const ContactSelectionCard = ({
                     {numberLabel}
                   </Label>
                   <div className="flex items-center">
-                    {/* Prefix display inside container */}
-                    <div className="bg-gray-100 border border-gray-300 border-r-0 px-2 h-8 flex items-center text-xs text-black rounded-l">
-                      {displayPrefix}
-                    </div>
-                    {/* Sequential number input - editable with placeholder */}
-                    <Input
-                      id="document_number"
-                      value={invoiceNumber || ''}
-                      onChange={(e) => onInvoiceNumberChange && onInvoiceNumberChange(e.target.value)}
-                      onFocus={onInvoiceNumberFocus}
-                      onBlur={onInvoiceNumberBlur}
-                      placeholder={placeholderNumber}
-                      className="h-8 text-xs placeholder:text-xs text-gray-600 rounded-l-none border-l-0"
-                      style={{ width: '80px' }}
-                    />
+                    {/* Show CONCEPT badge for drafts, otherwise show editable number field */}
+                    {formData.status === 'draft' ? (
+                      <div className="bg-orange-100 border border-orange-300 px-3 h-8 flex items-center text-xs text-orange-800 rounded font-medium">
+                        CONCEPT
+                      </div>
+                    ) : (
+                      <>
+                        <div className="bg-gray-100 border border-gray-300 border-r-0 px-2 h-8 flex items-center text-xs text-black rounded-l">
+                          {displayPrefix}
+                        </div>
+                        <Input
+                          id="document_number"
+                          value={invoiceNumber || ''}
+                          onChange={(e) => onInvoiceNumberChange && onInvoiceNumberChange(e.target.value)}
+                          onFocus={onInvoiceNumberFocus}
+                          onBlur={onInvoiceNumberBlur}
+                          placeholder={placeholderNumber}
+                          className="h-8 text-xs placeholder:text-xs text-gray-600 rounded-l-none border-l-0"
+                          style={{ width: '80px' }}
+                        />
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="w-32 flex flex-col">

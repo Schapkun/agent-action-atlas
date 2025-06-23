@@ -6,7 +6,7 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 
 export interface Quote {
   id: string;
-  quote_number: string;
+  quote_number: string | null; // Now nullable for drafts
   organization_id: string;
   workspace_id: string | null;
   template_id: string | null;

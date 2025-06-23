@@ -640,7 +640,7 @@ export type Database = {
           due_date: string
           id: string
           invoice_date: string
-          invoice_number: string
+          invoice_number: string | null
           notes: string | null
           organization_id: string
           outstanding_amount: number | null
@@ -667,7 +667,7 @@ export type Database = {
           due_date: string
           id?: string
           invoice_date?: string
-          invoice_number: string
+          invoice_number?: string | null
           notes?: string | null
           organization_id: string
           outstanding_amount?: number | null
@@ -694,7 +694,7 @@ export type Database = {
           due_date?: string
           id?: string
           invoice_date?: string
-          invoice_number?: string
+          invoice_number?: string | null
           notes?: string | null
           organization_id?: string
           outstanding_amount?: number | null
@@ -1129,7 +1129,7 @@ export type Database = {
           notes: string | null
           organization_id: string
           quote_date: string
-          quote_number: string
+          quote_number: string | null
           status: string
           subtotal: number
           template_id: string | null
@@ -1153,7 +1153,7 @@ export type Database = {
           notes?: string | null
           organization_id: string
           quote_date?: string
-          quote_number: string
+          quote_number?: string | null
           status?: string
           subtotal?: number
           template_id?: string | null
@@ -1177,7 +1177,7 @@ export type Database = {
           notes?: string | null
           organization_id?: string
           quote_date?: string
-          quote_number?: string
+          quote_number?: string | null
           status?: string
           subtotal?: number
           template_id?: string | null

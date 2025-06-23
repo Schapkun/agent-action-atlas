@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -6,7 +7,7 @@ import { LineItem } from '@/types/invoiceTypes';
 
 export interface Invoice {
   id: string;
-  invoice_number: string;
+  invoice_number: string | null; // Now nullable for drafts
   organization_id: string;
   workspace_id: string | null;
   template_id: string | null;
