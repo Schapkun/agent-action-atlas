@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -179,11 +180,11 @@ export const ContactSelectionCard = ({
                   <Label htmlFor="document_number" className="text-xs block mb-1">
                     {numberLabel}
                   </Label>
-                  <div className="flex items-center gap-1">
-                    {/* Prefix as separate text label */}
-                    <span className="text-xs text-gray-600 font-medium">
+                  <div className="flex items-center">
+                    {/* Prefix display inside container */}
+                    <div className="bg-gray-100 border border-gray-300 border-r-0 px-2 h-8 flex items-center text-xs text-black rounded-l">
                       {displayPrefix}
-                    </span>
+                    </div>
                     {/* Sequential number input */}
                     <Input
                       id="document_number"
@@ -192,8 +193,8 @@ export const ContactSelectionCard = ({
                       onFocus={onInvoiceNumberFocus}
                       onBlur={onInvoiceNumberBlur}
                       placeholder={placeholderNumber}
-                      className="h-8 text-xs placeholder:text-xs"
-                      style={{ width: '80px' }}
+                      className="h-8 text-xs placeholder:text-xs text-gray-600 rounded-l-none border-l-0"
+                      style={{ width: '60px' }}
                     />
                   </div>
                 </div>
