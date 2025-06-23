@@ -1,6 +1,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Save, Send, Eye } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 
 interface InvoiceHeaderProps {
@@ -10,6 +11,8 @@ interface InvoiceHeaderProps {
   showPreview: boolean;
   canSend: boolean;
   templateSelector: React.ReactNode;
+  isSessionRecovered?: boolean;
+  sessionData?: { clientName?: string } | null;
   onTogglePreview: () => void;
   onConvertToQuote: () => void;
   onSubmit: () => void;
@@ -23,6 +26,8 @@ export const InvoiceHeader = ({
   showPreview,
   canSend,
   templateSelector,
+  isSessionRecovered = false,
+  sessionData,
   onTogglePreview,
   onConvertToQuote,
   onSubmit,
@@ -33,6 +38,21 @@ export const InvoiceHeader = ({
   return (
     <div className="bg-white border-b px-4 py-2">
       <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          <h1 className="text-lg font-semibold">Factuur aanmaken</h1>
+          {isSessionRecovered && (
+            <Badge 
+              variant="outline" 
+              className="bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
+              title={sessionData?.clientName ? `Sessie hersteld voor ${sessionData.clientName}` : 'Sessie hersteld'}
+            >
+              Sessie hersteld
+            </Badge>
+          )}
+        </div>
+        
+        <div className="flex-1" />
+        
         <Button 
           variant="outline" 
           size="sm" 

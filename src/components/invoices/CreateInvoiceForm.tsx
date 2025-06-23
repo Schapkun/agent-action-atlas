@@ -25,12 +25,14 @@ export const CreateInvoiceForm = () => {
   // Line items management with VAT settings
   const { updateVatSettings } = useInvoiceLineItems();
 
-  // Form handlers with preview functionality
+  // Form handlers with preview functionality and session recovery
   const {
     showSettings,
     setShowSettings,
     showPreview,
     togglePreview,
+    isSessionRecovered,
+    sessionData,
     formData,
     setFormData,
     lineItems,
@@ -72,6 +74,8 @@ export const CreateInvoiceForm = () => {
         clientEmail={formData.client_email}
         showPreview={showPreview}
         canSend={canSend}
+        isSessionRecovered={isSessionRecovered}
+        sessionData={sessionData}
         templateSelector={
           <TemplateSelector
             selectedTemplate={selectedTemplate}
@@ -89,31 +93,35 @@ export const CreateInvoiceForm = () => {
 
       <div className="w-full px-6 max-w-none">
         <form onSubmit={handleFormSubmit} className="space-y-6 pt-6">
-          <ContactSelectionCard
-            selectedContact={selectedContact}
-            formData={formData}
-            invoiceNumber={invoiceNumber}
-            invoiceSettings={invoiceSettings}
-            onContactSelect={handleContactSelectOnly}
-            onShowSettings={() => setShowSettings(true)}
-            onFormDataChange={(updates) => setFormData(updates)}
-            onInvoiceNumberChange={handleInvoiceNumberChange}
-            onInvoiceNumberFocus={handleInvoiceNumberFocus}
-            onInvoiceNumberBlur={handleInvoiceNumberBlur}
-            getDisplayInvoiceNumber={getDisplayInvoiceNumber}
-          />
+          <div className={isSessionRecovered ? 'ring-2 ring-orange-200 rounded-lg' : ''}>
+            <ContactSelectionCard
+              selectedContact={selectedContact}
+              formData={formData}
+              invoiceNumber={invoiceNumber}
+              invoiceSettings={invoiceSettings}
+              onContactSelect={handleContactSelectOnly}
+              onShowSettings={() => setShowSettings(true)}
+              onFormDataChange={(updates) => setFormData(updates)}
+              onInvoiceNumberChange={handleInvoiceNumberChange}
+              onInvoiceNumberFocus={handleInvoiceNumberFocus}
+              onInvoiceNumberBlur={handleInvoiceNumberBlur}
+              getDisplayInvoiceNumber={getDisplayInvoiceNumber}
+            />
+          </div>
 
           <InvoiceDetailsCard
             formData={formData}
             onFormDataChange={(updates) => setFormData(updates)}
           />
 
-          <LineItemsTable
-            lineItems={lineItems}
-            onUpdateLineItem={handleLineItemUpdate}
-            onRemoveLineItem={handleLineItemRemove}
-            onAddLineItem={addLineItem}
-          />
+          <div className={lineItems.some(item => item.description || item.unit_price > 0) && isSessionRecovered ? 'ring-2 ring-orange-200 rounded-lg' : ''}>
+            <LineItemsTable
+              lineItems={lineItems}
+              onUpdateLineItem={handleLineItemUpdate}
+              onRemoveLineItem={handleLineItemRemove}
+              onAddLineItem={addLineItem}
+            />
+          </div>
 
           <InvoiceFormActions
             subtotal={subtotal}

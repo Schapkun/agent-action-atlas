@@ -2,11 +2,15 @@
 import { useState, useMemo } from 'react';
 import { useInvoiceForm } from './useInvoiceForm';
 import { useToast } from './use-toast';
+import { useSessionRecovery } from './useSessionRecovery';
 
 export const useInvoiceFormHandlers = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
+
+  // Session recovery
+  const { isSessionRecovered, sessionData, clearSession } = useSessionRecovery('factuur');
 
   const {
     formData,
@@ -28,7 +32,8 @@ export const useInvoiceFormHandlers = () => {
     calculateTotals,
     handleConvertToQuote,
     handleSubmit,
-    handleSaveAndSend
+    handleSaveAndSend,
+    clearFormData
   } = useInvoiceForm();
 
   // Validation logic to check if form can be sent
@@ -102,6 +107,14 @@ export const useInvoiceFormHandlers = () => {
     e.preventDefault();
     console.log('✅ EXPLICIT USER ACTION: Form submitted - this will create an invoice');
     handleSubmit();
+    // Clear session when successfully saving
+    clearSession();
+  };
+
+  const handleSaveAndSendAction = () => {
+    handleSaveAndSend();
+    // Clear session when successfully sending
+    clearSession();
   };
 
   const handleLineItemUpdate = (index: number, field: keyof import('@/hooks/useInvoiceForm').LineItem, value: string | number) => {
@@ -118,6 +131,11 @@ export const useInvoiceFormHandlers = () => {
     setShowSettings,
     showPreview,
     togglePreview,
+    
+    // Session recovery
+    isSessionRecovered,
+    sessionData,
+    clearSession,
     
     // Form data
     formData,
@@ -148,7 +166,7 @@ export const useInvoiceFormHandlers = () => {
     calculateTotals,
     handleConvertToQuote,
     handleSubmit,
-    handleSaveAndSend,
+    handleSaveAndSend: handleSaveAndSendAction,
     getDefaultInvoiceNumber
   };
 };
