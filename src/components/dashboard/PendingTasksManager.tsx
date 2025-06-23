@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { EmailDraftDialog } from './EmailDraftDialog';
+import { EmailViewDialog } from './EmailViewDialog';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,6 +40,25 @@ interface PendingTask {
   email_thread_id?: string;
   clients?: { name: string };
   dossiers?: { name: string };
+  emails?: {
+    id: string;
+    subject: string;
+    from_email: string;
+    to_email: string;
+    content: string;
+    body_html?: string;
+    body_text?: string;
+    status: string;
+    priority: string;
+    is_read: boolean;
+    is_flagged: boolean;
+    has_attachments: boolean;
+    attachments: any[];
+    folder: string;
+    received_at: string;
+    created_at: string;
+    headers?: any;
+  };
 }
 
 export const PendingTasksManager = () => {
@@ -50,6 +69,8 @@ export const PendingTasksManager = () => {
   const [taskTypeFilter, setTaskTypeFilter] = useState<string>('all');
   const [selectedEmailTask, setSelectedEmailTask] = useState<PendingTask | null>(null);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [selectedEmail, setSelectedEmail] = useState<any>(null);
+  const [showEmailViewDialog, setShowEmailViewDialog] = useState(false);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
 
@@ -65,7 +86,26 @@ export const PendingTasksManager = () => {
         .select(`
           *,
           clients(name),
-          dossiers(name)
+          dossiers(name),
+          emails(
+            id,
+            subject,
+            from_email,
+            to_email,
+            content,
+            body_html,
+            body_text,
+            status,
+            priority,
+            is_read,
+            is_flagged,
+            has_attachments,
+            attachments,
+            folder,
+            received_at,
+            created_at,
+            headers
+          )
         `)
         .eq('organization_id', selectedOrganization.id)
         .order('created_at', { ascending: false });
@@ -87,6 +127,7 @@ export const PendingTasksManager = () => {
       if (error) throw error;
 
       console.log('📋 Pending tasks fetched:', data?.length || 0);
+      console.log('📋 Tasks with email data:', data?.filter(t => t.emails).length || 0);
       setTasks(data || []);
     } catch (error) {
       console.error('Error fetching pending tasks:', error);
@@ -126,8 +167,23 @@ export const PendingTasksManager = () => {
   };
 
   const handleEmailTask = (task: PendingTask) => {
+    console.log('📧 Opening email draft for task:', task.id, 'with AI content:', !!task.ai_draft_content);
     setSelectedEmailTask(task);
     setShowEmailDialog(true);
+  };
+
+  const handleViewEmail = (task: PendingTask) => {
+    console.log('👁️ Viewing email for task:', task.id, 'email data:', !!task.emails);
+    if (task.emails) {
+      setSelectedEmail(task.emails);
+      setShowEmailViewDialog(true);
+    } else {
+      toast({
+        title: "Fout",
+        description: "Email gegevens niet beschikbaar",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleEmailSent = () => {
@@ -292,6 +348,14 @@ export const PendingTasksManager = () => {
                             <strong>Antwoord naar:</strong> {task.reply_to_email}
                           </p>
                         )}
+
+                        {/* Email info */}
+                        {task.emails && (
+                          <div className="text-sm text-gray-600 mb-2">
+                            <strong>Van:</strong> {task.emails.from_email} | 
+                            <strong> Onderwerp:</strong> {task.emails.subject}
+                          </div>
+                        )}
                         
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           {task.clients?.name && (
@@ -310,6 +374,17 @@ export const PendingTasksManager = () => {
                       </div>
 
                       <div className="flex items-center gap-2">
+                        {task.emails && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewEmail(task)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Bekijk
+                          </Button>
+                        )}
+                        
                         {task.status === 'open' && task.task_type === 'email_reply' && (
                           <Button
                             size="sm"
@@ -320,10 +395,6 @@ export const PendingTasksManager = () => {
                             Verstuur
                           </Button>
                         )}
-                        
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
                   </div>
@@ -433,6 +504,15 @@ export const PendingTasksManager = () => {
           setSelectedEmailTask(null);
         }}
         onEmailSent={handleEmailSent}
+      />
+
+      <EmailViewDialog
+        email={selectedEmail}
+        isOpen={showEmailViewDialog}
+        onClose={() => {
+          setShowEmailViewDialog(false);
+          setSelectedEmail(null);
+        }}
       />
     </>
   );

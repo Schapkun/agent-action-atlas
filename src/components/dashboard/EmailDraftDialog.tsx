@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,10 +27,26 @@ export const EmailDraftDialog = ({
   onClose, 
   onEmailSent 
 }: EmailDraftDialogProps) => {
-  const [subject, setSubject] = useState(task?.ai_draft_subject || '');
-  const [content, setContent] = useState(task?.ai_draft_content || '');
+  const [subject, setSubject] = useState('');
+  const [content, setContent] = useState('');
   const [sending, setSending] = useState(false);
   const { toast } = useToast();
+
+  // Reset form when task changes or dialog opens
+  useEffect(() => {
+    if (task && isOpen) {
+      console.log('📧 Setting email draft data for task:', task.id);
+      console.log('📧 AI draft subject:', task.ai_draft_subject);
+      console.log('📧 AI draft content length:', task.ai_draft_content?.length || 0);
+      
+      setSubject(task.ai_draft_subject || `Re: ${task.emails?.subject || task.title || ''}`);
+      setContent(task.ai_draft_content || '');
+    } else if (!isOpen) {
+      // Reset form when dialog closes
+      setSubject('');
+      setContent('');
+    }
+  }, [task, isOpen]);
 
   const handleSendEmail = async () => {
     if (!task || !subject.trim() || !content.trim()) {
@@ -44,6 +60,8 @@ export const EmailDraftDialog = ({
 
     setSending(true);
     try {
+      console.log('📤 Sending email reply for task:', task.id);
+      
       const { data, error } = await supabase.functions.invoke('send-email-reply', {
         body: {
           task_id: task.id,
@@ -59,6 +77,8 @@ export const EmailDraftDialog = ({
 
       if (error) throw error;
 
+      console.log('✅ Email sent successfully:', data);
+
       toast({
         title: "E-mail verzonden",
         description: "Het antwoord is succesvol verzonden"
@@ -67,7 +87,7 @@ export const EmailDraftDialog = ({
       onEmailSent();
       onClose();
     } catch (error: any) {
-      console.error('Error sending email:', error);
+      console.error('❌ Error sending email:', error);
       toast({
         title: "Fout",
         description: `Kon e-mail niet verzenden: ${error.message}`,
@@ -110,6 +130,11 @@ export const EmailDraftDialog = ({
             <div className="text-sm text-gray-600">
               <span className="font-medium">Taak:</span> {task.title}
             </div>
+            {task.emails && (
+              <div className="text-sm text-gray-600">
+                <span className="font-medium">Origineel onderwerp:</span> {task.emails.subject}
+              </div>
+            )}
           </div>
 
           {/* Subject */}

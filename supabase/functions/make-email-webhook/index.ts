@@ -28,16 +28,55 @@ serve(async (req) => {
       throw new Error('organization_id is required')
     }
 
+    // Verbeterde email data extractie - meer flexibele velden ondersteuning
+    const fromEmail = emailData.from_email || 
+                     emailData.from || 
+                     emailData.sender || 
+                     emailData.sender_email ||
+                     (emailData.headers && emailData.headers.from) ||
+                     'unknown@unknown.com';
+
+    const toEmail = emailData.to_email || 
+                   emailData.to || 
+                   emailData.recipient || 
+                   emailData.recipient_email ||
+                   (emailData.headers && emailData.headers.to) ||
+                   '';
+
+    const subject = emailData.subject || 
+                   emailData.email_subject ||
+                   (emailData.headers && emailData.headers.subject) ||
+                   'No Subject';
+
+    const content = emailData.content || 
+                   emailData.body_text || 
+                   emailData.text ||
+                   emailData.body ||
+                   emailData.message ||
+                   '';
+
+    const bodyHtml = emailData.body_html || 
+                    emailData.html || 
+                    emailData.html_body ||
+                    null;
+
+    console.log('📧 Extracted email data:', {
+      from: fromEmail,
+      to: toEmail,
+      subject: subject,
+      content: content ? content.substring(0, 100) + '...' : 'No content'
+    });
+
     // Bereid email data voor opslag voor
     const emailRecord = {
       organization_id: emailData.organization_id,
       workspace_id: emailData.workspace_id || null,
-      subject: emailData.subject || 'No Subject',
-      from_email: emailData.from || emailData.sender || 'unknown@unknown.com',
-      to_email: emailData.to || emailData.recipient || '',
-      content: emailData.content || emailData.body_text || '',
-      body_html: emailData.body_html || emailData.html || null,
-      body_text: emailData.body_text || emailData.text || emailData.content || '',
+      subject: subject,
+      from_email: fromEmail,
+      to_email: toEmail,
+      content: content,
+      body_html: bodyHtml,
+      body_text: content,
       message_id: emailData.message_id || emailData.messageId || null,
       in_reply_to: emailData.in_reply_to || emailData.inReplyTo || null,
       email_references: emailData.references || emailData.refs || null,
@@ -73,12 +112,12 @@ serve(async (req) => {
     console.log('✅ Email successfully saved:', savedEmail.id)
 
     // Probeer client te koppelen op basis van email adres
-    if (emailRecord.from_email && emailRecord.organization_id) {
+    if (fromEmail && fromEmail !== 'unknown@unknown.com' && emailRecord.organization_id) {
       const { data: matchingClient } = await supabaseClient
         .from('clients')
         .select('id, name')
         .eq('organization_id', emailRecord.organization_id)
-        .eq('email', emailRecord.from_email)
+        .eq('email', fromEmail)
         .maybeSingle()
 
       if (matchingClient) {
@@ -91,52 +130,67 @@ serve(async (req) => {
       }
     }
 
-    // Genereer AI concept antwoord
-    console.log('🤖 Generating AI draft response...')
-    try {
-      const aiResponse = await generateAIDraftResponse(emailRecord)
-      
-      // Maak een pending task aan met AI concept
-      const taskRecord = {
-        organization_id: emailRecord.organization_id,
-        workspace_id: emailRecord.workspace_id,
-        title: `Antwoord op: ${emailRecord.subject}`,
-        description: `AI concept antwoord gegenereerd voor e-mail van ${emailRecord.from_email}`,
-        priority: emailRecord.priority,
-        status: 'open',
-        task_type: 'email_reply',
-        email_id: savedEmail.id,
-        ai_draft_content: aiResponse.content,
-        ai_draft_subject: aiResponse.subject,
-        email_thread_id: emailRecord.thread_id,
-        reply_to_email: emailRecord.from_email,
-        ai_generated: true,
-        client_id: savedEmail.client_id,
-        dossier_id: savedEmail.dossier_id
+    // Genereer AI concept antwoord alleen als we geldige content hebben
+    if (content && content.trim().length > 0) {
+      console.log('🤖 Generating AI draft response...')
+      try {
+        const aiResponse = await generateAIDraftResponse({
+          ...emailRecord,
+          from_email: fromEmail,
+          subject: subject,
+          content: content
+        })
+        
+        // Maak een pending task aan met AI concept
+        const taskRecord = {
+          organization_id: emailRecord.organization_id,
+          workspace_id: emailRecord.workspace_id,
+          title: `Antwoord op: ${subject}`,
+          description: `AI concept antwoord gegenereerd voor e-mail van ${fromEmail}`,
+          priority: emailRecord.priority,
+          status: 'open',
+          task_type: 'email_reply',
+          email_id: savedEmail.id,
+          ai_draft_content: aiResponse.content,
+          ai_draft_subject: aiResponse.subject,
+          email_thread_id: emailRecord.thread_id,
+          reply_to_email: fromEmail,
+          ai_generated: true,
+          client_id: savedEmail.client_id,
+          dossier_id: savedEmail.dossier_id
+        }
+
+        const { data: savedTask, error: taskError } = await supabaseClient
+          .from('pending_tasks')
+          .insert(taskRecord)
+          .select()
+          .single()
+
+        if (taskError) {
+          console.error('❌ Error creating pending task:', taskError)
+        } else {
+          console.log('✅ AI draft task created:', savedTask.id)
+        }
+
+      } catch (aiError) {
+        console.error('❌ AI generation error:', aiError)
+        // Continue without AI draft - email is still saved
       }
-
-      const { data: savedTask, error: taskError } = await supabaseClient
-        .from('pending_tasks')
-        .insert(taskRecord)
-        .select()
-        .single()
-
-      if (taskError) {
-        console.error('❌ Error creating pending task:', taskError)
-      } else {
-        console.log('✅ AI draft task created:', savedTask.id)
-      }
-
-    } catch (aiError) {
-      console.error('❌ AI generation error:', aiError)
-      // Continue without AI draft - email is still saved
+    } else {
+      console.log('⚠️ No content found for AI draft generation')
     }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         email_id: savedEmail.id,
-        message: 'Email successfully received and AI draft generated'
+        message: 'Email successfully received and processed',
+        extracted_data: {
+          from: fromEmail,
+          to: toEmail,
+          subject: subject,
+          has_content: !!content
+        }
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -170,7 +224,7 @@ Je bent een professionele assistent die e-mail antwoorden genereert.
 INKOMENDE E-MAIL:
 Van: ${emailData.from_email}
 Onderwerp: ${emailData.subject}
-Inhoud: ${emailData.content || emailData.body_text}
+Inhoud: ${emailData.content}
 
 Genereer een professioneel, vriendelijk antwoord in het Nederlands. Het antwoord moet:
 - Beleefd en professioneel zijn
