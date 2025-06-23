@@ -3,7 +3,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 
 interface QuoteDetailsCardProps {
   formData: any;
@@ -47,17 +46,12 @@ export const QuoteDetailsCard = ({
 
         {/* Notities sectie */}
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <Label className="text-xs">Notities</Label>
-            <Button type="button" variant="link" className="text-blue-500 text-xs p-0 h-auto">
-              Bewerk introductie
-            </Button>
-          </div>
+          <Label className="text-xs">Notities</Label>
           <Textarea
             placeholder="Voer hier notities in..."
             value={formData.notes || ''}
             onChange={(e) => onFormDataChange({ notes: e.target.value })}
-            className="min-h-[60px] text-xs placeholder:text-xs"
+            className="min-h-[60px] text-xs placeholder:text-xs mt-1"
           />
         </div>
       </CardContent>
