@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { Plus, Trash2, Send, Bold, Italic, Underline, List, AlignLeft, AlignCent
 import { useInvoices, Invoice } from '@/hooks/useInvoices';
 import { useInvoiceLines } from '@/hooks/useInvoiceLines';
 import { useToast } from '@/hooks/use-toast';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -43,7 +43,8 @@ interface LineItem {
 }
 
 export const InvoiceDialog = ({ isOpen, onClose, invoice }: InvoiceDialogProps) => {
-  const { createInvoice, updateInvoice } = useInvoices();
+  const { createInvoice, updateInvoice, generateInvoiceNumber } = useInvoices();
+  const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { addLine, updateLine, deleteLine } = useInvoiceLines(invoice?.id || null);
   
   const [loading, setLoading] = useState(false);
@@ -152,6 +153,16 @@ export const InvoiceDialog = ({ isOpen, onClose, invoice }: InvoiceDialogProps) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!selectedOrganization) {
+      toast({
+        title: "Fout",
+        description: "Geen organisatie geselecteerd",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -159,6 +170,9 @@ export const InvoiceDialog = ({ isOpen, onClose, invoice }: InvoiceDialogProps) 
       const { subtotal, vatAmount, total } = calculateTotals();
       
       const invoiceData = {
+        organization_id: selectedOrganization.id,
+        workspace_id: selectedWorkspace?.id || null,
+        invoice_number: await generateInvoiceNumber(),
         ...formData,
         subtotal,
         vat_amount: vatAmount,

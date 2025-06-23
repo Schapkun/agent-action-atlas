@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { InvoiceFormData, InvoiceTotals, LineItem } from '@/types/invoiceTypes';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 export const useInvoiceSubmission = (
   formData: InvoiceFormData,
@@ -13,6 +14,7 @@ export const useInvoiceSubmission = (
 ) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { createInvoice, saveInvoiceLines, updateInvoice, generateInvoiceNumber } = useInvoices();
   const [loading, setLoading] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
@@ -24,12 +26,20 @@ export const useInvoiceSubmission = (
       console.log('❌ BLOCKING SAVE: No client name provided');
       return;
     }
+
+    if (!selectedOrganization) {
+      console.log('❌ BLOCKING SAVE: No organization selected');
+      return;
+    }
     
     setLoading(true);
     try {
       const { subtotal, vatAmount, total } = calculateTotals();
       
       const invoiceData = {
+        organization_id: selectedOrganization.id,
+        workspace_id: selectedWorkspace?.id || null,
+        invoice_number: await generateInvoiceNumber(),
         client_name: formData.client_name,
         client_email: formData.client_email || null,
         client_address: formData.client_address || null,
@@ -48,8 +58,8 @@ export const useInvoiceSubmission = (
         status: 'draft' as const // Always save as draft
       };
 
-      console.log('✅ EXPLICIT: Calling createInvoice with EXPLICIT_USER_ACTION for DRAFT');
-      const invoice = await createInvoice(invoiceData, 'EXPLICIT_USER_ACTION');
+      console.log('✅ EXPLICIT: Calling createInvoice for DRAFT');
+      const invoice = await createInvoice(invoiceData);
       
       // Save line items after invoice creation
       if (invoice && lineItems.length > 0) {
@@ -75,6 +85,11 @@ export const useInvoiceSubmission = (
       console.log('❌ BLOCKING SAVE: No client name provided');
       return;
     }
+
+    if (!selectedOrganization) {
+      console.log('❌ BLOCKING SAVE: No organization selected');
+      return;
+    }
     
     setSendLoading(true);
     try {
@@ -82,6 +97,9 @@ export const useInvoiceSubmission = (
       
       // Create invoice data with 'sent' status for Save & Send
       const invoiceData = {
+        organization_id: selectedOrganization.id,
+        workspace_id: selectedWorkspace?.id || null,
+        invoice_number: await generateInvoiceNumber(),
         client_name: formData.client_name,
         client_email: formData.client_email || null,
         client_address: formData.client_address || null,
@@ -100,8 +118,8 @@ export const useInvoiceSubmission = (
         status: 'sent' as const // Set status to 'sent' when saving and sending
       };
 
-      console.log('✅ EXPLICIT: Calling createInvoice with EXPLICIT_USER_ACTION for Save & Send');
-      const invoice = await createInvoice(invoiceData, 'EXPLICIT_USER_ACTION');
+      console.log('✅ EXPLICIT: Calling createInvoice for Save & Send');
+      const invoice = await createInvoice(invoiceData);
       
       // Save line items after invoice creation
       if (invoice && lineItems.length > 0) {

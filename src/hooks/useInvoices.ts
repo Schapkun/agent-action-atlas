@@ -38,7 +38,7 @@ export interface InvoiceLine {
   vat_rate: number;
   line_total: number;
   sort_order: number;
-  is_text_only?: boolean; // Added this property
+  is_text_only?: boolean;
   created_at: string;
 }
 
@@ -83,11 +83,46 @@ export const useInvoices = () => {
     }
   };
 
-  const createInvoice = async (invoiceData: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>) => {
+  const generateInvoiceNumber = async (): Promise<string> => {
+    if (!selectedOrganization) {
+      throw new Error('No organization selected');
+    }
+
     try {
+      const { data, error } = await supabase.rpc('generate_invoice_number_with_gaps', {
+        org_id: selectedOrganization.id,
+        workspace_id: selectedWorkspace?.id || null
+      });
+
+      if (error) throw error;
+      return data || `${new Date().getFullYear()}-001`;
+    } catch (error) {
+      console.error('Error generating invoice number:', error);
+      return `${new Date().getFullYear()}-001`;
+    }
+  };
+
+  const createInvoice = async (invoiceData: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>) => {
+    if (!selectedOrganization) {
+      throw new Error('No organization selected');
+    }
+
+    try {
+      // Ensure organization_id is set
+      const dataWithOrg = {
+        ...invoiceData,
+        organization_id: selectedOrganization.id,
+        workspace_id: selectedWorkspace?.id || null
+      };
+
+      // Generate invoice number if not provided
+      if (!dataWithOrg.invoice_number) {
+        dataWithOrg.invoice_number = await generateInvoiceNumber();
+      }
+
       const { data, error } = await supabase
         .from('invoices')
-        .insert(invoiceData)
+        .insert(dataWithOrg)
         .select()
         .single();
 
@@ -101,6 +136,43 @@ export const useInvoices = () => {
       toast({
         title: "Fout",
         description: "Kon factuur niet aanmaken",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  const saveInvoiceLines = async (invoiceId: string, lineItems: any[]) => {
+    try {
+      // First, delete existing line items
+      await supabase.from('invoice_lines').delete().eq('invoice_id', invoiceId);
+
+      // Then insert new line items
+      const lineItemsData = lineItems.map((item, index) => ({
+        invoice_id: invoiceId,
+        description: item.description,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        vat_rate: item.vat_rate,
+        line_total: item.line_total,
+        sort_order: index,
+        is_text_only: item.is_text_only || false
+      }));
+
+      if (lineItemsData.length > 0) {
+        const { error } = await supabase
+          .from('invoice_lines')
+          .insert(lineItemsData);
+
+        if (error) throw error;
+      }
+
+      console.log('✅ Invoice lines saved:', lineItemsData.length);
+    } catch (error) {
+      console.error('Error saving invoice lines:', error);
+      toast({
+        title: "Fout",
+        description: "Kon factuurregels niet opslaan",
         variant: "destructive"
       });
       throw error;
@@ -168,6 +240,8 @@ export const useInvoices = () => {
     fetchInvoices,
     createInvoice,
     updateInvoice,
-    deleteInvoice
+    deleteInvoice,
+    generateInvoiceNumber,
+    saveInvoiceLines
   };
 };
