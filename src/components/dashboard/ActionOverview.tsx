@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Filter, FileText, Phone, Mail, Receipt, Gavel } from 'lucide-react';
+import { Search, Filter, FileText, Phone, Mail, Receipt, Gavel, Webhook } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import type { AIAction, ActionCategory, ActionStatus } from '@/types/dashboard';
 
@@ -51,6 +51,10 @@ export const ActionOverview = ({ limit, showFilters = true }: ActionOverviewProp
         return 'bg-green-100 text-green-800 hover:bg-green-200';
       case 'pending':
         return 'bg-orange-100 text-orange-800 hover:bg-orange-200';
+      case 'approved':
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+      case 'rejected':
+        return 'bg-red-100 text-red-800 hover:bg-red-200';
       case 'failed':
         return 'bg-red-100 text-red-800 hover:bg-red-200';
       case 'draft':
@@ -65,7 +69,11 @@ export const ActionOverview = ({ limit, showFilters = true }: ActionOverviewProp
       case 'completed':
         return 'Voltooid';
       case 'pending':
-        return 'In behandeling';
+        return 'Wacht op Goedkeuring';
+      case 'approved':
+        return 'Goedgekeurd';
+      case 'rejected':
+        return 'Afgewezen';
       case 'failed':
         return 'Mislukt';
       case 'draft':
@@ -119,7 +127,10 @@ export const ActionOverview = ({ limit, showFilters = true }: ActionOverviewProp
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>AI Acties</span>
+          <div className="flex items-center gap-2">
+            <Webhook className="h-5 w-5" />
+            <span>AI Acties</span>
+          </div>
           {showFilters && (
             <Button variant="outline" size="sm">
               <Filter className="h-4 w-4 mr-2" />
@@ -172,9 +183,11 @@ export const ActionOverview = ({ limit, showFilters = true }: ActionOverviewProp
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle statussen</SelectItem>
+                <SelectItem value="pending">Wacht op Goedkeuring</SelectItem>
+                <SelectItem value="approved">Goedgekeurd</SelectItem>
                 <SelectItem value="completed">Voltooid</SelectItem>
-                <SelectItem value="pending">In behandeling</SelectItem>
                 <SelectItem value="draft">Concept</SelectItem>
+                <SelectItem value="rejected">Afgewezen</SelectItem>
                 <SelectItem value="failed">Mislukt</SelectItem>
               </SelectContent>
             </Select>
@@ -193,6 +206,7 @@ export const ActionOverview = ({ limit, showFilters = true }: ActionOverviewProp
             <div className="text-center py-8 text-muted-foreground">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Geen acties gevonden voor de geselecteerde context</p>
+              <p className="text-sm mt-2">AI acties van Make.com verschijnen hier automatisch</p>
             </div>
           ) : (
             filteredActions.map((action) => {

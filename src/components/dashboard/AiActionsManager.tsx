@@ -3,18 +3,16 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
+import { AiActionCard } from './AiActionCard';
 import { 
   Search, 
   Activity, 
   Plus, 
-  Eye, 
-  CheckCircle, 
-  Clock, 
-  AlertCircle 
+  Webhook,
+  Settings
 } from 'lucide-react';
 
 interface AiAction {
@@ -27,6 +25,13 @@ interface AiAction {
   status: string;
   created_at: string;
   updated_at: string;
+  make_scenario_id?: string;
+  webhook_url?: string;
+  action_data?: any;
+  approved_at?: string;
+  approved_by?: string;
+  executed_at?: string;
+  execution_result?: any;
 }
 
 export const AiActionsManager = () => {
@@ -76,31 +81,6 @@ export const AiActionsManager = () => {
     }
   };
 
-  const updateActionStatus = async (actionId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from('ai_actions')
-        .update({ status: newStatus })
-        .eq('id', actionId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Succes",
-        description: "Actie status bijgewerkt"
-      });
-
-      fetchActions();
-    } catch (error) {
-      console.error('Error updating action status:', error);
-      toast({
-        title: "Fout",
-        description: "Kon actie status niet bijwerken",
-        variant: "destructive"
-      });
-    }
-  };
-
   useEffect(() => {
     fetchActions();
   }, [selectedOrganization, selectedWorkspace, statusFilter]);
@@ -111,29 +91,17 @@ export const AiActionsManager = () => {
     action.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="text-orange-600"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
-      case 'completed':
-        return <Badge variant="outline" className="text-green-600"><CheckCircle className="h-3 w-3 mr-1" />Voltooid</Badge>;
-      case 'failed':
-        return <Badge variant="outline" className="text-red-600"><AlertCircle className="h-3 w-3 mr-1" />Gefaald</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
+  const getWebhookEndpoint = () => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/functions/v1/make-webhook-receive`;
   };
 
-  const getCategoryBadge = (category: string) => {
-    const colors = {
-      'invoice_created': 'bg-blue-100 text-blue-800',
-      'document_created': 'bg-purple-100 text-purple-800',
-      'email_sent': 'bg-green-100 text-green-800',
-      'phone_call_registered': 'bg-yellow-100 text-yellow-800',
-      'automated_decision': 'bg-gray-100 text-gray-800'
-    };
-    
-    return <Badge className={colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>{category}</Badge>;
+  const copyWebhookUrl = () => {
+    navigator.clipboard.writeText(getWebhookEndpoint());
+    toast({
+      title: "Webhook URL Gekopieerd",
+      description: "De webhook URL is gekopieerd naar je klembord"
+    });
   };
 
   return (
@@ -141,13 +109,37 @@ export const AiActionsManager = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">AI Acties</h1>
-          <p className="text-muted-foreground">Overzicht van alle AI uitgevoerde acties</p>
+          <p className="text-muted-foreground">Beheer en goedkeur AI uitgevoerde acties van Make.com</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Nieuwe Actie
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={copyWebhookUrl} variant="outline">
+            <Webhook className="h-4 w-4 mr-2" />
+            Webhook URL
+          </Button>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Handmatige Actie
+          </Button>
+        </div>
       </div>
+
+      {/* Webhook Info Card */}
+      <Card className="border-blue-200 bg-blue-50">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <Webhook className="h-5 w-5 text-blue-600 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-medium text-blue-900">Make.com Webhook Endpoint</h3>
+              <p className="text-sm text-blue-700 mb-2">
+                Gebruik deze URL in je Make.com scenario om AI acties naar dit systeem te versturen:
+              </p>
+              <code className="block p-2 bg-white rounded border text-sm font-mono">
+                {getWebhookEndpoint()}
+              </code>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -163,8 +155,10 @@ export const AiActionsManager = () => {
                 className="px-3 py-1 border rounded-md text-sm"
               >
                 <option value="all">Alle statussen</option>
-                <option value="pending">Pending</option>
+                <option value="pending">Wacht op Goedkeuring</option>
+                <option value="approved">Goedgekeurd</option>
                 <option value="completed">Voltooid</option>
+                <option value="rejected">Afgewezen</option>
                 <option value="failed">Gefaald</option>
               </select>
             </div>
@@ -187,56 +181,18 @@ export const AiActionsManager = () => {
             <div className="text-center py-8 text-muted-foreground">
               <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Geen acties gevonden</p>
+              <p className="text-sm mt-2">
+                AI acties van Make.com verschijnen hier automatisch
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
               {filteredActions.map((action) => (
-                <div key={action.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-medium">{action.title}</h3>
-                        {getStatusBadge(action.status)}
-                        {getCategoryBadge(action.category)}
-                      </div>
-                      
-                      {action.description && (
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {action.description}
-                        </p>
-                      )}
-                      
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        {action.client_name && (
-                          <span>Klant: {action.client_name}</span>
-                        )}
-                        {action.dossier_name && (
-                          <span>Dossier: {action.dossier_name}</span>
-                        )}
-                        <span>
-                          Aangemaakt: {new Date(action.created_at).toLocaleDateString('nl-NL')}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {action.status === 'pending' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateActionStatus(action.id, 'completed')}
-                        >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Voltooien
-                        </Button>
-                      )}
-                      
-                      <Button size="sm" variant="outline">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                <AiActionCard 
+                  key={action.id} 
+                  action={action} 
+                  onActionUpdate={fetchActions}
+                />
               ))}
             </div>
           )}

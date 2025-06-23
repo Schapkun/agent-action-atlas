@@ -11,6 +11,9 @@ export type Database = {
     Tables: {
       ai_actions: {
         Row: {
+          action_data: Json | null
+          approved_at: string | null
+          approved_by: string | null
           category: string
           client_name: string | null
           created_at: string
@@ -18,14 +21,21 @@ export type Database = {
           description: string | null
           document_id: string | null
           dossier_name: string | null
+          executed_at: string | null
+          execution_result: Json | null
           id: string
+          make_scenario_id: string | null
           organization_id: string
           status: string
           title: string
           updated_at: string
+          webhook_url: string | null
           workspace_id: string | null
         }
         Insert: {
+          action_data?: Json | null
+          approved_at?: string | null
+          approved_by?: string | null
           category: string
           client_name?: string | null
           created_at?: string
@@ -33,14 +43,21 @@ export type Database = {
           description?: string | null
           document_id?: string | null
           dossier_name?: string | null
+          executed_at?: string | null
+          execution_result?: Json | null
           id?: string
+          make_scenario_id?: string | null
           organization_id: string
           status?: string
           title: string
           updated_at?: string
+          webhook_url?: string | null
           workspace_id?: string | null
         }
         Update: {
+          action_data?: Json | null
+          approved_at?: string | null
+          approved_by?: string | null
           category?: string
           client_name?: string | null
           created_at?: string
@@ -48,11 +65,15 @@ export type Database = {
           description?: string | null
           document_id?: string | null
           dossier_name?: string | null
+          executed_at?: string | null
+          execution_result?: Json | null
           id?: string
+          make_scenario_id?: string | null
           organization_id?: string
           status?: string
           title?: string
           updated_at?: string
+          webhook_url?: string | null
           workspace_id?: string | null
         }
         Relationships: []
@@ -732,6 +753,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      make_webhooks: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          organization_id: string
+          updated_at: string
+          webhook_type: string
+          webhook_url: string
+          workspace_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          updated_at?: string
+          webhook_type: string
+          webhook_url: string
+          workspace_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          updated_at?: string
+          webhook_type?: string
+          webhook_url?: string
+          workspace_id?: string | null
+        }
+        Relationships: []
       }
       organization_members: {
         Row: {

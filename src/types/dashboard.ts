@@ -1,4 +1,3 @@
-
 export interface AIAction {
   id: string;
   category: ActionCategory;
@@ -10,6 +9,13 @@ export interface AIAction {
   status: ActionStatus;
   details?: string;
   documentId?: string;
+  makeScenarioId?: string;
+  webhookUrl?: string;
+  actionData?: any;
+  approvedAt?: Date;
+  approvedBy?: string;
+  executedAt?: Date;
+  executionResult?: any;
 }
 
 export type ActionCategory = 
@@ -22,9 +28,11 @@ export type ActionCategory =
   | 'letter_sent'
   | 'email_sent'
   | 'document_created'
-  | 'automated_decision';
+  | 'automated_decision'
+  | 'legal_document'
+  | 'client_communication';
 
-export type ActionStatus = 'pending' | 'completed' | 'failed' | 'draft';
+export type ActionStatus = 'pending' | 'approved' | 'completed' | 'failed' | 'draft' | 'rejected';
 
 export interface DocumentFolder {
   id: string;
