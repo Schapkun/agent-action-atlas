@@ -12,13 +12,13 @@ import {
   Search, 
   Clock, 
   Plus, 
-  Eye, 
   CheckCircle, 
   AlertTriangle,
   Calendar,
   Mail,
   Sparkles,
-  Send
+  Send,
+  Settings
 } from 'lucide-react';
 
 interface PendingTask {
@@ -69,8 +69,8 @@ export const PendingTasksManager = () => {
   const [taskTypeFilter, setTaskTypeFilter] = useState<string>('all');
   const [selectedEmailTask, setSelectedEmailTask] = useState<PendingTask | null>(null);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
-  const [selectedEmail, setSelectedEmail] = useState<any>(null);
-  const [showEmailViewDialog, setShowEmailViewDialog] = useState(false);
+  const [showCombinedDialog, setShowCombinedDialog] = useState(false);
+  const [selectedTaskForCombined, setSelectedTaskForCombined] = useState<PendingTask | null>(null);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
 
@@ -207,6 +207,14 @@ export const PendingTasksManager = () => {
 
   const handleEmailSent = () => {
     fetchTasks(); // Refresh tasks after email is sent
+  };
+
+  const handleManageTask = (task: PendingTask) => {
+    if (task.task_type === 'email_reply') {
+      console.log('📧 Opening combined email management for task:', task.id);
+      setSelectedTaskForCombined(task);
+      setShowCombinedDialog(true);
+    }
   };
 
   useEffect(() => {
@@ -347,7 +355,12 @@ export const PendingTasksManager = () => {
                           <h3 className="font-medium">{task.title}</h3>
                           {getStatusBadge(task.status)}
                           {getPriorityBadge(task.priority)}
-                          {getTaskTypeBadge(task.task_type, task.ai_generated)}
+                          {task.ai_generated && (
+                            <Badge variant="outline" className="text-blue-600">
+                              <Sparkles className="h-3 w-3 mr-1" />
+                              AI
+                            </Badge>
+                          )}
                           {isOverdue(task.due_date) && (
                             <Badge variant="destructive" className="animate-pulse">
                               <AlertTriangle className="h-3 w-3 mr-1" />
@@ -393,25 +406,14 @@ export const PendingTasksManager = () => {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        {task.emails && (
+                        {task.status === 'open' && (
                           <Button
                             size="sm"
-                            variant="outline"
-                            onClick={() => handleViewEmail(task)}
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            Bekijk
-                          </Button>
-                        )}
-                        
-                        {task.status === 'open' && task.task_type === 'email_reply' && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleEmailTask(task)}
+                            onClick={() => handleManageTask(task)}
                             className="bg-blue-600 hover:bg-blue-700"
                           >
-                            <Send className="h-4 w-4 mr-1" />
-                            Verstuur
+                            <Settings className="h-4 w-4 mr-1" />
+                            Beheer
                           </Button>
                         )}
                       </div>
@@ -525,6 +527,19 @@ export const PendingTasksManager = () => {
         onEmailSent={handleEmailSent}
       />
 
+      {/* Combined Email Management Dialog */}
+      {selectedTaskForCombined && (
+        <EmailManagementDialog
+          task={selectedTaskForCombined}
+          isOpen={showCombinedDialog}
+          onClose={() => {
+            setShowCombinedDialog(false);
+            setSelectedTaskForCombined(null);
+          }}
+          onEmailSent={handleEmailSent}
+        />
+      )}
+
       <EmailViewDialog
         email={selectedEmail}
         isOpen={showEmailViewDialog}
@@ -534,5 +549,169 @@ export const PendingTasksManager = () => {
         }}
       />
     </>
+  );
+};
+
+// New combined email management dialog component
+const EmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
+  task: PendingTask;
+  isOpen: boolean;
+  onClose: () => void;
+  onEmailSent: () => void;
+}) => {
+  const [subject, setSubject] = useState('');
+  const [content, setContent] = useState('');
+  const [sending, setSending] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (task && isOpen) {
+      setSubject(task.ai_draft_subject || `Re: ${task.emails?.subject || task.title || ''}`);
+      setContent(task.ai_draft_content || '');
+    }
+  }, [task, isOpen]);
+
+  const handleSendEmail = async () => {
+    if (!subject.trim() || !content.trim()) {
+      toast({
+        title: "Fout",
+        description: "Vul alle velden in",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-email-reply', {
+        body: {
+          task_id: task.id,
+          to_email: task.reply_to_email,
+          subject: subject,
+          content: content,
+          organization_id: task.organization_id,
+          workspace_id: task.workspace_id,
+          original_email_id: task.email_id,
+          thread_id: task.email_thread_id
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "E-mail verzonden",
+        description: "Het antwoord is succesvol verzonden"
+      });
+
+      onEmailSent();
+      onClose();
+    } catch (error: any) {
+      console.error('❌ Error sending email:', error);
+      toast({
+        title: "Fout",
+        description: `Kon e-mail niet verzenden: ${error.message}`,
+        variant: "destructive"
+      });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-6xl max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            E-mail Beheer: {task.title}
+            {task.ai_generated && (
+              <Badge variant="outline" className="text-blue-600">
+                <Sparkles className="h-4 w-4 mr-1" />
+                AI Gegenereerd
+              </Badge>
+            )}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+          {/* Originele Email */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Originele E-mail</h3>
+            {task.emails ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    {task.emails.subject || 'Geen onderwerp'}
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">
+                    Van: {task.emails.from_email}
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-48">
+                    <div className="text-sm whitespace-pre-wrap">
+                      {task.emails.body_text || task.emails.content || 'Geen inhoud beschikbaar'}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            ) : (
+              <p className="text-gray-500">Geen originele e-mail beschikbaar</p>
+            )}
+          </div>
+
+          {/* AI Concept Reactie */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">AI Concept Reactie</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Onderwerp</label>
+                <Input
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  placeholder="E-mail onderwerp"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Inhoud</label>
+                <Textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="E-mail inhoud"
+                  rows={8}
+                  className="min-h-[200px]"
+                />
+              </div>
+
+              {task.ai_generated && (
+                <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                  <div className="flex items-center gap-2 text-blue-800 text-sm">
+                    <Sparkles className="h-4 w-4" />
+                    <span className="font-medium">AI Concept</span>
+                  </div>
+                  <p className="text-blue-700 text-sm mt-1">
+                    Dit antwoord is automatisch gegenereerd door AI. Controleer en pas aan waar nodig.
+                  </p>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button onClick={onClose} variant="outline" disabled={sending}>
+                  Annuleren
+                </Button>
+                <Button 
+                  onClick={handleSendEmail}
+                  disabled={sending || !subject.trim() || !content.trim()}
+                >
+                  {sending ? 'Verzenden...' : 'Verzenden'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };

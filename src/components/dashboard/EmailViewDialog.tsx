@@ -109,7 +109,7 @@ export const EmailViewDialog = ({ email, isOpen, onClose, onReply, onForward }: 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
-            {email.subject || 'Geen onderwerp'}
+            Onderwerp: {email.subject || 'Geen onderwerp'}
             {email.is_flagged && <Star className="h-4 w-4 text-yellow-500 fill-current" />}
           </DialogTitle>
         </DialogHeader>

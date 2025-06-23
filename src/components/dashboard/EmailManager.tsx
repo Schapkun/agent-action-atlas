@@ -60,6 +60,7 @@ export const EmailManager = () => {
   const [showWorkspaceSelector, setShowWorkspaceSelector] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showNewEmailDialog, setShowNewEmailDialog] = useState(false);
+  const [emailDraftMode, setEmailDraftMode] = useState<'new' | 'reply' | 'forward'>('new');
   const { selectedOrganization, selectedWorkspace, getFilteredWorkspaces } = useOrganization();
   const { toast } = useToast();
 
@@ -285,6 +286,20 @@ export const EmailManager = () => {
     }
   };
 
+  const handleReply = (email: Email) => {
+    console.log('Reply to:', email.from_email);
+    setSelectedEmail(email);
+    setEmailDraftMode('reply');
+    setShowNewEmailDialog(true);
+  };
+
+  const handleForward = (email: Email) => {
+    console.log('Forward:', email.subject);
+    setSelectedEmail(email);
+    setEmailDraftMode('forward');
+    setShowNewEmailDialog(true);
+  };
+
   const getContextInfo = () => {
     if (selectedWorkspace) {
       return `Werkruimte: ${selectedWorkspace.name}`;
@@ -310,15 +325,21 @@ export const EmailManager = () => {
         setShowWorkspaceSelector(true);
         return;
       } else if (workspaces.length === 1) {
+        setEmailDraftMode('new');
+        setSelectedEmail(null);
         setShowNewEmailDialog(true);
         return;
       }
     }
 
+    setEmailDraftMode('new');
+    setSelectedEmail(null);
     setShowNewEmailDialog(true);
   };
 
   const createEmailInWorkspace = (workspaceId: string) => {
+    setEmailDraftMode('new');
+    setSelectedEmail(null);
     setShowNewEmailDialog(true);
     setShowWorkspaceSelector(false);
   };
@@ -551,30 +572,24 @@ export const EmailManager = () => {
           setShowDetailDialog(false);
           setSelectedEmail(null);
         }}
-        onReply={(email) => {
-          console.log('Reply to:', email.from_email);
-          toast({
-            title: "Antwoorden",
-            description: `Bezig met voorbereiden van antwoord naar ${email.from_email}...`
-          });
-        }}
-        onForward={(email) => {
-          console.log('Forward:', email.subject);
-          toast({
-            title: "Doorsturen", 
-            description: `Bezig met voorbereiden van doorsturen: ${email.subject}...`
-          });
-        }}
+        onReply={handleReply}
+        onForward={handleForward}
       />
 
       <EmailDraftDialog
         task={null}
         isOpen={showNewEmailDialog}
-        onClose={() => setShowNewEmailDialog(false)}
+        onClose={() => {
+          setShowNewEmailDialog(false);
+          setSelectedEmail(null);
+        }}
         onEmailSent={() => {
           setShowNewEmailDialog(false);
+          setSelectedEmail(null);
           refreshEmails();
         }}
+        mode={emailDraftMode}
+        originalEmail={selectedEmail}
       />
     </>
   );
