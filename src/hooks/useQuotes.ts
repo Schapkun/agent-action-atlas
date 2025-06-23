@@ -121,10 +121,11 @@ export const useQuotes = () => {
 
   const createQuote = async (quoteData: Partial<Quote>) => {
     try {
-      const quoteNumber = await generateQuoteNumber();
+      // Only generate quote number if status is 'sent'
+      const quoteNumber = quoteData.status === 'sent' ? await generateQuoteNumber() : null;
       
       const insertData = {
-        quote_number: quoteNumber,
+        quote_number: quoteNumber, // null for drafts, actual number for sent quotes
         organization_id: selectedOrganization?.id || '',
         workspace_id: selectedWorkspace?.id || null,
         template_id: null,
@@ -156,9 +157,13 @@ export const useQuotes = () => {
       const newQuote = castToQuote(data);
       setQuotes(prev => [newQuote, ...prev]);
       
+      const successMessage = quoteData.status === 'draft' 
+        ? 'Concept offerte succesvol aangemaakt'
+        : `Offerte ${quoteNumber} succesvol aangemaakt en verzonden`;
+      
       toast({
         title: "Succes",
-        description: `Offerte ${quoteNumber} succesvol aangemaakt`
+        description: successMessage
       });
 
       return newQuote;

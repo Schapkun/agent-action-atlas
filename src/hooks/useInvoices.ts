@@ -166,15 +166,15 @@ export const useInvoices = () => {
     try {
       console.log('Creating invoice with data:', invoiceData);
       
-      // Generate a fresh invoice number for ALL invoices (including drafts)
-      const invoiceNumber = await generateInvoiceNumber();
+      // Only generate invoice number if status is 'sent'
+      const invoiceNumber = invoiceData.status === 'sent' ? await generateInvoiceNumber() : null;
       const defaultTemplate = await getDefaultTemplate();
       
       console.log('🔢 Using invoice number:', invoiceNumber, 'for status:', invoiceData.status);
       
       // Ensure required fields are present and properly formatted
       const insertData = {
-        invoice_number: invoiceNumber, // Always set the number, even for drafts
+        invoice_number: invoiceNumber, // null for drafts, actual number for sent invoices
         organization_id: selectedOrganization?.id || '',
         workspace_id: selectedWorkspace?.id || null,
         template_id: defaultTemplate,
@@ -215,8 +215,8 @@ export const useInvoices = () => {
       setInvoices(prev => [newInvoice, ...prev]);
       
       const successMessage = invoiceData.status === 'draft' 
-        ? `Concept ${invoiceNumber} succesvol aangemaakt`
-        : `Factuur ${invoiceNumber} succesvol aangemaakt`;
+        ? 'Concept factuur succesvol aangemaakt'
+        : `Factuur ${invoiceNumber} succesvol aangemaakt en verzonden`;
       
       toast({
         title: "Succes",
