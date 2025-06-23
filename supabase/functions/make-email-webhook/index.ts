@@ -8,6 +8,79 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Helper function to sanitize content
+function sanitizeContent(content: string): string {
+  if (!content || typeof content !== 'string') return '';
+  
+  return content
+    .replace(/\r\n/g, '\n')  // Normalize line endings
+    .replace(/\r/g, '\n')    // Convert remaining \r to \n
+    .replace(/\t/g, ' ')     // Convert tabs to spaces
+    .replace(/"/g, '"')      // Escape quotes
+    .replace(/\\/g, '\\\\')  // Escape backslashes
+    .trim();
+}
+
+// Helper function to safely parse JSON with fallback
+async function safeParseEmailData(req: Request) {
+  const rawBody = await req.text();
+  console.log('📧 Raw request body length:', rawBody.length);
+  
+  try {
+    // Try direct JSON parsing first
+    return JSON.parse(rawBody);
+  } catch (parseError) {
+    console.log('⚠️ Direct JSON parse failed, attempting data cleaning...', parseError.message);
+    
+    try {
+      // Try to clean and parse again
+      const cleanedBody = rawBody
+        .replace(/\r\n/g, '\\n')
+        .replace(/\r/g, '\\n')
+        .replace(/\n/g, '\\n')
+        .replace(/\t/g, '\\t')
+        .replace(/"/g, '\\"')
+        .replace(/\\/g, '\\\\');
+        
+      console.log('📧 Attempting to parse cleaned body...');
+      return JSON.parse(cleanedBody);
+    } catch (secondError) {
+      console.log('❌ Second parse attempt failed:', secondError.message);
+      
+      // Last resort: try to extract basic data manually
+      try {
+        const emailData: any = {};
+        
+        // Extract organization_id
+        const orgMatch = rawBody.match(/"organization_id"\s*:\s*"([^"]+)"/);
+        if (orgMatch) emailData.organization_id = orgMatch[1];
+        
+        // Extract workspace_id
+        const workspaceMatch = rawBody.match(/"workspace_id"\s*:\s*"([^"]+)"/);
+        if (workspaceMatch) emailData.workspace_id = workspaceMatch[1];
+        
+        // Extract from_email
+        const fromMatch = rawBody.match(/"from_email"\s*:\s*"([^"]+)"/);
+        if (fromMatch) emailData.from_email = fromMatch[1];
+        
+        // Extract subject
+        const subjectMatch = rawBody.match(/"subject"\s*:\s*"([^"]+)"/);
+        if (subjectMatch) emailData.subject = subjectMatch[1];
+        
+        // Extract message_id
+        const messageIdMatch = rawBody.match(/"message_id"\s*:\s*"([^"]+)"/);
+        if (messageIdMatch) emailData.message_id = messageIdMatch[1];
+        
+        console.log('📧 Manual extraction result:', emailData);
+        return emailData;
+      } catch (manualError) {
+        console.error('❌ Manual extraction failed:', manualError);
+        throw new Error(`Failed to parse email data: ${parseError.message}`);
+      }
+    }
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -19,16 +92,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const emailData = await req.json()
+    // Use safe parsing function
+    const emailData = await safeParseEmailData(req);
     
-    console.log('📧 Incoming email webhook data:', JSON.stringify(emailData, null, 2))
+    console.log('📧 Parsed email data successfully:', {
+      organization_id: emailData.organization_id,
+      from_email: emailData.from_email || emailData.from,
+      subject: emailData.subject,
+      has_text: !!(emailData.text || emailData.content || emailData.body_text),
+      has_html: !!(emailData.body_html || emailData.html)
+    });
 
     // Valideer verplichte velden
     if (!emailData.organization_id) {
       throw new Error('organization_id is required')
     }
 
-    // Verbeterde email data extractie - meer flexibele velden ondersteuning
+    // Verbeterde email data extractie met content sanitization
     const fromEmail = emailData.from_email || 
                      emailData.from || 
                      emailData.sender || 
@@ -48,23 +128,37 @@ serve(async (req) => {
                    (emailData.headers && emailData.headers.subject) ||
                    'No Subject';
 
-    const content = emailData.content || 
-                   emailData.body_text || 
-                   emailData.text ||
-                   emailData.body ||
-                   emailData.message ||
-                   '';
+    // Multiple content sources with sanitization
+    let content = '';
+    const contentSources = [
+      emailData.text,
+      emailData.content,
+      emailData.body_text,
+      emailData.body,
+      emailData.message
+    ];
+    
+    for (const source of contentSources) {
+      if (source && typeof source === 'string' && source.trim()) {
+        content = sanitizeContent(source);
+        break;
+      }
+    }
 
     const bodyHtml = emailData.body_html || 
                     emailData.html || 
                     emailData.html_body ||
                     null;
 
-    console.log('📧 Extracted email data:', {
+    // Sanitize HTML if present
+    const sanitizedBodyHtml = bodyHtml ? sanitizeContent(bodyHtml) : null;
+
+    console.log('📧 Extracted and sanitized email data:', {
       from: fromEmail,
       to: toEmail,
       subject: subject,
-      content: content ? content.substring(0, 100) + '...' : 'No content'
+      content_length: content.length,
+      has_html: !!sanitizedBodyHtml
     });
 
     // Bereid email data voor opslag voor
@@ -75,7 +169,7 @@ serve(async (req) => {
       from_email: fromEmail,
       to_email: toEmail,
       content: content,
-      body_html: bodyHtml,
+      body_html: sanitizedBodyHtml,
       body_text: content,
       message_id: emailData.message_id || emailData.messageId || null,
       in_reply_to: emailData.in_reply_to || emailData.inReplyTo || null,
@@ -131,7 +225,7 @@ serve(async (req) => {
     }
 
     // Genereer AI concept antwoord alleen als we geldige content hebben
-    if (content && content.trim().length > 0) {
+    if (content && content.trim().length > 10) { // Minimum content length
       console.log('🤖 Generating AI draft response...')
       try {
         const aiResponse = await generateAIDraftResponse({
@@ -177,7 +271,7 @@ serve(async (req) => {
         // Continue without AI draft - email is still saved
       }
     } else {
-      console.log('⚠️ No content found for AI draft generation')
+      console.log('⚠️ Content too short for AI draft generation, length:', content.length)
     }
 
     return new Response(
@@ -189,7 +283,8 @@ serve(async (req) => {
           from: fromEmail,
           to: toEmail,
           subject: subject,
-          has_content: !!content
+          content_length: content.length,
+          has_html: !!sanitizedBodyHtml
         }
       }),
       {
