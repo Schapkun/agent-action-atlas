@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { useInvoiceForm } from './useInvoiceForm';
 import { useToast } from './use-toast';
@@ -38,17 +37,16 @@ export const useInvoiceFormHandlers = () => {
     clearFormData
   } = useInvoiceForm();
 
-  // More flexible validation logic
+  // Stricter validation logic - each line item must have description AND (price > 0 OR quantity > 0)
   const canSend = useMemo(() => {
     // Check if contact info is filled
     const hasContactInfo = formData.client_name.trim() !== '';
     
     // Check if at least one line item has meaningful content
-    // Either: description filled OR unit_price > 0 OR quantity > 0
+    // Must have: description AND (unit_price > 0 OR quantity > 0)
     const hasValidLineItem = lineItems.some(item => 
-      item.description.trim() !== '' || 
-      item.unit_price > 0 || 
-      item.quantity > 0
+      item.description.trim() !== '' && 
+      (item.unit_price > 0 || item.quantity > 0)
     );
     
     return hasContactInfo && hasValidLineItem;
@@ -61,13 +59,12 @@ export const useInvoiceFormHandlers = () => {
     }
     
     const hasValidLineItem = lineItems.some(item => 
-      item.description.trim() !== '' || 
-      item.unit_price > 0 || 
-      item.quantity > 0
+      item.description.trim() !== '' && 
+      (item.unit_price > 0 || item.quantity > 0)
     );
     
     if (!hasValidLineItem) {
-      return 'Voeg minimaal één regel toe met beschrijving, prijs of aantal';
+      return 'Voeg minimaal één regel toe met een beschrijving én een prijs of aantal';
     }
     
     return null;

@@ -39,8 +39,19 @@ export const useQuoteFormHandlers = () => {
     clearFormData
   } = useQuoteForm();
 
+  // Stricter validation logic for quotes - same as invoices
   const canSend = useMemo(() => {
-    return formData.client_name.trim() !== '' && lineItems.length > 0;
+    // Check if contact info is filled
+    const hasContactInfo = formData.client_name.trim() !== '';
+    
+    // Check if at least one line item has meaningful content
+    // Must have: description AND (unit_price > 0 OR quantity > 0)
+    const hasValidLineItem = lineItems.some(item => 
+      item.description.trim() !== '' && 
+      (item.unit_price > 0 || item.quantity > 0)
+    );
+    
+    return hasContactInfo && hasValidLineItem;
   }, [formData.client_name, lineItems]);
 
   const togglePreview = () => setShowPreview(!showPreview);
