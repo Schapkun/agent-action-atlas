@@ -50,40 +50,23 @@ export const ContactSelectionCard = ({
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [placeholderNumber, setPlaceholderNumber] = useState('');
-  const [numberPrefix, setNumberPrefix] = useState('');
 
-  // Load the placeholder number and prefix
+  // Load the placeholder number (only sequential part)
   useEffect(() => {
     const loadNumberInfo = () => {
       if (getPlaceholderInvoiceNumber) {
         const placeholder = getPlaceholderInvoiceNumber();
         setPlaceholderNumber(placeholder);
-        
-        // Set the prefix based on document type
-        const currentYear = new Date().getFullYear();
-        if (isQuote) {
-          setNumberPrefix(`OFF-${currentYear}-`);
-        } else {
-          setNumberPrefix(`${currentYear}-`);
-        }
       } else if (getDisplayInvoiceNumber) {
         // Fallback for older implementations
         getDisplayInvoiceNumber().then(number => {
-          // Extract prefix and sequential part
+          // Extract only the sequential part after the last dash
           const parts = number.split('-');
-          if (parts.length >= 2) {
-            const sequential = parts[parts.length - 1];
-            const prefix = number.substring(0, number.lastIndexOf('-') + 1);
-            setPlaceholderNumber(sequential);
-            setNumberPrefix(prefix);
-          } else {
-            setPlaceholderNumber(number);
-            setNumberPrefix('');
-          }
+          const sequential = parts[parts.length - 1];
+          setPlaceholderNumber(sequential);
         }).catch(error => {
           console.error('Error loading placeholder number:', error);
           setPlaceholderNumber('');
-          setNumberPrefix('');
         });
       }
     };
@@ -132,6 +115,10 @@ export const ContactSelectionCard = ({
       });
     }
   };
+
+  // Generate the prefix based on document type
+  const currentYear = new Date().getFullYear();
+  const displayPrefix = isQuote ? `OFF-${currentYear}-` : `${currentYear}-`;
 
   // Dynamic labels based on isQuote prop
   const numberLabel = isQuote ? 'Offertenummer' : 'Factuurnummer';
@@ -192,11 +179,11 @@ export const ContactSelectionCard = ({
                   <Label htmlFor="document_number" className="text-xs block mb-1">
                     {numberLabel}
                   </Label>
-                  <div className="flex items-center">
-                    {/* Prefix display */}
-                    <div className="bg-gray-100 border border-gray-300 border-r-0 px-2 h-8 flex items-center text-xs text-gray-600 rounded-l">
-                      {numberPrefix}
-                    </div>
+                  <div className="flex items-center gap-1">
+                    {/* Prefix as separate text label */}
+                    <span className="text-xs text-gray-600 font-medium">
+                      {displayPrefix}
+                    </span>
                     {/* Sequential number input */}
                     <Input
                       id="document_number"
@@ -205,8 +192,8 @@ export const ContactSelectionCard = ({
                       onFocus={onInvoiceNumberFocus}
                       onBlur={onInvoiceNumberBlur}
                       placeholder={placeholderNumber}
-                      className="h-8 text-xs placeholder:text-xs bg-gray-100 rounded-l-none border-l-0"
-                      style={{ width: '60px' }}
+                      className="h-8 text-xs placeholder:text-xs"
+                      style={{ width: '80px' }}
                     />
                   </div>
                 </div>
