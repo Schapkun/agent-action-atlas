@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { LineItem, InvoiceTotals } from '@/types/invoiceTypes';
 import { useInvoiceStorage } from './useInvoiceStorage';
@@ -55,12 +54,17 @@ export const useInvoiceLineItems = () => {
   }, []);
 
   const calculateLineTotal = (item: LineItem): number => {
+    // Text-only items have no financial calculation
+    if (item.is_text_only) {
+      return 0;
+    }
+    
     const quantity = item.quantity || 0;
     const unit_price = item.unit_price || 0;
     return quantity * unit_price;
   };
 
-  const updateLineItem = (index: number, field: keyof LineItem, value: string | number) => {
+  const updateLineItem = (index: number, field: keyof LineItem, value: string | number | boolean) => {
     setLineItems(prev =>
       prev.map((item, i) =>
         i === index ? { ...item, [field]: value, line_total: calculateLineTotal({ ...item, [field]: value }) } : item
@@ -75,7 +79,8 @@ export const useInvoiceLineItems = () => {
       quantity: 1,
       unit_price: 0,
       vat_rate: 21,
-      line_total: 0
+      line_total: 0,
+      is_text_only: false
     };
     setLineItems(prev => [...prev, newItem]);
   };
@@ -91,6 +96,11 @@ export const useInvoiceLineItems = () => {
     console.log('Berekening met VAT instelling:', vatSettings.vatDisplay);
 
     lineItems.forEach(item => {
+      // Skip text-only items in calculations
+      if (item.is_text_only) {
+        return;
+      }
+      
       const lineTotal = calculateLineTotal(item);
       const vatRate = item.vat_rate / 100;
       

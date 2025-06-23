@@ -1,4 +1,3 @@
-
 export interface InvoiceFormData {
   client_name: string;
   client_email: string;
@@ -19,6 +18,7 @@ export interface LineItem {
   unit_price: number;
   vat_rate: number;
   line_total: number;
+  is_text_only?: boolean; // New field for text-only mode
 }
 
 export interface Contact {

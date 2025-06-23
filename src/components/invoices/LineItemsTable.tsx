@@ -1,13 +1,13 @@
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Bold, Italic, Underline, List, Trash2, Plus } from 'lucide-react';
+import { Bold, Italic, Underline, List, Trash2, Plus, Type } from 'lucide-react';
 import { VatSelector } from '@/components/ui/vat-selector';
 import { LineItem } from '@/hooks/useInvoiceForm';
 
 interface LineItemsTableProps {
   lineItems: LineItem[];
-  onUpdateLineItem: (index: number, field: keyof LineItem, value: string | number) => void;
+  onUpdateLineItem: (index: number, field: keyof LineItem, value: string | number | boolean) => void;
   onRemoveLineItem: (index: number) => void;
   onAddLineItem: () => void;
 }
@@ -18,6 +18,24 @@ export const LineItemsTable = ({
   onRemoveLineItem,
   onAddLineItem
 }: LineItemsTableProps) => {
+
+  const toggleTextOnlyMode = (index: number) => {
+    const item = lineItems[index];
+    const newTextOnlyMode = !item.is_text_only;
+    
+    // When converting to text-only, reset quantity, price and VAT
+    if (newTextOnlyMode) {
+      onUpdateLineItem(index, 'quantity', 0);
+      onUpdateLineItem(index, 'unit_price', 0);
+      onUpdateLineItem(index, 'vat_rate', 0);
+    } else {
+      // When converting back to product line, set default values
+      onUpdateLineItem(index, 'quantity', 1);
+      onUpdateLineItem(index, 'vat_rate', 21);
+    }
+    
+    onUpdateLineItem(index, 'is_text_only', newTextOnlyMode);
+  };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, index: number) => {
     if (event.key === 'Enter') {
@@ -211,15 +229,22 @@ export const LineItemsTable = ({
         <div className="space-y-2">
           {lineItems.map((item, index) => (
             <div key={index} className="grid grid-cols-12 gap-2 items-start">
+              {/* Quantity column - hidden for text-only items */}
               <div className="col-span-1">
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={item.quantity}
-                  onChange={(e) => onUpdateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                  className="text-left text-xs h-8"
-                />
+                {!item.is_text_only ? (
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={item.quantity}
+                    onChange={(e) => onUpdateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                    className="text-left text-xs h-8"
+                  />
+                ) : (
+                  <div className="h-8" />
+                )}
               </div>
+              
+              {/* Description column */}
               <div className="col-span-6">
                 <div className="space-y-1">
                   <div
@@ -270,33 +295,62 @@ export const LineItemsTable = ({
                     >
                       <List className="h-3 w-3" />
                     </Button>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => toggleTextOnlyMode(index)}
+                      title={item.is_text_only ? "Terugzetten naar productregel" : "Omzetten naar tekst"}
+                    >
+                      <Type className="h-3 w-3" />
+                    </Button>
                   </div>
                 </div>
               </div>
+              
+              {/* Price column - hidden for text-only items */}
               <div className="col-span-2">
-                <div className="flex items-center gap-1">
-                  <span className="text-xs">€</span>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={item.unit_price}
-                    onChange={(e) => onUpdateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                    className="text-left text-xs h-8 min-w-24"
-                  />
-                </div>
+                {!item.is_text_only ? (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs">€</span>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={item.unit_price || ''}
+                      placeholder=""
+                      onChange={(e) => onUpdateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                      className="text-left text-xs h-8 min-w-24"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-8" />
+                )}
               </div>
+              
+              {/* VAT column - hidden for text-only items */}
               <div className="col-span-1">
-                <VatSelector
-                  value={item.vat_rate}
-                  onValueChange={(value) => onUpdateLineItem(index, 'vat_rate', value)}
-                  className="text-xs h-8 w-full"
-                />
+                {!item.is_text_only ? (
+                  <VatSelector
+                    value={item.vat_rate}
+                    onValueChange={(value) => onUpdateLineItem(index, 'vat_rate', value)}
+                    className="text-xs h-8 w-full"
+                  />
+                ) : (
+                  <div className="h-8" />
+                )}
               </div>
+              
+              {/* Total column - hidden for text-only items */}
               <div className="col-span-2 flex items-center justify-between">
-                <div className="flex items-center gap-1 min-w-20">
-                  <span className="text-xs">€</span>
-                  <span className="font-medium text-xs">{item.line_total.toFixed(2)}</span>
-                </div>
+                {!item.is_text_only ? (
+                  <div className="flex items-center gap-1 min-w-20">
+                    <span className="text-xs">€</span>
+                    <span className="font-medium text-xs">{item.line_total.toFixed(2)}</span>
+                  </div>
+                ) : (
+                  <div className="h-8" />
+                )}
                 <Button
                   type="button"
                   variant="ghost"
