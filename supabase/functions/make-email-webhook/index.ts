@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -58,6 +59,10 @@ async function safeParseEmailData(req: Request) {
         const fromMatch = rawBody.match(/"from_email"\s*:\s*"([^"]+)"/);
         if (fromMatch) emailData.from_email = fromMatch[1];
         
+        // Extract to_email - NEW ADDITION
+        const toMatch = rawBody.match(/"to_email"\s*:\s*"([^"]+)"/);
+        if (toMatch) emailData.to_email = toMatch[1];
+        
         // Extract subject
         const subjectMatch = rawBody.match(/"subject"\s*:\s*"([^"]+)"/);
         if (subjectMatch) emailData.subject = subjectMatch[1];
@@ -104,6 +109,7 @@ serve(async (req) => {
     console.log('📧 Parsed email data successfully:', {
       organization_id: emailData.organization_id,
       from_email: emailData.from_email || emailData.from,
+      to_email: emailData.to_email || emailData.to,
       subject: emailData.subject,
       has_text: !!(emailData.text || emailData.content || emailData.body_text),
       has_html: !!(emailData.body_html || emailData.html),
@@ -239,6 +245,7 @@ serve(async (req) => {
         const aiResponse = await generateAIDraftResponse({
           ...emailRecord,
           from_email: fromEmail,
+          to_email: toEmail,
           subject: subject,
           content: content
         })
@@ -248,7 +255,7 @@ serve(async (req) => {
           organization_id: emailRecord.organization_id,
           workspace_id: emailRecord.workspace_id,
           title: `Antwoord op: ${subject}`,
-          description: `AI concept antwoord gegenereerd voor e-mail van ${fromEmail}`,
+          description: `AI concept antwoord gegenereerd voor e-mail van ${fromEmail} naar ${toEmail}`,
           priority: emailRecord.priority,
           status: 'open',
           task_type: 'email_reply',
@@ -327,6 +334,7 @@ Je bent een professionele assistent die e-mail antwoorden genereert.
 
 INKOMENDE E-MAIL:
 Van: ${emailData.from_email}
+Naar: ${emailData.to_email}
 Onderwerp: ${emailData.subject}
 Inhoud: ${emailData.content}
 
