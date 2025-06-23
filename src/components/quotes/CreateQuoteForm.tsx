@@ -91,7 +91,11 @@ export const CreateQuote = () => {
 
       <div className="w-full px-6 max-w-none">
         <form onSubmit={handleFormSubmit} className="space-y-6 pt-6">
-          <div className={isSessionRecovered ? 'ring-2 ring-orange-200 rounded-lg' : ''}>
+          <div className={
+            isSessionRecovered && sessionData?.hasFormData 
+              ? 'ring-2 ring-orange-200 rounded-lg' 
+              : ''
+          }>
             <ContactSelectionCard
               selectedContact={selectedContact}
               formData={formData}
@@ -114,7 +118,11 @@ export const CreateQuote = () => {
             onFormDataChange={(updates) => setFormData({ ...formData, ...updates })}
           />
 
-          <div className={convertedLineItems.some(item => item.description || item.unit_price > 0) && isSessionRecovered ? 'ring-2 ring-orange-200 rounded-lg' : ''}>
+          <div className={
+            isSessionRecovered && sessionData?.hasLineItems 
+              ? 'ring-2 ring-orange-200 rounded-lg' 
+              : ''
+          }>
             <LineItemsTable
               lineItems={convertedLineItems}
               onUpdateLineItem={handleLineItemUpdate}
