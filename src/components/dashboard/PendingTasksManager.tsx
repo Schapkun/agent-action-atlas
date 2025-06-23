@@ -36,7 +36,8 @@ import {
   Settings,
   Eye,
   Trash2,
-  FileText
+  FileText,
+  AlertCircle
 } from 'lucide-react';
 
 interface PendingTask {
@@ -177,62 +178,107 @@ export const PendingTasksManager = () => {
 
   const updateTaskStatus = async (taskId: string, newStatus: string) => {
     try {
+      console.log('🔄 Updating task status:', { taskId, newStatus });
+      
       const { error } = await supabase
         .from('pending_tasks')
         .update({ status: newStatus })
         .eq('id', taskId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Task status update error:', error);
+        throw error;
+      }
 
+      console.log('✅ Task status updated successfully');
+      
       toast({
         title: "Succes",
         description: "Taak status bijgewerkt"
       });
 
       fetchTasks();
-    } catch (error) {
-      console.error('Error updating task status:', error);
+    } catch (error: any) {
+      console.error('❌ Error updating task status:', error);
       toast({
         title: "Fout",
-        description: "Kon taak status niet bijwerken",
+        description: `Kon taak status niet bijwerken: ${error.message}`,
         variant: "destructive"
       });
     }
   };
 
   const deleteTask = async (taskId: string) => {
-    if (deletingTaskId) return; // Prevent double deletion
+    if (deletingTaskId) {
+      console.log('⏳ Delete already in progress, ignoring duplicate request');
+      return;
+    }
 
     setDeletingTaskId(taskId);
     
     try {
-      console.log('🗑️ Deleting task:', taskId);
+      console.log('🗑️ Starting task deletion process:', taskId);
+      console.log('🗑️ Organization:', selectedOrganization?.id);
+      console.log('🗑️ Workspace:', selectedWorkspace?.id);
       
-      const { error } = await supabase
+      // First verify the task exists and belongs to the organization
+      const { data: existingTask, error: checkError } = await supabase
+        .from('pending_tasks')
+        .select('id, organization_id, workspace_id, title')
+        .eq('id', taskId)
+        .single();
+
+      if (checkError) {
+        console.error('❌ Error checking task existence:', checkError);
+        throw new Error(`Taak niet gevonden: ${checkError.message}`);
+      }
+
+      if (!existingTask) {
+        throw new Error('Taak niet gevonden in database');
+      }
+
+      console.log('✅ Task found:', existingTask);
+
+      // Verify ownership
+      if (existingTask.organization_id !== selectedOrganization?.id) {
+        throw new Error('Je hebt geen rechten om deze taak te verwijderen');
+      }
+
+      // Perform the delete
+      console.log('🗑️ Proceeding with task deletion...');
+      
+      const { error: deleteError } = await supabase
         .from('pending_tasks')
         .delete()
-        .eq('id', taskId);
+        .eq('id', taskId)
+        .eq('organization_id', selectedOrganization.id); // Extra security check
 
-      if (error) {
-        console.error('Delete error:', error);
-        throw error;
+      if (deleteError) {
+        console.error('❌ Delete operation failed:', deleteError);
+        throw new Error(`Verwijderen mislukt: ${deleteError.message}`);
       }
+
+      console.log('✅ Task deleted successfully');
 
       toast({
         title: "Taak verwijderd",
-        description: "De AI actie is succesvol geannuleerd"
+        description: "De AI actie is succesvol geannuleerd",
+        variant: "default"
       });
 
-      fetchTasks();
+      // Refresh the tasks list
+      await fetchTasks();
+      
     } catch (error: any) {
-      console.error('Error deleting task:', error);
+      console.error('❌ Complete delete process failed:', error);
       toast({
-        title: "Fout",
-        description: `Kon taak niet verwijderen: ${error.message}`,
+        title: "Verwijderen mislukt",
+        description: error.message || "Onbekende fout opgetreden",
         variant: "destructive"
       });
     } finally {
       setDeletingTaskId(null);
+      console.log('🗑️ Delete process completed, clearing loading state');
     }
   };
 
@@ -287,40 +333,40 @@ export const PendingTasksManager = () => {
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case 'high':
-        return <Badge variant="destructive">Hoog</Badge>;
+        return <Badge variant="destructive" className="text-xs">Hoog</Badge>;
       case 'medium':
-        return <Badge variant="outline" className="text-orange-600">Gemiddeld</Badge>;
+        return <Badge variant="outline" className="text-orange-600 text-xs">Gemiddeld</Badge>;
       case 'low':
-        return <Badge variant="outline" className="text-green-600">Laag</Badge>;
+        return <Badge variant="outline" className="text-green-600 text-xs">Laag</Badge>;
       default:
-        return <Badge variant="outline">{priority}</Badge>;
+        return <Badge variant="outline" className="text-xs">{priority}</Badge>;
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'open':
-        return <Badge variant="outline" className="text-blue-600"><Clock className="h-3 w-3 mr-1" />Open</Badge>;
+        return <Badge variant="outline" className="text-blue-600 text-xs"><Clock className="h-3 w-3 mr-1" />Open</Badge>;
       case 'in_progress':
-        return <Badge variant="outline" className="text-orange-600">In Behandeling</Badge>;
+        return <Badge variant="outline" className="text-orange-600 text-xs">Bezig</Badge>;
       case 'completed':
-        return <Badge variant="outline" className="text-green-600"><CheckCircle className="h-3 w-3 mr-1" />Voltooid</Badge>;
+        return <Badge variant="outline" className="text-green-600 text-xs"><CheckCircle className="h-3 w-3 mr-1" />Klaar</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline" className="text-xs">{status}</Badge>;
     }
   };
 
   const getTaskTypeBadge = (taskType: string, aiGenerated: boolean) => {
     if (taskType === 'email_reply') {
       return (
-        <Badge variant="outline" className="text-blue-600">
+        <Badge variant="outline" className="text-blue-600 text-xs">
           <Mail className="h-3 w-3 mr-1" />
           E-mail
           {aiGenerated && <Sparkles className="h-3 w-3 ml-1" />}
         </Badge>
       );
     }
-    return <Badge variant="outline">{taskType}</Badge>;
+    return <Badge variant="outline" className="text-xs">{taskType}</Badge>;
   };
 
   const isOverdue = (dueDate?: string) => {
@@ -342,10 +388,10 @@ export const PendingTasksManager = () => {
 
   return (
     <>
-      <div className="space-y-6">
-        <div className="space-y-4">
+      <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 flex-1">
+            <div className="flex items-center gap-3 flex-1">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
@@ -379,7 +425,7 @@ export const PendingTasksManager = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <Button>
+              <Button size="sm">
                 <Plus className="h-4 w-4 mr-2" />
                 Nieuwe Taak
               </Button>
@@ -395,20 +441,19 @@ export const PendingTasksManager = () => {
 
         {emailTasks.length > 0 && (
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Mail className="h-5 w-5" />
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Mail className="h-4 w-4" />
                 E-mail Antwoorden ({emailTasks.length})
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid gap-2">
+            <CardContent className="pt-0">
+              <div className="space-y-2">
                 {emailTasks.map((task) => (
-                  <div key={task.id} className="border rounded-lg p-3 hover:shadow-sm transition-all bg-blue-50/50 relative">
+                  <div key={task.id} className="border rounded-lg p-3 hover:shadow-sm transition-all bg-blue-50/30 relative">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <Mail className="h-4 w-4 text-blue-600 flex-shrink-0" />
                           <h3 className="font-medium text-sm truncate">{task.title}</h3>
                           <div className="flex gap-1 flex-shrink-0">
                             {getStatusBadge(task.status)}
@@ -427,6 +472,12 @@ export const PendingTasksManager = () => {
                             <div className="flex items-center gap-1">
                               <span className="font-medium">Onderwerp:</span>
                               <span className="truncate">{task.emails.subject}</span>
+                            </div>
+                          )}
+                          {task.emails?.from_email && (
+                            <div className="flex items-center gap-1">
+                              <span className="font-medium">Van:</span>
+                              <span className="truncate">{task.emails.from_email}</span>
                             </div>
                           )}
                           {task.due_date && (
@@ -449,19 +500,40 @@ export const PendingTasksManager = () => {
                             Beantwoorden
                           </Button>
                         )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => deleteTask(task.id)}
-                          disabled={deletingTaskId === task.id}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 h-7 w-7"
-                        >
-                          {deletingTaskId === task.id ? (
-                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600"></div>
-                          ) : (
-                            <Trash2 className="h-3 w-3" />
-                          )}
-                        </Button>
+                        
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={deletingTaskId === task.id}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 h-7 w-7"
+                            >
+                              {deletingTaskId === task.id ? (
+                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600"></div>
+                              ) : (
+                                <Trash2 className="h-3 w-3" />
+                              )}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>AI Actie Annuleren</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Weet je zeker dat je deze AI e-mail actie wilt annuleren? Deze actie kan niet ongedaan worden gemaakt.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => deleteTask(task.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Verwijderen
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
 
@@ -481,14 +553,14 @@ export const PendingTasksManager = () => {
         )}
 
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <FileText className="h-5 w-5" />
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <FileText className="h-4 w-4" />
               Algemene Taken ({generalTasks.length})
             </CardTitle>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="pt-0">
             {loading ? (
               <div className="text-center py-8">Taken laden...</div>
             ) : generalTasks.length === 0 ? (
@@ -497,13 +569,12 @@ export const PendingTasksManager = () => {
                 <p>Geen algemene taken gevonden</p>
               </div>
             ) : (
-              <div className="grid gap-2">
+              <div className="space-y-2">
                 {generalTasks.map((task) => (
                   <div key={task.id} className="border rounded-lg p-3 hover:shadow-sm transition-all relative">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <FileText className="h-4 w-4 text-gray-600 flex-shrink-0" />
                           <h3 className="font-medium text-sm truncate">{task.title}</h3>
                           <div className="flex gap-1 flex-shrink-0">
                             {getStatusBadge(task.status)}
@@ -565,19 +636,39 @@ export const PendingTasksManager = () => {
                           <Eye className="h-3 w-3" />
                         </Button>
 
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => deleteTask(task.id)}
-                          disabled={deletingTaskId === task.id}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 h-7 w-7"
-                        >
-                          {deletingTaskId === task.id ? (
-                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600"></div>
-                          ) : (
-                            <Trash2 className="h-3 w-3" />
-                          )}
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={deletingTaskId === task.id}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 h-7 w-7"
+                            >
+                              {deletingTaskId === task.id ? (
+                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600"></div>
+                              ) : (
+                                <Trash2 className="h-3 w-3" />
+                              )}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Taak Verwijderen</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Weet je zeker dat je deze taak wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => deleteTask(task.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Verwijderen
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
 
@@ -661,7 +752,13 @@ const EnhancedEmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
 
     setSending(true);
     try {
-      console.log('📤 Sending email for task:', task.id);
+      console.log('📤 Starting email send process for task:', task.id);
+      console.log('📤 Email details:', {
+        to: task.reply_to_email,
+        subject: subject.substring(0, 50) + '...',
+        contentLength: content.length,
+        taskId: task.id
+      });
       
       const { data, error } = await supabase.functions.invoke('send-email-reply', {
         body: {
@@ -676,15 +773,69 @@ const EnhancedEmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
         }
       });
 
+      console.log('📤 Function response:', data);
+
       if (error) {
         console.error('❌ Function invoke error:', error);
+        
+        // Check for specific domain verification error
+        if (error.message && error.message.includes('domain is not verified')) {
+          toast({
+            title: "E-mail domein niet geverifieerd",
+            description: (
+              <div className="space-y-2">
+                <p>Het e-mail domein moet eerst worden geverifieerd.</p>
+                <p className="text-xs">Ga naar: https://resend.com/domains</p>
+                <p className="text-xs">Verifieer het domein met DNS records</p>
+              </div>
+            ),
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "E-mail verzenden mislukt",
+            description: error.message || "Onbekende fout opgetreden",
+            variant: "destructive"
+          });
+        }
         throw error;
       }
 
       if (data && !data.success) {
         console.error('❌ Function returned error:', data.error);
+        
+        // Check for domain verification in response
+        if (data.error && data.error.includes('domain is not verified')) {
+          toast({
+            title: "E-mail domein niet geverifieerd",
+            description: (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="font-medium">Domein verificatie vereist</span>
+                </div>
+                <p className="text-sm">Het e-mail domein moet worden geverifieerd:</p>
+                <ol className="text-xs list-decimal list-inside space-y-1 ml-2">
+                  <li>Ga naar: https://resend.com/domains</li>
+                  <li>Voeg je domein toe en verifieer het</li>
+                  <li>Voeg de DNS records toe aan je domein</li>
+                  <li>Wacht tot verificatie compleet is</li>
+                </ol>
+              </div>
+            ),
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "E-mail verzenden mislukt",
+            description: data.error || "Onbekende fout opgetreden",
+            variant: "destructive"
+          });
+        }
         throw new Error(data.error);
       }
+
+      console.log('✅ Email sent successfully');
 
       toast({
         title: "E-mail verzonden",
@@ -694,12 +845,8 @@ const EnhancedEmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
       onEmailSent();
       onClose();
     } catch (error: any) {
-      console.error('❌ Error sending email:', error);
-      toast({
-        title: "Fout",
-        description: error.message || "Kon e-mail niet verzenden. Controleer de configuratie.",
-        variant: "destructive"
-      });
+      console.error('❌ Complete email send process failed:', error);
+      // Error handling is done above, no need for additional toast here
     } finally {
       setSending(false);
     }
