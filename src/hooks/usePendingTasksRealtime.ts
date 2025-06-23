@@ -1,0 +1,72 @@
+
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useOrganization } from '@/contexts/OrganizationContext';
+
+export const usePendingTasksRealtime = () => {
+  const [pendingTasksCount, setPendingTasksCount] = useState(0);
+  const { selectedOrganization, selectedWorkspace } = useOrganization();
+
+  const fetchPendingTasksCount = async () => {
+    if (!selectedOrganization) {
+      setPendingTasksCount(0);
+      return;
+    }
+
+    try {
+      let query = supabase
+        .from('pending_tasks')
+        .select('id', { count: 'exact' })
+        .eq('organization_id', selectedOrganization.id)
+        .eq('status', 'open');
+
+      if (selectedWorkspace) {
+        query = query.eq('workspace_id', selectedWorkspace.id);
+      }
+
+      const { count, error } = await query;
+
+      if (error) throw error;
+
+      setPendingTasksCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching pending tasks count:', error);
+      setPendingTasksCount(0);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingTasksCount();
+  }, [selectedOrganization, selectedWorkspace]);
+
+  // Real-time subscription voor pending tasks updates
+  useEffect(() => {
+    if (!selectedOrganization) return;
+
+    console.log('📡 Setting up real-time pending tasks subscription');
+
+    const channel = supabase
+      .channel('pending-tasks-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'pending_tasks',
+          filter: `organization_id=eq.${selectedOrganization.id}`
+        },
+        (payload) => {
+          console.log('📋 Pending tasks changed:', payload);
+          fetchPendingTasksCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('📡 Cleaning up pending tasks real-time subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [selectedOrganization]);
+
+  return { pendingTasksCount, refreshCount: fetchPendingTasksCount };
+};

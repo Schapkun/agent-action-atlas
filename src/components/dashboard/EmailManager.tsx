@@ -20,7 +20,8 @@ import {
   StarOff,
   Plus,
   MailOpen,
-  RefreshCw
+  RefreshCw,
+  Clock
 } from 'lucide-react';
 
 interface Email {
@@ -336,6 +337,17 @@ export const EmailManager = () => {
     }
   };
 
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('nl-NL', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('nl-NL');
+  };
+
   const unreadCount = emails.filter(email => !email.is_read).length;
 
   return (
@@ -394,7 +406,7 @@ export const EmailManager = () => {
               <CardTitle className="text-lg flex items-center justify-between">
                 E-mail Folders
                 {unreadCount > 0 && (
-                  <Badge variant="secondary">{unreadCount}</Badge>
+                  <Badge variant="secondary">{unreadCount} nieuw</Badge>
                 )}
               </CardTitle>
             </CardHeader>
@@ -411,6 +423,7 @@ export const EmailManager = () => {
                     const folderEmails = folder.id === 'starred' 
                       ? emails.filter(e => e.is_flagged)
                       : emails.filter(e => e.folder === folder.id);
+                    const folderUnreadCount = folderEmails.filter(e => !e.is_read).length;
                     
                     return (
                       <button
@@ -424,11 +437,18 @@ export const EmailManager = () => {
                           <Icon className="h-4 w-4" />
                           <span className="text-sm">{folder.name}</span>
                         </div>
-                        {folderEmails.length > 0 && (
-                          <Badge variant="outline" className="text-xs">
-                            {folderEmails.length}
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-1">
+                          {folderUnreadCount > 0 && (
+                            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                              {folderUnreadCount}
+                            </Badge>
+                          )}
+                          {folderEmails.length > 0 && (
+                            <Badge variant="outline" className="text-xs">
+                              {folderEmails.length}
+                            </Badge>
+                          )}
+                        </div>
                       </button>
                     );
                   })}
@@ -474,6 +494,7 @@ export const EmailManager = () => {
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm text-gray-600 font-medium">Onderwerp:</span>
                             <span className={`font-medium ${!email.is_read ? 'font-bold' : ''}`}>
                               {email.subject || 'Geen onderwerp'}
                             </span>
@@ -507,8 +528,12 @@ export const EmailManager = () => {
                               <StarOff className="h-4 w-4 text-gray-400" />
                             )}
                           </button>
-                          <div className="text-xs text-gray-400">
-                            {new Date(email.received_at || email.created_at).toLocaleDateString('nl-NL')}
+                          <div className="text-xs text-gray-400 flex flex-col items-end">
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {formatTime(email.received_at || email.created_at)}
+                            </div>
+                            <div>{formatDate(email.received_at || email.created_at)}</div>
                           </div>
                         </div>
                       </div>
@@ -536,16 +561,18 @@ export const EmailManager = () => {
           setShowDetailDialog(false);
           setSelectedEmail(null);
         }}
-        onReply={() => {
+        onReply={(email) => {
+          console.log('Reply to:', email.from_email);
           toast({
             title: "Antwoorden",
-            description: "Reply functionaliteit wordt binnenkort toegevoegd..."
+            description: `Bezig met voorbereiden van antwoord naar ${email.from_email}...`
           });
         }}
-        onForward={() => {
+        onForward={(email) => {
+          console.log('Forward:', email.subject);
           toast({
             title: "Doorsturen", 
-            description: "Forward functionaliteit wordt binnenkort toegevoegd..."
+            description: `Bezig met voorbereiden van doorsturen: ${email.subject}...`
           });
         }}
       />

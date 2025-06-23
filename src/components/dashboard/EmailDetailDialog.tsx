@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +10,8 @@ import {
   Paperclip,
   Calendar,
   User,
-  Mail
+  Mail,
+  MessageSquare
 } from 'lucide-react';
 
 interface Email {
@@ -43,8 +43,8 @@ interface EmailDetailDialogProps {
   email: Email | null;
   isOpen: boolean;
   onClose: () => void;
-  onReply: () => void;
-  onForward: () => void;
+  onReply: (email: Email) => void;
+  onForward: (email: Email) => void;
 }
 
 export const EmailDetailDialog = ({ 
@@ -73,6 +73,16 @@ export const EmailDetailDialog = ({
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleReply = () => {
+    onReply(email);
+    onClose();
+  };
+
+  const handleForward = () => {
+    onForward(email);
+    onClose();
   };
 
   return (
@@ -108,11 +118,11 @@ export const EmailDetailDialog = ({
               </div>
               
               <div className="flex gap-2">
-                <Button onClick={onReply} variant="outline" size="sm">
+                <Button onClick={handleReply} variant="outline" size="sm">
                   <Reply className="h-4 w-4 mr-2" />
                   Antwoorden
                 </Button>
-                <Button onClick={onForward} variant="outline" size="sm">
+                <Button onClick={handleForward} variant="outline" size="sm">
                   <Forward className="h-4 w-4 mr-2" />
                   Doorsturen
                 </Button>
@@ -139,12 +149,11 @@ export const EmailDetailDialog = ({
                   <span className="font-medium">Ontvangen:</span>
                   <span>{formatDate(email.received_at || email.created_at)}</span>
                 </div>
-                {email.message_id && (
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <span className="font-medium">Message ID:</span>
-                    <span className="truncate">{email.message_id}</span>
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-gray-400" />
+                  <span className="font-medium">Onderwerp:</span>
+                  <span>{email.subject || 'Geen onderwerp'}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -175,42 +184,26 @@ export const EmailDetailDialog = ({
           )}
 
           {/* Email content */}
-          <ScrollArea className="h-96 w-full">
-            <div className="pr-4">
-              {email.body_html ? (
-                <div 
-                  className="prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: email.body_html }}
-                />
-              ) : (
-                <div className="whitespace-pre-wrap text-sm">
-                  {email.body_text || email.content || 'Geen inhoud beschikbaar'}
-                </div>
-              )}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-gray-400" />
+              <label className="font-medium">Bericht:</label>
             </div>
-          </ScrollArea>
-
-          {/* Technical details (collapsible) */}
-          {email.message_id && (
-            <details className="border-t pt-4">
-              <summary className="cursor-pointer text-sm font-medium text-gray-600 hover:text-gray-800">
-                Technische details
-              </summary>
-              <div className="mt-2 text-xs text-gray-500 space-y-1">
-                {email.message_id && (
-                  <div><strong>Message ID:</strong> {email.message_id}</div>
+            <ScrollArea className="h-96 w-full border rounded-lg p-4">
+              <div className="pr-4">
+                {email.body_html ? (
+                  <div 
+                    className="prose max-w-none"
+                    dangerouslySetInnerHTML={{ __html: email.body_html }}
+                  />
+                ) : (
+                  <div className="whitespace-pre-wrap text-sm">
+                    {email.body_text || email.content || 'Geen inhoud beschikbaar'}
+                  </div>
                 )}
-                {email.thread_id && (
-                  <div><strong>Thread ID:</strong> {email.thread_id}</div>
-                )}
-                {email.in_reply_to && (
-                  <div><strong>In Reply To:</strong> {email.in_reply_to}</div>
-                )}
-                <div><strong>Folder:</strong> {email.folder}</div>
-                <div><strong>Status:</strong> {email.status}</div>
               </div>
-            </details>
-          )}
+            </ScrollArea>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
