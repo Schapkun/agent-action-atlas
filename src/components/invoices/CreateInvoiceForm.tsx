@@ -1,4 +1,3 @@
-
 import { InvoiceHeader } from './InvoiceHeader';
 import { ContactSelectionCard } from './ContactSelectionCard';
 import { InvoiceDetailsCard } from './InvoiceDetailsCard';
@@ -48,6 +47,7 @@ export const CreateInvoiceForm = () => {
     getDisplayInvoiceNumber,
     getPlaceholderInvoiceNumber,
     handleContactSelectOnly,
+    handleCancel,
     handleFormSubmit,
     handleLineItemUpdate,
     handleLineItemRemove,
@@ -89,6 +89,7 @@ export const CreateInvoiceForm = () => {
         onConvertToQuote={handleConvertToQuote}
         onSubmit={handleSubmit}
         onSaveAndSend={handleSaveAndSend}
+        onCancel={handleCancel}
       />
 
       <div className="w-full px-6 max-w-none">

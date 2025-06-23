@@ -3,11 +3,13 @@ import { useState, useMemo } from 'react';
 import { useInvoiceForm } from './useInvoiceForm';
 import { useToast } from './use-toast';
 import { useSessionRecovery } from './useSessionRecovery';
+import { useNavigate } from 'react-router-dom';
 
 export const useInvoiceFormHandlers = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Session recovery
   const { isSessionRecovered, sessionData, clearSession } = useSessionRecovery('factuur');
@@ -103,6 +105,14 @@ export const useInvoiceFormHandlers = () => {
     });
   };
 
+  const handleCancel = () => {
+    // Clear all form data and session
+    clearFormData();
+    clearSession();
+    // Navigate to sent invoices
+    navigate('/facturen?status=sent');
+  };
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('✅ EXPLICIT USER ACTION: Form submitted - this will create an invoice');
@@ -115,6 +125,8 @@ export const useInvoiceFormHandlers = () => {
     handleSaveAndSend();
     // Clear session when successfully sending
     clearSession();
+    // Navigate to sent invoices after sending
+    navigate('/facturen?status=sent');
   };
 
   const handleLineItemUpdate = (index: number, field: keyof import('@/hooks/useInvoiceForm').LineItem, value: string | number) => {
@@ -159,6 +171,7 @@ export const useInvoiceFormHandlers = () => {
     getPlaceholderInvoiceNumber,
     handleContactSelectOnly,
     handleContactClear,
+    handleCancel,
     handleFormSubmit,
     handleLineItemUpdate,
     handleLineItemRemove,

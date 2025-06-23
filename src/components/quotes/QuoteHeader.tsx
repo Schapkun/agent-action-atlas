@@ -17,6 +17,7 @@ interface QuoteHeaderProps {
   onConvertToInvoice: () => void;
   onSubmit: () => void;
   onSaveAndSend: () => void;
+  onCancel?: () => void;
 }
 
 export const QuoteHeader = ({
@@ -31,9 +32,12 @@ export const QuoteHeader = ({
   onTogglePreview,
   onConvertToInvoice,
   onSubmit,
-  onSaveAndSend
+  onSaveAndSend,
+  onCancel
 }: QuoteHeaderProps) => {
   const navigate = useNavigate();
+
+  const handleCancel = onCancel || (() => navigate('/offertes?status=sent'));
 
   return (
     <div className="bg-white border-b px-4 py-2">
@@ -79,7 +83,7 @@ export const QuoteHeader = ({
         
         <Button 
           type="button" 
-          onClick={() => navigate('/offertes')}
+          onClick={handleCancel}
           variant="outline"
           size="sm"
           className="h-8"

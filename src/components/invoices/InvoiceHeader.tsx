@@ -17,6 +17,7 @@ interface InvoiceHeaderProps {
   onConvertToQuote: () => void;
   onSubmit: () => void;
   onSaveAndSend: () => void;
+  onCancel: () => void;
 }
 
 export const InvoiceHeader = ({
@@ -31,7 +32,8 @@ export const InvoiceHeader = ({
   onTogglePreview,
   onConvertToQuote,
   onSubmit,
-  onSaveAndSend
+  onSaveAndSend,
+  onCancel
 }: InvoiceHeaderProps) => {
   const navigate = useNavigate();
 
@@ -79,7 +81,7 @@ export const InvoiceHeader = ({
         
         <Button 
           type="button" 
-          onClick={() => navigate('/facturen')}
+          onClick={onCancel}
           variant="outline"
           size="sm"
           className="h-8"

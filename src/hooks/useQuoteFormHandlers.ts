@@ -1,14 +1,17 @@
+
 import { useState, useMemo } from 'react';
 import { useQuotes } from '@/hooks/useQuotes';
 import { useToast } from '@/hooks/use-toast';
 import { useSessionRecovery } from './useSessionRecovery';
 import { useQuoteForm } from './useQuoteForm';
+import { useNavigate } from 'react-router-dom';
 
 export const useQuoteFormHandlers = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
   const { createQuote } = useQuotes();
+  const navigate = useNavigate();
 
   // Session recovery for quotes
   const { isSessionRecovered, sessionData, clearSession } = useSessionRecovery('offerte');
@@ -70,6 +73,14 @@ export const useQuoteFormHandlers = () => {
     return '';
   };
 
+  const handleCancel = () => {
+    // Clear all form data and session
+    clearFormData();
+    clearSession();
+    // Navigate to sent quotes
+    navigate('/offertes?status=sent');
+  };
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Quote form submitted');
@@ -81,6 +92,8 @@ export const useQuoteFormHandlers = () => {
     console.log('Quote save and send');
     handleSaveAndSend();
     clearSession();
+    // Navigate to sent quotes after sending
+    navigate('/offertes?status=sent');
   };
 
   const handleLineItemUpdate = (index: number, field: any, value: string | number) => {
@@ -123,6 +136,7 @@ export const useQuoteFormHandlers = () => {
     getDisplayQuoteNumber,
     getPlaceholderQuoteNumber,
     handleContactSelectOnly,
+    handleCancel,
     handleFormSubmit,
     handleLineItemUpdate,
     handleLineItemRemove,

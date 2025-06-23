@@ -1,4 +1,3 @@
-
 import { QuoteHeader } from './QuoteHeader';
 import { ContactSelectionCard } from '../invoices/ContactSelectionCard';
 import { QuoteDetailsCard } from './QuoteDetailsCard';
@@ -43,6 +42,7 @@ export const CreateQuote = () => {
     getDisplayQuoteNumber,
     getPlaceholderQuoteNumber,
     handleContactSelectOnly,
+    handleCancel,
     handleFormSubmit,
     handleLineItemUpdate,
     handleLineItemRemove,
@@ -87,6 +87,7 @@ export const CreateQuote = () => {
         onConvertToInvoice={handleConvertToInvoice}
         onSubmit={handleSubmit}
         onSaveAndSend={handleSaveAndSend}
+        onCancel={handleCancel}
       />
 
       <div className="w-full px-6 max-w-none">
