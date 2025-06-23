@@ -53,7 +53,7 @@ interface PendingTask {
     is_read: boolean;
     is_flagged: boolean;
     has_attachments: boolean;
-    attachments: any[];
+    attachments: any; // Changed from any[] to any to match Json type
     folder: string;
     received_at: string;
     created_at: string;
@@ -128,7 +128,19 @@ export const PendingTasksManager = () => {
 
       console.log('📋 Pending tasks fetched:', data?.length || 0);
       console.log('📋 Tasks with email data:', data?.filter(t => t.emails).length || 0);
-      setTasks(data || []);
+      
+      // Transform the data to ensure attachments is properly handled
+      const transformedData = data?.map(task => ({
+        ...task,
+        emails: task.emails ? {
+          ...task.emails,
+          attachments: Array.isArray(task.emails.attachments) 
+            ? task.emails.attachments 
+            : (task.emails.attachments ? JSON.parse(task.emails.attachments as string) : [])
+        } : undefined
+      })) || [];
+      
+      setTasks(transformedData);
     } catch (error) {
       console.error('Error fetching pending tasks:', error);
       toast({
@@ -175,7 +187,14 @@ export const PendingTasksManager = () => {
   const handleViewEmail = (task: PendingTask) => {
     console.log('👁️ Viewing email for task:', task.id, 'email data:', !!task.emails);
     if (task.emails) {
-      setSelectedEmail(task.emails);
+      // Ensure attachments is properly formatted for the view dialog
+      const emailForView = {
+        ...task.emails,
+        attachments: Array.isArray(task.emails.attachments) 
+          ? task.emails.attachments 
+          : (task.emails.attachments ? JSON.parse(task.emails.attachments as string) : [])
+      };
+      setSelectedEmail(emailForView);
       setShowEmailViewDialog(true);
     } else {
       toast({
