@@ -58,12 +58,28 @@ export const useInvoiceFormHandlers = () => {
     setIsInvoiceNumberFocused(false);
   };
 
-  const getDisplayInvoiceNumber = () => {
-    return invoiceNumber || 'Wordt automatisch toegewezen';
+  const getDisplayInvoiceNumber = async () => {
+    if (invoiceNumber) {
+      return invoiceNumber;
+    }
+    // Show the next sequential number as placeholder
+    try {
+      const nextNumber = await getDefaultInvoiceNumber();
+      return nextNumber;
+    } catch (error) {
+      console.error('Error getting next invoice number:', error);
+      return '';
+    }
   };
 
   const getPlaceholderInvoiceNumber = async () => {
-    return 'Wordt automatisch toegewezen';
+    try {
+      const nextNumber = await getDefaultInvoiceNumber();
+      return nextNumber;
+    } catch (error) {
+      console.error('Error getting placeholder invoice number:', error);
+      return '';
+    }
   };
 
   const handleContactClear = () => {

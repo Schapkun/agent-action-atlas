@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +24,7 @@ interface ContactSelectionCardProps {
   onInvoiceNumberChange?: (value: string) => void;
   onInvoiceNumberFocus?: () => void;
   onInvoiceNumberBlur?: () => void;
-  getDisplayInvoiceNumber?: () => string;
+  getDisplayInvoiceNumber?: () => Promise<string>;
 }
 
 export const ContactSelectionCard = ({ 
@@ -45,6 +44,24 @@ export const ContactSelectionCard = ({
 }: ContactSelectionCardProps) => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [displayNumber, setDisplayNumber] = useState('');
+
+  // Load the next invoice number as placeholder
+  useEffect(() => {
+    const loadDisplayNumber = async () => {
+      if (getDisplayInvoiceNumber) {
+        try {
+          const number = await getDisplayInvoiceNumber();
+          setDisplayNumber(number);
+        } catch (error) {
+          console.error('Error loading display number:', error);
+          setDisplayNumber('');
+        }
+      }
+    };
+    
+    loadDisplayNumber();
+  }, [getDisplayInvoiceNumber, invoiceNumber]);
 
   const handleContactSaved = (newContact: any) => {
     onContactSelect(newContact);
@@ -139,11 +156,11 @@ export const ContactSelectionCard = ({
                   </Label>
                   <Input
                     id="invoice_number"
-                    value={getDisplayInvoiceNumber ? getDisplayInvoiceNumber() : invoiceNumber || ''}
+                    value={invoiceNumber || ''}
                     onChange={(e) => onInvoiceNumberChange && onInvoiceNumberChange(e.target.value)}
                     onFocus={onInvoiceNumberFocus}
                     onBlur={onInvoiceNumberBlur}
-                    placeholder="Factuurnummer"
+                    placeholder={displayNumber}
                     className="h-8 text-xs placeholder:text-xs"
                   />
                 </div>
