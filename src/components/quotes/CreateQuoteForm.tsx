@@ -59,6 +59,18 @@ export const CreateQuote = () => {
     console.log('Quote settings changed:', settings);
   };
 
+  // Create sync wrapper functions for the async functions
+  const getDisplayQuoteNumberSync = () => {
+    if (quoteNumber) {
+      return quoteNumber;
+    }
+    return ''; // Return empty string as placeholder for now
+  };
+
+  const getPlaceholderQuoteNumberSync = () => {
+    return ''; // Return empty string as placeholder for now
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <QuoteHeader
@@ -97,8 +109,8 @@ export const CreateQuote = () => {
               onInvoiceNumberChange={handleQuoteNumberChange}
               onInvoiceNumberFocus={handleQuoteNumberFocus}
               onInvoiceNumberBlur={handleQuoteNumberBlur}
-              getDisplayInvoiceNumber={getDisplayQuoteNumber}
-              getPlaceholderInvoiceNumber={getPlaceholderQuoteNumber}
+              getDisplayInvoiceNumber={getDisplayQuoteNumberSync}
+              getPlaceholderInvoiceNumber={getPlaceholderQuoteNumberSync}
               isQuote={true}
             />
           </div>
