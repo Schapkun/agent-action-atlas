@@ -1,19 +1,15 @@
 
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus } from 'lucide-react';
 import { useOrganizationSettings } from '@/hooks/useOrganizationSettings';
 
 interface InvoiceFormActionsProps {
-  onAddLineItem: () => void;
   subtotal: number;
   vatAmount: number;
   total: number;
 }
 
 export const InvoiceFormActions = ({ 
-  onAddLineItem, 
   subtotal, 
   vatAmount, 
   total 
@@ -22,23 +18,10 @@ export const InvoiceFormActions = ({
 
   return (
     <>
-      {/* Add line button */}
-      <div className="flex justify-end">
-        <Button 
-          type="button" 
-          onClick={onAddLineItem}
-          size="sm"
-          className="bg-blue-500 text-white hover:bg-blue-600 text-xs"
-        >
-          <Plus className="h-3 w-3 mr-1" />
-          Voeg regel toe
-        </Button>
-      </div>
-
       {/* Footer with payment info */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Betalingsinstructies</CardTitle>
+          <CardTitle className="text-sm">Betalingsinstructies</CardTitle>
         </CardHeader>
         <CardContent className="p-3 pt-0">
           <Textarea 

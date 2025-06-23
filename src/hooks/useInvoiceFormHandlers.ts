@@ -62,10 +62,12 @@ export const useInvoiceFormHandlers = () => {
     if (invoiceNumber) {
       return invoiceNumber;
     }
-    // Show the next sequential number as placeholder
+    // Show only the sequential number part as placeholder
     try {
       const nextNumber = await getDefaultInvoiceNumber();
-      return nextNumber;
+      // Extract only the part after the last dash (e.g., "002" from "2025-002")
+      const parts = nextNumber.split('-');
+      return parts[parts.length - 1];
     } catch (error) {
       console.error('Error getting next invoice number:', error);
       return '';
@@ -75,7 +77,9 @@ export const useInvoiceFormHandlers = () => {
   const getPlaceholderInvoiceNumber = async () => {
     try {
       const nextNumber = await getDefaultInvoiceNumber();
-      return nextNumber;
+      // Extract only the part after the last dash (e.g., "002" from "2025-002")
+      const parts = nextNumber.split('-');
+      return parts[parts.length - 1];
     } catch (error) {
       console.error('Error getting placeholder invoice number:', error);
       return '';

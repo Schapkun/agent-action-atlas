@@ -112,10 +112,10 @@ export const CreateInvoiceForm = () => {
             lineItems={lineItems}
             onUpdateLineItem={handleLineItemUpdate}
             onRemoveLineItem={handleLineItemRemove}
+            onAddLineItem={addLineItem}
           />
 
           <InvoiceFormActions
-            onAddLineItem={addLineItem}
             subtotal={subtotal}
             vatAmount={vatAmount}
             total={total}

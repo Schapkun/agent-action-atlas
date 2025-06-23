@@ -1,7 +1,7 @@
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Bold, Italic, Underline, List, Trash2 } from 'lucide-react';
+import { Bold, Italic, Underline, List, Trash2, Plus } from 'lucide-react';
 import { VatSelector } from '@/components/ui/vat-selector';
 import { LineItem } from '@/hooks/useInvoiceForm';
 
@@ -9,12 +9,14 @@ interface LineItemsTableProps {
   lineItems: LineItem[];
   onUpdateLineItem: (index: number, field: keyof LineItem, value: string | number) => void;
   onRemoveLineItem: (index: number) => void;
+  onAddLineItem: () => void;
 }
 
 export const LineItemsTable = ({
   lineItems,
   onUpdateLineItem,
-  onRemoveLineItem
+  onRemoveLineItem,
+  onAddLineItem
 }: LineItemsTableProps) => {
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, index: number) => {
@@ -308,6 +310,19 @@ export const LineItemsTable = ({
               </div>
             </div>
           ))}
+        </div>
+        
+        {/* Add line button */}
+        <div className="flex justify-end mt-4">
+          <Button 
+            type="button" 
+            onClick={onAddLineItem}
+            size="sm"
+            className="bg-blue-500 text-white hover:bg-blue-600 text-xs"
+          >
+            <Plus className="h-3 w-3 mr-1" />
+            Voeg regel toe
+          </Button>
         </div>
       </CardContent>
     </Card>
