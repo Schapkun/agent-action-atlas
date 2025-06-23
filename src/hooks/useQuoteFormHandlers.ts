@@ -55,29 +55,16 @@ export const useQuoteFormHandlers = () => {
     setIsQuoteNumberFocused(false);
   };
 
-  const getDisplayQuoteNumber = async () => {
+  // Synchronous wrapper functions for the ContactSelectionCard
+  const getDisplayQuoteNumber = () => {
     if (quoteNumber) {
       return quoteNumber;
     }
-    try {
-      const nextNumber = await getDefaultQuoteNumber();
-      const parts = nextNumber.split('-');
-      return parts[parts.length - 1];
-    } catch (error) {
-      console.error('Error getting next quote number:', error);
-      return '';
-    }
+    return ''; // Return empty string when no quote number is set
   };
 
-  const getPlaceholderQuoteNumber = async () => {
-    try {
-      const nextNumber = await getDefaultQuoteNumber();
-      const parts = nextNumber.split('-');
-      return parts[parts.length - 1];
-    } catch (error) {
-      console.error('Error getting placeholder quote number:', error);
-      return '';
-    }
+  const getPlaceholderQuoteNumber = () => {
+    return ''; // Return empty placeholder - the actual async loading happens elsewhere
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
