@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -302,10 +301,10 @@ export const InvoiceOverview = () => {
           )}
           
           <Button asChild>
-            <a href="/facturen/nieuw">
+            <Link to="/facturen/nieuw">
               <Plus className="h-4 w-4 mr-2" />
               Nieuwe Factuur
-            </a>
+            </Link>
           </Button>
         </div>
       </div>
@@ -412,9 +411,9 @@ export const InvoiceOverview = () => {
                           </Button>
                           
                           <Button size="sm" variant="outline" asChild title="Bewerken">
-                            <a href={`/facturen/nieuw?edit=${invoice.id}`}>
+                            <Link to={`/facturen/nieuw?edit=${invoice.id}`}>
                               <Edit className="h-4 w-4" />
-                            </a>
+                            </Link>
                           </Button>
                           
                           <Button 

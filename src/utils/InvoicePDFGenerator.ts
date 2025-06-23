@@ -34,14 +34,31 @@ export class InvoicePDFGenerator {
     console.log('Invoice lines count:', lines.length);
     console.log('Company info available:', !!companyInfo);
     
-    const invoiceLinesHtml = lines.map(line => `
-      <tr style="border-bottom: 1px solid #ddd;">
-        <td style="padding: 12px; border-right: 1px solid #ddd; text-align: left;">${line.description}</td>
-        <td style="padding: 12px; border-right: 1px solid #ddd; text-align: center;">${line.quantity}</td>
-        <td style="padding: 12px; border-right: 1px solid #ddd; text-align: right;">€${line.unit_price.toFixed(2)}</td>
-        <td style="padding: 12px; text-align: right;">€${line.line_total.toFixed(2)}</td>
-      </tr>
-    `).join('');
+    // Filter out text-only lines from calculations but include them in display
+    const productLines = lines.filter(line => !line.is_text_only);
+    const textOnlyLines = lines.filter(line => line.is_text_only);
+    
+    // Generate invoice lines HTML with proper handling of text-only items
+    const invoiceLinesHtml = lines.map(line => {
+      if (line.is_text_only) {
+        // Text-only line: span across all columns
+        return `
+          <tr style="border-bottom: 1px solid #ddd;">
+            <td colspan="4" style="padding: 12px; text-align: left; font-style: italic;">${line.description}</td>
+          </tr>
+        `;
+      } else {
+        // Regular product line with new column order: Aantal, Omschrijving, Prijs, BTW, Totaal
+        return `
+          <tr style="border-bottom: 1px solid #ddd;">
+            <td style="padding: 12px; border-right: 1px solid #ddd; text-align: center;">${line.quantity}</td>
+            <td style="padding: 12px; border-right: 1px solid #ddd; text-align: left;">${line.description}</td>
+            <td style="padding: 12px; border-right: 1px solid #ddd; text-align: right;">€${line.unit_price.toFixed(2)}</td>
+            <td style="padding: 12px; text-align: right;">€${line.line_total.toFixed(2)}</td>
+          </tr>
+        `;
+      }
+    }).join('');
 
     const processedHtml = html
       .replace(/{{COMPANY_NAME}}/g, companyInfo?.name || 'Uw Bedrijf')
@@ -317,10 +334,8 @@ export class InvoicePDFGenerator {
     });
   }
 
-  // UNIFIED template - used for BOTH preview and download to ensure consistency
+  // UNIFIED template - updated with new column order and text-only handling
   private static getUnifiedTemplate(): string {
-    // Main .page or .document content is centered with width 754px + 2x20px padding
-    // No margin or outer padding, all inside the .document
     return `<!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -474,8 +489,8 @@ export class InvoicePDFGenerator {
             <table>
                 <thead>
                     <tr>
-                        <th>Beschrijving</th>
                         <th>Aantal</th>
+                        <th>Omschrijving</th>
                         <th>Prijs</th>
                         <th>Totaal</th>
                     </tr>
