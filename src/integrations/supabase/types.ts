@@ -490,54 +490,129 @@ export type Database = {
           },
         ]
       }
+      email_webhooks: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          organization_id: string
+          updated_at: string
+          webhook_type: string
+          webhook_url: string
+          workspace_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          updated_at?: string
+          webhook_type?: string
+          webhook_url: string
+          workspace_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          updated_at?: string
+          webhook_type?: string
+          webhook_url?: string
+          workspace_id?: string | null
+        }
+        Relationships: []
+      }
       emails: {
         Row: {
+          attachments: Json | null
+          body_html: string | null
+          body_text: string | null
           client_id: string | null
           content: string | null
           created_at: string
           created_by: string | null
           dossier_id: string | null
+          email_references: string | null
+          folder: string | null
           from_email: string | null
           has_attachments: boolean | null
+          headers: Json | null
           id: string
+          in_reply_to: string | null
+          is_flagged: boolean | null
+          is_read: boolean | null
+          make_scenario_id: string | null
+          message_id: string | null
           organization_id: string
           priority: string
+          raw_email_data: Json | null
+          received_at: string | null
           status: string
           subject: string
+          thread_id: string | null
           to_email: string | null
           updated_at: string
           workspace_id: string | null
         }
         Insert: {
+          attachments?: Json | null
+          body_html?: string | null
+          body_text?: string | null
           client_id?: string | null
           content?: string | null
           created_at?: string
           created_by?: string | null
           dossier_id?: string | null
+          email_references?: string | null
+          folder?: string | null
           from_email?: string | null
           has_attachments?: boolean | null
+          headers?: Json | null
           id?: string
+          in_reply_to?: string | null
+          is_flagged?: boolean | null
+          is_read?: boolean | null
+          make_scenario_id?: string | null
+          message_id?: string | null
           organization_id: string
           priority?: string
+          raw_email_data?: Json | null
+          received_at?: string | null
           status?: string
           subject: string
+          thread_id?: string | null
           to_email?: string | null
           updated_at?: string
           workspace_id?: string | null
         }
         Update: {
+          attachments?: Json | null
+          body_html?: string | null
+          body_text?: string | null
           client_id?: string | null
           content?: string | null
           created_at?: string
           created_by?: string | null
           dossier_id?: string | null
+          email_references?: string | null
+          folder?: string | null
           from_email?: string | null
           has_attachments?: boolean | null
+          headers?: Json | null
           id?: string
+          in_reply_to?: string | null
+          is_flagged?: boolean | null
+          is_read?: boolean | null
+          make_scenario_id?: string | null
+          message_id?: string | null
           organization_id?: string
           priority?: string
+          raw_email_data?: Json | null
+          received_at?: string | null
           status?: string
           subject?: string
+          thread_id?: string | null
           to_email?: string | null
           updated_at?: string
           workspace_id?: string | null
