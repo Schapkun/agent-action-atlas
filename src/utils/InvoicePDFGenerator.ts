@@ -38,23 +38,23 @@ export class InvoicePDFGenerator {
     const productLines = lines.filter(line => !line.is_text_only);
     const textOnlyLines = lines.filter(line => line.is_text_only);
     
-    // Generate invoice lines HTML with proper handling of text-only items
+    // Generate invoice lines HTML with FIXED column order: Aantal, Omschrijving, Prijs, Totaal
     const invoiceLinesHtml = lines.map(line => {
       if (line.is_text_only) {
-        // Text-only line: span across all columns (3 columns now: Aantal, Omschrijving, Prijs, Totaal)
+        // Text-only line: span across all 4 columns (Aantal, Omschrijving, Prijs, Totaal)
         return `
           <tr style="border-bottom: 1px solid #ddd;">
-            <td colspan="4" style="padding: 12px; text-align: left; font-style: italic;">${line.description}</td>
+            <td colspan="4" style="padding: 12px; text-align: left; font-style: italic; color: #666;">${line.description}</td>
           </tr>
         `;
       } else {
-        // Regular product line with correct column order: Aantal, Omschrijving, Prijs, Totaal
+        // Regular product line: Aantal | Omschrijving | Prijs | Totaal (NO VAT column)
         return `
           <tr style="border-bottom: 1px solid #ddd;">
-            <td style="padding: 12px; border-right: 1px solid #ddd; text-align: center;">${line.quantity}</td>
-            <td style="padding: 12px; border-right: 1px solid #ddd; text-align: left;">${line.description}</td>
-            <td style="padding: 12px; border-right: 1px solid #ddd; text-align: right;">€${line.unit_price.toFixed(2)}</td>
-            <td style="padding: 12px; text-align: right;">€${line.line_total.toFixed(2)}</td>
+            <td style="padding: 12px; border-right: 1px solid #ddd; text-align: center; width: 10%;">${line.quantity}</td>
+            <td style="padding: 12px; border-right: 1px solid #ddd; text-align: left; width: 50%;">${line.description}</td>
+            <td style="padding: 12px; border-right: 1px solid #ddd; text-align: right; width: 20%;">€${line.unit_price.toFixed(2)}</td>
+            <td style="padding: 12px; text-align: right; width: 20%;">€${line.line_total.toFixed(2)}</td>
           </tr>
         `;
       }
@@ -334,7 +334,7 @@ export class InvoicePDFGenerator {
     });
   }
 
-  // Updated template with correct column headers: Aantal, Omschrijving, Prijs, Totaal
+  // COMPLETELY REFRESHED template with CORRECT column order: Aantal, Omschrijving, Prijs, Totaal
   private static getUnifiedTemplate(): string {
     return `<!DOCTYPE html>
 <html lang="nl">
@@ -489,10 +489,10 @@ export class InvoicePDFGenerator {
             <table>
                 <thead>
                     <tr>
-                        <th>Aantal</th>
-                        <th>Omschrijving</th>
-                        <th>Prijs</th>
-                        <th>Totaal</th>
+                        <th style="width: 10%; text-align: center;">Aantal</th>
+                        <th style="width: 50%; text-align: left;">Omschrijving</th>
+                        <th style="width: 20%; text-align: right;">Prijs</th>
+                        <th style="width: 20%; text-align: right;">Totaal</th>
                     </tr>
                 </thead>
                 <tbody>
