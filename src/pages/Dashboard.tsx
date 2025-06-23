@@ -6,14 +6,7 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       <DashboardStats />
-      
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold">AI Acties</h2>
-          <p className="text-sm text-muted-foreground">Recente geautomatiseerde acties en processen</p>
-        </div>
-        <ActionOverview limit={10} showFilters={false} />
-      </div>
+      <ActionOverview limit={10} showFilters={false} />
     </div>
   );
 };
