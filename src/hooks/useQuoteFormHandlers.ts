@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuotes } from './useQuotes';
@@ -59,7 +60,7 @@ export const useQuoteFormHandlers = () => {
     quote_date: format(new Date(), 'yyyy-MM-dd'),
     valid_until: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
     payment_terms: invoiceSettings?.default_payment_terms || 30,
-    notes: 'Deze offerte is geldig tot de genoemde datum. Na acceptatie wordt deze offerte omgezet naar een factuur.',
+    notes: '',
     vat_percentage: 21.00,
     kenmerk: '',
     referentie: ''
