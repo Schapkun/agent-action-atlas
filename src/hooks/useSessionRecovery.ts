@@ -90,15 +90,15 @@ export const useSessionRecovery = (documentType: 'factuur' | 'offerte' = 'factuu
         setSessionData(session);
         setIsSessionRecovered(true);
 
-        // Show toast notification
+        // Show toast notification with shorter duration
         const message = clientName 
-          ? `Sessie hersteld: Je was bezig met een ${documentType} voor ${clientName}`
-          : `Sessie hersteld: Je was bezig met een ${documentType}`;
+          ? `Sessie hersteld voor ${clientName}`
+          : `Sessie hersteld`;
 
         toast({
           title: "Sessie hersteld",
           description: message,
-          duration: 5000
+          duration: 2000 // Verkort van 5000 naar 2000ms
         });
       }
     };

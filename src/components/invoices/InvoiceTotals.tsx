@@ -15,15 +15,15 @@ export const InvoiceTotals = ({ subtotal, vatAmount, total }: InvoiceTotalsProps
           <div className="space-y-2 text-right">
             <div className="flex justify-between items-center text-sm">
               <span>Subtotaal:</span>
-              <span className="w-24 text-right">€ {subtotal.toFixed(2)}</span>
+              <span className="w-32 text-right whitespace-nowrap">€ {subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center text-sm">
               <span>BTW:</span>
-              <span className="w-24 text-right">€ {vatAmount.toFixed(2)}</span>
+              <span className="w-32 text-right whitespace-nowrap">€ {vatAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center text-lg font-bold text-blue-600 border-t pt-2">
               <span>Totaal:</span>
-              <span className="w-24 text-right">€ {total.toFixed(2)}</span>
+              <span className="w-32 text-right whitespace-nowrap">€ {total.toFixed(2)}</span>
             </div>
           </div>
         </CardContent>
