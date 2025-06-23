@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,7 +19,8 @@ import {
   Star,
   StarOff,
   Plus,
-  MailOpen
+  MailOpen,
+  RefreshCw
 } from 'lucide-react';
 
 interface Email {
@@ -51,6 +51,7 @@ interface Email {
 export const EmailManager = () => {
   const [emails, setEmails] = useState<Email[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFolder, setSelectedFolder] = useState('inbox');
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
@@ -117,6 +118,99 @@ export const EmailManager = () => {
       setLoading(false);
     }
   };
+
+  const refreshEmails = async () => {
+    if (!selectedOrganization) return;
+
+    setRefreshing(true);
+    try {
+      console.log('🔄 Refreshing emails...');
+      await fetchEmails();
+      toast({
+        title: "E-mails bijgewerkt",
+        description: "De e-maillijst is vernieuwd"
+      });
+    } catch (error) {
+      console.error('Error refreshing emails:', error);
+      toast({
+        title: "Fout",
+        description: "Kon e-mails niet verversen",
+        variant: "destructive"
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Real-time subscription voor nieuwe emails
+  useEffect(() => {
+    if (!selectedOrganization) return;
+
+    console.log('📡 Setting up real-time email subscription for org:', selectedOrganization.id);
+
+    const channel = supabase
+      .channel('emails-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'emails',
+          filter: `organization_id=eq.${selectedOrganization.id}`
+        },
+        (payload) => {
+          console.log('📧 New email received via real-time:', payload.new);
+          const newEmail = payload.new as Email;
+          
+          // Transform attachments
+          const transformedEmail = {
+            ...newEmail,
+            attachments: Array.isArray(newEmail.attachments) ? newEmail.attachments : []
+          };
+          
+          // Check if email matches current folder filter
+          const matchesFolder = 
+            selectedFolder === 'inbox' && transformedEmail.folder === 'inbox' ||
+            selectedFolder === 'starred' && transformedEmail.is_flagged ||
+            selectedFolder === transformedEmail.folder;
+          
+          if (matchesFolder) {
+            setEmails(prevEmails => [transformedEmail, ...prevEmails]);
+            toast({
+              title: "Nieuwe e-mail ontvangen",
+              description: `Van: ${transformedEmail.from_email}`,
+            });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'emails',
+          filter: `organization_id=eq.${selectedOrganization.id}`
+        },
+        (payload) => {
+          console.log('📧 Email updated via real-time:', payload.new);
+          const updatedEmail = payload.new as Email;
+          
+          setEmails(prevEmails => 
+            prevEmails.map(email => 
+              email.id === updatedEmail.id 
+                ? { ...updatedEmail, attachments: Array.isArray(updatedEmail.attachments) ? updatedEmail.attachments : [] }
+                : email
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('📡 Cleaning up email real-time subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [selectedOrganization, selectedFolder, toast]);
 
   useEffect(() => {
     fetchEmails();
@@ -257,6 +351,16 @@ export const EmailManager = () => {
             </div>
 
             <div className="flex items-center gap-2">
+              <Button
+                onClick={refreshEmails}
+                disabled={refreshing}
+                variant="outline"
+                size="sm"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                {refreshing ? 'Vernieuwen...' : 'Vernieuwen'}
+              </Button>
+              
               <Button onClick={handleCreateEmail}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nieuwe E-mail
