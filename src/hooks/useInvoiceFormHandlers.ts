@@ -38,17 +38,39 @@ export const useInvoiceFormHandlers = () => {
     clearFormData
   } = useInvoiceForm();
 
-  // Validation logic to check if form can be sent
+  // More flexible validation logic
   const canSend = useMemo(() => {
     // Check if contact info is filled
     const hasContactInfo = formData.client_name.trim() !== '';
     
-    // Check if at least one line item has description and price > 0
+    // Check if at least one line item has meaningful content
+    // Either: description filled OR unit_price > 0 OR quantity > 0
     const hasValidLineItem = lineItems.some(item => 
-      item.description.trim() !== '' && item.unit_price > 0
+      item.description.trim() !== '' || 
+      item.unit_price > 0 || 
+      item.quantity > 0
     );
     
     return hasContactInfo && hasValidLineItem;
+  }, [formData.client_name, lineItems]);
+
+  // Provide reason why send is disabled
+  const sendDisabledReason = useMemo(() => {
+    if (!formData.client_name.trim()) {
+      return 'Voer een klantnaam in';
+    }
+    
+    const hasValidLineItem = lineItems.some(item => 
+      item.description.trim() !== '' || 
+      item.unit_price > 0 || 
+      item.quantity > 0
+    );
+    
+    if (!hasValidLineItem) {
+      return 'Voeg minimaal één regel toe met beschrijving, prijs of aantal';
+    }
+    
+    return null;
   }, [formData.client_name, lineItems]);
 
   const togglePreview = () => setShowPreview(!showPreview);
@@ -162,6 +184,7 @@ export const useInvoiceFormHandlers = () => {
     sendLoading,
     invoiceSettings,
     canSend,
+    sendDisabledReason,
     
     // Handlers
     handleInvoiceNumberChange,

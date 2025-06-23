@@ -41,6 +41,7 @@ export const CreateInvoiceForm = () => {
     sendLoading,
     invoiceSettings,
     canSend,
+    sendDisabledReason,
     handleInvoiceNumberChange,
     handleInvoiceNumberFocus,
     handleInvoiceNumberBlur,
@@ -74,6 +75,7 @@ export const CreateInvoiceForm = () => {
         clientEmail={formData.client_email}
         showPreview={showPreview}
         canSend={canSend}
+        sendDisabledReason={sendDisabledReason}
         isSessionRecovered={isSessionRecovered}
         sessionData={sessionData}
         templateSelector={

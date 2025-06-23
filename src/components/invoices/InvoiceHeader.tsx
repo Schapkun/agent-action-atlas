@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Save, Send, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface InvoiceHeaderProps {
   loading: boolean;
@@ -10,6 +11,7 @@ interface InvoiceHeaderProps {
   clientEmail: string;
   showPreview: boolean;
   canSend: boolean;
+  sendDisabledReason?: string | null;
   templateSelector: React.ReactNode;
   isSessionRecovered?: boolean;
   sessionData?: { clientName?: string } | null;
@@ -26,6 +28,7 @@ export const InvoiceHeader = ({
   clientEmail,
   showPreview,
   canSend,
+  sendDisabledReason,
   templateSelector,
   isSessionRecovered = false,
   sessionData,
@@ -36,6 +39,18 @@ export const InvoiceHeader = ({
   onCancel
 }: InvoiceHeaderProps) => {
   const navigate = useNavigate();
+
+  const SendButton = () => (
+    <Button 
+      onClick={onSaveAndSend} 
+      disabled={sendLoading || !canSend}
+      size="sm"
+      className="bg-gray-800 hover:bg-gray-900 disabled:bg-gray-300 disabled:text-gray-500 h-8"
+    >
+      <Send className="h-4 w-4 mr-1" />
+      {sendLoading ? 'Versturen...' : 'Versturen'}
+    </Button>
+  );
 
   return (
     <div className="bg-white border-b px-4 py-2">
@@ -100,15 +115,22 @@ export const InvoiceHeader = ({
           {loading ? 'Opslaan...' : 'Opslaan als concept'}
         </Button>
         
-        <Button 
-          onClick={onSaveAndSend} 
-          disabled={sendLoading || !canSend}
-          size="sm"
-          className="bg-gray-800 hover:bg-gray-900 disabled:bg-gray-300 disabled:text-gray-500 h-8"
-        >
-          <Send className="h-4 w-4 mr-1" />
-          {sendLoading ? 'Versturen...' : 'Versturen'}
-        </Button>
+        {!canSend && sendDisabledReason ? (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <SendButton />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{sendDisabledReason}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : (
+          <SendButton />
+        )}
       </div>
     </div>
   );
