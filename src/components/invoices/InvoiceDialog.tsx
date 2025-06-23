@@ -389,15 +389,14 @@ Uw administratie`
                 </div>
               </div>
 
-              {/* Products/Services table - compact */}
+              {/* Products/Services table - compact with corrected headers */}
               <div className="bg-white rounded shadow-sm">
                 <div className="p-3 border-b">
-                  <div className="grid grid-cols-6 gap-3 text-sm font-medium text-gray-700">
+                  <div className="grid grid-cols-4 gap-3 text-sm font-medium text-gray-700">
                     <div>Aantal</div>
-                    <div className="col-span-2">Omschrijving</div>
+                    <div>Omschrijving</div>
                     <div>Prijs</div>
-                    <div>btw</div>
-                    <div>Prijs incl. btw</div>
+                    <div>Totaal</div>
                   </div>
                 </div>
 
@@ -417,7 +416,7 @@ Uw administratie`
                   ) : (
                     <div className="space-y-2">
                       {lineItems.map((item, index) => (
-                        <div key={index} className="grid grid-cols-6 gap-3 items-start">
+                        <div key={index} className="grid grid-cols-4 gap-3 items-start">
                           <div>
                             <Input
                               type="number"
@@ -427,7 +426,7 @@ Uw administratie`
                               className="text-center h-8"
                             />
                           </div>
-                          <div className="col-span-2">
+                          <div>
                             <Textarea
                               value={item.description}
                               onChange={(e) => updateLineItem(index, 'description', e.target.value)}
@@ -471,18 +470,6 @@ Uw administratie`
                                 onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
                                 className="text-right h-8"
                               />
-                            </div>
-                          </div>
-                          <div>
-                            <div className="flex items-center">
-                              <Input
-                                type="number"
-                                step="0.01"
-                                value={item.vat_rate}
-                                onChange={(e) => updateLineItem(index, 'vat_rate', parseFloat(e.target.value) || 0)}
-                                className="text-right w-12 h-8"
-                              />
-                              <span className="text-sm ml-1">%</span>
                             </div>
                           </div>
                           <div className="flex items-center justify-between">

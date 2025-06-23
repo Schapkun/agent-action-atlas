@@ -216,18 +216,18 @@ export const LineItemsTable = ({
   return (
     <Card>
       <CardHeader className="p-2">
-        <div className="grid grid-cols-10 gap-2 text-xs font-medium text-gray-700">
-          <div className="col-span-1 text-left">Aantal</div>
-          <div className="col-span-6 text-left">Omschrijving</div>
-          <div className="col-span-2 text-left">Prijs</div>
-          <div className="col-span-1 text-left">Totaal</div>
+        <div className="grid grid-cols-8 gap-2 text-xs font-medium text-gray-700">
+          <div className="col-span-1 text-center">Aantal</div>
+          <div className="col-span-4 text-left">Omschrijving</div>
+          <div className="col-span-2 text-right">Prijs</div>
+          <div className="col-span-1 text-right">Totaal</div>
         </div>
       </CardHeader>
 
       <CardContent className="p-2">
         <div className="space-y-2">
           {lineItems.map((item, index) => (
-            <div key={index} className="grid grid-cols-10 gap-2 items-start">
+            <div key={index} className="grid grid-cols-8 gap-2 items-start">
               {/* Quantity column - hidden for text-only items */}
               <div className="col-span-1">
                 {!item.is_text_only ? (
@@ -236,7 +236,7 @@ export const LineItemsTable = ({
                     step="0.01"
                     value={item.quantity}
                     onChange={(e) => onUpdateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                    className="text-left text-xs h-8"
+                    className="text-center text-xs h-8"
                   />
                 ) : (
                   <div className="h-8" />
@@ -244,7 +244,7 @@ export const LineItemsTable = ({
               </div>
               
               {/* Description column */}
-              <div className="col-span-6">
+              <div className="col-span-4">
                 <div className="space-y-1">
                   <div
                     data-description-index={index}
@@ -329,7 +329,7 @@ export const LineItemsTable = ({
                       value={item.unit_price || ''}
                       placeholder=""
                       onChange={(e) => onUpdateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                      className="text-left text-xs h-8 min-w-24"
+                      className="text-right text-xs h-8 min-w-24"
                     />
                   </div>
                 ) : (

@@ -217,20 +217,18 @@ export const InvoiceViewDialog = ({ open, onClose, invoice }: InvoiceViewDialogP
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <div className="grid grid-cols-12 gap-2 text-sm font-medium text-gray-600 border-b pb-2">
-                      <div className="col-span-5">Omschrijving</div>
-                      <div className="col-span-2 text-right">Aantal</div>
+                    <div className="grid grid-cols-8 gap-2 text-sm font-medium text-gray-600 border-b pb-2">
+                      <div className="col-span-1 text-center">Aantal</div>
+                      <div className="col-span-4 text-left">Omschrijving</div>
                       <div className="col-span-2 text-right">Prijs</div>
-                      <div className="col-span-1 text-right">BTW%</div>
-                      <div className="col-span-2 text-right">Totaal</div>
+                      <div className="col-span-1 text-right">Totaal</div>
                     </div>
                     {lines.map((line) => (
-                      <div key={line.id} className="grid grid-cols-12 gap-2 text-sm py-2 border-b">
-                        <div className="col-span-5">{line.description}</div>
-                        <div className="col-span-2 text-right">{line.quantity}</div>
+                      <div key={line.id} className="grid grid-cols-8 gap-2 text-sm py-2 border-b">
+                        <div className="col-span-1 text-center">{line.quantity}</div>
+                        <div className="col-span-4 text-left">{line.description}</div>
                         <div className="col-span-2 text-right">€{line.unit_price.toFixed(2)}</div>
-                        <div className="col-span-1 text-right">{line.vat_rate}%</div>
-                        <div className="col-span-2 text-right">€{line.line_total.toFixed(2)}</div>
+                        <div className="col-span-1 text-right">€{line.line_total.toFixed(2)}</div>
                       </div>
                     ))}
                   </div>
