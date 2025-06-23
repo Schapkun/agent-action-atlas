@@ -3,6 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
 import { EmailDraftDialog } from './EmailDraftDialog';
 import { EmailViewDialog } from './EmailViewDialog';
 import { useToast } from '@/hooks/use-toast';
@@ -18,7 +21,8 @@ import {
   Mail,
   Sparkles,
   Send,
-  Settings
+  Settings,
+  Eye
 } from 'lucide-react';
 
 interface PendingTask {
@@ -38,6 +42,8 @@ interface PendingTask {
   ai_draft_subject?: string;
   reply_to_email?: string;
   email_thread_id?: string;
+  organization_id: string;
+  workspace_id?: string;
   clients?: { name: string };
   dossiers?: { name: string };
   emails?: {
@@ -53,7 +59,7 @@ interface PendingTask {
     is_read: boolean;
     is_flagged: boolean;
     has_attachments: boolean;
-    attachments: any; // Changed from any[] to any to match Json type
+    attachments: any;
     folder: string;
     received_at: string;
     created_at: string;
@@ -68,7 +74,9 @@ export const PendingTasksManager = () => {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [taskTypeFilter, setTaskTypeFilter] = useState<string>('all');
   const [selectedEmailTask, setSelectedEmailTask] = useState<PendingTask | null>(null);
+  const [selectedEmail, setSelectedEmail] = useState<any | null>(null);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [showEmailViewDialog, setShowEmailViewDialog] = useState(false);
   const [showCombinedDialog, setShowCombinedDialog] = useState(false);
   const [selectedTaskForCombined, setSelectedTaskForCombined] = useState<PendingTask | null>(null);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
@@ -129,7 +137,6 @@ export const PendingTasksManager = () => {
       console.log('📋 Pending tasks fetched:', data?.length || 0);
       console.log('📋 Tasks with email data:', data?.filter(t => t.emails).length || 0);
       
-      // Transform the data to ensure attachments is properly handled
       const transformedData = data?.map(task => ({
         ...task,
         emails: task.emails ? {
@@ -187,7 +194,6 @@ export const PendingTasksManager = () => {
   const handleViewEmail = (task: PendingTask) => {
     console.log('👁️ Viewing email for task:', task.id, 'email data:', !!task.emails);
     if (task.emails) {
-      // Ensure attachments is properly formatted for the view dialog
       const emailForView = {
         ...task.emails,
         attachments: Array.isArray(task.emails.attachments) 
@@ -206,7 +212,7 @@ export const PendingTasksManager = () => {
   };
 
   const handleEmailSent = () => {
-    fetchTasks(); // Refresh tasks after email is sent
+    fetchTasks();
   };
 
   const handleManageTask = (task: PendingTask) => {
@@ -336,7 +342,6 @@ export const PendingTasksManager = () => {
           )}
         </div>
 
-        {/* E-mail Taken */}
         {emailTasks.length > 0 && (
           <Card>
             <CardHeader>
@@ -381,7 +386,6 @@ export const PendingTasksManager = () => {
                           </p>
                         )}
 
-                        {/* Email info */}
                         {task.emails && (
                           <div className="text-sm text-gray-600 mb-2">
                             <strong>Van:</strong> {task.emails.from_email} | 
@@ -425,7 +429,6 @@ export const PendingTasksManager = () => {
           </Card>
         )}
 
-        {/* Algemene Taken */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -527,7 +530,6 @@ export const PendingTasksManager = () => {
         onEmailSent={handleEmailSent}
       />
 
-      {/* Combined Email Management Dialog */}
       {selectedTaskForCombined && (
         <EmailManagementDialog
           task={selectedTaskForCombined}
@@ -552,7 +554,6 @@ export const PendingTasksManager = () => {
   );
 };
 
-// New combined email management dialog component
 const EmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
   task: PendingTask;
   isOpen: boolean;
@@ -634,7 +635,6 @@ const EmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
         </DialogHeader>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-          {/* Originele Email */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Originele E-mail</h3>
             {task.emails ? (
@@ -660,7 +660,6 @@ const EmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
             )}
           </div>
 
-          {/* AI Concept Reactie */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">AI Concept Reactie</h3>
             
