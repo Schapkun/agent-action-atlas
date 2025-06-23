@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -15,9 +14,6 @@ function sanitizeContent(content: string): string {
   return content
     .replace(/\r\n/g, '\n')  // Normalize line endings
     .replace(/\r/g, '\n')    // Convert remaining \r to \n
-    .replace(/\t/g, ' ')     // Convert tabs to spaces
-    .replace(/"/g, '"')      // Escape quotes
-    .replace(/\\/g, '\\\\')  // Escape backslashes
     .trim();
 }
 
@@ -25,12 +21,13 @@ function sanitizeContent(content: string): string {
 async function safeParseEmailData(req: Request) {
   const rawBody = await req.text();
   console.log('📧 Raw request body length:', rawBody.length);
+  console.log('📧 Raw request body preview:', rawBody.substring(0, 500));
   
   try {
     // Try direct JSON parsing first
     return JSON.parse(rawBody);
   } catch (parseError) {
-    console.log('⚠️ Direct JSON parse failed, attempting data cleaning...', parseError.message);
+    console.log('⚠️ Direct JSON parse failed, attempting data cleanup...', parseError.message);
     
     try {
       // Try to clean and parse again
@@ -38,9 +35,7 @@ async function safeParseEmailData(req: Request) {
         .replace(/\r\n/g, '\\n')
         .replace(/\r/g, '\\n')
         .replace(/\n/g, '\\n')
-        .replace(/\t/g, '\\t')
-        .replace(/"/g, '\\"')
-        .replace(/\\/g, '\\\\');
+        .replace(/\t/g, '\\t');
         
       console.log('📧 Attempting to parse cleaned body...');
       return JSON.parse(cleanedBody);
@@ -71,6 +66,17 @@ async function safeParseEmailData(req: Request) {
         const messageIdMatch = rawBody.match(/"message_id"\s*:\s*"([^"]+)"/);
         if (messageIdMatch) emailData.message_id = messageIdMatch[1];
         
+        // Extract text content - improved extraction
+        const textMatch = rawBody.match(/"text"\s*:\s*"((?:[^"\\]|\\.)*)"/s);
+        if (textMatch) {
+          emailData.text = textMatch[1]
+            .replace(/\\n/g, '\n')
+            .replace(/\\r/g, '\r')
+            .replace(/\\t/g, '\t')
+            .replace(/\\"/g, '"')
+            .replace(/\\\\/g, '\\');
+        }
+        
         console.log('📧 Manual extraction result:', emailData);
         return emailData;
       } catch (manualError) {
@@ -100,7 +106,8 @@ serve(async (req) => {
       from_email: emailData.from_email || emailData.from,
       subject: emailData.subject,
       has_text: !!(emailData.text || emailData.content || emailData.body_text),
-      has_html: !!(emailData.body_html || emailData.html)
+      has_html: !!(emailData.body_html || emailData.html),
+      text_preview: (emailData.text || '').substring(0, 100)
     });
 
     // Valideer verplichte velden
@@ -128,7 +135,7 @@ serve(async (req) => {
                    (emailData.headers && emailData.headers.subject) ||
                    'No Subject';
 
-    // Multiple content sources with sanitization
+    // Multiple content sources with improved sanitization
     let content = '';
     const contentSources = [
       emailData.text,
@@ -141,7 +148,7 @@ serve(async (req) => {
     for (const source of contentSources) {
       if (source && typeof source === 'string' && source.trim()) {
         content = sanitizeContent(source);
-        break;
+        if (content.length > 0) break; // Stop when we find valid content
       }
     }
 
@@ -158,6 +165,7 @@ serve(async (req) => {
       to: toEmail,
       subject: subject,
       content_length: content.length,
+      content_preview: content.substring(0, 100),
       has_html: !!sanitizedBodyHtml
     });
 
@@ -284,6 +292,7 @@ serve(async (req) => {
           to: toEmail,
           subject: subject,
           content_length: content.length,
+          content_preview: content.substring(0, 100),
           has_html: !!sanitizedBodyHtml
         }
       }),
