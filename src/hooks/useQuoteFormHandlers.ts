@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react';
 import { useQuotes } from '@/hooks/useQuotes';
 import { useToast } from '@/hooks/use-toast';
@@ -40,6 +41,45 @@ export const useQuoteFormHandlers = () => {
     return formData.client_name.trim() !== '' && lineItems.length > 0;
   }, [formData.client_name, lineItems]);
 
+  const togglePreview = () => setShowPreview(!showPreview);
+
+  const handleQuoteNumberChange = (value: string) => {
+    setQuoteNumber(value);
+  };
+
+  const handleQuoteNumberFocus = () => {
+    setIsQuoteNumberFocused(true);
+  };
+
+  const handleQuoteNumberBlur = () => {
+    setIsQuoteNumberFocused(false);
+  };
+
+  const getDisplayQuoteNumber = async () => {
+    if (quoteNumber) {
+      return quoteNumber;
+    }
+    try {
+      const nextNumber = await getDefaultQuoteNumber();
+      const parts = nextNumber.split('-');
+      return parts[parts.length - 1];
+    } catch (error) {
+      console.error('Error getting next quote number:', error);
+      return '';
+    }
+  };
+
+  const getPlaceholderQuoteNumber = async () => {
+    try {
+      const nextNumber = await getDefaultQuoteNumber();
+      const parts = nextNumber.split('-');
+      return parts[parts.length - 1];
+    } catch (error) {
+      console.error('Error getting placeholder quote number:', error);
+      return '';
+    }
+  };
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Quote form submitted');
@@ -47,10 +87,23 @@ export const useQuoteFormHandlers = () => {
     clearSession();
   };
 
-  const handleSaveAndSend = () => {
+  const handleSaveAndSendAction = () => {
     console.log('Quote save and send');
     handleSaveAndSend();
     clearSession();
+  };
+
+  const handleLineItemUpdate = (index: number, field: any, value: string | number) => {
+    updateLineItem(index, field, value);
+  };
+
+  const handleLineItemRemove = (index: number) => {
+    removeLineItem(index);
+  };
+
+  const handleConvertToInvoice = () => {
+    console.log('Convert quote to invoice');
+    // Implementation would go here
   };
 
   return {
@@ -58,6 +111,7 @@ export const useQuoteFormHandlers = () => {
     setShowSettings,
     showPreview,
     setShowPreview,
+    togglePreview,
     isSessionRecovered,
     sessionData,
     clearSession,
@@ -71,14 +125,21 @@ export const useQuoteFormHandlers = () => {
     setIsQuoteNumberFocused,
     loading,
     sendLoading,
-    quoteSettings,
-    getDefaultQuoteNumber,
+    invoiceSettings: quoteSettings, // Alias for compatibility
+    canSend,
+    handleQuoteNumberChange,
+    handleQuoteNumberFocus,
+    handleQuoteNumberBlur,
+    getDisplayQuoteNumber,
+    getPlaceholderQuoteNumber,
     handleContactSelectOnly,
-    updateLineItem,
+    handleFormSubmit,
+    handleLineItemUpdate,
+    handleLineItemRemove,
     addLineItem,
-    removeLineItem,
     calculateTotals,
+    handleConvertToInvoice,
     handleSubmit,
-    handleSaveAndSend
+    handleSaveAndSend: handleSaveAndSendAction
   };
 };

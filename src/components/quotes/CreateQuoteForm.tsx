@@ -20,12 +20,14 @@ export const CreateQuote = () => {
     handleTemplateSelect
   } = useQuoteTemplateManager();
 
-  // Form handlers with preview functionality
+  // Form handlers with preview functionality and session recovery
   const {
     showSettings,
     setShowSettings,
     showPreview,
     togglePreview,
+    isSessionRecovered,
+    sessionData,
     formData,
     setFormData,
     lineItems,
@@ -65,6 +67,8 @@ export const CreateQuote = () => {
         clientEmail={formData.client_email}
         showPreview={showPreview}
         canSend={canSend}
+        isSessionRecovered={isSessionRecovered}
+        sessionData={sessionData}
         templateSelector={
           <QuoteTemplateSelector
             selectedTemplate={selectedTemplate}
@@ -81,33 +85,37 @@ export const CreateQuote = () => {
 
       <div className="w-full px-6 max-w-none">
         <form onSubmit={handleFormSubmit} className="space-y-6 pt-6">
-          <ContactSelectionCard
-            selectedContact={selectedContact}
-            formData={formData}
-            invoiceNumber={quoteNumber}
-            invoiceSettings={invoiceSettings}
-            onContactSelect={handleContactSelectOnly}
-            onShowSettings={() => setShowSettings(true)}
-            onFormDataChange={(updates) => setFormData({ ...formData, ...updates })}
-            onInvoiceNumberChange={handleQuoteNumberChange}
-            onInvoiceNumberFocus={handleQuoteNumberFocus}
-            onInvoiceNumberBlur={handleQuoteNumberBlur}
-            getDisplayInvoiceNumber={getDisplayQuoteNumber}
-            getPlaceholderInvoiceNumber={getPlaceholderQuoteNumber}
-            isQuote={true}
-          />
+          <div className={isSessionRecovered ? 'ring-2 ring-orange-200 rounded-lg' : ''}>
+            <ContactSelectionCard
+              selectedContact={selectedContact}
+              formData={formData}
+              invoiceNumber={quoteNumber}
+              invoiceSettings={invoiceSettings}
+              onContactSelect={handleContactSelectOnly}
+              onShowSettings={() => setShowSettings(true)}
+              onFormDataChange={(updates) => setFormData({ ...formData, ...updates })}
+              onInvoiceNumberChange={handleQuoteNumberChange}
+              onInvoiceNumberFocus={handleQuoteNumberFocus}
+              onInvoiceNumberBlur={handleQuoteNumberBlur}
+              getDisplayInvoiceNumber={getDisplayQuoteNumber}
+              getPlaceholderInvoiceNumber={getPlaceholderQuoteNumber}
+              isQuote={true}
+            />
+          </div>
 
           <QuoteDetailsCard
             formData={formData}
             onFormDataChange={(updates) => setFormData({ ...formData, ...updates })}
           />
 
-          <LineItemsTable
-            lineItems={lineItems}
-            onUpdateLineItem={handleLineItemUpdate}
-            onRemoveLineItem={handleLineItemRemove}
-            onAddLineItem={addLineItem}
-          />
+          <div className={lineItems.some(item => item.description || item.unit_price > 0) && isSessionRecovered ? 'ring-2 ring-orange-200 rounded-lg' : ''}>
+            <LineItemsTable
+              lineItems={lineItems}
+              onUpdateLineItem={handleLineItemUpdate}
+              onRemoveLineItem={handleLineItemRemove}
+              onAddLineItem={addLineItem}
+            />
+          </div>
 
           <QuoteFormActions
             subtotal={subtotal}
