@@ -1,4 +1,3 @@
-
 import { QuoteHeader } from './QuoteHeader';
 import { ContactSelectionCard } from '../invoices/ContactSelectionCard';
 import { QuoteDetailsCard } from './QuoteDetailsCard';
@@ -92,6 +91,7 @@ export const CreateQuote = () => {
             onInvoiceNumberFocus={handleQuoteNumberFocus}
             onInvoiceNumberBlur={handleQuoteNumberBlur}
             getDisplayInvoiceNumber={getDisplayQuoteNumber}
+            isQuote={true}
           />
 
           <QuoteDetailsCard

@@ -25,6 +25,8 @@ interface ContactSelectionCardProps {
   onInvoiceNumberFocus?: () => void;
   onInvoiceNumberBlur?: () => void;
   getDisplayInvoiceNumber?: () => Promise<string>;
+  // New prop to determine if this is for quotes
+  isQuote?: boolean;
 }
 
 export const ContactSelectionCard = ({ 
@@ -40,13 +42,14 @@ export const ContactSelectionCard = ({
   onInvoiceNumberChange,
   onInvoiceNumberFocus,
   onInvoiceNumberBlur,
-  getDisplayInvoiceNumber
+  getDisplayInvoiceNumber,
+  isQuote = false
 }: ContactSelectionCardProps) => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [displayNumber, setDisplayNumber] = useState('');
 
-  // Load the next invoice number as placeholder
+  // Load the next invoice/quote number as placeholder
   useEffect(() => {
     const loadDisplayNumber = async () => {
       if (getDisplayInvoiceNumber) {
@@ -94,13 +97,23 @@ export const ContactSelectionCard = ({
   const handlePaymentTermsChange = (days: string) => {
     if (onFormDataChange && formData) {
       const daysNumber = parseInt(days) || 14;
-      const newDueDate = format(addDays(new Date(formData.invoice_date || new Date()), daysNumber), 'yyyy-MM-dd');
+      const dateField = isQuote ? 'quote_date' : 'invoice_date';
+      const currentDate = formData[dateField] || new Date();
+      const dueDateField = isQuote ? 'valid_until' : 'due_date';
+      const newDueDate = format(addDays(new Date(currentDate), daysNumber), 'yyyy-MM-dd');
       onFormDataChange({ 
         payment_terms: daysNumber,
-        due_date: newDueDate
+        [dueDateField]: newDueDate
       });
     }
   };
+
+  // Dynamic labels based on isQuote prop
+  const numberLabel = isQuote ? 'Offertenummer' : 'Factuurnummer';
+  const dateLabel = isQuote ? 'Offertedatum' : 'Factuurdatum';
+  const dueDateLabel = isQuote ? 'Geldig tot' : 'Vervaldatum';
+  const dateField = isQuote ? 'quote_date' : 'invoice_date';
+  const dueDateField = isQuote ? 'valid_until' : 'due_date';
 
   return (
     <>
@@ -147,21 +160,21 @@ export const ContactSelectionCard = ({
               </div>
             </div>
 
-            {/* Invoice details - only show if formData is provided */}
+            {/* Invoice/Quote details - only show if formData is provided */}
             {formData && onFormDataChange && (
               <div className="flex items-start gap-3">
                 <div className="w-32 flex flex-col">
-                  <Label htmlFor="invoice_number" className="text-xs block mb-1">
-                    Factuurnummer
+                  <Label htmlFor="document_number" className="text-xs block mb-1">
+                    {numberLabel}
                   </Label>
                   <Input
-                    id="invoice_number"
+                    id="document_number"
                     value={invoiceNumber || ''}
                     onChange={(e) => onInvoiceNumberChange && onInvoiceNumberChange(e.target.value)}
                     onFocus={onInvoiceNumberFocus}
                     onBlur={onInvoiceNumberBlur}
                     placeholder={displayNumber}
-                    className="h-8 text-xs placeholder:text-xs"
+                    className="h-8 text-xs placeholder:text-xs bg-gray-100"
                   />
                 </div>
                 <div className="w-32 flex flex-col">
@@ -179,26 +192,26 @@ export const ContactSelectionCard = ({
                   />
                 </div>
                 <div className="w-32 flex flex-col">
-                  <Label htmlFor="invoice_date" className="text-xs block mb-1">
-                    Factuurdatum
+                  <Label htmlFor="document_date" className="text-xs block mb-1">
+                    {dateLabel}
                   </Label>
                   <Input
-                    id="invoice_date"
+                    id="document_date"
                     type="date"
-                    value={formData.invoice_date || format(new Date(), 'yyyy-MM-dd')}
-                    onChange={(e) => onFormDataChange({ invoice_date: e.target.value })}
+                    value={formData[dateField] || format(new Date(), 'yyyy-MM-dd')}
+                    onChange={(e) => onFormDataChange({ [dateField]: e.target.value })}
                     className="h-8 text-xs"
                   />
                 </div>
                 <div className="w-32 flex flex-col">
                   <Label htmlFor="due_date" className="text-xs block mb-1">
-                    Vervaldatum
+                    {dueDateLabel}
                   </Label>
                   <Input
                     id="due_date"
                     type="date"
-                    value={formData.due_date || format(addDays(new Date(), formData.payment_terms || 14), 'yyyy-MM-dd')}
-                    onChange={(e) => onFormDataChange({ due_date: e.target.value })}
+                    value={formData[dueDateField] || format(addDays(new Date(), formData.payment_terms || 14), 'yyyy-MM-dd')}
+                    onChange={(e) => onFormDataChange({ [dueDateField]: e.target.value })}
                     className="h-8 text-xs"
                   />
                 </div>
