@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -46,6 +45,8 @@ interface Email {
   dossier_id?: string;
   message_id?: string;
   thread_id?: string;
+  in_reply_to?: string;
+  email_references?: string;
 }
 
 export const EmailManager = () => {
@@ -98,7 +99,14 @@ export const EmailManager = () => {
       if (error) throw error;
 
       console.log('📧 Emails fetched:', data?.length || 0);
-      setEmails(data || []);
+      
+      // Transform Supabase data to match our Email interface
+      const transformedEmails: Email[] = (data || []).map(email => ({
+        ...email,
+        attachments: Array.isArray(email.attachments) ? email.attachments : []
+      }));
+
+      setEmails(transformedEmails);
     } catch (error) {
       console.error('Error fetching emails:', error);
       toast({

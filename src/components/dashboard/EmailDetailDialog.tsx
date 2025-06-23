@@ -35,6 +35,8 @@ interface Email {
   dossier_id?: string;
   message_id?: string;
   thread_id?: string;
+  in_reply_to?: string;
+  email_references?: string;
 }
 
 interface EmailDetailDialogProps {

@@ -25,6 +25,8 @@ interface Email {
   dossier_id?: string;
   message_id?: string;
   thread_id?: string;
+  in_reply_to?: string;
+  email_references?: string;
 }
 
 export const useEmailManager = () => {
@@ -70,8 +72,15 @@ export const useEmailManager = () => {
       if (error) throw error;
 
       console.log('📧 Emails loaded:', data?.length || 0);
-      setEmails(data || []);
-      return data || [];
+      
+      // Transform Supabase data to match our Email interface
+      const transformedEmails: Email[] = (data || []).map(email => ({
+        ...email,
+        attachments: Array.isArray(email.attachments) ? email.attachments : []
+      }));
+
+      setEmails(transformedEmails);
+      return transformedEmails;
     } catch (error: any) {
       console.error('❌ Email fetch error:', error);
       toast({
