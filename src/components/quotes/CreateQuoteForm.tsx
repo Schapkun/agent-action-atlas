@@ -35,6 +35,10 @@ export const CreateQuote = () => {
     sendLoading,
     invoiceSettings,
     canSend,
+    handleQuoteNumberChange,
+    handleQuoteNumberFocus,
+    handleQuoteNumberBlur,
+    getDisplayQuoteNumber,
     handleContactSelectOnly,
     handleFormSubmit,
     handleLineItemUpdate,
@@ -75,16 +79,23 @@ export const CreateQuote = () => {
       />
 
       <div className="w-full px-6 max-w-none">
-        <form onSubmit={handleFormSubmit} className="space-y-2">
+        <form onSubmit={handleFormSubmit} className="space-y-6 pt-6">
           <ContactSelectionCard
             selectedContact={selectedContact}
+            formData={formData}
+            invoiceNumber={quoteNumber}
+            invoiceSettings={invoiceSettings}
             onContactSelect={handleContactSelectOnly}
             onShowSettings={() => setShowSettings(true)}
+            onFormDataChange={(updates) => setFormData({ ...formData, ...updates })}
+            onInvoiceNumberChange={handleQuoteNumberChange}
+            onInvoiceNumberFocus={handleQuoteNumberFocus}
+            onInvoiceNumberBlur={handleQuoteNumberBlur}
+            getDisplayInvoiceNumber={getDisplayQuoteNumber}
           />
 
           <QuoteDetailsCard
             formData={formData}
-            quoteNumber={quoteNumber}
             onFormDataChange={(updates) => setFormData({ ...formData, ...updates })}
           />
 
@@ -99,8 +110,6 @@ export const CreateQuote = () => {
             subtotal={subtotal}
             vatAmount={vatAmount}
             total={total}
-            notes={formData.notes}
-            onNotesChange={(notes) => setFormData({ ...formData, notes })}
           />
 
           <QuoteTotals

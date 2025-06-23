@@ -5,7 +5,7 @@ import { useQuotes } from './useQuotes';
 import { useInvoices } from './useInvoices';
 import { useInvoiceSettings } from './useInvoiceSettings';
 import { useToast } from './use-toast';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { LineItem } from '@/types/invoiceTypes';
 
 interface QuoteFormData {
@@ -17,8 +17,11 @@ interface QuoteFormData {
   client_country: string;
   quote_date: string;
   valid_until: string;
+  payment_terms: number;
   notes: string;
   vat_percentage: number;
+  kenmerk: string;
+  referentie: string;
 }
 
 interface Contact {
@@ -45,6 +48,7 @@ export const useQuoteFormHandlers = () => {
   const [sendLoading, setSendLoading] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [quoteNumber, setQuoteNumber] = useState('');
+  const [isQuoteNumberFocused, setIsQuoteNumberFocused] = useState(false);
   
   const [formData, setFormData] = useState<QuoteFormData>({
     client_name: '',
@@ -54,9 +58,12 @@ export const useQuoteFormHandlers = () => {
     client_city: '',
     client_country: 'Nederland',
     quote_date: format(new Date(), 'yyyy-MM-dd'),
-    valid_until: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+    valid_until: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
+    payment_terms: invoiceSettings?.default_payment_terms || 30,
     notes: 'Deze offerte is geldig tot de genoemde datum. Na acceptatie wordt deze offerte omgezet naar een factuur.',
-    vat_percentage: 21.00
+    vat_percentage: 21.00,
+    kenmerk: '',
+    referentie: ''
   });
 
   const [lineItems, setLineItems] = useState<LineItem[]>([
@@ -94,6 +101,34 @@ export const useQuoteFormHandlers = () => {
 
   const togglePreview = () => {
     setShowPreview(!showPreview);
+  };
+
+  const handleQuoteNumberChange = (value: string) => {
+    setQuoteNumber(value);
+  };
+
+  const handleQuoteNumberFocus = () => {
+    setIsQuoteNumberFocused(true);
+  };
+
+  const handleQuoteNumberBlur = () => {
+    setIsQuoteNumberFocused(false);
+  };
+
+  const getDisplayQuoteNumber = async () => {
+    if (quoteNumber) {
+      return quoteNumber;
+    }
+    // Show only the sequential number part as placeholder
+    try {
+      const nextNumber = await generateQuoteNumber();
+      // Extract only the part after the last dash (e.g., "002" from "2025-002")
+      const parts = nextNumber.split('-');
+      return parts[parts.length - 1];
+    } catch (error) {
+      console.error('Error getting next quote number:', error);
+      return '';
+    }
   };
 
   const handleContactSelectOnly = (contact: Contact | null) => {
@@ -185,8 +220,7 @@ export const useQuoteFormHandlers = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setLoading(true);
 
     try {
@@ -233,23 +267,36 @@ export const useQuoteFormHandlers = () => {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Prevent default form submission
+    console.log('✅ EXPLICIT USER ACTION: Form submitted - this will create a quote');
+    handleSubmit();
   };
 
   return {
+    // State
     showSettings,
     setShowSettings,
     showPreview,
     togglePreview,
+    
+    // Form data
     formData,
     setFormData,
     lineItems,
     selectedContact,
     quoteNumber,
+    setQuoteNumber,
+    isQuoteNumberFocused,
+    setIsQuoteNumberFocused,
     loading,
     sendLoading,
     invoiceSettings,
     canSend,
+    
+    // Handlers
+    handleQuoteNumberChange,
+    handleQuoteNumberFocus,
+    handleQuoteNumberBlur,
+    getDisplayQuoteNumber,
     handleContactSelectOnly,
     handleFormSubmit,
     handleLineItemUpdate,
