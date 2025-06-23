@@ -9,7 +9,6 @@ import {
   User, 
   X,
   Star,
-  StarOff,
   Paperclip,
   MessageSquare,
   Reply,
@@ -87,7 +86,6 @@ export const EmailViewDialog = ({ email, isOpen, onClose, onReply, onForward }: 
     }
   };
 
-  // Bepaal welke content te tonen
   const emailContent = email.body_html || email.content || email.body_text || 'Geen inhoud beschikbaar';
   const isHtmlContent = !!email.body_html;
 
@@ -109,13 +107,12 @@ export const EmailViewDialog = ({ email, isOpen, onClose, onReply, onForward }: 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
-            Onderwerp: {email.subject || 'Geen onderwerp'}
+            {email.subject || 'Geen onderwerp'}
             {email.is_flagged && <Star className="h-4 w-4 text-yellow-500 fill-current" />}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Email metadata */}
           <div className="bg-gray-50 p-4 rounded-lg space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -168,7 +165,6 @@ export const EmailViewDialog = ({ email, isOpen, onClose, onReply, onForward }: 
             </div>
           </div>
 
-          {/* Email content */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4 text-gray-500" />
@@ -188,7 +184,6 @@ export const EmailViewDialog = ({ email, isOpen, onClose, onReply, onForward }: 
             </ScrollArea>
           </div>
 
-          {/* Attachments */}
           {email.has_attachments && email.attachments && email.attachments.length > 0 && (
             <div className="space-y-2">
               <label className="text-sm font-medium">Bijlagen</label>
@@ -206,7 +201,6 @@ export const EmailViewDialog = ({ email, isOpen, onClose, onReply, onForward }: 
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex justify-end gap-2 pt-4 border-t">
             <Button onClick={onClose} variant="outline">
               <X className="h-4 w-4 mr-2" />

@@ -3,9 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { usePendingTasksRealtime } from '@/hooks/usePendingTasksRealtime';
 import { 
   LayoutDashboard, 
-  Activity, 
   FileText, 
   Settings, 
   ChevronLeft,
@@ -32,18 +32,17 @@ interface SidebarProps {
   currentView: ViewType;
   collapsed: boolean;
   onToggleCollapse: () => void;
-  pendingTasksCount?: number;
 }
 
 export const Sidebar = ({ 
   currentView, 
   collapsed, 
-  onToggleCollapse,
-  pendingTasksCount = 0 
+  onToggleCollapse
 }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+  const { pendingTasksCount } = usePendingTasksRealtime();
 
   // Auto-expand submenu's based on current route and auto-collapse others
   useEffect(() => {

@@ -13,12 +13,10 @@ import {
   Search, 
   Mail, 
   Folder, 
-  Eye,
   Reply,
   Forward,
   Trash2,
   Star,
-  StarOff,
   Plus,
   MailOpen,
   RefreshCw,
@@ -232,7 +230,6 @@ export const EmailManager = () => {
     setSelectedEmail(email);
     setShowDetailDialog(true);
     
-    // Markeer als gelezen
     if (!email.is_read) {
       markAsRead(email.id);
     }
@@ -536,7 +533,7 @@ export const EmailManager = () => {
                             {email.is_flagged ? (
                               <Star className="h-4 w-4 text-yellow-500 fill-current" />
                             ) : (
-                              <StarOff className="h-4 w-4 text-gray-400" />
+                              <Star className="h-4 w-4 text-gray-400" />
                             )}
                           </button>
                           <div className="text-xs text-gray-400 flex flex-col items-end">

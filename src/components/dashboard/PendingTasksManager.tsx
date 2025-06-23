@@ -7,7 +7,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { EmailDraftDialog } from './EmailDraftDialog';
-import { EmailViewDialog } from './EmailViewDialog';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -74,9 +73,7 @@ export const PendingTasksManager = () => {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [taskTypeFilter, setTaskTypeFilter] = useState<string>('all');
   const [selectedEmailTask, setSelectedEmailTask] = useState<PendingTask | null>(null);
-  const [selectedEmail, setSelectedEmail] = useState<any | null>(null);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
-  const [showEmailViewDialog, setShowEmailViewDialog] = useState(false);
   const [showCombinedDialog, setShowCombinedDialog] = useState(false);
   const [selectedTaskForCombined, setSelectedTaskForCombined] = useState<PendingTask | null>(null);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
@@ -388,8 +385,7 @@ export const PendingTasksManager = () => {
 
                         {task.emails && (
                           <div className="text-sm text-gray-600 mb-2">
-                            <strong>Van:</strong> {task.emails.from_email} | 
-                            <strong> Onderwerp:</strong> {task.emails.subject}
+                            <strong>Van:</strong> {task.emails.from_email}
                           </div>
                         )}
                         
@@ -527,7 +523,7 @@ export const PendingTasksManager = () => {
           setShowEmailDialog(false);
           setSelectedEmailTask(null);
         }}
-        onEmailSent={handleEmailSent}
+        onEmailSent={() => fetchTasks()}
       />
 
       {selectedTaskForCombined && (
@@ -538,18 +534,9 @@ export const PendingTasksManager = () => {
             setShowCombinedDialog(false);
             setSelectedTaskForCombined(null);
           }}
-          onEmailSent={handleEmailSent}
+          onEmailSent={() => fetchTasks()}
         />
       )}
-
-      <EmailViewDialog
-        email={selectedEmail}
-        isOpen={showEmailViewDialog}
-        onClose={() => {
-          setShowEmailViewDialog(false);
-          setSelectedEmail(null);
-        }}
-      />
     </>
   );
 };
