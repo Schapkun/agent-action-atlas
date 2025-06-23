@@ -184,17 +184,16 @@ export const ContactSelectionCard = ({
                     <div className="bg-gray-100 border border-gray-300 border-r-0 px-2 h-8 flex items-center text-xs text-black rounded-l">
                       {displayPrefix}
                     </div>
-                    {/* Sequential number input - show as placeholder for drafts */}
+                    {/* Sequential number input - editable with placeholder */}
                     <Input
                       id="document_number"
                       value={invoiceNumber || ''}
                       onChange={(e) => onInvoiceNumberChange && onInvoiceNumberChange(e.target.value)}
                       onFocus={onInvoiceNumberFocus}
                       onBlur={onInvoiceNumberBlur}
-                      placeholder={`${placeholderNumber} (wordt toegekend bij versturen)`}
+                      placeholder={placeholderNumber}
                       className="h-8 text-xs placeholder:text-xs text-gray-600 rounded-l-none border-l-0"
-                      style={{ width: '180px' }}
-                      disabled={true} // Make it read-only since it's just for display during creation
+                      style={{ width: '80px' }}
                     />
                   </div>
                 </div>

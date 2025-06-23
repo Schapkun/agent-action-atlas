@@ -3,21 +3,21 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Bold, Italic, Underline, List, Trash2, Plus } from 'lucide-react';
 import { VatSelector } from '@/components/ui/vat-selector';
-import { LineItem } from '@/hooks/useInvoiceForm';
+import { LineItem } from '@/types/invoiceTypes';
 
-interface LineItemsTableProps {
+interface QuoteLineItemsTableProps {
   lineItems: LineItem[];
   onUpdateLineItem: (index: number, field: keyof LineItem, value: string | number) => void;
   onRemoveLineItem: (index: number) => void;
   onAddLineItem: () => void;
 }
 
-export const LineItemsTable = ({
+export const QuoteLineItemsTable = ({
   lineItems,
   onUpdateLineItem,
   onRemoveLineItem,
   onAddLineItem
-}: LineItemsTableProps) => {
+}: QuoteLineItemsTableProps) => {
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, index: number) => {
     if (event.key === 'Enter') {
