@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,15 +13,13 @@ import {
   Search, 
   Mail, 
   Folder, 
-  Eye, 
+  Eye,
   Reply,
   Forward,
   Trash2,
   Star,
   StarOff,
   Plus,
-  Webhook,
-  Copy,
   MailOpen
 } from 'lucide-react';
 
@@ -189,19 +188,6 @@ export const EmailManager = () => {
     }
   };
 
-  const getWebhookEndpoint = () => {
-    const baseUrl = window.location.origin;
-    return `${baseUrl}/functions/v1/make-email-webhook`;
-  };
-
-  const copyWebhookUrl = () => {
-    navigator.clipboard.writeText(getWebhookEndpoint());
-    toast({
-      title: "Webhook URL Gekopieerd",
-      description: "De email webhook URL is gekopieerd naar je klembord"
-    });
-  };
-
   const getContextInfo = () => {
     if (selectedWorkspace) {
       return `Werkruimte: ${selectedWorkspace.name}`;
@@ -266,42 +252,17 @@ export const EmailManager = () => {
             <div>
               <h1 className="text-2xl font-bold">E-mail Manager</h1>
               <p className="text-muted-foreground">
-                Beheer inkomende e-mails van Make.com integratie
+                Beheer inkomende e-mails
               </p>
             </div>
 
             <div className="flex items-center gap-2">
-              <Button onClick={copyWebhookUrl} variant="outline">
-                <Webhook className="h-4 w-4 mr-2" />
-                Webhook URL
-              </Button>
               <Button onClick={handleCreateEmail}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nieuwe E-mail
               </Button>
             </div>
           </div>
-
-          {/* Webhook Info Card */}
-          <Card className="border-blue-200 bg-blue-50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <Webhook className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div className="flex-1">
-                  <h3 className="font-medium text-blue-900">Make.com Email Webhook</h3>
-                  <p className="text-sm text-blue-700 mb-2">
-                    Gebruik deze URL in je Make.com scenario om e-mails naar dit systeem te versturen:
-                  </p>
-                  <code className="block p-2 bg-white rounded border text-sm font-mono">
-                    {getWebhookEndpoint()}
-                  </code>
-                  <p className="text-xs text-blue-600 mt-2">
-                    POST body moet organization_id bevatten
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
           <div className="flex items-center gap-4 flex-1">
             <div className="relative flex-1 max-w-md">
@@ -391,9 +352,9 @@ export const EmailManager = () => {
               ) : filteredEmails.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Geen e-mails gevonden voor de geselecteerde criteria</p>
+                  <p>Geen e-mails gevonden</p>
                   <p className="text-sm mt-2">
-                    E-mails van Make.com verschijnen hier automatisch
+                    E-mails van externe bronnen verschijnen hier automatisch
                   </p>
                 </div>
               ) : (
