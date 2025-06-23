@@ -216,19 +216,18 @@ export const LineItemsTable = ({
   return (
     <Card>
       <CardHeader className="p-2">
-        <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700">
+        <div className="grid grid-cols-10 gap-2 text-xs font-medium text-gray-700">
           <div className="col-span-1 text-left">Aantal</div>
           <div className="col-span-6 text-left">Omschrijving</div>
           <div className="col-span-2 text-left">Prijs</div>
-          <div className="col-span-1 text-left">BTW</div>
-          <div className="col-span-2 text-left">Totaal</div>
+          <div className="col-span-1 text-left">Totaal</div>
         </div>
       </CardHeader>
 
       <CardContent className="p-2">
         <div className="space-y-2">
           {lineItems.map((item, index) => (
-            <div key={index} className="grid grid-cols-12 gap-2 items-start">
+            <div key={index} className="grid grid-cols-10 gap-2 items-start">
               {/* Quantity column - hidden for text-only items */}
               <div className="col-span-1">
                 {!item.is_text_only ? (
@@ -305,6 +304,16 @@ export const LineItemsTable = ({
                     >
                       <Type className="h-3 w-3" />
                     </Button>
+                    {/* Hidden VAT selector - still needed for calculations */}
+                    {!item.is_text_only && (
+                      <div className="hidden">
+                        <VatSelector
+                          value={item.vat_rate}
+                          onValueChange={(value) => onUpdateLineItem(index, 'vat_rate', value)}
+                          className="text-xs h-8 w-full"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -328,21 +337,8 @@ export const LineItemsTable = ({
                 )}
               </div>
               
-              {/* VAT column - hidden for text-only items */}
-              <div className="col-span-1">
-                {!item.is_text_only ? (
-                  <VatSelector
-                    value={item.vat_rate}
-                    onValueChange={(value) => onUpdateLineItem(index, 'vat_rate', value)}
-                    className="text-xs h-8 w-full"
-                  />
-                ) : (
-                  <div className="h-8" />
-                )}
-              </div>
-              
-              {/* Total column - hidden for text-only items */}
-              <div className="col-span-2 flex items-center justify-between">
+              {/* Total column with delete button - hidden for text-only items */}
+              <div className="col-span-1 flex items-center justify-between">
                 {!item.is_text_only ? (
                   <div className="flex items-center gap-1 min-w-20">
                     <span className="text-xs">€</span>

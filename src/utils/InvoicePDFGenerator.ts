@@ -41,14 +41,14 @@ export class InvoicePDFGenerator {
     // Generate invoice lines HTML with proper handling of text-only items
     const invoiceLinesHtml = lines.map(line => {
       if (line.is_text_only) {
-        // Text-only line: span across all columns
+        // Text-only line: span across all columns (3 columns now: Aantal, Omschrijving, Prijs, Totaal)
         return `
           <tr style="border-bottom: 1px solid #ddd;">
             <td colspan="4" style="padding: 12px; text-align: left; font-style: italic;">${line.description}</td>
           </tr>
         `;
       } else {
-        // Regular product line with new column order: Aantal, Omschrijving, Prijs, BTW, Totaal
+        // Regular product line with correct column order: Aantal, Omschrijving, Prijs, Totaal
         return `
           <tr style="border-bottom: 1px solid #ddd;">
             <td style="padding: 12px; border-right: 1px solid #ddd; text-align: center;">${line.quantity}</td>
@@ -334,7 +334,7 @@ export class InvoicePDFGenerator {
     });
   }
 
-  // UNIFIED template - updated with new column order and text-only handling
+  // Updated template with correct column headers: Aantal, Omschrijving, Prijs, Totaal
   private static getUnifiedTemplate(): string {
     return `<!DOCTYPE html>
 <html lang="nl">
