@@ -24,7 +24,16 @@ import {
   Settings,
   Eye,
   Trash2,
-  FileText
+  FileText,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
 } from 'lucide-react';
 
 interface PendingTask {
@@ -81,6 +90,7 @@ export const PendingTasksManager = () => {
   const [selectedTaskForCombined, setSelectedTaskForCombined] = useState<PendingTask | null>(null);
   const [selectedEmailForView, setSelectedEmailForView] = useState<any>(null);
   const [showEmailViewDialog, setShowEmailViewDialog] = useState(false);
+  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
 
@@ -188,13 +198,22 @@ export const PendingTasksManager = () => {
   };
 
   const deleteTask = async (taskId: string) => {
+    if (deletingTaskId) return; // Prevent double deletion
+
+    setDeletingTaskId(taskId);
+    
     try {
+      console.log('🗑️ Deleting task:', taskId);
+      
       const { error } = await supabase
         .from('pending_tasks')
         .delete()
         .eq('id', taskId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
 
       toast({
         title: "Taak verwijderd",
@@ -202,13 +221,15 @@ export const PendingTasksManager = () => {
       });
 
       fetchTasks();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting task:', error);
       toast({
         title: "Fout",
-        description: "Kon taak niet verwijderen",
+        description: `Kon taak niet verwijderen: ${error.message}`,
         variant: "destructive"
       });
+    } finally {
+      setDeletingTaskId(null);
     }
   };
 
@@ -378,12 +399,12 @@ export const PendingTasksManager = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-3">
+              <div className="grid gap-2">
                 {emailTasks.map((task) => (
                   <div key={task.id} className="border rounded-lg p-3 hover:shadow-sm transition-all bg-blue-50/50 relative">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-1">
                           <Mail className="h-4 w-4 text-blue-600 flex-shrink-0" />
                           <h3 className="font-medium text-sm truncate">{task.title}</h3>
                           <div className="flex gap-1 flex-shrink-0">
@@ -398,17 +419,11 @@ export const PendingTasksManager = () => {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-600">
-                          {task.reply_to_email && (
+                        <div className="text-xs text-gray-600 space-y-1">
+                          {task.emails?.subject && (
                             <div className="flex items-center gap-1">
-                              <span className="font-medium">Antwoord naar:</span>
-                              <span className="truncate">{task.reply_to_email}</span>
-                            </div>
-                          )}
-                          {task.emails && (
-                            <div className="flex items-center gap-1">
-                              <span className="font-medium">Van:</span>
-                              <span className="truncate">{task.emails.from_email}</span>
+                              <span className="font-medium">Onderwerp:</span>
+                              <span className="truncate">{task.emails.subject}</span>
                             </div>
                           )}
                           {task.due_date && (
@@ -427,17 +442,22 @@ export const PendingTasksManager = () => {
                             onClick={() => handleManageTask(task)}
                             className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 h-7"
                           >
-                            <Settings className="h-3 w-3 mr-1" />
-                            Beheer
+                            <Mail className="h-3 w-3 mr-1" />
+                            Beantwoorden
                           </Button>
                         )}
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => deleteTask(task.id)}
+                          disabled={deletingTaskId === task.id}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 h-7 w-7"
                         >
-                          <Trash2 className="h-3 w-3" />
+                          {deletingTaskId === task.id ? (
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600"></div>
+                          ) : (
+                            <Trash2 className="h-3 w-3" />
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -474,12 +494,12 @@ export const PendingTasksManager = () => {
                 <p>Geen algemene taken gevonden</p>
               </div>
             ) : (
-              <div className="grid gap-3">
+              <div className="grid gap-2">
                 {generalTasks.map((task) => (
                   <div key={task.id} className="border rounded-lg p-3 hover:shadow-sm transition-all relative">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-1">
                           <FileText className="h-4 w-4 text-gray-600 flex-shrink-0" />
                           <h3 className="font-medium text-sm truncate">{task.title}</h3>
                           <div className="flex gap-1 flex-shrink-0">
@@ -489,12 +509,12 @@ export const PendingTasksManager = () => {
                         </div>
                         
                         {task.description && (
-                          <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                          <p className="text-xs text-muted-foreground mb-1 line-clamp-2">
                             {task.description}
                           </p>
                         )}
                         
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-gray-600">
+                        <div className="flex items-center gap-4 text-xs text-gray-600">
                           {task.clients?.name && (
                             <span>Klant: {task.clients.name}</span>
                           )}
@@ -504,7 +524,7 @@ export const PendingTasksManager = () => {
                           {task.due_date && (
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              Vervalt: {new Date(task.due_date).toLocaleDateString('nl-NL')}
+                              {new Date(task.due_date).toLocaleDateString('nl-NL')}
                             </span>
                           )}
                         </div>
@@ -546,9 +566,14 @@ export const PendingTasksManager = () => {
                           size="sm"
                           variant="outline"
                           onClick={() => deleteTask(task.id)}
+                          disabled={deletingTaskId === task.id}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 h-7 w-7"
                         >
-                          <Trash2 className="h-3 w-3" />
+                          {deletingTaskId === task.id ? (
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600"></div>
+                          ) : (
+                            <Trash2 className="h-3 w-3" />
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -633,6 +658,8 @@ const EnhancedEmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
 
     setSending(true);
     try {
+      console.log('📤 Sending email for task:', task.id);
+      
       const { data, error } = await supabase.functions.invoke('send-email-reply', {
         body: {
           task_id: task.id,
@@ -646,7 +673,15 @@ const EnhancedEmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Function invoke error:', error);
+        throw error;
+      }
+
+      if (data && !data.success) {
+        console.error('❌ Function returned error:', data.error);
+        throw new Error(data.error);
+      }
 
       toast({
         title: "E-mail verzonden",
@@ -659,7 +694,7 @@ const EnhancedEmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
       console.error('❌ Error sending email:', error);
       toast({
         title: "Fout",
-        description: `Kon e-mail niet verzenden: ${error.message}`,
+        description: error.message || "Kon e-mail niet verzenden. Controleer de configuratie.",
         variant: "destructive"
       });
     } finally {
@@ -673,7 +708,7 @@ const EnhancedEmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
         <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
-            E-mail Beheer: {task.title}
+            E-mail Beantwoorden: {task.title}
             {task.ai_generated && (
               <Badge variant="outline" className="text-blue-600">
                 <Sparkles className="h-4 w-4 mr-1" />
@@ -685,7 +720,7 @@ const EnhancedEmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 h-[calc(90vh-100px)]">
           {/* Ontvangen E-mail Panel */}
-          <div className="border-r bg-gray-50 flex flex-col">
+          <div className="border-r bg-gray-50 flex flex-col min-h-[600px]">
             <div className="px-4 py-3 bg-blue-600 text-white">
               <h3 className="font-semibold flex items-center gap-2">
                 <Mail className="h-4 w-4" />
@@ -726,7 +761,7 @@ const EnhancedEmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
           </div>
 
           {/* AI Concept Antwoord Panel */}
-          <div className="flex flex-col">
+          <div className="flex flex-col min-h-[600px]">
             <div className="px-4 py-3 bg-orange-600 text-white">
               <h3 className="font-semibold flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />

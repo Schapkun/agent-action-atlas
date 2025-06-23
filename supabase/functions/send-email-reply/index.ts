@@ -30,7 +30,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
+    const resendApiKey = Deno.env.get('RESEND_API_KEY')
+    
+    if (!resendApiKey) {
+      console.error('❌ RESEND_API_KEY is not configured')
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Email service is not configured. Please configure RESEND_API_KEY.' 
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        },
+      )
+    }
+
+    const resend = new Resend(resendApiKey)
 
     const {
       task_id,
@@ -44,23 +60,38 @@ serve(async (req) => {
     }: EmailReplyRequest = await req.json()
 
     console.log('📤 Sending email reply for task:', task_id)
+    console.log('📧 To:', to_email)
+    console.log('📋 Subject:', subject)
+
+    if (!to_email || !subject || !content) {
+      throw new Error('Missing required email fields: to_email, subject, or content')
+    }
 
     // Haal organisatie settings op voor afzender informatie
-    const { data: orgSettings } = await supabaseClient
+    const { data: orgSettings, error: orgError } = await supabaseClient
       .from('organization_settings')
       .select('company_email, company_name')
       .eq('organization_id', organization_id)
       .maybeSingle()
 
+    if (orgError) {
+      console.error('⚠️ Could not fetch organization settings:', orgError)
+    }
+
     const fromEmail = orgSettings?.company_email || 'noreply@example.com'
     const fromName = orgSettings?.company_name || 'Support Team'
+
+    console.log('📤 Sending from:', `${fromName} <${fromEmail}>`)
+
+    // Converteer plain text naar HTML als nodig
+    const htmlContent = content.includes('<') ? content : content.replace(/\n/g, '<br>')
 
     // Verstuur e-mail via Resend
     const emailResponse = await resend.emails.send({
       from: `${fromName} <${fromEmail}>`,
       to: [to_email],
       subject: subject,
-      html: content.replace(/\n/g, '<br>'),
+      html: htmlContent,
       headers: thread_id ? {
         'In-Reply-To': thread_id,
         'References': thread_id
@@ -68,6 +99,7 @@ serve(async (req) => {
     })
 
     if (emailResponse.error) {
+      console.error('❌ Resend API error:', emailResponse.error)
       throw new Error(`Email send failed: ${emailResponse.error.message}`)
     }
 
@@ -88,9 +120,13 @@ serve(async (req) => {
       sent_at: new Date().toISOString()
     }
 
-    await supabaseClient
+    const { error: logError } = await supabaseClient
       .from('email_send_logs')
       .insert(sendLogRecord)
+
+    if (logError) {
+      console.error('⚠️ Could not log email send:', logError)
+    }
 
     // Update de task status naar completed
     const { error: taskUpdateError } = await supabaseClient
@@ -103,6 +139,7 @@ serve(async (req) => {
 
     if (taskUpdateError) {
       console.error('❌ Error updating task status:', taskUpdateError)
+      throw new Error(`Could not update task status: ${taskUpdateError.message}`)
     }
 
     return new Response(
@@ -122,7 +159,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: error.message || 'Unknown error occurred'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
