@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { useQuotes } from '@/hooks/useQuotes';
 import { useToast } from '@/hooks/use-toast';
@@ -39,7 +38,7 @@ export const useQuoteFormHandlers = () => {
     clearFormData
   } = useQuoteForm();
 
-  // Stricter validation logic for quotes - same as invoices
+  // Enhanced validation logic for quotes with total amount check
   const canSend = useMemo(() => {
     // Check if contact info is filled
     const hasContactInfo = formData.client_name.trim() !== '';
@@ -51,8 +50,35 @@ export const useQuoteFormHandlers = () => {
       (item.unit_price > 0 || item.quantity > 0)
     );
     
-    return hasContactInfo && hasValidLineItem;
-  }, [formData.client_name, lineItems]);
+    // Calculate total to ensure it's greater than 0
+    const { total } = calculateTotals();
+    const hasPositiveTotal = total > 0;
+    
+    return hasContactInfo && hasValidLineItem && hasPositiveTotal;
+  }, [formData.client_name, lineItems, calculateTotals]);
+
+  // Enhanced reason why send is disabled
+  const sendDisabledReason = useMemo(() => {
+    if (!formData.client_name.trim()) {
+      return 'Voer een klantnaam in';
+    }
+    
+    const hasValidLineItem = lineItems.some(item => 
+      item.description.trim() !== '' && 
+      (item.unit_price > 0 || item.quantity > 0)
+    );
+    
+    if (!hasValidLineItem) {
+      return 'Voeg minimaal één regel toe met een beschrijving én een prijs of aantal';
+    }
+    
+    const { total } = calculateTotals();
+    if (total <= 0) {
+      return 'Het totaalbedrag moet groter zijn dan €0.00 om te kunnen versturen';
+    }
+    
+    return null;
+  }, [formData.client_name, lineItems, calculateTotals]);
 
   const togglePreview = () => setShowPreview(!showPreview);
 
@@ -141,6 +167,7 @@ export const useQuoteFormHandlers = () => {
     sendLoading,
     invoiceSettings: quoteSettings, // Alias for compatibility
     canSend,
+    sendDisabledReason,
     handleQuoteNumberChange,
     handleQuoteNumberFocus,
     handleQuoteNumberBlur,

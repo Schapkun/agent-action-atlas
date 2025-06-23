@@ -37,7 +37,7 @@ export const useInvoiceFormHandlers = () => {
     clearFormData
   } = useInvoiceForm();
 
-  // Stricter validation logic - each line item must have description AND (price > 0 OR quantity > 0)
+  // Enhanced validation logic with total amount check
   const canSend = useMemo(() => {
     // Check if contact info is filled
     const hasContactInfo = formData.client_name.trim() !== '';
@@ -49,10 +49,14 @@ export const useInvoiceFormHandlers = () => {
       (item.unit_price > 0 || item.quantity > 0)
     );
     
-    return hasContactInfo && hasValidLineItem;
-  }, [formData.client_name, lineItems]);
+    // Calculate total to ensure it's greater than 0
+    const { total } = calculateTotals();
+    const hasPositiveTotal = total > 0;
+    
+    return hasContactInfo && hasValidLineItem && hasPositiveTotal;
+  }, [formData.client_name, lineItems, calculateTotals]);
 
-  // Provide reason why send is disabled
+  // Enhanced reason why send is disabled
   const sendDisabledReason = useMemo(() => {
     if (!formData.client_name.trim()) {
       return 'Voer een klantnaam in';
@@ -67,8 +71,13 @@ export const useInvoiceFormHandlers = () => {
       return 'Voeg minimaal één regel toe met een beschrijving én een prijs of aantal';
     }
     
+    const { total } = calculateTotals();
+    if (total <= 0) {
+      return 'Het totaalbedrag moet groter zijn dan €0.00 om te kunnen versturen';
+    }
+    
     return null;
-  }, [formData.client_name, lineItems]);
+  }, [formData.client_name, lineItems, calculateTotals]);
 
   const togglePreview = () => setShowPreview(!showPreview);
 
