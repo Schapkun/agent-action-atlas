@@ -67,6 +67,11 @@ export const CreateQuote = () => {
     updateVatSettings(settings);
   };
 
+  // Make getDisplayQuoteNumber synchronous by removing async
+  const getDisplayQuoteNumberSync = () => {
+    return getDisplayQuoteNumber();
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <QuoteHeader
@@ -110,7 +115,7 @@ export const CreateQuote = () => {
               onQuoteNumberChange={handleQuoteNumberChange}
               onQuoteNumberFocus={handleQuoteNumberFocus}
               onQuoteNumberBlur={handleQuoteNumberBlur}
-              getDisplayQuoteNumber={getDisplayQuoteNumber}
+              getDisplayQuoteNumber={getDisplayQuoteNumberSync}
             />
           </div>
 

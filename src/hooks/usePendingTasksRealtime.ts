@@ -46,7 +46,7 @@ export const usePendingTasksRealtime = () => {
     console.log('📡 Setting up real-time pending tasks count subscription');
 
     const channel = supabase
-      .channel('pending-tasks-count-realtime') // Different channel name to avoid conflicts
+      .channel('pending-tasks-count-realtime-v3') // Updated channel name to avoid conflicts
       .on(
         'postgres_changes',
         {

@@ -129,7 +129,15 @@ export const CreateInvoiceForm = () => {
           }>
             <LineItemsTable
               items={lineItems}
-              onItemsChange={handleLineItemUpdate}
+              onItemsChange={(newItems) => {
+                // Convert the new items array to the expected format
+                newItems.forEach((item, index) => {
+                  handleLineItemUpdate(index, 'description', item.description);
+                  handleLineItemUpdate(index, 'quantity', item.quantity);
+                  handleLineItemUpdate(index, 'unit_price', item.unit_price);
+                  handleLineItemUpdate(index, 'vat_rate', item.vat_rate);
+                });
+              }}
               mode="invoice"
             />
           </div>

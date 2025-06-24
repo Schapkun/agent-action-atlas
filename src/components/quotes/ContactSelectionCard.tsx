@@ -54,7 +54,6 @@ export const ContactSelectionCard = ({
           <ContactSelector
             selectedContact={selectedContact}
             onContactSelect={onContactSelect}
-            placeholder="Zoek een contact..."
           />
         </div>
         

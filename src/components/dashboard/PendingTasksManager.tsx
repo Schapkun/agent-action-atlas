@@ -164,7 +164,7 @@ export const PendingTasksManager = () => {
     console.log('📡 Setting up real-time task manager subscription for org:', selectedOrganization.id);
 
     const channel = supabase
-      .channel('pending-tasks-manager-realtime') // Different channel name to avoid conflicts
+      .channel('pending-tasks-manager-realtime-v2') // Updated channel name to avoid conflicts
       .on(
         'postgres_changes',
         {
