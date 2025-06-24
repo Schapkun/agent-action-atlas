@@ -1,16 +1,14 @@
-
 import { QuoteHeader } from './QuoteHeader';
-import { ContactSelectionCard } from './ContactSelectionCard';
+import { ContactSelectionCard } from '../invoices/ContactSelectionCard';
 import { QuoteDetailsCard } from './QuoteDetailsCard';
-import { QuoteLineItemsTable } from './QuoteLineItemsTable';
+import { LineItemsTable } from '../invoices/LineItemsTable';
+import { QuoteFormActions } from './QuoteFormActions';
 import { QuoteTotals } from './QuoteTotals';
 import { QuoteSettingsSidebar } from './QuoteSettingsSidebar';
-import { QuoteFormActions } from './QuoteFormActions';
 import { QuoteTemplateSelector } from './QuoteTemplateSelector';
-import { QuotePreviewPopup } from './QuotePreviewPopup';
+import { QuotePreviewDialog } from './QuotePreviewDialog';
 import { useQuoteFormHandlers } from '@/hooks/useQuoteFormHandlers';
 import { useQuoteTemplateManager } from '@/hooks/useQuoteTemplateManager';
-import { useQuoteLineItems } from '@/hooks/useQuoteLineItems';
 
 export const CreateQuote = () => {
   // Centralized template management with default label from settings
@@ -18,12 +16,8 @@ export const CreateQuote = () => {
     selectedTemplate,
     availableTemplates,
     templatesLoading,
-    noLabelConfigured,
     handleTemplateSelect
   } = useQuoteTemplateManager();
-
-  // Line items management with VAT settings
-  const { updateVatSettings } = useQuoteLineItems();
 
   // Form handlers with preview functionality and session recovery
   const {
@@ -40,8 +34,8 @@ export const CreateQuote = () => {
     quoteNumber,
     loading,
     sendLoading,
+    invoiceSettings,
     canSend,
-    sendDisabledReason,
     handleQuoteNumberChange,
     handleQuoteNumberFocus,
     handleQuoteNumberBlur,
@@ -56,28 +50,20 @@ export const CreateQuote = () => {
     calculateTotals,
     handleConvertToInvoice,
     handleSubmit,
-    handleSaveAndSend,
-    setLineItems
+    handleSaveAndSend
   } = useQuoteFormHandlers();
 
   const { subtotal, vatAmount, total } = calculateTotals();
 
   const handleDocumentSettingsChange = (settings: any) => {
-    console.log('Document settings changed:', settings);
-    // Update VAT settings in line items hook
-    updateVatSettings(settings);
+    console.log('Quote settings changed:', settings);
   };
 
-  // Make getDisplayQuoteNumber synchronous for ContactSelectionCard
-  const getDisplayQuoteNumberSync = (): string => {
-    // If getDisplayQuoteNumber returns a Promise, we need to handle it differently
-    const result = getDisplayQuoteNumber();
-    if (typeof result === 'string') {
-      return result;
-    }
-    // For now, return the quote number directly if async
-    return quoteNumber || '';
-  };
+  // Convert QuoteLineItem[] to LineItem[] for compatibility with LineItemsTable
+  const convertedLineItems = lineItems.map((item, index) => ({
+    ...item,
+    id: item.id || index.toString()
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -114,21 +100,23 @@ export const CreateQuote = () => {
             <ContactSelectionCard
               selectedContact={selectedContact}
               formData={formData}
-              quoteNumber={quoteNumber}
-              quoteSettings={{}}
+              invoiceNumber={quoteNumber}
+              invoiceSettings={invoiceSettings}
               onContactSelect={handleContactSelectOnly}
               onShowSettings={() => setShowSettings(true)}
-              onFormDataChange={(updates) => setFormData(updates)}
-              onQuoteNumberChange={handleQuoteNumberChange}
-              onQuoteNumberFocus={handleQuoteNumberFocus}
-              onQuoteNumberBlur={handleQuoteNumberBlur}
-              getDisplayQuoteNumber={getDisplayQuoteNumberSync}
+              onFormDataChange={(updates) => setFormData({ ...formData, ...updates })}
+              onInvoiceNumberChange={handleQuoteNumberChange}
+              onInvoiceNumberFocus={handleQuoteNumberFocus}
+              onInvoiceNumberBlur={handleQuoteNumberBlur}
+              getDisplayInvoiceNumber={getDisplayQuoteNumber}
+              getPlaceholderInvoiceNumber={getPlaceholderQuoteNumber}
+              isQuote={true}
             />
           </div>
 
           <QuoteDetailsCard
             formData={formData}
-            onFormDataChange={(updates) => setFormData(updates)}
+            onFormDataChange={(updates) => setFormData({ ...formData, ...updates })}
           />
 
           <div className={
@@ -136,9 +124,11 @@ export const CreateQuote = () => {
               ? 'ring-2 ring-orange-200 rounded-lg' 
               : ''
           }>
-            <QuoteLineItemsTable
-              items={lineItems}
-              onItemsChange={setLineItems}
+            <LineItemsTable
+              lineItems={convertedLineItems}
+              onUpdateLineItem={handleLineItemUpdate}
+              onRemoveLineItem={handleLineItemRemove}
+              onAddLineItem={addLineItem}
             />
           </div>
 
@@ -162,12 +152,12 @@ export const CreateQuote = () => {
         onSettingsChange={handleDocumentSettingsChange}
       />
 
-      <QuotePreviewPopup
+      <QuotePreviewDialog
         isOpen={showPreview}
         onClose={() => togglePreview()}
         selectedTemplate={selectedTemplate}
         formData={formData}
-        lineItems={lineItems}
+        lineItems={convertedLineItems}
         quoteNumber={quoteNumber}
       />
     </div>

@@ -1,4 +1,3 @@
-
 import { InvoiceHeader } from './InvoiceHeader';
 import { ContactSelectionCard } from './ContactSelectionCard';
 import { InvoiceDetailsCard } from './InvoiceDetailsCard';
@@ -128,17 +127,10 @@ export const CreateInvoiceForm = () => {
               : ''
           }>
             <LineItemsTable
-              items={lineItems}
-              onItemsChange={(newItems) => {
-                // Convert the new items array to the expected format
-                newItems.forEach((item, index) => {
-                  handleLineItemUpdate(index, 'description', item.description);
-                  handleLineItemUpdate(index, 'quantity', item.quantity);
-                  handleLineItemUpdate(index, 'unit_price', item.unit_price);
-                  handleLineItemUpdate(index, 'vat_rate', item.vat_rate);
-                });
-              }}
-              mode="invoice"
+              lineItems={lineItems}
+              onUpdateLineItem={handleLineItemUpdate}
+              onRemoveLineItem={handleLineItemRemove}
+              onAddLineItem={addLineItem}
             />
           </div>
 

@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { useRealtimeSubscriptionManager } from './useRealtimeSubscriptionManager';
 
 export const usePendingTasksRealtime = () => {
   const [pendingTasksCount, setPendingTasksCount] = useState(0);
@@ -19,7 +18,7 @@ export const usePendingTasksRealtime = () => {
         .from('pending_tasks')
         .select('id', { count: 'exact' })
         .eq('organization_id', selectedOrganization.id)
-        .eq('status', 'open');
+        .eq('status', 'open'); // Only count open tasks, not completed ones
 
       if (selectedWorkspace) {
         query = query.eq('workspace_id', selectedWorkspace.id);
@@ -40,20 +39,35 @@ export const usePendingTasksRealtime = () => {
     fetchPendingTasksCount();
   }, [selectedOrganization, selectedWorkspace]);
 
-  // Use centralized subscription manager
-  useRealtimeSubscriptionManager(
-    selectedOrganization?.id,
-    [
-      {
-        channelName: 'pending-tasks-count-v4',
-        table: 'pending_tasks',
-        filter: `organization_id=eq.${selectedOrganization?.id}`,
-        onInsert: () => fetchPendingTasksCount(),
-        onUpdate: () => fetchPendingTasksCount(),
-        onDelete: () => fetchPendingTasksCount(),
-      }
-    ]
-  );
+  // Real-time subscription voor pending tasks updates
+  useEffect(() => {
+    if (!selectedOrganization) return;
+
+    console.log('📡 Setting up real-time pending tasks subscription');
+
+    const channel = supabase
+      .channel('pending-tasks-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'pending_tasks',
+          filter: `organization_id=eq.${selectedOrganization.id}`
+        },
+        (payload) => {
+          console.log('📋 Pending tasks changed:', payload);
+          // Immediately refresh count when any task changes
+          fetchPendingTasksCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('📡 Cleaning up pending tasks real-time subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [selectedOrganization]);
 
   return { pendingTasksCount, refreshCount: fetchPendingTasksCount };
 };

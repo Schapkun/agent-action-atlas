@@ -1,4 +1,3 @@
-
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -45,7 +44,6 @@ export const Sidebar = ({
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const { pendingTasksCount } = usePendingTasksRealtime();
-  const [showFloatingSupport, setShowFloatingSupport] = useState(false);
 
   useEffect(() => {
     try {
@@ -72,19 +70,6 @@ export const Sidebar = ({
       setExpandedMenus([]);
     }
   }, [location.pathname, location.search]);
-
-  // Check for support button visibility issue
-  useEffect(() => {
-    const shouldShowSupport = location.pathname === '/support';
-    console.log('Support visibility check:', { 
-      currentPath: location.pathname, 
-      shouldShow: shouldShowSupport,
-      collapsed 
-    });
-    
-    // If in collapsed mode and on support page, show floating button
-    setShowFloatingSupport(collapsed && shouldShowSupport);
-  }, [location.pathname, collapsed]);
 
   const isActiveRoute = (path: string) => {
     try {
@@ -218,8 +203,6 @@ export const Sidebar = ({
     }
   };
 
-  const supportButtonVisible = !collapsed || location.pathname !== '/support';
-
   return (
     <div className={cn(
       "bg-card border-r border-border flex flex-col transition-all duration-300",
@@ -319,36 +302,20 @@ export const Sidebar = ({
       </nav>
 
       {/* Support Link */}
-      {supportButtonVisible && (
-        <div className="p-4 border-t border-border">
-          <Button
-            variant={location.pathname === '/support' ? "secondary" : "ghost"}
-            className={cn(
-              "w-full justify-start text-xs",
-              collapsed && "px-3",
-              location.pathname === '/support' && "bg-primary/10 text-primary font-medium"
-            )}
-            onClick={() => navigate('/support')}
-          >
-            <HelpCircle className="h-4 w-4" />
-            {!collapsed && <span className="ml-3">Hulp & Support</span>}
-          </Button>
-        </div>
-      )}
-
-      {/* Floating support button for collapsed state */}
-      {showFloatingSupport && (
-        <div className="fixed bottom-4 left-4 z-50">
-          <Button
-            size="sm"
-            variant="secondary"
-            className="bg-primary/10 text-primary font-medium shadow-lg"
-            onClick={() => navigate('/support')}
-          >
-            <HelpCircle className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
+      <div className="p-4 border-t border-border">
+        <Button
+          variant={location.pathname === '/support' ? "secondary" : "ghost"}
+          className={cn(
+            "w-full justify-start text-xs",
+            collapsed && "px-3",
+            location.pathname === '/support' && "bg-primary/10 text-primary font-medium"
+          )}
+          onClick={() => navigate('/support')}
+        >
+          <HelpCircle className="h-4 w-4" />
+          {!collapsed && <span className="ml-3">Hulp & Support</span>}
+        </Button>
+      </div>
 
       {/* Footer */}
       {!collapsed && (
