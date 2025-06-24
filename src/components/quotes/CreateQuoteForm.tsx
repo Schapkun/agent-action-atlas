@@ -1,3 +1,4 @@
+
 import { QuoteHeader } from './QuoteHeader';
 import { ContactSelectionCard } from './ContactSelectionCard';
 import { QuoteDetailsCard } from './QuoteDetailsCard';
@@ -39,7 +40,6 @@ export const CreateQuote = () => {
     quoteNumber,
     loading,
     sendLoading,
-    quoteSettings,
     canSend,
     sendDisabledReason,
     handleQuoteNumberChange,
@@ -75,7 +75,6 @@ export const CreateQuote = () => {
         clientEmail={formData.client_email}
         showPreview={showPreview}
         canSend={canSend}
-        sendDisabledReason={sendDisabledReason}
         isSessionRecovered={isSessionRecovered}
         sessionData={sessionData}
         templateSelector={
@@ -83,7 +82,6 @@ export const CreateQuote = () => {
             selectedTemplate={selectedTemplate}
             availableTemplates={availableTemplates}
             templatesLoading={templatesLoading}
-            noLabelConfigured={noLabelConfigured}
             onTemplateSelect={handleTemplateSelect}
           />
         }
@@ -105,7 +103,7 @@ export const CreateQuote = () => {
               selectedContact={selectedContact}
               formData={formData}
               quoteNumber={quoteNumber}
-              quoteSettings={quoteSettings}
+              quoteSettings={{}}
               onContactSelect={handleContactSelectOnly}
               onShowSettings={() => setShowSettings(true)}
               onFormDataChange={(updates) => setFormData(updates)}
