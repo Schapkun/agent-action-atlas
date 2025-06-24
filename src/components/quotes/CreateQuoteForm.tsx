@@ -1,7 +1,8 @@
+
 import { QuoteHeader } from './QuoteHeader';
 import { ContactSelectionCard } from '../invoices/ContactSelectionCard';
 import { QuoteDetailsCard } from './QuoteDetailsCard';
-import { LineItemsTable } from '../invoices/LineItemsTable';
+import { QuoteLineItemsTable } from './QuoteLineItemsTable';
 import { QuoteFormActions } from './QuoteFormActions';
 import { QuoteTotals } from './QuoteTotals';
 import { QuoteSettingsSidebar } from './QuoteSettingsSidebar';
@@ -58,12 +59,6 @@ export const CreateQuote = () => {
   const handleDocumentSettingsChange = (settings: any) => {
     console.log('Quote settings changed:', settings);
   };
-
-  // Convert QuoteLineItem[] to LineItem[] for compatibility with LineItemsTable
-  const convertedLineItems = lineItems.map((item, index) => ({
-    ...item,
-    id: item.id || index.toString()
-  }));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -124,8 +119,8 @@ export const CreateQuote = () => {
               ? 'ring-2 ring-orange-200 rounded-lg' 
               : ''
           }>
-            <LineItemsTable
-              lineItems={convertedLineItems}
+            <QuoteLineItemsTable
+              lineItems={lineItems}
               onUpdateLineItem={handleLineItemUpdate}
               onRemoveLineItem={handleLineItemRemove}
               onAddLineItem={addLineItem}
@@ -157,7 +152,7 @@ export const CreateQuote = () => {
         onClose={() => togglePreview()}
         selectedTemplate={selectedTemplate}
         formData={formData}
-        lineItems={convertedLineItems}
+        lineItems={lineItems}
         quoteNumber={quoteNumber}
       />
     </div>

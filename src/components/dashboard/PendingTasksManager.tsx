@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePendingTasksRealtime } from '@/hooks/usePendingTasksRealtime';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Clock, 
@@ -48,6 +49,9 @@ export const PendingTasksManager = () => {
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { user } = useAuth();
   const { toast } = useToast();
+  
+  // Use the real-time hook for automatic updates
+  const { pendingTasksCount, refreshCount } = usePendingTasksRealtime();
 
   const fetchTasks = async () => {
     if (!selectedOrganization) return;
@@ -187,7 +191,8 @@ export const PendingTasksManager = () => {
         description: "De taak is gemarkeerd als voltooid"
       });
 
-      fetchTasks();
+      // Refresh tasks after update
+      await fetchTasks();
     } catch (error) {
       console.error('Error completing task:', error);
       toast({
@@ -215,7 +220,8 @@ export const PendingTasksManager = () => {
         description: "De taak is weer opengesteld"
       });
 
-      fetchTasks();
+      // Refresh tasks after update
+      await fetchTasks();
     } catch (error) {
       console.error('Error reopening task:', error);
       toast({
@@ -242,7 +248,8 @@ export const PendingTasksManager = () => {
         description: "De taak is succesvol verwijderd"
       });
 
-      fetchTasks();
+      // Refresh tasks after deletion
+      await fetchTasks();
     } catch (error) {
       console.error('Error deleting task:', error);
       toast({
@@ -282,6 +289,13 @@ export const PendingTasksManager = () => {
   useEffect(() => {
     fetchTasks();
   }, [selectedOrganization, selectedWorkspace]);
+
+  // Refresh tasks when real-time count changes
+  useEffect(() => {
+    if (pendingTasksCount !== undefined) {
+      fetchTasks();
+    }
+  }, [pendingTasksCount]);
 
   const TaskCard = ({ task, isCompleted = false }: { task: PendingTask; isCompleted?: boolean }) => (
     <Card key={task.id} className="mb-4">

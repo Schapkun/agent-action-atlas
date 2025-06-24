@@ -1,9 +1,10 @@
+
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Bold, Italic, Underline, List, Trash2, Plus } from 'lucide-react';
 import { VatSelector } from '@/components/ui/vat-selector';
-import { LineItem } from '@/types/invoiceTypes';
+import { LineItem } from '@/types/lineItemTypes';
 
 interface QuoteLineItemsTableProps {
   lineItems: LineItem[];

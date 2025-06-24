@@ -1,12 +1,12 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { subscriptionManager } from '@/utils/subscriptionManager';
 
 export const usePendingTasksRealtime = () => {
   const [pendingTasksCount, setPendingTasksCount] = useState(0);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
-  const channelRef = useRef<any>(null);
 
   const fetchPendingTasksCount = async () => {
     if (!selectedOrganization) {
@@ -44,20 +44,11 @@ export const usePendingTasksRealtime = () => {
   useEffect(() => {
     if (!selectedOrganization) return;
 
-    // Clean up existing channel if it exists
-    if (channelRef.current) {
-      console.log('📡 Cleaning up existing pending tasks channel');
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
-    }
-
     console.log('📡 Setting up real-time pending tasks subscription');
 
-    // Create unique channel name to avoid conflicts
-    const channelName = `pending-tasks-realtime-${selectedOrganization.id}-${Date.now()}`;
+    const channel = subscriptionManager.createChannel('pending-tasks-realtime', selectedOrganization.id);
     
-    const channel = supabase
-      .channel(channelName)
+    channel
       .on(
         'postgres_changes',
         {
@@ -66,7 +57,7 @@ export const usePendingTasksRealtime = () => {
           table: 'pending_tasks',
           filter: `organization_id=eq.${selectedOrganization.id}`
         },
-        (payload) => {
+        (payload: any) => {
           console.log('📋 Pending tasks changed:', payload);
           // Immediately refresh count when any task changes
           fetchPendingTasksCount();
@@ -74,14 +65,9 @@ export const usePendingTasksRealtime = () => {
       )
       .subscribe();
 
-    channelRef.current = channel;
-
     return () => {
       console.log('📡 Cleaning up pending tasks real-time subscription');
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
+      subscriptionManager.cleanupChannel('pending-tasks-realtime');
     };
   }, [selectedOrganization]);
 
