@@ -18,9 +18,14 @@ const Settings = () => {
       setSearchParams({ tab: 'organizations' });
     }
     
-    // Redirect old 'documents' tab to 'templates'
+    // Redirect old 'documents' tab to 'templates-emails'
     if (searchParams.get('tab') === 'documents') {
-      setSearchParams({ tab: 'templates' });
+      setSearchParams({ tab: 'templates-emails' });
+    }
+    
+    // Redirect old 'templates' and 'emails' tabs to 'templates-emails'
+    if (searchParams.get('tab') === 'templates' || searchParams.get('tab') === 'emails') {
+      setSearchParams({ tab: 'templates-emails' });
     }
   }, [searchParams, setSearchParams]);
 

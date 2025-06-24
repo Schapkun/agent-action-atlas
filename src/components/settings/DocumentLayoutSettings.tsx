@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -12,6 +13,7 @@ import { DocumentTemplateWithTags } from '@/types/documentTags';
 import { TemplateLibraryNew } from './components/TemplateLibraryNew';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { DocumentSettings } from './DocumentSettings';
+import { EmailTemplateSettings } from './EmailTemplateSettings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const DocumentLayoutContent = () => {
@@ -128,19 +130,20 @@ const DocumentLayoutContent = () => {
     <DocumentProvider>
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-medium">Template Beheer</h3>
+          <h3 className="text-lg font-medium">Templates & Emails</h3>
           <p className="text-sm text-muted-foreground">
-            Beheer document templates en instellingen.
+            Beheer document templates, document types en email templates.
           </p>
         </div>
 
-        <Tabs defaultValue="templates" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="templates">Document Templates</TabsTrigger>
-            <TabsTrigger value="settings">Document Types</TabsTrigger>
+        <Tabs defaultValue="document-templates" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="document-templates">Document Templates</TabsTrigger>
+            <TabsTrigger value="document-types">Document Types</TabsTrigger>
+            <TabsTrigger value="email-templates">Email Templates</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="templates" className="space-y-6">
+          <TabsContent value="document-templates" className="space-y-6">
             <DocumentActions 
               onNewDocument={handleNewDocument}
               onOpenLibrary={handleOpenLibrary}
@@ -163,8 +166,12 @@ const DocumentLayoutContent = () => {
             />
           </TabsContent>
 
-          <TabsContent value="settings" className="space-y-6">
+          <TabsContent value="document-types" className="space-y-6">
             <DocumentSettings />
+          </TabsContent>
+
+          <TabsContent value="email-templates" className="space-y-6">
+            <EmailTemplateSettings />
           </TabsContent>
         </Tabs>
 

@@ -1,12 +1,12 @@
 
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
-import { ActionOverview } from '@/components/dashboard/ActionOverview';
+import { PendingTasksManager } from '@/components/dashboard/PendingTasksManager';
 
 const Dashboard = () => {
   return (
     <div className="space-y-6">
       <DashboardStats />
-      <ActionOverview limit={10} showFilters={false} />
+      <PendingTasksManager />
     </div>
   );
 };
