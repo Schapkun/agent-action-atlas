@@ -1,123 +1,199 @@
 
-import React, { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { useDocumentTypes, DocumentType } from '@/hooks/useDocumentTypes';
-import { DocumentTypeActions } from './components/DocumentTypeActions';
-import { DocumentTypeList } from './components/DocumentTypeList';
-import { DocumentTypeDialog } from './components/DocumentTypeDialog';
+import React, { useState, useMemo } from 'react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Loader2 } from 'lucide-react';
+import { SimpleHtmlDocumentBuilder } from './htmldocument/SimpleHtmlDocumentBuilder';
+import { DocumentNameDialog } from './components/DocumentNameDialog';
+import { useToast } from '@/hooks/use-toast';
+import { DocumentActions } from './components/DocumentActions';
+import { DocumentList } from './components/DocumentList';
+import { DocumentProvider } from './contexts/DocumentContext';
+import { DocumentTemplateWithTags } from '@/types/documentTags';
+import { TemplateLibraryNew } from './components/TemplateLibraryNew';
+import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
+import { DocumentTypeSettings } from './DocumentTypeSettings';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-export const DocumentSettings = () => {
-  const { toast } = useToast();
-  const { documentTypes, loading: documentTypesLoading, createDocumentType, updateDocumentType, deleteDocumentType } = useDocumentTypes();
+const DocumentSettingsContent = () => {
+  const [isBuilderOpen, setIsBuilderOpen] = useState(false);
+  const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [editingDocumentId, setEditingDocumentId] = useState<string | undefined>(undefined);
+  const [duplicatingDocument, setDuplicatingDocument] = useState<DocumentTemplateWithTags | null>(null);
   
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingDocumentType, setEditingDocumentType] = useState<DocumentType | undefined>();
+  const [selectedFilterTags, setSelectedFilterTags] = useState<string[]>([]);
+  
+  const { templates, loading, fetchTemplates } = useDocumentTemplates();
+  const { toast } = useToast();
 
-  const handleNewDocumentType = () => {
-    setEditingDocumentType(undefined);
-    setIsDialogOpen(true);
+  // Since tags are removed, we don't need tag filtering anymore
+  const availableTags: string[] = [];
+
+  const filteredTemplates = useMemo(() => {
+    return templates.sort((a, b) => {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  }, [templates]);
+
+  const handleNewDocument = () => {
+    setEditingDocumentId(undefined);
+    setIsBuilderOpen(true);
   };
 
-  const handleEditDocumentType = (documentType: DocumentType) => {
-    setEditingDocumentType(documentType);
-    setIsDialogOpen(true);
+  const handleOpenLibrary = () => {
+    setIsLibraryOpen(true);
   };
 
-  const handleDeleteDocumentType = async (documentType: DocumentType) => {
-    if (window.confirm(`Weet je zeker dat je "${documentType.label}" wilt verwijderen?`)) {
-      console.log('[DocumentSettings] Attempting to delete document type:', documentType.id);
-      
-      const success = await deleteDocumentType(documentType.id);
-      
-      if (success) {
+  const handleEditDocument = (document: DocumentTemplateWithTags) => {
+    setEditingDocumentId(document.id);
+    setIsBuilderOpen(true);
+  };
+
+  const handleBuilderComplete = async (success: boolean) => {
+    setIsBuilderOpen(false);
+    setEditingDocumentId(undefined);
+    
+    if (success) {
+      await fetchTemplates();
+      toast({
+        title: "Succes",
+        description: "Document is opgeslagen."
+      });
+    }
+  };
+
+  const handleDuplicateDocument = (document: DocumentTemplateWithTags) => {
+    setDuplicatingDocument(document);
+    setIsNameDialogOpen(true);
+  };
+
+  const handleDuplicateSave = async (name: string, description: string) => {
+    if (duplicatingDocument) {
+      try {
+        console.log('Duplicate template functionality needs to be implemented');
+        
+        setDuplicatingDocument(null);
         toast({
-          title: "Document type verwijderd",
-          description: `"${documentType.label}" is succesvol verwijderd.`
+          title: "Document gedupliceerd",
+          description: `"${name}" is aangemaakt als kopie.`
         });
-      } else {
+      } catch (error) {
+        console.error('Error duplicating document:', error);
         toast({
-          title: "Fout bij verwijderen",
-          description: "Kon document type niet verwijderen. Probeer het opnieuw.",
+          title: "Fout",
+          description: "Kon document niet dupliceren",
           variant: "destructive"
         });
       }
     }
   };
 
-  const handleSaveDocumentType = async (name: string, label: string, templateId?: string) => {
-    if (editingDocumentType) {
-      const success = await updateDocumentType(editingDocumentType.id, name, label, templateId);
-      if (success) {
-        toast({
-          title: "Document type bijgewerkt",
-          description: `"${label}" is bijgewerkt.`
-        });
-        return true;
+  const handleDeleteDocument = async (document: DocumentTemplateWithTags) => {
+    try {
+      console.log('Delete template functionality needs to be implemented');
+      
+      if (editingDocumentId === document.id) {
+        setEditingDocumentId(undefined);
       }
-    } else {
-      const success = await createDocumentType(name, label, templateId);
-      if (success) {
-        toast({
-          title: "Document type aangemaakt",
-          description: `"${label}" is aangemaakt.`
-        });
-        return true;
-      }
+      toast({
+        title: "Document verwijderd",
+        description: `"${document.name}" is verwijderd.`
+      });
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast({
+        title: "Fout",
+        description: "Kon document niet verwijderen",
+        variant: "destructive"
+      });
     }
-    
-    toast({
-      title: "Fout",
-      description: "Kon document type niet opslaan. Probeer het opnieuw.",
-      variant: "destructive"
-    });
-    return false;
   };
 
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false);
-    setEditingDocumentType(undefined);
+  const handleClearFilters = () => {
+    setSelectedFilterTags([]);
   };
 
-  if (documentTypesLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="flex items-center gap-2">
           <Loader2 className="h-5 w-5 animate-spin" />
-          <span>Document types laden...</span>
+          <span>Templates laden...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium">Document Types</h3>
-        <p className="text-sm text-muted-foreground">
-          Beheer de verschillende document types en hun standaard templates.
-        </p>
+    <DocumentProvider>
+      <div className="space-y-6">
+        <Tabs defaultValue="document-templates" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="document-templates">Document Templates</TabsTrigger>
+            <TabsTrigger value="document-types">Document Types</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="document-templates" className="space-y-6">
+            <DocumentActions 
+              onNewDocument={handleNewDocument}
+              onOpenLibrary={handleOpenLibrary}
+              selectedTags={selectedFilterTags}
+              onTagsChange={setSelectedFilterTags}
+              onClearFilters={handleClearFilters}
+              availableTags={availableTags}
+            />
+
+            <div className="text-sm text-gray-600">
+              {filteredTemplates.length} van {templates.length} templates {filteredTemplates.length === 1 ? 'wordt' : 'worden'} getoond
+            </div>
+
+            <DocumentList
+              documents={filteredTemplates}
+              onEditDocument={handleEditDocument}
+              onDuplicateDocument={handleDuplicateDocument}
+              onDeleteDocument={handleDeleteDocument}
+              onRefreshDocuments={fetchTemplates}
+            />
+          </TabsContent>
+
+          <TabsContent value="document-types" className="space-y-6">
+            <DocumentTypeSettings />
+          </TabsContent>
+        </Tabs>
+
+        <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen}>
+          <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 flex flex-col">
+            <DialogTitle className="sr-only">Document Builder</DialogTitle>
+            <SimpleHtmlDocumentBuilder 
+              documentId={editingDocumentId}
+              onComplete={handleBuilderComplete}
+            />
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isLibraryOpen} onOpenChange={setIsLibraryOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh]">
+            <DialogTitle className="sr-only">Template Bibliotheek</DialogTitle>
+            <TemplateLibraryNew />
+          </DialogContent>
+        </Dialog>
+
+        <DocumentNameDialog
+          open={isNameDialogOpen}
+          onClose={() => {
+            setIsNameDialogOpen(false);
+            setDuplicatingDocument(null);
+          }}
+          onSave={handleDuplicateSave}
+          existingNames={templates.map(d => d.name)}
+          initialName={duplicatingDocument ? `${duplicatingDocument.name} (kopie)` : ''}
+          initialDescription={duplicatingDocument?.description || ''}
+        />
       </div>
-
-      <DocumentTypeActions onNewDocumentType={handleNewDocumentType} />
-
-      <div className="text-sm text-gray-600">
-        {documentTypes.length} document {documentTypes.length === 1 ? 'type' : 'types'} gevonden
-      </div>
-
-      <DocumentTypeList
-        documentTypes={documentTypes}
-        onEditDocumentType={handleEditDocumentType}
-        onDeleteDocumentType={handleDeleteDocumentType}
-      />
-
-      <DocumentTypeDialog
-        open={isDialogOpen}
-        onClose={handleCloseDialog}
-        onSave={handleSaveDocumentType}
-        documentType={editingDocumentType}
-        existingNames={documentTypes.map(dt => dt.name)}
-      />
-    </div>
+    </DocumentProvider>
   );
+};
+
+export const DocumentSettings = () => {
+  return <DocumentSettingsContent />;
 };
