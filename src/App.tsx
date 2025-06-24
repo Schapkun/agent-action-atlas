@@ -31,55 +31,52 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <OrganizationProvider>
-          <TooltipProvider>
-            <BrowserRouter>
-              <Routes>
-                {/* Auth routes */}
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/register" element={<Register />} />
-                
-                {/* Main app routes - all wrapped in Index for layout */}
-                <Route path="/" element={<Index><Dashboard /></Index>} />
-                <Route path="/openstaande-taken" element={<Index><PendingTasks /></Index>} />
-                <Route path="/ai-acties" element={<Index><Actions /></Index>} />
-                
-                {/* Client routes - new primary route + redirect from old */}
-                <Route path="/clienten" element={<Index><Contacts /></Index>} />
-                <Route path="/contacten" element={<Navigate to="/clienten" replace />} />
-                
-                <Route path="/documenten" element={<Index><Documents /></Index>} />
-                <Route path="/documenten/nieuw" element={<Index><CreateDocument /></Index>} />
-                <Route path="/documenten/opstellen" element={<Navigate to="/documenten/nieuw" replace />} />
-                <Route path="/actieve-dossiers" element={<Index><ActiveDossiers /></Index>} />
-                <Route path="/gesloten-dossiers" element={<Index><ClosedDossiers /></Index>} />
-                <Route path="/facturen" element={<Index><Invoices /></Index>} />
-                <Route path="/facturen/nieuw" element={<Index><CreateInvoice /></Index>} />
-                <Route path="/facturen/opstellen" element={<Navigate to="/facturen/nieuw" replace />} />
-                <Route path="/facturen/:id/sturen" element={<Index><FactuurSturen /></Index>} />
-                <Route path="/offertes" element={<Index><Quotes /></Index>} />
-                <Route path="/offertes/nieuw" element={<Index><CreateQuote /></Index>} />
-                <Route path="/offertes/opstellen" element={<Navigate to="/offertes/nieuw" replace />} />
-                <Route path="/telefoongesprekken" element={<Index><PhoneCalls /></Index>} />
-                <Route path="/e-mails" element={<Index><Emails /></Index>} />
-                <Route path="/instellingen/*" element={<Index><Settings /></Index>} />
-                
-                {/* 404 route */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <OrganizationProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Auth routes */}
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/register" element={<Register />} />
               
-              <Toaster />
-              <Sonner />
-            </BrowserRouter>
-          </TooltipProvider>
-        </OrganizationProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  );
-};
+              {/* Main app routes - all wrapped in Index for layout */}
+              <Route path="/" element={<Index><Dashboard /></Index>} />
+              <Route path="/openstaande-taken" element={<Index><PendingTasks /></Index>} />
+              <Route path="/ai-acties" element={<Index><Actions /></Index>} />
+              
+              {/* Client routes - new primary route + redirect from old */}
+              <Route path="/clienten" element={<Index><Contacts /></Index>} />
+              <Route path="/contacten" element={<Navigate to="/clienten" replace />} />
+              
+              <Route path="/documenten" element={<Index><Documents /></Index>} />
+              <Route path="/documenten/nieuw" element={<Index><CreateDocument /></Index>} />
+              <Route path="/documenten/opstellen" element={<Navigate to="/documenten/nieuw" replace />} />
+              <Route path="/actieve-dossiers" element={<Index><ActiveDossiers /></Index>} />
+              <Route path="/gesloten-dossiers" element={<Index><ClosedDossiers /></Index>} />
+              <Route path="/facturen" element={<Index><Invoices /></Index>} />
+              <Route path="/facturen/nieuw" element={<Index><CreateInvoice /></Index>} />
+              <Route path="/facturen/opstellen" element={<Navigate to="/facturen/nieuw" replace />} />
+              <Route path="/facturen/:id/sturen" element={<Index><FactuurSturen /></Index>} />
+              <Route path="/offertes" element={<Index><Quotes /></Index>} />
+              <Route path="/offertes/nieuw" element={<Index><CreateQuote /></Index>} />
+              <Route path="/offertes/opstellen" element={<Navigate to="/offertes/nieuw" replace />} />
+              <Route path="/telefoongesprekken" element={<Index><PhoneCalls /></Index>} />
+              <Route path="/e-mails" element={<Index><Emails /></Index>} />
+              <Route path="/instellingen/*" element={<Index><Settings /></Index>} />
+              
+              {/* 404 route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </OrganizationProvider>
+    </AuthProvider>
+  </QueryClientProvider>
+);
 
 export default App;
