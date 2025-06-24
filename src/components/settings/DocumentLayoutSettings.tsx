@@ -129,49 +129,58 @@ const DocumentLayoutContent = () => {
   return (
     <DocumentProvider>
       <div className="space-y-6">
-        <div>
-          <h3 className="text-lg font-medium">Templates & Emails</h3>
-          <p className="text-sm text-muted-foreground">
-            Beheer document templates, document types en email templates.
-          </p>
-        </div>
-
-        <Tabs defaultValue="document-templates" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="document-templates">Document Templates</TabsTrigger>
-            <TabsTrigger value="document-types">Document Types</TabsTrigger>
-            <TabsTrigger value="email-templates">Email Templates</TabsTrigger>
+        <Tabs defaultValue="documenten" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="documenten">Documenten</TabsTrigger>
+            <TabsTrigger value="emails">Emails</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="document-templates" className="space-y-6">
-            <DocumentActions 
-              onNewDocument={handleNewDocument}
-              onOpenLibrary={handleOpenLibrary}
-              selectedTags={selectedFilterTags}
-              onTagsChange={setSelectedFilterTags}
-              onClearFilters={handleClearFilters}
-              availableTags={availableTags}
-            />
+          <TabsContent value="documenten" className="space-y-6">
+            <Tabs defaultValue="document-templates" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="document-templates">Document Templates</TabsTrigger>
+                <TabsTrigger value="document-types">Document Types</TabsTrigger>
+              </TabsList>
 
-            <div className="text-sm text-gray-600">
-              {filteredTemplates.length} van {templates.length} templates {filteredTemplates.length === 1 ? 'wordt' : 'worden'} getoond
-            </div>
+              <TabsContent value="document-templates" className="space-y-6">
+                <DocumentActions 
+                  onNewDocument={handleNewDocument}
+                  onOpenLibrary={handleOpenLibrary}
+                  selectedTags={selectedFilterTags}
+                  onTagsChange={setSelectedFilterTags}
+                  onClearFilters={handleClearFilters}
+                  availableTags={availableTags}
+                />
 
-            <DocumentList
-              documents={filteredTemplates}
-              onEditDocument={handleEditDocument}
-              onDuplicateDocument={handleDuplicateDocument}
-              onDeleteDocument={handleDeleteDocument}
-              onRefreshDocuments={fetchTemplates}
-            />
+                <div className="text-sm text-gray-600">
+                  {filteredTemplates.length} van {templates.length} templates {filteredTemplates.length === 1 ? 'wordt' : 'worden'} getoond
+                </div>
+
+                <DocumentList
+                  documents={filteredTemplates}
+                  onEditDocument={handleEditDocument}
+                  onDuplicateDocument={handleDuplicateDocument}
+                  onDeleteDocument={handleDeleteDocument}
+                  onRefreshDocuments={fetchTemplates}
+                />
+              </TabsContent>
+
+              <TabsContent value="document-types" className="space-y-6">
+                <DocumentSettings />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
-          <TabsContent value="document-types" className="space-y-6">
-            <DocumentSettings />
-          </TabsContent>
+          <TabsContent value="emails" className="space-y-6">
+            <Tabs defaultValue="email-templates" className="w-full">
+              <TabsList className="grid w-full grid-cols-1">
+                <TabsTrigger value="email-templates">Email Templates</TabsTrigger>
+              </TabsList>
 
-          <TabsContent value="email-templates" className="space-y-6">
-            <EmailTemplateSettings />
+              <TabsContent value="email-templates" className="space-y-6">
+                <EmailTemplateSettings />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
         </Tabs>
 

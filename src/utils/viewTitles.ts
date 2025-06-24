@@ -44,7 +44,7 @@ export const getViewTitleFromPath = (path: string): string => {
   if (path === '/telefoongesprekken') return 'Telefoongesprekken';
   if (path === '/e-mails') return 'E-mails';
   if (path === '/clienten' || path === '/contacten') return 'Cliënten';
-  if (path === '/instellingen') return 'Instellingen';
+  if (path === '/instellingen' || path.startsWith('/instellingen')) return 'Instellingen';
   if (path === '/support') return 'Hulp & Support';
   return 'Dashboard';
 };

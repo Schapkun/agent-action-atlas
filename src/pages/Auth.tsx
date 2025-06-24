@@ -46,8 +46,8 @@ const Auth = () => {
         }
       } else {
         toast({
-          title: "Welkom terug!",
-          description: "Je bent succesvol ingelogd.",
+          title: "Succesvol ingelogd",
+          description: "Je wordt doorgestuurd naar het dashboard.",
         });
         navigate('/');
       }
@@ -72,12 +72,9 @@ const Auth = () => {
             <span className="text-2xl font-bold text-foreground">Meester.app</span>
           </div>
 
-          {/* Title */}
+          {/* Subtitle */}
           <div className="text-center">
-            <h1 className="text-2xl font-semibold">
-              Welkom terug
-            </h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-muted-foreground">
               Log in op uw AI juridisch dashboard
             </p>
           </div>
