@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { BarChart3, Users, Mail, FileText, Receipt, Calculator, Phone, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -7,7 +6,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
-export type ViewType =
+interface SidebarProps {
+  currentView: ViewType;
+  onViewChange: (view: ViewType) => void;
+}
+
+type ViewType =
   | 'dashboard'
   | 'contacts'
   | 'emails'
@@ -16,11 +20,6 @@ export type ViewType =
   | 'quotes'
   | 'phone-calls'
   | 'settings';
-
-interface SidebarProps {
-  currentView: ViewType;
-  onViewChange: (view: ViewType) => void;
-}
 
 const Sidebar = ({ currentView, onViewChange }: SidebarProps) => {
   const { selectedOrganization } = useOrganization();
@@ -35,6 +34,7 @@ const Sidebar = ({ currentView, onViewChange }: SidebarProps) => {
     { id: 'invoices' as ViewType, icon: Receipt, label: 'Facturen' },
     { id: 'quotes' as ViewType, icon: Calculator, label: 'Offertes' },
     { id: 'phone-calls' as ViewType, icon: Phone, label: 'Telefoongesprekken' },
+    // Removed 'pending-tasks' from the menu
   ];
 
   return (
@@ -71,5 +71,4 @@ const Sidebar = ({ currentView, onViewChange }: SidebarProps) => {
   );
 };
 
-export { Sidebar };
 export default Sidebar;
