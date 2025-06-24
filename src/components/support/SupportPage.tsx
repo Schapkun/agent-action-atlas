@@ -185,252 +185,246 @@ export const SupportPage = () => {
   return (
     <div className="space-y-8">
       {/* Contact Options */}
-      <div>
-        <h2 className="text-xl font-semibold mb-6">Contactmogelijkheden</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6 text-center">
-              <div className="bg-blue-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <Phone className="h-8 w-8 text-blue-600" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Bellen</h3>
-              <p className="text-sm text-muted-foreground mb-4">Binnenkort beschikbaar</p>
-              <Button variant="outline" size="sm" disabled className="w-full">
-                Bel ons
-              </Button>
-            </CardContent>
-          </Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardContent className="p-6 text-center">
+            <div className="bg-amber-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <Phone className="h-8 w-8 text-amber-600" />
+            </div>
+            <h3 className="font-semibold text-lg mb-2">Bellen</h3>
+            <p className="text-sm text-muted-foreground mb-4">Binnenkort beschikbaar</p>
+            <Button variant="outline" size="sm" disabled className="w-full">
+              Bel ons
+            </Button>
+          </CardContent>
+        </Card>
 
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6 text-center">
-              <div className="bg-green-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <Mail className="h-8 w-8 text-green-600" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">E-mail</h3>
-              <p className="text-sm text-muted-foreground mb-4">hallo@meester.app</p>
-              <Button variant="outline" size="sm" asChild className="w-full">
-                <a href="mailto:hallo@meester.app">Mail ons</a>
-              </Button>
-            </CardContent>
-          </Card>
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardContent className="p-6 text-center">
+            <div className="bg-blue-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <Mail className="h-8 w-8 text-blue-600" />
+            </div>
+            <h3 className="font-semibold text-lg mb-2">E-mail</h3>
+            <p className="text-sm text-muted-foreground mb-4">hallo@meester.app</p>
+            <Button variant="outline" size="sm" asChild className="w-full">
+              <a href="mailto:hallo@meester.app">Mail ons</a>
+            </Button>
+          </CardContent>
+        </Card>
 
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6 text-center">
-              <div className="bg-green-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <MessageSquare className="h-8 w-8 text-green-600" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">WhatsApp</h3>
-              <p className="text-sm text-muted-foreground mb-4">Binnenkort beschikbaar</p>
-              <Button variant="outline" size="sm" disabled className="w-full">
-                WhatsApp
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardContent className="p-6 text-center">
+            <div className="bg-green-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <MessageSquare className="h-8 w-8 text-green-600" />
+            </div>
+            <h3 className="font-semibold text-lg mb-2">WhatsApp</h3>
+            <p className="text-sm text-muted-foreground mb-4">Binnenkort beschikbaar</p>
+            <Button variant="outline" size="sm" disabled className="w-full">
+              WhatsApp
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Contact Forms */}
-      <div>
-        <h2 className="text-xl font-semibold mb-6">Contactformulieren</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* General Contact Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <HelpCircle className="h-5 w-5" />
-                Contact Formulier
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleContactSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Naam *</label>
-                  <Input
-                    value={contactFormData.name}
-                    onChange={(e) => setContactFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Uw naam"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">E-mail *</label>
-                  <Input
-                    type="email"
-                    value={contactFormData.email}
-                    onChange={(e) => setContactFormData(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="uw.email@voorbeeld.nl"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Onderwerp *</label>
-                  <Input
-                    value={contactFormData.subject}
-                    onChange={(e) => setContactFormData(prev => ({ ...prev, subject: e.target.value }))}
-                    placeholder="Onderwerp van uw bericht"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Bericht *</label>
-                  <Textarea
-                    value={contactFormData.message}
-                    onChange={(e) => setContactFormData(prev => ({ ...prev, message: e.target.value }))}
-                    placeholder="Uw bericht..."
-                    rows={4}
-                    className="resize-none"
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full"
-                  disabled={loadingStates.contact}
-                >
-                  {loadingStates.contact ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Verzenden...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4 mr-2" />
-                      Verstuur Bericht
-                    </>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* General Contact Form */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <HelpCircle className="h-5 w-5" />
+              Contact Formulier
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleContactSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Naam *</label>
+                <Input
+                  value={contactFormData.name}
+                  onChange={(e) => setContactFormData(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Uw naam"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">E-mail *</label>
+                <Input
+                  type="email"
+                  value={contactFormData.email}
+                  onChange={(e) => setContactFormData(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="uw.email@voorbeeld.nl"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Onderwerp *</label>
+                <Input
+                  value={contactFormData.subject}
+                  onChange={(e) => setContactFormData(prev => ({ ...prev, subject: e.target.value }))}
+                  placeholder="Onderwerp van uw bericht"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Bericht *</label>
+                <Textarea
+                  value={contactFormData.message}
+                  onChange={(e) => setContactFormData(prev => ({ ...prev, message: e.target.value }))}
+                  placeholder="Uw bericht..."
+                  rows={4}
+                  className="resize-none"
+                />
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={loadingStates.contact}
+              >
+                {loadingStates.contact ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Verzenden...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Verstuur Bericht
+                  </>
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
 
-          {/* Bug Report Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Bug className="h-5 w-5" />
-                Fout Melden
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleBugSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Naam *</label>
-                  <Input
-                    value={bugFormData.name}
-                    onChange={(e) => setBugFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Uw naam"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">E-mail *</label>
-                  <Input
-                    type="email"
-                    value={bugFormData.email}
-                    onChange={(e) => setBugFormData(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="uw.email@voorbeeld.nl"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Onderwerp *</label>
-                  <Input
-                    value={bugFormData.subject}
-                    onChange={(e) => setBugFormData(prev => ({ ...prev, subject: e.target.value }))}
-                    placeholder="Onderwerp van uw bericht"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Bericht *</label>
-                  <Textarea
-                    value={bugFormData.message}
-                    onChange={(e) => setBugFormData(prev => ({ ...prev, message: e.target.value }))}
-                    placeholder="Uw bericht..."
-                    rows={4}
-                    className="resize-none"
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full"
-                  disabled={loadingStates.bug}
-                >
-                  {loadingStates.bug ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Verzenden...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4 mr-2" />
-                      Meld Fout
-                    </>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+        {/* Bug Report Form */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Bug className="h-5 w-5" />
+              Fout Melden
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleBugSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Naam *</label>
+                <Input
+                  value={bugFormData.name}
+                  onChange={(e) => setBugFormData(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Uw naam"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">E-mail *</label>
+                <Input
+                  type="email"
+                  value={bugFormData.email}
+                  onChange={(e) => setBugFormData(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="uw.email@voorbeeld.nl"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Onderwerp *</label>
+                <Input
+                  value={bugFormData.subject}
+                  onChange={(e) => setBugFormData(prev => ({ ...prev, subject: e.target.value }))}
+                  placeholder="Onderwerp van uw bericht"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Bericht *</label>
+                <Textarea
+                  value={bugFormData.message}
+                  onChange={(e) => setBugFormData(prev => ({ ...prev, message: e.target.value }))}
+                  placeholder="Uw bericht..."
+                  rows={4}
+                  className="resize-none"
+                />
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={loadingStates.bug}
+              >
+                {loadingStates.bug ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Verzenden...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Meld Fout
+                  </>
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
 
-          {/* Feature Request Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Lightbulb className="h-5 w-5" />
-                Functie Verzoek
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleFeatureSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Naam *</label>
-                  <Input
-                    value={featureFormData.name}
-                    onChange={(e) => setFeatureFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Uw naam"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">E-mail *</label>
-                  <Input
-                    type="email"
-                    value={featureFormData.email}
-                    onChange={(e) => setFeatureFormData(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="uw.email@voorbeeld.nl"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Onderwerp *</label>
-                  <Input
-                    value={featureFormData.subject}
-                    onChange={(e) => setFeatureFormData(prev => ({ ...prev, subject: e.target.value }))}
-                    placeholder="Onderwerp van uw bericht"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Bericht *</label>
-                  <Textarea
-                    value={featureFormData.message}
-                    onChange={(e) => setFeatureFormData(prev => ({ ...prev, message: e.target.value }))}
-                    placeholder="Uw bericht..."
-                    rows={4}
-                    className="resize-none"
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full"
-                  disabled={loadingStates.feature}
-                >
-                  {loadingStates.feature ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Verzenden...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4 mr-2" />
-                      Verstuur Verzoek
-                    </>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Feature Request Form */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Lightbulb className="h-5 w-5" />
+              Functie Verzoek
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleFeatureSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Naam *</label>
+                <Input
+                  value={featureFormData.name}
+                  onChange={(e) => setFeatureFormData(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Uw naam"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">E-mail *</label>
+                <Input
+                  type="email"
+                  value={featureFormData.email}
+                  onChange={(e) => setFeatureFormData(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="uw.email@voorbeeld.nl"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Onderwerp *</label>
+                <Input
+                  value={featureFormData.subject}
+                  onChange={(e) => setFeatureFormData(prev => ({ ...prev, subject: e.target.value }))}
+                  placeholder="Onderwerp van uw bericht"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Bericht *</label>
+                <Textarea
+                  value={featureFormData.message}
+                  onChange={(e) => setFeatureFormData(prev => ({ ...prev, message: e.target.value }))}
+                  placeholder="Uw bericht..."
+                  rows={4}
+                  className="resize-none"
+                />
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={loadingStates.feature}
+              >
+                {loadingStates.feature ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Verzenden...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Verstuur Verzoek
+                  </>
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Help Information */}
