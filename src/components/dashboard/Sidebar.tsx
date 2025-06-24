@@ -206,7 +206,7 @@ export const Sidebar = ({
 
   return (
     <div className={cn(
-      "bg-card border-r border-border flex flex-col transition-all duration-300 relative h-full",
+      "bg-card border-r border-border flex flex-col h-full relative",
       collapsed ? "w-16" : "w-64"
     )}>
       {/* Header */}

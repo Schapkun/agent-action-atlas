@@ -3,7 +3,7 @@ import { DocumentOverview } from '@/components/documents/DocumentOverview';
 
 const Documents = () => {
   return (
-    <div className="w-full max-w-none">
+    <div className="w-full">
       <DocumentOverview />
     </div>
   );

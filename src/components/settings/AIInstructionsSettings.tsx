@@ -231,12 +231,20 @@ export const AIInstructionsSettings = () => {
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecteer een type..." />
                 </SelectTrigger>
-                <SelectContent className="bg-white border shadow-lg z-[9999] max-h-[200px] overflow-y-auto">
+                <SelectContent 
+                  className="bg-white border shadow-lg z-[100] max-h-[300px] overflow-y-auto"
+                  position="popper"
+                  sideOffset={5}
+                >
                   {getAvailableTypes().map((type) => (
-                    <SelectItem key={type.value} value={type.value} className="cursor-pointer hover:bg-gray-50">
-                      <div>
-                        <div className="font-medium">{type.label}</div>
-                        <div className="text-xs text-muted-foreground">{type.description}</div>
+                    <SelectItem 
+                      key={type.value} 
+                      value={type.value} 
+                      className="cursor-pointer hover:bg-gray-50 p-3"
+                    >
+                      <div className="w-full">
+                        <div className="font-medium text-sm">{type.label}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{type.description}</div>
                       </div>
                     </SelectItem>
                   ))}

@@ -37,12 +37,21 @@ const Index = ({ children }: IndexProps) => {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background flex w-full">
-        <Sidebar 
-          currentView={currentView} 
-          collapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        />
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <div className={cn(
+          "fixed left-0 top-0 h-full z-40 transition-all duration-300",
+          collapsed ? "w-16" : "w-64"
+        )}>
+          <Sidebar 
+            currentView={currentView} 
+            collapsed={sidebarCollapsed}
+            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          />
+        </div>
+        
+        <div className={cn(
+          "flex-1 flex flex-col min-h-screen transition-all duration-300",
+          sidebarCollapsed ? "ml-16" : "ml-64"
+        )}>
           <Header 
             currentView={currentView}
             onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
