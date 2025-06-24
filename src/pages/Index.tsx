@@ -39,7 +39,7 @@ const Index = ({ children }: IndexProps) => {
       <div className="min-h-screen bg-background flex w-full">
         <div className={cn(
           "fixed left-0 top-0 h-full z-40 transition-all duration-300",
-          collapsed ? "w-16" : "w-64"
+          sidebarCollapsed ? "w-16" : "w-64"
         )}>
           <Sidebar 
             currentView={currentView} 
