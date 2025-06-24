@@ -47,7 +47,7 @@ const Index = ({ children }: IndexProps) => {
             currentView={currentView}
             onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
           />
-          <main className="flex-1 overflow-auto p-6">
+          <main className="flex-1 overflow-auto p-6 w-full max-w-none">
             {children}
           </main>
         </div>

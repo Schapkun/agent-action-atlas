@@ -207,7 +207,7 @@ export const DocumentOverview = () => {
   };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full max-w-none space-y-6">
       <div className="flex items-center justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -240,7 +240,7 @@ export const DocumentOverview = () => {
         </div>
       </div>
 
-      <Card>
+      <Card className="w-full">
         <CardContent className="p-0">
           {loading ? (
             <div className="text-center py-8">Documenten laden...</div>
@@ -250,69 +250,71 @@ export const DocumentOverview = () => {
               <p>Geen documenten gevonden</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={isAllSelected}
-                      onCheckedChange={handleSelectAll}
-                    />
-                  </TableHead>
-                  <TableHead>Documentnaam</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Cliënt</TableHead>
-                  <TableHead>Adres</TableHead>
-                  <TableHead>Postcode</TableHead>
-                  <TableHead>Woonplaats</TableHead>
-                  <TableHead>Aangemaakt</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Acties</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredDocuments.map((document) => (
-                  <TableRow key={document.id}>
-                    <TableCell>
+            <div className="w-full overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">
                       <Checkbox
-                        checked={selectedDocuments.has(document.id)}
-                        onCheckedChange={(checked) => handleSelectDocument(document.id, checked as boolean)}
+                        checked={isAllSelected}
+                        onCheckedChange={handleSelectAll}
                       />
-                    </TableCell>
-                    <TableCell className="font-medium">{document.name}</TableCell>
-                    <TableCell>{document.document_type || '-'}</TableCell>
-                    <TableCell>{document.client_name || '-'}</TableCell>
-                    <TableCell>{document.client_address || '-'}</TableCell>
-                    <TableCell>{document.client_postal_code || '-'}</TableCell>
-                    <TableCell>{document.client_city || '-'}</TableCell>
-                    <TableCell>{new Date(document.created_at).toLocaleDateString('nl-NL')}</TableCell>
-                    <TableCell>{getStatusBadge(document.status)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button size="sm" variant="outline" title="Bekijken">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        
-                        <Button size="sm" variant="outline" asChild title="Bewerken">
-                          <a href={`/documenten/nieuw?edit=${document.id}`}>
-                            <Edit className="h-4 w-4" />
-                          </a>
-                        </Button>
-                        
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => deleteDocument(document.id)}
-                          title="Verwijderen"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                    </TableHead>
+                    <TableHead>Documentnaam</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Cliënt</TableHead>
+                    <TableHead>Adres</TableHead>
+                    <TableHead>Postcode</TableHead>
+                    <TableHead>Woonplaats</TableHead>
+                    <TableHead>Aangemaakt</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Acties</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredDocuments.map((document) => (
+                    <TableRow key={document.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedDocuments.has(document.id)}
+                          onCheckedChange={(checked) => handleSelectDocument(document.id, checked as boolean)}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">{document.name}</TableCell>
+                      <TableCell>{document.document_type || '-'}</TableCell>
+                      <TableCell>{document.client_name || '-'}</TableCell>
+                      <TableCell>{document.client_address || '-'}</TableCell>
+                      <TableCell>{document.client_postal_code || '-'}</TableCell>
+                      <TableCell>{document.client_city || '-'}</TableCell>
+                      <TableCell>{new Date(document.created_at).toLocaleDateString('nl-NL')}</TableCell>
+                      <TableCell>{getStatusBadge(document.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button size="sm" variant="outline" title="Bekijken">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          
+                          <Button size="sm" variant="outline" asChild title="Bewerken">
+                            <a href={`/documenten/nieuw?edit=${document.id}`}>
+                              <Edit className="h-4 w-4" />
+                            </a>
+                          </Button>
+                          
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => deleteDocument(document.id)}
+                            title="Verwijderen"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

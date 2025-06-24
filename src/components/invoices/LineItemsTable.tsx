@@ -1,4 +1,3 @@
-
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -218,11 +217,11 @@ export const LineItemsTable = ({
     <Card>
       <CardHeader className="p-2">
         <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700">
-          <div className="col-span-1 text-center">Aantal</div>
+          <div className="col-span-1 text-left">Aantal</div>
           <div className="col-span-6 text-left">Omschrijving</div>
-          <div className="col-span-2 text-right">Prijs</div>
-          <div className="col-span-1 text-center">BTW</div>
-          <div className="col-span-2 text-right">Totaal</div>
+          <div className="col-span-2 text-left">Prijs</div>
+          <div className="col-span-1 text-left">BTW</div>
+          <div className="col-span-2 text-left">Totaal</div>
         </div>
       </CardHeader>
 
@@ -232,17 +231,13 @@ export const LineItemsTable = ({
             <div key={index} className="grid grid-cols-12 gap-2 items-start">
               {/* Quantity column */}
               <div className="col-span-1">
-                {!item.is_text_only ? (
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={item.quantity}
-                    onChange={(e) => onUpdateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                    className="text-center text-xs h-8"
-                  />
-                ) : (
-                  <div className="h-8" />
-                )}
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={item.quantity}
+                  onChange={(e) => onUpdateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                  className="text-left text-xs h-8"
+                />
               </div>
               
               {/* Description column */}
@@ -296,62 +291,39 @@ export const LineItemsTable = ({
                     >
                       <List className="h-3 w-3" />
                     </Button>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-6 w-6 p-0"
-                      onClick={() => toggleTextOnlyMode(index)}
-                      title={item.is_text_only ? "Terugzetten naar productregel" : "Omzetten naar tekst"}
-                    >
-                      <Type className="h-3 w-3" />
-                    </Button>
                   </div>
                 </div>
               </div>
               
               {/* Price column */}
               <div className="col-span-2">
-                {!item.is_text_only ? (
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs">€</span>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={item.unit_price || ''}
-                      placeholder=""
-                      onChange={(e) => onUpdateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                      className="text-right text-xs h-8"
-                    />
-                  </div>
-                ) : (
-                  <div className="h-8" />
-                )}
+                <div className="flex items-center gap-1">
+                  <span className="text-xs">€</span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={item.unit_price}
+                    onChange={(e) => onUpdateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                    className="text-left text-xs h-8 min-w-24"
+                  />
+                </div>
               </div>
               
               {/* VAT column - now visible */}
               <div className="col-span-1">
-                {!item.is_text_only ? (
-                  <VatSelector
-                    value={item.vat_rate}
-                    onValueChange={(value) => onUpdateLineItem(index, 'vat_rate', value)}
-                    className="text-xs h-8 w-full"
-                  />
-                ) : (
-                  <div className="h-8" />
-                )}
+                <VatSelector
+                  value={item.vat_rate}
+                  onValueChange={(value) => onUpdateLineItem(index, 'vat_rate', value)}
+                  className="text-xs h-8 w-full"
+                />
               </div>
               
               {/* Total column with delete button */}
               <div className="col-span-2 flex items-center justify-between">
-                {!item.is_text_only ? (
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs">€</span>
-                    <span className="font-medium text-xs">{item.line_total.toFixed(2)}</span>
-                  </div>
-                ) : (
-                  <div className="h-8" />
-                )}
+                <div className="flex items-center gap-1 min-w-20">
+                  <span className="text-xs">€</span>
+                  <span className="font-medium text-xs">{item.line_total.toFixed(2)}</span>
+                </div>
                 <Button
                   type="button"
                   variant="ghost"
