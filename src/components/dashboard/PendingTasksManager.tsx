@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -37,9 +36,7 @@ import {
   Eye,
   Trash2,
   FileText,
-  AlertCircle,
-  ChevronDown,
-  ChevronRight
+  AlertCircle
 } from 'lucide-react';
 
 interface PendingTask {
@@ -91,7 +88,6 @@ export const PendingTasksManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [taskTypeFilter, setTaskTypeFilter] = useState<string>('all');
-  const [showCompletedTasks, setShowCompletedTasks] = useState(false);
   const [selectedEmailTask, setSelectedEmailTask] = useState<PendingTask | null>(null);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [showCombinedDialog, setShowCombinedDialog] = useState(false);
@@ -620,59 +616,38 @@ export const PendingTasksManager = () => {
           </CardContent>
         </Card>
 
-        {/* Completed Tasks Section */}
-        {(completedEmailTasks.length > 0 || completedGeneralTasks.length > 0) && (
-          <Collapsible open={showCompletedTasks} onOpenChange={setShowCompletedTasks}>
-            <Card className="border-green-200">
-              <CardHeader className="pb-2">
-                <CollapsibleTrigger asChild>
-                  <div className="flex items-center justify-between cursor-pointer hover:bg-green-50 -m-3 p-3 rounded-lg">
-                    <CardTitle className="flex items-center gap-2 text-base text-green-700">
-                      <CheckCircle className="h-4 w-4" />
-                      Afgeronde Taken ({completedEmailTasks.length + completedGeneralTasks.length})
-                    </CardTitle>
-                    {showCompletedTasks ? (
-                      <ChevronDown className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 text-green-600" />
-                    )}
-                  </div>
-                </CollapsibleTrigger>
-              </CardHeader>
+        {/* Completed Email Tasks - Always visible */}
+        {completedEmailTasks.length > 0 && (
+          <Card className="border-green-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base text-green-700">
+                <CheckCircle className="h-4 w-4" />
+                Voltooide E-mail Antwoorden ({completedEmailTasks.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="space-y-2">
+                {completedEmailTasks.map((task) => renderTaskItem(task, true))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-              <CollapsibleContent>
-                <CardContent className="pt-0">
-                  <div className="space-y-4">
-                    {/* Completed Email Tasks */}
-                    {completedEmailTasks.length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-medium text-green-700 mb-2 flex items-center gap-2">
-                          <Mail className="h-3 w-3" />
-                          Voltooide E-mail Antwoorden ({completedEmailTasks.length})
-                        </h4>
-                        <div className="space-y-2">
-                          {completedEmailTasks.map((task) => renderTaskItem(task, true))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Completed General Tasks */}
-                    {completedGeneralTasks.length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-medium text-green-700 mb-2 flex items-center gap-2">
-                          <FileText className="h-3 w-3" />
-                          Voltooide Algemene Taken ({completedGeneralTasks.length})
-                        </h4>
-                        <div className="space-y-2">
-                          {completedGeneralTasks.map((task) => renderTaskItem(task, true))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </CollapsibleContent>
-            </Card>
-          </Collapsible>
+        {/* Completed General Tasks - Always visible */}
+        {completedGeneralTasks.length > 0 && (
+          <Card className="border-green-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base text-green-700">
+                <CheckCircle className="h-4 w-4" />
+                Voltooide Algemene Taken ({completedGeneralTasks.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="space-y-2">
+                {completedGeneralTasks.map((task) => renderTaskItem(task, true))}
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
 

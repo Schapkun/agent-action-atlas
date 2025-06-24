@@ -35,19 +35,19 @@ export const useDashboardStats = () => {
           ? { ...orgCondition, workspace_id: selectedWorkspace.id }
           : orgCondition;
 
-        // 1. Pending Actions (openstaande acties)
+        // 1. Pending Tasks (from pending_tasks table, not ai_actions)
         const { count: pendingActions } = await supabase
-          .from('ai_actions')
+          .from('pending_tasks')
           .select('*', { count: 'exact', head: true })
-          .match({ ...workspaceCondition, status: 'pending' });
+          .match({ ...workspaceCondition, status: 'open' });
 
-        // 2. Total AI Actions + estimated hours saved
+        // 2. Total Pending Tasks + estimated hours saved
         const { count: totalActions } = await supabase
-          .from('ai_actions')
+          .from('pending_tasks')
           .select('*', { count: 'exact', head: true })
           .match(workspaceCondition);
 
-        // Calculate estimated hours saved (2.5 hours per AI action average)
+        // Calculate estimated hours saved (2.5 hours per task average)
         const estimatedHoursSaved = (totalActions || 0) * 2.5;
 
         // 3. Week Revenue (gefactureerde invoices van afgelopen 7 dagen)
@@ -89,7 +89,7 @@ export const useDashboardStats = () => {
 
         // Additional stats for compatibility
         const { count: completedTodayCount } = await supabase
-          .from('ai_actions')
+          .from('pending_tasks')
           .select('*', { count: 'exact', head: true })
           .match({ ...workspaceCondition, status: 'completed' })
           .gte('updated_at', new Date().toISOString().split('T')[0]);
@@ -102,7 +102,7 @@ export const useDashboardStats = () => {
         setStats({
           pendingActions: pendingActions || 0,
           totalActions: totalActions || 0,
-          estimatedHoursSaved: Math.round(estimatedHoursSaved * 10) / 10, // Round to 1 decimal
+          estimatedHoursSaved: Math.round(estimatedHoursSaved * 10) / 10,
           weekRevenue: weekRevenue,
           monthRevenue: monthRevenue,
           activeClients: activeClients || 0,
@@ -111,7 +111,7 @@ export const useDashboardStats = () => {
           totalDocuments: totalDocuments || 0
         });
 
-        console.log('📊 Dashboard stats updated:', {
+        console.log('📊 Dashboard stats updated (now using pending_tasks):', {
           pendingActions: pendingActions || 0,
           totalActions: totalActions || 0,
           estimatedHoursSaved: Math.round(estimatedHoursSaved * 10) / 10,
