@@ -84,23 +84,55 @@ serve(async (req) => {
       throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
     }
 
-    // Fetch organization settings for sender information
-    console.log('🏢 Fetching organization settings for:', organization_id);
+    // Determine sender email with priority logic
+    let fromEmail = 'hallo@meester.app'; // Default fallback
+    let fromName = 'Support Team';
     
-    const { data: orgSettings, error: orgError } = await supabaseClient
-      .from('organization_settings')
-      .select('company_email, company_name')
-      .eq('organization_id', organization_id)
-      .maybeSingle()
+    console.log('🔍 Determining sender email...');
+    
+    // First, try to get workspace sender email if workspace_id is provided
+    if (workspace_id) {
+      console.log('📋 Checking workspace sender email for:', workspace_id);
+      
+      const { data: workspaceData, error: workspaceError } = await supabaseClient
+        .from('workspaces')
+        .select('sender_email, name')
+        .eq('id', workspace_id)
+        .maybeSingle()
 
-    if (orgError) {
-      console.error('⚠️ Could not fetch organization settings:', orgError)
+      if (workspaceError) {
+        console.error('⚠️ Could not fetch workspace data:', workspaceError)
+      } else if (workspaceData?.sender_email) {
+        fromEmail = workspaceData.sender_email;
+        fromName = workspaceData.name || 'Support Team';
+        console.log('✅ Using workspace sender email:', fromEmail);
+      } else {
+        console.log('ℹ️ No workspace sender email found, checking organization...');
+      }
+    }
+    
+    // If no workspace sender email, fall back to organization settings
+    if (fromEmail === 'hallo@meester.app') {
+      console.log('🏢 Fetching organization settings for:', organization_id);
+      
+      const { data: orgSettings, error: orgError } = await supabaseClient
+        .from('organization_settings')
+        .select('company_email, company_name')
+        .eq('organization_id', organization_id)
+        .maybeSingle()
+
+      if (orgError) {
+        console.error('⚠️ Could not fetch organization settings:', orgError)
+      } else if (orgSettings?.company_email) {
+        fromEmail = orgSettings.company_email;
+        fromName = orgSettings.company_name || 'Support Team';
+        console.log('✅ Using organization sender email:', fromEmail);
+      } else {
+        console.log('ℹ️ No organization sender email found, using default fallback');
+      }
     }
 
-    const fromEmail = orgSettings?.company_email || 'noreply@example.com'
-    const fromName = orgSettings?.company_name || 'Support Team'
-
-    console.log('📤 Email will be sent from:', `${fromName} <${fromEmail}>`)
+    console.log('📤 Final sender details:', `${fromName} <${fromEmail}>`)
     console.log('📤 Email will be sent to:', to_email)
     console.log('📋 Subject:', subject)
 
@@ -128,22 +160,46 @@ serve(async (req) => {
       
       // Check for specific domain verification error
       if (emailResponse.error.message && emailResponse.error.message.includes('domain is not verified')) {
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: `The ${fromEmail.split('@')[1]} domain is not verified. Please add and verify your domain at https://resend.com/domains`
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 403,
-          },
-        )
+        // If the domain is not verified, try fallback to verified domain
+        if (fromEmail !== 'hallo@meester.app') {
+          console.log('🔄 Domain not verified, trying fallback to hallo@meester.app...');
+          
+          const fallbackResponse = await resend.emails.send({
+            from: `${fromName} <hallo@meester.app>`,
+            to: [to_email],
+            subject: subject,
+            html: htmlContent,
+            headers: thread_id ? {
+              'In-Reply-To': thread_id,
+              'References': thread_id
+            } : undefined
+          })
+          
+          if (fallbackResponse.error) {
+            console.error('❌ Fallback email also failed:', fallbackResponse.error);
+            throw new Error(`Email send failed: ${fallbackResponse.error.message || 'Unknown Resend error'}`)
+          }
+          
+          console.log('✅ Fallback email sent successfully with ID:', fallbackResponse.data?.id)
+          fromEmail = 'hallo@meester.app'; // Update for logging
+        } else {
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: `The ${fromEmail.split('@')[1]} domain is not verified. Please add and verify your domain at https://resend.com/domains`
+            }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 403,
+            },
+          )
+        }
+      } else {
+        throw new Error(`Email send failed: ${emailResponse.error.message || 'Unknown Resend error'}`)
       }
-      
-      throw new Error(`Email send failed: ${emailResponse.error.message || 'Unknown Resend error'}`)
+    } else {
+      console.log('✅ Email sent successfully with ID:', emailResponse.data?.id)
     }
-
-    console.log('✅ Email sent successfully with ID:', emailResponse.data?.id)
 
     // Log the email send
     const sendLogRecord = {
@@ -197,7 +253,8 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message_id: emailResponse.data?.id,
-        message: 'Email reply sent successfully'
+        message: 'Email reply sent successfully',
+        sender_email: fromEmail
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

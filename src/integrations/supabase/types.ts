@@ -1600,6 +1600,7 @@ export type Database = {
           id: string
           name: string
           organization_id: string
+          sender_email: string | null
           slug: string
           updated_at: string
           users: Json | null
@@ -1611,6 +1612,7 @@ export type Database = {
           id?: string
           name: string
           organization_id: string
+          sender_email?: string | null
           slug: string
           updated_at?: string
           users?: Json | null
@@ -1622,6 +1624,7 @@ export type Database = {
           id?: string
           name?: string
           organization_id?: string
+          sender_email?: string | null
           slug?: string
           updated_at?: string
           users?: Json | null

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Save } from 'lucide-react';
+import { SenderEmailField } from './SenderEmailField';
 
 interface User {
   id: string;
@@ -24,6 +26,7 @@ interface EditOrgWorkspaceDialogProps {
     id: string;
     name: string;
     organization_id?: string;
+    sender_email?: string;
   } | null;
   onUpdate: () => void;
 }
@@ -36,6 +39,7 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
   onUpdate
 }) => {
   const [name, setName] = useState('');
+  const [senderEmail, setSenderEmail] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const { user: currentUser } = useAuth();
@@ -44,6 +48,7 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
   useEffect(() => {
     if (item) {
       setName(item.name);
+      setSenderEmail(item.sender_email || '');
       fetchUsers();
     }
   }, [item]);
@@ -114,8 +119,9 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
     try {
       setLoading(true);
 
-      // Update name first
+      // Update name and sender email
       if (type === 'organization') {
+        // For organization, we update organization_settings table for sender email
         const { error: updateError } = await supabase
           .from('organizations')
           .update({
@@ -125,12 +131,28 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
           .eq('id', item.id);
 
         if (updateError) throw updateError;
+
+        // Update organization settings with sender email
+        if (senderEmail.trim()) {
+          const { error: settingsError } = await supabase
+            .from('organization_settings')
+            .upsert({
+              organization_id: item.id,
+              company_email: senderEmail.trim()
+            }, {
+              onConflict: 'organization_id'
+            });
+
+          if (settingsError) throw settingsError;
+        }
       } else {
+        // For workspace, update both name and sender_email
         const { error: updateError } = await supabase
           .from('workspaces')
           .update({
             name: name.trim(),
-            slug: name.toLowerCase().replace(/\s+/g, '-')
+            slug: name.toLowerCase().replace(/\s+/g, '-'),
+            sender_email: senderEmail.trim() || null
           })
           .eq('id', item.id);
 
@@ -289,6 +311,20 @@ export const EditOrgWorkspaceDialog: React.FC<EditOrgWorkspaceDialogProps> = ({
               onChange={(e) => setName(e.target.value)}
               className="mt-1"
               placeholder={`${type === 'organization' ? 'Organisatie' : 'Werkruimte'} naam`}
+            />
+          </div>
+
+          <div>
+            <SenderEmailField
+              value={senderEmail}
+              onChange={setSenderEmail}
+              label={type === 'organization' ? 'Organisatie E-mailadres' : 'Werkruimte E-mailadres'}
+              description={
+                type === 'organization' 
+                  ? 'Dit emailadres wordt gebruikt als standaard voor alle e-mails vanuit deze organisatie'
+                  : 'Dit emailadres wordt gebruikt voor e-mails vanuit deze werkruimte. Laat leeg om het organisatie emailadres te gebruiken.'
+              }
+              placeholder={type === 'organization' ? 'info@uwbedrijf.nl' : 'werkruimte@uwbedrijf.nl'}
             />
           </div>
 
