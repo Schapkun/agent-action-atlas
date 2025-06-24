@@ -1,3 +1,4 @@
+
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -205,7 +206,7 @@ export const Sidebar = ({
 
   return (
     <div className={cn(
-      "bg-card border-r border-border flex flex-col transition-all duration-300",
+      "bg-card border-r border-border flex flex-col transition-all duration-300 relative",
       collapsed ? "w-16" : "w-64"
     )}>
       {/* Header */}
@@ -232,7 +233,7 @@ export const Sidebar = ({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 p-4 overflow-y-auto">
         <ul className="space-y-2">
           {menuItems.map((item) => (
             <li key={item.id}>
@@ -301,25 +302,25 @@ export const Sidebar = ({
         </ul>
       </nav>
 
-      {/* Support Link */}
-      <div className="p-4 border-t border-border">
+      {/* Support Link - Fixed positioning to ensure visibility */}
+      <div className="p-4 border-t border-border bg-card">
         <Button
           variant={location.pathname === '/support' ? "secondary" : "ghost"}
           className={cn(
-            "w-full justify-start text-xs",
+            "w-full justify-start text-xs relative",
             collapsed && "px-3",
             location.pathname === '/support' && "bg-primary/10 text-primary font-medium"
           )}
           onClick={() => navigate('/support')}
         >
-          <HelpCircle className="h-4 w-4" />
+          <HelpCircle className="h-4 w-4 flex-shrink-0" />
           {!collapsed && <span className="ml-3">Hulp & Support</span>}
         </Button>
       </div>
 
       {/* Footer */}
       {!collapsed && (
-        <div className="p-4 border-t border-border">
+        <div className="p-4 border-t border-border bg-card">
           <div className="text-xs text-muted-foreground">
             Meester.app v1.0
           </div>
