@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -387,15 +388,27 @@ export const PendingTasksManager = () => {
   };
 
   const formatEmailDisplay = (fromEmail: string) => {
+    if (!fromEmail) return 'Onbekend';
+    
     // Extract name and email from "Name <email@domain.com>" format
     const emailMatch = fromEmail.match(/^(.+?)\s*<(.+)>$/);
     if (emailMatch) {
-      const name = emailMatch[1].trim();
+      const name = emailMatch[1].trim().replace(/^["']|["']$/g, ''); // Remove quotes if present
       const email = emailMatch[2].trim();
-      return `${name} "${email}"`;
+      return `${name} (${email})`;
     }
-    // If no name found, just return the email with quotes
-    return `"${fromEmail}"`;
+    
+    // If it's just an email without name
+    if (fromEmail.includes('@')) {
+      // Try to extract name from email prefix
+      const emailPrefix = fromEmail.split('@')[0];
+      const nameGuess = emailPrefix.replace(/[._-]/g, ' ').split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+      return `${nameGuess} (${fromEmail})`;
+    }
+    
+    return fromEmail;
   };
 
   const isOverdue = (dueDate?: string) => {
@@ -435,7 +448,10 @@ export const PendingTasksManager = () => {
                   {getTaskTypeBadge(task.task_type)}
                 </>
               ) : (
-                getStatusBadge(task.status)
+                <>
+                  {getStatusBadge(task.status)}
+                  {getTaskTypeBadge(task.task_type)}
+                </>
               )}
               {getPriorityBadge(task.priority)}
             </div>

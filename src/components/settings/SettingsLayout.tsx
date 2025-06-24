@@ -101,8 +101,8 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
   }
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 max-w-6xl">
-      <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-4">
+    <div className="w-full px-2 sm:px-4">
+      <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-4 w-full">
         <TabsList className={`grid w-full gap-1 h-auto p-1 ${
           isMobile 
             ? 'grid-cols-3 grid-rows-3' 
@@ -152,33 +152,33 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="organizations">
-          <Card className="rounded-lg border bg-card text-card-foreground shadow-sm">
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
+        <TabsContent value="organizations" className="w-full">
+          <Card className="rounded-lg border bg-card text-card-foreground shadow-sm w-full">
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'} w-full`}>
               <OrganizationWorkspaceView userRole={userRole} />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="users">
-          <Card>
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
+        <TabsContent value="users" className="w-full">
+          <Card className="w-full">
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'} w-full`}>
               <UserProfileSettings />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="invoicing">
-          <Card>
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
+        <TabsContent value="invoicing" className="w-full">
+          <Card className="w-full">
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'} w-full`}>
               <InvoiceSettings />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="templates">
-          <Card>
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
+        <TabsContent value="templates" className="w-full">
+          <Card className="w-full">
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'} w-full`}>
               <RoleGuard 
                 requiredRoles={['admin', 'eigenaar']} 
                 userRole={userRole}
@@ -189,9 +189,9 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
           </Card>
         </TabsContent>
 
-        <TabsContent value="emails">
-          <Card>
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
+        <TabsContent value="emails" className="w-full">
+          <Card className="w-full">
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'} w-full`}>
               <RoleGuard 
                 requiredRoles={['admin', 'eigenaar']} 
                 userRole={userRole}
@@ -202,9 +202,9 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
           </Card>
         </TabsContent>
 
-        <TabsContent value="ai">
-          <Card>
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
+        <TabsContent value="ai" className="w-full">
+          <Card className="w-full">
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'} w-full`}>
               <RoleGuard 
                 requiredRoles={['admin', 'eigenaar']} 
                 userRole={userRole}
@@ -215,9 +215,9 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
           </Card>
         </TabsContent>
 
-        <TabsContent value="history">
-          <Card>
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
+        <TabsContent value="history" className="w-full">
+          <Card className="w-full">
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'} w-full`}>
               <RoleGuard 
                 requiredRoles={['admin', 'eigenaar']} 
                 userRole={userRole}

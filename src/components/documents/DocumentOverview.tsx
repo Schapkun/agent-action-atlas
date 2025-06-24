@@ -1,322 +1,288 @@
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { DocumentPreview } from './DocumentPreviewPopup';
+import { generatePDF, downloadPDF } from '@/utils/pdfGenerator';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { supabase } from '@/integrations/supabase/client';
+import { WorkspaceSelector } from '@/components/dashboard/WorkspaceSelector';
 import { 
   Search, 
   FileText, 
-  Plus, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  Send,
-  Clock,
-  CheckCircle,
-  Archive
+  Download, 
+  Eye,
+  Plus,
+  Filter
 } from 'lucide-react';
-
-interface Document {
-  id: string;
-  name: string;
-  document_type: string;
-  client_name?: string;
-  client_email?: string;
-  client_address?: string;
-  client_city?: string;
-  client_postal_code?: string;
-  status: string;
-  created_at: string;
-  updated_at?: string;
-}
+import type { Document as DocumentType } from '@/types/dashboard';
 
 export const DocumentOverview = () => {
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchParams] = useSearchParams();
-  const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
-  const [isAllSelected, setIsAllSelected] = useState(false);
-  const { selectedOrganization, selectedWorkspace } = useOrganization();
+  const [previewDocument, setPreviewDocument] = useState<DocumentType | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [showWorkspaceSelector, setShowWorkspaceSelector] = useState(false);
   const { toast } = useToast();
+  const { selectedOrganization, selectedWorkspace, getFilteredWorkspaces } = useOrganization();
 
-  const statusFilter = searchParams.get('status') || 'all';
+  // Empty array - no documents currently
+  const allDocuments: DocumentType[] = [];
 
-  const getPageTitle = () => {
-    switch (statusFilter) {
-      case 'draft':
-        return 'Concept Documenten';
-      case 'sent':
-        return 'Verzonden Documenten';
-      case 'completed':
-        return 'Voltooide Documenten';
-      case 'archived':
-        return 'Gearchiveerde Documenten';
-      default:
-        return 'Alle Documenten';
+  const getContextInfo = () => {
+    if (selectedWorkspace) {
+      return `Werkruimte: ${selectedWorkspace.name}`;
+    } else if (selectedOrganization) {
+      return `Organisatie: ${selectedOrganization.name}`;
     }
+    return 'Geen selectie';
   };
 
-  const fetchDocuments = async () => {
-    if (!selectedOrganization) return;
-
-    setLoading(true);
-    try {
-      console.log('📋 Fetching documents for organization:', selectedOrganization.id);
-
-      let query = supabase
-        .from('documents')
-        .select('*')
-        .eq('organization_id', selectedOrganization.id)
-        .order('created_at', { ascending: false });
-
-      if (selectedWorkspace) {
-        query = query.eq('workspace_id', selectedWorkspace.id);
-      }
-
-      if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      console.log('📋 Documents fetched:', data?.length || 0);
-      setDocuments(data || []);
-    } catch (error) {
-      console.error('Error fetching documents:', error);
+  const handleCreateDocument = () => {
+    if (!selectedOrganization && !selectedWorkspace) {
       toast({
-        title: "Fout",
-        description: "Kon documenten niet ophalen",
-        variant: "destructive"
+        title: "Geen selectie",
+        description: "Selecteer eerst een organisatie of werkruimte om een document te maken.",
+        variant: "destructive",
       });
-    } finally {
-      setLoading(false);
+      return;
+    }
+
+    // If only organization is selected, show workspace selector
+    if (selectedOrganization && !selectedWorkspace) {
+      const workspaces = getFilteredWorkspaces();
+      if (workspaces.length > 1) {
+        setShowWorkspaceSelector(true);
+        return;
+      } else if (workspaces.length === 1) {
+        // Auto-select the only workspace
+        createDocumentInWorkspace(workspaces[0].id);
+        return;
+      }
+    }
+
+    // If workspace is selected, create directly
+    if (selectedWorkspace) {
+      createDocumentInWorkspace(selectedWorkspace.id);
     }
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedDocuments(new Set(filteredDocuments.map(document => document.id)));
-      setIsAllSelected(true);
-    } else {
-      setSelectedDocuments(new Set());
-      setIsAllSelected(false);
-    }
-  };
-
-  const handleSelectDocument = (documentId: string, checked: boolean) => {
-    const newSelected = new Set(selectedDocuments);
-    if (checked) {
-      newSelected.add(documentId);
-    } else {
-      newSelected.delete(documentId);
-    }
-    setSelectedDocuments(newSelected);
-    setIsAllSelected(newSelected.size === filteredDocuments.length && filteredDocuments.length > 0);
-  };
-
-  const handleBulkDelete = async () => {
-    if (selectedDocuments.size === 0) return;
+  const createDocumentInWorkspace = (workspaceId: string) => {
+    console.log('Creating document in workspace:', workspaceId);
+    console.log('Organization:', selectedOrganization?.name);
     
-    if (!confirm(`Weet je zeker dat je ${selectedDocuments.size} documenten wilt verwijderen?`)) return;
+    toast({
+      title: "Nieuw document",
+      description: "Document wordt aangemaakt in de geselecteerde werkruimte...",
+    });
+  };
 
+  const handleViewDocument = (document: DocumentType) => {
+    console.log('Opening document preview for:', document.name);
+    setPreviewDocument(document);
+    setIsPreviewOpen(true);
+    toast({
+      title: "Document bekijken",
+      description: `${document.name} wordt geopend voor preview...`,
+    });
+  };
+
+  const handleDownloadDocument = (document: DocumentType) => {
     try {
-      const { error } = await supabase
-        .from('documents')
-        .delete()
-        .in('id', Array.from(selectedDocuments));
-
-      if (error) throw error;
-
+      let pdfDoc;
+      const filename = document.name.replace(/\.[^/.]+$/, '.pdf');
+      
+      // Generate appropriate PDF based on document type
+      if (document.type.toLowerCase().includes('contract')) {
+        pdfDoc = generatePDF('contract', { 
+          client: document.client, 
+          dossier: document.dossier 
+        });
+      } else if (document.type.toLowerCase().includes('dagvaarding')) {
+        pdfDoc = generatePDF('dagvaarding', { 
+          client: document.client, 
+          dossier: document.dossier 
+        });
+      } else {
+        pdfDoc = generatePDF('generic', { 
+          name: document.name,
+          client: document.client, 
+          dossier: document.dossier 
+        });
+      }
+      
+      downloadPDF(pdfDoc, filename);
+      
       toast({
-        title: "Succes",
-        description: `${selectedDocuments.size} documenten verwijderd`
+        title: "Document gedownload",
+        description: `${document.name} is succesvol gedownload.`,
       });
-
-      setSelectedDocuments(new Set());
-      setIsAllSelected(false);
-      fetchDocuments();
     } catch (error) {
-      console.error('Error deleting documents:', error);
+      console.error('Download error:', error);
       toast({
-        title: "Fout",
-        description: "Kon documenten niet verwijderen",
-        variant: "destructive"
+        title: "Download fout",
+        description: "Er is een fout opgetreden bij het downloaden van het document.",
+        variant: "destructive",
       });
     }
   };
 
-  const deleteDocument = async (documentId: string) => {
-    if (!confirm('Weet je zeker dat je dit document wilt verwijderen?')) return;
-
-    try {
-      const { error } = await supabase
-        .from('documents')
-        .delete()
-        .eq('id', documentId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Succes",
-        description: "Document verwijderd"
-      });
-
-      fetchDocuments();
-    } catch (error) {
-      console.error('Error deleting document:', error);
-      toast({
-        title: "Fout",
-        description: "Kon document niet verwijderen",
-        variant: "destructive"
-      });
-    }
-  };
-
-  useEffect(() => {
-    fetchDocuments();
-  }, [selectedOrganization, selectedWorkspace, statusFilter]);
-
-  const filteredDocuments = documents.filter(document =>
-    document.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    document.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    document.document_type?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredDocuments = allDocuments.filter(doc =>
+    searchTerm === '' || 
+    doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    doc.client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    doc.dossier?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    doc.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return <Badge variant="outline" className="text-gray-600"><Clock className="h-3 w-3 mr-1" />Concept</Badge>;
-      case 'sent':
-        return <Badge variant="outline" className="text-blue-600"><Send className="h-3 w-3 mr-1" />Verzonden</Badge>;
-      case 'completed':
-        return <Badge variant="outline" className="text-green-600"><CheckCircle className="h-3 w-3 mr-1" />Voltooid</Badge>;
-      case 'archived':
-        return <Badge variant="outline" className="text-gray-500"><Archive className="h-3 w-3 mr-1" />Gearchiveerd</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Zoek documenten..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        
-        <div className="flex items-center gap-2">
-          {selectedDocuments.size > 0 && (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleBulkDelete}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Verwijder ({selectedDocuments.size})
-            </Button>
-          )}
-          
-          <Button asChild>
-            <a href="/documenten/nieuw">
-              <Plus className="h-4 w-4 mr-2" />
-              Nieuw Document
-            </a>
-          </Button>
-        </div>
-      </div>
+    <div className="w-full space-y-4">
+      <Card className="w-full">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <FileText className="h-6 w-6 text-blue-500" />
+              <div>
+                <CardTitle className="text-lg">Documenten</CardTitle>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                {allDocuments.length} documenten
+              </Badge>
+              <Button variant="outline" size="sm" onClick={handleCreateDocument}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nieuw Document
+              </Button>
+            </div>
+          </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="text-center py-8">Documenten laden...</div>
+          {!selectedOrganization && !selectedWorkspace && (
+            <div className="text-sm text-muted-foreground">
+              Selecteer een organisatie of werkruimte om documenten te bekijken
+            </div>
+          )}
+
+          {(selectedOrganization || selectedWorkspace) && (
+            <>
+              <div className="text-sm text-muted-foreground">
+                Data voor: {getContextInfo()}
+              </div>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Zoek documenten..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Button variant="outline" size="sm">
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filters
+                </Button>
+              </div>
+            </>
+          )}
+        </CardHeader>
+
+        <CardContent className="w-full">
+          {!selectedOrganization && !selectedWorkspace ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Selecteer een organisatie of werkruimte om documenten te bekijken</p>
+            </div>
           ) : filteredDocuments.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Geen documenten gevonden</p>
+              <p>Geen documenten gevonden voor de geselecteerde context</p>
+              <p className="text-sm mt-2">Klik op "Nieuw Document" om je eerste document aan te maken</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={isAllSelected}
-                      onCheckedChange={handleSelectAll}
-                    />
-                  </TableHead>
-                  <TableHead>Documentnaam</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Cliënt</TableHead>
-                  <TableHead>Adres</TableHead>
-                  <TableHead>Postcode</TableHead>
-                  <TableHead>Woonplaats</TableHead>
-                  <TableHead>Aangemaakt</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Acties</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredDocuments.map((document) => (
-                  <TableRow key={document.id}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedDocuments.has(document.id)}
-                        onCheckedChange={(checked) => handleSelectDocument(document.id, checked as boolean)}
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">{document.name}</TableCell>
-                    <TableCell>{document.document_type || '-'}</TableCell>
-                    <TableCell>{document.client_name || '-'}</TableCell>
-                    <TableCell>{document.client_address || '-'}</TableCell>
-                    <TableCell>{document.client_postal_code || '-'}</TableCell>
-                    <TableCell>{document.client_city || '-'}</TableCell>
-                    <TableCell>{new Date(document.created_at).toLocaleDateString('nl-NL')}</TableCell>
-                    <TableCell>{getStatusBadge(document.status)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button size="sm" variant="outline" title="Bekijken">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        
-                        <Button size="sm" variant="outline" asChild title="Bewerken">
-                          <a href={`/documenten/nieuw?edit=${document.id}`}>
-                            <Edit className="h-4 w-4" />
-                          </a>
-                        </Button>
-                        
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => deleteDocument(document.id)}
-                          title="Verwijderen"
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {filteredDocuments.map((document) => (
+                <Card key={document.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-sm truncate">{document.name}</h3>
+                        <p className="text-xs text-muted-foreground mt-1">{document.type}</p>
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {document.status === 'draft' && 'Concept'}
+                        {document.status === 'final' && 'Definitief'}
+                        {document.status === 'sent' && 'Verzonden'}
+                      </Badge>
+                    </div>
+
+                    {(document.client || document.dossier) && (
+                      <div className="space-y-1 mb-3">
+                        {document.client && (
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-medium">Klant:</span> {document.client}
+                          </p>
+                        )}
+                        {document.dossier && (
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-medium">Dossier:</span> {document.dossier}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center text-xs text-muted-foreground">
+                      <span>{new Date(document.createdAt).toLocaleDateString('nl-NL')}</span>
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewDocument(document);
+                          }}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownloadDocument(document);
+                          }}
+                        >
+                          <Download className="h-3 w-3" />
                         </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
+
+      <DocumentPreview
+        document={previewDocument}
+        isOpen={isPreviewOpen}
+        onClose={() => {
+          setIsPreviewOpen(false);
+          setPreviewDocument(null);
+        }}
+      />
+
+      <WorkspaceSelector
+        isOpen={showWorkspaceSelector}
+        onClose={() => setShowWorkspaceSelector(false)}
+        onSelectWorkspace={createDocumentInWorkspace}
+        title="Selecteer werkruimte voor nieuw document"
+        description="Kies in welke werkruimte het document moet worden aangemaakt:"
+      />
     </div>
   );
 };

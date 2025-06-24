@@ -1452,6 +1452,54 @@ export type Database = {
         }
         Relationships: []
       }
+      support_requests: {
+        Row: {
+          contact_email: string
+          contact_name: string | null
+          created_at: string
+          description: string
+          id: string
+          organization_id: string
+          priority: string
+          request_type: string
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          contact_email: string
+          contact_name?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          organization_id: string
+          priority?: string
+          request_type: string
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          contact_email?: string
+          contact_name?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          organization_id?: string
+          priority?: string
+          request_type?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: []
+      }
       user_invitations: {
         Row: {
           accepted_at: string | null
