@@ -22,16 +22,14 @@ export const SupportPage = () => {
     name: '',
     email: '',
     subject: '',
-    description: '',
-    steps: ''
+    message: ''
   });
 
   const [featureFormData, setFeatureFormData] = useState({
     name: '',
     email: '',
     subject: '',
-    description: '',
-    justification: ''
+    message: ''
   });
 
   const [loadingStates, setLoadingStates] = useState({
@@ -93,10 +91,10 @@ export const SupportPage = () => {
   const handleBugSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!bugFormData.name || !bugFormData.email || !bugFormData.subject || !bugFormData.description) {
+    if (!bugFormData.name || !bugFormData.email || !bugFormData.subject || !bugFormData.message) {
       toast({
         title: "Fout",
-        description: "Vul alle verplichte velden in",
+        description: "Vul alle velden in",
         variant: "destructive"
       });
       return;
@@ -110,7 +108,7 @@ export const SupportPage = () => {
           request_type: 'technical_issue',
           priority: 'high',
           subject: bugFormData.subject,
-          description: `${bugFormData.description}\n\nStappen om te reproduceren:\n${bugFormData.steps}`,
+          description: bugFormData.message,
           contact_name: bugFormData.name,
           contact_email: bugFormData.email,
           organization_id: selectedOrganization?.id || null,
@@ -124,7 +122,7 @@ export const SupportPage = () => {
         description: "Uw foutmelding is succesvol verzonden"
       });
 
-      setBugFormData({ name: '', email: '', subject: '', description: '', steps: '' });
+      setBugFormData({ name: '', email: '', subject: '', message: '' });
     } catch (error) {
       console.error('Error submitting bug report:', error);
       toast({
@@ -140,10 +138,10 @@ export const SupportPage = () => {
   const handleFeatureSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!featureFormData.name || !featureFormData.email || !featureFormData.subject || !featureFormData.description) {
+    if (!featureFormData.name || !featureFormData.email || !featureFormData.subject || !featureFormData.message) {
       toast({
         title: "Fout",
-        description: "Vul alle verplichte velden in",
+        description: "Vul alle velden in",
         variant: "destructive"
       });
       return;
@@ -157,7 +155,7 @@ export const SupportPage = () => {
           request_type: 'feature_request',
           priority: 'medium',
           subject: featureFormData.subject,
-          description: `${featureFormData.description}\n\nMotivatie:\n${featureFormData.justification}`,
+          description: featureFormData.message,
           contact_name: featureFormData.name,
           contact_email: featureFormData.email,
           organization_id: selectedOrganization?.id || null,
@@ -171,7 +169,7 @@ export const SupportPage = () => {
         description: "Uw functie verzoek is succesvol verzonden"
       });
 
-      setFeatureFormData({ name: '', email: '', subject: '', description: '', justification: '' });
+      setFeatureFormData({ name: '', email: '', subject: '', message: '' });
     } catch (error) {
       console.error('Error submitting feature request:', error);
       toast({
@@ -186,45 +184,44 @@ export const SupportPage = () => {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold mb-2">Hulp & Support</h1>
-        <p className="text-muted-foreground">
-          Heeft u vragen of problemen? Neem contact met ons op.
-        </p>
-      </div>
-
       {/* Contact Options */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Contactmogelijkheden</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+        <h2 className="text-xl font-semibold mb-6">Contactmogelijkheden</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="hover:shadow-lg transition-shadow">
             <CardContent className="p-6 text-center">
-              <Phone className="h-8 w-8 text-primary mx-auto mb-3" />
-              <h3 className="font-medium mb-2">Bellen</h3>
-              <p className="text-sm text-muted-foreground mb-3">Binnenkort beschikbaar</p>
-              <Button variant="outline" size="sm" disabled>
+              <div className="bg-blue-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <Phone className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Bellen</h3>
+              <p className="text-sm text-muted-foreground mb-4">Binnenkort beschikbaar</p>
+              <Button variant="outline" size="sm" disabled className="w-full">
                 Bel ons
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+          <Card className="hover:shadow-lg transition-shadow">
             <CardContent className="p-6 text-center">
-              <Mail className="h-8 w-8 text-primary mx-auto mb-3" />
-              <h3 className="font-medium mb-2">E-mail</h3>
-              <p className="text-sm text-muted-foreground mb-3">hallo@meester.app</p>
-              <Button variant="outline" size="sm" asChild>
+              <div className="bg-green-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <Mail className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">E-mail</h3>
+              <p className="text-sm text-muted-foreground mb-4">hallo@meester.app</p>
+              <Button variant="outline" size="sm" asChild className="w-full">
                 <a href="mailto:hallo@meester.app">Mail ons</a>
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+          <Card className="hover:shadow-lg transition-shadow">
             <CardContent className="p-6 text-center">
-              <MessageSquare className="h-8 w-8 text-primary mx-auto mb-3" />
-              <h3 className="font-medium mb-2">WhatsApp</h3>
-              <p className="text-sm text-muted-foreground mb-3">Binnenkort beschikbaar</p>
-              <Button variant="outline" size="sm" disabled>
+              <div className="bg-green-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <MessageSquare className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">WhatsApp</h3>
+              <p className="text-sm text-muted-foreground mb-4">Binnenkort beschikbaar</p>
+              <Button variant="outline" size="sm" disabled className="w-full">
                 WhatsApp
               </Button>
             </CardContent>
@@ -234,12 +231,12 @@ export const SupportPage = () => {
 
       {/* Contact Forms */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Contactformulieren</h2>
+        <h2 className="text-xl font-semibold mb-6">Contactformulieren</h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* General Contact Form */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <HelpCircle className="h-5 w-5" />
                 Contact Formulier
               </CardTitle>
@@ -305,7 +302,7 @@ export const SupportPage = () => {
           {/* Bug Report Form */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <Bug className="h-5 w-5" />
                 Fout Melden
               </CardTitle>
@@ -330,30 +327,20 @@ export const SupportPage = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Probleem *</label>
+                  <label className="block text-sm font-medium mb-1">Onderwerp *</label>
                   <Input
                     value={bugFormData.subject}
                     onChange={(e) => setBugFormData(prev => ({ ...prev, subject: e.target.value }))}
-                    placeholder="Korte beschrijving van het probleem"
+                    placeholder="Onderwerp van uw bericht"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Beschrijving *</label>
+                  <label className="block text-sm font-medium mb-1">Bericht *</label>
                   <Textarea
-                    value={bugFormData.description}
-                    onChange={(e) => setBugFormData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Gedetailleerde beschrijving van het probleem..."
-                    rows={3}
-                    className="resize-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Stappen om te reproduceren</label>
-                  <Textarea
-                    value={bugFormData.steps}
-                    onChange={(e) => setBugFormData(prev => ({ ...prev, steps: e.target.value }))}
-                    placeholder="1. Ga naar...\n2. Klik op...\n3. Het probleem verschijnt..."
-                    rows={3}
+                    value={bugFormData.message}
+                    onChange={(e) => setBugFormData(prev => ({ ...prev, message: e.target.value }))}
+                    placeholder="Uw bericht..."
+                    rows={4}
                     className="resize-none"
                   />
                 </div>
@@ -381,7 +368,7 @@ export const SupportPage = () => {
           {/* Feature Request Form */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <Lightbulb className="h-5 w-5" />
                 Functie Verzoek
               </CardTitle>
@@ -406,30 +393,20 @@ export const SupportPage = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Functie *</label>
+                  <label className="block text-sm font-medium mb-1">Onderwerp *</label>
                   <Input
                     value={featureFormData.subject}
                     onChange={(e) => setFeatureFormData(prev => ({ ...prev, subject: e.target.value }))}
-                    placeholder="Naam van de gewenste functie"
+                    placeholder="Onderwerp van uw bericht"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Beschrijving *</label>
+                  <label className="block text-sm font-medium mb-1">Bericht *</label>
                   <Textarea
-                    value={featureFormData.description}
-                    onChange={(e) => setFeatureFormData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Beschrijf de gewenste functie..."
-                    rows={3}
-                    className="resize-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Waarom is dit nuttig?</label>
-                  <Textarea
-                    value={featureFormData.justification}
-                    onChange={(e) => setFeatureFormData(prev => ({ ...prev, justification: e.target.value }))}
-                    placeholder="Leg uit waarom deze functie nuttig zou zijn..."
-                    rows={3}
+                    value={featureFormData.message}
+                    onChange={(e) => setFeatureFormData(prev => ({ ...prev, message: e.target.value }))}
+                    placeholder="Uw bericht..."
+                    rows={4}
                     className="resize-none"
                   />
                 </div>
