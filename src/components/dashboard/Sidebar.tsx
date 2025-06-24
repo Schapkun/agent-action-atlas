@@ -139,8 +139,8 @@ export const Sidebar = ({
   };
 
   const menuItems = [
-    { id: 'overview' as ViewType, label: 'Dashboard', icon: LayoutDashboard, path: '/' },
-    { id: 'pending-tasks' as ViewType, label: 'Openstaande Taken', icon: Clock, badge: pendingTasksCount, path: '/openstaande-taken' },
+    { id: 'overview' as ViewType, label: 'Dashboard', icon: LayoutDashboard, badge: pendingTasksCount, path: '/' },
+    { id: 'pending-tasks' as ViewType, label: 'Openstaande Taken', icon: Clock, path: '/openstaande-taken' },
     { id: 'contacts' as ViewType, label: 'Cliënten', icon: Users, path: '/clienten' },
     { 
       id: 'dossiers' as ViewType, 
