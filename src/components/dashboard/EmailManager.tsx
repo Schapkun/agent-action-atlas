@@ -9,6 +9,7 @@ import { EmailDraftDialog } from './EmailDraftDialog';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useEmailRealtime } from '@/hooks/useEmailRealtime';
 import { 
   Search, 
   Mail, 
@@ -144,75 +145,25 @@ export const EmailManager = () => {
     }
   };
 
-  // Real-time subscription voor nieuwe emails
-  useEffect(() => {
-    if (!selectedOrganization) return;
+  // Real-time subscription for new emails
+  const handleNewEmail = (email: Email) => {
+    setEmails(prevEmails => [email, ...prevEmails]);
+  };
 
-    console.log('📡 Setting up real-time email subscription for org:', selectedOrganization.id);
-
-    const channel = supabase
-      .channel('emails-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'emails',
-          filter: `organization_id=eq.${selectedOrganization.id}`
-        },
-        (payload) => {
-          console.log('📧 New email received via real-time:', payload.new);
-          const newEmail = payload.new as Email;
-          
-          // Transform attachments
-          const transformedEmail = {
-            ...newEmail,
-            attachments: Array.isArray(newEmail.attachments) ? newEmail.attachments : []
-          };
-          
-          // Check if email matches current folder filter
-          const matchesFolder = 
-            selectedFolder === 'inbox' && transformedEmail.folder === 'inbox' ||
-            selectedFolder === 'starred' && transformedEmail.is_flagged ||
-            selectedFolder === transformedEmail.folder;
-          
-          if (matchesFolder) {
-            setEmails(prevEmails => [transformedEmail, ...prevEmails]);
-            toast({
-              title: "Nieuwe e-mail ontvangen",
-              description: `Van: ${transformedEmail.from_email}`,
-            });
-          }
-        }
+  const handleEmailUpdate = (email: Email) => {
+    setEmails(prevEmails => 
+      prevEmails.map(e => 
+        e.id === email.id ? email : e
       )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'emails',
-          filter: `organization_id=eq.${selectedOrganization.id}`
-        },
-        (payload) => {
-          console.log('📧 Email updated via real-time:', payload.new);
-          const updatedEmail = payload.new as Email;
-          
-          setEmails(prevEmails => 
-            prevEmails.map(email => 
-              email.id === updatedEmail.id 
-                ? { ...updatedEmail, attachments: Array.isArray(updatedEmail.attachments) ? updatedEmail.attachments : [] }
-                : email
-            )
-          );
-        }
-      )
-      .subscribe();
+    );
+  };
 
-    return () => {
-      console.log('📡 Cleaning up email real-time subscription');
-      supabase.removeChannel(channel);
-    };
-  }, [selectedOrganization, selectedFolder, toast]);
+  useEmailRealtime({
+    organizationId: selectedOrganization?.id,
+    selectedFolder,
+    onNewEmail: handleNewEmail,
+    onEmailUpdate: handleEmailUpdate
+  });
 
   useEffect(() => {
     fetchEmails();
@@ -230,6 +181,7 @@ export const EmailManager = () => {
     setSelectedEmail(email);
     setShowDetailDialog(true);
     
+    // Only mark as read if it's not already read to prevent unnecessary DB calls
     if (!email.is_read) {
       markAsRead(email.id);
     }
@@ -237,18 +189,38 @@ export const EmailManager = () => {
 
   const markAsRead = async (emailId: string) => {
     try {
+      // First check current status to avoid unnecessary updates
+      const currentEmail = emails.find(e => e.id === emailId);
+      if (!currentEmail || currentEmail.is_read) {
+        console.log('Email already marked as read, skipping...');
+        return;
+      }
+
+      console.log('Marking email as read:', emailId);
+      
       const { error } = await supabase
         .from('emails')
-        .update({ is_read: true, status: 'read' })
-        .eq('id', emailId);
+        .update({ 
+          is_read: true, 
+          status: 'read',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', emailId)
+        .eq('is_read', false); // Only update if currently unread
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error marking email as read:', error);
+        return;
+      }
 
+      // Update local state
       setEmails(prev => prev.map(email => 
         email.id === emailId 
           ? { ...email, is_read: true, status: 'read' }
           : email
       ));
+
+      console.log('Email marked as read successfully');
     } catch (error) {
       console.error('Error marking email as read:', error);
     }

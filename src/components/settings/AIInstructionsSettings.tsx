@@ -1,25 +1,15 @@
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Save,
-  X,
-  Brain,
-  AlertCircle
-} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Brain, Save, Plus, Trash2, AlertCircle } from 'lucide-react';
 
 interface AIInstruction {
   id: string;
@@ -28,38 +18,43 @@ interface AIInstruction {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  organization_id: string;
+  workspace_id?: string;
+  created_by?: string;
 }
 
-const INSTRUCTION_TYPES = [
-  { value: 'email_reply', label: 'E-mail Beantwoording' },
+const instructionTypes = [
+  { value: 'email_reply', label: 'E-mail Antwoorden' },
+  { value: 'task_creation', label: 'Taak Aanmaken' },
   { value: 'document_generation', label: 'Document Generatie' },
-  { value: 'pending_tasks', label: 'Openstaande Taken' },
-  { value: 'client_communication', label: 'Klant Communicatie' },
-  { value: 'invoice_processing', label: 'Factuur Verwerking' },
+  { value: 'client_communication', label: 'Cliënt Communicatie' },
   { value: 'general', label: 'Algemeen' }
 ];
 
 export const AIInstructionsSettings = () => {
   const [instructions, setInstructions] = useState<AIInstruction[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [newInstruction, setNewInstruction] = useState({
-    instruction_type: '',
+    instruction_type: 'general',
     instructions: ''
   });
-  const [showAddForm, setShowAddForm] = useState(false);
-  
-  const { toast } = useToast();
-  const { user } = useAuth();
+  const [showNewForm, setShowNewForm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const { selectedOrganization, selectedWorkspace } = useOrganization();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const fetchInstructions = async () => {
-    if (!selectedOrganization || !user) return;
+    if (!selectedOrganization) return;
 
-    setLoading(true);
     try {
-      console.log('🤖 Fetching AI instructions for org:', selectedOrganization.id);
+      setLoading(true);
+      setError(null);
       
+      console.log('📋 Fetching AI instructions for organization:', selectedOrganization.id);
+
       let query = supabase
         .from('ai_settings')
         .select('*')
@@ -71,187 +66,240 @@ export const AIInstructionsSettings = () => {
       }
 
       const { data, error } = await query;
-      
+
       if (error) {
         console.error('❌ Error fetching AI instructions:', error);
+        setError(`Fout bij ophalen: ${error.message}`);
         throw error;
       }
 
-      console.log('🤖 AI instructions fetched:', data?.length || 0);
+      console.log('📋 AI instructions fetched:', data?.length || 0);
       setInstructions(data || []);
-    } catch (error) {
-      console.error('Error fetching AI instructions:', error);
+    } catch (error: any) {
+      console.error('❌ Error in fetchInstructions:', error);
       toast({
         title: "Fout",
-        description: "Kon AI instructies niet ophalen",
-        variant: "destructive"
+        description: `Kon AI instructies niet ophalen: ${error.message}`,
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const saveInstruction = async () => {
-    if (!selectedOrganization || !user) {
-      toast({
-        title: "Fout",
-        description: "Je moet ingelogd zijn en een organisatie geselecteerd hebben",
-        variant: "destructive"
-      });
-      return;
-    }
+  const saveInstruction = async (instructionId?: string) => {
+    if (!selectedOrganization || !user) return;
 
-    if (!newInstruction.instruction_type.trim() || !newInstruction.instructions.trim()) {
+    const isNew = !instructionId;
+    const instructionData = isNew ? newInstruction : 
+      instructions.find(inst => inst.id === instructionId);
+
+    if (!instructionData?.instructions.trim()) {
       toast({
         title: "Fout",
-        description: "Vul alle velden in",
-        variant: "destructive"
+        description: "Voer instructies in",
+        variant: "destructive",
       });
       return;
     }
 
     try {
-      console.log('🤖 Saving new AI instruction:', newInstruction);
-      
-      const instructionData = {
-        organization_id: selectedOrganization.id,
-        workspace_id: selectedWorkspace?.id || null,
-        instruction_type: newInstruction.instruction_type.trim(),
-        instructions: newInstruction.instructions.trim(),
-        created_by: user.id,
-        is_active: true
-      };
+      setSaving(true);
 
-      console.log('🤖 Instruction data to insert:', instructionData);
+      if (isNew) {
+        console.log('🆕 Creating new AI instruction');
+        
+        const { data, error } = await supabase
+          .from('ai_settings')
+          .insert({
+            organization_id: selectedOrganization.id,
+            workspace_id: selectedWorkspace?.id,
+            instruction_type: instructionData.instruction_type,
+            instructions: instructionData.instructions,
+            is_active: true,
+            created_by: user.id
+          })
+          .select()
+          .single();
 
-      const { data, error } = await supabase
-        .from('ai_settings')
-        .insert([instructionData])
-        .select();
+        if (error) throw error;
 
-      if (error) {
-        console.error('❌ Error inserting AI instruction:', error);
-        throw error;
+        setInstructions(prev => [data, ...prev]);
+        setNewInstruction({ instruction_type: 'general', instructions: '' });
+        setShowNewForm(false);
+
+        toast({
+          title: "Succes",
+          description: "AI instructie aangemaakt"
+        });
+      } else {
+        console.log('💾 Updating AI instruction:', instructionId);
+
+        const { data, error } = await supabase
+          .from('ai_settings')
+          .update({
+            instructions: instructionData.instructions,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', instructionId)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        setInstructions(prev => prev.map(inst => 
+          inst.id === instructionId ? data : inst
+        ));
+
+        toast({
+          title: "Succes",
+          description: "AI instructie bijgewerkt"
+        });
       }
-
-      console.log('✅ AI instruction saved:', data);
-
-      toast({
-        title: "Succes",
-        description: "AI instructie succesvol toegevoegd"
-      });
-
-      setNewInstruction({ instruction_type: '', instructions: '' });
-      setShowAddForm(false);
-      fetchInstructions();
-    } catch (error) {
-      console.error('Error saving AI instruction:', error);
+    } catch (error: any) {
+      console.error('❌ Error saving instruction:', error);
       toast({
         title: "Fout",
-        description: "Kon AI instructie niet opslaan",
-        variant: "destructive"
+        description: `Kon instructie niet opslaan: ${error.message}`,
+        variant: "destructive",
       });
+    } finally {
+      setSaving(false);
     }
   };
 
-  const updateInstruction = async (id: string, updates: Partial<AIInstruction>) => {
+  const deleteInstruction = async (instructionId: string) => {
     try {
-      const { error } = await supabase
-        .from('ai_settings')
-        .update(updates)
-        .eq('id', id);
+      setSaving(true);
 
-      if (error) throw error;
-
-      toast({
-        title: "Succes",
-        description: "AI instructie bijgewerkt"
-      });
-
-      setEditingId(null);
-      fetchInstructions();
-    } catch (error) {
-      console.error('Error updating AI instruction:', error);
-      toast({
-        title: "Fout",
-        description: "Kon AI instructie niet bijwerken",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const deleteInstruction = async (id: string) => {
-    if (!confirm('Weet je zeker dat je deze AI instructie wilt verwijderen?')) return;
-
-    try {
       const { error } = await supabase
         .from('ai_settings')
         .delete()
-        .eq('id', id);
+        .eq('id', instructionId);
 
       if (error) throw error;
+
+      setInstructions(prev => prev.filter(inst => inst.id !== instructionId));
 
       toast({
         title: "Succes",
         description: "AI instructie verwijderd"
       });
-
-      fetchInstructions();
-    } catch (error) {
-      console.error('Error deleting AI instruction:', error);
+    } catch (error: any) {
+      console.error('❌ Error deleting instruction:', error);
       toast({
         title: "Fout",
-        description: "Kon AI instructie niet verwijderen",
-        variant: "destructive"
+        description: `Kon instructie niet verwijderen: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateInstructionText = (instructionId: string, text: string) => {
+    setInstructions(prev => prev.map(inst => 
+      inst.id === instructionId 
+        ? { ...inst, instructions: text }
+        : inst
+    ));
+  };
+
+  const toggleActive = async (instructionId: string, isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('ai_settings')
+        .update({ is_active: !isActive })
+        .eq('id', instructionId);
+
+      if (error) throw error;
+
+      setInstructions(prev => prev.map(inst => 
+        inst.id === instructionId 
+          ? { ...inst, is_active: !isActive }
+          : inst
+      ));
+
+      toast({
+        title: "Succes",
+        description: `Instructie ${!isActive ? 'geactiveerd' : 'gedeactiveerd'}`
+      });
+    } catch (error: any) {
+      console.error('❌ Error toggling instruction:', error);
+      toast({
+        title: "Fout",
+        description: "Kon status niet wijzigen",
+        variant: "destructive",
       });
     }
   };
 
-  const getInstructionTypeLabel = (type: string) => {
-    const instructionType = INSTRUCTION_TYPES.find(t => t.value === type);
-    return instructionType ? instructionType.label : type;
+  useEffect(() => {
+    if (selectedOrganization) {
+      fetchInstructions();
+    }
+  }, [selectedOrganization, selectedWorkspace]);
+
+  const getTypeLabel = (type: string) => {
+    return instructionTypes.find(t => t.value === type)?.label || type;
   };
 
-  useEffect(() => {
-    fetchInstructions();
-  }, [selectedOrganization, selectedWorkspace]);
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="animate-pulse">
+          <div className="h-6 bg-gray-200 rounded w-1/4 mb-3"></div>
+          <div className="h-32 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">AI Instructies</h2>
-          <p className="text-muted-foreground">
-            Beheer instructies voor AI-gestuurde functies zoals openstaande taken, e-mail beantwoording en meer
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Brain className="h-5 w-5" />
+            AI Instructies
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Configureer AI gedrag voor verschillende scenario's
           </p>
         </div>
-        <Button onClick={() => setShowAddForm(true)} disabled={showAddForm}>
+
+        <Button onClick={() => setShowNewForm(true)} disabled={saving}>
           <Plus className="h-4 w-4 mr-2" />
           Nieuwe Instructie
         </Button>
       </div>
 
-      {/* Add New Instruction Form */}
-      {showAddForm && (
+      {error && (
+        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <AlertCircle className="h-5 w-5 text-red-600" />
+          <span className="text-red-800 text-sm">{error}</span>
+        </div>
+      )}
+
+      {showNewForm && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5" />
-              Nieuwe AI Instructie
-            </CardTitle>
+            <CardTitle className="text-base">Nieuwe AI Instructie</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="instruction-type">Type Instructie</Label>
+              <label className="block text-sm font-medium mb-1">Type</label>
               <Select
                 value={newInstruction.instruction_type}
-                onValueChange={(value) => setNewInstruction(prev => ({ ...prev, instruction_type: value }))}
+                onValueChange={(value) => 
+                  setNewInstruction(prev => ({ ...prev, instruction_type: value }))
+                }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecteer een instructie type" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {INSTRUCTION_TYPES.map((type) => (
+                  {instructionTypes.map(type => (
                     <SelectItem key={type.value} value={type.value}>
                       {type.label}
                     </SelectItem>
@@ -259,26 +307,34 @@ export const AIInstructionsSettings = () => {
                 </SelectContent>
               </Select>
             </div>
+
             <div>
-              <Label htmlFor="instructions">Instructies</Label>
+              <label className="block text-sm font-medium mb-1">Instructies</label>
               <Textarea
-                id="instructions"
                 value={newInstruction.instructions}
-                onChange={(e) => setNewInstruction(prev => ({ ...prev, instructions: e.target.value }))}
-                placeholder="Beschrijf hier hoe de AI zich moet gedragen voor dit type taak..."
-                rows={6}
+                onChange={(e) => 
+                  setNewInstruction(prev => ({ ...prev, instructions: e.target.value }))
+                }
+                placeholder="Voer AI instructies in..."
+                rows={4}
               />
             </div>
-            <div className="flex gap-2">
-              <Button onClick={saveInstruction}>
+
+            <div className="flex items-center gap-2">
+              <Button 
+                onClick={() => saveInstruction()}
+                disabled={saving || !newInstruction.instructions.trim()}
+              >
                 <Save className="h-4 w-4 mr-2" />
-                Opslaan
+                {saving ? 'Opslaan...' : 'Opslaan'}
               </Button>
-              <Button variant="outline" onClick={() => {
-                setShowAddForm(false);
-                setNewInstruction({ instruction_type: '', instructions: '' });
-              }}>
-                <X className="h-4 w-4 mr-2" />
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowNewForm(false);
+                  setNewInstruction({ instruction_type: 'general', instructions: '' });
+                }}
+              >
                 Annuleren
               </Button>
             </div>
@@ -286,19 +342,20 @@ export const AIInstructionsSettings = () => {
         </Card>
       )}
 
-      {/* Instructions List */}
-      {loading ? (
-        <div className="text-center py-8">
-          <p>AI instructies laden...</p>
-        </div>
-      ) : instructions.length === 0 ? (
+      {instructions.length === 0 ? (
         <Card>
           <CardContent className="text-center py-8">
-            <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-muted-foreground">Geen AI instructies gevonden</p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Voeg je eerste AI instructie toe om te beginnen
-            </p>
+            <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-muted-foreground">Nog geen AI instructies geconfigureerd</p>
+            {!showNewForm && (
+              <Button 
+                className="mt-4" 
+                onClick={() => setShowNewForm(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Eerste Instructie Toevoegen
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -308,24 +365,33 @@ export const AIInstructionsSettings = () => {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Brain className="h-5 w-5" />
-                    <CardTitle className="text-lg">{getInstructionTypeLabel(instruction.instruction_type)}</CardTitle>
-                    <Badge variant={instruction.is_active ? "default" : "secondary"}>
-                      {instruction.is_active ? "Actief" : "Inactief"}
+                    <CardTitle className="text-base">
+                      {getTypeLabel(instruction.instruction_type)}
+                    </CardTitle>
+                    <Badge 
+                      variant={instruction.is_active ? "default" : "secondary"}
+                      className="cursor-pointer"
+                      onClick={() => toggleActive(instruction.id, instruction.is_active)}
+                    >
+                      {instruction.is_active ? 'Actief' : 'Inactief'}
                     </Badge>
                   </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => setEditingId(instruction.id)}
+                  
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => saveInstruction(instruction.id)}
+                      disabled={saving}
                     >
-                      <Edit className="h-4 w-4" />
+                      <Save className="h-4 w-4 mr-1" />
+                      {saving ? 'Opslaan...' : 'Opslaan'}
                     </Button>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
                       onClick={() => deleteInstruction(instruction.id)}
+                      disabled={saving}
+                      className="text-red-600 hover:text-red-800"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -333,49 +399,16 @@ export const AIInstructionsSettings = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {editingId === instruction.id ? (
-                  <div className="space-y-4">
-                    <Textarea
-                      value={instruction.instructions}
-                      onChange={(e) => {
-                        const updatedInstructions = instructions.map(inst => 
-                          inst.id === instruction.id 
-                            ? { ...inst, instructions: e.target.value }
-                            : inst
-                        );
-                        setInstructions(updatedInstructions);
-                      }}
-                      rows={6}
-                    />
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm"
-                        onClick={() => updateInstruction(instruction.id, { 
-                          instructions: instruction.instructions 
-                        })}
-                      >
-                        <Save className="h-4 w-4 mr-2" />
-                        Opslaan
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => setEditingId(null)}
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        Annuleren
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="whitespace-pre-wrap text-sm">
-                    {instruction.instructions}
-                  </div>
-                )}
-                <div className="text-xs text-muted-foreground mt-4">
+                <Textarea
+                  value={instruction.instructions}
+                  onChange={(e) => updateInstructionText(instruction.id, e.target.value)}
+                  rows={4}
+                  className="w-full"
+                />
+                <div className="mt-2 text-xs text-muted-foreground">
                   Aangemaakt: {new Date(instruction.created_at).toLocaleDateString('nl-NL')}
                   {instruction.updated_at !== instruction.created_at && (
-                    <span> • Bijgewerkt: {new Date(instruction.updated_at).toLocaleDateString('nl-NL')}</span>
+                    <> • Bijgewerkt: {new Date(instruction.updated_at).toLocaleDateString('nl-NL')}</>
                   )}
                 </div>
               </CardContent>
