@@ -45,7 +45,6 @@ export const Sidebar = ({
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const { pendingTasksCount } = usePendingTasksRealtime();
 
-  // Auto-expand submenu's based on current route and auto-collapse others
   useEffect(() => {
     try {
       const path = location.pathname;
@@ -54,7 +53,6 @@ export const Sidebar = ({
 
       console.log('Current path:', path, 'Search:', search);
 
-      // Check if we're on a page that should have its submenu expanded
       if (path.startsWith('/facturen')) {
         newExpandedMenus.push('invoices');
       } else if (path.startsWith('/offertes')) {
@@ -63,14 +61,9 @@ export const Sidebar = ({
         newExpandedMenus.push('documents');
       } else if (path.startsWith('/actieve-dossiers') || path.startsWith('/gesloten-dossiers')) {
         newExpandedMenus.push('dossiers');
-      } else if (path.startsWith('/clienten') || path.startsWith('/contacten')) {
-        // Handle both old and new routes for clients
-        // No submenu expansion needed for clients
       }
 
       console.log('Expanded menus:', newExpandedMenus);
-
-      // Set only the relevant submenu as expanded (auto-collapse others)
       setExpandedMenus(newExpandedMenus);
     } catch (error) {
       console.error('Error in useEffect:', error);
@@ -85,18 +78,15 @@ export const Sidebar = ({
       
       console.log('Checking route:', path, 'against current:', currentPath, currentSearch);
       
-      // Handle exact path matches first
       if (currentPath === path) {
         console.log('Exact match found for:', path);
         return true;
       }
       
-      // Handle client routes (both old and new)
       if (path === '/clienten' && (currentPath === '/clienten' || currentPath === '/contacten')) {
         return true;
       }
       
-      // Handle URL parameter matches for invoices
       if (path === '/facturen?status=draft' && currentPath === '/facturen' && currentSearch === '?status=draft') {
         return true;
       }
@@ -104,7 +94,6 @@ export const Sidebar = ({
         return true;
       }
       
-      // Handle URL parameter matches for quotes
       if (path === '/offertes?status=draft' && currentPath === '/offertes' && currentSearch === '?status=draft') {
         return true;
       }
@@ -112,7 +101,6 @@ export const Sidebar = ({
         return true;
       }
       
-      // Handle URL parameter matches for documents
       if (path === '/documenten?status=sent' && currentPath === '/documenten' && currentSearch === '?status=sent') {
         return true;
       }
@@ -127,20 +115,16 @@ export const Sidebar = ({
   const isActiveSubmenu = (parentId: string) => {
     try {
       const path = location.pathname;
-      const search = location.search;
       
       console.log('Checking submenu:', parentId, 'for path:', path);
       
       if (parentId === 'invoices') {
-        // Check if we're on any invoice-related page
         return path.startsWith('/facturen');
       }
       if (parentId === 'quotes') {
-        // Check if we're on any quote-related page
         return path.startsWith('/offertes');
       }
       if (parentId === 'documents') {
-        // Check if we're on any document-related page
         return path.startsWith('/documenten');
       }
       if (parentId === 'dossiers') {
@@ -322,7 +306,7 @@ export const Sidebar = ({
         <Button
           variant={location.pathname === '/support' ? "secondary" : "ghost"}
           className={cn(
-            "w-full justify-start",
+            "w-full justify-start text-sm",
             collapsed && "px-3",
             location.pathname === '/support' && "bg-primary/10 text-primary font-medium"
           )}

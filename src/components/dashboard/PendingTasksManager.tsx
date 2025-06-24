@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -34,10 +33,10 @@ interface PendingTask {
   assigned_to?: string;
   created_by?: string;
   ai_generated: boolean;
-  // Client info from join
+  // Client info
   client_name?: string;
   client_email?: string;
-  // User info from join
+  // User info
   assigned_user_name?: string;
   created_by_name?: string;
 }
@@ -58,12 +57,11 @@ export const PendingTasksManager = () => {
       console.log('📋 Fetching tasks for organization:', selectedOrganization.id);
       console.log('📋 Selected workspace:', selectedWorkspace?.id);
 
-      // Build base query with proper joins
+      // Build base query with simplified joins
       let query = supabase
         .from('pending_tasks')
         .select(`
           *,
-          clients!left(name, email),
           assigned_user:user_profiles!pending_tasks_assigned_to_fkey(full_name),
           created_user:user_profiles!pending_tasks_created_by_fkey(full_name)
         `)
@@ -75,32 +73,77 @@ export const PendingTasksManager = () => {
         query = query.eq('workspace_id', selectedWorkspace.id);
       }
 
-      console.log('📋 Executing query...');
-
-      // Fetch all tasks first
-      const { data: allTasks, error } = await query;
+      console.log('📋 Executing main query...');
+      const { data: tasks, error } = await query;
       
       if (error) {
         console.error('❌ Error fetching tasks:', error);
         throw error;
       }
 
-      console.log('📋 Raw tasks data:', allTasks);
+      console.log('📋 Raw tasks data:', tasks);
 
-      if (!allTasks) {
+      if (!tasks) {
         console.log('📋 No tasks found');
         setOpenTasks([]);
         setCompletedTasks([]);
         return;
       }
 
-      // Transform and separate tasks
-      const transformedTasks = allTasks.map((task: any) => {
-        console.log('📋 Transforming task:', task.id, 'Client data:', task.clients);
+      // Get all clients for this organization to match by email/ID
+      const { data: clients, error: clientsError } = await supabase
+        .from('clients')
+        .select('id, name, email')
+        .eq('organization_id', selectedOrganization.id);
+
+      if (clientsError) {
+        console.error('❌ Error fetching clients:', clientsError);
+      }
+
+      console.log('📋 Clients data:', clients);
+
+      // Transform tasks and match client information
+      const transformedTasks = tasks.map((task: any) => {
+        let clientInfo = { client_name: null, client_email: null };
+        
+        if (task.client_id && clients) {
+          // Direct client ID match
+          const client = clients.find(c => c.id === task.client_id);
+          if (client) {
+            clientInfo = {
+              client_name: client.name,
+              client_email: client.email
+            };
+          }
+        }
+        
+        // If no direct match but we have an email in the task, try email matching
+        // This is common for AI-generated tasks
+        if (!clientInfo.client_name && clients && task.description) {
+          // Try to extract email from task description or title
+          const emailRegex = /[\w\.-]+@[\w\.-]+\.\w+/g;
+          const emails = (task.title + ' ' + (task.description || '')).match(emailRegex);
+          
+          if (emails && emails.length > 0) {
+            const matchedClient = clients.find(c => 
+              emails.some(email => c.email && c.email.toLowerCase() === email.toLowerCase())
+            );
+            
+            if (matchedClient) {
+              clientInfo = {
+                client_name: matchedClient.name,
+                client_email: matchedClient.email
+              };
+            } else {
+              // Use the extracted email even if no client match
+              clientInfo.client_email = emails[0];
+            }
+          }
+        }
+
         return {
           ...task,
-          client_name: task.clients?.name || null,
-          client_email: task.clients?.email || null,
+          ...clientInfo,
           assigned_user_name: task.assigned_user?.full_name || null,
           created_by_name: task.created_user?.full_name || null
         };
@@ -336,15 +379,6 @@ export const PendingTasksManager = () => {
 
   return (
     <div className="w-full space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Taken Overzicht</h1>
-          <p className="text-muted-foreground">
-            Beheer je openstaande en voltooide taken
-          </p>
-        </div>
-      </div>
-
       <Tabs defaultValue="open" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="open" className="flex items-center gap-2">

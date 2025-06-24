@@ -116,13 +116,6 @@ export const SupportPage = () => {
 
   return (
     <div className="w-full space-y-6 p-4">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2">Hulp & Ondersteuning</h1>
-        <p className="text-muted-foreground">
-          Heb je vragen of hulp nodig? We helpen je graag verder via verschillende kanalen.
-        </p>
-      </div>
-
       {/* Contact Options */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={handlePhoneContact}>
@@ -265,7 +258,6 @@ export const SupportPage = () => {
             <Button 
               onClick={() => handleSubmitForm('bug_report')} 
               disabled={loading}
-              variant="destructive"
               className="w-full mt-auto"
             >
               <Bug className="h-4 w-4 mr-2" />
