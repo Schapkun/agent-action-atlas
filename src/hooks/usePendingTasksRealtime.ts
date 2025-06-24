@@ -18,7 +18,7 @@ export const usePendingTasksRealtime = () => {
         .from('pending_tasks')
         .select('id', { count: 'exact' })
         .eq('organization_id', selectedOrganization.id)
-        .eq('status', 'open');
+        .eq('status', 'open'); // Only count open tasks, not completed ones
 
       if (selectedWorkspace) {
         query = query.eq('workspace_id', selectedWorkspace.id);
@@ -57,6 +57,7 @@ export const usePendingTasksRealtime = () => {
         },
         (payload) => {
           console.log('📋 Pending tasks changed:', payload);
+          // Immediately refresh count when any task changes
           fetchPendingTasksCount();
         }
       )

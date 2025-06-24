@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +37,9 @@ import {
   Eye,
   Trash2,
   FileText,
-  AlertCircle
+  AlertCircle,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 
 interface PendingTask {
@@ -84,10 +86,12 @@ interface PendingTask {
 
 export const PendingTasksManager = () => {
   const [tasks, setTasks] = useState<PendingTask[]>([]);
+  const [completedTasks, setCompletedTasks] = useState<PendingTask[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [taskTypeFilter, setTaskTypeFilter] = useState<string>('all');
+  const [showCompletedTasks, setShowCompletedTasks] = useState(false);
   const [selectedEmailTask, setSelectedEmailTask] = useState<PendingTask | null>(null);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [showCombinedDialog, setShowCombinedDialog] = useState(false);
@@ -105,7 +109,7 @@ export const PendingTasksManager = () => {
     try {
       console.log('📋 Fetching pending tasks for organization:', selectedOrganization.id);
 
-      let query = supabase
+      let baseQuery = supabase
         .from('pending_tasks')
         .select(`
           *,
@@ -135,25 +139,33 @@ export const PendingTasksManager = () => {
         .order('created_at', { ascending: false });
 
       if (selectedWorkspace) {
-        query = query.eq('workspace_id', selectedWorkspace.id);
+        baseQuery = baseQuery.eq('workspace_id', selectedWorkspace.id);
       }
 
       if (priorityFilter !== 'all') {
-        query = query.eq('priority', priorityFilter);
+        baseQuery = baseQuery.eq('priority', priorityFilter);
       }
 
       if (taskTypeFilter !== 'all') {
-        query = query.eq('task_type', taskTypeFilter);
+        baseQuery = baseQuery.eq('task_type', taskTypeFilter);
       }
 
-      const { data, error } = await query;
+      // Fetch open tasks
+      const openQuery = baseQuery.eq('status', 'open');
+      const { data: openData, error: openError } = await openQuery;
 
-      if (error) throw error;
+      if (openError) throw openError;
 
-      console.log('📋 Pending tasks fetched:', data?.length || 0);
-      console.log('📋 Tasks with email data:', data?.filter(t => t.emails).length || 0);
+      // Fetch completed tasks
+      const completedQuery = baseQuery.eq('status', 'completed');
+      const { data: completedData, error: completedError } = await completedQuery;
+
+      if (completedError) throw completedError;
+
+      console.log('📋 Open tasks fetched:', openData?.length || 0);
+      console.log('📋 Completed tasks fetched:', completedData?.length || 0);
       
-      const transformedData = data?.map(task => ({
+      const transformData = (data: any[]) => data?.map(task => ({
         ...task,
         emails: task.emails ? {
           ...task.emails,
@@ -163,7 +175,8 @@ export const PendingTasksManager = () => {
         } : undefined
       })) || [];
       
-      setTasks(transformedData);
+      setTasks(transformData(openData));
+      setCompletedTasks(transformData(completedData));
     } catch (error) {
       console.error('Error fetching pending tasks:', error);
       toast({
@@ -330,6 +343,12 @@ export const PendingTasksManager = () => {
     task.dossiers?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const filteredCompletedTasks = completedTasks.filter(task =>
+    task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    task.clients?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    task.dossiers?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case 'high':
@@ -385,6 +404,126 @@ export const PendingTasksManager = () => {
 
   const emailTasks = filteredTasks.filter(task => task.task_type === 'email_reply');
   const generalTasks = filteredTasks.filter(task => task.task_type !== 'email_reply');
+  const completedEmailTasks = filteredCompletedTasks.filter(task => task.task_type === 'email_reply');
+  const completedGeneralTasks = filteredCompletedTasks.filter(task => task.task_type !== 'email_reply');
+
+  const renderTaskItem = (task: PendingTask, isCompleted = false) => (
+    <div key={task.id} className={`border rounded-lg p-3 hover:shadow-sm transition-all relative ${
+      task.task_type === 'email_reply' ? 'bg-blue-50/30' : ''
+    } ${isCompleted ? 'opacity-75 bg-gray-50' : ''}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className={`font-medium text-sm truncate ${isCompleted ? 'line-through text-gray-600' : ''}`}>
+              {task.title}
+            </h3>
+            <div className="flex gap-1 flex-shrink-0">
+              {isCompleted ? (
+                <Badge variant="outline" className="text-green-600 text-xs">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Voltooid
+                </Badge>
+              ) : (
+                getStatusBadge(task.status)
+              )}
+              {getPriorityBadge(task.priority)}
+              {task.ai_generated && (
+                <Badge variant="outline" className="text-blue-600 text-xs">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  AI
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          <div className="text-xs text-gray-600 space-y-1">
+            {task.emails?.subject && (
+              <div className="flex items-center gap-1">
+                <span className="font-medium">Onderwerp:</span>
+                <span className="truncate">{task.emails.subject}</span>
+              </div>
+            )}
+            {task.emails?.from_email && (
+              <div className="flex items-center gap-1">
+                <span className="font-medium">Van:</span>
+                <span className="truncate">{task.emails.from_email}</span>
+              </div>
+            )}
+            {task.due_date && (
+              <div className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                <span>Vervalt: {new Date(task.due_date).toLocaleDateString('nl-NL')}</span>
+              </div>
+            )}
+            {isCompleted && (
+              <div className="flex items-center gap-1 text-green-600">
+                <CheckCircle className="h-3 w-3" />
+                <span>Voltooid op: {new Date(task.updated_at).toLocaleDateString('nl-NL')}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {!isCompleted && (
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {task.status === 'open' && task.task_type === 'email_reply' && (
+              <Button
+                size="sm"
+                onClick={() => handleManageTask(task)}
+                className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 h-7"
+              >
+                <Mail className="h-3 w-3 mr-1" />
+                Beantwoorden
+              </Button>
+            )}
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={deletingTaskId === task.id}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 h-7 w-7"
+                >
+                  {deletingTaskId === task.id ? (
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600"></div>
+                  ) : (
+                    <Trash2 className="h-3 w-3" />
+                  )}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{isCompleted ? 'Voltooide Taak Verwijderen' : 'AI Actie Annuleren'}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Weet je zeker dat je deze {isCompleted ? 'voltooide taak' : 'AI actie'} wilt {isCompleted ? 'verwijderen' : 'annuleren'}? Deze actie kan niet ongedaan worden gemaakt.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={() => deleteTask(task.id)}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Verwijderen
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
+      </div>
+
+      {isOverdue(task.due_date) && !isCompleted && (
+        <div className="absolute top-2 right-2">
+          <Badge variant="destructive" className="animate-pulse text-xs">
+            <AlertTriangle className="h-3 w-3 mr-1" />
+            Verlopen
+          </Badge>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <>
@@ -439,6 +578,7 @@ export const PendingTasksManager = () => {
           )}
         </div>
 
+        {/* Open Email Tasks */}
         {emailTasks.length > 0 && (
           <Card>
             <CardHeader className="pb-2">
@@ -449,109 +589,13 @@ export const PendingTasksManager = () => {
             </CardHeader>
             <CardContent className="pt-0">
               <div className="space-y-2">
-                {emailTasks.map((task) => (
-                  <div key={task.id} className="border rounded-lg p-3 hover:shadow-sm transition-all bg-blue-50/30 relative">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-medium text-sm truncate">{task.title}</h3>
-                          <div className="flex gap-1 flex-shrink-0">
-                            {getStatusBadge(task.status)}
-                            {getPriorityBadge(task.priority)}
-                            {task.ai_generated && (
-                              <Badge variant="outline" className="text-blue-600 text-xs">
-                                <Sparkles className="h-3 w-3 mr-1" />
-                                AI
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="text-xs text-gray-600 space-y-1">
-                          {task.emails?.subject && (
-                            <div className="flex items-center gap-1">
-                              <span className="font-medium">Onderwerp:</span>
-                              <span className="truncate">{task.emails.subject}</span>
-                            </div>
-                          )}
-                          {task.emails?.from_email && (
-                            <div className="flex items-center gap-1">
-                              <span className="font-medium">Van:</span>
-                              <span className="truncate">{task.emails.from_email}</span>
-                            </div>
-                          )}
-                          {task.due_date && (
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              <span>Vervalt: {new Date(task.due_date).toLocaleDateString('nl-NL')}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        {task.status === 'open' && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleManageTask(task)}
-                            className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 h-7"
-                          >
-                            <Mail className="h-3 w-3 mr-1" />
-                            Beantwoorden
-                          </Button>
-                        )}
-                        
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={deletingTaskId === task.id}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 h-7 w-7"
-                            >
-                              {deletingTaskId === task.id ? (
-                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600"></div>
-                              ) : (
-                                <Trash2 className="h-3 w-3" />
-                              )}
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>AI Actie Annuleren</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Weet je zeker dat je deze AI e-mail actie wilt annuleren? Deze actie kan niet ongedaan worden gemaakt.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Annuleren</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => deleteTask(task.id)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Verwijderen
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
-
-                    {isOverdue(task.due_date) && (
-                      <div className="absolute top-2 right-2">
-                        <Badge variant="destructive" className="animate-pulse text-xs">
-                          <AlertTriangle className="h-3 w-3 mr-1" />
-                          Verlopen
-                        </Badge>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                {emailTasks.map((task) => renderTaskItem(task))}
               </div>
             </CardContent>
           </Card>
         )}
 
+        {/* Open General Tasks */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -570,122 +614,66 @@ export const PendingTasksManager = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                {generalTasks.map((task) => (
-                  <div key={task.id} className="border rounded-lg p-3 hover:shadow-sm transition-all relative">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-medium text-sm truncate">{task.title}</h3>
-                          <div className="flex gap-1 flex-shrink-0">
-                            {getStatusBadge(task.status)}
-                            {getPriorityBadge(task.priority)}
-                          </div>
-                        </div>
-                        
-                        {task.description && (
-                          <p className="text-xs text-muted-foreground mb-1 line-clamp-2">
-                            {task.description}
-                          </p>
-                        )}
-                        
-                        <div className="flex items-center gap-4 text-xs text-gray-600">
-                          {task.clients?.name && (
-                            <span>Klant: {task.clients.name}</span>
-                          )}
-                          {task.dossiers?.name && (
-                            <span>Dossier: {task.dossiers.name}</span>
-                          )}
-                          {task.due_date && (
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {new Date(task.due_date).toLocaleDateString('nl-NL')}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        {task.status === 'open' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateTaskStatus(task.id, 'in_progress')}
-                            className="text-xs px-2 py-1 h-7"
-                          >
-                            Start
-                          </Button>
-                        )}
-                        
-                        {task.status === 'in_progress' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateTaskStatus(task.id, 'completed')}
-                            className="text-xs px-2 py-1 h-7"
-                          >
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Voltooien
-                          </Button>
-                        )}
-                        
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="p-1 h-7 w-7"
-                        >
-                          <Eye className="h-3 w-3" />
-                        </Button>
-
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={deletingTaskId === task.id}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 h-7 w-7"
-                            >
-                              {deletingTaskId === task.id ? (
-                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600"></div>
-                              ) : (
-                                <Trash2 className="h-3 w-3" />
-                              )}
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Taak Verwijderen</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Weet je zeker dat je deze taak wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Annuleren</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => deleteTask(task.id)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Verwijderen
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
-
-                    {isOverdue(task.due_date) && (
-                      <div className="absolute top-2 right-2">
-                        <Badge variant="destructive" className="animate-pulse text-xs">
-                          <AlertTriangle className="h-3 w-3 mr-1" />
-                          Verlopen
-                        </Badge>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                {generalTasks.map((task) => renderTaskItem(task))}
               </div>
             )}
           </CardContent>
         </Card>
+
+        {/* Completed Tasks Section */}
+        {(completedEmailTasks.length > 0 || completedGeneralTasks.length > 0) && (
+          <Collapsible open={showCompletedTasks} onOpenChange={setShowCompletedTasks}>
+            <Card className="border-green-200">
+              <CardHeader className="pb-2">
+                <CollapsibleTrigger asChild>
+                  <div className="flex items-center justify-between cursor-pointer hover:bg-green-50 -m-3 p-3 rounded-lg">
+                    <CardTitle className="flex items-center gap-2 text-base text-green-700">
+                      <CheckCircle className="h-4 w-4" />
+                      Afgeronde Taken ({completedEmailTasks.length + completedGeneralTasks.length})
+                    </CardTitle>
+                    {showCompletedTasks ? (
+                      <ChevronDown className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-green-600" />
+                    )}
+                  </div>
+                </CollapsibleTrigger>
+              </CardHeader>
+
+              <CollapsibleContent>
+                <CardContent className="pt-0">
+                  <div className="space-y-4">
+                    {/* Completed Email Tasks */}
+                    {completedEmailTasks.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-medium text-green-700 mb-2 flex items-center gap-2">
+                          <Mail className="h-3 w-3" />
+                          Voltooide E-mail Antwoorden ({completedEmailTasks.length})
+                        </h4>
+                        <div className="space-y-2">
+                          {completedEmailTasks.map((task) => renderTaskItem(task, true))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Completed General Tasks */}
+                    {completedGeneralTasks.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-medium text-green-700 mb-2 flex items-center gap-2">
+                          <FileText className="h-3 w-3" />
+                          Voltooide Algemene Taken ({completedGeneralTasks.length})
+                        </h4>
+                        <div className="space-y-2">
+                          {completedGeneralTasks.map((task) => renderTaskItem(task, true))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+        )}
       </div>
 
       <EmailDraftDialog
