@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -268,12 +267,18 @@ export const DocumentOverview = () => {
       </Card>
 
       <DocumentPreviewPopup
-        document={previewDocument}
         isOpen={isPreviewOpen}
         onClose={() => {
           setIsPreviewOpen(false);
           setPreviewDocument(null);
         }}
+        selectedTemplate={null}
+        formData={{
+          title: previewDocument?.name || '',
+          description: previewDocument?.type || '',
+          client_name: previewDocument?.client || ''
+        }}
+        content={previewDocument ? `Document: ${previewDocument.name}\nType: ${previewDocument.type}\nKlant: ${previewDocument.client || 'Geen klant'}\nDossier: ${previewDocument.dossier || 'Geen dossier'}` : ''}
       />
 
       <WorkspaceSelector
