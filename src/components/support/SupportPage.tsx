@@ -27,7 +27,7 @@ const PRIORITY_LEVELS = [
 ];
 
 export const SupportPage = () => {
-  const [supportFormData, setSupportFormData] = useState({
+  const [formData, setFormData] = useState({
     request_type: '',
     priority: 'medium',
     subject: '',
@@ -36,22 +36,14 @@ export const SupportPage = () => {
     contact_email: ''
   });
 
-  const [contactFormData, setContactFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
-  });
-
-  const [supportLoading, setSupportLoading] = useState(false);
-  const [contactLoading, setContactLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { selectedOrganization } = useOrganization();
   const { toast } = useToast();
 
-  const handleSupportSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!supportFormData.request_type || !supportFormData.subject || !supportFormData.description || !supportFormData.contact_email) {
+    if (!formData.request_type || !formData.subject || !formData.description || !formData.contact_email) {
       toast({
         title: "Fout",
         description: "Vul alle verplichte velden in",
@@ -60,36 +52,24 @@ export const SupportPage = () => {
       return;
     }
 
-    setSupportLoading(true);
+    setLoading(true);
     try {
       const { error } = await supabase
         .from('support_requests')
         .insert([{
-          ...supportFormData,
+          ...formData,
           organization_id: selectedOrganization?.id || null,
           status: 'open'
         }]);
 
       if (error) throw error;
 
-      // Send email to hallo@meester.app
-      await fetch('/api/send-support-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: 'hallo@meester.app',
-          subject: `Support Verzoek: ${supportFormData.subject}`,
-          ...supportFormData,
-          organization: selectedOrganization?.name
-        })
-      });
-
       toast({
         title: "Succes",
         description: "Uw support verzoek is succesvol verzonden"
       });
 
-      setSupportFormData({
+      setFormData({
         request_type: '',
         priority: 'medium',
         subject: '',
@@ -105,55 +85,7 @@ export const SupportPage = () => {
         variant: "destructive"
       });
     } finally {
-      setSupportLoading(false);
-    }
-  };
-
-  const handleContactSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!contactFormData.name || !contactFormData.email || !contactFormData.subject || !contactFormData.message) {
-      toast({
-        title: "Fout",
-        description: "Vul alle velden in",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setContactLoading(true);
-    try {
-      // Send email directly to hallo@meester.app
-      await fetch('/api/send-contact-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: 'hallo@meester.app',
-          subject: `Contact Formulier: ${contactFormData.subject}`,
-          ...contactFormData
-        })
-      });
-
-      toast({
-        title: "Succes",
-        description: "Uw bericht is succesvol verzonden"
-      });
-
-      setContactFormData({
-        name: '',
-        email: '',
-        subject: '',
-        message: ''
-      });
-    } catch (error) {
-      console.error('Error sending contact message:', error);
-      toast({
-        title: "Fout",
-        description: "Er is een fout opgetreden bij het verzenden",
-        variant: "destructive"
-      });
-    } finally {
-      setContactLoading(false);
+      setLoading(false);
     }
   };
 
@@ -177,12 +109,11 @@ export const SupportPage = () => {
       <div>
         <h1 className="text-2xl font-bold mb-2">Hulp & Support</h1>
         <p className="text-muted-foreground">
-          Heeft u vragen of problemen? Neem contact met ons op via onderstaande formulieren.
+          Heeft u vragen of problemen? Neem contact met ons op via onderstaand formulier.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Support Request Form */}
+      <div className="max-w-2xl">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -191,12 +122,12 @@ export const SupportPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSupportSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium mb-2">Type Verzoek *</label>
                 <Select 
-                  value={supportFormData.request_type} 
-                  onValueChange={(value) => setSupportFormData(prev => ({ ...prev, request_type: value }))}
+                  value={formData.request_type} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, request_type: value }))}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Selecteer type verzoek..." />
@@ -220,8 +151,8 @@ export const SupportPage = () => {
               <div>
                 <label className="block text-sm font-medium mb-2">Prioriteit</label>
                 <Select 
-                  value={supportFormData.priority} 
-                  onValueChange={(value) => setSupportFormData(prev => ({ ...prev, priority: value }))}
+                  value={formData.priority} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue />
@@ -241,8 +172,8 @@ export const SupportPage = () => {
               <div>
                 <label className="block text-sm font-medium mb-2">Onderwerp *</label>
                 <Input
-                  value={supportFormData.subject}
-                  onChange={(e) => setSupportFormData(prev => ({ ...prev, subject: e.target.value }))}
+                  value={formData.subject}
+                  onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
                   placeholder="Korte beschrijving van uw verzoek"
                   className="w-full"
                 />
@@ -251,8 +182,8 @@ export const SupportPage = () => {
               <div>
                 <label className="block text-sm font-medium mb-2">Beschrijving *</label>
                 <Textarea
-                  value={supportFormData.description}
-                  onChange={(e) => setSupportFormData(prev => ({ ...prev, description: e.target.value }))}
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Gedetailleerde beschrijving van uw verzoek of probleem"
                   rows={6}
                   className="w-full resize-none"
@@ -263,8 +194,8 @@ export const SupportPage = () => {
                 <div>
                   <label className="block text-sm font-medium mb-2">Naam</label>
                   <Input
-                    value={supportFormData.contact_name}
-                    onChange={(e) => setSupportFormData(prev => ({ ...prev, contact_name: e.target.value }))}
+                    value={formData.contact_name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, contact_name: e.target.value }))}
                     placeholder="Uw naam"
                     className="w-full"
                   />
@@ -273,8 +204,8 @@ export const SupportPage = () => {
                   <label className="block text-sm font-medium mb-2">E-mail *</label>
                   <Input
                     type="email"
-                    value={supportFormData.contact_email}
-                    onChange={(e) => setSupportFormData(prev => ({ ...prev, contact_email: e.target.value }))}
+                    value={formData.contact_email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, contact_email: e.target.value }))}
                     placeholder="uw.email@voorbeeld.nl"
                     className="w-full"
                   />
@@ -284,9 +215,9 @@ export const SupportPage = () => {
               <Button 
                 type="submit" 
                 className="w-full"
-                disabled={supportLoading}
+                disabled={loading}
               >
-                {supportLoading ? (
+                {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Verzenden...
@@ -301,89 +232,15 @@ export const SupportPage = () => {
             </form>
           </CardContent>
         </Card>
-
-        {/* General Contact Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5" />
-              Algemeen Contact
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleContactSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Naam *</label>
-                  <Input
-                    value={contactFormData.name}
-                    onChange={(e) => setContactFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Uw naam"
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">E-mail *</label>
-                  <Input
-                    type="email"
-                    value={contactFormData.email}
-                    onChange={(e) => setContactFormData(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="uw.email@voorbeeld.nl"
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Onderwerp *</label>
-                <Input
-                  value={contactFormData.subject}
-                  onChange={(e) => setContactFormData(prev => ({ ...prev, subject: e.target.value }))}
-                  placeholder="Onderwerp van uw bericht"
-                  className="w-full"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Bericht *</label>
-                <Textarea
-                  value={contactFormData.message}
-                  onChange={(e) => setContactFormData(prev => ({ ...prev, message: e.target.value }))}
-                  placeholder="Uw bericht"
-                  rows={8}
-                  className="w-full resize-none"
-                />
-              </div>
-
-              <Button 
-                type="submit" 
-                className="w-full"
-                disabled={contactLoading}
-              >
-                {contactLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Verzenden...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    Bericht Verzenden
-                  </>
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Contact Information */}
-      <Card>
+      <Card className="max-w-2xl">
         <CardHeader>
-          <CardTitle>Andere Manieren om Contact op te Nemen</CardTitle>
+          <CardTitle>Contact Informatie</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
             <div className="flex items-center gap-3">
               <Mail className="h-5 w-5 text-primary" />
               <div>
@@ -403,10 +260,9 @@ export const SupportPage = () => {
       </Card>
 
       {/* Help Information */}
-      <Alert>
+      <Alert className="max-w-2xl">
         <AlertDescription>
           <strong>Tip:</strong> Voor technische problemen, vermeld alsjeblieft welke browser u gebruikt en beschrijf de stappen die tot het probleem hebben geleid.
-          Voor functie verzoeken, beschrijf zo gedetailleerd mogelijk wat u zou willen zien.
         </AlertDescription>
       </Alert>
     </div>
