@@ -13,7 +13,8 @@ import { DocumentTemplateWithTags } from '@/types/documentTags';
 import { TemplateLibraryNew } from './components/TemplateLibraryNew';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { DocumentSettings } from './DocumentSettings';
-import { EmailTemplateSettings } from './EmailTemplateSettings';
+import { EmailTemplateList } from './components/EmailTemplateList';
+import { EmailTemplateDialog } from './components/EmailTemplateDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const DocumentLayoutContent = () => {
@@ -172,15 +173,7 @@ const DocumentLayoutContent = () => {
           </TabsContent>
 
           <TabsContent value="emails" className="space-y-6">
-            <Tabs defaultValue="email-templates" className="w-full">
-              <TabsList className="grid w-full grid-cols-1">
-                <TabsTrigger value="email-templates">Email Templates</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="email-templates" className="space-y-6">
-                <EmailTemplateSettings />
-              </TabsContent>
-            </Tabs>
+            <EmailTemplateList />
           </TabsContent>
         </Tabs>
 
