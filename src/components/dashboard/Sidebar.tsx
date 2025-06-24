@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { BarChart3, Users, Mail, FileText, Receipt, Calculator, Phone, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -6,12 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
-interface SidebarProps {
-  currentView: ViewType;
-  onViewChange: (view: ViewType) => void;
-}
-
-type ViewType =
+export type ViewType =
   | 'dashboard'
   | 'contacts'
   | 'emails'
@@ -21,7 +17,12 @@ type ViewType =
   | 'phone-calls'
   | 'settings';
 
-const Sidebar = ({ currentView, onViewChange }: SidebarProps) => {
+interface SidebarProps {
+  currentView: ViewType;
+  onViewChange: (view: ViewType) => void;
+}
+
+export const Sidebar = ({ currentView, onViewChange }: SidebarProps) => {
   const { selectedOrganization } = useOrganization();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const navigate = useNavigate();
