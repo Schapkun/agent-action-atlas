@@ -16,6 +16,7 @@ export const getViewTitle = (view: ViewType): string => {
     emails: 'E-mails',
     contacts: 'Cliënten',
     settings: 'Instellingen',
+    support: 'Hulp & Support',
   };
 
   return titles[view] || 'Dashboard';
@@ -44,5 +45,6 @@ export const getViewTitleFromPath = (path: string): string => {
   if (path === '/e-mails') return 'E-mails';
   if (path === '/clienten' || path === '/contacten') return 'Cliënten';
   if (path === '/instellingen') return 'Instellingen';
+  if (path === '/support') return 'Hulp & Support';
   return 'Dashboard';
 };

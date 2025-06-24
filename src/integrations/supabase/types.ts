@@ -78,6 +78,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_settings: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          instruction_type: string
+          instructions: string
+          is_active: boolean
+          organization_id: string
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          instruction_type: string
+          instructions: string
+          is_active?: boolean
+          organization_id: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          instruction_type?: string
+          instructions?: string
+          is_active?: boolean
+          organization_id?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null
@@ -1412,6 +1448,54 @@ export type Database = {
           valid_until?: string
           vat_amount?: number
           vat_percentage?: number
+          workspace_id?: string | null
+        }
+        Relationships: []
+      }
+      support_requests: {
+        Row: {
+          contact_email: string
+          contact_name: string | null
+          created_at: string
+          description: string
+          id: string
+          organization_id: string
+          priority: string
+          request_type: string
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          contact_email: string
+          contact_name?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          organization_id: string
+          priority?: string
+          request_type: string
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          contact_email?: string
+          contact_name?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          organization_id?: string
+          priority?: string
+          request_type?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string | null
           workspace_id?: string | null
         }
         Relationships: []

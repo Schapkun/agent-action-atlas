@@ -106,7 +106,7 @@ const Register = () => {
           {/* Logo */}
           <div className="flex items-center space-x-2">
             <Scale className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold text-foreground">Meester.ai</span>
+            <span className="text-2xl font-bold text-foreground">Meester.app</span>
           </div>
 
           {/* Title */}

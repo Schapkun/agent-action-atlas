@@ -27,6 +27,7 @@ import PhoneCalls from "./pages/PhoneCalls";
 import Emails from "./pages/Emails";
 import Contacts from "./pages/Contacts";
 import Settings from "./pages/Settings";
+import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,7 @@ const App = () => (
               <Route path="/telefoongesprekken" element={<Index><PhoneCalls /></Index>} />
               <Route path="/e-mails" element={<Index><Emails /></Index>} />
               <Route path="/instellingen/*" element={<Index><Settings /></Index>} />
+              <Route path="/support" element={<Index><Support /></Index>} />
               
               {/* 404 route */}
               <Route path="*" element={<NotFound />} />

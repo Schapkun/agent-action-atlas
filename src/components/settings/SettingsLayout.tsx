@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,6 +8,7 @@ import { HistoryLogs } from './HistoryLogs';
 import { DocumentLayoutSettings } from './DocumentLayoutSettings';
 import { EmailTemplateSettings } from './EmailTemplateSettings';
 import { InvoiceSettings } from './InvoiceSettings';
+import { AIInstructionsSettings } from './AIInstructionsSettings';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -90,7 +90,7 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
 
   if (isRoleLoading) {
     return (
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
+      <div className="w-full px-4 py-6">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
           <p className="mt-2 text-muted-foreground">Gebruikersrol laden...</p>
@@ -100,12 +100,12 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
   }
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 max-w-6xl">
+    <div className="w-full px-2 sm:px-4">
       <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList className={`grid w-full gap-1 h-auto p-1 ${
           isMobile 
-            ? 'grid-cols-3 grid-rows-2' 
-            : 'grid-cols-6 grid-rows-1'
+            ? 'grid-cols-3 grid-rows-3' 
+            : 'grid-cols-7 grid-rows-1'
         }`}>
           <TabsTrigger 
             value="organizations" 
@@ -136,6 +136,12 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
             className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
           >
             Emails
+          </TabsTrigger>
+          <TabsTrigger 
+            value="ai-instructions" 
+            className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
+          >
+            AI Instructies
           </TabsTrigger>
           <TabsTrigger 
             value="history" 
@@ -190,6 +196,19 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
                 userRole={userRole}
               >
                 <EmailTemplateSettings />
+              </RoleGuard>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="ai-instructions">
+          <Card>
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
+              <RoleGuard 
+                requiredRoles={['admin', 'eigenaar']} 
+                userRole={userRole}
+              >
+                <AIInstructionsSettings />
               </RoleGuard>
             </CardContent>
           </Card>

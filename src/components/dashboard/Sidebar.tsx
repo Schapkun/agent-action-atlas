@@ -23,10 +23,11 @@ import {
   Send,
   FileCheck,
   FileSpreadsheet,
-  Folder
+  Folder,
+  HelpCircle
 } from 'lucide-react';
 
-export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'dossiers' | 'invoices' | 'quotes' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
+export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'dossiers' | 'invoices' | 'quotes' | 'phone-calls' | 'emails' | 'contacts' | 'settings' | 'support';
 
 interface SidebarProps {
   currentView: ViewType;
@@ -316,11 +317,27 @@ export const Sidebar = ({
         </ul>
       </nav>
 
+      {/* Support Link */}
+      <div className="p-4 border-t border-border">
+        <Button
+          variant={location.pathname === '/support' ? "secondary" : "ghost"}
+          className={cn(
+            "w-full justify-start",
+            collapsed && "px-3",
+            location.pathname === '/support' && "bg-primary/10 text-primary font-medium"
+          )}
+          onClick={() => navigate('/support')}
+        >
+          <HelpCircle className="h-4 w-4" />
+          {!collapsed && <span className="ml-3">Hulp & Support</span>}
+        </Button>
+      </div>
+
       {/* Footer */}
       {!collapsed && (
         <div className="p-4 border-t border-border">
           <div className="text-xs text-muted-foreground">
-            AI Agent Dashboard v1.0
+            Meester.app v1.0
           </div>
         </div>
       )}
