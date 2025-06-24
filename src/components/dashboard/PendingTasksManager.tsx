@@ -458,7 +458,7 @@ export const PendingTasksManager = () => {
             {isCompleted && (
               <div className="flex items-center gap-1 text-green-600">
                 <CheckCircle className="h-3 w-3" />
-                <span>Voltooid op: {new Date(task.updated_at).toLocaleDateString('nl-NL')}</span>
+                <span>Voltooid op: {new Date(task.updated_at || task.created_at).toLocaleDateString('nl-NL')}</span>
               </div>
             )}
           </div>
