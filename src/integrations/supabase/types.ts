@@ -78,6 +78,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_settings: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          instruction_type: string
+          instructions: string
+          is_active: boolean
+          organization_id: string
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          instruction_type: string
+          instructions: string
+          is_active?: boolean
+          organization_id: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          instruction_type?: string
+          instructions?: string
+          is_active?: boolean
+          organization_id?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null

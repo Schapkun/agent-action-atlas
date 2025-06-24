@@ -30,9 +30,7 @@ import {
   AlertTriangle,
   Calendar,
   Mail,
-  Sparkles,
   Send,
-  Settings,
   Eye,
   Trash2,
   FileText,
@@ -371,17 +369,33 @@ export const PendingTasksManager = () => {
     }
   };
 
-  const getTaskTypeBadge = (taskType: string, aiGenerated: boolean) => {
+  const getTaskTypeBadge = (taskType: string) => {
     if (taskType === 'email_reply') {
       return (
         <Badge variant="outline" className="text-blue-600 text-xs">
           <Mail className="h-3 w-3 mr-1" />
           E-mail
-          {aiGenerated && <Sparkles className="h-3 w-3 ml-1" />}
         </Badge>
       );
     }
-    return <Badge variant="outline" className="text-xs">{taskType}</Badge>;
+    return (
+      <Badge variant="outline" className="text-purple-600 text-xs">
+        <FileText className="h-3 w-3 mr-1" />
+        Algemeen
+      </Badge>
+    );
+  };
+
+  const formatEmailDisplay = (fromEmail: string) => {
+    // Extract name and email from "Name <email@domain.com>" format
+    const emailMatch = fromEmail.match(/^(.+?)\s*<(.+)>$/);
+    if (emailMatch) {
+      const name = emailMatch[1].trim();
+      const email = emailMatch[2].trim();
+      return `${name} "${email}"`;
+    }
+    // If no name found, just return the email with quotes
+    return `"${fromEmail}"`;
   };
 
   const isOverdue = (dueDate?: string) => {
@@ -400,8 +414,6 @@ export const PendingTasksManager = () => {
 
   const emailTasks = filteredTasks.filter(task => task.task_type === 'email_reply');
   const generalTasks = filteredTasks.filter(task => task.task_type !== 'email_reply');
-  const completedEmailTasks = filteredCompletedTasks.filter(task => task.task_type === 'email_reply');
-  const completedGeneralTasks = filteredCompletedTasks.filter(task => task.task_type !== 'email_reply');
 
   const renderTaskItem = (task: PendingTask, isCompleted = false) => (
     <div key={task.id} className={`border rounded-lg p-3 hover:shadow-sm transition-all relative ${
@@ -415,20 +427,17 @@ export const PendingTasksManager = () => {
             </h3>
             <div className="flex gap-1 flex-shrink-0">
               {isCompleted ? (
-                <Badge variant="outline" className="text-green-600 text-xs">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Voltooid
-                </Badge>
+                <>
+                  <Badge variant="outline" className="text-green-600 text-xs">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Voltooid
+                  </Badge>
+                  {getTaskTypeBadge(task.task_type)}
+                </>
               ) : (
                 getStatusBadge(task.status)
               )}
               {getPriorityBadge(task.priority)}
-              {task.ai_generated && (
-                <Badge variant="outline" className="text-blue-600 text-xs">
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  AI
-                </Badge>
-              )}
             </div>
           </div>
 
@@ -442,7 +451,7 @@ export const PendingTasksManager = () => {
             {task.emails?.from_email && (
               <div className="flex items-center gap-1">
                 <span className="font-medium">Van:</span>
-                <span className="truncate">{task.emails.from_email}</span>
+                <span className="truncate">{formatEmailDisplay(task.emails.from_email)}</span>
               </div>
             )}
             {task.due_date && (
@@ -468,8 +477,8 @@ export const PendingTasksManager = () => {
                 onClick={() => handleManageTask(task)}
                 className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 h-7"
               >
-                <Mail className="h-3 w-3 mr-1" />
-                Beantwoorden
+                <Eye className="h-3 w-3 mr-1" />
+                Bekijken
               </Button>
             )}
             
@@ -616,35 +625,18 @@ export const PendingTasksManager = () => {
           </CardContent>
         </Card>
 
-        {/* Completed Email Tasks - Always visible */}
-        {completedEmailTasks.length > 0 && (
+        {/* Consolidated Completed Tasks */}
+        {filteredCompletedTasks.length > 0 && (
           <Card className="border-green-200">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base text-green-700">
                 <CheckCircle className="h-4 w-4" />
-                Voltooide E-mail Antwoorden ({completedEmailTasks.length})
+                Voltooide Taken ({filteredCompletedTasks.length})
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="space-y-2">
-                {completedEmailTasks.map((task) => renderTaskItem(task, true))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Completed General Tasks - Always visible */}
-        {completedGeneralTasks.length > 0 && (
-          <Card className="border-green-200">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base text-green-700">
-                <CheckCircle className="h-4 w-4" />
-                Voltooide Algemene Taken ({completedGeneralTasks.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-2">
-                {completedGeneralTasks.map((task) => renderTaskItem(task, true))}
+                {filteredCompletedTasks.map((task) => renderTaskItem(task, true))}
               </div>
             </CardContent>
           </Card>
@@ -821,10 +813,9 @@ const EnhancedEmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
         <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
-            E-mail Beantwoorden: {task.title}
+            E-mail Bekijken: {task.title}
             {task.ai_generated && (
               <Badge variant="outline" className="text-blue-600">
-                <Sparkles className="h-4 w-4 mr-1" />
                 AI Gegenereerd
               </Badge>
             )}
@@ -877,8 +868,8 @@ const EnhancedEmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
           <div className="flex flex-col min-h-[600px]">
             <div className="px-4 py-3 bg-orange-600 text-white">
               <h3 className="font-semibold flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
-                AI CONCEPT ANTWOORD
+                <Send className="h-4 w-4" />
+                CONCEPT ANTWOORD
               </h3>
             </div>
             <div className="flex-1 p-4 min-h-0">
@@ -915,7 +906,7 @@ const EnhancedEmailManagementDialog = ({ task, isOpen, onClose, onEmailSent }: {
                 {task.ai_generated && (
                   <div className="bg-orange-50 border-2 border-dashed border-orange-200 p-3 rounded-lg">
                     <div className="flex items-center gap-2 text-orange-800 text-sm">
-                      <Sparkles className="h-4 w-4" />
+                      <AlertCircle className="h-4 w-4" />
                       <span className="font-medium">AI Gegenereerd Concept</span>
                     </div>
                     <p className="text-orange-700 text-sm mt-1">

@@ -9,6 +9,7 @@ import { HistoryLogs } from './HistoryLogs';
 import { DocumentLayoutSettings } from './DocumentLayoutSettings';
 import { EmailTemplateSettings } from './EmailTemplateSettings';
 import { InvoiceSettings } from './InvoiceSettings';
+import { AISettings } from './AISettings';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -104,8 +105,8 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
       <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList className={`grid w-full gap-1 h-auto p-1 ${
           isMobile 
-            ? 'grid-cols-3 grid-rows-2' 
-            : 'grid-cols-6 grid-rows-1'
+            ? 'grid-cols-3 grid-rows-3' 
+            : 'grid-cols-7 grid-rows-1'
         }`}>
           <TabsTrigger 
             value="organizations" 
@@ -136,6 +137,12 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
             className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
           >
             Emails
+          </TabsTrigger>
+          <TabsTrigger 
+            value="ai" 
+            className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
+          >
+            AI
           </TabsTrigger>
           <TabsTrigger 
             value="history" 
@@ -190,6 +197,19 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
                 userRole={userRole}
               >
                 <EmailTemplateSettings />
+              </RoleGuard>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="ai">
+          <Card>
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
+              <RoleGuard 
+                requiredRoles={['admin', 'eigenaar']} 
+                userRole={userRole}
+              >
+                <AISettings />
               </RoleGuard>
             </CardContent>
           </Card>
