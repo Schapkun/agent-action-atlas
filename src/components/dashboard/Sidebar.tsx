@@ -1,4 +1,3 @@
-
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +16,6 @@ import {
   Phone,
   Mail,
   Users,
-  Clock,
   ChevronDown,
   ChevronRight,
   Plus,
@@ -28,7 +26,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 
-export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'dossiers' | 'invoices' | 'quotes' | 'phone-calls' | 'emails' | 'contacts' | 'settings' | 'support';
+export type ViewType = 'overview' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'dossiers' | 'invoices' | 'quotes' | 'phone-calls' | 'emails' | 'contacts' | 'settings' | 'support';
 
 interface SidebarProps {
   currentView: ViewType;
@@ -140,7 +138,6 @@ export const Sidebar = ({
 
   const menuItems = [
     { id: 'overview' as ViewType, label: 'Dashboard', icon: LayoutDashboard, badge: pendingTasksCount, path: '/' },
-    { id: 'pending-tasks' as ViewType, label: 'Openstaande Taken', icon: Clock, path: '/openstaande-taken' },
     { id: 'contacts' as ViewType, label: 'Cliënten', icon: Users, path: '/clienten' },
     { 
       id: 'dossiers' as ViewType, 

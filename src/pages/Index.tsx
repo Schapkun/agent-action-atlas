@@ -18,7 +18,6 @@ const Index = ({ children }: IndexProps) => {
   const getCurrentView = () => {
     const path = location.pathname;
     if (path === '/') return 'overview';
-    if (path === '/openstaande-taken') return 'pending-tasks';
     if (path === '/ai-acties') return 'actions';
     if (path === '/documenten' || path.startsWith('/documenten/')) return 'documents';
     if (path === '/actieve-dossiers') return 'active-dossiers';
