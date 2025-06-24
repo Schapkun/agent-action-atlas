@@ -19,6 +19,7 @@ interface Workspace {
   name: string;
   slug: string;
   organization_id: string;
+  sender_email?: string;
 }
 
 interface ManageOrgWorkspaceDialogProps {
@@ -34,6 +35,7 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
   const {
     name,
     setName,
+    orgEmail,
     users,
     setUsers,
     workspaces,
@@ -42,6 +44,8 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
     setSaving,
     loading,
     fetchData,
+    handleOrgEmailChange,
+    handleWorkspaceEmailChange,
     handleOrgUserToggle,
     handleWorkspaceUserToggle,
     toast,
@@ -110,6 +114,8 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
           users={users}
           workspaces={workspaces}
           loading={loading}
+          orgEmail={orgEmail}
+          onOrgEmailChange={handleOrgEmailChange}
           onEditOrganization={(newName) => handleEditOrganization(item, newName, toast)}
           onDeleteOrganization={() => handleDeleteOrganization(item, toast, refreshData, setOpen, onSaved)}
           onOrgUserToggle={handleOrgUserToggle}
@@ -117,6 +123,7 @@ export const ManageOrgWorkspaceDialog = ({ type, item, trigger, onSaved }: Manag
           onEditWorkspace={(workspaceId, newName) => handleEditWorkspace(workspaceId, newName, setWorkspaces, toast)}
           onDeleteWorkspace={(workspaceId, workspaceName) => handleDeleteWorkspace(workspaceId, workspaceName, setWorkspaces, setUsers, toast)}
           onWorkspaceUserToggle={handleWorkspaceUserToggle}
+          onWorkspaceEmailChange={handleWorkspaceEmailChange}
         />
       </DialogContent>
     </Dialog>

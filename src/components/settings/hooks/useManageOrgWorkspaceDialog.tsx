@@ -16,6 +16,7 @@ interface Workspace {
   name: string;
   slug: string;
   organization_id: string;
+  sender_email?: string;
 }
 
 interface User {
@@ -28,6 +29,7 @@ interface User {
 
 export const useManageOrgWorkspaceDialog = (item: Organization | null) => {
   const [name, setName] = useState(item?.name || '');
+  const [orgEmail, setOrgEmail] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [saving, setSaving] = useState(false);
@@ -53,6 +55,19 @@ export const useManageOrgWorkspaceDialog = (item: Organization | null) => {
     try {
       setLoading(true);
       
+      // Get organization email from organization_settings
+      const { data: orgSettings, error: orgSettingsError } = await supabase
+        .from('organization_settings')
+        .select('company_email')
+        .eq('organization_id', item.id)
+        .maybeSingle();
+
+      if (orgSettingsError) {
+        console.error('Error fetching org settings:', orgSettingsError);
+      } else {
+        setOrgEmail(orgSettings?.company_email || '');
+      }
+      
       // Get all users from profiles
       const { data: allUsers, error: usersError } = await supabase
         .from('profiles')
@@ -73,7 +88,7 @@ export const useManageOrgWorkspaceDialog = (item: Organization | null) => {
       // Get workspaces for this organization
       const { data: workspacesData, error: workspacesError } = await supabase
         .from('workspaces')
-        .select('id, name, slug, organization_id')
+        .select('id, name, slug, organization_id, sender_email')
         .eq('organization_id', item.id)
         .order('name');
       
@@ -125,6 +140,63 @@ export const useManageOrgWorkspaceDialog = (item: Organization | null) => {
     }
   }, [item, dataFetched, loading, toast]);
 
+  const handleOrgEmailChange = async (email: string) => {
+    setOrgEmail(email);
+    
+    if (!item) return;
+    
+    try {
+      // Save organization email to organization_settings
+      const { error } = await supabase
+        .from('organization_settings')
+        .upsert({
+          organization_id: item.id,
+          company_email: email.trim() || null
+        }, {
+          onConflict: 'organization_id'
+        });
+
+      if (error) {
+        console.error('Error saving organization email:', error);
+        toast({
+          title: "Fout",
+          description: "Kon organisatie email niet opslaan",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error saving organization email:', error);
+    }
+  };
+
+  const handleWorkspaceEmailChange = async (workspaceId: string, email: string) => {
+    // Update local state
+    setWorkspaces(prev => prev.map(ws => 
+      ws.id === workspaceId ? { ...ws, sender_email: email } : ws
+    ));
+    
+    try {
+      // Save workspace email to workspaces table
+      const { error } = await supabase
+        .from('workspaces')
+        .update({
+          sender_email: email.trim() || null
+        })
+        .eq('id', workspaceId);
+
+      if (error) {
+        console.error('Error saving workspace email:', error);
+        toast({
+          title: "Fout",
+          description: "Kon werkruimte email niet opslaan",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error saving workspace email:', error);
+    }
+  };
+
   const handleOrgUserToggle = async (userId: string, hasAccess: boolean) => {
     setUsers(prev => prev.map(user => {
       if (user.id === userId) {
@@ -162,6 +234,7 @@ export const useManageOrgWorkspaceDialog = (item: Organization | null) => {
   return {
     name,
     setName,
+    orgEmail,
     users,
     setUsers,
     workspaces,
@@ -170,6 +243,8 @@ export const useManageOrgWorkspaceDialog = (item: Organization | null) => {
     setSaving,
     loading,
     fetchData,
+    handleOrgEmailChange,
+    handleWorkspaceEmailChange,
     handleOrgUserToggle,
     handleWorkspaceUserToggle,
     toast,

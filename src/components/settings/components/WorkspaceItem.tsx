@@ -4,12 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Edit, Trash2, Check, X } from 'lucide-react';
 import { UserCheckboxList } from './UserCheckboxList';
+import { SenderEmailField } from './SenderEmailField';
 
 interface Workspace {
   id: string;
   name: string;
   slug: string;
   organization_id: string;
+  sender_email?: string;
 }
 
 interface User {
@@ -26,6 +28,7 @@ interface WorkspaceItemProps {
   onEdit: (workspaceId: string, newName: string) => Promise<void>;
   onDelete: (workspaceId: string, workspaceName: string) => Promise<void>;
   onUserToggle: (workspaceId: string, userId: string, hasAccess: boolean) => void;
+  onEmailChange: (workspaceId: string, email: string) => void;
 }
 
 export const WorkspaceItem = ({ 
@@ -33,7 +36,8 @@ export const WorkspaceItem = ({
   users, 
   onEdit, 
   onDelete, 
-  onUserToggle 
+  onUserToggle,
+  onEmailChange
 }: WorkspaceItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
@@ -106,6 +110,16 @@ export const WorkspaceItem = ({
             </div>
           </>
         )}
+      </div>
+
+      <div className="mb-4">
+        <SenderEmailField
+          value={workspace.sender_email || ''}
+          onChange={(email) => onEmailChange(workspace.id, email)}
+          label="Werkruimte E-mailadres"
+          description="Dit emailadres wordt gebruikt voor e-mails vanuit deze werkruimte. Laat leeg om het organisatie emailadres te gebruiken."
+          placeholder="werkruimte@uwbedrijf.nl"
+        />
       </div>
       
       <UserCheckboxList

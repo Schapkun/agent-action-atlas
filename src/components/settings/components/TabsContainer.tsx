@@ -8,7 +8,6 @@ interface Organization {
   id: string;
   name: string;
   slug: string;
-  workspaces?: Workspace[];
 }
 
 interface Workspace {
@@ -16,6 +15,7 @@ interface Workspace {
   name: string;
   slug: string;
   organization_id: string;
+  sender_email?: string;
 }
 
 interface User {
@@ -31,6 +31,8 @@ interface TabsContainerProps {
   users: User[];
   workspaces: Workspace[];
   loading: boolean;
+  orgEmail: string;
+  onOrgEmailChange: (email: string) => void;
   onEditOrganization: (newName: string) => Promise<void>;
   onDeleteOrganization: () => Promise<void>;
   onOrgUserToggle: (userId: string, hasAccess: boolean) => void;
@@ -38,6 +40,7 @@ interface TabsContainerProps {
   onEditWorkspace: (workspaceId: string, newName: string) => Promise<void>;
   onDeleteWorkspace: (workspaceId: string, workspaceName: string) => Promise<void>;
   onWorkspaceUserToggle: (workspaceId: string, userId: string, hasAccess: boolean) => void;
+  onWorkspaceEmailChange: (workspaceId: string, email: string) => void;
 }
 
 export const TabsContainer = ({
@@ -45,45 +48,49 @@ export const TabsContainer = ({
   users,
   workspaces,
   loading,
+  orgEmail,
+  onOrgEmailChange,
   onEditOrganization,
   onDeleteOrganization,
   onOrgUserToggle,
   onAddWorkspace,
   onEditWorkspace,
   onDeleteWorkspace,
-  onWorkspaceUserToggle
+  onWorkspaceUserToggle,
+  onWorkspaceEmailChange
 }: TabsContainerProps) => {
   return (
-    <div className="flex-1 overflow-hidden">
-      <Tabs defaultValue="organisatie" className="w-full h-full flex flex-col">
-        <TabsList className="grid w-full grid-cols-2 flex-shrink-0">
-          <TabsTrigger value="organisatie">Organisatie</TabsTrigger>
-          <TabsTrigger value="werkruimtes">Werkruimtes</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="organisatie" className="flex-1 overflow-hidden">
-          <OrganizationTab
-            organization={organization}
-            users={users}
-            loading={loading}
-            onEditOrganization={onEditOrganization}
-            onDeleteOrganization={onDeleteOrganization}
-            onUserToggle={onOrgUserToggle}
-          />
-        </TabsContent>
-        
-        <TabsContent value="werkruimtes" className="flex-1 overflow-hidden">
-          <WorkspacesTab
-            workspaces={workspaces}
-            users={users}
-            loading={loading}
-            onAddWorkspace={onAddWorkspace}
-            onEditWorkspace={onEditWorkspace}
-            onDeleteWorkspace={onDeleteWorkspace}
-            onUserToggle={onWorkspaceUserToggle}
-          />
-        </TabsContent>
-      </Tabs>
-    </div>
+    <Tabs defaultValue="organization" className="flex-1 flex flex-col">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="organization">Organisatie</TabsTrigger>
+        <TabsTrigger value="workspaces">Werkruimtes</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="organization" className="flex-1">
+        <OrganizationTab
+          organization={organization}
+          users={users}
+          loading={loading}
+          orgEmail={orgEmail}
+          onOrgEmailChange={onOrgEmailChange}
+          onEditOrganization={onEditOrganization}
+          onDeleteOrganization={onDeleteOrganization}
+          onUserToggle={onOrgUserToggle}
+        />
+      </TabsContent>
+
+      <TabsContent value="workspaces" className="flex-1">
+        <WorkspacesTab
+          workspaces={workspaces}
+          users={users}
+          loading={loading}
+          onAddWorkspace={onAddWorkspace}
+          onEditWorkspace={onEditWorkspace}
+          onDeleteWorkspace={onDeleteWorkspace}
+          onUserToggle={onWorkspaceUserToggle}
+          onWorkspaceEmailChange={onWorkspaceEmailChange}
+        />
+      </TabsContent>
+    </Tabs>
   );
 };

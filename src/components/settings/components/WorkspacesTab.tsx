@@ -11,6 +11,7 @@ interface Workspace {
   name: string;
   slug: string;
   organization_id: string;
+  sender_email?: string;
 }
 
 interface User {
@@ -29,6 +30,7 @@ interface WorkspacesTabProps {
   onEditWorkspace: (workspaceId: string, newName: string) => Promise<void>;
   onDeleteWorkspace: (workspaceId: string, workspaceName: string) => Promise<void>;
   onUserToggle: (workspaceId: string, userId: string, hasAccess: boolean) => void;
+  onWorkspaceEmailChange: (workspaceId: string, email: string) => void;
 }
 
 export const WorkspacesTab = ({
@@ -38,7 +40,8 @@ export const WorkspacesTab = ({
   onAddWorkspace,
   onEditWorkspace,
   onDeleteWorkspace,
-  onUserToggle
+  onUserToggle,
+  onWorkspaceEmailChange
 }: WorkspacesTabProps) => {
   const [showAddWorkspace, setShowAddWorkspace] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
@@ -99,6 +102,7 @@ export const WorkspacesTab = ({
                     onEdit={onEditWorkspace}
                     onDelete={onDeleteWorkspace}
                     onUserToggle={onUserToggle}
+                    onEmailChange={onWorkspaceEmailChange}
                   />
                 ))}
               </div>

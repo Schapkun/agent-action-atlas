@@ -1,9 +1,11 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Edit, Trash2, Check, X } from 'lucide-react';
 import { UserCheckboxList } from './UserCheckboxList';
+import { SenderEmailField } from './SenderEmailField';
 
 interface Organization {
   id: string;
@@ -23,6 +25,8 @@ interface OrganizationTabProps {
   organization: Organization;
   users: User[];
   loading: boolean;
+  orgEmail: string;
+  onOrgEmailChange: (email: string) => void;
   onEditOrganization: (newName: string) => Promise<void>;
   onDeleteOrganization: () => Promise<void>;
   onUserToggle: (userId: string, hasAccess: boolean) => void;
@@ -32,6 +36,8 @@ export const OrganizationTab = ({
   organization,
   users,
   loading,
+  orgEmail,
+  onOrgEmailChange,
   onEditOrganization,
   onDeleteOrganization,
   onUserToggle
@@ -121,6 +127,16 @@ export const OrganizationTab = ({
                         </div>
                       </>
                     )}
+                  </div>
+
+                  <div className="mb-4">
+                    <SenderEmailField
+                      value={orgEmail}
+                      onChange={onOrgEmailChange}
+                      label="Organisatie E-mailadres"
+                      description="Dit emailadres wordt gebruikt als standaard voor alle e-mails vanuit deze organisatie"
+                      placeholder="info@uwbedrijf.nl"
+                    />
                   </div>
                   
                   <UserCheckboxList
