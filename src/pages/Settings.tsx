@@ -18,14 +18,14 @@ const Settings = () => {
       setSearchParams({ tab: 'organizations' });
     }
     
-    // Redirect old 'documents' tab to 'documenten'
+    // Redirect old 'documents' tab to 'templates-emails'
     if (searchParams.get('tab') === 'documents') {
-      setSearchParams({ tab: 'documenten' });
+      setSearchParams({ tab: 'templates-emails' });
     }
     
-    // Redirect old 'templates-emails' and 'templates' tabs to 'documenten'
-    if (searchParams.get('tab') === 'templates-emails' || searchParams.get('tab') === 'templates') {
-      setSearchParams({ tab: 'documenten' });
+    // Redirect old 'templates' and 'emails' tabs to 'templates-emails'
+    if (searchParams.get('tab') === 'templates' || searchParams.get('tab') === 'emails') {
+      setSearchParams({ tab: 'templates-emails' });
     }
   }, [searchParams, setSearchParams]);
 

@@ -6,8 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { OrganizationWorkspaceView } from './OrganizationWorkspaceView';
 import { UserProfileSettings } from './UserProfileSettings';
 import { HistoryLogs } from './HistoryLogs';
-import { DocumentSettings } from './DocumentSettings';
-import { EmailSettings } from './EmailSettings';
+import { DocumentLayoutSettings } from './DocumentLayoutSettings';
 import { InvoiceSettings } from './InvoiceSettings';
 import { AIInstructionsSettings } from './AIInstructionsSettings';
 import { RoleGuard } from '@/components/auth/RoleGuard';
@@ -28,9 +27,9 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
   const navigate = useNavigate();
 
   const handleTabChange = (value: string) => {
-    // Handle old "templates-emails" tab by redirecting to new "documenten" tab
-    if (value === 'templates-emails' || value === 'templates') {
-      value = 'documenten';
+    // Handle old "templates" and "emails" tabs by redirecting to new combined tab
+    if (value === 'templates' || value === 'emails') {
+      value = 'templates-emails';
     }
     onTabChange(value);
     navigate(`/instellingen?tab=${value}`);
@@ -105,18 +104,15 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
   }
 
   // Map old tab names to new ones
-  let mappedCurrentTab = currentTab;
-  if (currentTab === 'templates-emails' || currentTab === 'templates') {
-    mappedCurrentTab = 'documenten';
-  }
+  const mappedCurrentTab = currentTab === 'templates' || currentTab === 'emails' ? 'templates-emails' : currentTab;
 
   return (
     <div className="w-full px-2 sm:px-4">
       <Tabs value={mappedCurrentTab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList className={`grid w-full gap-1 h-auto p-1 ${
           isMobile 
-            ? 'grid-cols-3 grid-rows-3' 
-            : 'grid-cols-7 grid-rows-1'
+            ? 'grid-cols-3 grid-rows-2' 
+            : 'grid-cols-6 grid-rows-1'
         }`}>
           <TabsTrigger 
             value="organizations" 
@@ -137,16 +133,10 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
             Facturatie
           </TabsTrigger>
           <TabsTrigger 
-            value="documenten" 
+            value="templates-emails" 
             className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
           >
-            Documenten
-          </TabsTrigger>
-          <TabsTrigger 
-            value="emails" 
-            className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
-          >
-            Emails
+            Templates & Emails
           </TabsTrigger>
           <TabsTrigger 
             value="ai-instructions" 
@@ -186,27 +176,14 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
           </Card>
         </TabsContent>
 
-        <TabsContent value="documenten">
+        <TabsContent value="templates-emails">
           <Card>
             <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
               <RoleGuard 
                 requiredRoles={['admin', 'eigenaar']} 
                 userRole={userRole}
               >
-                <DocumentSettings />
-              </RoleGuard>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="emails">
-          <Card>
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
-              <RoleGuard 
-                requiredRoles={['admin', 'eigenaar']} 
-                userRole={userRole}
-              >
-                <EmailSettings />
+                <DocumentLayoutSettings />
               </RoleGuard>
             </CardContent>
           </Card>
