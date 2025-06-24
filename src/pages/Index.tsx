@@ -17,19 +17,15 @@ const Index = ({ children }: IndexProps) => {
   // Determine current view from URL
   const getCurrentView = () => {
     const path = location.pathname;
-    if (path === '/') return 'overview';
-    if (path === '/openstaande-taken') return 'pending-tasks';
-    if (path === '/ai-acties') return 'actions';
+    if (path === '/') return 'dashboard';
     if (path === '/documenten' || path.startsWith('/documenten/')) return 'documents';
-    if (path === '/actieve-dossiers') return 'active-dossiers';
-    if (path === '/gesloten-dossiers') return 'closed-dossiers';
     if (path === '/facturen' || path.startsWith('/facturen/')) return 'invoices';
     if (path === '/offertes' || path.startsWith('/offertes/')) return 'quotes';
     if (path === '/telefoongesprekken') return 'phone-calls';
     if (path === '/e-mails') return 'emails';
     if (path === '/contacten') return 'contacts';
     if (path === '/instellingen') return 'settings';
-    return 'overview';
+    return 'dashboard';
   };
 
   const currentView = getCurrentView();
@@ -43,8 +39,7 @@ const Index = ({ children }: IndexProps) => {
         )}>
           <Sidebar 
             currentView={currentView} 
-            collapsed={sidebarCollapsed}
-            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+            onViewChange={() => {}}
           />
         </div>
         

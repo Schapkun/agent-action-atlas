@@ -3,20 +3,14 @@ import type { ViewType } from '@/components/dashboard/Sidebar';
 
 export const getViewTitle = (view: ViewType): string => {
   const titles = {
-    overview: 'Dashboard',
-    'pending-tasks': 'Openstaande Taken',
-    actions: 'AI Acties',
+    dashboard: 'Dashboard',
     documents: 'Documenten',
-    'active-dossiers': 'Actieve Dossiers',
-    'closed-dossiers': 'Gesloten Dossiers',
     invoices: 'Facturen',
     quotes: 'Offertes',
-    factuursturen: 'factuursturen.nl',
     'phone-calls': 'Telefoongesprekken',
     emails: 'E-mails',
     contacts: 'Cliënten',
     settings: 'Instellingen',
-    support: 'Hulp & Support',
   };
 
   return titles[view] || 'Dashboard';
@@ -27,7 +21,6 @@ export const getViewTitleFromPath = (path: string): string => {
   if (path === '/facturen/opstellen' || path === '/facturen/nieuw') return 'Factuur Opstellen';
   if (path === '/offertes/opstellen' || path === '/offertes/nieuw') return 'Offerte Opstellen';
   if (path === '/documenten/opstellen' || path === '/documenten/nieuw') return 'Document Opstellen';
-  if (path === '/openstaande-taken') return 'Openstaande Taken';
   if (path === '/ai-acties') return 'AI Acties';
   if (path === '/documenten') return 'Documenten';
   if (path === '/documenten?status=draft') return 'Concept Documenten';
