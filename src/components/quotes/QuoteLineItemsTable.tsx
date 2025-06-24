@@ -3,21 +3,48 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Bold, Italic, Underline, List, Trash2, Plus } from 'lucide-react';
 import { VatSelector } from '@/components/ui/vat-selector';
-import { LineItem } from '@/types/invoiceTypes';
+import { QuoteLineItem } from '@/hooks/useQuoteLineItems';
 
 interface QuoteLineItemsTableProps {
-  lineItems: LineItem[];
-  onUpdateLineItem: (index: number, field: keyof LineItem, value: string | number) => void;
-  onRemoveLineItem: (index: number) => void;
-  onAddLineItem: () => void;
+  items: QuoteLineItem[];
+  onItemsChange: (newItems: QuoteLineItem[]) => void;
 }
 
 export const QuoteLineItemsTable = ({
-  lineItems,
-  onUpdateLineItem,
-  onRemoveLineItem,
-  onAddLineItem
+  items,
+  onItemsChange
 }: QuoteLineItemsTableProps) => {
+
+  const updateLineItem = (index: number, field: keyof QuoteLineItem, value: string | number) => {
+    const updatedItems = [...items];
+    updatedItems[index] = { ...updatedItems[index], [field]: value };
+    
+    // Recalculate line total when quantity or unit_price changes
+    if (field === 'quantity' || field === 'unit_price') {
+      updatedItems[index].line_total = updatedItems[index].quantity * updatedItems[index].unit_price;
+    }
+    
+    onItemsChange(updatedItems);
+  };
+
+  const removeLineItem = (index: number) => {
+    if (items.length > 1) {
+      const updatedItems = items.filter((_, i) => i !== index);
+      onItemsChange(updatedItems);
+    }
+  };
+
+  const addLineItem = () => {
+    const newItem: QuoteLineItem = {
+      id: Date.now().toString(),
+      description: '',
+      quantity: 1,
+      unit_price: 0,
+      vat_rate: 21,
+      line_total: 0
+    };
+    onItemsChange([...items, newItem]);
+  };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, index: number) => {
     if (event.key === 'Enter') {
@@ -58,7 +85,7 @@ export const QuoteLineItemsTable = ({
           lines[currentLineIndex] = '';
           const newText = lines.join('\n');
           element.textContent = newText;
-          onUpdateLineItem(index, 'description', newText);
+          updateLineItem(index, 'description', newText);
           
           // Let browser handle cursor positioning naturally
           setTimeout(() => {
@@ -77,7 +104,7 @@ export const QuoteLineItemsTable = ({
           lines.splice(currentLineIndex + 1, 0, '• ');
           const newText = lines.join('\n');
           element.textContent = newText;
-          onUpdateLineItem(index, 'description', newText);
+          updateLineItem(index, 'description', newText);
           
           // Position cursor after the new bullet
           setTimeout(() => {
@@ -129,7 +156,7 @@ export const QuoteLineItemsTable = ({
       
       const newText = beforeSelection + formattedSelection + afterSelection;
       element.textContent = newText;
-      onUpdateLineItem(index, 'description', newText);
+      updateLineItem(index, 'description', newText);
       
       // Keep cursor at the end of the formatted selection
       setTimeout(() => {
@@ -165,7 +192,7 @@ export const QuoteLineItemsTable = ({
         lines[currentLineIndex] = `• ${currentLine}`;
         const newText = lines.join('\n');
         element.textContent = newText;
-        onUpdateLineItem(index, 'description', newText);
+        updateLineItem(index, 'description', newText);
         
         // Keep cursor at its relative position in the current line
         setTimeout(() => {
@@ -209,14 +236,14 @@ export const QuoteLineItemsTable = ({
 
       <CardContent className="p-2">
         <div className="space-y-2">
-          {lineItems.map((item, index) => (
+          {items.map((item, index) => (
             <div key={index} className="grid grid-cols-12 gap-2 items-start">
               <div className="col-span-1">
                 <Input
                   type="number"
                   step="0.01"
                   value={item.quantity}
-                  onChange={(e) => onUpdateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                  onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
                   className="text-left text-xs h-8"
                 />
               </div>
@@ -227,7 +254,7 @@ export const QuoteLineItemsTable = ({
                     contentEditable
                     className="min-h-[32px] p-2 text-xs focus:outline-none border rounded whitespace-pre-wrap"
                     style={{ direction: 'ltr', textAlign: 'left' }}
-                    onBlur={(e) => onUpdateLineItem(index, 'description', e.currentTarget.textContent || '')}
+                    onBlur={(e) => updateLineItem(index, 'description', e.currentTarget.textContent || '')}
                     onKeyDown={(e) => handleKeyDown(e, index)}
                     suppressContentEditableWarning
                   >
@@ -280,7 +307,7 @@ export const QuoteLineItemsTable = ({
                     type="number"
                     step="0.01"
                     value={item.unit_price}
-                    onChange={(e) => onUpdateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                    onChange={(e) => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
                     className="text-left text-xs h-8 min-w-24"
                   />
                 </div>
@@ -288,7 +315,7 @@ export const QuoteLineItemsTable = ({
               <div className="col-span-1">
                 <VatSelector
                   value={item.vat_rate}
-                  onValueChange={(value) => onUpdateLineItem(index, 'vat_rate', value)}
+                  onValueChange={(value) => updateLineItem(index, 'vat_rate', value)}
                   className="text-xs h-8 w-full"
                 />
               </div>
@@ -301,8 +328,8 @@ export const QuoteLineItemsTable = ({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => onRemoveLineItem(index)}
-                  disabled={lineItems.length === 1}
+                  onClick={() => removeLineItem(index)}
+                  disabled={items.length === 1}
                   className="text-red-500 hover:text-red-700 h-6 w-6 p-0 ml-2"
                 >
                   <Trash2 className="h-3 w-3" />
@@ -316,7 +343,7 @@ export const QuoteLineItemsTable = ({
         <div className="flex justify-end mt-4">
           <Button 
             type="button" 
-            onClick={onAddLineItem}
+            onClick={addLineItem}
             size="sm"
             className="bg-blue-500 text-white hover:bg-blue-600 text-xs"
           >

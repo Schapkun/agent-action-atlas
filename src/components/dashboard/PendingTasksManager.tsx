@@ -12,6 +12,8 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { usePendingTasksRealtime } from '@/hooks/usePendingTasksRealtime';
+import { useRealtimeSubscriptionManager } from '@/hooks/useRealtimeSubscriptionManager';
+import { PendingTask, validatePendingTaskData } from '@/types/pendingTasks';
 import { 
   Search, 
   Clock, 
@@ -25,34 +27,6 @@ import {
   Filter,
   X
 } from 'lucide-react';
-
-interface PendingTask {
-  id: string;
-  title: string;
-  description?: string;
-  status: 'open' | 'completed' | 'cancelled';
-  priority: 'low' | 'medium' | 'high';
-  task_type: string;
-  due_date?: string;
-  assigned_to?: string;
-  assigned_to_name?: string;
-  created_by?: string;
-  created_by_name?: string;
-  client_id?: string;
-  client_name?: string;
-  dossier_id?: string;
-  dossier_name?: string;
-  email_id?: string;
-  email_thread_id?: string;
-  reply_to_email?: string;
-  ai_draft_subject?: string;
-  ai_draft_content?: string;
-  ai_generated?: boolean;
-  organization_id: string;
-  workspace_id?: string;
-  created_at: string;
-  updated_at: string;
-}
 
 export const PendingTasksManager = () => {
   const [tasks, setTasks] = useState<PendingTask[]>([]);
@@ -110,15 +84,15 @@ export const PendingTasksManager = () => {
 
       console.log('📋 Tasks fetched:', data?.length || 0);
       
-      const transformedTasks: PendingTask[] = (data || []).map(task => ({
-        ...task,
-        status: task.status as 'open' | 'completed' | 'cancelled',
-        priority: task.priority as 'low' | 'medium' | 'high',
-        assigned_to_name: task.assigned_to_profile?.full_name || null,
-        created_by_name: task.created_by_profile?.full_name || null,
-        client_name: task.client?.name || null,
-        dossier_name: task.dossier?.name || null
-      }));
+      const transformedTasks: PendingTask[] = (data || []).map(task => 
+        validatePendingTaskData({
+          ...task,
+          assigned_to_name: task.assigned_to_profile?.full_name || null,
+          created_by_name: task.created_by_profile?.full_name || null,
+          client_name: task.client?.name || null,
+          dossier_name: task.dossier?.name || null
+        })
+      );
 
       setTasks(transformedTasks);
     } catch (error: any) {
@@ -157,66 +131,42 @@ export const PendingTasksManager = () => {
     }
   }, [selectedOrganization, selectedWorkspace]);
 
-  // Real-time subscription voor taken updates - using unique channel name with organization ID
-  useEffect(() => {
-    if (!selectedOrganization) return;
-
-    const channelName = `pending-tasks-manager-${selectedOrganization.id}-v2`;
-    console.log('📡 Setting up real-time task manager subscription:', channelName);
-
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'pending_tasks',
-          filter: `organization_id=eq.${selectedOrganization.id}`
-        },
-        (payload) => {
-          console.log('📋 Task manager update via real-time:', payload);
+  // Use centralized subscription manager for real-time updates
+  useRealtimeSubscriptionManager(
+    selectedOrganization?.id,
+    [
+      {
+        channelName: 'pending-tasks-manager-v4',
+        table: 'pending_tasks',
+        filter: `organization_id=eq.${selectedOrganization?.id}`,
+        onInsert: (payload) => {
+          const newTask = validatePendingTaskData(payload.new);
+          setTasks(prevTasks => [newTask, ...prevTasks]);
           
-          if (payload.eventType === 'INSERT') {
-            const newTask: PendingTask = { 
-              ...payload.new,
-              status: payload.new.status as 'open' | 'completed' | 'cancelled',
-              priority: payload.new.priority as 'low' | 'medium' | 'high'
-            } as PendingTask;
-            setTasks(prevTasks => [newTask, ...prevTasks]);
-            
-            if (selectedWorkspace && newTask.workspace_id === selectedWorkspace.id) {
-              toast({
-                title: "Nieuwe taak",
-                description: `Taak "${newTask.title}" is toegevoegd`,
-              });
-            }
-          } else if (payload.eventType === 'UPDATE') {
-            const updatedTask: PendingTask = { 
-              ...payload.new,
-              status: payload.new.status as 'open' | 'completed' | 'cancelled',
-              priority: payload.new.priority as 'low' | 'medium' | 'high'
-            } as PendingTask;
-            setTasks(prevTasks => 
-              prevTasks.map(task => 
-                task.id === updatedTask.id ? updatedTask : task
-              )
-            );
-          } else if (payload.eventType === 'DELETE') {
-            const deletedTask = payload.old as PendingTask;
-            setTasks(prevTasks => 
-              prevTasks.filter(task => task.id !== deletedTask.id)
-            );
+          if (selectedWorkspace && newTask.workspace_id === selectedWorkspace.id) {
+            toast({
+              title: "Nieuwe taak",
+              description: `Taak "${newTask.title}" is toegevoegd`,
+            });
           }
+        },
+        onUpdate: (payload) => {
+          const updatedTask = validatePendingTaskData(payload.new);
+          setTasks(prevTasks => 
+            prevTasks.map(task => 
+              task.id === updatedTask.id ? updatedTask : task
+            )
+          );
+        },
+        onDelete: (payload) => {
+          const deletedTask = payload.old as PendingTask;
+          setTasks(prevTasks => 
+            prevTasks.filter(task => task.id !== deletedTask.id)
+          );
         }
-      )
-      .subscribe();
-
-    return () => {
-      console.log('📡 Cleaning up task manager real-time subscription:', channelName);
-      supabase.removeChannel(channel);
-    };
-  }, [selectedOrganization, selectedWorkspace, toast]);
+      }
+    ]
+  );
 
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -308,7 +258,8 @@ export const PendingTasksManager = () => {
 
       if (error) throw error;
 
-      setTasks(prev => [data, ...prev]);
+      const validatedTask = validatePendingTaskData(data);
+      setTasks(prev => [validatedTask, ...prev]);
       setNewTask({
         title: '',
         description: '',

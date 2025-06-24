@@ -56,7 +56,8 @@ export const CreateQuote = () => {
     calculateTotals,
     handleConvertToInvoice,
     handleSubmit,
-    handleSaveAndSend
+    handleSaveAndSend,
+    setLineItems
   } = useQuoteFormHandlers();
 
   const { subtotal, vatAmount, total } = calculateTotals();
@@ -137,7 +138,7 @@ export const CreateQuote = () => {
           }>
             <QuoteLineItemsTable
               items={lineItems}
-              onItemsChange={handleLineItemUpdate}
+              onItemsChange={setLineItems}
             />
           </div>
 

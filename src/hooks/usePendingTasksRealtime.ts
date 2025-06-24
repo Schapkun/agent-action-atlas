@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { useRealtimeSubscriptionManager } from './useRealtimeSubscriptionManager';
 
 export const usePendingTasksRealtime = () => {
   const [pendingTasksCount, setPendingTasksCount] = useState(0);
@@ -18,7 +19,7 @@ export const usePendingTasksRealtime = () => {
         .from('pending_tasks')
         .select('id', { count: 'exact' })
         .eq('organization_id', selectedOrganization.id)
-        .eq('status', 'open'); // Only count open tasks, not completed ones
+        .eq('status', 'open');
 
       if (selectedWorkspace) {
         query = query.eq('workspace_id', selectedWorkspace.id);
@@ -39,36 +40,20 @@ export const usePendingTasksRealtime = () => {
     fetchPendingTasksCount();
   }, [selectedOrganization, selectedWorkspace]);
 
-  // Real-time subscription voor pending tasks updates - using unique channel name with organization ID
-  useEffect(() => {
-    if (!selectedOrganization) return;
-
-    const channelName = `pending-tasks-count-${selectedOrganization.id}-v3`;
-    console.log('📡 Setting up real-time pending tasks count subscription:', channelName);
-
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'pending_tasks',
-          filter: `organization_id=eq.${selectedOrganization.id}`
-        },
-        (payload) => {
-          console.log('📋 Pending tasks count changed:', payload);
-          // Immediately refresh count when any task changes
-          fetchPendingTasksCount();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      console.log('📡 Cleaning up pending tasks count real-time subscription:', channelName);
-      supabase.removeChannel(channel);
-    };
-  }, [selectedOrganization]);
+  // Use centralized subscription manager
+  useRealtimeSubscriptionManager(
+    selectedOrganization?.id,
+    [
+      {
+        channelName: 'pending-tasks-count-v4',
+        table: 'pending_tasks',
+        filter: `organization_id=eq.${selectedOrganization?.id}`,
+        onInsert: () => fetchPendingTasksCount(),
+        onUpdate: () => fetchPendingTasksCount(),
+        onDelete: () => fetchPendingTasksCount(),
+      }
+    ]
+  );
 
   return { pendingTasksCount, refreshCount: fetchPendingTasksCount };
 };
