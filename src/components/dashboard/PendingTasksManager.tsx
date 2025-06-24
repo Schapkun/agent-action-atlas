@@ -81,11 +81,17 @@ export const PendingTasksManager = () => {
 
       // Fetch open tasks
       const { data: openData, error: openError } = await baseQuery.eq('status', 'open');
-      if (openError) throw openError;
+      if (openError) {
+        console.error('Error fetching open tasks:', openError);
+        throw openError;
+      }
 
       // Fetch completed tasks
       const { data: completedData, error: completedError } = await baseQuery.eq('status', 'completed');
-      if (completedError) throw completedError;
+      if (completedError) {
+        console.error('Error fetching completed tasks:', completedError);
+        throw completedError;
+      }
 
       console.log('📋 Open tasks fetched:', openData?.length || 0);
       console.log('📋 Completed tasks fetched:', completedData?.length || 0);
@@ -93,10 +99,10 @@ export const PendingTasksManager = () => {
       // Transform data to include client and user names
       const transformTask = (task: any): PendingTask => ({
         ...task,
-        client_name: task.clients?.name,
-        client_email: task.clients?.email,
-        assigned_user_name: task.assigned_user?.full_name,
-        created_by_name: task.created_user?.full_name
+        client_name: task.clients?.name || null,
+        client_email: task.clients?.email || null,
+        assigned_user_name: task.assigned_user?.full_name || null,
+        created_by_name: task.created_user?.full_name || null
       });
 
       setOpenTasks((openData || []).map(transformTask));
@@ -112,10 +118,6 @@ export const PendingTasksManager = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchTasks();
-  }, [selectedOrganization, selectedWorkspace]);
 
   const markTaskCompleted = async (taskId: string) => {
     try {
@@ -225,6 +227,10 @@ export const PendingTasksManager = () => {
         return <AlertCircle className="h-4 w-4" />;
     }
   };
+
+  useEffect(() => {
+    fetchTasks();
+  }, [selectedOrganization, selectedWorkspace]);
 
   const TaskCard = ({ task, isCompleted = false }: { task: PendingTask; isCompleted?: boolean }) => (
     <Card key={task.id} className="mb-4">

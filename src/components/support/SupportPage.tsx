@@ -115,7 +115,7 @@ export const SupportPage = () => {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-6 p-4">
+    <div className="w-full space-y-6 p-4">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-2">Hulp & Ondersteuning</h1>
         <p className="text-muted-foreground">
