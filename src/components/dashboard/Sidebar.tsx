@@ -306,7 +306,7 @@ export const Sidebar = ({
         <Button
           variant={location.pathname === '/support' ? "secondary" : "ghost"}
           className={cn(
-            "w-full justify-start text-sm",
+            "w-full justify-start text-xs",
             collapsed && "px-3",
             location.pathname === '/support' && "bg-primary/10 text-primary font-medium"
           )}

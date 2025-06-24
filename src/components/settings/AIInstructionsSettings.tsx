@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -28,6 +29,15 @@ interface AIInstruction {
   created_at: string;
   updated_at: string;
 }
+
+const INSTRUCTION_TYPES = [
+  { value: 'email_reply', label: 'E-mail Beantwoording' },
+  { value: 'document_generation', label: 'Document Generatie' },
+  { value: 'pending_tasks', label: 'Openstaande Taken' },
+  { value: 'client_communication', label: 'Klant Communicatie' },
+  { value: 'invoice_processing', label: 'Factuur Verwerking' },
+  { value: 'general', label: 'Algemeen' }
+];
 
 export const AIInstructionsSettings = () => {
   const [instructions, setInstructions] = useState<AIInstruction[]>([]);
@@ -197,6 +207,11 @@ export const AIInstructionsSettings = () => {
     }
   };
 
+  const getInstructionTypeLabel = (type: string) => {
+    const instructionType = INSTRUCTION_TYPES.find(t => t.value === type);
+    return instructionType ? instructionType.label : type;
+  };
+
   useEffect(() => {
     fetchInstructions();
   }, [selectedOrganization, selectedWorkspace]);
@@ -207,7 +222,7 @@ export const AIInstructionsSettings = () => {
         <div>
           <h2 className="text-2xl font-bold">AI Instructies</h2>
           <p className="text-muted-foreground">
-            Beheer instructies voor AI-gestuurde functies
+            Beheer instructies voor AI-gestuurde functies zoals openstaande taken, e-mail beantwoording en meer
           </p>
         </div>
         <Button onClick={() => setShowAddForm(true)} disabled={showAddForm}>
@@ -228,12 +243,21 @@ export const AIInstructionsSettings = () => {
           <CardContent className="space-y-4">
             <div>
               <Label htmlFor="instruction-type">Type Instructie</Label>
-              <Input
-                id="instruction-type"
+              <Select
                 value={newInstruction.instruction_type}
-                onChange={(e) => setNewInstruction(prev => ({ ...prev, instruction_type: e.target.value }))}
-                placeholder="Bijv. email_reply, document_generation, etc."
-              />
+                onValueChange={(value) => setNewInstruction(prev => ({ ...prev, instruction_type: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecteer een instructie type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {INSTRUCTION_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="instructions">Instructies</Label>
@@ -241,7 +265,7 @@ export const AIInstructionsSettings = () => {
                 id="instructions"
                 value={newInstruction.instructions}
                 onChange={(e) => setNewInstruction(prev => ({ ...prev, instructions: e.target.value }))}
-                placeholder="Beschrijf hier hoe de AI zich moet gedragen..."
+                placeholder="Beschrijf hier hoe de AI zich moet gedragen voor dit type taak..."
                 rows={6}
               />
             </div>
@@ -285,7 +309,7 @@ export const AIInstructionsSettings = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Brain className="h-5 w-5" />
-                    <CardTitle className="text-lg">{instruction.instruction_type}</CardTitle>
+                    <CardTitle className="text-lg">{getInstructionTypeLabel(instruction.instruction_type)}</CardTitle>
                     <Badge variant={instruction.is_active ? "default" : "secondary"}>
                       {instruction.is_active ? "Actief" : "Inactief"}
                     </Badge>

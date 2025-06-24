@@ -1,3 +1,4 @@
+
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -216,19 +217,20 @@ export const LineItemsTable = ({
   return (
     <Card>
       <CardHeader className="p-2">
-        <div className="grid grid-cols-8 gap-2 text-xs font-medium text-gray-700">
+        <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700">
           <div className="col-span-1 text-center">Aantal</div>
-          <div className="col-span-4 text-left">Omschrijving</div>
+          <div className="col-span-6 text-left">Omschrijving</div>
           <div className="col-span-2 text-right">Prijs</div>
-          <div className="col-span-1 text-right">Totaal</div>
+          <div className="col-span-1 text-center">BTW</div>
+          <div className="col-span-2 text-right">Totaal</div>
         </div>
       </CardHeader>
 
       <CardContent className="p-2">
         <div className="space-y-2">
           {lineItems.map((item, index) => (
-            <div key={index} className="grid grid-cols-8 gap-2 items-start">
-              {/* Quantity column - hidden for text-only items */}
+            <div key={index} className="grid grid-cols-12 gap-2 items-start">
+              {/* Quantity column */}
               <div className="col-span-1">
                 {!item.is_text_only ? (
                   <Input
@@ -244,7 +246,7 @@ export const LineItemsTable = ({
               </div>
               
               {/* Description column */}
-              <div className="col-span-4">
+              <div className="col-span-6">
                 <div className="space-y-1">
                   <div
                     data-description-index={index}
@@ -304,21 +306,11 @@ export const LineItemsTable = ({
                     >
                       <Type className="h-3 w-3" />
                     </Button>
-                    {/* Hidden VAT selector - still needed for calculations */}
-                    {!item.is_text_only && (
-                      <div className="hidden">
-                        <VatSelector
-                          value={item.vat_rate}
-                          onValueChange={(value) => onUpdateLineItem(index, 'vat_rate', value)}
-                          className="text-xs h-8 w-full"
-                        />
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
               
-              {/* Price column - hidden for text-only items */}
+              {/* Price column */}
               <div className="col-span-2">
                 {!item.is_text_only ? (
                   <div className="flex items-center gap-1">
@@ -329,7 +321,7 @@ export const LineItemsTable = ({
                       value={item.unit_price || ''}
                       placeholder=""
                       onChange={(e) => onUpdateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                      className="text-right text-xs h-8 min-w-24"
+                      className="text-right text-xs h-8"
                     />
                   </div>
                 ) : (
@@ -337,10 +329,23 @@ export const LineItemsTable = ({
                 )}
               </div>
               
-              {/* Total column with delete button - hidden for text-only items */}
-              <div className="col-span-1 flex items-center justify-between">
+              {/* VAT column - now visible */}
+              <div className="col-span-1">
                 {!item.is_text_only ? (
-                  <div className="flex items-center gap-1 min-w-20">
+                  <VatSelector
+                    value={item.vat_rate}
+                    onValueChange={(value) => onUpdateLineItem(index, 'vat_rate', value)}
+                    className="text-xs h-8 w-full"
+                  />
+                ) : (
+                  <div className="h-8" />
+                )}
+              </div>
+              
+              {/* Total column with delete button */}
+              <div className="col-span-2 flex items-center justify-between">
+                {!item.is_text_only ? (
+                  <div className="flex items-center gap-1">
                     <span className="text-xs">€</span>
                     <span className="font-medium text-xs">{item.line_total.toFixed(2)}</span>
                   </div>
