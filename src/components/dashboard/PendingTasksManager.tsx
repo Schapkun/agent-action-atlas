@@ -56,59 +56,67 @@ export const PendingTasksManager = () => {
     setLoading(true);
     try {
       console.log('📋 Fetching tasks for organization:', selectedOrganization.id);
+      console.log('📋 Selected workspace:', selectedWorkspace?.id);
 
-      let baseQuery = supabase
+      // Build base query with proper joins
+      let query = supabase
         .from('pending_tasks')
         .select(`
           *,
-          clients:client_id (
-            name,
-            email
-          ),
-          assigned_user:user_profiles!assigned_to (
-            full_name
-          ),
-          created_user:user_profiles!created_by (
-            full_name
-          )
+          clients!left(name, email),
+          assigned_user:user_profiles!pending_tasks_assigned_to_fkey(full_name),
+          created_user:user_profiles!pending_tasks_created_by_fkey(full_name)
         `)
         .eq('organization_id', selectedOrganization.id)
         .order('created_at', { ascending: false });
 
+      // Add workspace filter if selected
       if (selectedWorkspace) {
-        baseQuery = baseQuery.eq('workspace_id', selectedWorkspace.id);
+        query = query.eq('workspace_id', selectedWorkspace.id);
       }
 
-      // Fetch open tasks
-      const { data: openData, error: openError } = await baseQuery.eq('status', 'open');
-      if (openError) {
-        console.error('Error fetching open tasks:', openError);
-        throw openError;
+      console.log('📋 Executing query...');
+
+      // Fetch all tasks first
+      const { data: allTasks, error } = await query;
+      
+      if (error) {
+        console.error('❌ Error fetching tasks:', error);
+        throw error;
       }
 
-      // Fetch completed tasks
-      const { data: completedData, error: completedError } = await baseQuery.eq('status', 'completed');
-      if (completedError) {
-        console.error('Error fetching completed tasks:', completedError);
-        throw completedError;
+      console.log('📋 Raw tasks data:', allTasks);
+
+      if (!allTasks) {
+        console.log('📋 No tasks found');
+        setOpenTasks([]);
+        setCompletedTasks([]);
+        return;
       }
 
-      console.log('📋 Open tasks fetched:', openData?.length || 0);
-      console.log('📋 Completed tasks fetched:', completedData?.length || 0);
-
-      // Transform data to include client and user names
-      const transformTask = (task: any): PendingTask => ({
-        ...task,
-        client_name: task.clients?.name || null,
-        client_email: task.clients?.email || null,
-        assigned_user_name: task.assigned_user?.full_name || null,
-        created_by_name: task.created_user?.full_name || null
+      // Transform and separate tasks
+      const transformedTasks = allTasks.map((task: any) => {
+        console.log('📋 Transforming task:', task.id, 'Client data:', task.clients);
+        return {
+          ...task,
+          client_name: task.clients?.name || null,
+          client_email: task.clients?.email || null,
+          assigned_user_name: task.assigned_user?.full_name || null,
+          created_by_name: task.created_user?.full_name || null
+        };
       });
 
-      setOpenTasks((openData || []).map(transformTask));
-      setCompletedTasks((completedData || []).map(transformTask));
+      const openTasksFiltered = transformedTasks.filter((task: any) => task.status === 'open');
+      const completedTasksFiltered = transformedTasks.filter((task: any) => task.status === 'completed');
+
+      console.log('📋 Open tasks:', openTasksFiltered.length);
+      console.log('📋 Completed tasks:', completedTasksFiltered.length);
+
+      setOpenTasks(openTasksFiltered);
+      setCompletedTasks(completedTasksFiltered);
+
     } catch (error) {
-      console.error('Error fetching tasks:', error);
+      console.error('❌ Error fetching tasks:', error);
       toast({
         title: "Fout",
         description: "Kon taken niet ophalen",

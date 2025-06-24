@@ -17,9 +17,7 @@ import {
   Save,
   X,
   Brain,
-  FileText,
-  Mail,
-  Phone
+  AlertCircle
 } from 'lucide-react';
 
 interface AIInstruction {
@@ -39,24 +37,19 @@ export const AIInstructionsSettings = () => {
     instruction_type: '',
     instructions: ''
   });
-  const [isAdding, setIsAdding] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
   
   const { toast } = useToast();
   const { user } = useAuth();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
 
-  const instructionTypes = [
-    { value: 'email_processing', label: 'E-mail Verwerking', icon: Mail },
-    { value: 'document_generation', label: 'Document Generatie', icon: FileText },
-    { value: 'phone_call_processing', label: 'Telefoongesprek Verwerking', icon: Phone },
-    { value: 'general', label: 'Algemeen', icon: Brain }
-  ];
-
   const fetchInstructions = async () => {
-    if (!selectedOrganization) return;
+    if (!selectedOrganization || !user) return;
 
     setLoading(true);
     try {
+      console.log('🤖 Fetching AI instructions for org:', selectedOrganization.id);
+      
       let query = supabase
         .from('ai_settings')
         .select('*')
@@ -68,9 +61,13 @@ export const AIInstructionsSettings = () => {
       }
 
       const { data, error } = await query;
+      
+      if (error) {
+        console.error('❌ Error fetching AI instructions:', error);
+        throw error;
+      }
 
-      if (error) throw error;
-
+      console.log('🤖 AI instructions fetched:', data?.length || 0);
       setInstructions(data || []);
     } catch (error) {
       console.error('Error fetching AI instructions:', error);
@@ -84,21 +81,75 @@ export const AIInstructionsSettings = () => {
     }
   };
 
-  useEffect(() => {
-    fetchInstructions();
-  }, [selectedOrganization, selectedWorkspace]);
+  const saveInstruction = async () => {
+    if (!selectedOrganization || !user) {
+      toast({
+        title: "Fout",
+        description: "Je moet ingelogd zijn en een organisatie geselecteerd hebben",
+        variant: "destructive"
+      });
+      return;
+    }
 
-  const handleSaveInstruction = async (instruction: AIInstruction) => {
-    if (!selectedOrganization || !user) return;
+    if (!newInstruction.instruction_type.trim() || !newInstruction.instructions.trim()) {
+      toast({
+        title: "Fout",
+        description: "Vul alle velden in",
+        variant: "destructive"
+      });
+      return;
+    }
 
+    try {
+      console.log('🤖 Saving new AI instruction:', newInstruction);
+      
+      const instructionData = {
+        organization_id: selectedOrganization.id,
+        workspace_id: selectedWorkspace?.id || null,
+        instruction_type: newInstruction.instruction_type.trim(),
+        instructions: newInstruction.instructions.trim(),
+        created_by: user.id,
+        is_active: true
+      };
+
+      console.log('🤖 Instruction data to insert:', instructionData);
+
+      const { data, error } = await supabase
+        .from('ai_settings')
+        .insert([instructionData])
+        .select();
+
+      if (error) {
+        console.error('❌ Error inserting AI instruction:', error);
+        throw error;
+      }
+
+      console.log('✅ AI instruction saved:', data);
+
+      toast({
+        title: "Succes",
+        description: "AI instructie succesvol toegevoegd"
+      });
+
+      setNewInstruction({ instruction_type: '', instructions: '' });
+      setShowAddForm(false);
+      fetchInstructions();
+    } catch (error) {
+      console.error('Error saving AI instruction:', error);
+      toast({
+        title: "Fout",
+        description: "Kon AI instructie niet opslaan",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const updateInstruction = async (id: string, updates: Partial<AIInstruction>) => {
     try {
       const { error } = await supabase
         .from('ai_settings')
-        .update({
-          instructions: instruction.instructions,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', instruction.id);
+        .update(updates)
+        .eq('id', id);
 
       if (error) throw error;
 
@@ -119,49 +170,7 @@ export const AIInstructionsSettings = () => {
     }
   };
 
-  const handleAddInstruction = async () => {
-    if (!selectedOrganization || !user || !newInstruction.instruction_type || !newInstruction.instructions) {
-      toast({
-        title: "Fout",
-        description: "Vul alle velden in",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('ai_settings')
-        .insert({
-          organization_id: selectedOrganization.id,
-          workspace_id: selectedWorkspace?.id,
-          instruction_type: newInstruction.instruction_type,
-          instructions: newInstruction.instructions,
-          created_by: user.id,
-          is_active: true
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Succes",
-        description: "AI instructie toegevoegd"
-      });
-
-      setNewInstruction({ instruction_type: '', instructions: '' });
-      setIsAdding(false);
-      fetchInstructions();
-    } catch (error) {
-      console.error('Error adding AI instruction:', error);
-      toast({
-        title: "Fout",
-        description: "Kon AI instructie niet toevoegen",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleDeleteInstruction = async (id: string) => {
+  const deleteInstruction = async (id: string) => {
     if (!confirm('Weet je zeker dat je deze AI instructie wilt verwijderen?')) return;
 
     try {
@@ -188,35 +197,9 @@ export const AIInstructionsSettings = () => {
     }
   };
 
-  const toggleActive = async (instruction: AIInstruction) => {
-    try {
-      const { error } = await supabase
-        .from('ai_settings')
-        .update({ is_active: !instruction.is_active })
-        .eq('id', instruction.id);
-
-      if (error) throw error;
-
-      fetchInstructions();
-    } catch (error) {
-      console.error('Error toggling instruction status:', error);
-      toast({
-        title: "Fout",
-        description: "Kon status niet wijzigen",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const getTypeLabel = (type: string) => {
-    const found = instructionTypes.find(t => t.value === type);
-    return found ? found.label : type;
-  };
-
-  const getTypeIcon = (type: string) => {
-    const found = instructionTypes.find(t => t.value === type);
-    return found ? found.icon : Brain;
-  };
+  useEffect(() => {
+    fetchInstructions();
+  }, [selectedOrganization, selectedWorkspace]);
 
   return (
     <div className="space-y-6">
@@ -224,37 +207,33 @@ export const AIInstructionsSettings = () => {
         <div>
           <h2 className="text-2xl font-bold">AI Instructies</h2>
           <p className="text-muted-foreground">
-            Configureer hoe de AI moet reageren in verschillende situaties
+            Beheer instructies voor AI-gestuurde functies
           </p>
         </div>
-        <Button onClick={() => setIsAdding(true)} disabled={isAdding}>
+        <Button onClick={() => setShowAddForm(true)} disabled={showAddForm}>
           <Plus className="h-4 w-4 mr-2" />
           Nieuwe Instructie
         </Button>
       </div>
 
-      {/* Add New Instruction */}
-      {isAdding && (
+      {/* Add New Instruction Form */}
+      {showAddForm && (
         <Card>
           <CardHeader>
-            <CardTitle>Nieuwe AI Instructie Toevoegen</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5" />
+              Nieuwe AI Instructie
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="instruction-type">Type</Label>
-              <select
+              <Label htmlFor="instruction-type">Type Instructie</Label>
+              <Input
                 id="instruction-type"
                 value={newInstruction.instruction_type}
                 onChange={(e) => setNewInstruction(prev => ({ ...prev, instruction_type: e.target.value }))}
-                className="w-full p-2 border border-input rounded-md"
-              >
-                <option value="">Selecteer type...</option>
-                {instructionTypes.map(type => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
+                placeholder="Bijv. email_reply, document_generation, etc."
+              />
             </div>
             <div>
               <Label htmlFor="instructions">Instructies</Label>
@@ -262,16 +241,19 @@ export const AIInstructionsSettings = () => {
                 id="instructions"
                 value={newInstruction.instructions}
                 onChange={(e) => setNewInstruction(prev => ({ ...prev, instructions: e.target.value }))}
-                placeholder="Beschrijf hoe de AI moet handelen..."
-                rows={4}
+                placeholder="Beschrijf hier hoe de AI zich moet gedragen..."
+                rows={6}
               />
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleAddInstruction}>
+              <Button onClick={saveInstruction}>
                 <Save className="h-4 w-4 mr-2" />
                 Opslaan
               </Button>
-              <Button variant="outline" onClick={() => setIsAdding(false)}>
+              <Button variant="outline" onClick={() => {
+                setShowAddForm(false);
+                setNewInstruction({ instruction_type: '', instructions: '' });
+              }}>
                 <X className="h-4 w-4 mr-2" />
                 Annuleren
               </Button>
@@ -282,100 +264,99 @@ export const AIInstructionsSettings = () => {
 
       {/* Instructions List */}
       {loading ? (
-        <div className="text-center py-8">AI instructies laden...</div>
+        <div className="text-center py-8">
+          <p>AI instructies laden...</p>
+        </div>
       ) : instructions.length === 0 ? (
         <Card>
           <CardContent className="text-center py-8">
-            <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-muted-foreground">Nog geen AI instructies geconfigureerd</p>
+            <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-muted-foreground">Geen AI instructies gevonden</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Voeg je eerste AI instructie toe om te beginnen
+            </p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
-          {instructions.map((instruction) => {
-            const TypeIcon = getTypeIcon(instruction.instruction_type);
-            const isEditing = editingId === instruction.id;
-            
-            return (
-              <Card key={instruction.id}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <TypeIcon className="h-5 w-5 text-primary" />
-                      <div>
-                        <CardTitle className="text-lg">
-                          {getTypeLabel(instruction.instruction_type)}
-                        </CardTitle>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant={instruction.is_active ? "default" : "secondary"}>
-                            {instruction.is_active ? 'Actief' : 'Inactief'}
-                          </Badge>
-                          <span className="text-sm text-muted-foreground">
-                            Aangemaakt: {new Date(instruction.created_at).toLocaleDateString('nl-NL')}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
+          {instructions.map((instruction) => (
+            <Card key={instruction.id}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Brain className="h-5 w-5" />
+                    <CardTitle className="text-lg">{instruction.instruction_type}</CardTitle>
+                    <Badge variant={instruction.is_active ? "default" : "secondary"}>
+                      {instruction.is_active ? "Actief" : "Inactief"}
+                    </Badge>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => setEditingId(instruction.id)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => deleteInstruction(instruction.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {editingId === instruction.id ? (
+                  <div className="space-y-4">
+                    <Textarea
+                      value={instruction.instructions}
+                      onChange={(e) => {
+                        const updatedInstructions = instructions.map(inst => 
+                          inst.id === instruction.id 
+                            ? { ...inst, instructions: e.target.value }
+                            : inst
+                        );
+                        setInstructions(updatedInstructions);
+                      }}
+                      rows={6}
+                    />
+                    <div className="flex gap-2">
+                      <Button 
                         size="sm"
-                        variant="outline"
-                        onClick={() => toggleActive(instruction)}
+                        onClick={() => updateInstruction(instruction.id, { 
+                          instructions: instruction.instructions 
+                        })}
                       >
-                        {instruction.is_active ? 'Deactiveren' : 'Activeren'}
+                        <Save className="h-4 w-4 mr-2" />
+                        Opslaan
                       </Button>
-                      <Button
-                        size="sm"
+                      <Button 
+                        size="sm" 
                         variant="outline"
-                        onClick={() => setEditingId(isEditing ? null : instruction.id)}
+                        onClick={() => setEditingId(null)}
                       >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDeleteInstruction(instruction.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
+                        <X className="h-4 w-4 mr-2" />
+                        Annuleren
                       </Button>
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  {isEditing ? (
-                    <div className="space-y-4">
-                      <Textarea
-                        value={instruction.instructions}
-                        onChange={(e) => {
-                          const updated = instructions.map(inst => 
-                            inst.id === instruction.id 
-                              ? { ...inst, instructions: e.target.value }
-                              : inst
-                          );
-                          setInstructions(updated);
-                        }}
-                        rows={6}
-                      />
-                      <div className="flex gap-2">
-                        <Button onClick={() => handleSaveInstruction(instruction)}>
-                          <Save className="h-4 w-4 mr-2" />
-                          Opslaan
-                        </Button>
-                        <Button variant="outline" onClick={() => setEditingId(null)}>
-                          <X className="h-4 w-4 mr-2" />
-                          Annuleren
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="whitespace-pre-wrap text-sm">
-                      {instruction.instructions}
-                    </div>
+                ) : (
+                  <div className="whitespace-pre-wrap text-sm">
+                    {instruction.instructions}
+                  </div>
+                )}
+                <div className="text-xs text-muted-foreground mt-4">
+                  Aangemaakt: {new Date(instruction.created_at).toLocaleDateString('nl-NL')}
+                  {instruction.updated_at !== instruction.created_at && (
+                    <span> • Bijgewerkt: {new Date(instruction.updated_at).toLocaleDateString('nl-NL')}</span>
                   )}
-                </CardContent>
-              </Card>
-            );
-          })}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
     </div>

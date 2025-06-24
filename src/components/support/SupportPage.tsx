@@ -162,18 +162,18 @@ export const SupportPage = () => {
         </Card>
       </div>
 
-      {/* Contact Form and Bug/Feature Request */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Three Equal Forms Side by Side */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Contact Form */}
-        <Card>
+        <Card className="h-full flex flex-col">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               Contact Formulier
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className="flex-1 flex flex-col space-y-4">
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <Label htmlFor="name">Naam</Label>
                 <Input
@@ -206,7 +206,7 @@ export const SupportPage = () => {
               />
             </div>
             
-            <div>
+            <div className="flex-1 flex flex-col">
               <Label htmlFor="message">Bericht</Label>
               <Textarea
                 id="message"
@@ -215,13 +215,14 @@ export const SupportPage = () => {
                 placeholder="Beschrijf je vraag of probleem..."
                 rows={4}
                 required
+                className="flex-1"
               />
             </div>
             
             <Button 
               onClick={() => handleSubmitForm('general')} 
               disabled={loading}
-              className="w-full"
+              className="w-full mt-auto"
             >
               <Send className="h-4 w-4 mr-2" />
               {loading ? 'Versturen...' : 'Verstuur Bericht'}
@@ -229,91 +230,92 @@ export const SupportPage = () => {
           </CardContent>
         </Card>
 
-        {/* Bug Reports and Feature Requests */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bug className="h-5 w-5" />
-                Fout Melden
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                Heb je een fout gevonden? Help ons de app te verbeteren door deze te melden.
-              </p>
-              <div>
-                <Label htmlFor="bug-subject">Onderwerp</Label>
-                <Input
-                  id="bug-subject"
-                  value={contactForm.subject}
-                  onChange={(e) => handleInputChange('subject', e.target.value)}
-                  placeholder="Korte beschrijving van de fout"
-                />
-              </div>
-              <div>
-                <Label htmlFor="bug-message">Beschrijving</Label>
-                <Textarea
-                  id="bug-message"
-                  value={contactForm.message}
-                  onChange={(e) => handleInputChange('message', e.target.value)}
-                  placeholder="Beschrijf de fout zo gedetailleerd mogelijk..."
-                  rows={3}
-                />
-              </div>
-              <Button 
-                onClick={() => handleSubmitForm('bug_report')} 
-                disabled={loading}
-                variant="destructive"
-                className="w-full"
-              >
-                <Bug className="h-4 w-4 mr-2" />
-                Fout Melden
-              </Button>
-            </CardContent>
-          </Card>
+        {/* Bug Reports */}
+        <Card className="h-full flex flex-col">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bug className="h-5 w-5" />
+              Fout Melden
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col space-y-4">
+            <p className="text-muted-foreground">
+              Heb je een fout gevonden? Help ons de app te verbeteren door deze te melden.
+            </p>
+            <div>
+              <Label htmlFor="bug-subject">Onderwerp</Label>
+              <Input
+                id="bug-subject"
+                value={contactForm.subject}
+                onChange={(e) => handleInputChange('subject', e.target.value)}
+                placeholder="Korte beschrijving van de fout"
+              />
+            </div>
+            <div className="flex-1 flex flex-col">
+              <Label htmlFor="bug-message">Beschrijving</Label>
+              <Textarea
+                id="bug-message"
+                value={contactForm.message}
+                onChange={(e) => handleInputChange('message', e.target.value)}
+                placeholder="Beschrijf de fout zo gedetailleerd mogelijk..."
+                rows={4}
+                className="flex-1"
+              />
+            </div>
+            <Button 
+              onClick={() => handleSubmitForm('bug_report')} 
+              disabled={loading}
+              variant="destructive"
+              className="w-full mt-auto"
+            >
+              <Bug className="h-4 w-4 mr-2" />
+              Fout Melden
+            </Button>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lightbulb className="h-5 w-5" />
-                Feature Verzoek
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                Mis je een functie? Laat het ons weten en we kijken of we het kunnen toevoegen.
-              </p>
-              <div>
-                <Label htmlFor="feature-subject">Onderwerp</Label>
-                <Input
-                  id="feature-subject"
-                  value={contactForm.subject}
-                  onChange={(e) => handleInputChange('subject', e.target.value)}
-                  placeholder="Naam van de gewenste functie"
-                />
-              </div>
-              <div>
-                <Label htmlFor="feature-message">Beschrijving</Label>
-                <Textarea
-                  id="feature-message"
-                  value={contactForm.message}
-                  onChange={(e) => handleInputChange('message', e.target.value)}
-                  placeholder="Beschrijf de functie die je mist..."
-                  rows={3}
-                />
-              </div>
-              <Button 
-                onClick={() => handleSubmitForm('feature_request')} 
-                disabled={loading}
-                className="w-full"
-              >
-                <Lightbulb className="h-4 w-4 mr-2" />
-                Feature Voorstellen
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Feature Requests */}
+        <Card className="h-full flex flex-col">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5" />
+              Feature Verzoek
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col space-y-4">
+            <p className="text-muted-foreground">
+              Mis je een functie? Laat het ons weten en we kijken of we het kunnen toevoegen.
+            </p>
+            <div>
+              <Label htmlFor="feature-subject">Onderwerp</Label>
+              <Input
+                id="feature-subject"
+                value={contactForm.subject}
+                onChange={(e) => handleInputChange('subject', e.target.value)}
+                placeholder="Naam van de gewenste functie"
+              />
+            </div>
+            <div className="flex-1 flex flex-col">
+              <Label htmlFor="feature-message">Beschrijving</Label>
+              <Textarea
+                id="feature-message"
+                value={contactForm.message}
+                onChange={(e) => handleInputChange('message', e.target.value)}
+                placeholder="Beschrijf de functie die je mist..."
+                rows={4}
+                className="flex-1"
+              />
+            </div>
+            <Button 
+              onClick={() => handleSubmitForm('feature_request')} 
+              disabled={loading}
+              className="w-full mt-auto"
+            >
+              <Lightbulb className="h-4 w-4 mr-2" />
+              Feature Voorstellen
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
