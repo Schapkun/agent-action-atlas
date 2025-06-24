@@ -117,7 +117,10 @@ const Index = () => {
       />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
+        <Header 
+          currentView={currentView}
+          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
         
         <main className={`flex-1 overflow-auto ${
           currentView === 'documents' ? 'p-0' : 'p-6'

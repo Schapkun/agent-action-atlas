@@ -113,6 +113,7 @@ export const PendingTasksManager = () => {
       
       const transformedTasks: PendingTask[] = (data || []).map(task => ({
         ...task,
+        status: task.status as 'open' | 'completed' | 'cancelled', // Type assertion
         assigned_to_name: task.assigned_to_profile?.full_name || null,
         created_by_name: task.created_by_profile?.full_name || null,
         client_name: task.client?.name || null,
@@ -176,7 +177,10 @@ export const PendingTasksManager = () => {
           console.log('📋 Task update via real-time:', payload);
           
           if (payload.eventType === 'INSERT') {
-            const newTask = payload.new as PendingTask;
+            const newTask = { 
+              ...payload.new,
+              status: payload.new.status as 'open' | 'completed' | 'cancelled'
+            } as PendingTask;
             setTasks(prevTasks => [newTask, ...prevTasks]);
             
             if (selectedWorkspace && newTask.workspace_id === selectedWorkspace.id) {
@@ -186,7 +190,10 @@ export const PendingTasksManager = () => {
               });
             }
           } else if (payload.eventType === 'UPDATE') {
-            const updatedTask = payload.new as PendingTask;
+            const updatedTask = { 
+              ...payload.new,
+              status: payload.new.status as 'open' | 'completed' | 'cancelled'
+            } as PendingTask;
             setTasks(prevTasks => 
               prevTasks.map(task => 
                 task.id === updatedTask.id ? updatedTask : task

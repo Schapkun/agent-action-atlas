@@ -127,10 +127,9 @@ export const CreateInvoiceForm = () => {
               : ''
           }>
             <LineItemsTable
-              lineItems={lineItems}
-              onUpdateLineItem={handleLineItemUpdate}
-              onRemoveLineItem={handleLineItemRemove}
-              onAddLineItem={addLineItem}
+              items={lineItems}
+              onItemsChange={handleLineItemUpdate}
+              mode="invoice"
             />
           </div>
 
