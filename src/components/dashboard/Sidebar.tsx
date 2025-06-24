@@ -25,8 +25,10 @@ import {
   ChevronRight
 } from 'lucide-react';
 
+export type ViewType = 'overview' | 'pending-tasks' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'invoices' | 'quotes' | 'phone-calls' | 'emails' | 'contacts' | 'settings';
+
 interface SidebarProps {
-  currentView: string;
+  currentView: ViewType;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
 }
@@ -74,7 +76,11 @@ export const Sidebar = ({ currentView, collapsed = false, onToggleCollapse }: Si
       {/* Organization/Workspace Switcher */}
       {!collapsed && (
         <div className="p-4 pb-2">
-          <WorkspaceOrgSwitcher />
+          <WorkspaceOrgSwitcher 
+            hasUnsavedChanges={false}
+            onSaveChanges={() => {}}
+            onDiscardChanges={() => {}}
+          />
         </div>
       )}
 

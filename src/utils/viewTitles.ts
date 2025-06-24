@@ -1,48 +1,93 @@
 
 import type { ViewType } from '@/components/dashboard/Sidebar';
 
-export const getViewTitle = (view: ViewType): string => {
-  const titles = {
-    overview: 'Dashboard',
-    'pending-tasks': 'Openstaande Taken',
-    actions: 'AI Acties',
-    documents: 'Documenten',
-    'active-dossiers': 'Actieve Dossiers',
-    'closed-dossiers': 'Gesloten Dossiers',
-    invoices: 'Facturen',
-    quotes: 'Offertes',
-    factuursturen: 'factuursturen.nl',
-    'phone-calls': 'Telefoongesprekken',
-    emails: 'E-mails',
-    contacts: 'Cliënten',
-    settings: 'Instellingen',
-  };
+interface ViewTitle {
+  id: ViewType;
+  title: string;
+  paths: string[];
+}
 
-  return titles[view] || 'Dashboard';
-};
+const viewTitles: ViewTitle[] = [
+  {
+    id: 'overview',
+    title: 'Dashboard',
+    paths: ['/']
+  },
+  {
+    id: 'pending-tasks',
+    title: 'Openstaande Taken',
+    paths: ['/openstaande-taken']
+  },
+  {
+    id: 'actions',
+    title: 'AI Acties',
+    paths: ['/ai-acties']
+  },
+  {
+    id: 'documents',
+    title: 'Documenten',
+    paths: ['/documenten']
+  },
+  {
+    id: 'active-dossiers',
+    title: 'Actieve Dossiers',
+    paths: ['/actieve-dossiers']
+  },
+  {
+    id: 'closed-dossiers',
+    title: 'Gesloten Dossiers',
+    paths: ['/gesloten-dossiers']
+  },
+  {
+    id: 'invoices',
+    title: 'Facturen',
+    paths: ['/facturen', '/factuur-maken']
+  },
+  {
+    id: 'quotes',
+    title: 'Offertes',
+    paths: ['/offertes', '/offerte-maken']
+  },
+  {
+    id: 'phone-calls',
+    title: 'Telefoongesprekken',
+    paths: ['/telefoongesprekken']
+  },
+  {
+    id: 'emails',
+    title: 'E-mails',
+    paths: ['/e-mails']
+  },
+  {
+    id: 'contacts',
+    title: 'Contacten',
+    paths: ['/contacten']
+  },
+  {
+    id: 'settings',
+    title: 'Instellingen',
+    paths: ['/instellingen']
+  }
+];
 
 export const getViewTitleFromPath = (path: string): string => {
-  if (path === '/') return 'Dashboard';
-  if (path === '/facturen/opstellen' || path === '/facturen/nieuw') return 'Factuur Opstellen';
-  if (path === '/offertes/opstellen' || path === '/offertes/nieuw') return 'Offerte Opstellen';
-  if (path === '/documenten/opstellen' || path === '/documenten/nieuw') return 'Document Opstellen';
-  if (path === '/openstaande-taken') return 'Openstaande Taken';
-  if (path === '/ai-acties') return 'AI Acties';
-  if (path === '/documenten') return 'Documenten';
-  if (path === '/documenten?status=draft') return 'Concept Documenten';
-  if (path === '/documenten?status=sent') return 'Verzonden Documenten';
-  if (path === '/actieve-dossiers') return 'Actieve Dossiers';
-  if (path === '/gesloten-dossiers') return 'Gesloten Dossiers';
-  if (path === '/facturen') return 'Facturen';
-  if (path === '/facturen?status=draft') return 'Concept Facturen';
-  if (path === '/facturen?status=sent') return 'Verzonden Facturen';
-  if (path === '/offertes') return 'Offertes';
-  if (path === '/offertes?status=draft') return 'Concept Offertes';
-  if (path === '/offertes?status=sent') return 'Verzonden Offertes';
-  if (path === '/factuursturen') return 'factuursturen.nl';
-  if (path === '/telefoongesprekken') return 'Telefoongesprekken';
-  if (path === '/e-mails') return 'E-mails';
-  if (path === '/clienten' || path === '/contacten') return 'Cliënten';
-  if (path === '/instellingen') return 'Instellingen';
-  return 'Dashboard';
+  // Remove query parameters for matching
+  const cleanPath = path.split('?')[0];
+  
+  const viewTitle = viewTitles.find(view => 
+    view.paths.some(viewPath => cleanPath === viewPath || cleanPath.startsWith(viewPath + '/'))
+  );
+  
+  return viewTitle?.title || 'meester.app';
+};
+
+export const getViewIdFromPath = (path: string): ViewType => {
+  // Remove query parameters for matching
+  const cleanPath = path.split('?')[0];
+  
+  const viewTitle = viewTitles.find(view => 
+    view.paths.some(viewPath => cleanPath === viewPath || cleanPath.startsWith(viewPath + '/'))
+  );
+  
+  return viewTitle?.id || 'overview';
 };

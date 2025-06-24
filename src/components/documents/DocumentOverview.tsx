@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { DocumentPreview } from './DocumentPreviewPopup';
+import { DocumentPreviewPopup } from './DocumentPreviewPopup';
 import { generatePDF, downloadPDF } from '@/utils/pdfGenerator';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { WorkspaceSelector } from '@/components/dashboard/WorkspaceSelector';
@@ -267,7 +267,7 @@ export const DocumentOverview = () => {
         </CardContent>
       </Card>
 
-      <DocumentPreview
+      <DocumentPreviewPopup
         document={previewDocument}
         isOpen={isPreviewOpen}
         onClose={() => {
