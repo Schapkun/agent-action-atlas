@@ -1,11 +1,12 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 
 export const usePendingTasksRealtime = () => {
   const [pendingTasksCount, setPendingTasksCount] = useState(0);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
+  const channelRef = useRef<any>(null);
 
   const fetchPendingTasksCount = async () => {
     if (!selectedOrganization) {
@@ -39,14 +40,24 @@ export const usePendingTasksRealtime = () => {
     fetchPendingTasksCount();
   }, [selectedOrganization, selectedWorkspace]);
 
-  // Real-time subscription voor pending tasks updates
+  // Real-time subscription for pending tasks updates
   useEffect(() => {
     if (!selectedOrganization) return;
 
+    // Clean up existing channel if it exists
+    if (channelRef.current) {
+      console.log('📡 Cleaning up existing pending tasks channel');
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
     console.log('📡 Setting up real-time pending tasks subscription');
 
+    // Create unique channel name to avoid conflicts
+    const channelName = `pending-tasks-realtime-${selectedOrganization.id}-${Date.now()}`;
+    
     const channel = supabase
-      .channel('pending-tasks-realtime')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -63,9 +74,14 @@ export const usePendingTasksRealtime = () => {
       )
       .subscribe();
 
+    channelRef.current = channel;
+
     return () => {
       console.log('📡 Cleaning up pending tasks real-time subscription');
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
   }, [selectedOrganization]);
 

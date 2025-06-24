@@ -1215,6 +1215,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_pending_tasks_assigned_to"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_pending_tasks_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "pending_tasks_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
