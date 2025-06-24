@@ -67,9 +67,15 @@ export const CreateQuote = () => {
     updateVatSettings(settings);
   };
 
-  // Make getDisplayQuoteNumber synchronous by removing async
-  const getDisplayQuoteNumberSync = () => {
-    return getDisplayQuoteNumber();
+  // Make getDisplayQuoteNumber synchronous for ContactSelectionCard
+  const getDisplayQuoteNumberSync = (): string => {
+    // If getDisplayQuoteNumber returns a Promise, we need to handle it differently
+    const result = getDisplayQuoteNumber();
+    if (typeof result === 'string') {
+      return result;
+    }
+    // For now, return the quote number directly if async
+    return quoteNumber || '';
   };
 
   return (

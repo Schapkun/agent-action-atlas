@@ -39,14 +39,15 @@ export const usePendingTasksRealtime = () => {
     fetchPendingTasksCount();
   }, [selectedOrganization, selectedWorkspace]);
 
-  // Real-time subscription voor pending tasks updates - using unique channel name
+  // Real-time subscription voor pending tasks updates - using unique channel name with organization ID
   useEffect(() => {
     if (!selectedOrganization) return;
 
-    console.log('📡 Setting up real-time pending tasks count subscription');
+    const channelName = `pending-tasks-count-${selectedOrganization.id}-v3`;
+    console.log('📡 Setting up real-time pending tasks count subscription:', channelName);
 
     const channel = supabase
-      .channel('pending-tasks-count-realtime-v3') // Updated channel name to avoid conflicts
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -64,7 +65,7 @@ export const usePendingTasksRealtime = () => {
       .subscribe();
 
     return () => {
-      console.log('📡 Cleaning up pending tasks count real-time subscription');
+      console.log('📡 Cleaning up pending tasks count real-time subscription:', channelName);
       supabase.removeChannel(channel);
     };
   }, [selectedOrganization]);

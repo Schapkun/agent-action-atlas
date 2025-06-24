@@ -157,14 +157,15 @@ export const PendingTasksManager = () => {
     }
   }, [selectedOrganization, selectedWorkspace]);
 
-  // Real-time subscription voor taken updates - using unique channel name
+  // Real-time subscription voor taken updates - using unique channel name with organization ID
   useEffect(() => {
     if (!selectedOrganization) return;
 
-    console.log('📡 Setting up real-time task manager subscription for org:', selectedOrganization.id);
+    const channelName = `pending-tasks-manager-${selectedOrganization.id}-v2`;
+    console.log('📡 Setting up real-time task manager subscription:', channelName);
 
     const channel = supabase
-      .channel('pending-tasks-manager-realtime-v2') // Updated channel name to avoid conflicts
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -177,7 +178,7 @@ export const PendingTasksManager = () => {
           console.log('📋 Task manager update via real-time:', payload);
           
           if (payload.eventType === 'INSERT') {
-            const newTask = { 
+            const newTask: PendingTask = { 
               ...payload.new,
               status: payload.new.status as 'open' | 'completed' | 'cancelled',
               priority: payload.new.priority as 'low' | 'medium' | 'high'
@@ -191,7 +192,7 @@ export const PendingTasksManager = () => {
               });
             }
           } else if (payload.eventType === 'UPDATE') {
-            const updatedTask = { 
+            const updatedTask: PendingTask = { 
               ...payload.new,
               status: payload.new.status as 'open' | 'completed' | 'cancelled',
               priority: payload.new.priority as 'low' | 'medium' | 'high'
@@ -212,7 +213,7 @@ export const PendingTasksManager = () => {
       .subscribe();
 
     return () => {
-      console.log('📡 Cleaning up task manager real-time subscription');
+      console.log('📡 Cleaning up task manager real-time subscription:', channelName);
       supabase.removeChannel(channel);
     };
   }, [selectedOrganization, selectedWorkspace, toast]);
