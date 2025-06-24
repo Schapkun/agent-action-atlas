@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,12 +20,12 @@ interface AIInstruction {
 }
 
 const INSTRUCTION_TYPES = [
-  { value: 'email_response', label: 'E-mail Response', description: 'Instructies voor automatische e-mail antwoorden' },
-  { value: 'task_creation', label: 'Taak Aanmaak', description: 'Instructies voor automatische taak aanmaak' },
-  { value: 'document_generation', label: 'Document Generatie', description: 'Instructies voor automatische document aanmaak' },
-  { value: 'client_communication', label: 'Cliënt Communicatie', description: 'Instructies voor cliënt interacties' },
-  { value: 'case_analysis', label: 'Zaak Analyse', description: 'Instructies voor zaak analyse en advies' },
-  { value: 'general', label: 'Algemeen', description: 'Algemene AI instructies en gedrag' }
+  { value: 'openstaande_taken', label: 'Openstaande Taken', description: 'Instructies voor het beheren en prioriteren van openstaande taken' },
+  { value: 'dossiers', label: 'Dossiers', description: 'Instructies voor dossier management en zaak behandeling' },
+  { value: 'documenten', label: 'Documenten', description: 'Instructies voor document generatie en bewerking' },
+  { value: 'facturen_offertes', label: 'Facturen en Offertes', description: 'Instructies voor facturatie en offerte processen' },
+  { value: 'telefoongesprekken', label: 'Telefoongesprekken', description: 'Instructies voor telefonische communicatie en notities' },
+  { value: 'emails', label: 'E-mails', description: 'Instructies voor e-mail communicatie en automatische antwoorden' }
 ];
 
 export const AIInstructionsSettings = () => {
@@ -232,7 +231,7 @@ export const AIInstructionsSettings = () => {
                   <SelectValue placeholder="Selecteer een type..." />
                 </SelectTrigger>
                 <SelectContent 
-                  className="bg-white border shadow-lg z-[100] max-h-[300px] overflow-y-auto"
+                  className="bg-white border shadow-lg z-[200] max-h-[300px] overflow-y-auto"
                   position="popper"
                   sideOffset={5}
                 >
