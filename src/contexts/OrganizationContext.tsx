@@ -61,10 +61,20 @@ export const OrganizationProvider = ({ children }: OrganizationProviderProps) =>
 
     try {
       setIsLoadingOrganizations(true);
-      const isAccountOwner = user.email === 'info@schapkun.com';
       
-      if (isAccountOwner) {
-        // Fetch all organizations and workspaces for account owner
+      // Check user's role in organizations to determine access level
+      const userOrgMemberships = await supabase
+        .from('organization_members')
+        .select('organization_id, role')
+        .eq('user_id', user.id);
+
+      if (userOrgMemberships.error) throw userOrgMemberships.error;
+
+      // Check if user has owner role in any organization (for super admin access)
+      const hasOwnerRole = userOrgMemberships.data?.some(membership => membership.role === 'owner');
+      
+      if (hasOwnerRole) {
+        // If user is owner in any org, fetch all organizations and workspaces
         const [orgResponse, workspaceResponse] = await Promise.all([
           supabase.from('organizations').select('id, name, slug').order('created_at', { ascending: true }),
           supabase.from('workspaces').select('id, name, slug, organization_id').order('created_at', { ascending: true })
@@ -76,17 +86,9 @@ export const OrganizationProvider = ({ children }: OrganizationProviderProps) =>
         setOrganizations(orgResponse.data || []);
         setWorkspaces(workspaceResponse.data || []);
       } else {
-        // For regular users, first get organization memberships
-        const orgMembership = await supabase
-          .from('organization_members')
-          .select('organization_id')
-          .eq('user_id', user.id);
-
-        if (orgMembership.error) throw orgMembership.error;
-
-        if (orgMembership.data && orgMembership.data.length > 0) {
-          // Get organizations user is member of
-          const orgIds = orgMembership.data.map(m => m.organization_id);
+        // For regular users, get organizations they're member of
+        if (userOrgMemberships.data && userOrgMemberships.data.length > 0) {
+          const orgIds = userOrgMemberships.data.map(m => m.organization_id);
           const { data: orgData, error: orgError } = await supabase
             .from('organizations')
             .select('id, name, slug')

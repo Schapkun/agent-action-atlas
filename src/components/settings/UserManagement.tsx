@@ -44,32 +44,32 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
     }
 
     try {
-      console.log('Fetching users for user:', user.id);
-      console.log('User email:', user.email);
+      console.log('🔍 Fetching users for user:', user.id);
+      console.log('👤 User email:', user.email);
+      console.log('🏷️ User role:', userRole);
       
-      // Check if user is the account owner (Michael Schapkun)
-      const isAccountOwner = user.email === 'info@schapkun.com';
-      console.log('Is account owner:', isAccountOwner);
-      
-      if (isAccountOwner) {
-        // If account owner, show ALL users in the entire system
+      // Check based on actual role from database, not hardcoded email
+      if (userRole === 'owner') {
+        // If user has owner role, show ALL users in the entire system
+        console.log('🔓 Owner access: fetching all users and invitations');
         const usersWithOrgs = await fetchUsersForAccountOwner();
         const pendingUsers = await fetchPendingInvitations();
 
-        console.log('Pending invitations:', pendingUsers);
-        console.log('Users with organizations:', usersWithOrgs);
+        console.log('📨 Pending invitations:', pendingUsers);
+        console.log('👥 Users with organizations:', usersWithOrgs);
         
         // Combine existing users and pending invitations, then sort by creation date
         const allUsers = [...usersWithOrgs, ...pendingUsers]
           .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
         onUsersUpdate(allUsers);
       } else {
+        console.log('🔒 Regular user access: fetching limited users');
         // For regular users
         const allUsers = await fetchUsersForRegularUser(user.id, user.email);
         onUsersUpdate(allUsers);
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('❌ Error fetching users:', error);
       toast({
         title: "Error",
         description: "Kon gebruikers niet ophalen. Controleer je internetverbinding en probeer opnieuw.",
@@ -82,10 +82,10 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
   const userOperations = useUserOperations(user?.id, fetchUsers);
 
   useEffect(() => {
-    if (user) {
+    if (user && userRole !== null) {
       fetchUsers();
     }
-  }, [user]);
+  }, [user, userRole]); // Add userRole as dependency
 
   return {
     fetchUsers,

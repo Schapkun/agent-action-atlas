@@ -9,37 +9,41 @@ export const useUserRole = (userId: string | undefined, userEmail: string | unde
     if (!userId) return;
 
     try {
-      // Check if user is account owner first - they should have 'owner' role in database
-      if (userEmail === 'info@schapkun.com') {
-        // Get actual role from database for account owner
-        const { data: memberships } = await supabase
-          .from('organization_members')
-          .select('role')
-          .eq('user_id', userId)
-          .limit(1);
-
-        if (memberships && memberships.length > 0) {
-          setUserRole(memberships[0].role);
-        } else {
-          setUserRole('owner'); // Fallback if no membership found
-        }
-        return;
-      }
-
-      // Get user's role from their organization memberships
-      const { data: memberships } = await supabase
+      console.log('🔍 Fetching user role for:', userId, userEmail);
+      
+      // Get user's role from their organization memberships - prioritize owner role
+      const { data: memberships, error } = await supabase
         .from('organization_members')
         .select('role')
         .eq('user_id', userId)
-        .limit(1);
+        .order('role', { ascending: true }); // owner comes before admin/member alphabetically
+
+      if (error) {
+        console.error('❌ Error fetching user role:', error);
+        throw error;
+      }
+
+      console.log('📋 User memberships found:', memberships);
 
       if (memberships && memberships.length > 0) {
-        setUserRole(memberships[0].role);
+        // If user has multiple roles, prioritize owner > admin > member
+        const roles = memberships.map(m => m.role);
+        let highestRole = 'member';
+        
+        if (roles.includes('owner')) {
+          highestRole = 'owner';
+        } else if (roles.includes('admin')) {
+          highestRole = 'admin';
+        }
+        
+        console.log('🎯 Setting user role to:', highestRole);
+        setUserRole(highestRole);
       } else {
+        console.log('👤 No organization memberships found, setting role to member');
         setUserRole('member');
       }
     } catch (error) {
-      console.error('Error fetching user role:', error);
+      console.error('❌ Error fetching user role:', error);
       setUserRole('member');
     }
   };
