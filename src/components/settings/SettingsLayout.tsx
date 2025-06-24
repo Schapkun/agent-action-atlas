@@ -9,7 +9,6 @@ import { HistoryLogs } from './HistoryLogs';
 import { DocumentLayoutSettings } from './DocumentLayoutSettings';
 import { EmailTemplateSettings } from './EmailTemplateSettings';
 import { InvoiceSettings } from './InvoiceSettings';
-import { AISettings } from './AISettings';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -101,12 +100,12 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
   }
 
   return (
-    <div className="w-full px-2 sm:px-4">
-      <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-4 w-full">
+    <div className="container mx-auto px-2 sm:px-4 max-w-6xl">
+      <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList className={`grid w-full gap-1 h-auto p-1 ${
           isMobile 
-            ? 'grid-cols-3 grid-rows-3' 
-            : 'grid-cols-7 grid-rows-1'
+            ? 'grid-cols-3 grid-rows-2' 
+            : 'grid-cols-6 grid-rows-1'
         }`}>
           <TabsTrigger 
             value="organizations" 
@@ -139,12 +138,6 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
             Emails
           </TabsTrigger>
           <TabsTrigger 
-            value="ai" 
-            className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
-          >
-            AI
-          </TabsTrigger>
-          <TabsTrigger 
             value="history" 
             className={`${isMobile ? 'text-sm px-2 py-2' : 'px-3 py-1.5'} whitespace-nowrap`}
           >
@@ -152,33 +145,33 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="organizations" className="w-full">
-          <Card className="rounded-lg border bg-card text-card-foreground shadow-sm w-full">
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'} w-full`}>
+        <TabsContent value="organizations">
+          <Card className="rounded-lg border bg-card text-card-foreground shadow-sm">
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
               <OrganizationWorkspaceView userRole={userRole} />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="users" className="w-full">
-          <Card className="w-full">
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'} w-full`}>
+        <TabsContent value="users">
+          <Card>
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
               <UserProfileSettings />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="invoicing" className="w-full">
-          <Card className="w-full">
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'} w-full`}>
+        <TabsContent value="invoicing">
+          <Card>
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
               <InvoiceSettings />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="templates" className="w-full">
-          <Card className="w-full">
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'} w-full`}>
+        <TabsContent value="templates">
+          <Card>
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
               <RoleGuard 
                 requiredRoles={['admin', 'eigenaar']} 
                 userRole={userRole}
@@ -189,9 +182,9 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
           </Card>
         </TabsContent>
 
-        <TabsContent value="emails" className="w-full">
-          <Card className="w-full">
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'} w-full`}>
+        <TabsContent value="emails">
+          <Card>
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
               <RoleGuard 
                 requiredRoles={['admin', 'eigenaar']} 
                 userRole={userRole}
@@ -202,22 +195,9 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
           </Card>
         </TabsContent>
 
-        <TabsContent value="ai" className="w-full">
-          <Card className="w-full">
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'} w-full`}>
-              <RoleGuard 
-                requiredRoles={['admin', 'eigenaar']} 
-                userRole={userRole}
-              >
-                <AISettings />
-              </RoleGuard>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="history" className="w-full">
-          <Card className="w-full">
-            <CardContent className={`${isMobile ? 'p-3' : 'p-6'} w-full`}>
+        <TabsContent value="history">
+          <Card>
+            <CardContent className={`${isMobile ? 'p-3' : 'p-6'}`}>
               <RoleGuard 
                 requiredRoles={['admin', 'eigenaar']} 
                 userRole={userRole}

@@ -5,7 +5,7 @@ import { FilterSelector } from './FilterSelector';
 import { HeaderActions } from './HeaderActions';
 import { getViewTitleFromPath } from '@/utils/viewTitles';
 import { useLocation } from 'react-router-dom';
-import type { ViewType } from './Sidebar';
+import type { ViewType } from '@/components/dashboard/Sidebar';
 
 interface HeaderProps {
   currentView: ViewType;
