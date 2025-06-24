@@ -12,7 +12,6 @@ import { OrganizationProvider } from "./contexts/OrganizationContext";
 // Import all pages
 import Auth from "./pages/Auth";
 import Register from "./pages/Register";
-import PendingTasks from "./pages/PendingTasks";
 import Actions from "./pages/Actions";
 import Documents from "./pages/Documents";
 import CreateDocument from "./pages/CreateDocument";
@@ -47,7 +46,6 @@ const App = () => (
               
               {/* Main app routes - all wrapped in Index for layout */}
               <Route path="/" element={<Index><Dashboard /></Index>} />
-              <Route path="/openstaande-taken" element={<Index><PendingTasks /></Index>} />
               <Route path="/ai-acties" element={<Index><Actions /></Index>} />
               
               {/* Client routes - new primary route + redirect from old */}
