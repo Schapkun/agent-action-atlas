@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -274,23 +273,23 @@ export const TaskDetailDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl w-full h-[90vh] p-0 overflow-hidden">
+      <DialogContent className="!max-w-none !w-screen !h-screen !p-0 !m-0 fixed inset-0 z-50 bg-white overflow-hidden border-0 rounded-none">
         {/* Header */}
         <div className={`${isCompleted 
           ? 'bg-gradient-to-r from-green-600 to-emerald-600' 
           : 'bg-gradient-to-r from-blue-600 to-purple-600'
-        } text-white px-4 py-3 flex-shrink-0`}>
+        } text-white px-4 py-2 flex-shrink-0`}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-white/20 rounded-lg p-2">
+            <div className="flex items-center gap-2">
+              <div className="bg-white/20 rounded-lg p-1.5">
                 {isCompleted ? (
-                  <CheckCircle className="w-4 h-4" />
+                  <CheckCircle className="w-3 h-3" />
                 ) : (
-                  <Mail className="w-4 h-4" />
+                  <Mail className="w-3 h-3" />
                 )}
               </div>
               <div>
-                <h1 className="text-sm font-semibold">
+                <h1 className="text-xs font-semibold">
                   {isCompleted ? '✓ E-mail Verzonden' : getActionType(task)}
                 </h1>
                 <p className="text-white/80 text-xs">
@@ -310,16 +309,24 @@ export const TaskDetailDialog = ({
               <Badge className={`${getStatusColor(task.status)} px-2 py-1 text-xs font-semibold`}>
                 {task.status === 'completed' ? 'Voltooid' : 'Open'}
               </Badge>
+              <Button 
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="text-white hover:bg-white/20 h-6 w-6 p-0"
+              >
+                <X className="w-3 h-3" />
+              </Button>
             </div>
           </div>
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex min-h-0 h-[600px]">
+        <div className="flex-1 flex min-h-0" style={{ height: 'calc(100vh - 120px)' }}>
           {/* Left Panel - Originele E-mail */}
           <div className="w-1/2 border-r flex flex-col">
-            <div className="bg-amber-50 border-b px-4 py-2 flex items-center gap-2 flex-shrink-0">
-              <div className="bg-amber-100 p-1.5 rounded-lg">
+            <div className="bg-amber-50 border-b px-3 py-2 flex items-center gap-2 flex-shrink-0">
+              <div className="bg-amber-100 p-1 rounded-lg">
                 <Mail className="w-3 h-3 text-amber-600" />
               </div>
               <div>
@@ -328,7 +335,7 @@ export const TaskDetailDialog = ({
                   Ontvangen: {originalEmail ? new Date(originalEmail.received_at).toLocaleString('nl-NL') : 'Onbekend'}
                 </p>
               </div>
-              <div className="ml-auto bg-gray-500 text-white px-2 py-1 rounded text-xs font-medium">
+              <div className="ml-auto bg-gray-500 text-white px-2 py-0.5 rounded text-xs font-medium">
                 READ-ONLY
               </div>
             </div>
@@ -336,7 +343,7 @@ export const TaskDetailDialog = ({
             <div className="p-3 flex-1 flex flex-col min-h-0">
               {loading ? (
                 <div className="flex items-center justify-center flex-1">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-600"></div>
                 </div>
               ) : originalEmail ? (
                 <>
@@ -344,13 +351,13 @@ export const TaskDetailDialog = ({
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">VAN</label>
-                        <div className="bg-gray-50 border border-gray-200 rounded-md px-2 py-1.5 text-xs text-gray-600">
+                        <div className="bg-gray-50 border border-gray-200 rounded-md px-2 py-1 text-xs text-gray-600">
                           {originalEmail.from_email}
                         </div>
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">AAN</label>
-                        <div className="bg-gray-50 border border-gray-200 rounded-md px-2 py-1.5 text-xs text-gray-600">
+                        <div className="bg-gray-50 border border-gray-200 rounded-md px-2 py-1 text-xs text-gray-600">
                           {originalEmail.to_email}
                         </div>
                       </div>
@@ -358,7 +365,7 @@ export const TaskDetailDialog = ({
                     
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">ONDERWERP</label>
-                      <div className="bg-gray-50 border border-gray-200 rounded-md px-2 py-1.5 text-xs text-gray-600">
+                      <div className="bg-gray-50 border border-gray-200 rounded-md px-2 py-1 text-xs text-gray-600">
                         {originalEmail.subject}
                       </div>
                     </div>
@@ -385,7 +392,7 @@ export const TaskDetailDialog = ({
               ) : (
                 <div className="flex-1 flex items-center justify-center text-gray-500">
                   <div className="text-center">
-                    <Mail className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p className="text-xs">Geen origineel bericht beschikbaar</p>
                   </div>
                 </div>
@@ -398,11 +405,11 @@ export const TaskDetailDialog = ({
             <div className={`${isCompleted 
               ? 'bg-green-50' 
               : 'bg-blue-50'
-            } border-b px-4 py-2 flex items-center gap-2 flex-shrink-0`}>
+            } border-b px-3 py-2 flex items-center gap-2 flex-shrink-0`}>
               <div className={`${isCompleted 
                 ? 'bg-green-100' 
                 : 'bg-blue-100'
-              } p-1.5 rounded-lg`}>
+              } p-1 rounded-lg`}>
                 {isCompleted ? (
                   <CheckCircle className={`w-3 h-3 ${isCompleted ? 'text-green-600' : 'text-blue-600'}`} />
                 ) : (
@@ -413,8 +420,8 @@ export const TaskDetailDialog = ({
                 <h3 className={`font-semibold text-xs ${isCompleted ? 'text-green-800' : 'text-blue-800'}`}>
                   {isCompleted ? 'Verzonden Antwoord' : 'Concept Antwoord'}
                 </h3>
-                <p className={`text-xs ${isCompleted ? 'text-green-600' : 'text-blue-600'} flex items-center gap-2`}>
-                  <span className={`w-2 h-2 ${isCompleted ? 'bg-green-400' : 'bg-green-400'} rounded-full`}></span>
+                <p className={`text-xs ${isCompleted ? 'text-green-600' : 'text-blue-600'} flex items-center gap-1`}>
+                  <span className={`w-1.5 h-1.5 ${isCompleted ? 'bg-green-400' : 'bg-green-400'} rounded-full`}></span>
                   {isCompleted ? 'Succesvol verzonden' : 'Klaar om te versturen'}
                 </p>
               </div>
@@ -427,21 +434,21 @@ export const TaskDetailDialog = ({
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">VAN</label>
-                        <div className={`bg-gray-50 border ${isCompleted ? 'border-green-200' : 'border-blue-200'} rounded-md px-2 py-1.5 text-xs text-gray-600`}>
+                        <div className={`bg-gray-50 border ${isCompleted ? 'border-green-200' : 'border-blue-200'} rounded-md px-2 py-1 text-xs text-gray-600`}>
                           {selectedOrganization?.name || 'info@bedrijf.nl'}
                         </div>
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">AAN</label>
                         {isCompleted ? (
-                          <div className={`bg-gray-50 border ${isCompleted ? 'border-green-200' : 'border-blue-200'} rounded-md px-2 py-1.5 text-xs text-gray-600`}>
+                          <div className={`bg-gray-50 border ${isCompleted ? 'border-green-200' : 'border-blue-200'} rounded-md px-2 py-1 text-xs text-gray-600`}>
                             {task.reply_to_email || ''}
                           </div>
                         ) : (
                           <input 
                             type="text" 
                             value={task.reply_to_email || ''}
-                            className="w-full border border-blue-200 rounded-md px-2 py-1.5 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full border border-blue-200 rounded-md px-2 py-1 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             readOnly
                           />
                         )}
@@ -451,14 +458,14 @@ export const TaskDetailDialog = ({
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">ONDERWERP</label>
                       {isCompleted ? (
-                        <div className="bg-gray-50 border border-green-200 rounded-md px-2 py-1.5 text-xs text-gray-600">
+                        <div className="bg-gray-50 border border-green-200 rounded-md px-2 py-1 text-xs text-gray-600">
                           {editedSubject || task.ai_draft_subject || ''}
                         </div>
                       ) : (
                         <Input
                           value={editedSubject}
                           onChange={(e) => setEditedSubject(e.target.value)}
-                          className="border-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-7"
+                          className="border-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-6"
                           placeholder="Voer onderwerp in..."
                         />
                       )}
@@ -488,7 +495,7 @@ export const TaskDetailDialog = ({
               ) : (
                 <div className="flex-1 flex items-center justify-center text-gray-500">
                   <div className="text-center">
-                    <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p className="text-xs">Geen AI gegenereerde actie beschikbaar</p>
                   </div>
                 </div>
@@ -504,7 +511,7 @@ export const TaskDetailDialog = ({
               variant="outline"
               size="sm"
               onClick={handleClientDossier}
-              className="text-xs h-8 px-3"
+              className="text-xs h-7 px-3"
             >
               <User className="w-3 h-3 mr-1" />
               Klant Dossier
@@ -513,7 +520,7 @@ export const TaskDetailDialog = ({
               variant="outline"
               size="sm"
               onClick={handleCommunicationHistory}
-              className="text-xs h-8 px-3"
+              className="text-xs h-7 px-3"
             >
               <FolderOpen className="w-3 h-3 mr-1" />
               Communicatie Historie
@@ -525,7 +532,7 @@ export const TaskDetailDialog = ({
               variant="outline"
               size="sm"
               onClick={onClose}
-              className="text-xs h-8 px-4"
+              className="text-xs h-7 px-4"
             >
               Sluiten
             </Button>
@@ -534,7 +541,7 @@ export const TaskDetailDialog = ({
               <Button 
                 size="sm"
                 onClick={handleSendReply}
-                className="bg-blue-600 hover:bg-blue-700 text-xs h-8 px-4"
+                className="bg-blue-600 hover:bg-blue-700 text-xs h-7 px-4"
               >
                 <Send className="w-3 h-3 mr-1" />
                 Taak uitvoeren
