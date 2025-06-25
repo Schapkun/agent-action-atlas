@@ -33,7 +33,7 @@ export const useDossierForm = (onSuccess?: () => void) => {
     priority: 'medium',
     start_date: '',
     end_date: '',
-    responsible_user_id: '',
+    responsible_user_id: 'unassigned',
     budget: '',
     is_billable: true,
     tags: ''
@@ -53,7 +53,7 @@ export const useDossierForm = (onSuccess?: () => void) => {
       priority: 'medium',
       start_date: '',
       end_date: '',
-      responsible_user_id: '',
+      responsible_user_id: 'unassigned',
       budget: '',
       is_billable: true,
       tags: ''
@@ -90,7 +90,7 @@ export const useDossierForm = (onSuccess?: () => void) => {
         priority: formData.priority,
         start_date: formData.start_date || null,
         end_date: formData.end_date || null,
-        responsible_user_id: formData.responsible_user_id || null,
+        responsible_user_id: formData.responsible_user_id === 'unassigned' ? null : formData.responsible_user_id,
         budget: formData.budget ? parseFloat(formData.budget) : null,
         is_billable: formData.is_billable,
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : null,

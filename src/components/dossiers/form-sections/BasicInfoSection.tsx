@@ -124,7 +124,7 @@ export const BasicInfoSection = ({ formData, updateFormData }: BasicInfoSectionP
               <SelectValue placeholder="Selecteer persoon" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Niet toegewezen</SelectItem>
+              <SelectItem value="unassigned">Niet toegewezen</SelectItem>
               {members.map((member) => (
                 <SelectItem key={member.user_id} value={member.user_id}>
                   <div className="flex items-center justify-between w-full">
