@@ -1,5 +1,5 @@
+
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,12 +12,13 @@ import {
   FileText,
   Phone,
   Calendar,
-  Filter,
-  Clock,
-  CheckCircle,
-  AlertCircle,
+  RefreshCw,
   AlertTriangle,
-  RefreshCw
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  CreditCard,
+  FileCheck
 } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useClientsWithDossiers } from '@/hooks/useClientsWithDossiers';
@@ -96,240 +97,350 @@ export const ActiveDossiers = () => {
 
   const getTimelineIcon = (type: string) => {
     switch (type) {
-      case 'email': return <Mail className="h-4 w-4" />;
-      case 'document': return <FileText className="h-4 w-4" />;
-      case 'phone_call': return <Phone className="h-4 w-4" />;
-      default: return <Calendar className="h-4 w-4" />;
+      case 'email': return <Mail className="h-5 w-5" />;
+      case 'document': return <FileText className="h-5 w-5" />;
+      case 'phone_call': return <Phone className="h-5 w-5" />;
+      case 'invoice': return <CreditCard className="h-5 w-5" />;
+      case 'quote': return <FileCheck className="h-5 w-5" />;
+      default: return <Calendar className="h-5 w-5" />;
     }
   };
 
   const getTimelineColor = (type: string) => {
     switch (type) {
-      case 'email': return 'border-blue-200 bg-blue-50';
-      case 'document': return 'border-green-200 bg-green-50';
-      case 'phone_call': return 'border-orange-200 bg-orange-50';
-      default: return 'border-gray-200 bg-gray-50';
+      case 'email': return 'bg-blue-100 text-blue-600';
+      case 'document': return 'bg-green-100 text-green-600';
+      case 'phone_call': return 'bg-purple-100 text-purple-600';
+      case 'invoice': return 'bg-yellow-100 text-yellow-600';
+      case 'quote': return 'bg-indigo-100 text-indigo-600';
+      default: return 'bg-gray-100 text-gray-600';
     }
   };
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      {/* Clients Sidebar */}
-      <Card className="lg:col-span-1">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Klanten met Actieve Dossiers</CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={refreshClients}
-              disabled={clientsLoading}
-            >
-              <RefreshCw className={`h-4 w-4 ${clientsLoading ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
-          <div className="text-sm text-muted-foreground">
-            {getContextInfo()}
-          </div>
-          
-          {clientsError && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                Database fout: {clientsError}
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Zoek klanten..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          {!selectedOrganization && !selectedWorkspace ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <User className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Selecteer een organisatie of werkruimte</p>
-            </div>
-          ) : clientsLoading ? (
-            <div className="text-center py-8">Klanten laden...</div>
-          ) : filteredClients.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-sm mb-4">
-                {clientsError ? 'Er ging iets mis bij het laden van klanten' : 'Geen klanten met actieve dossiers gevonden'}
-              </p>
-              <Button onClick={createExamples} variant="outline" size="sm">
-                Voorbeeldklanten aanmaken
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-[600px] overflow-y-auto">
-              {filteredClients.map((client) => (
-                <div 
-                  key={client.id} 
-                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                    selectedClient === client.id 
-                      ? 'bg-blue-50 border-blue-200' 
-                      : 'hover:bg-gray-50 border-gray-200'
-                  }`}
-                  onClick={() => setSelectedClient(client.id)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        {client.type === 'zakelijk' ? (
-                          <Building2 className="h-4 w-4 text-blue-600" />
-                        ) : (
-                          <User className="h-4 w-4 text-green-600" />
-                        )}
-                        <h3 className="font-medium text-sm truncate">{client.name}</h3>
-                      </div>
-                      
-                      {client.contact_person && (
-                        <p className="text-xs text-muted-foreground mb-1">
-                          {client.contact_person}
-                        </p>
-                      )}
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">
-                          {client.city}
-                        </span>
-                        <Badge variant="outline" className="text-xs">
-                          {client.dossier_count} dossier{client.dossier_count !== 1 ? 's' : ''}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+  const getTimelineCardBorder = (type: string) => {
+    switch (type) {
+      case 'email': return 'border-blue-200';
+      case 'document': return 'border-green-200';
+      case 'phone_call': return 'border-purple-200';
+      case 'invoice': return 'border-yellow-200';
+      case 'quote': return 'border-indigo-200';
+      default: return 'border-gray-200';
+    }
+  };
 
-      {/* Dossier Timeline */}
-      <Card className="lg:col-span-3">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-lg">
-                {selectedClientData ? `Dossier Tijdlijn - ${selectedClientData.name}` : 'Selecteer een klant'}
-              </CardTitle>
-              {selectedClientData && (
-                <div className="text-sm text-muted-foreground mt-1">
-                  {selectedClientData.email} • {selectedClientData.dossier_count} actieve dossier{selectedClientData.dossier_count !== 1 ? 's' : ''}
+  const formatTimelineDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return `Vandaag ${date.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}`;
+    if (diffDays === 1) return 'Gisteren';
+    if (diffDays <= 7) return `${diffDays} dagen geleden`;
+    if (diffDays <= 30) return `${Math.floor(diffDays / 7)} weken geleden`;
+    return date.toLocaleDateString('nl-NL');
+  };
+
+  return (
+    <div className="bg-gray-100 min-h-screen p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Actieve Dossiers</h1>
+          <p className="text-sm text-gray-600">Bekijk en beheer dossiers per client • {getContextInfo()}</p>
+        </div>
+
+        {/* Main Container: Two Panel Layout */}
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden h-[800px] flex">
+          
+          {/* LEFT PANEL: Clients List with Search */}
+          <div className="w-1/3 border-r border-gray-200 flex flex-col">
+            {/* Search Header */}
+            <div className="p-4 border-b border-gray-200 bg-gray-50">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Zoek clients met actieve dossiers..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 text-sm"
+                />
+              </div>
+              <div className="mt-2 flex items-center justify-between">
+                <div className="text-xs text-gray-500">
+                  {filteredClients.length} client{filteredClients.length !== 1 ? 's' : ''} met actieve dossiers gevonden
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={refreshClients}
+                  disabled={clientsLoading}
+                  className="h-auto p-1"
+                >
+                  <RefreshCw className={`h-3 w-3 ${clientsLoading ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+              
+              {clientsError && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    {clientsError}
+                  </AlertDescription>
+                </Alert>
               )}
             </div>
 
-            {selectedClient && (
-              <div className="flex items-center gap-2">
-                <select 
-                  value={timelineFilter} 
-                  onChange={(e) => setTimelineFilter(e.target.value)}
-                  className="text-sm border border-gray-300 rounded px-2 py-1"
-                >
-                  <option value="all">Alle types</option>
-                  <option value="email">E-mails</option>
-                  <option value="document">Documenten</option>
-                  <option value="phone_call">Telefoongesprekken</option>
-                </select>
-                
-                <select 
-                  value={periodFilter} 
-                  onChange={(e) => setPeriodFilter(e.target.value)}
-                  className="text-sm border border-gray-300 rounded px-2 py-1"
-                >
-                  <option value="all">Alle periodes</option>
-                  <option value="today">Vandaag</option>
-                  <option value="week">Deze week</option>
-                  <option value="month">Deze maand</option>
-                </select>
-              </div>
-            )}
-          </div>
-          
-          {timelineError && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                Timeline fout: {timelineError}
-              </AlertDescription>
-            </Alert>
-          )}
-        </CardHeader>
-
-        <CardContent>
-          {!selectedClient ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Selecteer een klant om de dossier tijdlijn te bekijken</p>
-            </div>
-          ) : timelineLoading ? (
-            <div className="text-center py-8">Tijdlijn laden...</div>
-          ) : filteredTimeline.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">
-                {timelineError ? 'Er ging iets mis bij het laden van de tijdlijn' : 'Geen communicatie of documenten gevonden'}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4 max-h-[600px] overflow-y-auto">
-              {filteredTimeline.map((item) => (
-                <div key={item.id} className={`p-4 rounded-lg border ${getTimelineColor(item.type)}`}>
-                  <div className="flex items-start gap-3">
-                    <div className="mt-1">
-                      {getTimelineIcon(item.type)}
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="font-medium text-sm">{item.title}</h4>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
-                            {item.type === 'email' ? 'E-mail' : 
-                             item.type === 'document' ? 'Document' : 'Gesprek'}
-                          </Badge>
-                          {item.status && (
-                            <div className="flex items-center gap-1">
-                              {item.status === 'completed' ? (
-                                <CheckCircle className="h-3 w-3 text-green-600" />
-                              ) : item.status === 'pending' ? (
-                                <Clock className="h-3 w-3 text-yellow-600" />
-                              ) : (
-                                <AlertCircle className="h-3 w-3 text-red-600" />
-                              )}
-                            </div>
+            {/* Scrollable Clients List */}
+            <div className="flex-1 overflow-y-auto">
+              {!selectedOrganization && !selectedWorkspace ? (
+                <div className="p-8 text-center text-gray-500">
+                  <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-sm">Selecteer een organisatie of werkruimte</p>
+                </div>
+              ) : clientsLoading ? (
+                <div className="p-8 text-center text-gray-500">
+                  <div className="animate-spin h-8 w-8 border-2 border-gray-300 border-t-blue-600 rounded-full mx-auto mb-4"></div>
+                  <p className="text-sm">Klanten laden...</p>
+                </div>
+              ) : filteredClients.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-sm mb-4">
+                    {clientsError ? 'Er ging iets mis bij het laden van klanten' : 'Geen klanten met actieve dossiers gevonden'}
+                  </p>
+                  <Button onClick={createExamples} variant="outline" size="sm">
+                    Voorbeeldklanten aanmaken
+                  </Button>
+                </div>
+              ) : (
+                filteredClients.map((client) => (
+                  <div 
+                    key={client.id} 
+                    className={`p-4 border-b border-gray-100 cursor-pointer transition-colors ${
+                      selectedClient === client.id 
+                        ? 'bg-blue-50 border-l-4 border-l-blue-500' 
+                        : 'hover:bg-gray-50'
+                    }`}
+                    onClick={() => setSelectedClient(client.id)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          {client.type === 'zakelijk' ? (
+                            <Building2 className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                          ) : (
+                            <User className="h-4 w-4 text-green-600 flex-shrink-0" />
                           )}
+                          <h3 className="font-semibold text-gray-900 text-sm truncate">{client.name}</h3>
+                        </div>
+                        
+                        {client.contact_person && (
+                          <p className="text-xs text-gray-600 mb-1 truncate">
+                            {client.contact_person}
+                          </p>
+                        )}
+                        
+                        {client.email && (
+                          <p className="text-xs text-gray-500 mb-2 truncate">
+                            {client.email}
+                          </p>
+                        )}
+                        
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="outline" className="text-xs bg-green-100 text-green-800 border-green-200">
+                            {client.dossier_count} actieve
+                          </Badge>
+                          <Badge variant="outline" className={`text-xs ${
+                            client.type === 'zakelijk' 
+                              ? 'bg-blue-100 text-blue-800 border-blue-200' 
+                              : 'bg-purple-100 text-purple-800 border-purple-200'
+                          }`}>
+                            {client.type === 'zakelijk' ? 'Zakelijk' : 'Privé'}
+                          </Badge>
                         </div>
                       </div>
-                      
-                      {item.description && (
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {item.description}
-                        </p>
-                      )}
-                      
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(item.date).toLocaleString('nl-NL')}
-                      </p>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+
+          {/* RIGHT PANEL: Dossier Timeline */}
+          <div className="flex-1 flex flex-col">
+            {/* Timeline Header with Filter */}
+            <div className="p-6 border-b border-gray-200 bg-gray-50">
+              {selectedClientData ? (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900">{selectedClientData.name}</h2>
+                      <p className="text-sm text-gray-600">
+                        {selectedClientData.dossier_count} actieve dossier{selectedClientData.dossier_count !== 1 ? 's' : ''} • 
+                        Laatste activiteit: {filteredTimeline.length > 0 ? formatTimelineDate(filteredTimeline[0].date) : 'onbekend'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-green-100 text-green-800 border-green-200">Actief</Badge>
+                    </div>
+                  </div>
+                  
+                  {/* Filter Controls */}
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-gray-700">Filter:</label>
+                      <select 
+                        value={timelineFilter} 
+                        onChange={(e) => setTimelineFilter(e.target.value)}
+                        className="border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="all">Alle items</option>
+                        <option value="email">E-mails</option>
+                        <option value="document">Documenten</option>
+                        <option value="phone_call">Telefoongesprekken</option>
+                        <option value="invoice">Facturen</option>
+                        <option value="quote">Offertes</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-gray-700">Periode:</label>
+                      <select 
+                        value={periodFilter} 
+                        onChange={(e) => setPeriodFilter(e.target.value)}
+                        className="border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="all">Alle tijd</option>
+                        <option value="today">Vandaag</option>
+                        <option value="week">Deze week</option>
+                        <option value="month">Deze maand</option>
+                      </select>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Selecteer een client</h2>
+                  <p className="text-sm text-gray-600">Kies een client uit de lijst om de dossier tijdlijn te bekijken</p>
+                </div>
+              )}
+              
+              {timelineError && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Timeline fout: {timelineError}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+
+            {/* Scrollable Timeline Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {!selectedClient ? (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="text-center">
+                    <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg font-medium">Selecteer een client</p>
+                    <p className="text-sm">Kies een client uit de lijst om de dossier tijdlijn te bekijken</p>
+                  </div>
+                </div>
+              ) : timelineLoading ? (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="text-center">
+                    <div className="animate-spin h-12 w-12 border-2 border-gray-300 border-t-blue-600 rounded-full mx-auto mb-4"></div>
+                    <p>Tijdlijn laden...</p>
+                  </div>
+                </div>
+              ) : filteredTimeline.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="text-center">
+                    <Calendar className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg font-medium">Geen activiteiten gevonden</p>
+                    <p className="text-sm">
+                      {timelineError ? 'Er ging iets mis bij het laden van de tijdlijn' : 'Geen communicatie of documenten gevonden voor de geselecteerde filters'}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {filteredTimeline.map((item, index) => (
+                    <div key={item.id} className="flex items-start gap-4">
+                      {/* Timeline Icon */}
+                      <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${getTimelineColor(item.type)}`}>
+                        {getTimelineIcon(item.type)}
+                      </div>
+                      
+                      {/* Timeline Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className={`bg-white border rounded-lg p-4 shadow-sm ${getTimelineCardBorder(item.type)}`}>
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-medium text-gray-900">{item.title}</h4>
+                            <span className="text-xs text-gray-500">{formatTimelineDate(item.date)}</span>
+                          </div>
+                          
+                          {item.description && (
+                            <p className="text-sm text-gray-600 mb-2">{item.description}</p>
+                          )}
+                          
+                          {item.from_email && (
+                            <p className="text-sm text-gray-600 mb-2">Van: {item.from_email}</p>
+                          )}
+                          
+                          {item.subject && (
+                            <p className="text-sm text-gray-800 mb-2">Onderwerp: {item.subject}</p>
+                          )}
+                          
+                          <div className="mt-3 flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">
+                              {item.type === 'email' ? 'E-mail' : 
+                               item.type === 'document' ? 'Document' : 
+                               item.type === 'phone_call' ? 'Gesprek' :
+                               item.type === 'invoice' ? 'Factuur' :
+                               item.type === 'quote' ? 'Offerte' : 'Activiteit'}
+                            </Badge>
+                            
+                            {item.status && (
+                              <div className="flex items-center gap-1">
+                                {item.status === 'completed' ? (
+                                  <Badge variant="outline" className="text-xs bg-green-100 text-green-800 border-green-200">
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    Voltooid
+                                  </Badge>
+                                ) : item.status === 'pending' ? (
+                                  <Badge variant="outline" className="text-xs bg-yellow-100 text-yellow-800 border-yellow-200">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    In behandeling
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-xs bg-red-100 text-red-800 border-red-200">
+                                    <AlertCircle className="h-3 w-3 mr-1" />
+                                    Fout
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                            
+                            <div className="ml-auto flex gap-1">
+                              <Button variant="ghost" size="sm" className="text-xs h-auto px-2 py-1">
+                                Bekijken
+                              </Button>
+                              {item.type === 'email' && (
+                                <Button variant="ghost" size="sm" className="text-xs h-auto px-2 py-1">
+                                  Beantwoorden
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
