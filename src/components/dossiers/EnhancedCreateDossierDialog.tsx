@@ -37,7 +37,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="!w-[95vw] !h-[85vh] !max-w-none !fixed !top-[7.5vh] !left-[2.5vw] !transform-none !translate-x-0 !translate-y-0 p-0 rounded-lg overflow-hidden flex flex-col">
+      <DialogContent className="!w-[98vw] !h-[92vh] !max-w-none !fixed !top-[4vh] !left-[1vw] !transform-none !translate-x-0 !translate-y-0 p-0 rounded-lg overflow-hidden flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 flex-shrink-0">
           <DialogHeader>
@@ -54,8 +54,8 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
         </div>
         
         {/* Content */}
-        <div className="flex-1 p-6 overflow-y-auto bg-gray-50">
-          <form onSubmit={handleSubmit} className="w-full space-y-4">
+        <div className="flex-1 p-8 overflow-y-auto bg-gray-50 min-h-0">
+          <form onSubmit={handleSubmit} className="w-full max-w-4xl mx-auto space-y-6">
             <BasicInfoSection formData={formData} updateFormData={updateFormData} />
             <ClientSection formData={formData} updateFormData={updateFormData} />
             <PlanningBudgetSection formData={formData} updateFormData={updateFormData} />
@@ -65,12 +65,12 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 p-4 border-t border-gray-200 bg-white flex-shrink-0">
+        <div className="flex justify-end gap-3 p-6 border-t border-gray-200 bg-white flex-shrink-0">
           <Button 
             type="button" 
             variant="outline" 
             onClick={() => setOpen(false)}
-            className="px-4 py-2 text-sm border-gray-300 text-gray-700 hover:bg-gray-50"
+            className="px-6 py-2 text-sm border-gray-300 text-gray-700 hover:bg-gray-50"
           >
             Annuleren
           </Button>
@@ -78,7 +78,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
             type="submit" 
             disabled={loading}
             onClick={handleSubmit}
-            className="px-4 py-2 text-sm bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+            className="px-6 py-2 text-sm bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
           >
             {loading ? (
               <div className="flex items-center gap-2">
