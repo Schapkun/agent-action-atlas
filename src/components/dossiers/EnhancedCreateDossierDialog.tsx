@@ -131,67 +131,67 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="w-screen h-screen max-w-none m-0 p-0 rounded-none">
+      <DialogContent className="fixed inset-0 w-[90vw] h-[90vh] m-auto p-0 rounded-lg">
         {/* Compact Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 flex-shrink-0">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3 flex-shrink-0 rounded-t-lg">
           <DialogHeader>
-            <div className="flex items-center gap-3">
-              <div className="bg-white/20 rounded-lg p-2">
-                <FolderPlus className="h-5 w-5" />
+            <div className="flex items-center gap-2">
+              <div className="bg-white/20 rounded-lg p-1.5">
+                <FolderPlus className="h-4 w-4" />
               </div>
               <div>
-                <DialogTitle className="text-xl font-bold text-white">Nieuw Dossier</DialogTitle>
-                <p className="text-blue-100 text-sm">Maak een nieuw dossier aan</p>
+                <DialogTitle className="text-lg font-bold text-white">Nieuw Dossier</DialogTitle>
+                <p className="text-blue-100 text-xs">Maak een nieuw dossier aan</p>
               </div>
             </div>
           </DialogHeader>
         </div>
         
-        {/* Single column content */}
-        <div className="flex-1 p-6 h-[calc(100vh-120px)] overflow-y-auto">
-          <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
+        {/* Full width content - NO scrolling */}
+        <div className="flex-1 p-4">
+          <form onSubmit={handleSubmit} className="w-full space-y-4">
             
             {/* Basisinformatie */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="bg-blue-600 rounded-lg p-2">
-                  <User className="h-4 w-4 text-white" />
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 border border-blue-200">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="bg-blue-600 rounded-lg p-1.5">
+                  <User className="h-3 w-3 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-blue-900">Basisinformatie</h3>
+                <h3 className="text-sm font-semibold text-blue-900">Basisinformatie</h3>
               </div>
               
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
-                  <Label htmlFor="name" className="text-blue-900 font-medium">Naam *</Label>
+                  <Label htmlFor="name" className="text-xs text-blue-900 font-medium">Naam *</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Dossiernaam"
                     required
-                    className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 h-8 text-xs border-blue-200 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
                 
                 <div>
-                  <Label htmlFor="reference" className="text-blue-900 font-medium">Referentie</Label>
+                  <Label htmlFor="reference" className="text-xs text-blue-900 font-medium">Referentie</Label>
                   <Input
                     id="reference"
                     value={formData.reference}
                     onChange={(e) => setFormData(prev => ({ ...prev, reference: e.target.value }))}
                     placeholder="Referentienummer"
-                    className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 h-8 text-xs border-blue-200 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label htmlFor="category" className="text-blue-900 font-medium">Categorie</Label>
+                    <Label htmlFor="category" className="text-xs text-blue-900 font-medium">Categorie</Label>
                     <Select 
                       value={formData.category} 
                       onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
                     >
-                      <SelectTrigger className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                      <SelectTrigger className="mt-1 h-8 text-xs border-blue-200 focus:border-blue-500 focus:ring-blue-500">
                         <SelectValue placeholder="Selecteer" />
                       </SelectTrigger>
                       <SelectContent>
@@ -207,36 +207,36 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                   </div>
 
                   <div>
-                    <Label htmlFor="priority" className="text-blue-900 font-medium">Prioriteit</Label>
+                    <Label htmlFor="priority" className="text-xs text-blue-900 font-medium">Prioriteit</Label>
                     <Select 
                       value={formData.priority} 
                       onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}
                     >
-                      <SelectTrigger className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                      <SelectTrigger className="mt-1 h-8 text-xs border-blue-200 focus:border-blue-500 focus:ring-blue-500">
                         <SelectValue placeholder="Selecteer" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="low">
                           <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
                             <span>Laag</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="medium">
                           <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
                             <span>Normaal</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="high">
                           <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                            <div className="w-2 h-2 rounded-full bg-orange-500"></div>
                             <span>Hoog</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="urgent">
                           <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div className="w-2 h-2 rounded-full bg-red-500"></div>
                             <span>Urgent</span>
                           </div>
                         </SelectItem>
@@ -248,21 +248,21 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
             </div>
 
             {/* Client */}
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="bg-green-600 rounded-lg p-2">
-                  <Building2 className="h-4 w-4 text-white" />
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 border border-green-200">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="bg-green-600 rounded-lg p-1.5">
+                  <Building2 className="h-3 w-3 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-green-900">Client</h3>
+                <h3 className="text-sm font-semibold text-green-900">Client</h3>
               </div>
               
               <div>
-                <Label htmlFor="client_id" className="text-green-900 font-medium">Gekoppelde Client</Label>
+                <Label htmlFor="client_id" className="text-xs text-green-900 font-medium">Gekoppelde Client</Label>
                 <Select 
                   value={formData.client_id} 
                   onValueChange={(value) => setFormData(prev => ({ ...prev, client_id: value }))}
                 >
-                  <SelectTrigger className="mt-1 border-green-200 focus:border-green-500 focus:ring-green-500">
+                  <SelectTrigger className="mt-1 h-8 text-xs border-green-200 focus:border-green-500 focus:ring-green-500">
                     <SelectValue placeholder="Selecteer client" />
                   </SelectTrigger>
                   <SelectContent>
@@ -283,43 +283,43 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
             </div>
 
             {/* Planning & Budget */}
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-200">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="bg-purple-600 rounded-lg p-2">
-                  <Calendar className="h-4 w-4 text-white" />
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 border border-purple-200">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="bg-purple-600 rounded-lg p-1.5">
+                  <Calendar className="h-3 w-3 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-purple-900">Planning & Budget</h3>
+                <h3 className="text-sm font-semibold text-purple-900">Planning & Budget</h3>
               </div>
               
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label htmlFor="start_date" className="text-purple-900 font-medium">Start</Label>
+                    <Label htmlFor="start_date" className="text-xs text-purple-900 font-medium">Start</Label>
                     <Input
                       id="start_date"
                       type="date"
                       value={formData.start_date}
                       onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                      className="mt-1 border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                      className="mt-1 h-8 text-xs border-purple-200 focus:border-purple-500 focus:ring-purple-500"
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="end_date" className="text-purple-900 font-medium">Eind</Label>
+                    <Label htmlFor="end_date" className="text-xs text-purple-900 font-medium">Eind</Label>
                     <Input
                       id="end_date"
                       type="date"
                       value={formData.end_date}
                       onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
-                      className="mt-1 border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                      className="mt-1 h-8 text-xs border-purple-200 focus:border-purple-500 focus:ring-purple-500"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="budget" className="text-purple-900 font-medium">Budget (€)</Label>
+                  <Label htmlFor="budget" className="text-xs text-purple-900 font-medium">Budget (€)</Label>
                   <div className="relative mt-1">
-                    <CreditCard className="absolute left-3 top-3 h-4 w-4 text-purple-500" />
+                    <CreditCard className="absolute left-2 top-2 h-3 w-3 text-purple-500" />
                     <Input
                       id="budget"
                       type="number"
@@ -327,7 +327,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                       value={formData.budget}
                       onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
                       placeholder="0.00"
-                      className="pl-10 border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                      className="pl-8 h-8 text-xs border-purple-200 focus:border-purple-500 focus:ring-purple-500"
                     />
                   </div>
                 </div>
@@ -339,75 +339,75 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                     onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_billable: !!checked }))}
                     className="border-purple-300 text-purple-600 focus:ring-purple-500"
                   />
-                  <Label htmlFor="is_billable" className="text-purple-900 font-medium">Factuurbaar</Label>
+                  <Label htmlFor="is_billable" className="text-xs text-purple-900 font-medium">Factuurbaar</Label>
                 </div>
               </div>
             </div>
 
             {/* Beschrijving */}
-            <div className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg p-4 border border-gray-200">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="bg-gray-600 rounded-lg p-2">
-                  <FileText className="h-4 w-4 text-white" />
+            <div className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg p-3 border border-gray-200">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="bg-gray-600 rounded-lg p-1.5">
+                  <FileText className="h-3 w-3 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Beschrijving</h3>
+                <h3 className="text-sm font-semibold text-gray-900">Beschrijving</h3>
               </div>
               
               <div>
-                <Label htmlFor="description" className="text-gray-900 font-medium">Omschrijving</Label>
+                <Label htmlFor="description" className="text-xs text-gray-900 font-medium">Omschrijving</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Beschrijving van het dossier"
-                  rows={4}
-                  className="mt-1 border-gray-200 focus:border-gray-500 focus:ring-gray-500 resize-none"
+                  rows={3}
+                  className="mt-1 text-xs border-gray-200 focus:border-gray-500 focus:ring-gray-500 resize-none"
                 />
               </div>
             </div>
 
             {/* Tags */}
-            <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-4 border border-orange-200">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="bg-orange-600 rounded-lg p-2">
-                  <Tag className="h-4 w-4 text-white" />
+            <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-3 border border-orange-200">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="bg-orange-600 rounded-lg p-1.5">
+                  <Tag className="h-3 w-3 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-orange-900">Tags</h3>
+                <h3 className="text-sm font-semibold text-orange-900">Tags</h3>
               </div>
               
               <div>
-                <Label htmlFor="tags" className="text-orange-900 font-medium">Labels</Label>
+                <Label htmlFor="tags" className="text-xs text-orange-900 font-medium">Labels</Label>
                 <Input
                   id="tags"
                   value={formData.tags}
                   onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
                   placeholder="urgent, project, review"
-                  className="mt-1 border-orange-200 focus:border-orange-500 focus:ring-orange-500"
+                  className="mt-1 h-8 text-xs border-orange-200 focus:border-orange-500 focus:ring-orange-500"
                 />
-                <p className="text-sm text-orange-600 mt-1">
+                <p className="text-xs text-orange-600 mt-1">
                   Gescheiden door komma's
                 </p>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-end gap-3 pt-4">
+            <div className="flex justify-end gap-3 pt-3 border-t border-gray-200">
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={() => setOpen(false)}
-                className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+                className="px-4 py-1 h-8 text-xs border-gray-300 text-gray-700 hover:bg-gray-50"
               >
                 Annuleren
               </Button>
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+                className="px-4 py-1 h-8 text-xs bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
               >
                 {loading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     <span>Bezig...</span>
                   </div>
                 ) : (
