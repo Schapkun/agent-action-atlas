@@ -145,65 +145,65 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-hidden p-0">
-        {/* Header with gradient background */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+      <DialogContent className="max-w-[95vw] w-full max-h-[95vh] flex flex-col p-0">
+        {/* Compact Header with gradient background */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 flex-shrink-0">
           <DialogHeader>
-            <div className="flex items-center gap-3">
-              <div className="bg-white/20 rounded-lg p-2">
-                <FolderPlus className="h-6 w-6" />
+            <div className="flex items-center gap-2">
+              <div className="bg-white/20 rounded-lg p-1.5">
+                <FolderPlus className="h-5 w-5" />
               </div>
               <div>
-                <DialogTitle className="text-2xl font-bold text-white">Nieuw Dossier Aanmaken</DialogTitle>
-                <p className="text-blue-100 mt-1">Maak een nieuw dossier aan voor uw organisatie</p>
+                <DialogTitle className="text-xl font-bold text-white">Nieuw Dossier Aanmaken</DialogTitle>
+                <p className="text-blue-100 text-sm mt-0.5">Maak een nieuw dossier aan voor uw organisatie</p>
               </div>
             </div>
           </DialogHeader>
         </div>
         
         {/* Scrollable content */}
-        <div className="overflow-y-auto flex-1 p-6">
-          <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="overflow-y-auto flex-1 p-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Basic Information */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="bg-blue-600 rounded-lg p-2">
-                  <User className="h-5 w-5 text-white" />
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="bg-blue-600 rounded-lg p-1.5">
+                  <User className="h-4 w-4 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-blue-900">Basisinformatie</h3>
+                <h3 className="text-base font-semibold text-blue-900">Basisinformatie</h3>
               </div>
               
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="name" className="text-blue-900 font-medium">Naam *</Label>
+                  <Label htmlFor="name" className="text-blue-900 font-medium text-sm">Naam *</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Dossiernaam"
                     required
-                    className="mt-2 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-9 text-sm"
                   />
                 </div>
                 
                 <div>
-                  <Label htmlFor="reference" className="text-blue-900 font-medium">Referentie/Kenmerk</Label>
+                  <Label htmlFor="reference" className="text-blue-900 font-medium text-sm">Referentie/Kenmerk</Label>
                   <Input
                     id="reference"
                     value={formData.reference}
                     onChange={(e) => setFormData(prev => ({ ...prev, reference: e.target.value }))}
                     placeholder="Referentienummer of kenmerk"
-                    className="mt-2 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-9 text-sm"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="category" className="text-blue-900 font-medium">Categorie</Label>
+                  <Label htmlFor="category" className="text-blue-900 font-medium text-sm">Categorie</Label>
                   <Select 
                     value={formData.category} 
                     onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
                   >
-                    <SelectTrigger className="mt-2 border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                    <SelectTrigger className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-9 text-sm">
                       <SelectValue placeholder="Selecteer categorie" />
                     </SelectTrigger>
                     <SelectContent>
@@ -219,50 +219,50 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                 </div>
               </div>
 
-              <div className="mt-6">
-                <Label htmlFor="description" className="text-blue-900 font-medium">Beschrijving</Label>
+              <div className="mt-4">
+                <Label htmlFor="description" className="text-blue-900 font-medium text-sm">Beschrijving</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Beschrijving van het dossier"
-                  rows={3}
-                  className="mt-2 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                  rows={2}
+                  className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500 text-sm"
                 />
               </div>
 
-              <div className="mt-6">
-                <Label htmlFor="priority" className="text-blue-900 font-medium">Prioriteit</Label>
+              <div className="mt-4">
+                <Label htmlFor="priority" className="text-blue-900 font-medium text-sm">Prioriteit</Label>
                 <Select 
                   value={formData.priority} 
                   onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}
                 >
-                  <SelectTrigger className="mt-2 border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                  <SelectTrigger className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-9 text-sm">
                     <SelectValue placeholder="Selecteer prioriteit" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="low">
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                        Laag
+                        <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                        <span className="text-sm">Laag</span>
                       </div>
                     </SelectItem>
                     <SelectItem value="medium">
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                        Normaal
+                        <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+                        <span className="text-sm">Normaal</span>
                       </div>
                     </SelectItem>
                     <SelectItem value="high">
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                        Hoog
+                        <div className="w-2.5 h-2.5 rounded-full bg-orange-500"></div>
+                        <span className="text-sm">Hoog</span>
                       </div>
                     </SelectItem>
                     <SelectItem value="urgent">
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                        Urgent
+                        <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                        <span className="text-sm">Urgent</span>
                       </div>
                     </SelectItem>
                   </SelectContent>
@@ -271,64 +271,64 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
             </div>
 
             {/* Client Selection */}
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="bg-green-600 rounded-lg p-2">
-                  <Building2 className="h-5 w-5 text-white" />
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="bg-green-600 rounded-lg p-1.5">
+                  <Building2 className="h-4 w-4 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-green-900">Client Selectie</h3>
+                <h3 className="text-base font-semibold text-green-900">Client Selectie</h3>
               </div>
               
               <div>
-                <Label htmlFor="client_id" className="text-green-900 font-medium">Gekoppelde Client</Label>
-                <div className="mt-2">
+                <Label htmlFor="client_id" className="text-green-900 font-medium text-sm">Gekoppelde Client</Label>
+                <div className="mt-1">
                   <ContactSelector
                     selectedContact={selectedContact}
                     onContactSelect={handleContactSelect}
                   />
                 </div>
-                <p className="text-sm text-green-600 mt-2">
+                <p className="text-xs text-green-600 mt-1">
                   Typ om te zoeken op naam, e-mail, plaats, adres of postcode
                 </p>
               </div>
             </div>
 
             {/* Timeline & Budget */}
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="bg-purple-600 rounded-lg p-2">
-                  <Calendar className="h-5 w-5 text-white" />
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-200">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="bg-purple-600 rounded-lg p-1.5">
+                  <Calendar className="h-4 w-4 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-purple-900">Planning & Budget</h3>
+                <h3 className="text-base font-semibold text-purple-900">Planning & Budget</h3>
               </div>
               
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="start_date" className="text-purple-900 font-medium">Startdatum</Label>
+                  <Label htmlFor="start_date" className="text-purple-900 font-medium text-sm">Startdatum</Label>
                   <Input
                     id="start_date"
                     type="date"
                     value={formData.start_date}
                     onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                    className="mt-2 border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                    className="mt-1 border-purple-200 focus:border-purple-500 focus:ring-purple-500 h-9 text-sm"
                   />
                 </div>
                 
                 <div>
-                  <Label htmlFor="end_date" className="text-purple-900 font-medium">Einddatum</Label>
+                  <Label htmlFor="end_date" className="text-purple-900 font-medium text-sm">Einddatum</Label>
                   <Input
                     id="end_date"
                     type="date"
                     value={formData.end_date}
                     onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
-                    className="mt-2 border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                    className="mt-1 border-purple-200 focus:border-purple-500 focus:ring-purple-500 h-9 text-sm"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="budget" className="text-purple-900 font-medium">Budget (€)</Label>
-                  <div className="relative mt-2">
-                    <CreditCard className="absolute left-3 top-3 h-4 w-4 text-purple-500" />
+                  <Label htmlFor="budget" className="text-purple-900 font-medium text-sm">Budget (€)</Label>
+                  <div className="relative mt-1">
+                    <CreditCard className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-purple-500" />
                     <Input
                       id="budget"
                       type="number"
@@ -336,68 +336,68 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                       value={formData.budget}
                       onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
                       placeholder="0.00"
-                      className="pl-10 border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                      className="pl-8 border-purple-200 focus:border-purple-500 focus:ring-purple-500 h-9 text-sm"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6">
-                <div className="flex items-center space-x-3">
+              <div className="mt-4">
+                <div className="flex items-center space-x-2">
                   <Checkbox
                     id="is_billable"
                     checked={formData.is_billable}
                     onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_billable: !!checked }))}
                     className="border-purple-300 text-purple-600 focus:ring-purple-500"
                   />
-                  <Label htmlFor="is_billable" className="text-purple-900 font-medium">Factuurbaar</Label>
+                  <Label htmlFor="is_billable" className="text-purple-900 font-medium text-sm">Factuurbaar</Label>
                 </div>
               </div>
             </div>
 
             {/* Tags */}
-            <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-6 border border-orange-200">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="bg-orange-600 rounded-lg p-2">
-                  <Tag className="h-5 w-5 text-white" />
+            <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-4 border border-orange-200">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="bg-orange-600 rounded-lg p-1.5">
+                  <Tag className="h-4 w-4 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-orange-900">Tags</h3>
+                <h3 className="text-base font-semibold text-orange-900">Tags</h3>
               </div>
               
               <div>
-                <Label htmlFor="tags" className="text-orange-900 font-medium">Tags (gescheiden door komma's)</Label>
+                <Label htmlFor="tags" className="text-orange-900 font-medium text-sm">Tags (gescheiden door komma's)</Label>
                 <Input
                   id="tags"
                   value={formData.tags}
                   onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
                   placeholder="urgent, project, review"
-                  className="mt-2 border-orange-200 focus:border-orange-500 focus:ring-orange-500"
+                  className="mt-1 border-orange-200 focus:border-orange-500 focus:ring-orange-500 h-9 text-sm"
                 />
-                <p className="text-sm text-orange-600 mt-2">
+                <p className="text-xs text-orange-600 mt-1">
                   Voer tags in gescheiden door komma's
                 </p>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={() => setOpen(false)}
-                className="px-8 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+                className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50 h-9 text-sm"
               >
                 Annuleren
               </Button>
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="px-8 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg h-9 text-sm"
               >
                 {loading ? (
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Bezig...
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-sm">Bezig...</span>
                   </div>
                 ) : (
                   'Dossier Aanmaken'
