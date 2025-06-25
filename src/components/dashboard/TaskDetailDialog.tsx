@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -169,10 +168,10 @@ export const TaskDetailDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0">
         <DialogHeader className="p-6 pb-4">
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <FileText className="h-6 w-6" />
+          <DialogTitle className="flex items-center gap-3 text-2xl">
+            <FileText className="h-7 w-7" />
             {task.title}
           </DialogTitle>
         </DialogHeader>
@@ -180,35 +179,35 @@ export const TaskDetailDialog = ({
         <div className="px-6">
           {/* Task metadata */}
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <Badge variant="outline" className={getPriorityColor(task.priority)}>
+            <div className="flex items-center gap-4">
+              <Badge variant="outline" className={`${getPriorityColor(task.priority)} text-sm px-3 py-1`}>
                 {task.priority}
               </Badge>
-              <Badge variant={task.status === 'completed' ? 'default' : 'outline'}>
+              <Badge variant={task.status === 'completed' ? 'default' : 'outline'} className="text-sm px-3 py-1">
                 {task.status === 'completed' ? 'Voltooid' : 'Openstaand'}
               </Badge>
               {task.ai_generated && (
-                <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                <Badge variant="outline" className="bg-blue-100 text-blue-800 text-sm px-3 py-1">
                   AI Gegenereerd
                 </Badge>
               )}
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <Button
                 onClick={handleStatusChange}
                 variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
+                size="default"
+                className="flex items-center gap-2 px-4 py-2"
               >
                 {task.status === 'completed' ? (
                   <>
-                    <Clock className="h-4 w-4" />
+                    <Clock className="h-5 w-5" />
                     Heropen
                   </>
                 ) : (
                   <>
-                    <CheckCircle className="h-4 w-4" />
+                    <CheckCircle className="h-5 w-5" />
                     Markeer als Voltooid
                   </>
                 )}
@@ -217,10 +216,10 @@ export const TaskDetailDialog = ({
               {task.ai_draft_content && task.reply_to_email && (
                 <Button
                   onClick={handleSendReply}
-                  size="sm"
-                  className="flex items-center gap-2"
+                  size="default"
+                  className="flex items-center gap-2 px-4 py-2"
                 >
-                  <Send className="h-4 w-4" />
+                  <Send className="h-5 w-5" />
                   Verstuur AI Antwoord
                 </Button>
               )}
@@ -228,34 +227,34 @@ export const TaskDetailDialog = ({
           </div>
 
           {/* Task details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 text-sm">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-gray-400" />
-                <span className="font-medium">Aangemaakt:</span>
-                <span>{formatDate(task.created_at)}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Calendar className="h-5 w-5 text-gray-400" />
+                <span className="font-medium text-base">Aangemaakt:</span>
+                <span className="text-base">{formatDate(task.created_at)}</span>
               </div>
               {task.due_date && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-gray-400" />
-                  <span className="font-medium">Vervaldatum:</span>
-                  <span>{new Date(task.due_date).toLocaleDateString('nl-NL')}</span>
+                <div className="flex items-center gap-3">
+                  <Calendar className="h-5 w-5 text-gray-400" />
+                  <span className="font-medium text-base">Vervaldatum:</span>
+                  <span className="text-base">{new Date(task.due_date).toLocaleDateString('nl-NL')}</span>
                 </div>
               )}
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-4">
               {task.reply_to_email && (
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-gray-400" />
-                  <span className="font-medium">Antwoord naar:</span>
-                  <span>{task.reply_to_email}</span>
+                <div className="flex items-center gap-3">
+                  <Mail className="h-5 w-5 text-gray-400" />
+                  <span className="font-medium text-base">Antwoord naar:</span>
+                  <span className="text-base">{task.reply_to_email}</span>
                 </div>
               )}
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-gray-400" />
-                <span className="font-medium">Type:</span>
-                <span>{task.task_type || 'Algemeen'}</span>
+              <div className="flex items-center gap-3">
+                <MessageSquare className="h-5 w-5 text-gray-400" />
+                <span className="font-medium text-base">Type:</span>
+                <span className="text-base">{task.task_type || 'Algemeen'}</span>
               </div>
             </div>
           </div>
@@ -263,57 +262,52 @@ export const TaskDetailDialog = ({
           <Separator className="mb-6" />
         </div>
 
-        {/* Main content with tabs */}
-        <div className="px-6 pb-6 flex-1">
-          <Tabs defaultValue="original" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="original" className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                Origineel Bericht
-              </TabsTrigger>
-              <TabsTrigger value="ai-response" className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                AI Gegenereerde Actie
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="original" className="mt-0">
+        {/* Main content - Side by side layout */}
+        <div className="px-6 pb-6 flex-1 min-h-0">
+          <div className="grid grid-cols-2 gap-6 h-full">
+            {/* Left panel - Original message */}
+            <div className="border rounded-lg p-6 flex flex-col">
+              <div className="flex items-center gap-3 mb-4">
+                <Mail className="h-6 w-6" />
+                <h3 className="text-xl font-semibold">Origineel Bericht</h3>
+              </div>
+              
               {loading ? (
-                <div className="flex items-center justify-center h-96">
+                <div className="flex items-center justify-center flex-1">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
               ) : originalEmail ? (
-                <div className="border rounded-lg p-6 h-96">
+                <div className="flex-1 flex flex-col">
                   <div className="space-y-4 mb-6">
                     <div>
-                      <span className="font-medium text-gray-600">Van:</span>
-                      <div className="text-lg">{originalEmail.from_email}</div>
+                      <span className="font-medium text-gray-600 text-base">Van:</span>
+                      <div className="text-lg font-medium">{originalEmail.from_email}</div>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-600">Aan:</span>
-                      <div className="text-lg">{originalEmail.to_email}</div>
+                      <span className="font-medium text-gray-600 text-base">Aan:</span>
+                      <div className="text-lg font-medium">{originalEmail.to_email}</div>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-600">Onderwerp:</span>
+                      <span className="font-medium text-gray-600 text-base">Onderwerp:</span>
                       <div className="text-lg font-semibold">{originalEmail.subject}</div>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-600">Ontvangen:</span>
-                      <div className="text-sm text-gray-500">{formatDate(originalEmail.received_at || originalEmail.created_at)}</div>
+                      <span className="font-medium text-gray-600 text-base">Ontvangen:</span>
+                      <div className="text-base text-gray-600">{formatDate(originalEmail.received_at || originalEmail.created_at)}</div>
                     </div>
                   </div>
                   
                   <Separator className="mb-6" />
                   
-                  <ScrollArea className="h-48">
+                  <ScrollArea className="flex-1">
                     <div className="pr-4">
                       {originalEmail.body_html ? (
                         <div 
-                          className="prose max-w-none"
+                          className="prose max-w-none text-base leading-relaxed"
                           dangerouslySetInnerHTML={{ __html: originalEmail.body_html }}
                         />
                       ) : (
-                        <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                        <div className="whitespace-pre-wrap text-base leading-relaxed">
                           {originalEmail.body_text || originalEmail.content || 'Geen inhoud beschikbaar'}
                         </div>
                       )}
@@ -321,33 +315,39 @@ export const TaskDetailDialog = ({
                   </ScrollArea>
                 </div>
               ) : task.description ? (
-                <div className="border rounded-lg p-6 h-96">
+                <div className="flex-1 flex flex-col">
                   <div className="mb-4">
-                    <span className="font-medium text-gray-600">Taak beschrijving:</span>
+                    <span className="font-medium text-gray-600 text-base">Taak beschrijving:</span>
                   </div>
-                  <ScrollArea className="h-64">
-                    <div className="whitespace-pre-wrap leading-relaxed pr-4">
+                  <ScrollArea className="flex-1">
+                    <div className="whitespace-pre-wrap leading-relaxed pr-4 text-base">
                       {task.description}
                     </div>
                   </ScrollArea>
                 </div>
               ) : (
-                <div className="border rounded-lg p-6 h-96 flex items-center justify-center text-gray-500">
+                <div className="flex-1 flex items-center justify-center text-gray-500">
                   <div className="text-center">
                     <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Geen origineel bericht beschikbaar</p>
+                    <p className="text-base">Geen origineel bericht beschikbaar</p>
                   </div>
                 </div>
               )}
-            </TabsContent>
+            </div>
 
-            <TabsContent value="ai-response" className="mt-0">
+            {/* Right panel - AI Response */}
+            <div className="border rounded-lg p-6 flex flex-col">
+              <div className="flex items-center gap-3 mb-4">
+                <MessageSquare className="h-6 w-6" />
+                <h3 className="text-xl font-semibold">AI Gegenereerde Actie</h3>
+              </div>
+              
               {task.ai_draft_subject || task.ai_draft_content ? (
-                <div className="border rounded-lg p-6 h-96">
+                <div className="flex-1 flex flex-col">
                   {task.ai_draft_subject && (
                     <div className="mb-6">
-                      <span className="font-medium text-gray-600">Onderwerp:</span>
-                      <div className="text-lg font-semibold mt-1">{task.ai_draft_subject}</div>
+                      <span className="font-medium text-gray-600 text-base">Onderwerp:</span>
+                      <div className="text-lg font-semibold mt-2">{task.ai_draft_subject}</div>
                     </div>
                   )}
                   
@@ -355,10 +355,10 @@ export const TaskDetailDialog = ({
                     <>
                       {task.ai_draft_subject && <Separator className="mb-6" />}
                       <div className="mb-4">
-                        <span className="font-medium text-gray-600">AI Antwoord:</span>
+                        <span className="font-medium text-gray-600 text-base">AI Antwoord:</span>
                       </div>
-                      <ScrollArea className="h-48">
-                        <div className="whitespace-pre-wrap leading-relaxed pr-4">
+                      <ScrollArea className="flex-1">
+                        <div className="whitespace-pre-wrap leading-relaxed pr-4 text-base">
                           {task.ai_draft_content}
                         </div>
                       </ScrollArea>
@@ -366,15 +366,15 @@ export const TaskDetailDialog = ({
                   )}
                 </div>
               ) : (
-                <div className="border rounded-lg p-6 h-96 flex items-center justify-center text-gray-500">
+                <div className="flex-1 flex items-center justify-center text-gray-500">
                   <div className="text-center">
                     <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Geen AI gegenereerde actie beschikbaar</p>
+                    <p className="text-base">Geen AI gegenereerde actie beschikbaar</p>
                   </div>
                 </div>
               )}
-            </TabsContent>
-          </Tabs>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
