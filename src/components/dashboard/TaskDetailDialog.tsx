@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { 
   CheckCircle, 
   Clock, 
@@ -14,8 +16,10 @@ import {
   Mail,
   MessageSquare,
   Calendar,
-  User,
-  FileText
+  FileText,
+  Edit,
+  Save,
+  X
 } from 'lucide-react';
 
 interface PendingTask {
@@ -67,7 +71,11 @@ export const TaskDetailDialog = ({
 }: TaskDetailDialogProps) => {
   const [originalEmail, setOriginalEmail] = useState<Email | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isEditingContent, setIsEditingContent] = useState(false);
+  const [editedContent, setEditedContent] = useState('');
+  const [editedSubject, setEditedSubject] = useState('');
   const { toast } = useToast();
+  const { selectedOrganization, selectedWorkspace } = useOrganization();
 
   const fetchOriginalEmail = async (emailId: string) => {
     setLoading(true);
@@ -100,6 +108,14 @@ export const TaskDetailDialog = ({
     }
   }, [task?.email_id, isOpen]);
 
+  useEffect(() => {
+    if (task && isOpen) {
+      setEditedContent(task.ai_draft_content || '');
+      setEditedSubject(task.ai_draft_subject || '');
+      setIsEditingContent(false);
+    }
+  }, [task, isOpen]);
+
   if (!task) return null;
 
   const getPriorityColor = (priority: string) => {
@@ -128,10 +144,19 @@ export const TaskDetailDialog = ({
   };
 
   const handleSendReply = async () => {
-    if (!task.ai_draft_content || !task.reply_to_email) {
+    if (!editedContent || !task.reply_to_email) {
       toast({
         title: "Fout",
         description: "Geen draft inhoud of e-mail adres beschikbaar",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!selectedOrganization) {
+      toast({
+        title: "Fout",
+        description: "Geen organisatie geselecteerd",
         variant: "destructive"
       });
       return;
@@ -142,8 +167,12 @@ export const TaskDetailDialog = ({
         body: {
           task_id: task.id,
           to_email: task.reply_to_email,
-          subject: task.ai_draft_subject || 'Re: ' + (originalEmail?.subject || task.title),
-          content: task.ai_draft_content
+          subject: editedSubject || 'Re: ' + (originalEmail?.subject || task.title),
+          content: editedContent,
+          organization_id: selectedOrganization.id,
+          workspace_id: selectedWorkspace?.id,
+          original_email_id: task.email_id,
+          thread_id: task.email_thread_id
         }
       });
 
@@ -166,6 +195,20 @@ export const TaskDetailDialog = ({
     }
   };
 
+  const handleSaveEdit = () => {
+    setIsEditingContent(false);
+    toast({
+      title: "Wijzigingen opgeslagen",
+      description: "Je kunt nu het aangepaste antwoord versturen"
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditedContent(task.ai_draft_content || '');
+    setEditedSubject(task.ai_draft_subject || '');
+    setIsEditingContent(false);
+  };
+
   const hasAIResponse = task.ai_draft_content && task.reply_to_email;
 
   return (
@@ -183,16 +226,11 @@ export const TaskDetailDialog = ({
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Badge variant="outline" className={`${getPriorityColor(task.priority)} text-xs px-2 py-1`}>
-                {task.priority}
+                {task.priority === 'high' ? 'Hoog' : task.priority === 'medium' ? 'Gemiddeld' : 'Laag'}
               </Badge>
               <Badge variant={task.status === 'completed' ? 'default' : 'outline'} className="text-xs px-2 py-1">
                 {task.status === 'completed' ? 'Voltooid' : 'Openstaand'}
               </Badge>
-              {task.ai_generated && (
-                <Badge variant="outline" className="bg-blue-100 text-blue-800 text-xs px-2 py-1">
-                  AI Gegenereerd
-                </Badge>
-              )}
             </div>
             
             <div className="flex gap-2">
@@ -217,15 +255,48 @@ export const TaskDetailDialog = ({
                 </Button>
               )}
               
-              {hasAIResponse && (
-                <Button
-                  onClick={handleSendReply}
-                  size="sm"
-                  className="flex items-center gap-1 px-3 py-1"
-                >
-                  <Send className="h-3 w-3" />
-                  Verstuur AI Antwoord
-                </Button>
+              {hasAIResponse && !isEditingContent && (
+                <>
+                  <Button
+                    onClick={() => setIsEditingContent(true)}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1 px-3 py-1"
+                  >
+                    <Edit className="h-3 w-3" />
+                    Bewerken
+                  </Button>
+                  <Button
+                    onClick={handleSendReply}
+                    size="sm"
+                    className="flex items-center gap-1 px-3 py-1"
+                  >
+                    <Send className="h-3 w-3" />
+                    Verstuur AI Antwoord
+                  </Button>
+                </>
+              )}
+
+              {isEditingContent && (
+                <>
+                  <Button
+                    onClick={handleCancelEdit}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1 px-3 py-1"
+                  >
+                    <X className="h-3 w-3" />
+                    Annuleren
+                  </Button>
+                  <Button
+                    onClick={handleSaveEdit}
+                    size="sm"
+                    className="flex items-center gap-1 px-3 py-1"
+                  >
+                    <Save className="h-3 w-3" />
+                    Opslaan
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -357,24 +428,41 @@ export const TaskDetailDialog = ({
               <div className="p-3 flex-1 min-h-0 flex flex-col">
                 {task.ai_draft_subject || task.ai_draft_content ? (
                   <div className="flex-1 flex flex-col min-h-0">
-                    {task.ai_draft_subject && (
+                    {(task.ai_draft_subject || editedSubject) && (
                       <div className="mb-3">
                         <span className="font-medium text-gray-600 text-xs">Onderwerp:</span>
-                        <div className="text-sm font-medium mt-1">{task.ai_draft_subject}</div>
+                        {isEditingContent ? (
+                          <input
+                            type="text"
+                            value={editedSubject}
+                            onChange={(e) => setEditedSubject(e.target.value)}
+                            className="w-full mt-1 px-2 py-1 border rounded text-sm"
+                          />
+                        ) : (
+                          <div className="text-sm font-medium mt-1">{editedSubject}</div>
+                        )}
                       </div>
                     )}
                     
                     {task.ai_draft_content && (
                       <>
-                        {task.ai_draft_subject && <Separator className="mb-3" />}
+                        {(task.ai_draft_subject || editedSubject) && <Separator className="mb-3" />}
                         <div className="mb-2">
                           <span className="font-medium text-gray-600 text-xs">AI Antwoord:</span>
                         </div>
-                        <ScrollArea className="flex-1 h-[400px]">
-                          <div className="whitespace-pre-wrap text-sm pr-3">
-                            {task.ai_draft_content}
-                          </div>
-                        </ScrollArea>
+                        {isEditingContent ? (
+                          <Textarea
+                            value={editedContent}
+                            onChange={(e) => setEditedContent(e.target.value)}
+                            className="flex-1 min-h-[400px] text-sm resize-none"
+                          />
+                        ) : (
+                          <ScrollArea className="flex-1 h-[400px]">
+                            <div className="whitespace-pre-wrap text-sm pr-3">
+                              {editedContent}
+                            </div>
+                          </ScrollArea>
+                        )}
                       </>
                     )}
                   </div>
