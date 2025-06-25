@@ -37,7 +37,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="!w-[95vw] !h-[95vh] !max-w-none !fixed !top-[2.5vh] !left-[2.5vw] !transform-none !translate-x-0 !translate-y-0 p-0 rounded-lg overflow-hidden flex flex-col">
+      <DialogContent className="!w-[95vw] !h-[98vh] !max-w-none !fixed !top-[1vh] !left-[2.5vw] !transform-none !translate-x-0 !translate-y-0 p-0 rounded-lg overflow-hidden flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3 flex-shrink-0">
           <DialogHeader>
