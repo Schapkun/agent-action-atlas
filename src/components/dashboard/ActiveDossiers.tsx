@@ -1,9 +1,9 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Search, 
   User, 
@@ -15,7 +15,9 @@ import {
   Filter,
   Clock,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useClientsWithDossiers } from '@/hooks/useClientsWithDossiers';
@@ -29,8 +31,8 @@ export const ActiveDossiers = () => {
   const [timelineFilter, setTimelineFilter] = useState<string>('all');
   const [periodFilter, setPeriodFilter] = useState<string>('all');
   const { selectedOrganization, selectedWorkspace } = useOrganization();
-  const { clients, loading: clientsLoading, refreshClients } = useClientsWithDossiers();
-  const { timelineItems, loading: timelineLoading } = useDossierTimeline(selectedClient);
+  const { clients, loading: clientsLoading, error: clientsError, refreshClients } = useClientsWithDossiers();
+  const { timelineItems, loading: timelineLoading, error: timelineError } = useDossierTimeline(selectedClient);
   const { toast } = useToast();
 
   const createExamples = async () => {
@@ -115,10 +117,30 @@ export const ActiveDossiers = () => {
       {/* Clients Sidebar */}
       <Card className="lg:col-span-1">
         <CardHeader>
-          <CardTitle className="text-lg">Klanten met Actieve Dossiers</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Klanten met Actieve Dossiers</CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={refreshClients}
+              disabled={clientsLoading}
+            >
+              <RefreshCw className={`h-4 w-4 ${clientsLoading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
           <div className="text-sm text-muted-foreground">
             {getContextInfo()}
           </div>
+          
+          {clientsError && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Database fout: {clientsError}
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
@@ -140,7 +162,9 @@ export const ActiveDossiers = () => {
           ) : filteredClients.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-sm mb-4">Geen klanten met actieve dossiers gevonden</p>
+              <p className="text-sm mb-4">
+                {clientsError ? 'Er ging iets mis bij het laden van klanten' : 'Geen klanten met actieve dossiers gevonden'}
+              </p>
               <Button onClick={createExamples} variant="outline" size="sm">
                 Voorbeeldklanten aanmaken
               </Button>
@@ -232,6 +256,15 @@ export const ActiveDossiers = () => {
               </div>
             )}
           </div>
+          
+          {timelineError && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Timeline fout: {timelineError}
+              </AlertDescription>
+            </Alert>
+          )}
         </CardHeader>
 
         <CardContent>
@@ -245,7 +278,9 @@ export const ActiveDossiers = () => {
           ) : filteredTimeline.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Geen communicatie of documenten gevonden</p>
+              <p className="text-sm">
+                {timelineError ? 'Er ging iets mis bij het laden van de tijdlijn' : 'Geen communicatie of documenten gevonden'}
+              </p>
             </div>
           ) : (
             <div className="space-y-4 max-h-[600px] overflow-y-auto">

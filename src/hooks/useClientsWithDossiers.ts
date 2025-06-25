@@ -26,19 +26,62 @@ interface ClientWithDossiers {
 export const useClientsWithDossiers = () => {
   const [clients, setClients] = useState<ClientWithDossiers[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
 
   const fetchClientsWithDossiers = async () => {
     if (!selectedOrganization) {
+      console.log('📋 No organization selected, clearing clients');
       setClients([]);
+      setError(null);
       return;
     }
 
     setLoading(true);
+    setError(null);
+    
     try {
       console.log('📋 Fetching clients with dossiers for organization:', selectedOrganization.id);
+      console.log('📋 Selected workspace:', selectedWorkspace?.id || 'none');
 
+      // First, let's check if we can access the clients table
+      const { data: clientsData, error: clientsError } = await supabase
+        .from('clients')
+        .select('id, name, email, phone, type, contact_person, city')
+        .eq('organization_id', selectedOrganization.id)
+        .limit(5); // Limit to test connection
+
+      if (clientsError) {
+        console.error('📋 Error accessing clients table:', clientsError);
+        throw new Error(`Clients table error: ${clientsError.message}`);
+      }
+
+      console.log('📋 Basic clients query successful:', clientsData?.length || 0, 'clients found');
+
+      // Now let's check if we can access the dossiers table
+      const { data: dossiersData, error: dossiersError } = await supabase
+        .from('dossiers')
+        .select('id, name, status, category, created_at, updated_at, client_id')
+        .eq('organization_id', selectedOrganization.id)
+        .limit(5); // Limit to test connection
+
+      if (dossiersError) {
+        console.error('📋 Error accessing dossiers table:', dossiersError);
+        // If dossiers table doesn't exist or has issues, return clients without dossiers
+        const clientsWithoutDossiers = (clientsData || []).map(client => ({
+          ...client,
+          dossiers: [],
+          dossier_count: 0
+        }));
+        setClients(clientsWithoutDossiers);
+        setError(`Dossiers table error: ${dossiersError.message}`);
+        return;
+      }
+
+      console.log('📋 Basic dossiers query successful:', dossiersData?.length || 0, 'dossiers found');
+
+      // Now try the join query
       let query = supabase
         .from('clients')
         .select(`
@@ -69,7 +112,37 @@ export const useClientsWithDossiers = () => {
       const { data, error } = await query;
 
       if (error) {
-        console.error('📋 Error fetching clients with dossiers:', error);
+        console.error('📋 Error in join query:', error);
+        
+        // Fallback: Get clients and dossiers separately
+        console.log('📋 Attempting fallback approach...');
+        
+        const clientsWithDossiers: ClientWithDossiers[] = [];
+        
+        if (clientsData) {
+          for (const client of clientsData) {
+            const { data: clientDossiers, error: clientDossiersError } = await supabase
+              .from('dossiers')
+              .select('id, name, status, category, created_at, updated_at')
+              .eq('client_id', client.id)
+              .eq('status', 'active');
+
+            if (!clientDossiersError && clientDossiers) {
+              clientsWithDossiers.push({
+                ...client,
+                dossiers: clientDossiers,
+                dossier_count: clientDossiers.length
+              });
+            }
+          }
+        }
+
+        if (clientsWithDossiers.length > 0) {
+          console.log('📋 Fallback successful:', clientsWithDossiers.length, 'clients with dossiers');
+          setClients(clientsWithDossiers);
+          return;
+        }
+
         throw error;
       }
 
@@ -79,13 +152,17 @@ export const useClientsWithDossiers = () => {
         dossier_count: client.dossiers?.length || 0
       }));
 
-      console.log('📋 Clients with dossiers fetched:', clientsWithDossiers.length);
+      console.log('📋 Clients with dossiers fetched successfully:', clientsWithDossiers.length);
       setClients(clientsWithDossiers);
-    } catch (error) {
-      console.error('Error fetching clients with dossiers:', error);
+      
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Unknown error occurred';
+      console.error('📋 Final error in fetchClientsWithDossiers:', error);
+      setError(errorMessage);
+      
       toast({
-        title: "Fout",
-        description: "Kon klanten met dossiers niet ophalen",
+        title: "Database Fout",
+        description: `Kon klanten met dossiers niet ophalen: ${errorMessage}`,
         variant: "destructive"
       });
     } finally {
@@ -100,6 +177,7 @@ export const useClientsWithDossiers = () => {
   return {
     clients,
     loading,
+    error,
     refreshClients: fetchClientsWithDossiers
   };
 };
