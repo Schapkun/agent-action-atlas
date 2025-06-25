@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -134,295 +133,282 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
       </DialogTrigger>
       <DialogContent className="w-screen h-screen max-w-none m-0 p-0 rounded-none">
         {/* Compact Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-2 flex-shrink-0">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 flex-shrink-0">
           <DialogHeader>
-            <div className="flex items-center gap-2">
-              <div className="bg-white/20 rounded-lg p-1">
-                <FolderPlus className="h-3 w-3" />
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 rounded-lg p-2">
+                <FolderPlus className="h-5 w-5" />
               </div>
               <div>
-                <DialogTitle className="text-base font-bold text-white">Nieuw Dossier</DialogTitle>
-                <p className="text-blue-100 text-xs">Maak een nieuw dossier aan</p>
+                <DialogTitle className="text-xl font-bold text-white">Nieuw Dossier</DialogTitle>
+                <p className="text-blue-100 text-sm">Maak een nieuw dossier aan</p>
               </div>
             </div>
           </DialogHeader>
         </div>
         
-        {/* Full screen content without overflow */}
-        <div className="flex-1 p-2 h-[calc(100vh-60px)]">
-          <form onSubmit={handleSubmit} className="h-full flex flex-col">
-            {/* 3-kolommen layout voor optimale ruimtebenutting */}
-            <div className="grid grid-cols-3 gap-2 flex-1">
+        {/* Single column content */}
+        <div className="flex-1 p-6 h-[calc(100vh-120px)] overflow-y-auto">
+          <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
+            
+            {/* Basisinformatie */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="bg-blue-600 rounded-lg p-2">
+                  <User className="h-4 w-4 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-blue-900">Basisinformatie</h3>
+              </div>
               
-              {/* Kolom 1: Basisinformatie + Client */}
-              <div className="space-y-2">
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="name" className="text-blue-900 font-medium">Naam *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Dossiernaam"
+                    required
+                    className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
                 
-                {/* Basic Information */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-2 border border-blue-200">
-                  <div className="flex items-center gap-1 mb-1">
-                    <div className="bg-blue-600 rounded-lg p-1">
-                      <User className="h-2 w-2 text-white" />
-                    </div>
-                    <h3 className="text-xs font-semibold text-blue-900">Basisinformatie</h3>
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <div>
-                      <Label htmlFor="name" className="text-blue-900 font-medium text-xs">Naam *</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="Dossiernaam"
-                        required
-                        className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-7 text-xs"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="reference" className="text-blue-900 font-medium text-xs">Referentie</Label>
-                      <Input
-                        id="reference"
-                        value={formData.reference}
-                        onChange={(e) => setFormData(prev => ({ ...prev, reference: e.target.value }))}
-                        placeholder="Referentienummer"
-                        className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-7 text-xs"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-1">
-                      <div>
-                        <Label htmlFor="category" className="text-blue-900 font-medium text-xs">Categorie</Label>
-                        <Select 
-                          value={formData.category} 
-                          onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-                        >
-                          <SelectTrigger className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-7 text-xs">
-                            <SelectValue placeholder="Selecteer" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="algemeen">Algemeen</SelectItem>
-                            <SelectItem value="juridisch">Juridisch</SelectItem>
-                            <SelectItem value="financieel">Financieel</SelectItem>
-                            <SelectItem value="hr">HR</SelectItem>
-                            <SelectItem value="project">Project</SelectItem>
-                            <SelectItem value="klacht">Klacht</SelectItem>
-                            <SelectItem value="onderzoek">Onderzoek</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="priority" className="text-blue-900 font-medium text-xs">Prioriteit</Label>
-                        <Select 
-                          value={formData.priority} 
-                          onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}
-                        >
-                          <SelectTrigger className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-7 text-xs">
-                            <SelectValue placeholder="Selecteer" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="low">
-                              <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                <span className="text-xs">Laag</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="medium">
-                              <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                                <span className="text-xs">Normaal</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="high">
-                              <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                                <span className="text-xs">Hoog</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="urgent">
-                              <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                                <span className="text-xs">Urgent</span>
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
+                <div>
+                  <Label htmlFor="reference" className="text-blue-900 font-medium">Referentie</Label>
+                  <Input
+                    id="reference"
+                    value={formData.reference}
+                    onChange={(e) => setFormData(prev => ({ ...prev, reference: e.target.value }))}
+                    placeholder="Referentienummer"
+                    className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                  />
                 </div>
 
-                {/* Compact Client Selection */}
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-2 border border-green-200">
-                  <div className="flex items-center gap-1 mb-1">
-                    <div className="bg-green-600 rounded-lg p-1">
-                      <Building2 className="h-2 w-2 text-white" />
-                    </div>
-                    <h3 className="text-xs font-semibold text-green-900">Client</h3>
-                  </div>
-                  
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="client_id" className="text-green-900 font-medium text-xs">Gekoppelde Client</Label>
+                    <Label htmlFor="category" className="text-blue-900 font-medium">Categorie</Label>
                     <Select 
-                      value={formData.client_id} 
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, client_id: value }))}
+                      value={formData.category} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
                     >
-                      <SelectTrigger className="mt-1 border-green-200 focus:border-green-500 focus:ring-green-500 h-7 text-xs">
-                        <SelectValue placeholder="Selecteer client" />
+                      <SelectTrigger className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                        <SelectValue placeholder="Selecteer" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="no_client">Geen client</SelectItem>
-                        {clients.map((client) => (
-                          <SelectItem key={client.id} value={client.id}>
-                            <div className="flex items-center justify-between w-full">
-                              <span className="text-xs">{client.name}</span>
-                              {client.contact_number && (
-                                <span className="text-xs text-gray-400 ml-2">#{client.contact_number}</span>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="algemeen">Algemeen</SelectItem>
+                        <SelectItem value="juridisch">Juridisch</SelectItem>
+                        <SelectItem value="financieel">Financieel</SelectItem>
+                        <SelectItem value="hr">HR</SelectItem>
+                        <SelectItem value="project">Project</SelectItem>
+                        <SelectItem value="klacht">Klacht</SelectItem>
+                        <SelectItem value="onderzoek">Onderzoek</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="priority" className="text-blue-900 font-medium">Prioriteit</Label>
+                    <Select 
+                      value={formData.priority} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}
+                    >
+                      <SelectTrigger className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                        <SelectValue placeholder="Selecteer" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                            <span>Laag</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="medium">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <span>Normaal</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="high">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                            <span>Hoog</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="urgent">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                            <span>Urgent</span>
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Kolom 2: Planning & Budget */}
-              <div className="space-y-2">
-                <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-2 border border-purple-200">
-                  <div className="flex items-center gap-1 mb-1">
-                    <div className="bg-purple-600 rounded-lg p-1">
-                      <Calendar className="h-2 w-2 text-white" />
-                    </div>
-                    <h3 className="text-xs font-semibold text-purple-900">Planning & Budget</h3>
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <div className="grid grid-cols-2 gap-1">
-                      <div>
-                        <Label htmlFor="start_date" className="text-purple-900 font-medium text-xs">Start</Label>
-                        <Input
-                          id="start_date"
-                          type="date"
-                          value={formData.start_date}
-                          onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                          className="mt-1 border-purple-200 focus:border-purple-500 focus:ring-purple-500 h-7 text-xs"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="end_date" className="text-purple-900 font-medium text-xs">Eind</Label>
-                        <Input
-                          id="end_date"
-                          type="date"
-                          value={formData.end_date}
-                          onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
-                          className="mt-1 border-purple-200 focus:border-purple-500 focus:ring-purple-500 h-7 text-xs"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="budget" className="text-purple-900 font-medium text-xs">Budget (€)</Label>
-                      <div className="relative mt-1">
-                        <CreditCard className="absolute left-2 top-2 h-2 w-2 text-purple-500" />
-                        <Input
-                          id="budget"
-                          type="number"
-                          step="0.01"
-                          value={formData.budget}
-                          onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
-                          placeholder="0.00"
-                          className="pl-6 border-purple-200 focus:border-purple-500 focus:ring-purple-500 h-7 text-xs"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="is_billable"
-                        checked={formData.is_billable}
-                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_billable: !!checked }))}
-                        className="border-purple-300 text-purple-600 focus:ring-purple-500"
-                      />
-                      <Label htmlFor="is_billable" className="text-purple-900 font-medium text-xs">Factuurbaar</Label>
-                    </div>
-                  </div>
+            {/* Client */}
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="bg-green-600 rounded-lg p-2">
+                  <Building2 className="h-4 w-4 text-white" />
                 </div>
+                <h3 className="text-lg font-semibold text-green-900">Client</h3>
               </div>
+              
+              <div>
+                <Label htmlFor="client_id" className="text-green-900 font-medium">Gekoppelde Client</Label>
+                <Select 
+                  value={formData.client_id} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, client_id: value }))}
+                >
+                  <SelectTrigger className="mt-1 border-green-200 focus:border-green-500 focus:ring-green-500">
+                    <SelectValue placeholder="Selecteer client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="no_client">Geen client</SelectItem>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        <div className="flex items-center justify-between w-full">
+                          <span>{client.name}</span>
+                          {client.contact_number && (
+                            <span className="text-gray-400 ml-2">#{client.contact_number}</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-              {/* Kolom 3: Beschrijving & Tags */}
-              <div className="space-y-2">
-                
-                {/* Description */}
-                <div className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg p-2 border border-gray-200">
-                  <div className="flex items-center gap-1 mb-1">
-                    <div className="bg-gray-600 rounded-lg p-1">
-                      <FileText className="h-2 w-2 text-white" />
-                    </div>
-                    <h3 className="text-xs font-semibold text-gray-900">Beschrijving</h3>
+            {/* Planning & Budget */}
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-200">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="bg-purple-600 rounded-lg p-2">
+                  <Calendar className="h-4 w-4 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-purple-900">Planning & Budget</h3>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="start_date" className="text-purple-900 font-medium">Start</Label>
+                    <Input
+                      id="start_date"
+                      type="date"
+                      value={formData.start_date}
+                      onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
+                      className="mt-1 border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                    />
                   </div>
                   
                   <div>
-                    <Label htmlFor="description" className="text-gray-900 font-medium text-xs">Omschrijving</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Beschrijving van het dossier"
-                      rows={8}
-                      className="mt-1 border-gray-200 focus:border-gray-500 focus:ring-gray-500 text-xs resize-none"
+                    <Label htmlFor="end_date" className="text-purple-900 font-medium">Eind</Label>
+                    <Input
+                      id="end_date"
+                      type="date"
+                      value={formData.end_date}
+                      onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
+                      className="mt-1 border-purple-200 focus:border-purple-500 focus:ring-purple-500"
                     />
                   </div>
                 </div>
 
-                {/* Tags */}
-                <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-2 border border-orange-200">
-                  <div className="flex items-center gap-1 mb-1">
-                    <div className="bg-orange-600 rounded-lg p-1">
-                      <Tag className="h-2 w-2 text-white" />
-                    </div>
-                    <h3 className="text-xs font-semibold text-orange-900">Tags</h3>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="tags" className="text-orange-900 font-medium text-xs">Labels</Label>
+                <div>
+                  <Label htmlFor="budget" className="text-purple-900 font-medium">Budget (€)</Label>
+                  <div className="relative mt-1">
+                    <CreditCard className="absolute left-3 top-3 h-4 w-4 text-purple-500" />
                     <Input
-                      id="tags"
-                      value={formData.tags}
-                      onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
-                      placeholder="urgent, project, review"
-                      className="mt-1 border-orange-200 focus:border-orange-500 focus:ring-orange-500 h-7 text-xs"
+                      id="budget"
+                      type="number"
+                      step="0.01"
+                      value={formData.budget}
+                      onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
+                      placeholder="0.00"
+                      className="pl-10 border-purple-200 focus:border-purple-500 focus:ring-purple-500"
                     />
-                    <p className="text-xs text-orange-600 mt-1">
-                      Gescheiden door komma's
-                    </p>
                   </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="is_billable"
+                    checked={formData.is_billable}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_billable: !!checked }))}
+                    className="border-purple-300 text-purple-600 focus:ring-purple-500"
+                  />
+                  <Label htmlFor="is_billable" className="text-purple-900 font-medium">Factuurbaar</Label>
                 </div>
               </div>
             </div>
 
-            {/* Action Buttons - Fixed at bottom */}
-            <div className="flex justify-end gap-2 pt-2 mt-2 border-t border-gray-200 flex-shrink-0">
+            {/* Beschrijving */}
+            <div className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg p-4 border border-gray-200">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="bg-gray-600 rounded-lg p-2">
+                  <FileText className="h-4 w-4 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Beschrijving</h3>
+              </div>
+              
+              <div>
+                <Label htmlFor="description" className="text-gray-900 font-medium">Omschrijving</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Beschrijving van het dossier"
+                  rows={4}
+                  className="mt-1 border-gray-200 focus:border-gray-500 focus:ring-gray-500 resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-4 border border-orange-200">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="bg-orange-600 rounded-lg p-2">
+                  <Tag className="h-4 w-4 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-orange-900">Tags</h3>
+              </div>
+              
+              <div>
+                <Label htmlFor="tags" className="text-orange-900 font-medium">Labels</Label>
+                <Input
+                  id="tags"
+                  value={formData.tags}
+                  onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
+                  placeholder="urgent, project, review"
+                  className="mt-1 border-orange-200 focus:border-orange-500 focus:ring-orange-500"
+                />
+                <p className="text-sm text-orange-600 mt-1">
+                  Gescheiden door komma's
+                </p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 pt-4">
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={() => setOpen(false)}
-                className="px-3 py-1 border-gray-300 text-gray-700 hover:bg-gray-50 h-7 text-xs"
+                className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
               >
                 Annuleren
               </Button>
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="px-3 py-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg h-7 text-xs"
+                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
               >
                 {loading ? (
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span className="text-xs">Bezig...</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Bezig...</span>
                   </div>
                 ) : (
                   'Aanmaken'
