@@ -29,7 +29,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
     name: '',
     description: '',
     category: 'algemeen',
-    client_id: '',
+    client_id: 'no_client',
     reference: '',
     priority: 'medium',
     start_date: '',
@@ -67,7 +67,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
         name: formData.name.trim(),
         description: formData.description.trim() || null,
         category: formData.category,
-        client_id: formData.client_id || null,
+        client_id: formData.client_id === 'no_client' ? null : formData.client_id,
         reference: formData.reference.trim() || null,
         priority: formData.priority,
         start_date: formData.start_date || null,
@@ -97,7 +97,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
         name: '',
         description: '',
         category: 'algemeen',
-        client_id: '',
+        client_id: 'no_client',
         reference: '',
         priority: 'medium',
         start_date: '',
@@ -232,7 +232,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                   <SelectValue placeholder="Selecteer een client (optioneel)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Geen client gekoppeld</SelectItem>
+                  <SelectItem value="no_client">Geen client gekoppeld</SelectItem>
                   {clients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
                       {client.name} {client.email && `(${client.email})`}
