@@ -81,7 +81,6 @@ export const TaskDetailDialog = ({
   const [originalEmail, setOriginalEmail] = useState<Email | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(false);
-  const [isEditingContent, setIsEditingContent] = useState(false);
   const [editedContent, setEditedContent] = useState('');
   const [editedSubject, setEditedSubject] = useState('');
   const { toast } = useToast();
@@ -143,11 +142,12 @@ export const TaskDetailDialog = ({
     if (task && isOpen) {
       setEditedContent(task.ai_draft_content || '');
       setEditedSubject(task.ai_draft_subject || '');
-      setIsEditingContent(false);
     }
   }, [task, isOpen]);
 
   if (!task) return null;
+
+  const isCompleted = task.status === 'completed';
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -167,7 +167,7 @@ export const TaskDetailDialog = ({
   };
 
   const getActionType = (task: PendingTask) => {
-    if (task.ai_draft_content) return 'E-mail Beantwoorden';
+    if (task.ai_draft_content) return isCompleted ? '✓ E-mail Verzonden' : 'E-mail Beantwoorden';
     if (task.task_type === 'document_creation') return 'Document Creatie';
     if (task.task_type === 'quote_creation') return 'Offerte Maken';
     return 'Algemene Taak';
@@ -239,49 +239,75 @@ export const TaskDetailDialog = ({
     }
   };
 
-  const handleSaveEdit = () => {
-    setIsEditingContent(false);
-    toast({
-      title: "Wijzigingen opgeslagen",
-      description: "Je kunt nu het aangepaste antwoord versturen"
-    });
-  };
-
-  const handleCancelEdit = () => {
-    setEditedContent(task.ai_draft_content || '');
-    setEditedSubject(task.ai_draft_subject || '');
-    setIsEditingContent(false);
-  };
-
   const handleClientDossier = () => {
-    toast({
-      title: "Klant Dossier",
-      description: "Navigatie naar klant dossier wordt geïmplementeerd"
-    });
+    // Navigate to client detail or open client management
+    if (task.client_id) {
+      toast({
+        title: "Klant Dossier",
+        description: `Navigatie naar klant ${getClientName()}`
+      });
+      // TODO: Implement navigation to client details
+    } else {
+      toast({
+        title: "Geen klant gekoppeld",
+        description: "Er is geen klant aan deze taak gekoppeld",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleCommunicationHistory = () => {
-    toast({
-      title: "Communicatie Historie",
-      description: "Communicatie historie wordt geladen"
-    });
+    // Show communication history for this client/email thread
+    if (task.client_id || task.email_thread_id) {
+      toast({
+        title: "Communicatie Historie",
+        description: "Laadt communicatie geschiedenis..."
+      });
+      // TODO: Implement communication history dialog
+    } else {
+      toast({
+        title: "Geen historie beschikbaar",
+        description: "Er is geen communicatie historie beschikbaar",
+        variant: "destructive"
+      });
+    }
   };
 
   const hasAIResponse = task.ai_draft_content && task.reply_to_email;
 
+  // Header gradient colors based on status
+  const headerGradient = isCompleted 
+    ? 'bg-gradient-to-r from-green-600 to-emerald-600' 
+    : 'bg-gradient-to-r from-blue-600 to-purple-600';
+
+  // Right panel colors based on status
+  const rightPanelHeaderBg = isCompleted ? 'bg-green-50' : 'bg-blue-50';
+  const rightPanelHeaderIcon = isCompleted ? 'bg-green-100' : 'bg-blue-100';
+  const rightPanelHeaderText = isCompleted ? 'text-green-800' : 'text-blue-800';
+  const rightPanelSubText = isCompleted ? 'text-green-600' : 'text-blue-600';
+  const rightPanelTitle = isCompleted ? 'Verzonden Antwoord' : 'Concept Antwoord';
+  const rightPanelStatus = isCompleted ? 'Verzonden om ' + new Date(task.updated_at).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }) : 'Klaar om te versturen';
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 flex flex-col overflow-hidden">
-        {/* Compact Header met Action Type - Gradient */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 flex-shrink-0">
+        {/* Compact Header met Action Type - Status-aware Gradient */}
+        <div className={`${headerGradient} text-white px-6 py-3 flex-shrink-0`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="bg-white/20 rounded-lg p-1.5">
-                <Mail className="w-4 h-4" />
+                {isCompleted ? (
+                  <CheckCircle className="w-4 h-4" />
+                ) : (
+                  <Mail className="w-4 h-4" />
+                )}
               </div>
               <div>
                 <h1 className="text-base font-semibold">{getActionType(task)}</h1>
-                <p className="text-white/80 text-xs">{getClientName()} - {getClientEmail()}</p>
+                <p className="text-white/80 text-xs">
+                  {getClientName()} - {getClientEmail()}
+                  {isCompleted && ` • Voltooid om ${new Date(task.updated_at).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}`}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -289,7 +315,7 @@ export const TaskDetailDialog = ({
                 {task.priority === 'high' ? 'Hoog' : task.priority === 'medium' ? 'Gemiddeld' : 'Laag'}
               </span>
               <span className={`${getStatusColor(task.status)} px-2 py-1 rounded-full text-xs font-semibold`}>
-                {task.status === 'completed' ? 'Klaar' : 'Open'}
+                {isCompleted ? '✓ Voltooid' : 'Open'}
               </span>
             </div>
           </div>
@@ -378,64 +404,80 @@ export const TaskDetailDialog = ({
             </div>
           </div>
 
-          {/* Right Panel - Concept Antwoord (Editable) */}
+          {/* Right Panel - Concept/Verzonden Antwoord */}
           <div className="w-1/2 flex flex-col">
-            {/* Panel Header */}
-            <div className="bg-blue-50 border-b px-4 py-2 flex items-center gap-3 flex-shrink-0">
-              <div className="bg-blue-100 p-1.5 rounded-lg">
-                <MessageSquare className="w-3 h-3 text-blue-600" />
+            {/* Panel Header - Status-aware */}
+            <div className={`${rightPanelHeaderBg} border-b px-4 py-2 flex items-center gap-3 flex-shrink-0`}>
+              <div className={`${rightPanelHeaderIcon} p-1.5 rounded-lg`}>
+                {isCompleted ? (
+                  <CheckCircle className={`w-3 h-3 ${rightPanelSubText}`} />
+                ) : (
+                  <MessageSquare className={`w-3 h-3 ${rightPanelSubText}`} />
+                )}
               </div>
               <div>
-                <h3 className="font-semibold text-blue-800 text-sm">Concept Antwoord</h3>
-                <p className="text-xs text-blue-600 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
-                  Klaar om te versturen
+                <h3 className={`font-semibold ${rightPanelHeaderText} text-sm`}>{rightPanelTitle}</h3>
+                <p className={`text-xs ${rightPanelSubText} flex items-center gap-1`}>
+                  <span className={`w-1.5 h-1.5 ${isCompleted ? 'bg-green-500' : 'bg-green-400'} rounded-full`}></span>
+                  {rightPanelStatus}
                 </p>
               </div>
+              {isCompleted && (
+                <div className="ml-auto bg-green-500 text-white px-2 py-0.5 rounded text-xs font-medium">VERZONDEN</div>
+              )}
             </div>
 
             <div className="p-4 flex-1 flex flex-col min-h-0">
               {task.ai_draft_subject || task.ai_draft_content ? (
                 <>
-                  {/* Compacte Email metadata op 1 regel */}
+                  {/* Compacte Email metadata op 1 regel - JUISTE VOLGORDE */}
                   <div className="space-y-2 flex-shrink-0 mb-3">
-                    {/* VAN en AAN op 1 regel - JUISTE VOLGORDE */}
+                    {/* AAN en VAN op 1 regel */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">VAN</label>
-                        <input 
-                          type="text" 
-                          value={selectedOrganization?.name || 'info@bedrijf.nl'}
-                          className="w-full border border-blue-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                          readOnly
-                        />
+                        <label className="block text-xs font-medium text-gray-700 mb-1">AAN</label>
+                        {isCompleted ? (
+                          <div className="bg-green-50 border border-green-200 rounded px-2 py-1 text-xs text-gray-600">
+                            {task.reply_to_email}
+                          </div>
+                        ) : (
+                          <input 
+                            type="text" 
+                            value={task.reply_to_email || ''}
+                            className="w-full border border-blue-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            readOnly
+                          />
+                        )}
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">AAN</label>
-                        <input 
-                          type="text" 
-                          value={task.reply_to_email || ''}
-                          className="w-full border border-blue-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                          readOnly
-                        />
+                        <label className="block text-xs font-medium text-gray-700 mb-1">VAN</label>
+                        {isCompleted ? (
+                          <div className="bg-green-50 border border-green-200 rounded px-2 py-1 text-xs text-gray-600">
+                            {selectedOrganization?.name || 'info@bedrijf.nl'}
+                          </div>
+                        ) : (
+                          <input 
+                            type="text" 
+                            value={selectedOrganization?.name || 'info@bedrijf.nl'}
+                            className="w-full border border-blue-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            readOnly
+                          />
+                        )}
                       </div>
                     </div>
                     
                     {/* ONDERWERP compacter */}
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">ONDERWERP</label>
-                      {isEditingContent ? (
+                      {isCompleted ? (
+                        <div className="bg-green-50 border border-green-200 rounded px-2 py-1 text-xs text-gray-600">
+                          {editedSubject || task.ai_draft_subject || ''}
+                        </div>
+                      ) : (
                         <Input
                           value={editedSubject}
                           onChange={(e) => setEditedSubject(e.target.value)}
                           className="text-xs px-2 py-1 border-blue-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                      ) : (
-                        <input 
-                          type="text" 
-                          value={editedSubject || task.ai_draft_subject || ''}
-                          className="w-full border border-blue-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                          readOnly
                         />
                       )}
                     </div>
@@ -444,22 +486,22 @@ export const TaskDetailDialog = ({
                   {/* Divider */}
                   <div className="border-t border-gray-200 mb-3 flex-shrink-0"></div>
 
-                  {/* Email content met juiste hoogte */}
+                  {/* Email content met juiste hoogte - Direct editable of read-only */}
                   <div className="flex-1 min-h-0">
                     <label className="block text-xs font-medium text-gray-700 mb-2">BERICHT</label>
-                    {isEditingContent ? (
+                    {isCompleted ? (
+                      <div className="bg-green-50 border border-green-200 rounded p-3 h-full overflow-y-auto">
+                        <div className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">
+                          {editedContent || task.ai_draft_content}
+                        </div>
+                      </div>
+                    ) : (
                       <textarea 
                         value={editedContent}
                         onChange={(e) => setEditedContent(e.target.value)}
                         className="w-full border border-blue-200 rounded p-3 h-full text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
                         placeholder="Typ je antwoord hier..."
                       />
-                    ) : (
-                      <div className="w-full border border-blue-200 rounded p-3 h-full overflow-y-auto">
-                        <div className="text-xs whitespace-pre-wrap">
-                          {editedContent || task.ai_draft_content}
-                        </div>
-                      </div>
                     )}
                   </div>
                 </>
@@ -495,38 +537,6 @@ export const TaskDetailDialog = ({
           </div>
           
           <div className="flex items-center gap-3">
-            {isEditingContent && (
-              <>
-                <Button
-                  onClick={handleCancelEdit}
-                  variant="outline"
-                  size="sm"
-                  className="text-sm font-medium"
-                >
-                  Annuleren
-                </Button>
-                <Button
-                  onClick={handleSaveEdit}
-                  size="sm"
-                  className="text-sm font-medium"
-                >
-                  Opslaan
-                </Button>
-              </>
-            )}
-            
-            {!isEditingContent && hasAIResponse && (
-              <Button
-                onClick={() => setIsEditingContent(true)}
-                variant="outline"
-                size="sm"
-                className="text-sm font-medium"
-              >
-                <Edit className="w-4 h-4 mr-1" />
-                Bewerken
-              </Button>
-            )}
-            
             <button 
               onClick={onClose}
               className="px-6 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
@@ -534,13 +544,13 @@ export const TaskDetailDialog = ({
               Sluiten
             </button>
             
-            {hasAIResponse && !isEditingContent && (
+            {hasAIResponse && !isCompleted && (
               <button 
                 onClick={handleSendReply}
                 className="px-6 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
               >
                 <Send className="w-4 h-4" />
-                Verstuur E-mail
+                Taak uitvoeren
               </button>
             )}
           </div>
