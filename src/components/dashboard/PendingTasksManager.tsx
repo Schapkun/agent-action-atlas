@@ -212,6 +212,14 @@ export const PendingTasksManager = () => {
     }
   };
 
+  const handleViewTask = (task: PendingTask) => {
+    console.log('Viewing task:', task.title);
+    toast({
+      title: "Taak Details",
+      description: `${task.title} wordt bekeken`
+    });
+  };
+
   useEffect(() => {
     fetchTasks();
   }, [selectedOrganization, selectedWorkspace]);
@@ -257,7 +265,7 @@ export const PendingTasksManager = () => {
   };
 
   const getPriorityBadge = (priority: string, status: string) => {
-    // Don't show priority badge for completed tasks
+    // Only show priority badge for open tasks
     if (status === 'completed') return null;
     
     switch (priority) {
@@ -272,6 +280,14 @@ export const PendingTasksManager = () => {
     }
   };
 
+  const getStatusBadge = (status: string) => {
+    if (status === 'completed') {
+      return <Badge variant="default" className="text-xs bg-green-100 text-green-800">Voltooid</Badge>;
+    } else {
+      return <Badge variant="outline" className="text-xs">Openstaand</Badge>;
+    }
+  };
+
   const TaskCard = ({ task }: { task: PendingTask }) => (
     <Card key={task.id} className="hover:shadow-sm transition-shadow">
       <CardContent className="p-4">
@@ -279,6 +295,7 @@ export const PendingTasksManager = () => {
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-sm">{task.title}</h3>
+              {getStatusBadge(task.status)}
               {getPriorityBadge(task.priority, task.status)}
             </div>
             
@@ -289,7 +306,7 @@ export const PendingTasksManager = () => {
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                <span>{new Date(task.created_at).toLocaleDateString('nl-NL')}</span>
+                <span>{new Date(task.created_at).toLocaleDateString('nl-NL')} {new Date(task.created_at).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
               
               {task.due_date && (
@@ -306,6 +323,7 @@ export const PendingTasksManager = () => {
               size="sm"
               variant="outline"
               className="h-8 px-3"
+              onClick={() => handleViewTask(task)}
             >
               <Eye className="h-3 w-3 mr-1" />
               Bekijken
@@ -315,7 +333,7 @@ export const PendingTasksManager = () => {
               size="sm"
               variant="ghost"
               onClick={() => deleteTask(task.id)}
-              className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+              className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
             >
               <Trash2 className="h-3 w-3" />
             </Button>
