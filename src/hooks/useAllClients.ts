@@ -12,6 +12,7 @@ interface Client {
   type?: string;
   contact_person?: string;
   city?: string;
+  contact_number?: string;
 }
 
 export const useAllClients = () => {
@@ -38,7 +39,7 @@ export const useAllClients = () => {
 
       let query = supabase
         .from('clients')
-        .select('id, name, email, phone, type, contact_person, city')
+        .select('id, name, email, phone, type, contact_person, city, contact_number')
         .eq('organization_id', selectedOrganization.id)
         .order('name');
 
