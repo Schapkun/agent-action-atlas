@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -21,6 +20,7 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { useClientsWithDossiers } from '@/hooks/useClientsWithDossiers';
 import { useDossierTimeline } from '@/hooks/useDossierTimeline';
 import { createExampleClients } from '@/data/exampleClients';
+import { createExampleDossiers } from '@/data/exampleDossiers';
 import { useToast } from '@/hooks/use-toast';
 
 export const ActiveDossiers = () => {
@@ -37,16 +37,21 @@ export const ActiveDossiers = () => {
     if (!selectedOrganization) return;
     
     try {
+      // First create clients
       await createExampleClients(selectedOrganization.id, selectedWorkspace?.id);
+      
+      // Then create dossiers for those clients
+      await createExampleDossiers(selectedOrganization.id, selectedWorkspace?.id);
+      
       toast({
         title: "Succes",
-        description: "Voorbeeldklanten aangemaakt"
+        description: "Voorbeeldklanten en dossiers aangemaakt"
       });
       refreshClients();
     } catch (error) {
       toast({
         title: "Fout",
-        description: "Kon voorbeeldklanten niet aanmaken",
+        description: "Kon voorbeelddata niet aanmaken",
         variant: "destructive"
       });
     }
@@ -115,7 +120,7 @@ export const ActiveDossiers = () => {
       {/* Clients Sidebar */}
       <Card className="lg:col-span-1">
         <CardHeader>
-          <CardTitle className="text-lg">Klanten met Actieve Dossiers</CardTitle>
+          <CardTitle className="text-lg">Klanten</CardTitle>
           <div className="text-sm text-muted-foreground">
             {getContextInfo()}
           </div>
@@ -140,9 +145,9 @@ export const ActiveDossiers = () => {
           ) : filteredClients.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-sm mb-4">Geen klanten met actieve dossiers gevonden</p>
+              <p className="text-sm mb-4">Geen klanten gevonden</p>
               <Button onClick={createExamples} variant="outline" size="sm">
-                Voorbeeldklanten aanmaken
+                Voorbeelddata aanmaken
               </Button>
             </div>
           ) : (
