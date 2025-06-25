@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -18,13 +17,15 @@ import {
   Clock,
   AlertCircle,
   CreditCard,
-  FileCheck
+  FileCheck,
+  Plus
 } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useClientsWithDossiers } from '@/hooks/useClientsWithDossiers';
 import { useDossierTimeline } from '@/hooks/useDossierTimeline';
 import { createExampleClients } from '@/data/exampleClients';
 import { useToast } from '@/hooks/use-toast';
+import { EnhancedCreateDossierDialog } from '@/components/dossiers/EnhancedCreateDossierDialog';
 
 export const ActiveDossiers = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -53,6 +54,14 @@ export const ActiveDossiers = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const handleDossierCreated = () => {
+    refreshClients();
+    toast({
+      title: "Succes",
+      description: "Dossier succesvol aangemaakt en lijst ververst"
+    });
   };
 
   const getContextInfo = () => {
@@ -261,7 +270,7 @@ export const ActiveDossiers = () => {
 
         {/* RIGHT PANEL: Dossier Timeline */}
         <div className="flex-1 flex flex-col">
-          {/* Timeline Header with Filter */}
+          {/* Timeline Header with Filter and New Dossier Button */}
           <div className="p-6 border-b border-gray-200 bg-gray-50">
             {selectedClientData ? (
               <>
@@ -274,6 +283,12 @@ export const ActiveDossiers = () => {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
+                    <EnhancedCreateDossierDialog onDossierCreated={handleDossierCreated}>
+                      <Button size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Nieuw Dossier
+                      </Button>
+                    </EnhancedCreateDossierDialog>
                     <Badge className="bg-green-100 text-green-800 border-green-200">Actief</Badge>
                   </div>
                 </div>
@@ -311,9 +326,17 @@ export const ActiveDossiers = () => {
                 </div>
               </>
             ) : (
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Selecteer een client</h2>
-                <p className="text-sm text-gray-600">Kies een client uit de lijst om de dossier tijdlijn te bekijken</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Selecteer een client</h2>
+                  <p className="text-sm text-gray-600">Kies een client uit de lijst om de dossier tijdlijn te bekijken</p>
+                </div>
+                <EnhancedCreateDossierDialog onDossierCreated={handleDossierCreated}>
+                  <Button size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nieuw Dossier
+                  </Button>
+                </EnhancedCreateDossierDialog>
               </div>
             )}
             

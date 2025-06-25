@@ -478,41 +478,68 @@ export type Database = {
       }
       dossiers: {
         Row: {
+          budget: number | null
           category: string | null
           client_id: string | null
           created_at: string
           created_by: string | null
           description: string | null
+          dossier_number: string | null
+          end_date: string | null
           id: string
+          is_billable: boolean | null
           name: string
           organization_id: string
+          priority: string | null
+          reference: string | null
+          responsible_user_id: string | null
+          start_date: string | null
           status: string
+          tags: string[] | null
           updated_at: string
           workspace_id: string | null
         }
         Insert: {
+          budget?: number | null
           category?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
+          dossier_number?: string | null
+          end_date?: string | null
           id?: string
+          is_billable?: boolean | null
           name: string
           organization_id: string
+          priority?: string | null
+          reference?: string | null
+          responsible_user_id?: string | null
+          start_date?: string | null
           status?: string
+          tags?: string[] | null
           updated_at?: string
           workspace_id?: string | null
         }
         Update: {
+          budget?: number | null
           category?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
+          dossier_number?: string | null
+          end_date?: string | null
           id?: string
+          is_billable?: boolean | null
           name?: string
           organization_id?: string
+          priority?: string | null
+          reference?: string | null
+          responsible_user_id?: string | null
+          start_date?: string | null
           status?: string
+          tags?: string[] | null
           updated_at?: string
           workspace_id?: string | null
         }
@@ -1037,6 +1064,7 @@ export type Database = {
           default_payment_terms: number | null
           default_quote_footer_text: string | null
           default_vat_rate: number | null
+          dossier_prefix: string | null
           id: string
           invoice_prefix: string | null
           invoice_start_number: number | null
@@ -1066,6 +1094,7 @@ export type Database = {
           default_payment_terms?: number | null
           default_quote_footer_text?: string | null
           default_vat_rate?: number | null
+          dossier_prefix?: string | null
           id?: string
           invoice_prefix?: string | null
           invoice_start_number?: number | null
@@ -1095,6 +1124,7 @@ export type Database = {
           default_payment_terms?: number | null
           default_quote_footer_text?: string | null
           default_vat_rate?: number | null
+          dossier_prefix?: string | null
           id?: string
           invoice_prefix?: string | null
           invoice_start_number?: number | null
@@ -1752,6 +1782,10 @@ export type Database = {
     Functions: {
       generate_contact_number: {
         Args: { org_id: string }
+        Returns: string
+      }
+      generate_dossier_number: {
+        Args: { org_id: string; workspace_id?: string }
         Returns: string
       }
       generate_hierarchical_contact_number: {
