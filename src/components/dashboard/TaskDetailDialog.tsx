@@ -151,10 +151,18 @@ export const TaskDetailDialog = ({
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'high': return 'bg-yellow-400 text-yellow-900';
+      case 'medium': return 'bg-blue-400 text-blue-900';
+      case 'low': return 'bg-green-400 text-green-900';
+      default: return 'bg-gray-400 text-gray-900';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-green-400 text-green-900';
+      case 'open': return 'bg-blue-400 text-blue-900';
+      default: return 'bg-gray-400 text-gray-900';
     }
   };
 
@@ -167,6 +175,10 @@ export const TaskDetailDialog = ({
 
   const getClientName = () => {
     return client?.name || 'Onbekende Klant';
+  };
+
+  const getClientEmail = () => {
+    return client?.email || task.reply_to_email || 'Onbekend e-mail';
   };
 
   const handleStatusChange = () => {
@@ -259,264 +271,277 @@ export const TaskDetailDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 flex flex-col">
-        {/* Compact Header */}
-        <DialogHeader className="flex-shrink-0 px-4 py-3 border-b">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 flex flex-col overflow-hidden">
+        {/* Compact Header met Action Type - Gradient */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle className="text-lg font-semibold text-gray-900">
-                {getActionType(task)}
-              </DialogTitle>
-              <p className="text-sm text-gray-600 mt-1">
-                {getClientName()}
-              </p>
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 rounded-lg p-1.5">
+                <Mail className="w-4 h-4" />
+              </div>
+              <div>
+                <h1 className="text-base font-semibold">{getActionType(task)}</h1>
+                <p className="text-white/80 text-xs">{getClientName()} - {getClientEmail()}</p>
+              </div>
             </div>
-            
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className={`${getPriorityColor(task.priority)} text-xs`}>
+              <span className={`${getPriorityColor(task.priority)} px-2 py-1 rounded-full text-xs font-semibold`}>
                 {task.priority === 'high' ? 'Hoog' : task.priority === 'medium' ? 'Gemiddeld' : 'Laag'}
-              </Badge>
-              <Badge variant={task.status === 'completed' ? 'default' : 'outline'} className="text-xs">
-                {task.status === 'completed' ? 'Voltooid' : 'Openstaand'}
-              </Badge>
-            </div>
-          </div>
-        </DialogHeader>
-
-        {/* Main Content */}
-        <div className="flex-1 min-h-0 p-4">
-          <div className="grid grid-cols-2 gap-4 h-full">
-            {/* Left Panel - Original Email */}
-            <div className="border rounded-lg flex flex-col h-full">
-              <div className="bg-gray-50 px-3 py-2 border-b rounded-t-lg flex-shrink-0">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-gray-600" />
-                    <h3 className="text-sm font-medium text-gray-800">Originele E-mail</h3>
-                  </div>
-                  <Badge variant="outline" className="bg-gray-100 text-gray-600 text-xs">
-                    READ-ONLY
-                  </Badge>
-                </div>
-              </div>
-              
-              <div className="p-3 flex-1 min-h-0 flex flex-col">
-                {loading ? (
-                  <div className="flex items-center justify-center flex-1">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-600"></div>
-                  </div>
-                ) : originalEmail ? (
-                  <div className="flex-1 flex flex-col min-h-0">
-                    <div className="space-y-2 mb-3 flex-shrink-0">
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <span className="font-medium text-gray-600 text-xs">VAN:</span>
-                          <div className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-700 truncate">
-                            {originalEmail.from_email}
-                          </div>
-                        </div>
-                        <div>
-                          <span className="font-medium text-gray-600 text-xs">AAN:</span>
-                          <div className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-700 truncate">
-                            {originalEmail.to_email}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <span className="font-medium text-gray-600 text-xs">ONDERWERP:</span>
-                        <div className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-700 font-medium">
-                          {originalEmail.subject}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <Separator className="mb-3 flex-shrink-0" />
-                    
-                    <div className="flex-1 min-h-0">
-                      <span className="font-medium text-gray-600 text-xs">BERICHT:</span>
-                      <ScrollArea className="h-full mt-1">
-                        <div className="bg-gray-100 px-3 py-2 rounded min-h-full">
-                          {originalEmail.body_html ? (
-                            <div 
-                              className="prose prose-xs max-w-none text-xs text-gray-700"
-                              dangerouslySetInnerHTML={{ __html: originalEmail.body_html }}
-                            />
-                          ) : (
-                            <div className="whitespace-pre-wrap text-xs text-gray-700">
-                              {originalEmail.body_text || originalEmail.content || 'Geen inhoud beschikbaar'}
-                            </div>
-                          )}
-                        </div>
-                      </ScrollArea>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex-1 flex items-center justify-center text-gray-500">
-                    <div className="text-center">
-                      <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">Geen origineel bericht beschikbaar</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Right Panel - AI Response */}
-            <div className="border rounded-lg flex flex-col h-full">
-              <div className="bg-blue-50 px-3 py-2 border-b rounded-t-lg flex-shrink-0">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-blue-600" />
-                    <h3 className="text-sm font-medium text-blue-800">Concept Antwoord</h3>
-                  </div>
-                  {!isEditingContent && hasAIResponse && (
-                    <Button
-                      onClick={() => setIsEditingContent(true)}
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 px-2 text-xs text-blue-600"
-                    >
-                      <Edit className="h-3 w-3 mr-1" />
-                      Bewerken
-                    </Button>
-                  )}
-                </div>
-              </div>
-              
-              <div className="p-3 flex-1 min-h-0 flex flex-col">
-                {task.ai_draft_subject || task.ai_draft_content ? (
-                  <div className="flex-1 flex flex-col min-h-0">
-                    <div className="space-y-2 mb-3 flex-shrink-0">
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <span className="font-medium text-gray-600 text-xs">VAN:</span>
-                          <div className="text-xs bg-white px-2 py-1 rounded border">
-                            {selectedOrganization?.name || 'info@bedrijf.nl'}
-                          </div>
-                        </div>
-                        <div>
-                          <span className="font-medium text-gray-600 text-xs">AAN:</span>
-                          <div className="text-xs bg-white px-2 py-1 rounded border truncate">
-                            {task.reply_to_email}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <span className="font-medium text-gray-600 text-xs">ONDERWERP:</span>
-                        {isEditingContent ? (
-                          <Input
-                            value={editedSubject}
-                            onChange={(e) => setEditedSubject(e.target.value)}
-                            className="h-7 text-xs px-2 py-1"
-                          />
-                        ) : (
-                          <div className="text-xs bg-white px-2 py-1 rounded border font-medium">
-                            {editedSubject || task.ai_draft_subject}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <Separator className="mb-3 flex-shrink-0" />
-                    
-                    <div className="flex-1 min-h-0">
-                      <span className="font-medium text-gray-600 text-xs">BERICHT:</span>
-                      {isEditingContent ? (
-                        <Textarea
-                          value={editedContent}
-                          onChange={(e) => setEditedContent(e.target.value)}
-                          className="mt-1 h-full text-xs resize-none px-3 py-2"
-                        />
-                      ) : (
-                        <ScrollArea className="h-full mt-1">
-                          <div className="bg-white px-3 py-2 rounded border min-h-full">
-                            <div className="whitespace-pre-wrap text-xs">
-                              {editedContent || task.ai_draft_content}
-                            </div>
-                          </div>
-                        </ScrollArea>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex-1 flex items-center justify-center text-gray-500">
-                    <div className="text-center">
-                      <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">Geen AI gegenereerde actie beschikbaar</p>
-                    </div>
-                  </div>
-                )}
-              </div>
+              </span>
+              <span className={`${getStatusColor(task.status)} px-2 py-1 rounded-full text-xs font-semibold`}>
+                {task.status === 'completed' ? 'Klaar' : 'Open'}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex-shrink-0 flex items-center justify-between p-4 border-t bg-gray-50">
-          <div className="flex gap-2">
-            <Button
+        {/* Main Content Area - Fixed Height */}
+        <div className="h-[600px] flex flex-1 min-h-0">
+          {/* Left Panel - Originele E-mail (Read-only) */}
+          <div className="w-1/2 border-r flex flex-col">
+            {/* Panel Header */}
+            <div className="bg-amber-50 border-b px-4 py-2 flex items-center gap-3 flex-shrink-0">
+              <div className="bg-amber-100 p-1.5 rounded-lg">
+                <Mail className="w-3 h-3 text-amber-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-amber-800 text-sm">Originele E-mail</h3>
+                <p className="text-xs text-amber-600">
+                  Ontvangen: {originalEmail ? new Date(originalEmail.received_at).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }) + ' vandaag' : 'Onbekend'}
+                </p>
+              </div>
+              <div className="ml-auto bg-gray-400 text-white px-2 py-0.5 rounded text-xs font-medium">READ-ONLY</div>
+            </div>
+
+            <div className="p-4 flex-1 flex flex-col min-h-0">
+              {loading ? (
+                <div className="flex items-center justify-center flex-1">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-600"></div>
+                </div>
+              ) : originalEmail ? (
+                <>
+                  {/* Compacte Email metadata op 1 regel */}
+                  <div className="space-y-2 flex-shrink-0 mb-3">
+                    {/* VAN en AAN op 1 regel */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">VAN</label>
+                        <div className="bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs text-gray-600">
+                          {originalEmail.from_email}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">AAN</label>
+                        <div className="bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs text-gray-600">
+                          {originalEmail.to_email}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* ONDERWERP compacter */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">ONDERWERP</label>
+                      <div className="bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs text-gray-600">
+                        {originalEmail.subject}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-200 mb-3 flex-shrink-0"></div>
+
+                  {/* Email content met juiste hoogte */}
+                  <div className="flex-1 min-h-0">
+                    <label className="block text-xs font-medium text-gray-500 mb-2">BERICHT</label>
+                    <div className="bg-gray-50 border border-gray-200 rounded p-3 h-full overflow-y-auto">
+                      {originalEmail.body_html ? (
+                        <div 
+                          className="text-xs text-gray-600 leading-relaxed"
+                          dangerouslySetInnerHTML={{ __html: originalEmail.body_html }}
+                        />
+                      ) : (
+                        <div className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">
+                          {originalEmail.body_text || originalEmail.content || 'Geen inhoud beschikbaar'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-gray-500">
+                  <div className="text-center">
+                    <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Geen origineel bericht beschikbaar</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Panel - Concept Antwoord (Editable) */}
+          <div className="w-1/2 flex flex-col">
+            {/* Panel Header */}
+            <div className="bg-blue-50 border-b px-4 py-2 flex items-center gap-3 flex-shrink-0">
+              <div className="bg-blue-100 p-1.5 rounded-lg">
+                <MessageSquare className="w-3 h-3 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-blue-800 text-sm">Concept Antwoord</h3>
+                <p className="text-xs text-blue-600 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+                  Klaar om te versturen
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 flex-1 flex flex-col min-h-0">
+              {task.ai_draft_subject || task.ai_draft_content ? (
+                <>
+                  {/* Compacte Email metadata op 1 regel */}
+                  <div className="space-y-2 flex-shrink-0 mb-3">
+                    {/* VAN en AAN op 1 regel - JUISTE VOLGORDE */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">VAN</label>
+                        <input 
+                          type="text" 
+                          value={selectedOrganization?.name || 'info@bedrijf.nl'}
+                          className="w-full border border-blue-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          readOnly
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">AAN</label>
+                        <input 
+                          type="text" 
+                          value={task.reply_to_email || ''}
+                          className="w-full border border-blue-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          readOnly
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* ONDERWERP compacter */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">ONDERWERP</label>
+                      {isEditingContent ? (
+                        <Input
+                          value={editedSubject}
+                          onChange={(e) => setEditedSubject(e.target.value)}
+                          className="text-xs px-2 py-1 border-blue-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      ) : (
+                        <input 
+                          type="text" 
+                          value={editedSubject || task.ai_draft_subject || ''}
+                          className="w-full border border-blue-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          readOnly
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-200 mb-3 flex-shrink-0"></div>
+
+                  {/* Email content met juiste hoogte */}
+                  <div className="flex-1 min-h-0">
+                    <label className="block text-xs font-medium text-gray-700 mb-2">BERICHT</label>
+                    {isEditingContent ? (
+                      <textarea 
+                        value={editedContent}
+                        onChange={(e) => setEditedContent(e.target.value)}
+                        className="w-full border border-blue-200 rounded p-3 h-full text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                        placeholder="Typ je antwoord hier..."
+                      />
+                    ) : (
+                      <div className="w-full border border-blue-200 rounded p-3 h-full overflow-y-auto">
+                        <div className="text-xs whitespace-pre-wrap">
+                          {editedContent || task.ai_draft_content}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-gray-500">
+                  <div className="text-center">
+                    <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Geen AI gegenereerde actie beschikbaar</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Action Bar */}
+        <div className="border-t bg-gray-50 px-6 py-3 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <button 
               onClick={handleClientDossier}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-1 h-8 px-3 text-xs bg-transparent"
+              className="px-4 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
             >
-              <User className="h-3 w-3" />
+              <User className="w-4 h-4" />
               Klant Dossier
-            </Button>
-            <Button
+            </button>
+            <button 
               onClick={handleCommunicationHistory}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-1 h-8 px-3 text-xs bg-transparent"
+              className="px-4 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
             >
-              <FolderOpen className="h-3 w-3" />
+              <FolderOpen className="w-4 h-4" />
               Communicatie Historie
-            </Button>
+            </button>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex items-center gap-3">
             {isEditingContent && (
               <>
                 <Button
                   onClick={handleCancelEdit}
                   variant="outline"
                   size="sm"
-                  className="flex items-center gap-1 h-8 px-3 text-xs"
+                  className="text-sm font-medium"
                 >
-                  <X className="h-3 w-3" />
                   Annuleren
                 </Button>
                 <Button
                   onClick={handleSaveEdit}
                   size="sm"
-                  className="flex items-center gap-1 h-8 px-3 text-xs"
+                  className="text-sm font-medium"
                 >
-                  <Save className="h-3 w-3" />
                   Opslaan
                 </Button>
               </>
             )}
             
-            <Button
+            {!isEditingContent && hasAIResponse && (
+              <Button
+                onClick={() => setIsEditingContent(true)}
+                variant="outline"
+                size="sm"
+                className="text-sm font-medium"
+              >
+                <Edit className="w-4 h-4 mr-1" />
+                Bewerken
+              </Button>
+            )}
+            
+            <button 
               onClick={onClose}
-              variant="outline"
-              size="sm"
-              className="h-8 px-3 text-xs"
+              className="px-6 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
             >
               Sluiten
-            </Button>
+            </button>
             
             {hasAIResponse && !isEditingContent && (
-              <Button
+              <button 
                 onClick={handleSendReply}
-                size="sm"
-                className="flex items-center gap-1 h-8 px-3 text-xs"
+                className="px-6 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
               >
-                <Send className="h-3 w-3" />
+                <Send className="w-4 h-4" />
                 Verstuur E-mail
-              </Button>
+              </button>
             )}
           </div>
         </div>
