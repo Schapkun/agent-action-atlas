@@ -1,5 +1,5 @@
-
 import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,11 +11,10 @@ import {
   FileText,
   Phone,
   Calendar,
-  CheckCircle,
+  Filter,
   Clock,
-  AlertCircle,
-  CreditCard,
-  FileCheck
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useClientsWithDossiers } from '@/hooks/useClientsWithDossiers';
@@ -38,7 +37,10 @@ export const ActiveDossiers = () => {
     if (!selectedOrganization) return;
     
     try {
+      // First create clients
       await createExampleClients(selectedOrganization.id, selectedWorkspace?.id);
+      
+      // Then create dossiers for those clients
       await createExampleDossiers(selectedOrganization.id, selectedWorkspace?.id);
       
       toast({
@@ -97,240 +99,207 @@ export const ActiveDossiers = () => {
 
   const getTimelineIcon = (type: string) => {
     switch (type) {
-      case 'email': return <Mail className="h-5 w-5 text-blue-600" />;
-      case 'document': return <FileText className="h-5 w-5 text-green-600" />;
-      case 'phone_call': return <Phone className="h-5 w-5 text-purple-600" />;
-      case 'invoice': return <CreditCard className="h-5 w-5 text-yellow-600" />;
-      case 'quote': return <FileCheck className="h-5 w-5 text-indigo-600" />;
-      default: return <Calendar className="h-5 w-5 text-gray-600" />;
+      case 'email': return <Mail className="h-4 w-4" />;
+      case 'document': return <FileText className="h-4 w-4" />;
+      case 'phone_call': return <Phone className="h-4 w-4" />;
+      default: return <Calendar className="h-4 w-4" />;
     }
   };
 
-  const getTimelineIconBg = (type: string) => {
+  const getTimelineColor = (type: string) => {
     switch (type) {
-      case 'email': return 'bg-blue-100';
-      case 'document': return 'bg-green-100';
-      case 'phone_call': return 'bg-purple-100';
-      case 'invoice': return 'bg-yellow-100';
-      case 'quote': return 'bg-indigo-100';
-      default: return 'bg-gray-100';
+      case 'email': return 'border-blue-200 bg-blue-50';
+      case 'document': return 'border-green-200 bg-green-50';
+      case 'phone_call': return 'border-orange-200 bg-orange-50';
+      default: return 'border-gray-200 bg-gray-50';
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Actieve Dossiers</h1>
-        <p className="text-sm text-gray-600">Bekijk en beheer dossiers per client</p>
-        <div className="text-sm text-gray-500 mt-1">{getContextInfo()}</div>
-      </div>
-
-      {/* Main Container: Two Panel Layout */}
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden h-[800px] flex">
-        
-        {/* LEFT PANEL: Clients List with Search */}
-        <div className="w-1/3 border-r border-gray-200 flex flex-col">
-          {/* Search Header */}
-          <div className="p-4 border-b border-gray-200 bg-gray-50">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Zoek clients met actieve dossiers..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <div className="mt-2 text-xs text-gray-500">
-              {filteredClients.length} clients met actieve dossiers gevonden
-            </div>
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      {/* Clients Sidebar */}
+      <Card className="lg:col-span-1">
+        <CardHeader>
+          <CardTitle className="text-lg">Klanten</CardTitle>
+          <div className="text-sm text-muted-foreground">
+            {getContextInfo()}
           </div>
-
-          {/* Scrollable Clients List */}
-          <div className="flex-1 overflow-y-auto">
-            {!selectedOrganization && !selectedWorkspace ? (
-              <div className="text-center py-8 text-gray-500">
-                <User className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">Selecteer een organisatie of werkruimte</p>
-              </div>
-            ) : clientsLoading ? (
-              <div className="text-center py-8 text-gray-500">
-                <div className="text-sm">Klanten laden...</div>
-              </div>
-            ) : filteredClients.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-sm mb-4">Geen klanten gevonden</p>
-                <Button onClick={createExamples} variant="outline" size="sm">
-                  Voorbeelddata aanmaken
-                </Button>
-              </div>
-            ) : (
-              filteredClients.map((client) => (
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Zoek klanten..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!selectedOrganization && !selectedWorkspace ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <User className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Selecteer een organisatie of werkruimte</p>
+            </div>
+          ) : clientsLoading ? (
+            <div className="text-center py-8">Klanten laden...</div>
+          ) : filteredClients.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-sm mb-4">Geen klanten gevonden</p>
+              <Button onClick={createExamples} variant="outline" size="sm">
+                Voorbeelddata aanmaken
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[600px] overflow-y-auto">
+              {filteredClients.map((client) => (
                 <div 
                   key={client.id} 
-                  className={`p-4 border-b border-gray-100 cursor-pointer ${
+                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                     selectedClient === client.id 
-                      ? 'bg-blue-50 border-l-4 border-l-blue-500' 
-                      : 'hover:bg-gray-50'
+                      ? 'bg-blue-50 border-blue-200' 
+                      : 'hover:bg-gray-50 border-gray-200'
                   }`}
                   onClick={() => setSelectedClient(client.id)}
                 >
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 text-sm">{client.name}</h3>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        {client.type === 'zakelijk' ? (
+                          <Building2 className="h-4 w-4 text-blue-600" />
+                        ) : (
+                          <User className="h-4 w-4 text-green-600" />
+                        )}
+                        <h3 className="font-medium text-sm truncate">{client.name}</h3>
+                      </div>
+                      
                       {client.contact_person && (
-                        <p className="text-xs text-gray-600 mt-1">{client.contact_person}</p>
+                        <p className="text-xs text-muted-foreground mb-1">
+                          {client.contact_person}
+                        </p>
                       )}
-                      <p className="text-xs text-gray-500">{client.email}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs">
-                          {client.dossier_count} actief{client.dossier_count !== 1 ? 'e' : ''}
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          {client.city}
                         </span>
-                        <Badge variant="outline" className={`text-xs ${
-                          client.type === 'zakelijk' 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : 'bg-purple-100 text-purple-800'
-                        }`}>
-                          {client.type === 'zakelijk' ? 'Zakelijk' : 'Privé'}
+                        <Badge variant="outline" className="text-xs">
+                          {client.dossier_count} dossier{client.dossier_count !== 1 ? 's' : ''}
                         </Badge>
                       </div>
                     </div>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-        {/* RIGHT PANEL: Dossier Details with Timeline */}
-        <div className="flex-1 flex flex-col">
-          {/* Dossier Header with Filter */}
-          <div className="p-6 border-b border-gray-200 bg-gray-50">
-            {selectedClientData ? (
-              <>
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">{selectedClientData.name}</h2>
-                    <p className="text-sm text-gray-600">
-                      {selectedClientData.dossier_count} actieve dossier{selectedClientData.dossier_count !== 1 ? 's' : ''} • 
-                      {selectedClientData.email}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">Actief</span>
-                  </div>
+      {/* Dossier Timeline */}
+      <Card className="lg:col-span-3">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">
+                {selectedClientData ? `Dossier Tijdlijn - ${selectedClientData.name}` : 'Selecteer een klant'}
+              </CardTitle>
+              {selectedClientData && (
+                <div className="text-sm text-muted-foreground mt-1">
+                  {selectedClientData.email} • {selectedClientData.dossier_count} actieve dossier{selectedClientData.dossier_count !== 1 ? 's' : ''}
                 </div>
+              )}
+            </div>
+
+            {selectedClient && (
+              <div className="flex items-center gap-2">
+                <select 
+                  value={timelineFilter} 
+                  onChange={(e) => setTimelineFilter(e.target.value)}
+                  className="text-sm border border-gray-300 rounded px-2 py-1"
+                >
+                  <option value="all">Alle types</option>
+                  <option value="email">E-mails</option>
+                  <option value="document">Documenten</option>
+                  <option value="phone_call">Telefoongesprekken</option>
+                </select>
                 
-                {/* Filter Controls */}
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-gray-700">Filter:</label>
-                    <select 
-                      value={timelineFilter}
-                      onChange={(e) => setTimelineFilter(e.target.value)}
-                      className="border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="all">Alle items</option>
-                      <option value="email">E-mails</option>
-                      <option value="document">Documenten</option>
-                      <option value="phone_call">Telefoongesprekken</option>
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-gray-700">Periode:</label>
-                    <select 
-                      value={periodFilter}
-                      onChange={(e) => setPeriodFilter(e.target.value)}
-                      className="border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="all">Alle tijd</option>
-                      <option value="today">Vandaag</option>
-                      <option value="week">Deze week</option>
-                      <option value="month">Deze maand</option>
-                    </select>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Selecteer een klant</h2>
-                <p className="text-sm text-gray-600">Kies een klant uit de lijst om de dossier tijdlijn te bekijken</p>
+                <select 
+                  value={periodFilter} 
+                  onChange={(e) => setPeriodFilter(e.target.value)}
+                  className="text-sm border border-gray-300 rounded px-2 py-1"
+                >
+                  <option value="all">Alle periodes</option>
+                  <option value="today">Vandaag</option>
+                  <option value="week">Deze week</option>
+                  <option value="month">Deze maand</option>
+                </select>
               </div>
             )}
           </div>
+        </CardHeader>
 
-          {/* Scrollable Timeline Content */}
-          <div className="flex-1 overflow-y-auto p-6">
-            {!selectedClient ? (
-              <div className="text-center py-12 text-gray-500">
-                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Selecteer een klant om de dossier tijdlijn te bekijken</p>
-              </div>
-            ) : timelineLoading ? (
-              <div className="text-center py-8 text-gray-500">
-                <div className="text-sm">Tijdlijn laden...</div>
-              </div>
-            ) : filteredTimeline.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">Geen communicatie of documenten gevonden</p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {filteredTimeline.map((item) => (
-                  <div key={item.id} className="flex items-start gap-4">
-                    <div className={`flex-shrink-0 w-10 h-10 ${getTimelineIconBg(item.type)} rounded-full flex items-center justify-center`}>
+        <CardContent>
+          {!selectedClient ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Selecteer een klant om de dossier tijdlijn te bekijken</p>
+            </div>
+          ) : timelineLoading ? (
+            <div className="text-center py-8">Tijdlijn laden...</div>
+          ) : filteredTimeline.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Geen communicatie of documenten gevonden</p>
+            </div>
+          ) : (
+            <div className="space-y-4 max-h-[600px] overflow-y-auto">
+              {filteredTimeline.map((item) => (
+                <div key={item.id} className={`p-4 rounded-lg border ${getTimelineColor(item.type)}`}>
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1">
                       {getTimelineIcon(item.type)}
                     </div>
+                    
                     <div className="flex-1 min-w-0">
-                      <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-gray-900">{item.title}</h4>
-                          <span className="text-xs text-gray-500">
-                            {new Date(item.date).toLocaleString('nl-NL')}
-                          </span>
-                        </div>
-                        {item.description && (
-                          <p className="text-sm text-gray-600 mb-2">{item.description}</p>
-                        )}
-                        {item.status && (
-                          <div className="flex items-center gap-1 mb-2">
-                            {item.status === 'completed' ? (
-                              <CheckCircle className="h-3 w-3 text-green-600" />
-                            ) : item.status === 'pending' ? (
-                              <Clock className="h-3 w-3 text-yellow-600" />
-                            ) : (
-                              <AlertCircle className="h-3 w-3 text-red-600" />
-                            )}
-                            <span className="text-xs text-gray-500 capitalize">{item.status}</span>
-                          </div>
-                        )}
-                        <div className="mt-3 flex items-center gap-2">
-                          <button className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded hover:bg-blue-100">
-                            Bekijken
-                          </button>
-                          {item.type === 'email' && (
-                            <button className="text-xs bg-gray-50 text-gray-700 px-2 py-1 rounded hover:bg-gray-100">
-                              Beantwoorden
-                            </button>
-                          )}
-                          {item.type === 'document' && (
-                            <button className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded hover:bg-green-100">
-                              Downloaden
-                            </button>
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-medium text-sm">{item.title}</h4>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {item.type === 'email' ? 'E-mail' : 
+                             item.type === 'document' ? 'Document' : 'Gesprek'}
+                          </Badge>
+                          {item.status && (
+                            <div className="flex items-center gap-1">
+                              {item.status === 'completed' ? (
+                                <CheckCircle className="h-3 w-3 text-green-600" />
+                              ) : item.status === 'pending' ? (
+                                <Clock className="h-3 w-3 text-yellow-600" />
+                              ) : (
+                                <AlertCircle className="h-3 w-3 text-red-600" />
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>
+                      
+                      {item.description && (
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {item.description}
+                        </p>
+                      )}
+                      
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(item.date).toLocaleString('nl-NL')}
+                      </p>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
