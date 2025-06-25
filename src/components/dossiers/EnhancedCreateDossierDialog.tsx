@@ -37,9 +37,9 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="!w-[90vw] !h-[90vh] !max-w-none !fixed !top-[5vh] !left-[5vw] !transform-none !translate-x-0 !translate-y-0 p-0 rounded-lg overflow-hidden flex flex-col">
+      <DialogContent className="!w-[95vw] !h-[95vh] !max-w-none !fixed !top-[2.5vh] !left-[2.5vw] !transform-none !translate-x-0 !translate-y-0 p-0 rounded-lg overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 flex-shrink-0">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3 flex-shrink-0">
           <DialogHeader>
             <div className="flex items-center gap-2">
               <div className="bg-white/20 rounded-lg p-1">
@@ -54,18 +54,24 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
         </div>
         
         {/* Content */}
-        <div className="flex-1 p-4 overflow-y-auto bg-gray-50 min-h-0">
-          <form onSubmit={handleSubmit} className="w-full space-y-4">
-            <BasicInfoSection formData={formData} updateFormData={updateFormData} />
-            <ClientSection formData={formData} updateFormData={updateFormData} />
-            <PlanningBudgetSection formData={formData} updateFormData={updateFormData} />
-            <DescriptionSection formData={formData} updateFormData={updateFormData} />
-            <TagsSection formData={formData} updateFormData={updateFormData} />
+        <div className="flex-1 p-4 overflow-hidden bg-gray-50 min-h-0">
+          <form onSubmit={handleSubmit} className="w-full h-full flex flex-col">
+            <div className="grid grid-cols-2 gap-4 flex-1 overflow-hidden">
+              <div className="space-y-3">
+                <BasicInfoSection formData={formData} updateFormData={updateFormData} />
+                <ClientSection formData={formData} updateFormData={updateFormData} />
+                <PlanningBudgetSection formData={formData} updateFormData={updateFormData} />
+              </div>
+              <div className="space-y-3">
+                <DescriptionSection formData={formData} updateFormData={updateFormData} />
+                <TagsSection formData={formData} updateFormData={updateFormData} />
+              </div>
+            </div>
           </form>
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 p-4 border-t border-gray-200 bg-white flex-shrink-0">
+        <div className="flex justify-end gap-3 p-3 border-t border-gray-200 bg-white flex-shrink-0">
           <Button 
             type="button" 
             variant="outline" 
