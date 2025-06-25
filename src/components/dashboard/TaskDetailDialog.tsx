@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -19,7 +20,9 @@ import {
   FileText,
   Edit,
   Save,
-  X
+  X,
+  User,
+  FolderOpen
 } from 'lucide-react';
 
 interface PendingTask {
@@ -74,6 +77,8 @@ export const TaskDetailDialog = ({
   const [isEditingContent, setIsEditingContent] = useState(false);
   const [editedContent, setEditedContent] = useState('');
   const [editedSubject, setEditedSubject] = useState('');
+  const [editedFromEmail, setEditedFromEmail] = useState('');
+  const [editedToEmail, setEditedToEmail] = useState('');
   const { toast } = useToast();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
 
@@ -127,14 +132,16 @@ export const TaskDetailDialog = ({
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('nl-NL', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const getActionType = (task: PendingTask) => {
+    if (task.ai_draft_content) return 'E-mail Beantwoorden';
+    if (task.task_type === 'document_creation') return 'Document Creatie';
+    if (task.task_type === 'quote_creation') return 'Offerte Maken';
+    return 'Algemene Taak';
+  };
+
+  const getClientName = (task: PendingTask) => {
+    // This would normally come from a client lookup, for now using a placeholder
+    return 'Klant Naam'; // TODO: Implement proper client name lookup
   };
 
   const handleStatusChange = () => {
@@ -206,24 +213,44 @@ export const TaskDetailDialog = ({
   const handleCancelEdit = () => {
     setEditedContent(task.ai_draft_content || '');
     setEditedSubject(task.ai_draft_subject || '');
+    setEditedFromEmail(originalEmail?.from_email || '');
+    setEditedToEmail(task.reply_to_email || '');
     setIsEditingContent(false);
+  };
+
+  const handleClientDossier = () => {
+    // TODO: Navigate to client dossier
+    toast({
+      title: "Klant Dossier",
+      description: "Navigatie naar klant dossier wordt geïmplementeerd"
+    });
+  };
+
+  const handleCommunicationHistory = () => {
+    // TODO: Open communication history modal
+    toast({
+      title: "Communicatie Historie",
+      description: "Communicatie historie wordt geladen"
+    });
   };
 
   const hasAIResponse = task.ai_draft_content && task.reply_to_email;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0">
-        <DialogHeader className="p-4 pb-2">
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <FileText className="h-4 w-4" />
-            {task.title}
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="px-4">
-          {/* Task metadata */}
-          <div className="flex items-center justify-between mb-3">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 flex flex-col">
+        {/* Compact Header */}
+        <DialogHeader className="flex-shrink-0 px-4 py-3 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle className="text-lg font-semibold text-gray-900">
+                {getActionType(task)}
+              </DialogTitle>
+              <p className="text-sm text-gray-600 mt-0.5">
+                {getClientName(task)}
+              </p>
+            </div>
+            
             <div className="flex items-center gap-2">
               <Badge variant="outline" className={`${getPriorityColor(task.priority)} text-xs px-2 py-1`}>
                 {task.priority === 'high' ? 'Hoog' : task.priority === 'medium' ? 'Gemiddeld' : 'Laag'}
@@ -232,177 +259,75 @@ export const TaskDetailDialog = ({
                 {task.status === 'completed' ? 'Voltooid' : 'Openstaand'}
               </Badge>
             </div>
-            
-            <div className="flex gap-2">
-              {!hasAIResponse && (
-                <Button
-                  onClick={handleStatusChange}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-1 px-3 py-1"
-                >
-                  {task.status === 'completed' ? (
-                    <>
-                      <Clock className="h-3 w-3" />
-                      Heropen
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-3 w-3" />
-                      Markeer als Voltooid
-                    </>
-                  )}
-                </Button>
-              )}
-              
-              {hasAIResponse && !isEditingContent && (
-                <>
-                  <Button
-                    onClick={() => setIsEditingContent(true)}
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-1 px-3 py-1"
-                  >
-                    <Edit className="h-3 w-3" />
-                    Bewerken
-                  </Button>
-                  <Button
-                    onClick={handleSendReply}
-                    size="sm"
-                    className="flex items-center gap-1 px-3 py-1"
-                  >
-                    <Send className="h-3 w-3" />
-                    Verstuur AI Antwoord
-                  </Button>
-                </>
-              )}
-
-              {isEditingContent && (
-                <>
-                  <Button
-                    onClick={handleCancelEdit}
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-1 px-3 py-1"
-                  >
-                    <X className="h-3 w-3" />
-                    Annuleren
-                  </Button>
-                  <Button
-                    onClick={handleSaveEdit}
-                    size="sm"
-                    className="flex items-center gap-1 px-3 py-1"
-                  >
-                    <Save className="h-3 w-3" />
-                    Opslaan
-                  </Button>
-                </>
-              )}
-            </div>
           </div>
+        </DialogHeader>
 
-          {/* Task details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-3 w-3 text-gray-400" />
-                <span className="font-medium text-sm">Aangemaakt:</span>
-                <span className="text-sm">{formatDate(task.created_at)}</span>
-              </div>
-              {task.due_date && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-3 w-3 text-gray-400" />
-                  <span className="font-medium text-sm">Vervaldatum:</span>
-                  <span className="text-sm">{new Date(task.due_date).toLocaleDateString('nl-NL')}</span>
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              {task.reply_to_email && (
-                <div className="flex items-center gap-2">
-                  <Mail className="h-3 w-3 text-gray-400" />
-                  <span className="font-medium text-sm">Antwoord naar:</span>
-                  <span className="text-sm">{task.reply_to_email}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-3 w-3 text-gray-400" />
-                <span className="font-medium text-sm">Type:</span>
-                <span className="text-sm">{task.task_type || 'Algemeen'}</span>
-              </div>
-            </div>
-          </div>
-
-          <Separator className="mb-3" />
-        </div>
-
-        {/* Main content - Side by side layout */}
-        <div className="px-4 pb-4 flex-1 min-h-0">
+        {/* Main Content - Fixed Height */}
+        <div className="flex-1 min-h-0 p-4">
           <div className="grid grid-cols-2 gap-4 h-full">
-            {/* Left panel - Original message */}
-            <div className="border rounded-lg flex flex-col h-full">
-              {/* Banner */}
-              <div className="bg-gray-50 px-3 py-2 border-b rounded-t-lg">
+            {/* Left Panel - Original Email */}
+            <div className="border rounded-lg flex flex-col h-full max-h-[600px]">
+              <div className="bg-amber-50 px-3 py-2 border-b rounded-t-lg flex-shrink-0">
                 <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-gray-600" />
-                  <h3 className="text-base font-medium text-gray-800">Originele Input/E-mail</h3>
+                  <Mail className="h-4 w-4 text-amber-600" />
+                  <h3 className="text-sm font-medium text-amber-800">Originele E-mail</h3>
                 </div>
               </div>
               
               <div className="p-3 flex-1 min-h-0 flex flex-col">
                 {loading ? (
                   <div className="flex items-center justify-center flex-1">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-600"></div>
                   </div>
                 ) : originalEmail ? (
                   <div className="flex-1 flex flex-col min-h-0">
-                    <div className="space-y-2 mb-3">
-                      <div>
-                        <span className="font-medium text-gray-600 text-xs">Van:</span>
-                        <div className="text-sm">{originalEmail.from_email}</div>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600 text-xs">Aan:</span>
-                        <div className="text-sm">{originalEmail.to_email}</div>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600 text-xs">Onderwerp:</span>
-                        <div className="text-sm font-medium">{originalEmail.subject}</div>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600 text-xs">Ontvangen:</span>
-                        <div className="text-xs text-gray-600">{formatDate(originalEmail.received_at || originalEmail.created_at)}</div>
-                      </div>
-                    </div>
-                    
-                    <Separator className="mb-3" />
-                    
-                    <ScrollArea className="flex-1 h-[400px]">
-                      <div className="pr-3">
-                        {originalEmail.body_html ? (
-                          <div 
-                            className="prose prose-sm max-w-none text-sm"
-                            dangerouslySetInnerHTML={{ __html: originalEmail.body_html }}
-                          />
-                        ) : (
-                          <div className="whitespace-pre-wrap text-sm">
-                            {originalEmail.body_text || originalEmail.content || 'Geen inhoud beschikbaar'}
+                    {/* Compact Fields */}
+                    <div className="space-y-2 mb-3 flex-shrink-0">
+                      {/* VAN and AAN on one line */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="font-medium text-gray-600 text-xs">VAN:</span>
+                          <div className="text-xs bg-gray-50 px-2 py-1 rounded border text-gray-700">
+                            {originalEmail.from_email}
                           </div>
-                        )}
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-600 text-xs">AAN:</span>
+                          <div className="text-xs bg-gray-50 px-2 py-1 rounded border text-gray-700">
+                            {originalEmail.to_email}
+                          </div>
+                        </div>
                       </div>
-                    </ScrollArea>
-                  </div>
-                ) : task.description ? (
-                  <div className="flex-1 flex flex-col min-h-0">
-                    <div className="mb-2">
-                      <span className="font-medium text-gray-600 text-xs">Taak beschrijving:</span>
+                      
+                      {/* ONDERWERP */}
+                      <div>
+                        <span className="font-medium text-gray-600 text-xs">ONDERWERP:</span>
+                        <div className="text-xs bg-gray-50 px-2 py-1 rounded border text-gray-700 font-medium">
+                          {originalEmail.subject}
+                        </div>
+                      </div>
                     </div>
-                    <ScrollArea className="flex-1 h-[400px]">
-                      <div className="whitespace-pre-wrap text-sm pr-3">
-                        {task.description}
-                      </div>
-                    </ScrollArea>
+                    
+                    <Separator className="mb-3 flex-shrink-0" />
+                    
+                    {/* BERICHT */}
+                    <div className="flex-1 min-h-0">
+                      <span className="font-medium text-gray-600 text-xs">BERICHT:</span>
+                      <ScrollArea className="h-full mt-1">
+                        <div className="bg-gray-50 px-2 py-2 rounded border min-h-full">
+                          {originalEmail.body_html ? (
+                            <div 
+                              className="prose prose-xs max-w-none text-xs text-gray-700"
+                              dangerouslySetInnerHTML={{ __html: originalEmail.body_html }}
+                            />
+                          ) : (
+                            <div className="whitespace-pre-wrap text-xs text-gray-700">
+                              {originalEmail.body_text || originalEmail.content || 'Geen inhoud beschikbaar'}
+                            </div>
+                          )}
+                        </div>
+                      </ScrollArea>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex-1 flex items-center justify-center text-gray-500">
@@ -415,56 +340,101 @@ export const TaskDetailDialog = ({
               </div>
             </div>
 
-            {/* Right panel - AI Response */}
-            <div className="border rounded-lg flex flex-col h-full">
-              {/* Banner */}
-              <div className="bg-blue-50 px-3 py-2 border-b rounded-t-lg">
+            {/* Right Panel - AI Response */}
+            <div className="border rounded-lg flex flex-col h-full max-h-[600px]">
+              <div className="bg-blue-50 px-3 py-2 border-b rounded-t-lg flex-shrink-0">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="h-4 w-4 text-blue-600" />
-                  <h3 className="text-base font-medium text-blue-800">AI Gegenereerde Actie</h3>
+                  <h3 className="text-sm font-medium text-blue-800">AI Gegenereerd Antwoord</h3>
+                  {!isEditingContent && hasAIResponse && (
+                    <Button
+                      onClick={() => setIsEditingContent(true)}
+                      variant="ghost"
+                      size="sm"
+                      className="ml-auto h-6 px-2 text-xs"
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      Bewerken
+                    </Button>
+                  )}
                 </div>
               </div>
               
               <div className="p-3 flex-1 min-h-0 flex flex-col">
                 {task.ai_draft_subject || task.ai_draft_content ? (
                   <div className="flex-1 flex flex-col min-h-0">
-                    {(task.ai_draft_subject || editedSubject) && (
-                      <div className="mb-3">
-                        <span className="font-medium text-gray-600 text-xs">Onderwerp:</span>
+                    {/* Compact Fields */}
+                    <div className="space-y-2 mb-3 flex-shrink-0">
+                      {/* AAN and VAN on one line */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="font-medium text-gray-600 text-xs">AAN:</span>
+                          {isEditingContent ? (
+                            <Input
+                              value={editedToEmail}
+                              onChange={(e) => setEditedToEmail(e.target.value)}
+                              className="h-7 text-xs"
+                            />
+                          ) : (
+                            <div className="text-xs bg-white px-2 py-1 rounded border">
+                              {task.reply_to_email}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-600 text-xs">VAN:</span>
+                          {isEditingContent ? (
+                            <Input
+                              value={editedFromEmail}
+                              onChange={(e) => setEditedFromEmail(e.target.value)}
+                              className="h-7 text-xs"
+                            />
+                          ) : (
+                            <div className="text-xs bg-white px-2 py-1 rounded border">
+                              {selectedWorkspace?.sender_email || selectedWorkspace?.email || 'info@bedrijf.nl'}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* ONDERWERP */}
+                      <div>
+                        <span className="font-medium text-gray-600 text-xs">ONDERWERP:</span>
                         {isEditingContent ? (
-                          <input
-                            type="text"
+                          <Input
                             value={editedSubject}
                             onChange={(e) => setEditedSubject(e.target.value)}
-                            className="w-full mt-1 px-2 py-1 border rounded text-sm"
+                            className="h-7 text-xs"
                           />
                         ) : (
-                          <div className="text-sm font-medium mt-1">{editedSubject}</div>
+                          <div className="text-xs bg-white px-2 py-1 rounded border font-medium">
+                            {editedSubject || task.ai_draft_subject}
+                          </div>
                         )}
                       </div>
-                    )}
+                    </div>
                     
-                    {task.ai_draft_content && (
-                      <>
-                        {(task.ai_draft_subject || editedSubject) && <Separator className="mb-3" />}
-                        <div className="mb-2">
-                          <span className="font-medium text-gray-600 text-xs">AI Antwoord:</span>
-                        </div>
-                        {isEditingContent ? (
-                          <Textarea
-                            value={editedContent}
-                            onChange={(e) => setEditedContent(e.target.value)}
-                            className="flex-1 min-h-[400px] text-sm resize-none"
-                          />
-                        ) : (
-                          <ScrollArea className="flex-1 h-[400px]">
-                            <div className="whitespace-pre-wrap text-sm pr-3">
-                              {editedContent}
+                    <Separator className="mb-3 flex-shrink-0" />
+                    
+                    {/* BERICHT */}
+                    <div className="flex-1 min-h-0">
+                      <span className="font-medium text-gray-600 text-xs">BERICHT:</span>
+                      {isEditingContent ? (
+                        <Textarea
+                          value={editedContent}
+                          onChange={(e) => setEditedContent(e.target.value)}
+                          className="mt-1 h-full text-xs resize-none"
+                        />
+                      ) : (
+                        <ScrollArea className="h-full mt-1">
+                          <div className="bg-white px-2 py-2 rounded border min-h-full">
+                            <div className="whitespace-pre-wrap text-xs">
+                              {editedContent || task.ai_draft_content}
                             </div>
-                          </ScrollArea>
-                        )}
-                      </>
-                    )}
+                          </div>
+                        </ScrollArea>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="flex-1 flex items-center justify-center text-gray-500">
@@ -476,6 +446,73 @@ export const TaskDetailDialog = ({
                 )}
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex-shrink-0 flex items-center justify-between p-4 border-t bg-gray-50">
+          <div className="flex gap-2">
+            <Button
+              onClick={handleClientDossier}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1"
+            >
+              <User className="h-3 w-3" />
+              Klant Dossier
+            </Button>
+            <Button
+              onClick={handleCommunicationHistory}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1"
+            >
+              <FolderOpen className="h-3 w-3" />
+              Communicatie Historie
+            </Button>
+          </div>
+          
+          <div className="flex gap-2">
+            {isEditingContent && (
+              <>
+                <Button
+                  onClick={handleCancelEdit}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1"
+                >
+                  <X className="h-3 w-3" />
+                  Annuleren
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  size="sm"
+                  className="flex items-center gap-1"
+                >
+                  <Save className="h-3 w-3" />
+                  Opslaan
+                </Button>
+              </>
+            )}
+            
+            <Button
+              onClick={onClose}
+              variant="outline"
+              size="sm"
+            >
+              Sluiten
+            </Button>
+            
+            {hasAIResponse && !isEditingContent && (
+              <Button
+                onClick={handleSendReply}
+                size="sm"
+                className="flex items-center gap-1"
+              >
+                <Send className="h-3 w-3" />
+                Verstuur E-mail
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>
