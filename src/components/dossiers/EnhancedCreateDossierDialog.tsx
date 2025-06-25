@@ -54,19 +54,13 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
         </div>
         
         {/* Content */}
-        <div className="flex-1 p-4 overflow-hidden bg-gray-50 min-h-0">
-          <form onSubmit={handleSubmit} className="w-full h-full flex flex-col">
-            <div className="grid grid-cols-2 gap-4 flex-1 overflow-hidden">
-              <div className="space-y-3">
-                <BasicInfoSection formData={formData} updateFormData={updateFormData} />
-                <ClientSection formData={formData} updateFormData={updateFormData} />
-                <PlanningBudgetSection formData={formData} updateFormData={updateFormData} />
-              </div>
-              <div className="space-y-3">
-                <DescriptionSection formData={formData} updateFormData={updateFormData} />
-                <TagsSection formData={formData} updateFormData={updateFormData} />
-              </div>
-            </div>
+        <div className="flex-1 p-4 overflow-y-auto bg-gray-50 min-h-0">
+          <form onSubmit={handleSubmit} className="w-full space-y-4">
+            <BasicInfoSection formData={formData} updateFormData={updateFormData} />
+            <ClientSection formData={formData} updateFormData={updateFormData} />
+            <PlanningBudgetSection formData={formData} updateFormData={updateFormData} />
+            <DescriptionSection formData={formData} updateFormData={updateFormData} />
+            <TagsSection formData={formData} updateFormData={updateFormData} />
           </form>
         </div>
 
