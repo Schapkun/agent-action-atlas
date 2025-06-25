@@ -35,11 +35,15 @@ export const useDashboardStats = () => {
           ? { ...orgCondition, workspace_id: selectedWorkspace.id }
           : orgCondition;
 
-        // 1. Pending Tasks (from pending_tasks table, not ai_actions)
-        const { count: pendingActions } = await supabase
-          .from('pending_tasks')
+        // 1. Nieuwe Berichten (emails van afgelopen 7 dagen, unread)
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        
+        const { count: newMessages } = await supabase
+          .from('emails')
           .select('*', { count: 'exact', head: true })
-          .match({ ...workspaceCondition, status: 'open' });
+          .match({ ...workspaceCondition, is_read: false })
+          .gte('received_at', weekAgo.toISOString());
 
         // 2. Total Pending Tasks + estimated hours saved
         const { count: totalActions } = await supabase
@@ -51,9 +55,6 @@ export const useDashboardStats = () => {
         const estimatedHoursSaved = (totalActions || 0) * 2.5;
 
         // 3. Week Revenue (gefactureerde invoices van afgelopen 7 dagen)
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        
         const { data: weekInvoices } = await supabase
           .from('invoices')
           .select('total_amount')
@@ -100,7 +101,7 @@ export const useDashboardStats = () => {
           .match(workspaceCondition);
 
         setStats({
-          pendingActions: pendingActions || 0,
+          pendingActions: newMessages || 0, // Now represents new messages instead of pending actions
           totalActions: totalActions || 0,
           estimatedHoursSaved: Math.round(estimatedHoursSaved * 10) / 10,
           weekRevenue: weekRevenue,
@@ -111,8 +112,8 @@ export const useDashboardStats = () => {
           totalDocuments: totalDocuments || 0
         });
 
-        console.log('📊 Dashboard stats updated (now using pending_tasks):', {
-          pendingActions: pendingActions || 0,
+        console.log('📊 Dashboard stats updated (now using nieuwe berichten):', {
+          newMessages: newMessages || 0,
           totalActions: totalActions || 0,
           estimatedHoursSaved: Math.round(estimatedHoursSaved * 10) / 10,
           weekRevenue,

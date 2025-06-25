@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,7 +20,8 @@ import {
   Mail,
   FileText,
   Trash2,
-  Edit
+  Edit,
+  Eye
 } from 'lucide-react';
 
 interface PendingTask {
@@ -49,7 +50,6 @@ export const PendingTasksManager = () => {
   const [tasks, setTasks] = useState<PendingTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [showNewTaskForm, setShowNewTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<PendingTask | null>(null);
@@ -245,38 +245,85 @@ export const PendingTasksManager = () => {
     };
   }, [selectedOrganization]);
 
-  const filteredTasks = tasks.filter(task => {
-    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         task.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
-    const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
-    
-    return matchesSearch && matchesStatus && matchesPriority;
-  });
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'open':
-        return <Badge variant="outline" className="text-orange-600"><Clock className="h-3 w-3 mr-1" />Open</Badge>;
-      case 'completed':
-        return <Badge variant="outline" className="text-green-600"><CheckCircle className="h-3 w-3 mr-1" />Voltooid</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
+  const getFilteredTasks = (status: 'open' | 'completed') => {
+    return tasks.filter(task => {
+      const matchesStatus = task.status === status;
+      const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           task.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
+      
+      return matchesStatus && matchesSearch && matchesPriority;
+    });
   };
 
-  const getPriorityBadge = (priority: string) => {
+  const getPriorityBadge = (priority: string, status: string) => {
+    // Don't show priority badge for completed tasks
+    if (status === 'completed') return null;
+    
     switch (priority) {
       case 'high':
-        return <Badge variant="destructive">Hoog</Badge>;
+        return <Badge variant="destructive" className="text-xs">Hoog</Badge>;
       case 'medium':
-        return <Badge variant="secondary">Gemiddeld</Badge>;
+        return <Badge variant="secondary" className="text-xs">Gemiddeld</Badge>;
       case 'low':
-        return <Badge variant="outline">Laag</Badge>;
+        return <Badge variant="outline" className="text-xs">Laag</Badge>;
       default:
-        return <Badge variant="outline">{priority}</Badge>;
+        return <Badge variant="outline" className="text-xs">{priority}</Badge>;
     }
   };
+
+  const TaskCard = ({ task }: { task: PendingTask }) => (
+    <Card key={task.id} className="hover:shadow-sm transition-shadow">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-sm">{task.title}</h3>
+              {getPriorityBadge(task.priority, task.status)}
+            </div>
+            
+            {task.description && (
+              <p className="text-muted-foreground text-sm mb-2">{task.description}</p>
+            )}
+
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                <span>{new Date(task.created_at).toLocaleDateString('nl-NL')}</span>
+              </div>
+              
+              {task.due_date && (
+                <div className="flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  <span>Vervalt: {new Date(task.due_date).toLocaleDateString('nl-NL')}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 px-3"
+            >
+              <Eye className="h-3 w-3 mr-1" />
+              Bekijken
+            </Button>
+            
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => deleteTask(task.id)}
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   if (loading) {
     return (
@@ -289,13 +336,16 @@ export const PendingTasksManager = () => {
     );
   }
 
+  const openTasks = getFilteredTasks('open');
+  const completedTasks = getFilteredTasks('completed');
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Openstaande Taken</h1>
+          <h1 className="text-2xl font-bold">Taken Beheer</h1>
           <p className="text-muted-foreground">
-            Beheer al je openstaande taken en to-do items
+            Beheer al je taken en to-do items
           </p>
         </div>
         
@@ -316,17 +366,6 @@ export const PendingTasksManager = () => {
             className="pl-10"
           />
         </div>
-        
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle statussen</SelectItem>
-            <SelectItem value="open">Open</SelectItem>
-            <SelectItem value="completed">Voltooid</SelectItem>
-          </SelectContent>
-        </Select>
 
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
           <SelectTrigger className="w-40">
@@ -404,92 +443,53 @@ export const PendingTasksManager = () => {
         </Card>
       )}
 
-      {/* Tasks List */}
-      <div className="space-y-4">
-        {filteredTasks.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-8">
-              <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-muted-foreground">
-                {tasks.length === 0 
-                  ? "Geen taken gevonden. Voeg je eerste taak toe!"
-                  : "Geen taken gevonden die voldoen aan de filters."
-                }
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredTasks.map((task) => (
-            <Card key={task.id}>
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-semibold">{task.title}</h3>
-                      {getStatusBadge(task.status)}
-                      {getPriorityBadge(task.priority)}
-                    </div>
-                    
-                    {task.description && (
-                      <p className="text-muted-foreground mb-3">{task.description}</p>
-                    )}
-
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>Aangemaakt: {new Date(task.created_at).toLocaleDateString('nl-NL')}</span>
-                      </div>
-                      
-                      {task.due_date && (
-                        <div className="flex items-center gap-1">
-                          <AlertCircle className="h-4 w-4" />
-                          <span>Vervalt: {new Date(task.due_date).toLocaleDateString('nl-NL')}</span>
-                        </div>
-                      )}
-
-                      {task.ai_generated && (
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">AI</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {task.status === 'open' ? (
-                      <Button
-                        size="sm"
-                        onClick={() => updateTaskStatus(task.id, 'completed')}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <CheckCircle className="h-4 w-4 mr-1" />
-                        Voltooid
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateTaskStatus(task.id, 'open')}
-                      >
-                        <Clock className="h-4 w-4 mr-1" />
-                        Heropen
-                      </Button>
-                    )}
-                    
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => deleteTask(task.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+      {/* Tasks Tabs */}
+      <Tabs defaultValue="open" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="open">
+            Openstaande Taken ({openTasks.length})
+          </TabsTrigger>
+          <TabsTrigger value="completed">
+            Voltooide Taken ({completedTasks.length})
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="open" className="space-y-4 mt-6">
+          {openTasks.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-8">
+                <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="text-muted-foreground">
+                  {tasks.filter(t => t.status === 'open').length === 0 
+                    ? "Geen openstaande taken. Voeg je eerste taak toe!"
+                    : "Geen taken gevonden die voldoen aan de filters."
+                  }
+                </p>
               </CardContent>
             </Card>
-          ))
-        )}
-      </div>
+          ) : (
+            openTasks.map((task) => <TaskCard key={task.id} task={task} />)
+          )}
+        </TabsContent>
+
+        <TabsContent value="completed" className="space-y-4 mt-6">
+          {completedTasks.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-8">
+                <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="text-muted-foreground">
+                  {tasks.filter(t => t.status === 'completed').length === 0 
+                    ? "Nog geen voltooide taken."
+                    : "Geen voltooide taken gevonden die voldoen aan de filters."
+                  }
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            completedTasks.map((task) => <TaskCard key={task.id} task={task} />)
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

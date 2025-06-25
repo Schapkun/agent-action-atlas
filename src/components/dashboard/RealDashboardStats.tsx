@@ -1,6 +1,5 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity, FileText, Users, Briefcase, CheckCircle, Clock, Euro, TrendingUp } from 'lucide-react';
+import { Activity, FileText, Users, Briefcase, CheckCircle, Clock, Euro, TrendingUp, Mail } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 
@@ -10,18 +9,18 @@ export const RealDashboardStats = () => {
 
   const statItems = [
     {
-      title: 'Openstaande Acties',
+      title: 'Nieuwe Berichten',
       value: stats.pendingActions.toString(),
-      change: stats.pendingActions > 0 ? `${stats.pendingActions} actief` : 'Geen openstaand',
-      icon: Clock,
-      color: 'text-orange-600'
+      change: stats.pendingActions > 0 ? `${stats.pendingActions} ongelezen` : 'Geen nieuwe',
+      icon: Mail,
+      color: 'text-blue-600'
     },
     {
       title: 'Totaal AI Acties',
       value: stats.totalActions.toString(),
       change: `~${stats.estimatedHoursSaved}u bespaard`,
       icon: Activity,
-      color: 'text-blue-600'
+      color: 'text-purple-600'
     },
     {
       title: 'Week Omzet',
@@ -49,7 +48,7 @@ export const RealDashboardStats = () => {
       value: stats.activeDossiers.toString(),
       change: '+7%',
       icon: Briefcase,
-      color: 'text-purple-600'
+      color: 'text-orange-600'
     }
   ];
 
