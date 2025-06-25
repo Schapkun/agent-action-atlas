@@ -3,7 +3,7 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User } from 'lucide-react';
+import { Folder } from 'lucide-react';
 import { useOrganizationMembers } from '@/hooks/useOrganizationMembers';
 
 interface BasicInfoSectionProps {
@@ -21,47 +21,53 @@ export const BasicInfoSection = ({ formData, updateFormData }: BasicInfoSectionP
   const { members } = useOrganizationMembers();
 
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-2 border border-blue-200 w-full">
-      <div className="flex items-center gap-1 mb-2">
-        <div className="bg-blue-600 rounded-lg p-1">
-          <User className="h-2 w-2 text-white" />
+    <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="bg-slate-800 rounded-lg p-2">
+          <Folder className="h-4 w-4 text-white" />
         </div>
-        <h3 className="text-xs font-semibold text-blue-900">Basisinformatie</h3>
+        <h3 className="text-lg font-semibold text-slate-900">Basisinformatie</h3>
       </div>
       
-      <div className="space-y-2">
+      <div className="space-y-4">
         <div>
-          <Label htmlFor="name" className="text-xs text-blue-900 font-medium">Naam *</Label>
+          <Label htmlFor="name" className="text-sm font-medium text-slate-700 mb-2 block">
+            Dossiernaam *
+          </Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => updateFormData({ name: e.target.value })}
-            placeholder="Dossiernaam"
+            placeholder="Voer dossiernaam in"
             required
-            className="mt-1 text-xs border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-7"
+            className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
           />
         </div>
         
         <div>
-          <Label htmlFor="reference" className="text-xs text-blue-900 font-medium">Referentie</Label>
+          <Label htmlFor="reference" className="text-sm font-medium text-slate-700 mb-2 block">
+            Referentienummer
+          </Label>
           <Input
             id="reference"
             value={formData.reference}
             onChange={(e) => updateFormData({ reference: e.target.value })}
-            placeholder="Referentienummer"
-            className="mt-1 text-xs border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-7"
+            placeholder="Extern referentienummer"
+            className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="category" className="text-xs text-blue-900 font-medium">Categorie</Label>
+            <Label htmlFor="category" className="text-sm font-medium text-slate-700 mb-2 block">
+              Categorie
+            </Label>
             <Select 
               value={formData.category} 
               onValueChange={(value) => updateFormData({ category: value })}
             >
-              <SelectTrigger className="mt-1 text-xs border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-7">
-                <SelectValue placeholder="Selecteer" />
+              <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
+                <SelectValue placeholder="Selecteer categorie" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="algemeen">Algemeen</SelectItem>
@@ -76,37 +82,39 @@ export const BasicInfoSection = ({ formData, updateFormData }: BasicInfoSectionP
           </div>
 
           <div>
-            <Label htmlFor="priority" className="text-xs text-blue-900 font-medium">Prioriteit</Label>
+            <Label htmlFor="priority" className="text-sm font-medium text-slate-700 mb-2 block">
+              Prioriteit
+            </Label>
             <Select 
               value={formData.priority} 
               onValueChange={(value) => updateFormData({ priority: value })}
             >
-              <SelectTrigger className="mt-1 text-xs border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-7">
-                <SelectValue placeholder="Selecteer" />
+              <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
+                <SelectValue placeholder="Selecteer prioriteit" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="low">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span className="text-xs">Laag</span>
+                    <span>Laag</span>
                   </div>
                 </SelectItem>
                 <SelectItem value="medium">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                    <span className="text-xs">Normaal</span>
+                    <span>Normaal</span>
                   </div>
                 </SelectItem>
                 <SelectItem value="high">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                    <span className="text-xs">Hoog</span>
+                    <span>Hoog</span>
                   </div>
                 </SelectItem>
                 <SelectItem value="urgent">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                    <span className="text-xs">Urgent</span>
+                    <span>Urgent</span>
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -115,21 +123,23 @@ export const BasicInfoSection = ({ formData, updateFormData }: BasicInfoSectionP
         </div>
 
         <div>
-          <Label htmlFor="responsible_user_id" className="text-xs text-blue-900 font-medium">Verantwoordelijke</Label>
+          <Label htmlFor="responsible_user_id" className="text-sm font-medium text-slate-700 mb-2 block">
+            Verantwoordelijke
+          </Label>
           <Select 
             value={formData.responsible_user_id} 
             onValueChange={(value) => updateFormData({ responsible_user_id: value })}
           >
-            <SelectTrigger className="mt-1 text-xs border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-7">
-              <SelectValue placeholder="Selecteer persoon" />
+            <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
+              <SelectValue placeholder="Selecteer verantwoordelijke" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="unassigned">Niet toegewezen</SelectItem>
               {members.map((member) => (
                 <SelectItem key={member.user_id} value={member.user_id}>
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-xs">{member.account_name || member.email}</span>
-                    <span className="text-gray-400 ml-2 text-xs">{member.role}</span>
+                    <span>{member.account_name || member.email}</span>
+                    <span className="text-slate-400 ml-2 text-xs">{member.role}</span>
                   </div>
                 </SelectItem>
               ))}

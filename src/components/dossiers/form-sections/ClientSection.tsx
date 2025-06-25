@@ -16,21 +16,23 @@ export const ClientSection = ({ formData, updateFormData }: ClientSectionProps) 
   const { clients } = useAllClients();
 
   return (
-    <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-2 border border-green-200 w-full">
-      <div className="flex items-center gap-1 mb-2">
-        <div className="bg-green-600 rounded-lg p-1">
-          <Building2 className="h-2 w-2 text-white" />
+    <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="bg-slate-800 rounded-lg p-2">
+          <Building2 className="h-4 w-4 text-white" />
         </div>
-        <h3 className="text-xs font-semibold text-green-900">Client</h3>
+        <h3 className="text-lg font-semibold text-slate-900">Client</h3>
       </div>
       
       <div>
-        <Label htmlFor="client_id" className="text-xs text-green-900 font-medium">Gekoppelde Client</Label>
+        <Label htmlFor="client_id" className="text-sm font-medium text-slate-700 mb-2 block">
+          Gekoppelde Client
+        </Label>
         <Select 
           value={formData.client_id} 
           onValueChange={(value) => updateFormData({ client_id: value })}
         >
-          <SelectTrigger className="mt-1 text-xs border-green-200 focus:border-green-500 focus:ring-green-500 h-7">
+          <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
             <SelectValue placeholder="Selecteer client" />
           </SelectTrigger>
           <SelectContent>
@@ -38,9 +40,9 @@ export const ClientSection = ({ formData, updateFormData }: ClientSectionProps) 
             {clients.map((client) => (
               <SelectItem key={client.id} value={client.id}>
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-xs">{client.name}</span>
+                  <span>{client.name}</span>
                   {client.contact_number && (
-                    <span className="text-gray-400 ml-2 text-xs">#{client.contact_number}</span>
+                    <span className="text-slate-400 ml-2 text-xs">#{client.contact_number}</span>
                   )}
                 </div>
               </SelectItem>

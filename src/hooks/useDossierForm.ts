@@ -17,6 +17,15 @@ interface DossierFormData {
   budget: string;
   is_billable: boolean;
   tags: string;
+  case_type?: string;
+  court_instance?: string;
+  legal_status?: string;
+  estimated_hours?: string;
+  hourly_rate?: string;
+  billing_type?: string;
+  deadline_date?: string;
+  deadline_description?: string;
+  intake_notes?: string;
 }
 
 export const useDossierForm = (onSuccess?: () => void) => {
@@ -36,7 +45,16 @@ export const useDossierForm = (onSuccess?: () => void) => {
     responsible_user_id: 'unassigned',
     budget: '',
     is_billable: true,
-    tags: ''
+    tags: '',
+    case_type: '',
+    court_instance: '',
+    legal_status: 'nieuw',
+    estimated_hours: '',
+    hourly_rate: '',
+    billing_type: 'per_uur',
+    deadline_date: '',
+    deadline_description: '',
+    intake_notes: ''
   });
 
   const updateFormData = (updates: Partial<DossierFormData>) => {
@@ -56,7 +74,16 @@ export const useDossierForm = (onSuccess?: () => void) => {
       responsible_user_id: 'unassigned',
       budget: '',
       is_billable: true,
-      tags: ''
+      tags: '',
+      case_type: '',
+      court_instance: '',
+      legal_status: 'nieuw',
+      estimated_hours: '',
+      hourly_rate: '',
+      billing_type: 'per_uur',
+      deadline_date: '',
+      deadline_description: '',
+      intake_notes: ''
     });
   };
 
