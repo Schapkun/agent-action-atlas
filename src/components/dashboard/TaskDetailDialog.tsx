@@ -240,22 +240,22 @@ export const TaskDetailDialog = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 flex flex-col">
         {/* Compact Header */}
-        <DialogHeader className="flex-shrink-0 px-4 py-3 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+        <DialogHeader className="flex-shrink-0 px-4 py-2 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="flex items-center justify-between">
             <div>
-              <DialogTitle className="text-lg font-semibold text-gray-900">
+              <DialogTitle className="text-base font-semibold text-gray-900">
                 {getActionType(task)}
               </DialogTitle>
-              <p className="text-sm text-gray-600 mt-0.5">
+              <p className="text-xs text-gray-600 mt-0.5">
                 {getClientName(task)}
               </p>
             </div>
             
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className={`${getPriorityColor(task.priority)} text-xs px-2 py-1`}>
+              <Badge variant="outline" className={`${getPriorityColor(task.priority)} text-xs px-2 py-0.5`}>
                 {task.priority === 'high' ? 'Hoog' : task.priority === 'medium' ? 'Gemiddeld' : 'Laag'}
               </Badge>
-              <Badge variant={task.status === 'completed' ? 'default' : 'outline'} className="text-xs px-2 py-1">
+              <Badge variant={task.status === 'completed' ? 'default' : 'outline'} className="text-xs px-2 py-0.5">
                 {task.status === 'completed' ? 'Voltooid' : 'Openstaand'}
               </Badge>
             </div>
@@ -267,14 +267,14 @@ export const TaskDetailDialog = ({
           <div className="grid grid-cols-2 gap-4 h-full">
             {/* Left Panel - Original Email */}
             <div className="border rounded-lg flex flex-col h-full max-h-[600px]">
-              <div className="bg-amber-50 px-3 py-2 border-b rounded-t-lg flex-shrink-0">
+              <div className="bg-amber-50 px-3 py-1.5 border-b rounded-t-lg flex-shrink-0">
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-amber-600" />
-                  <h3 className="text-sm font-medium text-amber-800">Originele E-mail</h3>
+                  <h3 className="text-xs font-medium text-amber-800">Originele E-mail</h3>
                 </div>
               </div>
               
-              <div className="p-3 flex-1 min-h-0 flex flex-col">
+              <div className="p-2 flex-1 min-h-0 flex flex-col">
                 {loading ? (
                   <div className="flex items-center justify-center flex-1">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-600"></div>
@@ -282,18 +282,18 @@ export const TaskDetailDialog = ({
                 ) : originalEmail ? (
                   <div className="flex-1 flex flex-col min-h-0">
                     {/* Compact Fields */}
-                    <div className="space-y-2 mb-3 flex-shrink-0">
+                    <div className="space-y-1 mb-2 flex-shrink-0">
                       {/* VAN and AAN on one line */}
                       <div className="grid grid-cols-2 gap-2">
                         <div>
                           <span className="font-medium text-gray-600 text-xs">VAN:</span>
-                          <div className="text-xs bg-gray-50 px-2 py-1 rounded border text-gray-700">
+                          <div className="text-xs bg-gray-50 px-1.5 py-0.5 rounded border text-gray-700 truncate">
                             {originalEmail.from_email}
                           </div>
                         </div>
                         <div>
                           <span className="font-medium text-gray-600 text-xs">AAN:</span>
-                          <div className="text-xs bg-gray-50 px-2 py-1 rounded border text-gray-700">
+                          <div className="text-xs bg-gray-50 px-1.5 py-0.5 rounded border text-gray-700 truncate">
                             {originalEmail.to_email}
                           </div>
                         </div>
@@ -302,19 +302,19 @@ export const TaskDetailDialog = ({
                       {/* ONDERWERP */}
                       <div>
                         <span className="font-medium text-gray-600 text-xs">ONDERWERP:</span>
-                        <div className="text-xs bg-gray-50 px-2 py-1 rounded border text-gray-700 font-medium">
+                        <div className="text-xs bg-gray-50 px-1.5 py-0.5 rounded border text-gray-700 font-medium truncate">
                           {originalEmail.subject}
                         </div>
                       </div>
                     </div>
                     
-                    <Separator className="mb-3 flex-shrink-0" />
+                    <Separator className="mb-2 flex-shrink-0" />
                     
                     {/* BERICHT */}
                     <div className="flex-1 min-h-0">
                       <span className="font-medium text-gray-600 text-xs">BERICHT:</span>
                       <ScrollArea className="h-full mt-1">
-                        <div className="bg-gray-50 px-2 py-2 rounded border min-h-full">
+                        <div className="bg-gray-50 px-2 py-1.5 rounded border min-h-full">
                           {originalEmail.body_html ? (
                             <div 
                               className="prose prose-xs max-w-none text-xs text-gray-700"
@@ -342,16 +342,16 @@ export const TaskDetailDialog = ({
 
             {/* Right Panel - AI Response */}
             <div className="border rounded-lg flex flex-col h-full max-h-[600px]">
-              <div className="bg-blue-50 px-3 py-2 border-b rounded-t-lg flex-shrink-0">
+              <div className="bg-blue-50 px-3 py-1.5 border-b rounded-t-lg flex-shrink-0">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="h-4 w-4 text-blue-600" />
-                  <h3 className="text-sm font-medium text-blue-800">AI Gegenereerd Antwoord</h3>
+                  <h3 className="text-xs font-medium text-blue-800">AI Gegenereerd Antwoord</h3>
                   {!isEditingContent && hasAIResponse && (
                     <Button
                       onClick={() => setIsEditingContent(true)}
                       variant="ghost"
                       size="sm"
-                      className="ml-auto h-6 px-2 text-xs"
+                      className="ml-auto h-5 px-1.5 text-xs"
                     >
                       <Edit className="h-3 w-3 mr-1" />
                       Bewerken
@@ -360,11 +360,11 @@ export const TaskDetailDialog = ({
                 </div>
               </div>
               
-              <div className="p-3 flex-1 min-h-0 flex flex-col">
+              <div className="p-2 flex-1 min-h-0 flex flex-col">
                 {task.ai_draft_subject || task.ai_draft_content ? (
                   <div className="flex-1 flex flex-col min-h-0">
                     {/* Compact Fields */}
-                    <div className="space-y-2 mb-3 flex-shrink-0">
+                    <div className="space-y-1 mb-2 flex-shrink-0">
                       {/* AAN and VAN on one line */}
                       <div className="grid grid-cols-2 gap-2">
                         <div>
@@ -373,10 +373,10 @@ export const TaskDetailDialog = ({
                             <Input
                               value={editedToEmail}
                               onChange={(e) => setEditedToEmail(e.target.value)}
-                              className="h-7 text-xs"
+                              className="h-6 text-xs px-1.5 py-0.5"
                             />
                           ) : (
-                            <div className="text-xs bg-white px-2 py-1 rounded border">
+                            <div className="text-xs bg-white px-1.5 py-0.5 rounded border truncate">
                               {task.reply_to_email}
                             </div>
                           )}
@@ -387,11 +387,11 @@ export const TaskDetailDialog = ({
                             <Input
                               value={editedFromEmail}
                               onChange={(e) => setEditedFromEmail(e.target.value)}
-                              className="h-7 text-xs"
+                              className="h-6 text-xs px-1.5 py-0.5"
                             />
                           ) : (
-                            <div className="text-xs bg-white px-2 py-1 rounded border">
-                              {selectedWorkspace?.sender_email || selectedWorkspace?.email || 'info@bedrijf.nl'}
+                            <div className="text-xs bg-white px-1.5 py-0.5 rounded border truncate">
+                              {selectedOrganization?.name || 'info@bedrijf.nl'}
                             </div>
                           )}
                         </div>
@@ -404,17 +404,17 @@ export const TaskDetailDialog = ({
                           <Input
                             value={editedSubject}
                             onChange={(e) => setEditedSubject(e.target.value)}
-                            className="h-7 text-xs"
+                            className="h-6 text-xs px-1.5 py-0.5"
                           />
                         ) : (
-                          <div className="text-xs bg-white px-2 py-1 rounded border font-medium">
+                          <div className="text-xs bg-white px-1.5 py-0.5 rounded border font-medium truncate">
                             {editedSubject || task.ai_draft_subject}
                           </div>
                         )}
                       </div>
                     </div>
                     
-                    <Separator className="mb-3 flex-shrink-0" />
+                    <Separator className="mb-2 flex-shrink-0" />
                     
                     {/* BERICHT */}
                     <div className="flex-1 min-h-0">
@@ -423,11 +423,11 @@ export const TaskDetailDialog = ({
                         <Textarea
                           value={editedContent}
                           onChange={(e) => setEditedContent(e.target.value)}
-                          className="mt-1 h-full text-xs resize-none"
+                          className="mt-1 h-full text-xs resize-none px-2 py-1.5"
                         />
                       ) : (
                         <ScrollArea className="h-full mt-1">
-                          <div className="bg-white px-2 py-2 rounded border min-h-full">
+                          <div className="bg-white px-2 py-1.5 rounded border min-h-full">
                             <div className="whitespace-pre-wrap text-xs">
                               {editedContent || task.ai_draft_content}
                             </div>
@@ -450,13 +450,13 @@ export const TaskDetailDialog = ({
         </div>
 
         {/* Footer */}
-        <div className="flex-shrink-0 flex items-center justify-between p-4 border-t bg-gray-50">
+        <div className="flex-shrink-0 flex items-center justify-between p-3 border-t bg-gray-50">
           <div className="flex gap-2">
             <Button
               onClick={handleClientDossier}
               variant="outline"
               size="sm"
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 h-7 px-2 text-xs"
             >
               <User className="h-3 w-3" />
               Klant Dossier
@@ -465,7 +465,7 @@ export const TaskDetailDialog = ({
               onClick={handleCommunicationHistory}
               variant="outline"
               size="sm"
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 h-7 px-2 text-xs"
             >
               <FolderOpen className="h-3 w-3" />
               Communicatie Historie
@@ -479,7 +479,7 @@ export const TaskDetailDialog = ({
                   onClick={handleCancelEdit}
                   variant="outline"
                   size="sm"
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 h-7 px-2 text-xs"
                 >
                   <X className="h-3 w-3" />
                   Annuleren
@@ -487,7 +487,7 @@ export const TaskDetailDialog = ({
                 <Button
                   onClick={handleSaveEdit}
                   size="sm"
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 h-7 px-2 text-xs"
                 >
                   <Save className="h-3 w-3" />
                   Opslaan
@@ -499,6 +499,7 @@ export const TaskDetailDialog = ({
               onClick={onClose}
               variant="outline"
               size="sm"
+              className="h-7 px-2 text-xs"
             >
               Sluiten
             </Button>
@@ -507,7 +508,7 @@ export const TaskDetailDialog = ({
               <Button
                 onClick={handleSendReply}
                 size="sm"
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 h-7 px-2 text-xs"
               >
                 <Send className="h-3 w-3" />
                 Verstuur E-mail
