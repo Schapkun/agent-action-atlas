@@ -53,6 +53,40 @@ export const SupportPage = () => {
     return null;
   };
 
+  // Helper function to send email notification
+  const sendEmailNotification = async (supportRequestData: any) => {
+    try {
+      console.log('Sending email notification for support request:', supportRequestData.id);
+      
+      const { error } = await supabase.functions.invoke('send-support-notification', {
+        body: {
+          id: supportRequestData.id,
+          contact_name: supportRequestData.contact_name,
+          contact_email: supportRequestData.contact_email,
+          subject: supportRequestData.subject,
+          description: supportRequestData.description,
+          request_type: supportRequestData.request_type,
+          created_at: supportRequestData.created_at
+        }
+      });
+
+      if (error) {
+        console.error('Error sending email notification:', error);
+        // Don't throw error here, as the support request was saved successfully
+        toast({
+          title: "Waarschuwing",
+          description: "Support request opgeslagen, maar email notificatie mislukt",
+          variant: "destructive"
+        });
+      } else {
+        console.log('Email notification sent successfully');
+      }
+    } catch (error) {
+      console.error('Error calling email notification function:', error);
+      // Don't throw error here, as the support request was saved successfully
+    }
+  };
+
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -77,7 +111,7 @@ export const SupportPage = () => {
 
     setLoadingStates(prev => ({ ...prev, contact: true }));
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('support_requests')
         .insert([{
           request_type: 'question',
@@ -88,9 +122,16 @@ export const SupportPage = () => {
           contact_email: contactFormData.email,
           organization_id: orgId,
           status: 'open'
-        }]);
+        }])
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Send email notification
+      if (data) {
+        await sendEmailNotification(data);
+      }
 
       toast({
         title: "Succes",
@@ -134,7 +175,7 @@ export const SupportPage = () => {
 
     setLoadingStates(prev => ({ ...prev, bug: true }));
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('support_requests')
         .insert([{
           request_type: 'technical_issue',
@@ -145,9 +186,16 @@ export const SupportPage = () => {
           contact_email: bugFormData.email,
           organization_id: orgId,
           status: 'open'
-        }]);
+        }])
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Send email notification
+      if (data) {
+        await sendEmailNotification(data);
+      }
 
       toast({
         title: "Succes",
@@ -191,7 +239,7 @@ export const SupportPage = () => {
 
     setLoadingStates(prev => ({ ...prev, feature: true }));
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('support_requests')
         .insert([{
           request_type: 'feature_request',
@@ -202,9 +250,16 @@ export const SupportPage = () => {
           contact_email: featureFormData.email,
           organization_id: orgId,
           status: 'open'
-        }]);
+        }])
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Send email notification
+      if (data) {
+        await sendEmailNotification(data);
+      }
 
       toast({
         title: "Succes",
