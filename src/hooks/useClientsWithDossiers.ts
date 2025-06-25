@@ -37,66 +37,55 @@ export const useClientsWithDossiers = () => {
 
     setLoading(true);
     try {
-      console.log('📋 Fetching clients for organization:', selectedOrganization.id);
+      console.log('📋 Fetching clients with dossiers for organization:', selectedOrganization.id);
 
-      // First get all clients
-      let clientQuery = supabase
+      let query = supabase
         .from('clients')
-        .select('*')
+        .select(`
+          id,
+          name,
+          email,
+          phone,
+          type,
+          contact_person,
+          city,
+          dossiers!inner(
+            id,
+            name,
+            status,
+            category,
+            created_at,
+            updated_at
+          )
+        `)
         .eq('organization_id', selectedOrganization.id)
+        .eq('dossiers.status', 'active')
         .order('name');
 
       if (selectedWorkspace) {
-        clientQuery = clientQuery.eq('workspace_id', selectedWorkspace.id);
+        query = query.eq('workspace_id', selectedWorkspace.id);
       }
 
-      const { data: clientsData, error: clientsError } = await clientQuery;
+      const { data, error } = await query;
 
-      if (clientsError) {
-        console.error('📋 Error fetching clients:', clientsError);
-        throw clientsError;
+      if (error) {
+        console.error('📋 Error fetching clients with dossiers:', error);
+        throw error;
       }
 
-      console.log('📋 Clients fetched:', clientsData?.length || 0);
+      // Transform data to include dossier count
+      const clientsWithDossiers: ClientWithDossiers[] = (data || []).map(client => ({
+        ...client,
+        dossier_count: client.dossiers?.length || 0
+      }));
 
-      // Then get dossiers for each client
-      const clientsWithDossiers: ClientWithDossiers[] = [];
-
-      for (const client of clientsData || []) {
-        let dossierQuery = supabase
-          .from('dossiers')
-          .select('id, name, status, category, created_at, updated_at')
-          .eq('client_id', client.id)
-          .eq('status', 'active')
-          .order('created_at', { ascending: false });
-
-        const { data: dossiersData, error: dossiersError } = await dossierQuery;
-
-        if (dossiersError) {
-          console.warn('📋 Error fetching dossiers for client', client.id, dossiersError);
-        }
-
-        // Include clients even if they have no dossiers
-        clientsWithDossiers.push({
-          id: client.id,
-          name: client.name,
-          email: client.email,
-          phone: client.phone,
-          type: client.type,
-          contact_person: client.contact_person,
-          city: client.city,
-          dossiers: dossiersData || [],
-          dossier_count: dossiersData?.length || 0
-        });
-      }
-
-      console.log('📋 Clients with dossiers processed:', clientsWithDossiers.length);
+      console.log('📋 Clients with dossiers fetched:', clientsWithDossiers.length);
       setClients(clientsWithDossiers);
     } catch (error) {
       console.error('Error fetching clients with dossiers:', error);
       toast({
         title: "Fout",
-        description: "Kon klanten niet ophalen",
+        description: "Kon klanten met dossiers niet ophalen",
         variant: "destructive"
       });
     } finally {
