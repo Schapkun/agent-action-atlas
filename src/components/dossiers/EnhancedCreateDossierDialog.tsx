@@ -37,7 +37,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="!w-[98vw] !h-[92vh] !max-w-none !fixed !top-[4vh] !left-[1vw] !transform-none !translate-x-0 !translate-y-0 p-0 rounded-lg overflow-hidden flex flex-col">
+      <DialogContent className="!w-[90vw] !h-[90vh] !max-w-none !fixed !top-[5vh] !left-[5vw] !transform-none !translate-x-0 !translate-y-0 p-0 rounded-lg overflow-hidden flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 flex-shrink-0">
           <DialogHeader>
@@ -54,8 +54,8 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
         </div>
         
         {/* Content */}
-        <div className="flex-1 p-8 overflow-y-auto bg-gray-50 min-h-0">
-          <form onSubmit={handleSubmit} className="w-full max-w-4xl mx-auto space-y-6">
+        <div className="flex-1 p-4 overflow-y-auto bg-gray-50 min-h-0">
+          <form onSubmit={handleSubmit} className="w-full space-y-4">
             <BasicInfoSection formData={formData} updateFormData={updateFormData} />
             <ClientSection formData={formData} updateFormData={updateFormData} />
             <PlanningBudgetSection formData={formData} updateFormData={updateFormData} />
@@ -65,7 +65,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 p-6 border-t border-gray-200 bg-white flex-shrink-0">
+        <div className="flex justify-end gap-3 p-4 border-t border-gray-200 bg-white flex-shrink-0">
           <Button 
             type="button" 
             variant="outline" 
