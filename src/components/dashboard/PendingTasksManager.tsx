@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
+import { TaskDetailDialog } from './TaskDetailDialog';
 import { 
   Search, 
   Plus, 
@@ -53,6 +54,8 @@ export const PendingTasksManager = () => {
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [showNewTaskForm, setShowNewTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<PendingTask | null>(null);
+  const [selectedTask, setSelectedTask] = useState<PendingTask | null>(null);
+  const [showTaskDialog, setShowTaskDialog] = useState(false);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
 
@@ -213,11 +216,38 @@ export const PendingTasksManager = () => {
   };
 
   const handleViewTask = (task: PendingTask) => {
-    console.log('Viewing task:', task.title);
-    toast({
-      title: "Taak Details",
-      description: `${task.title} wordt bekeken`
-    });
+    setSelectedTask(task);
+    setShowTaskDialog(true);
+  };
+
+  const handleCloseTaskDialog = () => {
+    setShowTaskDialog(false);
+    setSelectedTask(null);
+  };
+
+  const handleTaskStatusUpdate = async (taskId: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('pending_tasks')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succes",
+        description: `Taak gemarkeerd als ${status === 'completed' ? 'voltooid' : 'open'}`
+      });
+
+      fetchTasks();
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast({
+        title: "Fout",
+        description: "Kon taak status niet bijwerken",
+        variant: "destructive"
+      });
+    }
   };
 
   useEffect(() => {
@@ -508,6 +538,13 @@ export const PendingTasksManager = () => {
           )}
         </TabsContent>
       </Tabs>
+      
+      <TaskDetailDialog 
+        task={selectedTask}
+        isOpen={showTaskDialog}
+        onClose={handleCloseTaskDialog}
+        onStatusUpdate={handleTaskStatusUpdate}
+      />
     </div>
   );
 };
