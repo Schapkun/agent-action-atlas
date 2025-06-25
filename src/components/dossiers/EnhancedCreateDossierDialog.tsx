@@ -12,7 +12,6 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useAllClients } from '@/hooks/useAllClients';
-import { ContactSelector } from '@/components/contacts/ContactSelector';
 
 interface EnhancedCreateDossierDialogProps {
   children?: React.ReactNode;
@@ -40,17 +39,6 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
     is_billable: true,
     tags: ''
   });
-
-  const [selectedContact, setSelectedContact] = useState(null);
-
-  const handleContactSelect = (contact: any) => {
-    setSelectedContact(contact);
-    if (contact) {
-      setFormData(prev => ({ ...prev, client_id: contact.id }));
-    } else {
-      setFormData(prev => ({ ...prev, client_id: 'no_client' }));
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,7 +107,6 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
         is_billable: true,
         tags: ''
       });
-      setSelectedContact(null);
       
       setOpen(false);
       onDossierCreated?.();
@@ -145,41 +132,41 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-[90vw] w-full max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="w-screen h-screen max-w-none m-0 p-0 rounded-none">
         {/* Compact Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3 flex-shrink-0">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-2 flex-shrink-0">
           <DialogHeader>
             <div className="flex items-center gap-2">
               <div className="bg-white/20 rounded-lg p-1">
-                <FolderPlus className="h-4 w-4" />
+                <FolderPlus className="h-3 w-3" />
               </div>
               <div>
-                <DialogTitle className="text-lg font-bold text-white">Nieuw Dossier</DialogTitle>
+                <DialogTitle className="text-base font-bold text-white">Nieuw Dossier</DialogTitle>
                 <p className="text-blue-100 text-xs">Maak een nieuw dossier aan</p>
               </div>
             </div>
           </DialogHeader>
         </div>
         
-        {/* Scrollable content with optimized layout */}
-        <div className="overflow-y-auto flex-1 p-3">
-          <form onSubmit={handleSubmit}>
-            {/* Compact grid layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {/* Full screen content without overflow */}
+        <div className="flex-1 p-2 h-[calc(100vh-60px)]">
+          <form onSubmit={handleSubmit} className="h-full flex flex-col">
+            {/* 3-kolommen layout voor optimale ruimtebenutting */}
+            <div className="grid grid-cols-3 gap-2 flex-1">
               
-              {/* Left Column */}
-              <div className="space-y-3">
+              {/* Kolom 1: Basisinformatie + Client */}
+              <div className="space-y-2">
                 
                 {/* Basic Information */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 border border-blue-200">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-2 border border-blue-200">
+                  <div className="flex items-center gap-1 mb-1">
                     <div className="bg-blue-600 rounded-lg p-1">
-                      <User className="h-3 w-3 text-white" />
+                      <User className="h-2 w-2 text-white" />
                     </div>
-                    <h3 className="text-sm font-semibold text-blue-900">Basisinformatie</h3>
+                    <h3 className="text-xs font-semibold text-blue-900">Basisinformatie</h3>
                   </div>
                   
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <div>
                       <Label htmlFor="name" className="text-blue-900 font-medium text-xs">Naam *</Label>
                       <Input
@@ -188,7 +175,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                         onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                         placeholder="Dossiernaam"
                         required
-                        className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-8 text-xs"
+                        className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-7 text-xs"
                       />
                     </div>
                     
@@ -199,18 +186,18 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                         value={formData.reference}
                         onChange={(e) => setFormData(prev => ({ ...prev, reference: e.target.value }))}
                         placeholder="Referentienummer"
-                        className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-8 text-xs"
+                        className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-7 text-xs"
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-1">
                       <div>
                         <Label htmlFor="category" className="text-blue-900 font-medium text-xs">Categorie</Label>
                         <Select 
                           value={formData.category} 
                           onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
                         >
-                          <SelectTrigger className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-8 text-xs">
+                          <SelectTrigger className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-7 text-xs">
                             <SelectValue placeholder="Selecteer" />
                           </SelectTrigger>
                           <SelectContent>
@@ -231,7 +218,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                           value={formData.priority} 
                           onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}
                         >
-                          <SelectTrigger className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-8 text-xs">
+                          <SelectTrigger className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500 h-7 text-xs">
                             <SelectValue placeholder="Selecteer" />
                           </SelectTrigger>
                           <SelectContent>
@@ -266,37 +253,54 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                   </div>
                 </div>
 
-                {/* Client Selection */}
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 border border-green-200">
-                  <div className="flex items-center gap-2 mb-2">
+                {/* Compact Client Selection */}
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-2 border border-green-200">
+                  <div className="flex items-center gap-1 mb-1">
                     <div className="bg-green-600 rounded-lg p-1">
-                      <Building2 className="h-3 w-3 text-white" />
+                      <Building2 className="h-2 w-2 text-white" />
                     </div>
-                    <h3 className="text-sm font-semibold text-green-900">Client</h3>
+                    <h3 className="text-xs font-semibold text-green-900">Client</h3>
                   </div>
                   
                   <div>
                     <Label htmlFor="client_id" className="text-green-900 font-medium text-xs">Gekoppelde Client</Label>
-                    <div className="mt-1">
-                      <ContactSelector
-                        selectedContact={selectedContact}
-                        onContactSelect={handleContactSelect}
-                      />
-                    </div>
+                    <Select 
+                      value={formData.client_id} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, client_id: value }))}
+                    >
+                      <SelectTrigger className="mt-1 border-green-200 focus:border-green-500 focus:ring-green-500 h-7 text-xs">
+                        <SelectValue placeholder="Selecteer client" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="no_client">Geen client</SelectItem>
+                        {clients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            <div className="flex items-center justify-between w-full">
+                              <span className="text-xs">{client.name}</span>
+                              {client.contact_number && (
+                                <span className="text-xs text-gray-400 ml-2">#{client.contact_number}</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
+              </div>
 
-                {/* Timeline & Budget */}
-                <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 border border-purple-200">
-                  <div className="flex items-center gap-2 mb-2">
+              {/* Kolom 2: Planning & Budget */}
+              <div className="space-y-2">
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-2 border border-purple-200">
+                  <div className="flex items-center gap-1 mb-1">
                     <div className="bg-purple-600 rounded-lg p-1">
-                      <Calendar className="h-3 w-3 text-white" />
+                      <Calendar className="h-2 w-2 text-white" />
                     </div>
-                    <h3 className="text-sm font-semibold text-purple-900">Planning & Budget</h3>
+                    <h3 className="text-xs font-semibold text-purple-900">Planning & Budget</h3>
                   </div>
                   
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <div className="grid grid-cols-2 gap-1">
                       <div>
                         <Label htmlFor="start_date" className="text-purple-900 font-medium text-xs">Start</Label>
                         <Input
@@ -304,7 +308,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                           type="date"
                           value={formData.start_date}
                           onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                          className="mt-1 border-purple-200 focus:border-purple-500 focus:ring-purple-500 h-8 text-xs"
+                          className="mt-1 border-purple-200 focus:border-purple-500 focus:ring-purple-500 h-7 text-xs"
                         />
                       </div>
                       
@@ -315,7 +319,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                           type="date"
                           value={formData.end_date}
                           onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
-                          className="mt-1 border-purple-200 focus:border-purple-500 focus:ring-purple-500 h-8 text-xs"
+                          className="mt-1 border-purple-200 focus:border-purple-500 focus:ring-purple-500 h-7 text-xs"
                         />
                       </div>
                     </div>
@@ -323,7 +327,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                     <div>
                       <Label htmlFor="budget" className="text-purple-900 font-medium text-xs">Budget (€)</Label>
                       <div className="relative mt-1">
-                        <CreditCard className="absolute left-2 top-2 h-3 w-3 text-purple-500" />
+                        <CreditCard className="absolute left-2 top-2 h-2 w-2 text-purple-500" />
                         <Input
                           id="budget"
                           type="number"
@@ -331,7 +335,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                           value={formData.budget}
                           onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
                           placeholder="0.00"
-                          className="pl-7 border-purple-200 focus:border-purple-500 focus:ring-purple-500 h-8 text-xs"
+                          className="pl-6 border-purple-200 focus:border-purple-500 focus:ring-purple-500 h-7 text-xs"
                         />
                       </div>
                     </div>
@@ -349,16 +353,16 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                 </div>
               </div>
 
-              {/* Right Column */}
-              <div className="space-y-3">
+              {/* Kolom 3: Beschrijving & Tags */}
+              <div className="space-y-2">
                 
                 {/* Description */}
-                <div className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg p-2 border border-gray-200">
+                  <div className="flex items-center gap-1 mb-1">
                     <div className="bg-gray-600 rounded-lg p-1">
-                      <FileText className="h-3 w-3 text-white" />
+                      <FileText className="h-2 w-2 text-white" />
                     </div>
-                    <h3 className="text-sm font-semibold text-gray-900">Beschrijving</h3>
+                    <h3 className="text-xs font-semibold text-gray-900">Beschrijving</h3>
                   </div>
                   
                   <div>
@@ -368,19 +372,19 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                       value={formData.description}
                       onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                       placeholder="Beschrijving van het dossier"
-                      rows={6}
+                      rows={8}
                       className="mt-1 border-gray-200 focus:border-gray-500 focus:ring-gray-500 text-xs resize-none"
                     />
                   </div>
                 </div>
 
                 {/* Tags */}
-                <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-3 border border-orange-200">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-2 border border-orange-200">
+                  <div className="flex items-center gap-1 mb-1">
                     <div className="bg-orange-600 rounded-lg p-1">
-                      <Tag className="h-3 w-3 text-white" />
+                      <Tag className="h-2 w-2 text-white" />
                     </div>
-                    <h3 className="text-sm font-semibold text-orange-900">Tags</h3>
+                    <h3 className="text-xs font-semibold text-orange-900">Tags</h3>
                   </div>
                   
                   <div>
@@ -390,7 +394,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                       value={formData.tags}
                       onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
                       placeholder="urgent, project, review"
-                      className="mt-1 border-orange-200 focus:border-orange-500 focus:ring-orange-500 h-8 text-xs"
+                      className="mt-1 border-orange-200 focus:border-orange-500 focus:ring-orange-500 h-7 text-xs"
                     />
                     <p className="text-xs text-orange-600 mt-1">
                       Gescheiden door komma's
@@ -400,24 +404,24 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex justify-end gap-2 pt-3 mt-3 border-t border-gray-200">
+            {/* Action Buttons - Fixed at bottom */}
+            <div className="flex justify-end gap-2 pt-2 mt-2 border-t border-gray-200 flex-shrink-0">
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={() => setOpen(false)}
-                className="px-4 py-1 border-gray-300 text-gray-700 hover:bg-gray-50 h-8 text-xs"
+                className="px-3 py-1 border-gray-300 text-gray-700 hover:bg-gray-50 h-7 text-xs"
               >
                 Annuleren
               </Button>
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="px-4 py-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg h-8 text-xs"
+                className="px-3 py-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg h-7 text-xs"
               >
                 {loading ? (
                   <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-2 h-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     <span className="text-xs">Bezig...</span>
                   </div>
                 ) : (
