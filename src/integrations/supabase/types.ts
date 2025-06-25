@@ -114,6 +114,48 @@ export type Database = {
         }
         Relationships: []
       }
+      case_step_templates: {
+        Row: {
+          case_type: string
+          created_at: string
+          estimated_days: number | null
+          id: string
+          is_required: boolean | null
+          organization_id: string
+          step_description: string | null
+          step_name: string
+          step_order: number
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          case_type: string
+          created_at?: string
+          estimated_days?: number | null
+          id?: string
+          is_required?: boolean | null
+          organization_id: string
+          step_description?: string | null
+          step_name: string
+          step_order: number
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          case_type?: string
+          created_at?: string
+          estimated_days?: number | null
+          id?: string
+          is_required?: boolean | null
+          organization_id?: string
+          step_description?: string | null
+          step_name?: string
+          step_order?: number
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null
@@ -473,6 +515,45 @@ export type Database = {
           status?: string
           updated_at?: string
           workspace_id?: string | null
+        }
+        Relationships: []
+      }
+      dossier_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          dossier_id: string
+          id: string
+          notes: string | null
+          status: string
+          step_description: string | null
+          step_name: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          dossier_id: string
+          id?: string
+          notes?: string | null
+          status?: string
+          step_description?: string | null
+          step_name: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          dossier_id?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          step_description?: string | null
+          step_name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1827,6 +1908,15 @@ export type Database = {
       get_user_workspace_role: {
         Args: { workspace_id: string; user_id: string }
         Returns: string
+      }
+      initialize_dossier_progress: {
+        Args: {
+          dossier_id: string
+          case_type: string
+          org_id: string
+          workspace_id?: string
+        }
+        Returns: undefined
       }
       is_org_admin_or_owner: {
         Args: { org_id: string; user_id: string }

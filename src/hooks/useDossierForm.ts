@@ -126,11 +126,28 @@ export const useDossierForm = (onSuccess?: () => void) => {
         status: 'active'
       };
 
-      const { error } = await supabase
+      const { data: dossier, error } = await supabase
         .from('dossiers')
-        .insert(dossierData);
+        .insert(dossierData)
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Initialize case progress if case_type is selected
+      if (formData.case_type && dossier) {
+        try {
+          await supabase.rpc('initialize_dossier_progress', {
+            dossier_id: dossier.id,
+            case_type: formData.case_type,
+            org_id: selectedOrganization.id,
+            workspace_id: selectedWorkspace?.id || null
+          });
+        } catch (progressError) {
+          console.error('Error initializing case progress:', progressError);
+          // Don't fail the entire dossier creation for this
+        }
+      }
 
       toast({
         title: "Dossier aangemaakt",

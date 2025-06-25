@@ -8,6 +8,7 @@ import { BasicInfoSection } from './form-sections/BasicInfoSection';
 import { LegalDetailsSection } from './form-sections/LegalDetailsSection';
 import { ClientSection } from './form-sections/ClientSection';
 import { PlanningSection } from './form-sections/PlanningSection';
+import { CaseProgressSection } from './form-sections/CaseProgressSection';
 import { NotesSection } from './form-sections/NotesSection';
 
 interface EnhancedCreateDossierDialogProps {
@@ -59,14 +60,15 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left Column */}
               <div className="space-y-6">
+                <ClientSection formData={formData} updateFormData={updateFormData} />
                 <BasicInfoSection formData={formData} updateFormData={updateFormData} />
                 <LegalDetailsSection formData={formData} updateFormData={updateFormData} />
-                <ClientSection formData={formData} updateFormData={updateFormData} />
               </div>
               
               {/* Right Column */}
               <div className="space-y-6">
                 <PlanningSection formData={formData} updateFormData={updateFormData} />
+                <CaseProgressSection formData={formData} updateFormData={updateFormData} />
                 <NotesSection formData={formData} updateFormData={updateFormData} />
               </div>
             </div>
