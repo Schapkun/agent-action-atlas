@@ -11,7 +11,7 @@ import { Plus, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { useClientsWithDossiers } from '@/hooks/useClientsWithDossiers';
+import { useAllClients } from '@/hooks/useAllClients';
 
 interface EnhancedCreateDossierDialogProps {
   children?: React.ReactNode;
@@ -23,7 +23,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
-  const { clients } = useClientsWithDossiers();
+  const { clients } = useAllClients();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -132,7 +132,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nieuw Dossier Aanmaken</DialogTitle>
         </DialogHeader>
@@ -142,7 +142,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-gray-900">Basisinformatie</h3>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="name">Naam *</Label>
                 <Input
@@ -163,20 +163,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                   placeholder="Referentienummer of kenmerk"
                 />
               </div>
-            </div>
 
-            <div>
-              <Label htmlFor="description">Beschrijving</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Beschrijving van het dossier"
-                rows={3}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="category">Categorie</Label>
                 <Select 
@@ -197,24 +184,35 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                   </SelectContent>
                 </Select>
               </div>
+            </div>
 
-              <div>
-                <Label htmlFor="priority">Prioriteit</Label>
-                <Select 
-                  value={formData.priority} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecteer prioriteit" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Laag</SelectItem>
-                    <SelectItem value="medium">Normaal</SelectItem>
-                    <SelectItem value="high">Hoog</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <Label htmlFor="description">Beschrijving</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Beschrijving van het dossier"
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="priority">Prioriteit</Label>
+              <Select 
+                value={formData.priority} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecteer prioriteit" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Laag</SelectItem>
+                  <SelectItem value="medium">Normaal</SelectItem>
+                  <SelectItem value="high">Hoog</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -228,7 +226,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                 value={formData.client_id} 
                 onValueChange={(value) => setFormData(prev => ({ ...prev, client_id: value }))}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecteer een client (optioneel)" />
                 </SelectTrigger>
                 <SelectContent>
@@ -247,7 +245,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-gray-900">Planning & Budget</h3>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="start_date">Startdatum</Label>
                 <Input
@@ -267,9 +265,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                   onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="budget">Budget (€)</Label>
                 <Input
@@ -281,15 +277,15 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
                   placeholder="0.00"
                 />
               </div>
-              
-              <div className="flex items-center space-x-2 pt-6">
-                <Checkbox
-                  id="is_billable"
-                  checked={formData.is_billable}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_billable: !!checked }))}
-                />
-                <Label htmlFor="is_billable">Factuurbaar</Label>
-              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="is_billable"
+                checked={formData.is_billable}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_billable: !!checked }))}
+              />
+              <Label htmlFor="is_billable">Factuurbaar</Label>
             </div>
           </div>
 
