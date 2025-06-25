@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -254,7 +255,6 @@ export const TaskDetailDialog = ({
 
   const handleCommunicationHistory = () => {
     if (task.client_id) {
-      // Navigate to contacts with email filter for this client
       navigate('/contacts', { 
         state: { 
           selectedClientId: task.client_id,
@@ -274,12 +274,12 @@ export const TaskDetailDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-none w-screen h-screen p-0 flex flex-col overflow-hidden shadow-xl fixed inset-0">
+      <DialogContent className="max-w-7xl w-full h-[90vh] p-0 overflow-hidden">
         {/* Header */}
         <div className={`${isCompleted 
           ? 'bg-gradient-to-r from-green-600 to-emerald-600' 
           : 'bg-gradient-to-r from-blue-600 to-purple-600'
-        } text-white px-6 py-3 flex-shrink-0`}>
+        } text-white px-4 py-3 flex-shrink-0`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="bg-white/20 rounded-lg p-2">
@@ -290,7 +290,7 @@ export const TaskDetailDialog = ({
                 )}
               </div>
               <div>
-                <h1 className="text-base font-semibold">
+                <h1 className="text-sm font-semibold">
                   {isCompleted ? '✓ E-mail Verzonden' : getActionType(task)}
                 </h1>
                 <p className="text-white/80 text-xs">
@@ -304,22 +304,22 @@ export const TaskDetailDialog = ({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`${getPriorityColor(task.priority)} px-2 py-1 rounded-full text-xs font-semibold`}>
+              <Badge className={`${getPriorityColor(task.priority)} px-2 py-1 text-xs font-semibold`}>
                 {task.priority === 'high' ? 'Hoog' : task.priority === 'medium' ? 'Gemiddeld' : 'Laag'}
-              </span>
-              <span className={`${getStatusColor(task.status)} px-2 py-1 rounded-full text-xs font-semibold`}>
+              </Badge>
+              <Badge className={`${getStatusColor(task.status)} px-2 py-1 text-xs font-semibold`}>
                 {task.status === 'completed' ? 'Voltooid' : 'Open'}
-              </span>
+              </Badge>
             </div>
           </div>
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex min-h-0">
+        <div className="flex-1 flex min-h-0 h-[600px]">
           {/* Left Panel - Originele E-mail */}
           <div className="w-1/2 border-r flex flex-col">
-            <div className="bg-amber-50 border-b px-4 py-2 flex items-center gap-3 flex-shrink-0">
-              <div className="bg-amber-100 p-2 rounded-lg">
+            <div className="bg-amber-50 border-b px-4 py-2 flex items-center gap-2 flex-shrink-0">
+              <div className="bg-amber-100 p-1.5 rounded-lg">
                 <Mail className="w-3 h-3 text-amber-600" />
               </div>
               <div>
@@ -333,24 +333,24 @@ export const TaskDetailDialog = ({
               </div>
             </div>
 
-            <div className="p-4 flex-1 flex flex-col min-h-0">
+            <div className="p-3 flex-1 flex flex-col min-h-0">
               {loading ? (
                 <div className="flex items-center justify-center flex-1">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
                 </div>
               ) : originalEmail ? (
                 <>
-                  <div className="space-y-3 flex-shrink-0 mb-3">
-                    <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2 flex-shrink-0 mb-3">
+                    <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">VAN</label>
-                        <div className="bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-xs text-gray-600">
+                        <div className="bg-gray-50 border border-gray-200 rounded-md px-2 py-1.5 text-xs text-gray-600">
                           {originalEmail.from_email}
                         </div>
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">AAN</label>
-                        <div className="bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-xs text-gray-600">
+                        <div className="bg-gray-50 border border-gray-200 rounded-md px-2 py-1.5 text-xs text-gray-600">
                           {originalEmail.to_email}
                         </div>
                       </div>
@@ -358,13 +358,13 @@ export const TaskDetailDialog = ({
                     
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">ONDERWERP</label>
-                      <div className="bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-xs text-gray-600">
+                      <div className="bg-gray-50 border border-gray-200 rounded-md px-2 py-1.5 text-xs text-gray-600">
                         {originalEmail.subject}
                       </div>
                     </div>
                   </div>
 
-                  <div className="border-t border-gray-200 mb-3 flex-shrink-0"></div>
+                  <Separator className="mb-3" />
 
                   <div className="flex-1 min-h-0">
                     <label className="block text-xs font-medium text-gray-700 mb-2">BERICHT</label>
@@ -398,11 +398,11 @@ export const TaskDetailDialog = ({
             <div className={`${isCompleted 
               ? 'bg-green-50' 
               : 'bg-blue-50'
-            } border-b px-4 py-2 flex items-center gap-3 flex-shrink-0`}>
+            } border-b px-4 py-2 flex items-center gap-2 flex-shrink-0`}>
               <div className={`${isCompleted 
                 ? 'bg-green-100' 
                 : 'bg-blue-100'
-              } p-2 rounded-lg`}>
+              } p-1.5 rounded-lg`}>
                 {isCompleted ? (
                   <CheckCircle className={`w-3 h-3 ${isCompleted ? 'text-green-600' : 'text-blue-600'}`} />
                 ) : (
@@ -420,66 +420,66 @@ export const TaskDetailDialog = ({
               </div>
             </div>
 
-            <div className="p-4 flex-1 flex flex-col min-h-0">
+            <div className="p-3 flex-1 flex flex-col min-h-0">
               {task.ai_draft_subject || task.ai_draft_content ? (
                 <>
-                  <div className="space-y-3 flex-shrink-0 mb-3">
-                    <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2 flex-shrink-0 mb-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">VAN</label>
+                        <div className={`bg-gray-50 border ${isCompleted ? 'border-green-200' : 'border-blue-200'} rounded-md px-2 py-1.5 text-xs text-gray-600`}>
+                          {selectedOrganization?.name || 'info@bedrijf.nl'}
+                        </div>
+                      </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">AAN</label>
                         {isCompleted ? (
-                          <div className={`bg-gray-50 border ${isCompleted ? 'border-green-200' : 'border-blue-200'} rounded-md px-3 py-2 text-xs text-gray-600`}>
+                          <div className={`bg-gray-50 border ${isCompleted ? 'border-green-200' : 'border-blue-200'} rounded-md px-2 py-1.5 text-xs text-gray-600`}>
                             {task.reply_to_email || ''}
                           </div>
                         ) : (
                           <input 
                             type="text" 
                             value={task.reply_to_email || ''}
-                            className="w-full border border-blue-200 rounded-md px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full border border-blue-200 rounded-md px-2 py-1.5 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             readOnly
                           />
                         )}
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">VAN</label>
-                        <div className={`bg-gray-50 border ${isCompleted ? 'border-green-200' : 'border-blue-200'} rounded-md px-3 py-2 text-xs text-gray-600`}>
-                          {selectedOrganization?.name || 'info@bedrijf.nl'}
-                        </div>
                       </div>
                     </div>
                     
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">ONDERWERP</label>
                       {isCompleted ? (
-                        <div className="bg-gray-50 border border-green-200 rounded-md px-3 py-2 text-xs text-gray-600">
+                        <div className="bg-gray-50 border border-green-200 rounded-md px-2 py-1.5 text-xs text-gray-600">
                           {editedSubject || task.ai_draft_subject || ''}
                         </div>
                       ) : (
                         <Input
                           value={editedSubject}
                           onChange={(e) => setEditedSubject(e.target.value)}
-                          className="border-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-8"
+                          className="border-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs h-7"
                           placeholder="Voer onderwerp in..."
                         />
                       )}
                     </div>
                   </div>
 
-                  <div className="border-t border-gray-200 mb-3 flex-shrink-0"></div>
+                  <Separator className="mb-3" />
 
                   <div className="flex-1 min-h-0">
                     <label className="block text-xs font-medium text-gray-700 mb-2">BERICHT</label>
                     {isCompleted ? (
-                      <div className="w-full border border-green-200 rounded-md p-3 h-full overflow-y-auto bg-gray-50">
+                      <div className="w-full border border-green-200 rounded-md p-2 h-full overflow-y-auto bg-gray-50">
                         <div className="text-xs whitespace-pre-wrap text-gray-700">
                           {editedContent || task.ai_draft_content}
                         </div>
                       </div>
                     ) : (
-                      <textarea 
+                      <Textarea 
                         value={editedContent}
                         onChange={(e) => setEditedContent(e.target.value)}
-                        className="w-full border border-blue-200 rounded-md p-3 h-full text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                        className="w-full border border-blue-200 rounded-md p-2 h-full text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
                         placeholder="Typ je antwoord hier..."
                       />
                     )}
@@ -498,43 +498,47 @@ export const TaskDetailDialog = ({
         </div>
 
         {/* Footer */}
-        <div className="border-t bg-gray-50 px-6 py-3 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <button 
+        <div className="border-t bg-gray-50 px-4 py-2 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline"
+              size="sm"
               onClick={handleClientDossier}
-              className="px-4 py-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
+              className="text-xs h-8 px-3"
             >
-              <User className="w-3 h-3" />
+              <User className="w-3 h-3 mr-1" />
               Klant Dossier
-            </button>
-            <button 
+            </Button>
+            <Button 
+              variant="outline"
+              size="sm"
               onClick={handleCommunicationHistory}
-              className="px-4 py-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
+              className="text-xs h-8 px-3"
             >
-              <FolderOpen className="w-3 h-3" />
+              <FolderOpen className="w-3 h-3 mr-1" />
               Communicatie Historie
-            </button>
+            </Button>
           </div>
           
-          <div className="flex items-center gap-3">
-            <button 
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline"
+              size="sm"
               onClick={onClose}
-              className="px-6 py-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+              className="text-xs h-8 px-4"
             >
               Sluiten
-            </button>
+            </Button>
             
             {hasAIResponse && !isCompleted && (
-              <button 
+              <Button 
+                size="sm"
                 onClick={handleSendReply}
-                className={`px-6 py-2 ${isCompleted 
-                  ? 'bg-green-600 hover:bg-green-700' 
-                  : 'bg-blue-600 hover:bg-blue-700'
-                } text-white rounded-md text-xs font-medium transition-colors flex items-center gap-2`}
+                className="bg-blue-600 hover:bg-blue-700 text-xs h-8 px-4"
               >
-                <Send className="w-3 h-3" />
+                <Send className="w-3 h-3 mr-1" />
                 Taak uitvoeren
-              </button>
+              </Button>
             )}
           </div>
         </div>
