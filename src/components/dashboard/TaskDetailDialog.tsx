@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -240,13 +239,13 @@ export const TaskDetailDialog = ({
   };
 
   const handleClientDossier = () => {
-    // Navigate to client detail or open client management
     if (task.client_id) {
       toast({
-        title: "Klant Dossier",
-        description: `Navigatie naar klant ${getClientName()}`
+        title: "Navigeren naar klant dossier",
+        description: `Openen van dossier voor klant ${getClientName()}...`,
       });
-      // TODO: Implement navigation to client details
+      // This would typically navigate to /contacts/{client_id} or similar
+      // window.location.href = `/contacts/${task.client_id}`;
     } else {
       toast({
         title: "Geen klant gekoppeld",
@@ -257,17 +256,17 @@ export const TaskDetailDialog = ({
   };
 
   const handleCommunicationHistory = () => {
-    // Show communication history for this client/email thread
     if (task.client_id || task.email_thread_id) {
       toast({
-        title: "Communicatie Historie",
-        description: "Laadt communicatie geschiedenis..."
+        title: "Communicatie historie laden",
+        description: `Alle communicatie met ${getClientName()} wordt geladen...`,
       });
-      // TODO: Implement communication history dialog
+      // This would typically open a modal or navigate to communication history
+      // You could implement a separate dialog component for this
     } else {
       toast({
         title: "Geen historie beschikbaar",
-        description: "Er is geen communicatie historie beschikbaar",
+        description: "Er is geen communicatie historie beschikbaar voor deze taak",
         variant: "destructive"
       });
     }
@@ -430,25 +429,10 @@ export const TaskDetailDialog = ({
             <div className="p-4 flex-1 flex flex-col min-h-0">
               {task.ai_draft_subject || task.ai_draft_content ? (
                 <>
-                  {/* Compacte Email metadata op 1 regel - JUISTE VOLGORDE */}
+                  {/* Compacte Email metadata op 1 regel - GECORRIGEERDE VOLGORDE */}
                   <div className="space-y-2 flex-shrink-0 mb-3">
-                    {/* AAN en VAN op 1 regel */}
+                    {/* VAN en AAN op 1 regel - ZELFDE VOLGORDE ALS LINKS */}
                     <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">AAN</label>
-                        {isCompleted ? (
-                          <div className="bg-green-50 border border-green-200 rounded px-2 py-1 text-xs text-gray-600">
-                            {task.reply_to_email}
-                          </div>
-                        ) : (
-                          <input 
-                            type="text" 
-                            value={task.reply_to_email || ''}
-                            className="w-full border border-blue-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            readOnly
-                          />
-                        )}
-                      </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">VAN</label>
                         {isCompleted ? (
@@ -459,6 +443,21 @@ export const TaskDetailDialog = ({
                           <input 
                             type="text" 
                             value={selectedOrganization?.name || 'info@bedrijf.nl'}
+                            className="w-full border border-blue-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            readOnly
+                          />
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">AAN</label>
+                        {isCompleted ? (
+                          <div className="bg-green-50 border border-green-200 rounded px-2 py-1 text-xs text-gray-600">
+                            {task.reply_to_email}
+                          </div>
+                        ) : (
+                          <input 
+                            type="text" 
+                            value={task.reply_to_email || ''}
                             className="w-full border border-blue-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                             readOnly
                           />
@@ -523,6 +522,7 @@ export const TaskDetailDialog = ({
             <button 
               onClick={handleClientDossier}
               className="px-4 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
+              title={task.client_id ? `Ga naar dossier van ${getClientName()}` : 'Geen klant gekoppeld'}
             >
               <User className="w-4 h-4" />
               Klant Dossier
@@ -530,6 +530,7 @@ export const TaskDetailDialog = ({
             <button 
               onClick={handleCommunicationHistory}
               className="px-4 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
+              title={task.client_id || task.email_thread_id ? `Bekijk alle communicatie met ${getClientName()}` : 'Geen communicatie historie beschikbaar'}
             >
               <FolderOpen className="w-4 h-4" />
               Communicatie Historie
