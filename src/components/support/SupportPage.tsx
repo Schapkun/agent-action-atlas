@@ -38,8 +38,20 @@ export const SupportPage = () => {
     feature: false
   });
 
-  const { selectedOrganization } = useOrganization();
+  const { selectedOrganization, organizations } = useOrganization();
   const { toast } = useToast();
+
+  // Helper function to get organization ID with fallback
+  const getOrganizationId = () => {
+    if (selectedOrganization?.id) {
+      return selectedOrganization.id;
+    }
+    // Use first available organization as fallback
+    if (organizations && organizations.length > 0) {
+      return organizations[0].id;
+    }
+    return null;
+  };
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +60,16 @@ export const SupportPage = () => {
       toast({
         title: "Fout",
         description: "Vul alle velden in",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const orgId = getOrganizationId();
+    if (!orgId) {
+      toast({
+        title: "Fout",
+        description: "Geen organisatie beschikbaar. Neem contact op met de beheerder.",
         variant: "destructive"
       });
       return;
@@ -64,7 +86,7 @@ export const SupportPage = () => {
           description: contactFormData.message,
           contact_name: contactFormData.name,
           contact_email: contactFormData.email,
-          organization_id: selectedOrganization?.id || null,
+          organization_id: orgId,
           status: 'open'
         }]);
 
@@ -100,6 +122,16 @@ export const SupportPage = () => {
       return;
     }
 
+    const orgId = getOrganizationId();
+    if (!orgId) {
+      toast({
+        title: "Fout",
+        description: "Geen organisatie beschikbaar. Neem contact op met de beheerder.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoadingStates(prev => ({ ...prev, bug: true }));
     try {
       const { error } = await supabase
@@ -111,7 +143,7 @@ export const SupportPage = () => {
           description: bugFormData.message,
           contact_name: bugFormData.name,
           contact_email: bugFormData.email,
-          organization_id: selectedOrganization?.id || null,
+          organization_id: orgId,
           status: 'open'
         }]);
 
@@ -147,6 +179,16 @@ export const SupportPage = () => {
       return;
     }
 
+    const orgId = getOrganizationId();
+    if (!orgId) {
+      toast({
+        title: "Fout",
+        description: "Geen organisatie beschikbaar. Neem contact op met de beheerder.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoadingStates(prev => ({ ...prev, feature: true }));
     try {
       const { error } = await supabase
@@ -158,7 +200,7 @@ export const SupportPage = () => {
           description: featureFormData.message,
           contact_name: featureFormData.name,
           contact_email: featureFormData.email,
-          organization_id: selectedOrganization?.id || null,
+          organization_id: orgId,
           status: 'open'
         }]);
 
