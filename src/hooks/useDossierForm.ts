@@ -147,48 +147,14 @@ export const useDossierForm = (onSuccess?: () => void) => {
 
       console.log('📝 Dossier created successfully:', dossier);
 
-      // Initialize case progress if case_type is selected
-      if (formData.case_type && dossier) {
-        try {
-          console.log('🔄 Initializing case progress for dossier:', dossier.id);
-          
-          const { error: progressError } = await supabase.rpc('initialize_dossier_progress', {
-            dossier_id: dossier.id,
-            case_type: formData.case_type,
-            org_id: selectedOrganization.id,
-            p_workspace_id: selectedWorkspace?.id || null // Updated parameter name
-          });
+      // TEMPORARY: Disable case progress initialization until SQL function is fixed
+      // TODO: Re-enable once initialize_dossier_progress function is working properly
+      console.log('⚠️ Case progress initialization temporarily disabled due to SQL function issues');
 
-          if (progressError) {
-            console.error('⚠️ Error initializing case progress:', progressError);
-            // Don't fail the entire dossier creation for this - just log it
-            toast({
-              title: "Dossier aangemaakt",
-              description: `Dossier "${formData.name}" is aangemaakt, maar case progress kon niet worden geïnitialiseerd`,
-              variant: "default"
-            });
-          } else {
-            console.log('✅ Case progress initialized successfully');
-            toast({
-              title: "Dossier aangemaakt",
-              description: `Dossier "${formData.name}" is succesvol aangemaakt met case progress`
-            });
-          }
-        } catch (progressError) {
-          console.error('⚠️ Exception during case progress initialization:', progressError);
-          // Don't fail the entire dossier creation - just show a warning
-          toast({
-            title: "Dossier aangemaakt",
-            description: `Dossier "${formData.name}" is aangemaakt, maar case progress kon niet worden geïnitialiseerd`,
-            variant: "default"
-          });
-        }
-      } else {
-        toast({
-          title: "Dossier aangemaakt",
-          description: `Dossier "${formData.name}" is succesvol aangemaakt`
-        });
-      }
+      toast({
+        title: "Dossier aangemaakt",
+        description: `Dossier "${formData.name}" is succesvol aangemaakt`
+      });
 
       resetForm();
       onSuccess?.();
