@@ -1,44 +1,31 @@
-
-import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
+import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { FilterSelector } from './FilterSelector';
 import { HeaderActions } from './HeaderActions';
-import { getViewTitleFromPath } from '@/utils/viewTitles';
-import { useLocation } from 'react-router-dom';
-import type { ViewType } from '@/components/dashboard/Sidebar';
+import { getViewTitle } from '@/utils/viewTitle';
+import { MemberFilter } from './MemberFilter';
 
-interface HeaderProps {
-  currentView: ViewType;
-  onToggleSidebar: () => void;
-}
-
-export const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
+const Header = () => {
   const location = useLocation();
-  const fullPath = location.pathname + location.search;
-  const title = getViewTitleFromPath(fullPath);
 
   return (
-    <header className="bg-card border-b border-border px-6" style={{ paddingTop: '14px', paddingBottom: '14px' }}>
+    <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleSidebar}
-            className="lg:hidden"
-          >
-            <Menu className="h-4 w-4" />
-          </Button>
-          <h1 className="text-2xl font-semibold text-foreground">
-            {title}
+        <div className="flex items-center space-x-6">
+          <h1 className="text-2xl font-semibold text-gray-900">
+            {getViewTitle(location.pathname)}
           </h1>
+          
+          <div className="flex items-center space-x-4">
+            <FilterSelector />
+            <MemberFilter />
+          </div>
         </div>
-
-        <div className="flex items-center space-x-4">
-          <FilterSelector />
-          <HeaderActions />
-        </div>
+        
+        <HeaderActions />
       </div>
     </header>
   );
 };
+
+export default Header;

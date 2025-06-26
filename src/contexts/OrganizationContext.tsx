@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from './AuthContext';
 
 interface Organization {
   id: string;
@@ -16,16 +16,24 @@ interface Workspace {
   organization_id: string;
 }
 
+interface Member {
+  user_id: string;
+  email: string;
+  account_name?: string;
+  role: string;
+}
+
 interface OrganizationContextType {
   organizations: Organization[];
   workspaces: Workspace[];
   selectedOrganization: Organization | null;
   selectedWorkspace: Workspace | null;
+  selectedMember: Member | null;
   setSelectedOrganization: (org: Organization | null) => void;
   setSelectedWorkspace: (workspace: Workspace | null) => void;
-  isLoadingOrganizations: boolean;
-  getFilteredWorkspaces: () => Workspace[];
-  refreshData: () => Promise<void>;
+  setSelectedMember: (member: Member | null) => void;
+  loading: boolean;
+  refetch: () => Promise<void>;
 }
 
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
@@ -43,146 +51,92 @@ interface OrganizationProviderProps {
 }
 
 export const OrganizationProvider = ({ children }: OrganizationProviderProps) => {
+  const { user } = useAuth();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null);
   const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null);
-  const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(true);
-  const { user } = useAuth();
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchOrganizationsAndWorkspaces();
+  const fetchData = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
     }
-  }, [user]);
-
-  const fetchOrganizationsAndWorkspaces = async () => {
-    if (!user?.id) return;
 
     try {
-      setIsLoadingOrganizations(true);
-      
-      // Check user's role in organizations to determine access level
-      const userOrgMemberships = await supabase
+      setLoading(true);
+
+      // Fetch organizations
+      const { data: orgData, error: orgError } = await supabase
         .from('organization_members')
-        .select('organization_id, role')
+        .select(`
+          organization_id,
+          organizations!inner (
+            id,
+            name,
+            slug
+          )
+        `)
         .eq('user_id', user.id);
 
-      if (userOrgMemberships.error) throw userOrgMemberships.error;
+      if (orgError) throw orgError;
 
-      // Check if user has owner role in any organization (for super admin access)
-      const hasOwnerRole = userOrgMemberships.data?.some(membership => membership.role === 'owner');
-      
-      if (hasOwnerRole) {
-        // If user is owner in any org, fetch all organizations and workspaces
-        const [orgResponse, workspaceResponse] = await Promise.all([
-          supabase.from('organizations').select('id, name, slug').order('created_at', { ascending: true }),
-          supabase.from('workspaces').select('id, name, slug, organization_id').order('created_at', { ascending: true })
-        ]);
+      const orgs = orgData?.map(item => item.organizations).filter(Boolean) || [];
+      setOrganizations(orgs);
 
-        if (orgResponse.error) throw orgResponse.error;
-        if (workspaceResponse.error) throw workspaceResponse.error;
+      // Fetch workspaces
+      const { data: workspaceData, error: workspaceError } = await supabase
+        .from('workspace_members')
+        .select(`
+          workspace_id,
+          workspaces!inner (
+            id,
+            name,
+            slug,
+            organization_id
+          )
+        `)
+        .eq('user_id', user.id);
 
-        setOrganizations(orgResponse.data || []);
-        setWorkspaces(workspaceResponse.data || []);
-      } else {
-        // For regular users, get organizations they're member of
-        if (userOrgMemberships.data && userOrgMemberships.data.length > 0) {
-          const orgIds = userOrgMemberships.data.map(m => m.organization_id);
-          const { data: orgData, error: orgError } = await supabase
-            .from('organizations')
-            .select('id, name, slug')
-            .in('id', orgIds)
-            .order('created_at', { ascending: true });
+      if (workspaceError) throw workspaceError;
 
-          if (orgError) throw orgError;
-          setOrganizations(orgData || []);
+      const workspacesList = workspaceData?.map(item => item.workspaces).filter(Boolean) || [];
+      setWorkspaces(workspacesList);
 
-          // Get workspaces for those organizations
-          const { data: workspaceData, error: workspaceError } = await supabase
-            .from('workspaces')
-            .select('id, name, slug, organization_id')
-            .in('organization_id', orgIds)
-            .order('created_at', { ascending: true });
-
-          if (workspaceError) throw workspaceError;
-          setWorkspaces(workspaceData || []);
-        } else {
-          // User is not member of any organization, check workspace membership
-          const workspaceMembership = await supabase
-            .from('workspace_members')
-            .select('workspace_id')
-            .eq('user_id', user.id);
-
-          if (workspaceMembership.error) throw workspaceMembership.error;
-
-          if (workspaceMembership.data && workspaceMembership.data.length > 0) {
-            const workspaceIds = workspaceMembership.data.map(m => m.workspace_id);
-            const { data: workspaceData, error: workspaceError } = await supabase
-              .from('workspaces')
-              .select('id, name, slug, organization_id')
-              .in('id', workspaceIds)
-              .order('created_at', { ascending: true });
-
-            if (workspaceError) throw workspaceError;
-            setWorkspaces(workspaceData || []);
-
-            // Get unique organization IDs from workspaces
-            const orgIds = [...new Set(workspaceData?.map(w => w.organization_id) || [])];
-            
-            if (orgIds.length > 0) {
-              const { data: orgData, error: orgError } = await supabase
-                .from('organizations')
-                .select('id, name, slug')
-                .in('id', orgIds)
-                .order('created_at', { ascending: true });
-
-              if (orgError) throw orgError;
-              setOrganizations(orgData || []);
-            }
-          } else {
-            // User has no memberships at all
-            setOrganizations([]);
-            setWorkspaces([]);
-          }
-        }
+      // Auto-select first organization if none selected
+      if (!selectedOrganization && orgs.length > 0) {
+        setSelectedOrganization(orgs[0]);
       }
+
     } catch (error) {
-      console.error('Error fetching organizations and workspaces:', error);
-      setOrganizations([]);
-      setWorkspaces([]);
+      console.error('Error fetching organization data:', error);
     } finally {
-      setIsLoadingOrganizations(false);
+      setLoading(false);
     }
   };
 
-  const refreshData = async () => {
-    await fetchOrganizationsAndWorkspaces();
-  };
+  useEffect(() => {
+    fetchData();
+  }, [user]);
 
-  const getFilteredWorkspaces = () => {
-    if (selectedOrganization) {
-      return workspaces.filter(w => w.organization_id === selectedOrganization.id);
-    }
-    return workspaces;
-  };
-
-  const handleSetSelectedOrganization = (org: Organization | null) => {
-    setSelectedOrganization(org);
-    // Clear workspace selection when organization changes
-    setSelectedWorkspace(null);
-  };
+  // Reset selected member when organization or workspace changes
+  useEffect(() => {
+    setSelectedMember(null);
+  }, [selectedOrganization, selectedWorkspace]);
 
   const value: OrganizationContextType = {
     organizations,
     workspaces,
     selectedOrganization,
     selectedWorkspace,
-    setSelectedOrganization: handleSetSelectedOrganization,
+    selectedMember,
+    setSelectedOrganization,
     setSelectedWorkspace,
-    isLoadingOrganizations,
-    getFilteredWorkspaces,
-    refreshData,
+    setSelectedMember,
+    loading,
+    refetch: fetchData,
   };
 
   return (
