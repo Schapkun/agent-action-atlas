@@ -59,7 +59,7 @@ export const useDossiers = () => {
         .select(`
           *,
           client:clients(id, name, email),
-          assigned_user:profiles(id, email, account_name)
+          assigned_user:profiles!dossiers_responsible_user_id_fkey(id, email, full_name)
         `)
         .eq('organization_id', selectedOrganization.id);
 
@@ -76,7 +76,10 @@ export const useDossiers = () => {
       const { data, error: fetchError } = await query
         .order('created_at', { ascending: false });
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error('Fetch error details:', fetchError);
+        throw fetchError;
+      }
 
       // Map database names to frontend expectations with proper type casting
       const mappedDossiers: Dossier[] = (data || []).map(dossier => ({
@@ -94,7 +97,15 @@ export const useDossiers = () => {
         assigned_user_id: dossier.responsible_user_id || undefined,
         workspace_id: dossier.workspace_id || undefined,
         deadline: dossier.end_date || undefined,
-        custom_fields: {} // Default empty object since field doesn't exist in database
+        custom_fields: {}, // Default empty object since field doesn't exist in database
+        // Handle assigned_user properly
+        assigned_user: dossier.assigned_user && typeof dossier.assigned_user === 'object' && !('error' in dossier.assigned_user)
+          ? {
+              id: (dossier.assigned_user as any).id || '',
+              email: (dossier.assigned_user as any).email || '',
+              account_name: (dossier.assigned_user as any).full_name || undefined
+            }
+          : undefined
       }));
 
       setDossiers(mappedDossiers);
