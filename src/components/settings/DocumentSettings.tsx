@@ -128,9 +128,10 @@ const DocumentSettingsContent = () => {
     <DocumentProvider>
       <div className="space-y-6">
         <Tabs defaultValue="document-templates" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="document-templates">Document Templates</TabsTrigger>
             <TabsTrigger value="document-types">Document Types</TabsTrigger>
+            <TabsTrigger value="document-updates">Document Updates</TabsTrigger>
           </TabsList>
 
           <TabsContent value="document-templates" className="space-y-6">
@@ -158,6 +159,18 @@ const DocumentSettingsContent = () => {
 
           <TabsContent value="document-types" className="space-y-6">
             <DocumentTypeSettings />
+          </TabsContent>
+
+          <TabsContent value="document-updates" className="space-y-6">
+            <div className="bg-white rounded-lg border border-slate-200 p-6">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Document Updates</h3>
+              <p className="text-slate-600 mb-4">
+                Hier kun je de history en updates van documenten bekijken en beheren.
+              </p>
+              <div className="text-sm text-slate-500">
+                Deze functionaliteit wordt binnenkort beschikbaar gesteld.
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
 

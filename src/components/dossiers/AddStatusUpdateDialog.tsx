@@ -42,7 +42,7 @@ export const AddStatusUpdateDialog = ({ dossierId, onStatusUpdate, children }: A
     try {
       await onStatusUpdate({
         ...formData,
-        client_id: formData.client_id === 'no_client' ? undefined : formData.client_id
+        client_id: formData.client_id === 'no_client' || !formData.client_id ? undefined : formData.client_id
       });
       
       // Reset form
@@ -94,9 +94,9 @@ export const AddStatusUpdateDialog = ({ dossierId, onStatusUpdate, children }: A
           <div className="grid grid-cols-2 gap-4">
             <ClientSelector
               value={formData.client_id || 'no_client'}
-              onValueChange={(value) => updateFormData({ client_id: value })}
-              label="Gekoppelde Client"
-              placeholder="Zoek of selecteer client"
+              onValueChange={(value) => updateFormData({ client_id: value === 'no_client' ? '' : value })}
+              label="Gekoppelde Client (optioneel)"
+              placeholder="Geen client geselecteerd"
             />
 
             <div>
