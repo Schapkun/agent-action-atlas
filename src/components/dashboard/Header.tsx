@@ -6,7 +6,12 @@ import { HeaderActions } from './HeaderActions';
 import { getViewTitleFromPath } from '@/utils/viewTitles';
 import { MemberFilter } from './MemberFilter';
 
-const Header = () => {
+interface HeaderProps {
+  currentView?: string;
+  onToggleSidebar?: () => void;
+}
+
+const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
   const location = useLocation();
 
   return (
