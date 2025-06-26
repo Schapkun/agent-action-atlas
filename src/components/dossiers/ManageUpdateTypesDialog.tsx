@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Trash2, Plus, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { UPDATE_TYPE_LABELS } from '@/types/dossierStatusUpdates';
 
 interface ManageUpdateTypesDialogProps {
   open: boolean;
@@ -21,6 +22,15 @@ export const ManageUpdateTypesDialog = ({ open, onOpenChange }: ManageUpdateType
     { key: 'custom_type_1', label: 'Aangepast Type 1' },
     { key: 'custom_type_2', label: 'Aangepast Type 2' }
   ]);
+
+  // Standard types that can now be managed
+  const [standardUpdateTypes, setStandardUpdateTypes] = useState<Array<{ key: string; label: string; removable: boolean }>>(
+    Object.entries(UPDATE_TYPE_LABELS).map(([key, label]) => ({
+      key,
+      label,
+      removable: true
+    }))
+  );
 
   const handleAddType = () => {
     if (!newTypeName.trim() || !newTypeLabel.trim()) {
@@ -47,17 +57,25 @@ export const ManageUpdateTypesDialog = ({ open, onOpenChange }: ManageUpdateType
     });
   };
 
-  const handleRemoveType = (keyToRemove: string) => {
+  const handleRemoveCustomType = (keyToRemove: string) => {
     setCustomUpdateTypes(prev => prev.filter(type => type.key !== keyToRemove));
     toast({
       title: "Verwijderd",
-      description: "Update type verwijderd"
+      description: "Aangepast update type verwijderd"
+    });
+  };
+
+  const handleRemoveStandardType = (keyToRemove: string) => {
+    setStandardUpdateTypes(prev => prev.filter(type => type.key !== keyToRemove));
+    toast({
+      title: "Verwijderd",
+      description: "Standaard update type verwijderd"
     });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
@@ -106,6 +124,33 @@ export const ManageUpdateTypesDialog = ({ open, onOpenChange }: ManageUpdateType
             </Button>
           </div>
 
+          {/* Standard types */}
+          <div className="space-y-4">
+            <h3 className="font-medium text-slate-900">Standaard Types</h3>
+            {standardUpdateTypes.length === 0 ? (
+              <p className="text-sm text-slate-600">Alle standaard types zijn verwijderd</p>
+            ) : (
+              <div className="space-y-2">
+                {standardUpdateTypes.map((type) => (
+                  <div key={type.key} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div>
+                      <p className="font-medium text-slate-900">{type.label}</p>
+                      <p className="text-xs text-slate-600">{type.key}</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRemoveStandardType(type.key)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Existing custom types */}
           <div className="space-y-4">
             <h3 className="font-medium text-slate-900">Bestaande Aangepaste Types</h3>
@@ -122,7 +167,7 @@ export const ManageUpdateTypesDialog = ({ open, onOpenChange }: ManageUpdateType
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleRemoveType(type.key)}
+                      onClick={() => handleRemoveCustomType(type.key)}
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -131,14 +176,6 @@ export const ManageUpdateTypesDialog = ({ open, onOpenChange }: ManageUpdateType
                 ))}
               </div>
             )}
-          </div>
-
-          {/* Standard types info */}
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="font-medium text-blue-900 mb-2">Standaard Types</h4>
-            <p className="text-sm text-blue-700">
-              De standaard update types (Algemeen, Juridische Voortgang, etc.) kunnen niet worden aangepast.
-            </p>
           </div>
         </div>
       </DialogContent>
