@@ -72,21 +72,60 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left Column */}
               <div className="space-y-6">
-                <ClientSection formData={formData} updateFormData={updateFormData} />
-                <BasicInfoSection formData={formData} updateFormData={updateFormData} />
-                <LegalDetailsSection formData={formData} updateFormData={updateFormData} />
+                <ClientSection 
+                  formData={{ client_id: formData.client_id || '' }} 
+                  updateFormData={updateFormData} 
+                />
+                <BasicInfoSection 
+                  formData={{
+                    name: formData.name || formData.title,
+                    reference: formData.reference,
+                    category: formData.category,
+                    priority: formData.priority,
+                    responsible_user_id: formData.responsible_user_id,
+                    assigned_users: formData.assigned_users
+                  }} 
+                  updateFormData={updateFormData} 
+                />
+                <LegalDetailsSection 
+                  formData={{
+                    case_type: formData.case_type,
+                    court_instance: formData.court_instance,
+                    legal_status: formData.legal_status,
+                    estimated_hours: formData.estimated_hours,
+                    hourly_rate: formData.hourly_rate,
+                    billing_type: formData.billing_type
+                  }} 
+                  updateFormData={updateFormData} 
+                />
               </div>
               
               {/* Right Column */}
               <div className="space-y-6">
-                <PlanningSection formData={formData} updateFormData={updateFormData} />
+                <PlanningSection 
+                  formData={{
+                    start_date: formData.start_date,
+                    end_date: formData.end_date,
+                    budget: formData.budget,
+                    deadline_date: formData.deadline_date,
+                    deadline_description: formData.deadline_description
+                  }} 
+                  updateFormData={updateFormData} 
+                />
                 <CaseProgressSection 
                   currentStatus={formData.status}
                   statusUpdates={statusUpdates}
                   onStatusChange={handleStatusChange}
                   onAddStatusUpdate={handleAddStatusUpdate}
                 />
-                <NotesSection formData={formData} updateFormData={updateFormData} />
+                <NotesSection 
+                  formData={{
+                    description: formData.description,
+                    tags: formData.tags,
+                    intake_notes: formData.intake_notes
+                  }} 
+                  updateFormData={updateFormData} 
+                />
               </div>
             </div>
           </form>

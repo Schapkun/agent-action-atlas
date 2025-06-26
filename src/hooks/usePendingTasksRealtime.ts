@@ -54,10 +54,16 @@ export const usePendingTasksRealtime = () => {
 
       if (error) throw error;
 
-      // Type-safe conversion with priority casting
+      // Type-safe conversion with proper casting
       const typedTasks: PendingTask[] = (data || []).map(task => ({
         ...task,
-        priority: (task.priority as 'low' | 'medium' | 'high') || 'medium'
+        priority: (task.priority as 'low' | 'medium' | 'high') || 'medium',
+        status: (task.status as 'pending' | 'in_progress' | 'completed') || 'pending',
+        description: task.description || undefined,
+        assigned_user_id: task.assigned_to || undefined,
+        assigned_users: Array.isArray(task.assigned_users) ? task.assigned_users : [],
+        due_date: task.due_date || undefined,
+        workspace_id: task.workspace_id || undefined
       }));
 
       setTasks(typedTasks);

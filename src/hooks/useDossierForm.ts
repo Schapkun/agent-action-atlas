@@ -6,30 +6,78 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
 
 export interface DossierFormData {
+  // Basic Info Section
   title: string;
-  description: string;
-  status: 'active' | 'closed' | 'pending';
+  name: string;
+  reference: string;
+  category: string;
   priority: 'low' | 'medium' | 'high';
-  client_id?: string;
-  assigned_user_id?: string;
-  assigned_users: string[];
+  responsible_user_id: string;
+  assigned_users: Array<{
+    user_id: string;
+    name: string;
+    email: string;
+    role: string;
+    is_primary?: boolean;
+  }>;
+  
+  // Client Section
+  client_id: string;
+  
+  // Legal Details Section
+  case_type?: string;
+  court_instance?: string;
+  legal_status?: string;
+  estimated_hours?: string;
+  hourly_rate?: string;
+  billing_type?: string;
+  
+  // Planning Section
+  start_date: string;
+  end_date: string;
+  budget: string;
+  deadline_date?: string;
+  deadline_description?: string;
+  
+  // Notes Section
+  description: string;
+  tags: string;
+  intake_notes?: string;
+  
+  // Database fields
+  status: 'active' | 'closed' | 'pending';
   primary_user_id?: string;
   deadline?: Date;
-  budget?: number;
-  category?: string;
-  tags?: string[];
   custom_fields?: Record<string, any>;
 }
 
 export const useDossierForm = () => {
   const [formData, setFormData] = useState<DossierFormData>({
     title: '',
-    description: '',
-    status: 'active',
+    name: '',
+    reference: '',
+    category: '',
     priority: 'medium',
+    responsible_user_id: '',
     assigned_users: [],
-    tags: []
+    client_id: '',
+    case_type: '',
+    court_instance: '',
+    legal_status: '',
+    estimated_hours: '',
+    hourly_rate: '',
+    billing_type: '',
+    start_date: '',
+    end_date: '',
+    budget: '',
+    deadline_date: '',
+    deadline_description: '',
+    description: '',
+    tags: '',
+    intake_notes: '',
+    status: 'active'
   });
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
@@ -54,21 +102,24 @@ export const useDossierForm = () => {
     try {
       // Create dossier with proper field mapping
       const dossierData = {
-        name: data.title, // Map title to name for database
+        name: data.title || data.name, // Use title as name for database
         description: data.description,
         status: data.status,
         priority: data.priority,
-        client_id: data.client_id,
-        assigned_user_id: data.primary_user_id || data.assigned_users[0] || user.id,
-        assigned_users: data.assigned_users.length > 0 ? data.assigned_users : [user.id],
-        deadline: data.deadline?.toISOString(),
-        budget: data.budget,
-        category: data.category,
-        tags: data.tags || [],
+        client_id: data.client_id || null,
+        assigned_user_id: data.primary_user_id || data.assigned_users[0]?.user_id || user.id,
+        assigned_users: data.assigned_users.length > 0 ? data.assigned_users.map(u => u.user_id) : [user.id],
+        deadline: data.deadline?.toISOString() || null,
+        budget: data.budget ? parseFloat(data.budget) : null,
+        category: data.category || 'algemeen',
+        tags: data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
         custom_fields: data.custom_fields || {},
         organization_id: selectedOrganization.id,
-        workspace_id: selectedWorkspace?.id,
-        created_by: user.id
+        workspace_id: selectedWorkspace?.id || null,
+        created_by: user.id,
+        reference: data.reference,
+        start_date: data.start_date || null,
+        end_date: data.end_date || null
       };
 
       const { data: dossier, error: dossierError } = await supabase
@@ -80,17 +131,19 @@ export const useDossierForm = () => {
       if (dossierError) throw dossierError;
 
       // Create dossier assignments for all assigned users
-      const assignmentPromises = data.assigned_users.map((userId, index) => 
-        supabase.from('dossier_assignments').insert({
-          dossier_id: dossier.id,
-          user_id: userId,
-          role: 'assigned',
-          is_primary: index === 0 || userId === data.primary_user_id,
-          assigned_by: user.id
-        })
-      );
+      if (data.assigned_users.length > 0) {
+        const assignmentPromises = data.assigned_users.map((userAssignment, index) => 
+          supabase.from('dossier_assignments').insert({
+            dossier_id: dossier.id,
+            user_id: userAssignment.user_id,
+            role: 'assigned',
+            is_primary: index === 0 || userAssignment.is_primary || userAssignment.user_id === data.primary_user_id,
+            assigned_by: user.id
+          })
+        );
 
-      await Promise.all(assignmentPromises);
+        await Promise.all(assignmentPromises);
+      }
 
       toast({
         title: "Succes",

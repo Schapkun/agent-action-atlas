@@ -78,11 +78,21 @@ export const useDossiers = () => {
 
       if (fetchError) throw fetchError;
 
-      // Map database names to frontend expectations
+      // Map database names to frontend expectations with proper type casting
       const mappedDossiers: Dossier[] = (data || []).map(dossier => ({
         ...dossier,
         title: dossier.name, // Map name to title
-        assigned_users: Array.isArray(dossier.assigned_users) ? dossier.assigned_users : []
+        assigned_users: Array.isArray(dossier.assigned_users) ? dossier.assigned_users : [],
+        status: (dossier.status as 'active' | 'closed' | 'pending') || 'active',
+        priority: (dossier.priority as 'low' | 'medium' | 'high') || 'medium',
+        tags: Array.isArray(dossier.tags) ? dossier.tags : [],
+        budget: dossier.budget || undefined,
+        category: dossier.category || undefined,
+        client_id: dossier.client_id || undefined,
+        assigned_user_id: dossier.assigned_user_id || undefined,
+        workspace_id: dossier.workspace_id || undefined,
+        deadline: dossier.end_date || undefined,
+        custom_fields: dossier.custom_fields || undefined
       }));
 
       setDossiers(mappedDossiers);
