@@ -6,9 +6,9 @@ import { Calendar, Clock, Euro } from 'lucide-react';
 
 interface PlanningSectionProps {
   formData: {
-    start_date: string;
-    end_date: string;
-    budget: string;
+    start_date?: string;
+    end_date?: string;
+    budget?: string;
     deadline_date?: string;
     deadline_description?: string;
   };
@@ -34,7 +34,7 @@ export const PlanningSection = ({ formData, updateFormData }: PlanningSectionPro
             <Input
               id="start_date"
               type="date"
-              value={formData.start_date}
+              value={formData.start_date || ''}
               onChange={(e) => updateFormData({ start_date: e.target.value })}
               className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
             />
@@ -47,7 +47,7 @@ export const PlanningSection = ({ formData, updateFormData }: PlanningSectionPro
             <Input
               id="end_date"
               type="date"
-              value={formData.end_date}
+              value={formData.end_date || ''}
               onChange={(e) => updateFormData({ end_date: e.target.value })}
               className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
             />
@@ -90,7 +90,7 @@ export const PlanningSection = ({ formData, updateFormData }: PlanningSectionPro
               id="budget"
               type="number"
               step="0.01"
-              value={formData.budget}
+              value={formData.budget || ''}
               onChange={(e) => updateFormData({ budget: e.target.value })}
               placeholder="5000.00"
               className="pl-10 text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
