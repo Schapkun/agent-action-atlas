@@ -82,31 +82,38 @@ export const useDossiers = () => {
       }
 
       // Map database names to frontend expectations with proper type casting
-      const mappedDossiers: Dossier[] = (data || []).map(dossier => ({
-        ...dossier,
-        title: dossier.name, // Map name to title
-        assigned_users: Array.isArray(dossier.assigned_users) 
-          ? (dossier.assigned_users as any[]).map(user => String(user)).filter(Boolean)
-          : [],
-        status: (dossier.status as 'active' | 'closed' | 'pending') || 'active',
-        priority: (dossier.priority as 'low' | 'medium' | 'high') || 'medium',
-        tags: Array.isArray(dossier.tags) ? dossier.tags : [],
-        budget: dossier.budget || undefined,
-        category: dossier.category || undefined,
-        client_id: dossier.client_id || undefined,
-        assigned_user_id: dossier.responsible_user_id || undefined,
-        workspace_id: dossier.workspace_id || undefined,
-        deadline: dossier.end_date || undefined,
-        custom_fields: {}, // Default empty object since field doesn't exist in database
-        // Handle assigned_user properly with explicit null check
-        assigned_user: dossier.assigned_user !== null && typeof dossier.assigned_user === 'object' && !('error' in dossier.assigned_user)
+      const mappedDossiers: Dossier[] = (data || []).map(dossier => {
+        // Handle assigned_user with proper type narrowing
+        const assignedUserData = dossier.assigned_user;
+        const assignedUser = assignedUserData !== null && 
+                           typeof assignedUserData === 'object' && 
+                           !('error' in assignedUserData)
           ? {
-              id: (dossier.assigned_user as any).id || '',
-              email: (dossier.assigned_user as any).email || '',
-              account_name: (dossier.assigned_user as any).full_name || undefined
+              id: (assignedUserData as any).id || '',
+              email: (assignedUserData as any).email || '',
+              account_name: (assignedUserData as any).full_name || undefined
             }
-          : undefined
-      }));
+          : undefined;
+
+        return {
+          ...dossier,
+          title: dossier.name, // Map name to title
+          assigned_users: Array.isArray(dossier.assigned_users) 
+            ? (dossier.assigned_users as any[]).map(user => String(user)).filter(Boolean)
+            : [],
+          status: (dossier.status as 'active' | 'closed' | 'pending') || 'active',
+          priority: (dossier.priority as 'low' | 'medium' | 'high') || 'medium',
+          tags: Array.isArray(dossier.tags) ? dossier.tags : [],
+          budget: dossier.budget || undefined,
+          category: dossier.category || undefined,
+          client_id: dossier.client_id || undefined,
+          assigned_user_id: dossier.responsible_user_id || undefined,
+          workspace_id: dossier.workspace_id || undefined,
+          deadline: dossier.end_date || undefined,
+          custom_fields: {}, // Default empty object since field doesn't exist in database
+          assigned_user: assignedUser
+        };
+      });
 
       setDossiers(mappedDossiers);
       
