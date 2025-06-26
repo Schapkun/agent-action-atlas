@@ -1,157 +1,141 @@
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Search, 
-  Archive, 
-  Folder, 
-  FileText, 
-  Download, 
-  Eye,
-  ChevronRight,
-  ChevronDown,
-  Calendar
-} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { FolderClosed, Calendar, User, Users } from 'lucide-react';
+import { useDossiers } from '@/hooks/useDossiers';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { useOrganizationMembers } from '@/hooks/useOrganizationMembers';
 
 export const ClosedDossiers = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
-  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
-  const { selectedOrganization, selectedWorkspace } = useOrganization();
+  const { closedDossiers, loading } = useDossiers();
+  const { selectedMember } = useOrganization();
+  const { members } = useOrganizationMembers();
 
-  // Empty folder structure - no mock data
-  const folderStructure: any[] = [];
-
-  const getContextInfo = () => {
-    if (selectedWorkspace) {
-      return `Werkruimte: ${selectedWorkspace.name}`;
-    } else if (selectedOrganization) {
-      return `Organisatie: ${selectedOrganization.name}`;
-    }
-    return 'Geen selectie';
+  const getMemberName = (userId: string) => {
+    const member = members.find(m => m.user_id === userId);
+    return member?.account_name || member?.email || 'Onbekend';
   };
 
-  const toggleFolder = (folderId: string) => {
-    const newExpanded = new Set(expandedFolders);
-    if (newExpanded.has(folderId)) {
-      newExpanded.delete(folderId);
-    } else {
-      newExpanded.add(folderId);
-    }
-    setExpandedFolders(newExpanded);
-  };
-
-  const selectedFolderData = folderStructure.find(f => f.id === selectedFolder);
-  const itemsToShow = selectedFolderData?.items || [];
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FolderClosed className="h-5 w-5" />
+            Gesloten Dossiers
+            {selectedMember && (
+              <Badge variant="outline" className="ml-2">
+                <User className="h-3 w-3 mr-1" />
+                {getMemberName(selectedMember.user_id)}
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      {/* Folder Structure */}
-      <Card className="lg:col-span-1">
-        <CardHeader>
-          <CardTitle className="text-lg">Gesloten Categorieën</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!selectedOrganization && !selectedWorkspace ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Folder className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Selecteer een organisatie of werkruimte</p>
-            </div>
-          ) : folderStructure.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Folder className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Geen gesloten categorieën gevonden</p>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {folderStructure.map((folder) => (
-                <div key={folder.id}>
-                  <Button
-                    variant={selectedFolder === folder.id ? "secondary" : "ghost"}
-                    className="w-full justify-start p-2 h-auto"
-                    onClick={() => {
-                      setSelectedFolder(folder.id);
-                      if (!expandedFolders.has(folder.id)) {
-                        toggleFolder(folder.id);
-                      }
-                    }}
-                  >
-                    <div className="flex items-center space-x-2 w-full">
-                      {expandedFolders.has(folder.id) ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                      <Folder className="h-4 w-4" />
-                      <span className="text-sm truncate">{folder.name}</span>
-                      <Badge variant="outline" className="ml-auto text-xs">
-                        {folder.items?.length || 0}
-                      </Badge>
-                    </div>
-                  </Button>
-                </div>
-              ))}
-            </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FolderClosed className="h-5 w-5" />
+          Gesloten Dossiers
+          <Badge variant="secondary">{closedDossiers.length}</Badge>
+          {selectedMember && (
+            <Badge variant="outline" className="ml-2">
+              <User className="h-3 w-3 mr-1" />
+              {getMemberName(selectedMember.user_id)}
+            </Badge>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Dossier List */}
-      <Card className="lg:col-span-3">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">
-              {selectedFolderData?.name || 'Gesloten Dossiers'}
-            </CardTitle>
-            <Button variant="outline" size="sm">
-              <Archive className="h-4 w-4 mr-2" />
-              Archiveer
-            </Button>
+        </CardTitle>
+        <CardDescription>
+          {selectedMember 
+            ? `Gesloten dossiers voor ${getMemberName(selectedMember.user_id)}`
+            : 'Overzicht van alle gesloten dossiers'
+          }
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {closedDossiers.length === 0 ? (
+          <div className="text-center py-8">
+            <FolderClosed className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500">
+              {selectedMember 
+                ? `Geen gesloten dossiers voor ${getMemberName(selectedMember.user_id)}`
+                : 'Geen gesloten dossiers gevonden'
+              }
+            </p>
           </div>
-
-          {!selectedOrganization && !selectedWorkspace && (
-            <div className="text-sm text-muted-foreground">
-              Selecteer een organisatie of werkruimte om gesloten dossiers te bekijken
-            </div>
-          )}
-
-          {(selectedOrganization || selectedWorkspace) && (
-            <div className="text-sm text-muted-foreground">
-              Data voor: {getContextInfo()}
-            </div>
-          )}
-          
-          {(selectedOrganization || selectedWorkspace) && (
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Zoek gesloten dossiers..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          )}
-        </CardHeader>
-
-        <CardContent>
-          {!selectedOrganization && !selectedWorkspace ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Selecteer een organisatie of werkruimte om gesloten dossiers te bekijken</p>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Geen gesloten dossiers gevonden voor de geselecteerde context</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        ) : (
+          <div className="space-y-4">
+            {closedDossiers.slice(0, 5).map((dossier) => (
+              <div key={dossier.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-medium text-gray-900 truncate flex-1">
+                    {dossier.title}
+                  </h3>
+                  <Badge className="bg-gray-100 text-gray-800">
+                    Gesloten
+                  </Badge>
+                </div>
+                
+                <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                  {dossier.description}
+                </p>
+                
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div className="flex items-center gap-4">
+                    {dossier.client && (
+                      <div className="flex items-center gap-1">
+                        <User className="h-3 w-3" />
+                        <span>{dossier.client.name}</span>
+                      </div>
+                    )}
+                    
+                    {dossier.assigned_users && dossier.assigned_users.length > 0 && (
+                      <div className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        <span>
+                          {dossier.assigned_users.length === 1 
+                            ? getMemberName(dossier.assigned_users[0])
+                            : `${dossier.assigned_users.length} medewerkers`
+                          }
+                        </span>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      <span>Gesloten: {new Date(dossier.updated_at).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {closedDossiers.length > 5 && (
+              <div className="text-center pt-4">
+                <Button variant="outline" size="sm">
+                  Bekijk alle {closedDossiers.length} gesloten dossiers
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };

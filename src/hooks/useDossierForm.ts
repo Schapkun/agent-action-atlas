@@ -1,180 +1,106 @@
 
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { useAuth } from '@/contexts/AuthContext';
 
-interface DossierFormData {
-  name: string;
+export interface DossierFormData {
+  title: string;
   description: string;
-  category: string;
-  client_id: string;
-  reference: string;
-  priority: string;
-  start_date: string;
-  end_date: string;
-  responsible_user_id: string;
-  budget: string;
-  is_billable: boolean;
-  tags: string;
-  case_type?: string;
-  court_instance?: string;
-  legal_status?: string;
-  estimated_hours?: string;
-  hourly_rate?: string;
-  billing_type?: string;
-  deadline_date?: string;
-  deadline_description?: string;
-  intake_notes?: string;
+  status: 'active' | 'closed' | 'pending';
+  priority: 'low' | 'medium' | 'high';
+  client_id?: string;
+  assigned_user_id?: string;
+  assigned_users: string[];
+  primary_user_id?: string;
+  deadline?: Date;
+  budget?: number;
+  category?: string;
+  tags?: string[];
+  custom_fields?: Record<string, any>;
 }
 
-export const useDossierForm = (onSuccess?: () => void) => {
-  const [loading, setLoading] = useState(false);
+export const useDossierForm = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
-  
-  const [formData, setFormData] = useState<DossierFormData>({
-    name: '',
-    description: '',
-    category: 'algemeen',
-    client_id: 'no_client',
-    reference: '',
-    priority: 'medium',
-    start_date: '',
-    end_date: '',
-    responsible_user_id: 'unassigned',
-    budget: '',
-    is_billable: true,
-    tags: '',
-    case_type: '',
-    court_instance: '',
-    legal_status: 'nieuw',
-    estimated_hours: '',
-    hourly_rate: '',
-    billing_type: 'per_uur',
-    deadline_date: '',
-    deadline_description: '',
-    intake_notes: ''
-  });
+  const { user } = useAuth();
 
-  const updateFormData = (updates: Partial<DossierFormData>) => {
-    setFormData(prev => ({ ...prev, ...updates }));
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      category: 'algemeen',
-      client_id: 'no_client',
-      reference: '',
-      priority: 'medium',
-      start_date: '',
-      end_date: '',
-      responsible_user_id: 'unassigned',
-      budget: '',
-      is_billable: true,
-      tags: '',
-      case_type: '',
-      court_instance: '',
-      legal_status: 'nieuw',
-      estimated_hours: '',
-      hourly_rate: '',
-      billing_type: 'per_uur',
-      deadline_date: '',
-      deadline_description: '',
-      intake_notes: ''
-    });
-  };
-
-  const submitForm = async () => {
-    if (!selectedOrganization) {
+  const submitDossier = async (formData: DossierFormData) => {
+    if (!selectedOrganization || !user) {
       toast({
-        title: "Geen organisatie geselecteerd",
-        description: "Selecteer eerst een organisatie",
+        title: "Fout",
+        description: "Geen organisatie geselecteerd of gebruiker niet ingelogd",
         variant: "destructive"
       });
       return false;
     }
 
-    if (!formData.name.trim()) {
-      toast({
-        title: "Naam is verplicht",
-        description: "Voer een naam in voor het dossier",
-        variant: "destructive"
-      });
-      return false;
-    }
-
-    setLoading(true);
+    setIsSubmitting(true);
+    
     try {
+      // Create dossier
       const dossierData = {
-        name: formData.name.trim(),
-        description: formData.description.trim() || null,
-        category: formData.category,
-        client_id: formData.client_id === 'no_client' ? null : formData.client_id,
-        reference: formData.reference.trim() || null,
+        title: formData.title,
+        description: formData.description,
+        status: formData.status,
         priority: formData.priority,
-        start_date: formData.start_date || null,
-        end_date: formData.end_date || null,
-        responsible_user_id: formData.responsible_user_id === 'unassigned' ? null : formData.responsible_user_id,
-        budget: formData.budget ? parseFloat(formData.budget) : null,
-        is_billable: formData.is_billable,
-        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : null,
+        client_id: formData.client_id,
+        assigned_user_id: formData.primary_user_id || formData.assigned_users[0] || user.id,
+        assigned_users: formData.assigned_users.length > 0 ? formData.assigned_users : [user.id],
+        deadline: formData.deadline?.toISOString(),
+        budget: formData.budget,
+        category: formData.category,
+        tags: formData.tags || [],
+        custom_fields: formData.custom_fields || {},
         organization_id: selectedOrganization.id,
-        workspace_id: selectedWorkspace?.id || null,
-        status: 'active'
+        workspace_id: selectedWorkspace?.id,
+        created_by: user.id
       };
 
-      const { data: dossier, error } = await supabase
+      const { data: dossier, error: dossierError } = await supabase
         .from('dossiers')
         .insert(dossierData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (dossierError) throw dossierError;
 
-      // Initialize case progress if case_type is selected
-      if (formData.case_type && dossier) {
-        try {
-          await supabase.rpc('initialize_dossier_progress', {
-            dossier_id: dossier.id,
-            case_type: formData.case_type,
-            org_id: selectedOrganization.id,
-            workspace_id: selectedWorkspace?.id || null
-          });
-        } catch (progressError) {
-          console.error('Error initializing case progress:', progressError);
-          // Don't fail the entire dossier creation for this
-        }
-      }
+      // Create dossier assignments for all assigned users
+      const assignmentPromises = formData.assigned_users.map((userId, index) => 
+        supabase.from('dossier_assignments').insert({
+          dossier_id: dossier.id,
+          user_id: userId,
+          role: 'assigned',
+          is_primary: index === 0 || userId === formData.primary_user_id,
+          assigned_by: user.id
+        })
+      );
+
+      await Promise.all(assignmentPromises);
 
       toast({
-        title: "Dossier aangemaakt",
-        description: `Dossier "${formData.name}" is succesvol aangemaakt`
+        title: "Succes",
+        description: "Dossier succesvol aangemaakt",
       });
 
-      resetForm();
-      onSuccess?.();
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating dossier:', error);
       toast({
-        title: "Fout bij aanmaken",
-        description: "Er is een fout opgetreden bij het aanmaken van het dossier",
+        title: "Fout",
+        description: `Kon dossier niet aanmaken: ${error.message}`,
         variant: "destructive"
       });
       return false;
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return {
-    formData,
-    updateFormData,
-    resetForm,
-    submitForm,
-    loading
+    submitDossier,
+    isSubmitting
   };
 };

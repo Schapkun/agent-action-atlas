@@ -17,18 +17,17 @@ const Header = ({ currentView, onToggleSidebar }: HeaderProps) => {
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-6">
+        <div className="flex items-center">
           <h1 className="text-2xl font-semibold text-gray-900">
             {getViewTitleFromPath(location.pathname)}
           </h1>
-          
-          <div className="flex items-center space-x-4">
-            <FilterSelector />
-            <MemberFilter />
-          </div>
         </div>
         
-        <HeaderActions />
+        <div className="flex items-center space-x-4">
+          <FilterSelector />
+          <MemberFilter />
+          <HeaderActions />
+        </div>
       </div>
     </header>
   );
