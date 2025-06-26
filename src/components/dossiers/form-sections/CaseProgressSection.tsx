@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -7,7 +8,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle2, Circle, Clock, Plus, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { useCaseTypes } from '@/hooks/useCaseTypes';
 
 interface CaseStep {
   id: string;
@@ -40,7 +40,16 @@ export const CaseProgressSection = ({ formData, updateFormData }: CaseProgressSe
   const [customStep, setCustomStep] = useState({ name: '', description: '' });
   const [showAddCustom, setShowAddCustom] = useState(false);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
-  const { caseTypes, loading: caseTypesLoading } = useCaseTypes();
+
+  const caseTypes = [
+    { value: 'strafrecht', label: 'Strafrecht' },
+    { value: 'civielrecht', label: 'Civiel recht' },
+    { value: 'arbeidsrecht', label: 'Arbeidsrecht' },
+    { value: 'familierecht', label: 'Familierecht' },
+    { value: 'ondernemingsrecht', label: 'Ondernemingsrecht' },
+    { value: 'bestuursrecht', label: 'Bestuursrecht' },
+    { value: 'custom', label: 'Aangepast' }
+  ];
 
   useEffect(() => {
     if (formData.case_type && selectedOrganization) {
@@ -163,15 +172,14 @@ export const CaseProgressSection = ({ formData, updateFormData }: CaseProgressSe
           <Select 
             value={formData.case_type || ''} 
             onValueChange={(value) => updateFormData({ case_type: value })}
-            disabled={caseTypesLoading}
           >
             <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
-              <SelectValue placeholder={caseTypesLoading ? "Laden..." : "Selecteer zaaktype"} />
+              <SelectValue placeholder="Selecteer zaaktype" />
             </SelectTrigger>
             <SelectContent>
               {caseTypes.map((type) => (
-                <SelectItem key={type.id} value={type.name.toLowerCase()}>
-                  {type.name}
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
                 </SelectItem>
               ))}
             </SelectContent>

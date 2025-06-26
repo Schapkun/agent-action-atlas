@@ -156,39 +156,6 @@ export type Database = {
         }
         Relationships: []
       }
-      case_types: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          organization_id: string
-          updated_at: string
-          workspace_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          organization_id: string
-          updated_at?: string
-          workspace_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          organization_id?: string
-          updated_at?: string
-          workspace_id?: string | null
-        }
-        Relationships: []
-      }
       clients: {
         Row: {
           address: string | null
@@ -551,42 +518,6 @@ export type Database = {
         }
         Relationships: []
       }
-      dossier_categories: {
-        Row: {
-          color: string | null
-          created_at: string
-          description: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          organization_id: string
-          updated_at: string
-          workspace_id: string | null
-        }
-        Insert: {
-          color?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          organization_id: string
-          updated_at?: string
-          workspace_id?: string | null
-        }
-        Update: {
-          color?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          organization_id?: string
-          updated_at?: string
-          workspace_id?: string | null
-        }
-        Relationships: []
-      }
       dossier_progress: {
         Row: {
           completed_at: string | null
@@ -623,93 +554,6 @@ export type Database = {
           step_description?: string | null
           step_name?: string
           updated_at?: string
-        }
-        Relationships: []
-      }
-      dossier_statuses: {
-        Row: {
-          color: string | null
-          created_at: string
-          description: string | null
-          id: string
-          is_active: boolean | null
-          is_default: boolean | null
-          name: string
-          organization_id: string
-          updated_at: string
-          workspace_id: string | null
-        }
-        Insert: {
-          color?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          is_default?: boolean | null
-          name: string
-          organization_id: string
-          updated_at?: string
-          workspace_id?: string | null
-        }
-        Update: {
-          color?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          is_default?: boolean | null
-          name?: string
-          organization_id?: string
-          updated_at?: string
-          workspace_id?: string | null
-        }
-        Relationships: []
-      }
-      dossier_time_entries: {
-        Row: {
-          created_at: string
-          date: string
-          description: string
-          dossier_id: string
-          hourly_rate: number | null
-          hours: number
-          id: string
-          is_billable: boolean | null
-          notes: string | null
-          organization_id: string
-          updated_at: string
-          user_id: string
-          workspace_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          date?: string
-          description: string
-          dossier_id: string
-          hourly_rate?: number | null
-          hours: number
-          id?: string
-          is_billable?: boolean | null
-          notes?: string | null
-          organization_id: string
-          updated_at?: string
-          user_id: string
-          workspace_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          date?: string
-          description?: string
-          dossier_id?: string
-          hourly_rate?: number | null
-          hours?: number
-          id?: string
-          is_billable?: boolean | null
-          notes?: string | null
-          organization_id?: string
-          updated_at?: string
-          user_id?: string
-          workspace_id?: string | null
         }
         Relationships: []
       }
