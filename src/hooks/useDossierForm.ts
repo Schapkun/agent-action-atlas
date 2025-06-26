@@ -9,6 +9,7 @@ interface DossierFormData {
   description: string;
   category: string;
   client_id: string;
+  client_name?: string;
   reference: string;
   priority: string;
   start_date: string;
@@ -38,6 +39,7 @@ export const useDossierForm = (onSuccess?: () => void) => {
     description: '',
     category: 'algemeen',
     client_id: 'no_client',
+    client_name: '',
     reference: '',
     priority: 'medium',
     start_date: '',
@@ -67,6 +69,7 @@ export const useDossierForm = (onSuccess?: () => void) => {
       description: '',
       category: 'algemeen',
       client_id: 'no_client',
+      client_name: '',
       reference: '',
       priority: 'medium',
       start_date: '',
@@ -113,6 +116,7 @@ export const useDossierForm = (onSuccess?: () => void) => {
         description: formData.description.trim() || null,
         category: formData.category,
         client_id: formData.client_id === 'no_client' ? null : formData.client_id,
+        client_name: formData.client_name?.trim() || null,
         reference: formData.reference.trim() || null,
         priority: formData.priority,
         start_date: formData.start_date || null,
