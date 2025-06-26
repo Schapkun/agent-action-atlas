@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -131,14 +130,14 @@ export const BasicInfoSection = ({ formData, updateFormData }: BasicInfoSectionP
             Verantwoordelijke
           </Label>
           <Select 
-            value={formData.responsible_user_id || ''} 
-            onValueChange={(value) => updateFormData({ responsible_user_id: value })}
+            value={formData.responsible_user_id || 'unassigned'} 
+            onValueChange={(value) => updateFormData({ responsible_user_id: value === 'unassigned' ? '' : value })}
           >
             <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
               <SelectValue placeholder="Niet toegewezen" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Niet toegewezen</SelectItem>
+              <SelectItem value="unassigned">Niet toegewezen</SelectItem>
               {members.map((member) => (
                 <SelectItem key={member.user_id} value={member.user_id}>
                   <div className="flex items-center justify-between w-full">
