@@ -217,7 +217,6 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
             <div className="flex justify-end gap-2 mb-4 flex-shrink-0">
               <AddStatusUpdateDialog 
                 dossierId={dossier.id}
-                clientId={dossier.client?.id}
                 clientName={dossier.client_name || dossier.client?.name}
                 onStatusUpdate={handleStatusUpdate}
               >
