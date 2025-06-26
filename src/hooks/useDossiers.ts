@@ -85,15 +85,19 @@ export const useDossiers = () => {
       const mappedDossiers: Dossier[] = (data || []).map(dossier => {
         // Handle assigned_user with proper type narrowing
         const assignedUserData = dossier.assigned_user;
-        const assignedUser = assignedUserData !== null && 
-                           typeof assignedUserData === 'object' && 
-                           !('error' in assignedUserData)
-          ? {
-              id: (assignedUserData as any).id || '',
-              email: (assignedUserData as any).email || '',
-              account_name: (assignedUserData as any).full_name || undefined
-            }
-          : undefined;
+        let assignedUser: Dossier['assigned_user'] = undefined;
+
+        // Check if assignedUserData is valid and not null
+        if (assignedUserData !== null && 
+            typeof assignedUserData === 'object' && 
+            !Array.isArray(assignedUserData)) {
+          // Now TypeScript knows assignedUserData is not null
+          assignedUser = {
+            id: (assignedUserData as any).id || '',
+            email: (assignedUserData as any).email || '',
+            account_name: (assignedUserData as any).full_name || undefined
+          };
+        }
 
         return {
           ...dossier,
