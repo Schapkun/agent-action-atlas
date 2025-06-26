@@ -34,7 +34,15 @@ export const useDossierStatusUpdates = (dossierId?: string) => {
       if (error) throw error;
 
       console.log('📈 Status updates fetched:', data?.length || 0);
-      setStatusUpdates(data || []);
+      // Type cast the data to match our interface
+      const typedData = data?.map(item => ({
+        ...item,
+        update_type: item.update_type as DossierStatusUpdate['update_type'],
+        priority: item.priority as DossierStatusUpdate['priority'],
+        source_type: item.source_type as DossierStatusUpdate['source_type']
+      })) || [];
+      
+      setStatusUpdates(typedData);
     } catch (error) {
       console.error('Error fetching status updates:', error);
       toast({
@@ -47,8 +55,8 @@ export const useDossierStatusUpdates = (dossierId?: string) => {
     }
   };
 
-  const createStatusUpdate = async (updateData: CreateStatusUpdateData) => {
-    if (!selectedOrganization) return null;
+  const createStatusUpdate = async (updateData: CreateStatusUpdateData): Promise<void> => {
+    if (!selectedOrganization) return;
 
     try {
       console.log('📈 Creating status update:', updateData);
@@ -76,7 +84,6 @@ export const useDossierStatusUpdates = (dossierId?: string) => {
       });
 
       fetchStatusUpdates(); // Refresh list
-      return data;
     } catch (error) {
       console.error('Error creating status update:', error);
       toast({
@@ -84,11 +91,11 @@ export const useDossierStatusUpdates = (dossierId?: string) => {
         description: "Kon status update niet aanmaken",
         variant: "destructive"
       });
-      return null;
+      throw error; // Re-throw to handle in component
     }
   };
 
-  const updateStatusUpdate = async (id: string, updates: Partial<CreateStatusUpdateData>) => {
+  const updateStatusUpdate = async (id: string, updates: Partial<CreateStatusUpdateData>): Promise<void> => {
     try {
       const { data, error } = await supabase
         .from('dossier_status_updates')
@@ -108,7 +115,6 @@ export const useDossierStatusUpdates = (dossierId?: string) => {
       });
 
       fetchStatusUpdates();
-      return data;
     } catch (error) {
       console.error('Error updating status update:', error);
       toast({
@@ -116,11 +122,11 @@ export const useDossierStatusUpdates = (dossierId?: string) => {
         description: "Kon status update niet bijwerken",
         variant: "destructive"
       });
-      return null;
+      throw error;
     }
   };
 
-  const deleteStatusUpdate = async (id: string) => {
+  const deleteStatusUpdate = async (id: string): Promise<void> => {
     try {
       const { error } = await supabase
         .from('dossier_status_updates')
@@ -142,6 +148,7 @@ export const useDossierStatusUpdates = (dossierId?: string) => {
         description: "Kon status update niet verwijderen",
         variant: "destructive"
       });
+      throw error;
     }
   };
 
