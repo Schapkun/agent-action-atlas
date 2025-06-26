@@ -10,7 +10,9 @@ interface Dossier {
   description?: string;
   status: string;
   client_id?: string;
+  client_name?: string;
   category: string;
+  priority: string;
   created_at: string;
   updated_at: string;
   client?: {
@@ -74,6 +76,7 @@ export const useDossiers = () => {
     description?: string;
     client_id?: string;
     category?: string;
+    priority?: string;
   }) => {
     if (!selectedOrganization) return null;
 

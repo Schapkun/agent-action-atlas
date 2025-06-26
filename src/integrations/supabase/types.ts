@@ -114,81 +114,6 @@ export type Database = {
         }
         Relationships: []
       }
-      case_step_templates: {
-        Row: {
-          case_type: string
-          created_at: string
-          estimated_days: number | null
-          id: string
-          is_required: boolean | null
-          organization_id: string
-          step_description: string | null
-          step_name: string
-          step_order: number
-          updated_at: string
-          workspace_id: string | null
-        }
-        Insert: {
-          case_type: string
-          created_at?: string
-          estimated_days?: number | null
-          id?: string
-          is_required?: boolean | null
-          organization_id: string
-          step_description?: string | null
-          step_name: string
-          step_order: number
-          updated_at?: string
-          workspace_id?: string | null
-        }
-        Update: {
-          case_type?: string
-          created_at?: string
-          estimated_days?: number | null
-          id?: string
-          is_required?: boolean | null
-          organization_id?: string
-          step_description?: string | null
-          step_name?: string
-          step_order?: number
-          updated_at?: string
-          workspace_id?: string | null
-        }
-        Relationships: []
-      }
-      case_types: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          organization_id: string
-          updated_at: string
-          workspace_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          organization_id: string
-          updated_at?: string
-          workspace_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          organization_id?: string
-          updated_at?: string
-          workspace_id?: string | null
-        }
-        Relationships: []
-      }
       clients: {
         Row: {
           address: string | null
@@ -551,366 +476,49 @@ export type Database = {
         }
         Relationships: []
       }
-      dossier_assignments: {
-        Row: {
-          assigned_at: string | null
-          assigned_by: string | null
-          created_at: string | null
-          dossier_id: string
-          id: string
-          is_primary: boolean | null
-          role: string | null
-          user_id: string
-        }
-        Insert: {
-          assigned_at?: string | null
-          assigned_by?: string | null
-          created_at?: string | null
-          dossier_id: string
-          id?: string
-          is_primary?: boolean | null
-          role?: string | null
-          user_id: string
-        }
-        Update: {
-          assigned_at?: string | null
-          assigned_by?: string | null
-          created_at?: string | null
-          dossier_id?: string
-          id?: string
-          is_primary?: boolean | null
-          role?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dossier_assignments_dossier_id_fkey"
-            columns: ["dossier_id"]
-            isOneToOne: false
-            referencedRelation: "dossiers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      dossier_categories: {
-        Row: {
-          color: string | null
-          created_at: string
-          description: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          organization_id: string
-          updated_at: string
-          workspace_id: string | null
-        }
-        Insert: {
-          color?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          organization_id: string
-          updated_at?: string
-          workspace_id?: string | null
-        }
-        Update: {
-          color?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          organization_id?: string
-          updated_at?: string
-          workspace_id?: string | null
-        }
-        Relationships: []
-      }
-      dossier_progress: {
-        Row: {
-          assigned_users: Json | null
-          completed_at: string | null
-          created_at: string
-          created_by: string | null
-          dossier_id: string
-          id: string
-          notes: string | null
-          status: string
-          step_description: string | null
-          step_name: string
-          time_entries: Json | null
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          assigned_users?: Json | null
-          completed_at?: string | null
-          created_at?: string
-          created_by?: string | null
-          dossier_id: string
-          id?: string
-          notes?: string | null
-          status?: string
-          step_description?: string | null
-          step_name: string
-          time_entries?: Json | null
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          assigned_users?: Json | null
-          completed_at?: string | null
-          created_at?: string
-          created_by?: string | null
-          dossier_id?: string
-          id?: string
-          notes?: string | null
-          status?: string
-          step_description?: string | null
-          step_name?: string
-          time_entries?: Json | null
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: []
-      }
-      dossier_status_updates: {
-        Row: {
-          client_id: string | null
-          created_at: string
-          created_by: string | null
-          dossier_id: string
-          hours_spent: number | null
-          id: string
-          is_ai_generated: boolean | null
-          is_billable: boolean | null
-          notes: string | null
-          organization_id: string
-          priority: string | null
-          source_reference: string | null
-          source_type: string | null
-          status_description: string | null
-          status_title: string
-          update_type: string
-          updated_at: string
-          workspace_id: string | null
-        }
-        Insert: {
-          client_id?: string | null
-          created_at?: string
-          created_by?: string | null
-          dossier_id: string
-          hours_spent?: number | null
-          id?: string
-          is_ai_generated?: boolean | null
-          is_billable?: boolean | null
-          notes?: string | null
-          organization_id: string
-          priority?: string | null
-          source_reference?: string | null
-          source_type?: string | null
-          status_description?: string | null
-          status_title: string
-          update_type?: string
-          updated_at?: string
-          workspace_id?: string | null
-        }
-        Update: {
-          client_id?: string | null
-          created_at?: string
-          created_by?: string | null
-          dossier_id?: string
-          hours_spent?: number | null
-          id?: string
-          is_ai_generated?: boolean | null
-          is_billable?: boolean | null
-          notes?: string | null
-          organization_id?: string
-          priority?: string | null
-          source_reference?: string | null
-          source_type?: string | null
-          status_description?: string | null
-          status_title?: string
-          update_type?: string
-          updated_at?: string
-          workspace_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dossier_status_updates_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dossier_status_updates_dossier_id_fkey"
-            columns: ["dossier_id"]
-            isOneToOne: false
-            referencedRelation: "dossiers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      dossier_statuses: {
-        Row: {
-          color: string | null
-          created_at: string
-          description: string | null
-          id: string
-          is_active: boolean | null
-          is_default: boolean | null
-          name: string
-          organization_id: string
-          updated_at: string
-          workspace_id: string | null
-        }
-        Insert: {
-          color?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          is_default?: boolean | null
-          name: string
-          organization_id: string
-          updated_at?: string
-          workspace_id?: string | null
-        }
-        Update: {
-          color?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          is_default?: boolean | null
-          name?: string
-          organization_id?: string
-          updated_at?: string
-          workspace_id?: string | null
-        }
-        Relationships: []
-      }
-      dossier_time_entries: {
-        Row: {
-          created_at: string
-          date: string
-          description: string
-          dossier_id: string
-          hourly_rate: number | null
-          hours: number
-          id: string
-          is_billable: boolean | null
-          notes: string | null
-          organization_id: string
-          updated_at: string
-          user_id: string
-          workspace_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          date?: string
-          description: string
-          dossier_id: string
-          hourly_rate?: number | null
-          hours: number
-          id?: string
-          is_billable?: boolean | null
-          notes?: string | null
-          organization_id: string
-          updated_at?: string
-          user_id: string
-          workspace_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          date?: string
-          description?: string
-          dossier_id?: string
-          hourly_rate?: number | null
-          hours?: number
-          id?: string
-          is_billable?: boolean | null
-          notes?: string | null
-          organization_id?: string
-          updated_at?: string
-          user_id?: string
-          workspace_id?: string | null
-        }
-        Relationships: []
-      }
       dossiers: {
         Row: {
-          assigned_users: Json | null
-          budget: number | null
           category: string | null
           client_id: string | null
           client_name: string | null
           created_at: string
           created_by: string | null
           description: string | null
-          dossier_number: string | null
-          end_date: string | null
           id: string
-          is_billable: boolean | null
           name: string
           organization_id: string
           priority: string | null
-          reference: string | null
-          responsible_user_id: string | null
-          start_date: string | null
           status: string
-          tags: string[] | null
           updated_at: string
           workspace_id: string | null
         }
         Insert: {
-          assigned_users?: Json | null
-          budget?: number | null
           category?: string | null
           client_id?: string | null
           client_name?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
-          dossier_number?: string | null
-          end_date?: string | null
           id?: string
-          is_billable?: boolean | null
           name: string
           organization_id: string
           priority?: string | null
-          reference?: string | null
-          responsible_user_id?: string | null
-          start_date?: string | null
           status?: string
-          tags?: string[] | null
           updated_at?: string
           workspace_id?: string | null
         }
         Update: {
-          assigned_users?: Json | null
-          budget?: number | null
           category?: string | null
           client_id?: string | null
           client_name?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
-          dossier_number?: string | null
-          end_date?: string | null
           id?: string
-          is_billable?: boolean | null
           name?: string
           organization_id?: string
           priority?: string | null
-          reference?: string | null
-          responsible_user_id?: string | null
-          start_date?: string | null
           status?: string
-          tags?: string[] | null
           updated_at?: string
           workspace_id?: string | null
         }
@@ -1126,13 +734,6 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "emails_dossier_id_fkey"
-            columns: ["dossier_id"]
-            isOneToOne: false
-            referencedRelation: "dossiers"
             referencedColumns: ["id"]
           },
         ]
@@ -1637,13 +1238,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "pending_tasks_dossier_id_fkey"
-            columns: ["dossier_id"]
-            isOneToOne: false
-            referencedRelation: "dossiers"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "pending_tasks_email_id_fkey"
             columns: ["email_id"]
             isOneToOne: false
@@ -1707,13 +1301,6 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "phone_calls_dossier_id_fkey"
-            columns: ["dossier_id"]
-            isOneToOne: false
-            referencedRelation: "dossiers"
             referencedColumns: ["id"]
           },
         ]
@@ -2155,10 +1742,6 @@ export type Database = {
         Args: { org_id: string }
         Returns: string
       }
-      generate_dossier_number: {
-        Args: { org_id: string; workspace_id?: string }
-        Returns: string
-      }
       generate_hierarchical_contact_number: {
         Args: { org_id: string; workspace_id?: string }
         Returns: string
@@ -2198,15 +1781,6 @@ export type Database = {
       get_user_workspace_role: {
         Args: { workspace_id: string; user_id: string }
         Returns: string
-      }
-      initialize_dossier_progress: {
-        Args: {
-          dossier_id: string
-          case_type: string
-          org_id: string
-          p_workspace_id?: string
-        }
-        Returns: undefined
       }
       is_org_admin_or_owner: {
         Args: { org_id: string; user_id: string }

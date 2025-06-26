@@ -10,23 +10,7 @@ interface DossierFormData {
   category: string;
   client_id: string;
   client_name?: string;
-  reference: string;
   priority: string;
-  start_date: string;
-  end_date: string;
-  responsible_user_id: string;
-  budget: string;
-  is_billable: boolean;
-  tags: string;
-  case_type?: string;
-  court_instance?: string;
-  legal_status?: string;
-  estimated_hours?: string;
-  hourly_rate?: string;
-  billing_type?: string;
-  deadline_date?: string;
-  deadline_description?: string;
-  intake_notes?: string;
 }
 
 export const useDossierForm = (onSuccess?: () => void) => {
@@ -40,23 +24,7 @@ export const useDossierForm = (onSuccess?: () => void) => {
     category: 'algemeen',
     client_id: 'no_client',
     client_name: '',
-    reference: '',
-    priority: 'medium',
-    start_date: '',
-    end_date: '',
-    responsible_user_id: 'unassigned',
-    budget: '',
-    is_billable: true,
-    tags: '',
-    case_type: '',
-    court_instance: '',
-    legal_status: 'nieuw',
-    estimated_hours: '',
-    hourly_rate: '',
-    billing_type: 'per_uur',
-    deadline_date: '',
-    deadline_description: '',
-    intake_notes: ''
+    priority: 'medium'
   });
 
   const updateFormData = (updates: Partial<DossierFormData>) => {
@@ -70,23 +38,7 @@ export const useDossierForm = (onSuccess?: () => void) => {
       category: 'algemeen',
       client_id: 'no_client',
       client_name: '',
-      reference: '',
-      priority: 'medium',
-      start_date: '',
-      end_date: '',
-      responsible_user_id: 'unassigned',
-      budget: '',
-      is_billable: true,
-      tags: '',
-      case_type: '',
-      court_instance: '',
-      legal_status: 'nieuw',
-      estimated_hours: '',
-      hourly_rate: '',
-      billing_type: 'per_uur',
-      deadline_date: '',
-      deadline_description: '',
-      intake_notes: ''
+      priority: 'medium'
     });
   };
 
@@ -113,7 +65,6 @@ export const useDossierForm = (onSuccess?: () => void) => {
     try {
       console.log('📝 Creating dossier with data:', {
         name: formData.name,
-        case_type: formData.case_type,
         organization_id: selectedOrganization.id,
         workspace_id: selectedWorkspace?.id
       });
@@ -124,14 +75,7 @@ export const useDossierForm = (onSuccess?: () => void) => {
         category: formData.category,
         client_id: formData.client_id === 'no_client' ? null : formData.client_id,
         client_name: formData.client_name?.trim() || null,
-        reference: formData.reference.trim() || null,
         priority: formData.priority,
-        start_date: formData.start_date || null,
-        end_date: formData.end_date || null,
-        responsible_user_id: formData.responsible_user_id === 'unassigned' ? null : formData.responsible_user_id,
-        budget: formData.budget ? parseFloat(formData.budget) : null,
-        is_billable: formData.is_billable,
-        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : null,
         organization_id: selectedOrganization.id,
         workspace_id: selectedWorkspace?.id || null,
         status: 'active'
@@ -146,10 +90,6 @@ export const useDossierForm = (onSuccess?: () => void) => {
       if (error) throw error;
 
       console.log('📝 Dossier created successfully:', dossier);
-
-      // TEMPORARY: Disable case progress initialization until SQL function is fixed
-      // TODO: Re-enable once initialize_dossier_progress function is working properly
-      console.log('⚠️ Case progress initialization temporarily disabled due to SQL function issues');
 
       toast({
         title: "Dossier aangemaakt",
