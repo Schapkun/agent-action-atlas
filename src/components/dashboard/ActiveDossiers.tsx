@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Folder, Plus, Building2, Calendar, Mail, FileText, Phone, AlertCircle } from 'lucide-react';
+import { Folder, Plus, Building2, Calendar, Mail, FileText, Phone, AlertCircle, Clock, Euro, User, ExternalLink, Eye } from 'lucide-react';
 import { useDossiers } from '@/hooks/useDossiers';
 import { EnhancedCreateDossierDialog } from '@/components/dossiers/EnhancedCreateDossierDialog';
 import { DossierDetailDialog } from '@/components/dossiers/DossierDetailDialog';
@@ -37,6 +37,25 @@ export const ActiveDossiers = () => {
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
+
+  // Mock dossier details - in real app this would come from API
+  const getDossierDetails = (dossierId: string) => ({
+    hoursSpent: 14.5,
+    hoursAvailable: 5.5,
+    totalHours: 20,
+    hourlyRate: 175,
+    totalValue: 3500,
+    totalInvoiced: 3500,
+    paid: 2250,
+    outstanding: 1250,
+    lastEmail: 'Vandaag 14:23 - Vraag over nieuw contract',
+    documentCount: 5,
+    lastDocument: 'Leveringscontract biologisch meel (01-06-2025)',
+    lastCall: '15 min gesprek - intake nieuwe leveringscontract',
+    assignedUser: 'Marie van der Berg',
+    nextDeadline: '28 juni 2025 - Conceptovereenkomst opstellen',
+    internalNotes: 'Cliënt wacht nog op aangepaste conceptovereenkomst'
+  });
 
   // Mock status updates data - in real app this would come from API
   const getStatusUpdates = (dossierId: string) => [
@@ -91,6 +110,8 @@ export const ActiveDossiers = () => {
         statusFilter === 'all' || update.type === statusFilter
       )
     : [];
+
+  const dossierDetails = selectedDossier ? getDossierDetails(selectedDossier.id) : null;
 
   if (loading) {
     return (
@@ -159,6 +180,11 @@ export const ActiveDossiers = () => {
                         {dossier.name}
                       </h4>
                       <div className="flex gap-1 flex-shrink-0 ml-2">
+                        <DossierDetailDialog dossier={dossier}>
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                            <ExternalLink className="h-3 w-3" />
+                          </Button>
+                        </DossierDetailDialog>
                         <Badge 
                           variant="outline" 
                           className={`text-xs ${getStatusColor(dossier.status)}`}
@@ -208,10 +234,11 @@ export const ActiveDossiers = () => {
           </div>
         </div>
 
-        {/* Right side - 2/3 - Status Updates */}
+        {/* Right side - 2/3 - Dossier Details */}
         <div className="w-2/3 space-y-4">
           {selectedDossier ? (
             <>
+              {/* Dossier Header with Key Info */}
               <div className="bg-white rounded-lg border border-slate-200 p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div>
@@ -219,14 +246,81 @@ export const ActiveDossiers = () => {
                     <div className="flex items-center gap-2 mt-2">
                       <Badge className="bg-green-100 text-green-800 border-green-200">Actief</Badge>
                       <span className="text-sm text-slate-600">
-                        3 actieve dossiers • Laatste activiteit: vandaag
+                        Laatste activiteit: vandaag
                       </span>
                     </div>
                   </div>
+                  <DossierDetailDialog dossier={selectedDossier}>
+                    <Button variant="outline">
+                      <Eye className="h-4 w-4 mr-2" />
+                      Details
+                    </Button>
+                  </DossierDetailDialog>
                 </div>
 
+                {/* Key Metrics Grid */}
+                {dossierDetails && (
+                  <div className="grid grid-cols-4 gap-4 mb-6">
+                    {/* Hours & Budget */}
+                    <div className="bg-slate-50 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock className="h-4 w-4 text-slate-600" />
+                        <span className="text-sm font-medium text-slate-700">Uren</span>
+                      </div>
+                      <div className="text-lg font-semibold text-slate-900">
+                        {dossierDetails.hoursSpent}h
+                      </div>
+                      <div className="text-xs text-slate-600">
+                        Nog {dossierDetails.hoursAvailable}h beschikbaar
+                      </div>
+                    </div>
+
+                    {/* Financial Status */}
+                    <div className="bg-slate-50 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Euro className="h-4 w-4 text-slate-600" />
+                        <span className="text-sm font-medium text-slate-700">Betaald</span>
+                      </div>
+                      <div className="text-lg font-semibold text-green-600">
+                        €{dossierDetails.paid.toLocaleString()}
+                      </div>
+                      <div className="text-xs text-slate-600">
+                        €{dossierDetails.outstanding.toLocaleString()} openstaand
+                      </div>
+                    </div>
+
+                    {/* Assigned User */}
+                    <div className="bg-slate-50 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <User className="h-4 w-4 text-slate-600" />
+                        <span className="text-sm font-medium text-slate-700">Toegewezen</span>
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900">
+                        {dossierDetails.assignedUser}
+                      </div>
+                      <div className="text-xs text-slate-600">
+                        Verantwoordelijk
+                      </div>
+                    </div>
+
+                    {/* Next Deadline */}
+                    <div className="bg-orange-50 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertCircle className="h-4 w-4 text-orange-600" />
+                        <span className="text-sm font-medium text-orange-700">Deadline</span>
+                      </div>
+                      <div className="text-sm font-semibold text-orange-900">
+                        28 juni
+                      </div>
+                      <div className="text-xs text-orange-600">
+                        Conceptovereenkomst
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Status Filter Icons */}
-                <div className="flex items-center gap-2 mb-6">
+                <div className="flex items-center gap-2 mb-4">
                   <span className="text-sm font-medium text-slate-700 mr-2">Filter:</span>
                   {statusUpdateTypes.map((filterType) => {
                     const Icon = filterType.icon;
@@ -252,7 +346,7 @@ export const ActiveDossiers = () => {
               </div>
 
               {/* Status Updates List */}
-              <div className="space-y-3 max-h-[calc(100vh-400px)] overflow-y-auto">
+              <div className="space-y-3 max-h-[calc(100vh-450px)] overflow-y-auto">
                 {filteredStatusUpdates.map((update) => {
                   const Icon = update.icon;
                   return (
@@ -310,7 +404,7 @@ export const ActiveDossiers = () => {
                 <Folder className="h-16 w-16 text-slate-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-slate-900 mb-2">Selecteer een dossier</h3>
                 <p className="text-slate-600">
-                  Klik op een dossier links om de status updates te bekijken
+                  Klik op een dossier links om de details en status updates te bekijken
                 </p>
               </div>
             </div>
