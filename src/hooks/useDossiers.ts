@@ -70,7 +70,7 @@ export const useDossiers = () => {
 
       // Filter by member if selected
       if (selectedMember) {
-        query = query.or(`assigned_user_id.eq.${selectedMember.user_id},assigned_users.cs.["${selectedMember.user_id}"]`);
+        query = query.or(`responsible_user_id.eq.${selectedMember.user_id},assigned_users.cs.["${selectedMember.user_id}"]`);
       }
 
       const { data, error: fetchError } = await query
@@ -82,17 +82,19 @@ export const useDossiers = () => {
       const mappedDossiers: Dossier[] = (data || []).map(dossier => ({
         ...dossier,
         title: dossier.name, // Map name to title
-        assigned_users: Array.isArray(dossier.assigned_users) ? dossier.assigned_users : [],
+        assigned_users: Array.isArray(dossier.assigned_users) 
+          ? (dossier.assigned_users as any[]).map(user => String(user)).filter(Boolean)
+          : [],
         status: (dossier.status as 'active' | 'closed' | 'pending') || 'active',
         priority: (dossier.priority as 'low' | 'medium' | 'high') || 'medium',
         tags: Array.isArray(dossier.tags) ? dossier.tags : [],
         budget: dossier.budget || undefined,
         category: dossier.category || undefined,
         client_id: dossier.client_id || undefined,
-        assigned_user_id: dossier.assigned_user_id || undefined,
+        assigned_user_id: dossier.responsible_user_id || undefined,
         workspace_id: dossier.workspace_id || undefined,
         deadline: dossier.end_date || undefined,
-        custom_fields: dossier.custom_fields || undefined
+        custom_fields: {} // Default empty object since field doesn't exist in database
       }));
 
       setDossiers(mappedDossiers);

@@ -46,7 +46,7 @@ export const usePendingTasksRealtime = () => {
 
       // Filter by member if selected
       if (selectedMember) {
-        query = query.or(`assigned_user_id.eq.${selectedMember.user_id},assigned_users.cs.["${selectedMember.user_id}"]`);
+        query = query.eq('assigned_to', selectedMember.user_id);
       }
 
       const { data, error } = await query
@@ -61,7 +61,7 @@ export const usePendingTasksRealtime = () => {
         status: (task.status as 'pending' | 'in_progress' | 'completed') || 'pending',
         description: task.description || undefined,
         assigned_user_id: task.assigned_to || undefined,
-        assigned_users: Array.isArray(task.assigned_users) ? task.assigned_users : [],
+        assigned_users: [], // Default empty array since field doesn't exist in pending_tasks table
         due_date: task.due_date || undefined,
         workspace_id: task.workspace_id || undefined
       }));
