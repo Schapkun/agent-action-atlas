@@ -44,19 +44,24 @@ export const CaseProgressSection = ({
   const { members } = useOrganizationMembers();
   const { user } = useAuth();
   const [showAddUpdate, setShowAddUpdate] = useState(false);
-  const [newUpdate, setNewUpdate] = useState({
+  const [newUpdate, setNewUpdate] = useState<{
+    status: 'active' | 'closed' | 'pending' | 'on-hold' | 'in-review';
+    description: string;
+    updated_by: string;
+    time_entries: TimeEntry[];
+  }>({
     status: currentStatus,
     description: '',
     updated_by: user?.id || '',
-    time_entries: [] as TimeEntry[]
+    time_entries: []
   });
 
   const statusOptions = [
-    { value: 'active', label: 'Actief', color: 'bg-green-100 text-green-800' },
-    { value: 'pending', label: 'In afwachting', color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'on-hold', label: 'On hold', color: 'bg-orange-100 text-orange-800' },
-    { value: 'in-review', label: 'In review', color: 'bg-blue-100 text-blue-800' },
-    { value: 'closed', label: 'Gesloten', color: 'bg-gray-100 text-gray-800' }
+    { value: 'active' as const, label: 'Actief', color: 'bg-green-100 text-green-800' },
+    { value: 'pending' as const, label: 'In afwachting', color: 'bg-yellow-100 text-yellow-800' },
+    { value: 'on-hold' as const, label: 'On hold', color: 'bg-orange-100 text-orange-800' },
+    { value: 'in-review' as const, label: 'In review', color: 'bg-blue-100 text-blue-800' },
+    { value: 'closed' as const, label: 'Gesloten', color: 'bg-gray-100 text-gray-800' }
   ];
 
   const handleAddUpdate = () => {
@@ -86,6 +91,11 @@ export const CaseProgressSection = ({
   const getMemberName = (userId: string) => {
     const member = members.find(m => m.user_id === userId);
     return member?.account_name || member?.email || 'Onbekend';
+  };
+
+  const handleStatusSelectChange = (value: string) => {
+    const typedValue = value as 'active' | 'closed' | 'pending' | 'on-hold' | 'in-review';
+    setNewUpdate(prev => ({ ...prev, status: typedValue }));
   };
 
   return (
@@ -188,7 +198,7 @@ export const CaseProgressSection = ({
                 <Label className="text-sm font-medium">Nieuwe Status</Label>
                 <Select
                   value={newUpdate.status}
-                  onValueChange={(value) => setNewUpdate(prev => ({ ...prev, status: value }))}
+                  onValueChange={handleStatusSelectChange}
                 >
                   <SelectTrigger>
                     <SelectValue />

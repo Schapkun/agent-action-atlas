@@ -54,7 +54,13 @@ export const usePendingTasksRealtime = () => {
 
       if (error) throw error;
 
-      setTasks(data || []);
+      // Type-safe conversion with priority casting
+      const typedTasks: PendingTask[] = (data || []).map(task => ({
+        ...task,
+        priority: (task.priority as 'low' | 'medium' | 'high') || 'medium'
+      }));
+
+      setTasks(typedTasks);
     } catch (error) {
       console.error('Error fetching pending tasks:', error);
     } finally {
@@ -94,6 +100,7 @@ export const usePendingTasksRealtime = () => {
   return {
     tasks,
     loading,
-    refetch: fetchTasks
+    refetch: fetchTasks,
+    pendingTasksCount: tasks.length
   };
 };

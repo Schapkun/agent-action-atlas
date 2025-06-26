@@ -22,12 +22,24 @@ export interface DossierFormData {
 }
 
 export const useDossierForm = () => {
+  const [formData, setFormData] = useState<DossierFormData>({
+    title: '',
+    description: '',
+    status: 'active',
+    priority: 'medium',
+    assigned_users: [],
+    tags: []
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { user } = useAuth();
 
-  const submitDossier = async (formData: DossierFormData) => {
+  const updateFormData = (updates: Partial<DossierFormData>) => {
+    setFormData(prev => ({ ...prev, ...updates }));
+  };
+
+  const submitDossier = async (data: DossierFormData) => {
     if (!selectedOrganization || !user) {
       toast({
         title: "Fout",
@@ -40,20 +52,20 @@ export const useDossierForm = () => {
     setIsSubmitting(true);
     
     try {
-      // Create dossier
+      // Create dossier with proper field mapping
       const dossierData = {
-        title: formData.title,
-        description: formData.description,
-        status: formData.status,
-        priority: formData.priority,
-        client_id: formData.client_id,
-        assigned_user_id: formData.primary_user_id || formData.assigned_users[0] || user.id,
-        assigned_users: formData.assigned_users.length > 0 ? formData.assigned_users : [user.id],
-        deadline: formData.deadline?.toISOString(),
-        budget: formData.budget,
-        category: formData.category,
-        tags: formData.tags || [],
-        custom_fields: formData.custom_fields || {},
+        name: data.title, // Map title to name for database
+        description: data.description,
+        status: data.status,
+        priority: data.priority,
+        client_id: data.client_id,
+        assigned_user_id: data.primary_user_id || data.assigned_users[0] || user.id,
+        assigned_users: data.assigned_users.length > 0 ? data.assigned_users : [user.id],
+        deadline: data.deadline?.toISOString(),
+        budget: data.budget,
+        category: data.category,
+        tags: data.tags || [],
+        custom_fields: data.custom_fields || {},
         organization_id: selectedOrganization.id,
         workspace_id: selectedWorkspace?.id,
         created_by: user.id
@@ -68,12 +80,12 @@ export const useDossierForm = () => {
       if (dossierError) throw dossierError;
 
       // Create dossier assignments for all assigned users
-      const assignmentPromises = formData.assigned_users.map((userId, index) => 
+      const assignmentPromises = data.assigned_users.map((userId, index) => 
         supabase.from('dossier_assignments').insert({
           dossier_id: dossier.id,
           user_id: userId,
           role: 'assigned',
-          is_primary: index === 0 || userId === formData.primary_user_id,
+          is_primary: index === 0 || userId === data.primary_user_id,
           assigned_by: user.id
         })
       );
@@ -99,8 +111,16 @@ export const useDossierForm = () => {
     }
   };
 
+  const submitForm = async () => {
+    return await submitDossier(formData);
+  };
+
   return {
+    formData,
+    updateFormData,
     submitDossier,
-    isSubmitting
+    submitForm,
+    isSubmitting,
+    loading: isSubmitting
   };
 };

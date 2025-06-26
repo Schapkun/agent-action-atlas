@@ -18,14 +18,26 @@ interface EnhancedCreateDossierDialogProps {
 
 export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: EnhancedCreateDossierDialogProps) => {
   const [open, setOpen] = useState(false);
-  const { formData, updateFormData, submitForm, loading } = useDossierForm(() => {
-    setOpen(false);
-    onDossierCreated?.();
-  });
+  const { formData, updateFormData, submitForm, loading } = useDossierForm();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await submitForm();
+    const success = await submitForm();
+    if (success) {
+      setOpen(false);
+      onDossierCreated?.();
+    }
+  };
+
+  // Mock status updates for the case progress section
+  const [statusUpdates, setStatusUpdates] = useState<any[]>([]);
+
+  const handleStatusChange = (status: string) => {
+    updateFormData({ status: status as 'active' | 'closed' | 'pending' });
+  };
+
+  const handleAddStatusUpdate = (update: any) => {
+    setStatusUpdates(prev => [...prev, { ...update, id: Date.now().toString(), updated_at: new Date().toISOString() }]);
   };
 
   return (
@@ -68,7 +80,12 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
               {/* Right Column */}
               <div className="space-y-6">
                 <PlanningSection formData={formData} updateFormData={updateFormData} />
-                <CaseProgressSection formData={formData} updateFormData={updateFormData} />
+                <CaseProgressSection 
+                  currentStatus={formData.status}
+                  statusUpdates={statusUpdates}
+                  onStatusChange={handleStatusChange}
+                  onAddStatusUpdate={handleAddStatusUpdate}
+                />
                 <NotesSection formData={formData} updateFormData={updateFormData} />
               </div>
             </div>

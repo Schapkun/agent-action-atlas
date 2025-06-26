@@ -6,7 +6,8 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface Dossier {
   id: string;
-  title: string;
+  title: string; // Map name to title for frontend consistency
+  name: string; // Keep for database compatibility
   description: string;
   status: 'active' | 'closed' | 'pending';
   priority: 'low' | 'medium' | 'high';
@@ -77,7 +78,14 @@ export const useDossiers = () => {
 
       if (fetchError) throw fetchError;
 
-      setDossiers(data || []);
+      // Map database names to frontend expectations
+      const mappedDossiers: Dossier[] = (data || []).map(dossier => ({
+        ...dossier,
+        title: dossier.name, // Map name to title
+        assigned_users: Array.isArray(dossier.assigned_users) ? dossier.assigned_users : []
+      }));
+
+      setDossiers(mappedDossiers);
       
     } catch (error: any) {
       const errorMessage = error?.message || 'Unknown error occurred';
