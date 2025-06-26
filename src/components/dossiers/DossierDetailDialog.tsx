@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -197,300 +196,303 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
         </DialogHeader>
         
         <div className="flex-1 overflow-hidden">
-          <Tabs defaultValue="overview" className="h-full flex flex-col">
-            <div className="flex items-center justify-between mb-4 flex-shrink-0">
-              <TabsList className="grid w-full grid-cols-5 max-w-2xl">
+          <div className="h-full flex flex-col">
+            {/* Action Buttons - Above Tab Navigation */}
+            <div className="flex justify-end gap-2 mb-4 flex-shrink-0">
+              <Button size="sm" variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Status Update
+              </Button>
+              <Button size="sm" variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Deadline
+              </Button>
+            </div>
+
+            <Tabs defaultValue="overview" className="flex-1 flex flex-col">
+              {/* Tab Navigation - Full Width */}
+              <TabsList className="grid w-full grid-cols-5 mb-4 flex-shrink-0">
                 <TabsTrigger value="overview">Overzicht</TabsTrigger>
                 <TabsTrigger value="financial">Financieel</TabsTrigger>
                 <TabsTrigger value="communication">Communicatie</TabsTrigger>
                 <TabsTrigger value="documents">Documenten</TabsTrigger>
                 <TabsTrigger value="timeline">Tijdlijn</TabsTrigger>
               </TabsList>
-              
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Status Update
-                </Button>
-                <Button size="sm" variant="outline">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Deadline
-                </Button>
-              </div>
-            </div>
 
-            <div className="flex-1 overflow-y-auto">
-              <TabsContent value="overview" className="space-y-6 mt-0">
-                {/* Key Metrics Grid */}
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="bg-slate-50 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Clock className="h-4 w-4 text-slate-600" />
-                      <span className="text-sm font-medium text-slate-700">Uren</span>
-                    </div>
-                    <div className="text-lg font-semibold text-slate-900">
-                      {mockDossierDetails.hoursSpent}h
-                    </div>
-                    <div className="text-xs text-slate-600">
-                      Nog {mockDossierDetails.hoursAvailable}h beschikbaar
-                    </div>
-                  </div>
-
-                  <div className="bg-slate-50 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Euro className="h-4 w-4 text-slate-600" />
-                      <span className="text-sm font-medium text-slate-700">Waarde</span>
-                    </div>
-                    <div className="text-lg font-semibold text-slate-900">
-                      €{mockDossierDetails.totalValue.toLocaleString()}
-                    </div>
-                    <div className="text-xs text-slate-600">
-                      €{mockDossierDetails.hourlyRate}/uur
-                    </div>
-                  </div>
-
-                  <div className="bg-slate-50 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <User className="h-4 w-4 text-slate-600" />
-                      <span className="text-sm font-medium text-slate-700">Toegewezen</span>
-                    </div>
-                    <div className="text-sm font-semibold text-slate-900">
-                      {mockDossierDetails.assignedUser}
-                    </div>
-                    <div className="text-xs text-slate-600">
-                      Verantwoordelijk
-                    </div>
-                  </div>
-
-                  <div className="bg-orange-50 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertCircle className="h-4 w-4 text-orange-600" />
-                      <span className="text-sm font-medium text-orange-700">Deadline</span>
-                    </div>
-                    <div className="text-sm font-semibold text-orange-900">
-                      28 juni
-                    </div>
-                    <div className="text-xs text-orange-600">
-                      Conceptovereenkomst
-                    </div>
-                  </div>
-                </div>
-
-                {/* Client Information */}
-                <div className="bg-slate-50 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                    <Building2 className="h-5 w-5" />
-                    Client Informatie
-                  </h3>
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <p className="text-sm font-medium text-slate-700 mb-1">Naam</p>
-                      <p className="text-slate-900">{dossier.client_name || dossier.client?.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-700 mb-1">E-mail</p>
-                      <p className="text-slate-900">{mockDossierDetails.clientContact.email}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-700 mb-1">Telefoon</p>
-                      <p className="text-slate-900">{mockDossierDetails.clientContact.phone}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-700 mb-1">Adres</p>
-                      <p className="text-slate-900">{mockDossierDetails.clientContact.address}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Upcoming Deadlines */}
-                <div className="bg-slate-50 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Komende Deadlines
-                  </h3>
-                  <div className="space-y-3">
-                    {mockDossierDetails.upcomingDeadlines.map((deadline, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                        <div>
-                          <p className="font-medium text-slate-900">{deadline.description}</p>
-                          <p className="text-sm text-slate-600">{deadline.date}</p>
-                        </div>
-                        <Badge variant="outline" className={getPriorityColor(deadline.priority)}>
-                          {getPriorityLabel(deadline.priority)}
-                        </Badge>
+              <div className="flex-1 overflow-y-auto">
+                
+                <TabsContent value="overview" className="space-y-6 mt-0">
+                  {/* Key Metrics Grid */}
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="bg-slate-50 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock className="h-4 w-4 text-slate-600" />
+                        <span className="text-sm font-medium text-slate-700">Uren</span>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                      <div className="text-lg font-semibold text-slate-900">
+                        {mockDossierDetails.hoursSpent}h
+                      </div>
+                      <div className="text-xs text-slate-600">
+                        Nog {mockDossierDetails.hoursAvailable}h beschikbaar
+                      </div>
+                    </div>
 
-                {/* Description */}
-                {dossier.description && (
+                    <div className="bg-slate-50 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Euro className="h-4 w-4 text-slate-600" />
+                        <span className="text-sm font-medium text-slate-700">Waarde</span>
+                      </div>
+                      <div className="text-lg font-semibold text-slate-900">
+                        €{mockDossierDetails.totalValue.toLocaleString()}
+                      </div>
+                      <div className="text-xs text-slate-600">
+                        €{mockDossierDetails.hourlyRate}/uur
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <User className="h-4 w-4 text-slate-600" />
+                        <span className="text-sm font-medium text-slate-700">Toegewezen</span>
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900">
+                        {mockDossierDetails.assignedUser}
+                      </div>
+                      <div className="text-xs text-slate-600">
+                        Verantwoordelijk
+                      </div>
+                    </div>
+
+                    <div className="bg-orange-50 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertCircle className="h-4 w-4 text-orange-600" />
+                        <span className="text-sm font-medium text-orange-700">Deadline</span>
+                      </div>
+                      <div className="text-sm font-semibold text-orange-900">
+                        28 juni
+                      </div>
+                      <div className="text-xs text-orange-600">
+                        Conceptovereenkomst
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Client Information */}
                   <div className="bg-slate-50 rounded-lg p-6">
                     <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                      <FileText className="h-5 w-5" />
-                      Beschrijving
+                      <Building2 className="h-5 w-5" />
+                      Client Informatie
                     </h3>
-                    <p className="text-slate-700 leading-relaxed">{dossier.description}</p>
-                  </div>
-                )}
-
-                {/* Internal Notes */}
-                <div className="bg-slate-50 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-slate-900 mb-4">Interne Notities</h3>
-                  <p className="text-slate-700">{mockDossierDetails.internalNotes}</p>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="financial" className="space-y-6 mt-0">
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-slate-900">Uren & Tarieven</h3>
-                    <div className="bg-slate-50 rounded-lg p-4 space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Bestede uren:</span>
-                        <span className="font-medium">{mockDossierDetails.hoursSpent}h</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Beschikbare uren:</span>
-                        <span className="font-medium">{mockDossierDetails.hoursAvailable}h</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Totaal uren:</span>
-                        <span className="font-medium">{mockDossierDetails.totalHours}h</span>
-                      </div>
-                      <div className="flex justify-between border-t pt-2">
-                        <span className="text-slate-600">Uurtarief:</span>
-                        <span className="font-medium">€{mockDossierDetails.hourlyRate}/uur</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Totale waarde:</span>
-                        <span className="font-semibold text-lg">€{mockDossierDetails.totalValue.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-slate-900">Facturatie & Betalingen</h3>
-                    <div className="bg-slate-50 rounded-lg p-4 space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Totaal gefactureerd:</span>
-                        <span className="font-medium">€{mockDossierDetails.totalInvoiced.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Betaald:</span>
-                        <span className="font-medium text-green-600">€{mockDossierDetails.paid.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between border-t pt-2">
-                        <span className="text-slate-600">Openstaand:</span>
-                        <span className="font-semibold text-lg text-orange-600">€{mockDossierDetails.outstanding.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="communication" className="space-y-6 mt-0">
-                <div className="bg-slate-50 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                    <Mail className="h-5 w-5" />
-                    Laatste Communicatie
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                    <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <p className="font-medium text-slate-900">Laatste e-mail</p>
-                        <p className="text-sm text-slate-600">{mockDossierDetails.lastEmail}</p>
+                        <p className="text-sm font-medium text-slate-700 mb-1">Naam</p>
+                        <p className="text-slate-900">{dossier.client_name || dossier.client?.name}</p>
                       </div>
-                      <Button variant="outline" size="sm">
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-white rounded-lg">
                       <div>
-                        <p className="font-medium text-slate-900">Laatste gesprek</p>
-                        <p className="text-sm text-slate-600">{mockDossierDetails.lastCall}</p>
+                        <p className="text-sm font-medium text-slate-700 mb-1">E-mail</p>
+                        <p className="text-slate-900">{mockDossierDetails.clientContact.email}</p>
                       </div>
-                      <Button variant="outline" size="sm">
-                        <Phone className="h-4 w-4" />
-                      </Button>
+                      <div>
+                        <p className="text-sm font-medium text-slate-700 mb-1">Telefoon</p>
+                        <p className="text-slate-900">{mockDossierDetails.clientContact.phone}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-slate-700 mb-1">Adres</p>
+                        <p className="text-slate-900">{mockDossierDetails.clientContact.address}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </TabsContent>
 
-              <TabsContent value="documents" className="space-y-6 mt-0">
-                <div className="bg-slate-50 rounded-lg p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                      <FileText className="h-5 w-5" />
-                      Documenten ({mockDossierDetails.documents.length})
+                  {/* Upcoming Deadlines */}
+                  <div className="bg-slate-50 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Komende Deadlines
                     </h3>
-                    <Button size="sm" className="bg-slate-800 hover:bg-slate-700">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Document Toevoegen
-                    </Button>
-                  </div>
-                  <div className="space-y-3">
-                    {mockDossierDetails.documents.map((doc) => (
-                      <div key={doc.id} className="flex items-center justify-between p-4 bg-white rounded-lg border">
-                        <div className="flex items-center gap-3">
-                          <div className="bg-slate-100 p-2 rounded-lg">
-                            <FileText className="h-4 w-4 text-slate-600" />
-                          </div>
+                    <div className="space-y-3">
+                      {mockDossierDetails.upcomingDeadlines.map((deadline, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border">
                           <div>
-                            <p className="font-medium text-slate-900">{doc.name}</p>
-                            <div className="flex items-center gap-2 text-sm text-slate-600">
-                              <span>{doc.type}</span>
-                              <span>•</span>
-                              <span>{doc.size}</span>
-                              <span>•</span>
-                              <span>{doc.uploadDate}</span>
-                              <span>•</span>
-                              <span>door {doc.uploadedBy}</span>
-                            </div>
+                            <p className="font-medium text-slate-900">{deadline.description}</p>
+                            <p className="text-sm text-slate-600">{deadline.date}</p>
                           </div>
+                          <Badge variant="outline" className={getPriorityColor(deadline.priority)}>
+                            {getPriorityLabel(deadline.priority)}
+                          </Badge>
                         </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Download className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </TabsContent>
 
-              <TabsContent value="timeline" className="space-y-6 mt-0">
-                <div className="bg-slate-50 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-slate-900 mb-4">Recente Activiteiten</h3>
-                  <div className="space-y-4">
-                    {mockDossierDetails.recentActivities.map((activity, index) => (
-                      <div key={index} className="flex items-start gap-4 p-4 bg-white rounded-lg">
-                        <div className="bg-slate-100 p-2 rounded-lg">
-                          {activity.type === 'email' && <Mail className="h-4 w-4 text-blue-600" />}
-                          {activity.type === 'document' && <FileText className="h-4 w-4 text-green-600" />}
-                          {activity.type === 'phone' && <Phone className="h-4 w-4 text-purple-600" />}
+                  {/* Description */}
+                  {dossier.description && (
+                    <div className="bg-slate-50 rounded-lg p-6">
+                      <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                        <FileText className="h-5 w-5" />
+                        Beschrijving
+                      </h3>
+                      <p className="text-slate-700 leading-relaxed">{dossier.description}</p>
+                    </div>
+                  )}
+
+                  {/* Internal Notes */}
+                  <div className="bg-slate-50 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Interne Notities</h3>
+                    <p className="text-slate-700">{mockDossierDetails.internalNotes}</p>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="financial" className="space-y-6 mt-0">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-slate-900">Uren & Tarieven</h3>
+                      <div className="bg-slate-50 rounded-lg p-4 space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Bestede uren:</span>
+                          <span className="font-medium">{mockDossierDetails.hoursSpent}h</span>
                         </div>
-                        <div className="flex-1">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-medium text-slate-900">{activity.description}</p>
-                              <p className="text-sm text-slate-600">Door: {activity.user}</p>
-                            </div>
-                            <span className="text-sm text-slate-500">{activity.date}</span>
-                          </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Beschikbare uren:</span>
+                          <span className="font-medium">{mockDossierDetails.hoursAvailable}h</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Totaal uren:</span>
+                          <span className="font-medium">{mockDossierDetails.totalHours}h</span>
+                        </div>
+                        <div className="flex justify-between border-t pt-2">
+                          <span className="text-slate-600">Uurtarief:</span>
+                          <span className="font-medium">€{mockDossierDetails.hourlyRate}/uur</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Totale waarde:</span>
+                          <span className="font-semibold text-lg">€{mockDossierDetails.totalValue.toLocaleString()}</span>
                         </div>
                       </div>
-                    ))}
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-slate-900">Facturatie & Betalingen</h3>
+                      <div className="bg-slate-50 rounded-lg p-4 space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Totaal gefactureerd:</span>
+                          <span className="font-medium">€{mockDossierDetails.totalInvoiced.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Betaald:</span>
+                          <span className="font-medium text-green-600">€{mockDossierDetails.paid.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between border-t pt-2">
+                          <span className="text-slate-600">Openstaand:</span>
+                          <span className="font-semibold text-lg text-orange-600">€{mockDossierDetails.outstanding.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </TabsContent>
-            </div>
-          </Tabs>
+                </TabsContent>
+
+                <TabsContent value="communication" className="space-y-6 mt-0">
+                  <div className="bg-slate-50 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                      <Mail className="h-5 w-5" />
+                      Laatste Communicatie
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                        <div>
+                          <p className="font-medium text-slate-900">Laatste e-mail</p>
+                          <p className="text-sm text-slate-600">{mockDossierDetails.lastEmail}</p>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                        <div>
+                          <p className="font-medium text-slate-900">Laatste gesprek</p>
+                          <p className="text-sm text-slate-600">{mockDossierDetails.lastCall}</p>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          <Phone className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="documents" className="space-y-6 mt-0">
+                  <div className="bg-slate-50 rounded-lg p-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                        <FileText className="h-5 w-5" />
+                        Documenten ({mockDossierDetails.documents.length})
+                      </h3>
+                      <Button size="sm" className="bg-slate-800 hover:bg-slate-700">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Document Toevoegen
+                      </Button>
+                    </div>
+                    <div className="space-y-3">
+                      {mockDossierDetails.documents.map((doc) => (
+                        <div key={doc.id} className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-slate-100 p-2 rounded-lg">
+                              <FileText className="h-4 w-4 text-slate-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-slate-900">{doc.name}</p>
+                              <div className="flex items-center gap-2 text-sm text-slate-600">
+                                <span>{doc.type}</span>
+                                <span>•</span>
+                                <span>{doc.size}</span>
+                                <span>•</span>
+                                <span>{doc.uploadDate}</span>
+                                <span>•</span>
+                                <span>door {doc.uploadedBy}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm">
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="timeline" className="space-y-6 mt-0">
+                  <div className="bg-slate-50 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Recente Activiteiten</h3>
+                    <div className="space-y-4">
+                      {mockDossierDetails.recentActivities.map((activity, index) => (
+                        <div key={index} className="flex items-start gap-4 p-4 bg-white rounded-lg">
+                          <div className="bg-slate-100 p-2 rounded-lg">
+                            {activity.type === 'email' && <Mail className="h-4 w-4 text-blue-600" />}
+                            {activity.type === 'document' && <FileText className="h-4 w-4 text-green-600" />}
+                            {activity.type === 'phone' && <Phone className="h-4 w-4 text-purple-600" />}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="font-medium text-slate-900">{activity.description}</p>
+                                <p className="text-sm text-slate-600">Door: {activity.user}</p>
+                              </div>
+                              <span className="text-sm text-slate-500">{activity.date}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </TabsContent>
+              </div>
+            </Tabs>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
