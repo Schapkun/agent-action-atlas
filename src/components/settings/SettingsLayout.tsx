@@ -3,13 +3,12 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OrganizationSettings } from './OrganizationSettings';
 import { WorkspaceSettings } from './WorkspaceSettings';
-import { UserManagementPage } from './UserManagementPage';
+import { UserProfileSettings } from './UserProfileSettings';
 import { DocumentSettings } from './DocumentSettings';
 import { DossierSettings } from './DossierSettings';
 import { EmailSettings } from './EmailSettings';
 import { InvoiceSettings } from './InvoiceSettings';
 import { HistoryLogs } from './HistoryLogs';
-import { UserProfileSettings } from './UserProfileSettings';
 import { useUserRole } from './hooks/useUserRole';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -31,7 +30,7 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
         </div>
 
         <Tabs value={currentTab} onValueChange={onTabChange} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 mb-8">
+          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9 mb-8">
             <TabsTrigger value="organizations">Organisaties</TabsTrigger>
             <TabsTrigger value="workspaces">Werkruimtes</TabsTrigger>
             <TabsTrigger value="users">Gebruikers</TabsTrigger>
@@ -39,6 +38,7 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
             <TabsTrigger value="documenten">Documenten</TabsTrigger>
             <TabsTrigger value="emails">E-mails</TabsTrigger>
             <TabsTrigger value="invoices">Facturatie</TabsTrigger>
+            <TabsTrigger value="geschiedenis">Geschiedenis</TabsTrigger>
             <TabsTrigger value="profile">Profiel</TabsTrigger>
           </TabsList>
 
@@ -51,7 +51,7 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
           </TabsContent>
 
           <TabsContent value="users">
-            <UserManagementPage />
+            <UserProfileSettings />
           </TabsContent>
 
           <TabsContent value="dossiers">
@@ -68,6 +68,10 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
 
           <TabsContent value="invoices">
             <InvoiceSettings />
+          </TabsContent>
+
+          <TabsContent value="geschiedenis">
+            <HistoryLogs />
           </TabsContent>
 
           <TabsContent value="profile">
