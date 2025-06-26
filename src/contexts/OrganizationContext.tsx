@@ -33,7 +33,10 @@ interface OrganizationContextType {
   setSelectedWorkspace: (workspace: Workspace | null) => void;
   setSelectedMember: (member: Member | null) => void;
   loading: boolean;
+  isLoadingOrganizations: boolean;
   refetch: () => Promise<void>;
+  refreshData: () => Promise<void>;
+  getFilteredWorkspaces: () => Workspace[];
 }
 
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
@@ -58,22 +61,25 @@ export const OrganizationProvider = ({ children }: OrganizationProviderProps) =>
   const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(true);
 
   const fetchData = async () => {
     if (!user) {
       setLoading(false);
+      setIsLoadingOrganizations(false);
       return;
     }
 
     try {
       setLoading(true);
+      setIsLoadingOrganizations(true);
 
-      // Fetch organizations
+      // Fetch organizations with explicit column specification
       const { data: orgData, error: orgError } = await supabase
         .from('organization_members')
         .select(`
           organization_id,
-          organizations!inner (
+          organizations!organization_members_organization_id_fkey (
             id,
             name,
             slug
@@ -86,12 +92,12 @@ export const OrganizationProvider = ({ children }: OrganizationProviderProps) =>
       const orgs = orgData?.map(item => item.organizations).filter(Boolean) || [];
       setOrganizations(orgs);
 
-      // Fetch workspaces
+      // Fetch workspaces with explicit column specification
       const { data: workspaceData, error: workspaceError } = await supabase
         .from('workspace_members')
         .select(`
           workspace_id,
-          workspaces!inner (
+          workspaces!workspace_members_workspace_id_fkey (
             id,
             name,
             slug,
@@ -114,7 +120,13 @@ export const OrganizationProvider = ({ children }: OrganizationProviderProps) =>
       console.error('Error fetching organization data:', error);
     } finally {
       setLoading(false);
+      setIsLoadingOrganizations(false);
     }
+  };
+
+  const getFilteredWorkspaces = () => {
+    if (!selectedOrganization) return workspaces;
+    return workspaces.filter(w => w.organization_id === selectedOrganization.id);
   };
 
   useEffect(() => {
@@ -136,7 +148,10 @@ export const OrganizationProvider = ({ children }: OrganizationProviderProps) =>
     setSelectedWorkspace,
     setSelectedMember,
     loading,
+    isLoadingOrganizations,
     refetch: fetchData,
+    refreshData: fetchData,
+    getFilteredWorkspaces,
   };
 
   return (
