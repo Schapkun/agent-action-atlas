@@ -2204,7 +2204,7 @@ export type Database = {
           dossier_id: string
           case_type: string
           org_id: string
-          workspace_id?: string
+          p_workspace_id?: string
         }
         Returns: undefined
       }

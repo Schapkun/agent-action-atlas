@@ -111,6 +111,13 @@ export const useDossierForm = (onSuccess?: () => void) => {
 
     setLoading(true);
     try {
+      console.log('📝 Creating dossier with data:', {
+        name: formData.name,
+        case_type: formData.case_type,
+        organization_id: selectedOrganization.id,
+        workspace_id: selectedWorkspace?.id
+      });
+
       const dossierData = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
@@ -138,31 +145,56 @@ export const useDossierForm = (onSuccess?: () => void) => {
 
       if (error) throw error;
 
+      console.log('📝 Dossier created successfully:', dossier);
+
       // Initialize case progress if case_type is selected
       if (formData.case_type && dossier) {
         try {
-          await supabase.rpc('initialize_dossier_progress', {
+          console.log('🔄 Initializing case progress for dossier:', dossier.id);
+          
+          const { error: progressError } = await supabase.rpc('initialize_dossier_progress', {
             dossier_id: dossier.id,
             case_type: formData.case_type,
             org_id: selectedOrganization.id,
-            workspace_id: selectedWorkspace?.id || null
+            p_workspace_id: selectedWorkspace?.id || null // Updated parameter name
           });
-        } catch (progressError) {
-          console.error('Error initializing case progress:', progressError);
-          // Don't fail the entire dossier creation for this
-        }
-      }
 
-      toast({
-        title: "Dossier aangemaakt",
-        description: `Dossier "${formData.name}" is succesvol aangemaakt`
-      });
+          if (progressError) {
+            console.error('⚠️ Error initializing case progress:', progressError);
+            // Don't fail the entire dossier creation for this - just log it
+            toast({
+              title: "Dossier aangemaakt",
+              description: `Dossier "${formData.name}" is aangemaakt, maar case progress kon niet worden geïnitialiseerd`,
+              variant: "default"
+            });
+          } else {
+            console.log('✅ Case progress initialized successfully');
+            toast({
+              title: "Dossier aangemaakt",
+              description: `Dossier "${formData.name}" is succesvol aangemaakt met case progress`
+            });
+          }
+        } catch (progressError) {
+          console.error('⚠️ Exception during case progress initialization:', progressError);
+          // Don't fail the entire dossier creation - just show a warning
+          toast({
+            title: "Dossier aangemaakt",
+            description: `Dossier "${formData.name}" is aangemaakt, maar case progress kon niet worden geïnitialiseerd`,
+            variant: "default"
+          });
+        }
+      } else {
+        toast({
+          title: "Dossier aangemaakt",
+          description: `Dossier "${formData.name}" is succesvol aangemaakt`
+        });
+      }
 
       resetForm();
       onSuccess?.();
       return true;
     } catch (error) {
-      console.error('Error creating dossier:', error);
+      console.error('❌ Error creating dossier:', error);
       toast({
         title: "Fout bij aanmaken",
         description: "Er is een fout opgetreden bij het aanmaken van het dossier",
