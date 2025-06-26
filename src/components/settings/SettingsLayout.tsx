@@ -1,15 +1,17 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OrganizationSettings } from './OrganizationSettings';
 import { WorkspaceSettings } from './WorkspaceSettings';
-import { UserManagement } from './UserManagement';
+import { UserManagementPage } from './UserManagementPage';
 import { DocumentSettings } from './DocumentSettings';
 import { DossierSettings } from './DossierSettings';
 import { EmailSettings } from './EmailSettings';
 import { InvoiceSettings } from './InvoiceSettings';
 import { HistoryLogs } from './HistoryLogs';
 import { UserProfileSettings } from './UserProfileSettings';
+import { useUserRole } from './hooks/useUserRole';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SettingsLayoutProps {
   currentTab: string;
@@ -17,6 +19,9 @@ interface SettingsLayoutProps {
 }
 
 export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps) => {
+  const { user } = useAuth();
+  const { userRole } = useUserRole(user?.id, user?.email);
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="container mx-auto px-4 py-8">
@@ -42,11 +47,11 @@ export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps)
           </TabsContent>
 
           <TabsContent value="workspaces">
-            <WorkspaceSettings />
+            <WorkspaceSettings userRole={userRole || 'member'} />
           </TabsContent>
 
           <TabsContent value="users">
-            <UserManagement />
+            <UserManagementPage />
           </TabsContent>
 
           <TabsContent value="dossiers">

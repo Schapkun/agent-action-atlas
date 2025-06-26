@@ -73,9 +73,9 @@ export const ClientSection = ({ formData, updateFormData }: ClientSectionProps) 
       </div>
 
       <ContactDialog
-        open={showAddClient}
-        onOpenChange={setShowAddClient}
-        onContactCreated={handleClientCreated}
+        isOpen={showAddClient}
+        onClose={() => setShowAddClient(false)}
+        onContactSaved={handleClientCreated}
       />
     </div>
   );
