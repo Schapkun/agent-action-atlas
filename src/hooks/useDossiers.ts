@@ -98,8 +98,8 @@ export const useDossiers = () => {
         workspace_id: dossier.workspace_id || undefined,
         deadline: dossier.end_date || undefined,
         custom_fields: {}, // Default empty object since field doesn't exist in database
-        // Handle assigned_user properly
-        assigned_user: dossier.assigned_user && typeof dossier.assigned_user === 'object' && !('error' in dossier.assigned_user)
+        // Handle assigned_user properly with explicit null check
+        assigned_user: dossier.assigned_user !== null && typeof dossier.assigned_user === 'object' && !('error' in dossier.assigned_user)
           ? {
               id: (dossier.assigned_user as any).id || '',
               email: (dossier.assigned_user as any).email || '',
