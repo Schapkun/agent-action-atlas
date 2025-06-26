@@ -5,70 +5,54 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { useToast } from '@/hooks/use-toast';
 
 interface OrganizationMember {
+  id: string;
   user_id: string;
   email: string;
-  account_name?: string;
+  account_name: string;
   role: string;
 }
 
 export const useOrganizationMembers = () => {
   const [members, setMembers] = useState<OrganizationMember[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
 
   const fetchMembers = async () => {
-    if (!selectedOrganization) {
-      console.log('📋 No organization selected, clearing members');
-      setMembers([]);
-      setError(null);
-      return;
-    }
+    if (!selectedOrganization) return;
 
     setLoading(true);
-    setError(null);
-    
     try {
-      console.log('📋 Fetching organization members for:', selectedOrganization.id);
-
-      // Fetch organization members
+      // First get organization members
       const { data: orgMembers, error: orgError } = await supabase
         .from('organization_members')
-        .select('user_id, email, account_name, role')
+        .select('*')
         .eq('organization_id', selectedOrganization.id);
 
       if (orgError) throw orgError;
 
-      // If workspace is selected, also get workspace members
-      let workspaceMembers: OrganizationMember[] = [];
+      let allMembers = orgMembers || [];
+
+      // If workspace is selected, also get workspace-specific members
       if (selectedWorkspace) {
-        const { data: wsMembers, error: wsError } = await supabase
+        const { data: workspaceMembers, error: workspaceError } = await supabase
           .from('workspace_members')
-          .select('user_id, email, account_name, role')
+          .select('*')
           .eq('workspace_id', selectedWorkspace.id);
 
-        if (wsError) throw wsError;
-        workspaceMembers = wsMembers || [];
+        if (workspaceError) throw workspaceError;
+
+        // Combine and deduplicate members
+        const workspaceMemberIds = new Set(workspaceMembers?.map(m => m.user_id) || []);
+        allMembers = allMembers.filter(m => workspaceMemberIds.has(m.user_id));
       }
 
-      // Combine and deduplicate members
-      const allMembers = [...(orgMembers || []), ...workspaceMembers];
-      const uniqueMembers = allMembers.filter((member, index, self) => 
-        index === self.findIndex(m => m.user_id === member.user_id)
-      );
-
-      console.log('📋 Members fetched successfully:', uniqueMembers.length);
-      setMembers(uniqueMembers);
-      
-    } catch (error: any) {
-      const errorMessage = error?.message || 'Unknown error occurred';
-      console.error('📋 Error fetching members:', error);
-      setError(errorMessage);
-      
+      setMembers(allMembers);
+    } catch (error) {
+      console.error('Error fetching members:', error);
       toast({
-        title: "Database Fout",
-        description: `Kon leden niet ophalen: ${errorMessage}`,
+        title: "Fout",
+        description: "Kon medewerkers niet ophalen",
         variant: "destructive"
       });
     } finally {
@@ -83,7 +67,6 @@ export const useOrganizationMembers = () => {
   return {
     members,
     loading,
-    error,
     refreshMembers: fetchMembers
   };
 };
