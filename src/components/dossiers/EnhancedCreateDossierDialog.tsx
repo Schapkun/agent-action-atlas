@@ -4,10 +4,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Plus, Scale } from 'lucide-react';
 import { useDossierForm } from '@/hooks/useDossierForm';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BasicInfoSection } from './form-sections/BasicInfoSection';
+import { ClientSection } from './form-sections/ClientSection';
+import { PlanningSection } from './form-sections/PlanningSection';
+import { LegalDetailsSection } from './form-sections/LegalDetailsSection';
+import { NotesSection } from './form-sections/NotesSection';
+import { ProcedureSection } from './form-sections/ProcedureSection';
 
 interface EnhancedCreateDossierDialogProps {
   children?: React.ReactNode;
@@ -36,7 +38,7 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="bg-slate-800 rounded-lg p-2">
@@ -50,114 +52,23 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Basic Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-slate-900">Basis Informatie</h3>
-              
-              <div>
-                <Label htmlFor="name">Dossier Naam *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => updateFormData({ name: e.target.value })}
-                  placeholder="Dossiernaam"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="description">Beschrijving</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => updateFormData({ description: e.target.value })}
-                  placeholder="Beschrijving van het dossier"
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="category">Categorie</Label>
-                <Select 
-                  value={formData.category} 
-                  onValueChange={(value) => updateFormData({ category: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecteer categorie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="algemeen">Algemeen</SelectItem>
-                    <SelectItem value="strafrecht">Strafrecht</SelectItem>
-                    <SelectItem value="civielrecht">Civiel recht</SelectItem>
-                    <SelectItem value="arbeidsrecht">Arbeidsrecht</SelectItem>
-                    <SelectItem value="familierecht">Familierecht</SelectItem>
-                    <SelectItem value="ondernemingsrecht">Ondernemingsrecht</SelectItem>
-                    <SelectItem value="bestuursrecht">Bestuursrecht</SelectItem>
-                    <SelectItem value="juridisch">Juridisch</SelectItem>
-                    <SelectItem value="financieel">Financieel</SelectItem>
-                    <SelectItem value="hr">HR</SelectItem>
-                    <SelectItem value="project">Project</SelectItem>
-                    <SelectItem value="klacht">Klacht</SelectItem>
-                    <SelectItem value="onderzoek">Onderzoek</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left Column */}
+            <div className="space-y-6">
+              <ClientSection formData={formData} updateFormData={updateFormData} />
+              <BasicInfoSection formData={formData} updateFormData={updateFormData} />
+              <LegalDetailsSection formData={formData} updateFormData={updateFormData} />
             </div>
 
-            {/* Client & Priority Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-slate-900">Client & Prioriteit</h3>
-              
-              <div>
-                <Label htmlFor="client_name">Client Naam</Label>
-                <Input
-                  id="client_name"
-                  value={formData.client_name || ''}
-                  onChange={(e) => updateFormData({ client_name: e.target.value })}
-                  placeholder="Naam van de client (optioneel)"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="priority">Prioriteit</Label>
-                <Select 
-                  value={formData.priority} 
-                  onValueChange={(value) => updateFormData({ priority: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecteer prioriteit" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Laag</SelectItem>
-                    <SelectItem value="medium">Normaal</SelectItem>
-                    <SelectItem value="high">Hoog</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <Select 
-                  value={formData.status || 'active'} 
-                  onValueChange={(value) => updateFormData({ status: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecteer status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Actief</SelectItem>
-                    <SelectItem value="pending">In Behandeling</SelectItem>
-                    <SelectItem value="completed">Voltooid</SelectItem>
-                    <SelectItem value="cancelled">Geannuleerd</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Right Column */}
+            <div className="space-y-6">
+              <PlanningSection formData={formData} updateFormData={updateFormData} />
+              <ProcedureSection formData={formData} updateFormData={updateFormData} />
+              <NotesSection formData={formData} updateFormData={updateFormData} />
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="flex justify-end gap-3 pt-6 border-t">
             <Button 
               type="button" 
               variant="outline" 

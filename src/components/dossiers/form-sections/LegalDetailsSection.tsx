@@ -1,9 +1,9 @@
 
 import React from 'react';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Scale, AlertTriangle, Building } from 'lucide-react';
+import { Scale } from 'lucide-react';
 
 interface LegalDetailsSectionProps {
   formData: {
@@ -40,16 +40,14 @@ export const LegalDetailsSection = ({ formData, updateFormData }: LegalDetailsSe
               <SelectValue placeholder="Selecteer zaaktype" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="strafrecht">Strafrecht</SelectItem>
-              <SelectItem value="civiel_recht">Civiel recht</SelectItem>
-              <SelectItem value="handelsrecht">Handelsrecht</SelectItem>
-              <SelectItem value="familierecht">Familierecht</SelectItem>
-              <SelectItem value="arbeidsrecht">Arbeidsrecht</SelectItem>
-              <SelectItem value="verzekeringsrecht">Verzekeringsrecht</SelectItem>
-              <SelectItem value="vastgoedrecht">Vastgoedrecht</SelectItem>
-              <SelectItem value="intellectueel_eigendom">Intellectueel eigendom</SelectItem>
-              <SelectItem value="bestuursrecht">Bestuursrecht</SelectItem>
-              <SelectItem value="belastingrecht">Belastingrecht</SelectItem>
+              <SelectItem value="civiel">Civiele Zaak</SelectItem>
+              <SelectItem value="straf">Strafzaak</SelectItem>
+              <SelectItem value="bestuurs">Bestuurszaak</SelectItem>
+              <SelectItem value="arbeids">Arbeidszaak</SelectItem>
+              <SelectItem value="familie">Familiezaak</SelectItem>
+              <SelectItem value="ondernemings">Ondernemingszaak</SelectItem>
+              <SelectItem value="fiscaal">Fiscale Zaak</SelectItem>
+              <SelectItem value="intellectueel">Intellectueel Eigendom</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -62,58 +60,52 @@ export const LegalDetailsSection = ({ formData, updateFormData }: LegalDetailsSe
             id="court_instance"
             value={formData.court_instance || ''}
             onChange={(e) => updateFormData({ court_instance: e.target.value })}
-            placeholder="bijv. Rechtbank Amsterdam, Hof Den Haag"
+            placeholder="bijv. Rechtbank Amsterdam"
             className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
           />
         </div>
 
         <div>
           <Label htmlFor="legal_status" className="text-sm font-medium text-slate-700 mb-2 block">
-            Status
+            Juridische Status
           </Label>
           <Select 
-            value={formData.legal_status || 'nieuw'} 
+            value={formData.legal_status || ''} 
             onValueChange={(value) => updateFormData({ legal_status: value })}
           >
             <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
               <SelectValue placeholder="Selecteer status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="nieuw">Nieuw</SelectItem>
               <SelectItem value="intake">Intake</SelectItem>
-              <SelectItem value="in_behandeling">In behandeling</SelectItem>
-              <SelectItem value="dagvaarding">Dagvaarding</SelectItem>
-              <SelectItem value="procedure">Procedure</SelectItem>
+              <SelectItem value="onderzoek">Onderzoek</SelectItem>
+              <SelectItem value="dagvaarding">Dagvaarding Ingediend</SelectItem>
+              <SelectItem value="verweer">Verweer Ingediend</SelectItem>
+              <SelectItem value="comparitie">Comparitie</SelectItem>
               <SelectItem value="vonnis">Vonnis</SelectItem>
-              <SelectItem value="hoger_beroep">Hoger beroep</SelectItem>
+              <SelectItem value="hoger_beroep">Hoger Beroep</SelectItem>
+              <SelectItem value="executie">Executie</SelectItem>
               <SelectItem value="afgerond">Afgerond</SelectItem>
-              <SelectItem value="geseponeerd">Geseponeerd</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="billing_type" className="text-sm font-medium text-slate-700 mb-2 block">
-              Factureringstype
+            <Label htmlFor="estimated_hours" className="text-sm font-medium text-slate-700 mb-2 block">
+              Geschatte Uren
             </Label>
-            <Select 
-              value={formData.billing_type || 'per_uur'} 
-              onValueChange={(value) => updateFormData({ billing_type: value })}
-            >
-              <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
-                <SelectValue placeholder="Selecteer type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="per_uur">Per uur</SelectItem>
-                <SelectItem value="vast_bedrag">Vast bedrag</SelectItem>
-                <SelectItem value="no_cure_no_pay">No cure, no pay</SelectItem>
-                <SelectItem value="pro_bono">Pro bono</SelectItem>
-                <SelectItem value="contingency">Contingency fee</SelectItem>
-              </SelectContent>
-            </Select>
+            <Input
+              id="estimated_hours"
+              type="number"
+              step="0.5"
+              value={formData.estimated_hours || ''}
+              onChange={(e) => updateFormData({ estimated_hours: e.target.value })}
+              placeholder="0"
+              className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
+            />
           </div>
-
+          
           <div>
             <Label htmlFor="hourly_rate" className="text-sm font-medium text-slate-700 mb-2 block">
               Uurtarief (€)
@@ -124,28 +116,30 @@ export const LegalDetailsSection = ({ formData, updateFormData }: LegalDetailsSe
               step="0.01"
               value={formData.hourly_rate || ''}
               onChange={(e) => updateFormData({ hourly_rate: e.target.value })}
-              placeholder="250.00"
+              placeholder="0.00"
               className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
             />
           </div>
         </div>
 
         <div>
-          <Label htmlFor="estimated_hours" className="text-sm font-medium text-slate-700 mb-2 block">
-            Geschatte uren
+          <Label htmlFor="billing_type" className="text-sm font-medium text-slate-700 mb-2 block">
+            Facturatie Type
           </Label>
-          <Input
-            id="estimated_hours"
-            type="number"
-            step="0.5"
-            value={formData.estimated_hours || ''}
-            onChange={(e) => updateFormData({ estimated_hours: e.target.value })}
-            placeholder="20.0"
-            className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
-          />
-          <p className="text-xs text-slate-500 mt-1">
-            Schatting voor budgettering en planning
-          </p>
+          <Select 
+            value={formData.billing_type || 'hourly'} 
+            onValueChange={(value) => updateFormData({ billing_type: value })}
+          >
+            <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
+              <SelectValue placeholder="Selecteer facturatie type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="hourly">Per Uur</SelectItem>
+              <SelectItem value="fixed">Vast Bedrag</SelectItem>
+              <SelectItem value="success">Succesfee</SelectItem>
+              <SelectItem value="combination">Combinatie</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>

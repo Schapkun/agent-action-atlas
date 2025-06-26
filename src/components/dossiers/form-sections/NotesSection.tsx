@@ -3,12 +3,12 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { FileText, Tag } from 'lucide-react';
+import { FileText } from 'lucide-react';
 
 interface NotesSectionProps {
   formData: {
     description: string;
-    tags: string;
+    tags?: string;
     intake_notes?: string;
   };
   updateFormData: (updates: any) => void;
@@ -59,7 +59,7 @@ export const NotesSection = ({ formData, updateFormData }: NotesSectionProps) =>
           </Label>
           <Input
             id="tags"
-            value={formData.tags}
+            value={formData.tags || ''}
             onChange={(e) => updateFormData({ tags: e.target.value })}
             placeholder="urgent, complexe zaak, mediatie"
             className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"

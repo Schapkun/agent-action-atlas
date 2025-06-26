@@ -9,10 +9,10 @@ import { useOrganizationMembers } from '@/hooks/useOrganizationMembers';
 interface BasicInfoSectionProps {
   formData: {
     name: string;
-    reference: string;
+    reference?: string;
     category: string;
     priority: string;
-    responsible_user_id: string;
+    responsible_user_id?: string;
   };
   updateFormData: (updates: any) => void;
 }
@@ -38,7 +38,7 @@ export const BasicInfoSection = ({ formData, updateFormData }: BasicInfoSectionP
             id="name"
             value={formData.name}
             onChange={(e) => updateFormData({ name: e.target.value })}
-            placeholder="Voer dossiernaam in"
+            placeholder="1234"
             required
             className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
           />
@@ -50,76 +50,80 @@ export const BasicInfoSection = ({ formData, updateFormData }: BasicInfoSectionP
           </Label>
           <Input
             id="reference"
-            value={formData.reference}
+            value={formData.reference || ''}
             onChange={(e) => updateFormData({ reference: e.target.value })}
             placeholder="Extern referentienummer"
             className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="category" className="text-sm font-medium text-slate-700 mb-2 block">
-              Categorie
-            </Label>
-            <Select 
-              value={formData.category} 
-              onValueChange={(value) => updateFormData({ category: value })}
-            >
-              <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
-                <SelectValue placeholder="Selecteer categorie" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="algemeen">Algemeen</SelectItem>
-                <SelectItem value="juridisch">Juridisch</SelectItem>
-                <SelectItem value="financieel">Financieel</SelectItem>
-                <SelectItem value="hr">HR</SelectItem>
-                <SelectItem value="project">Project</SelectItem>
-                <SelectItem value="klacht">Klacht</SelectItem>
-                <SelectItem value="onderzoek">Onderzoek</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div>
+          <Label htmlFor="category" className="text-sm font-medium text-slate-700 mb-2 block">
+            Categorie
+          </Label>
+          <Select 
+            value={formData.category} 
+            onValueChange={(value) => updateFormData({ category: value })}
+          >
+            <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
+              <SelectValue placeholder="Selecteer categorie" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="algemeen">Algemeen</SelectItem>
+              <SelectItem value="strafrecht">Strafrecht</SelectItem>
+              <SelectItem value="civielrecht">Civiel recht</SelectItem>
+              <SelectItem value="arbeidsrecht">Arbeidsrecht</SelectItem>
+              <SelectItem value="familierecht">Familierecht</SelectItem>
+              <SelectItem value="ondernemingsrecht">Ondernemingsrecht</SelectItem>
+              <SelectItem value="bestuursrecht">Bestuursrecht</SelectItem>
+              <SelectItem value="juridisch">Juridisch</SelectItem>
+              <SelectItem value="financieel">Financieel</SelectItem>
+              <SelectItem value="hr">HR</SelectItem>
+              <SelectItem value="project">Project</SelectItem>
+              <SelectItem value="klacht">Klacht</SelectItem>
+              <SelectItem value="onderzoek">Onderzoek</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-          <div>
-            <Label htmlFor="priority" className="text-sm font-medium text-slate-700 mb-2 block">
-              Prioriteit
-            </Label>
-            <Select 
-              value={formData.priority} 
-              onValueChange={(value) => updateFormData({ priority: value })}
-            >
-              <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
-                <SelectValue placeholder="Selecteer prioriteit" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="low">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span>Laag</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="medium">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                    <span>Normaal</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="high">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                    <span>Hoog</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="urgent">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                    <span>Urgent</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div>
+          <Label htmlFor="priority" className="text-sm font-medium text-slate-700 mb-2 block">
+            Prioriteit
+          </Label>
+          <Select 
+            value={formData.priority} 
+            onValueChange={(value) => updateFormData({ priority: value })}
+          >
+            <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
+              <SelectValue placeholder="Selecteer prioriteit" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="low">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <span>Laag</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="medium">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                  <span>Normaal</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="high">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                  <span>Hoog</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="urgent">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                  <span>Urgent</span>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
@@ -127,14 +131,14 @@ export const BasicInfoSection = ({ formData, updateFormData }: BasicInfoSectionP
             Verantwoordelijke
           </Label>
           <Select 
-            value={formData.responsible_user_id} 
+            value={formData.responsible_user_id || ''} 
             onValueChange={(value) => updateFormData({ responsible_user_id: value })}
           >
             <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
-              <SelectValue placeholder="Selecteer verantwoordelijke" />
+              <SelectValue placeholder="Niet toegewezen" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="unassigned">Niet toegewezen</SelectItem>
+              <SelectItem value="">Niet toegewezen</SelectItem>
               {members.map((member) => (
                 <SelectItem key={member.user_id} value={member.user_id}>
                   <div className="flex items-center justify-between w-full">

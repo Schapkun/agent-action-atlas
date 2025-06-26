@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Folder, Plus, Building2, Calendar } from 'lucide-react';
 import { useDossiers } from '@/hooks/useDossiers';
-import { CreateDossierDialog } from '@/components/dossiers/CreateDossierDialog';
+import { EnhancedCreateDossierDialog } from '@/components/dossiers/EnhancedCreateDossierDialog';
 import { DossierDetailDialog } from '@/components/dossiers/DossierDetailDialog';
 
 export const ActiveDossiers = () => {
@@ -59,7 +59,7 @@ export const ActiveDossiers = () => {
           </Badge>
         </div>
         
-        <CreateDossierDialog />
+        <EnhancedCreateDossierDialog />
       </div>
 
       {activeDossiers.length === 0 ? (
@@ -70,12 +70,12 @@ export const ActiveDossiers = () => {
             <p className="text-slate-600 text-center mb-6">
               Maak je eerste dossier aan om te beginnen
             </p>
-            <CreateDossierDialog>
+            <EnhancedCreateDossierDialog>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
                 Nieuw Dossier
               </Button>
-            </CreateDossierDialog>
+            </EnhancedCreateDossierDialog>
           </CardContent>
         </Card>
       ) : (

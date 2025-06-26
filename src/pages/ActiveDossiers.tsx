@@ -1,8 +1,9 @@
 
-import { ActiveDossiers as ActiveDossiersComponent } from '@/components/dashboard/ActiveDossiers';
+import React from 'react';
+import { ActiveDossiers } from '@/components/dashboard/ActiveDossiers';
 
-const ActiveDossiers = () => {
-  return <ActiveDossiersComponent />;
+const ActiveDossiersPage = () => {
+  return <ActiveDossiers />;
 };
 
-export default ActiveDossiers;
+export default ActiveDossiersPage;
