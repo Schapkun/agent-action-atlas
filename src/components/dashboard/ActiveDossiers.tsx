@@ -124,12 +124,12 @@ export const ActiveDossiers = () => {
 
       <div className="flex gap-6 h-[calc(100vh-200px)]">
         {/* Left side - 1/3 - Dossiers List */}
-        <div className="w-1/3 space-y-4 overflow-y-auto">
-          <h3 className="text-lg font-semibold text-slate-900">Bekijk en beheer dossiers per client</h3>
-          
-          {activeDossiers.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
+        <div className="w-1/3 space-y-4">
+          <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Bekijk en beheer dossiers per client</h3>
+            
+            {activeDossiers.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
                 <Folder className="h-12 w-12 text-slate-300 mb-4" />
                 <h3 className="text-lg font-medium text-slate-900 mb-2">Geen actieve dossiers</h3>
                 <p className="text-slate-600 text-center mb-6">
@@ -141,23 +141,23 @@ export const ActiveDossiers = () => {
                     Nieuw Dossier
                   </Button>
                 </EnhancedCreateDossierDialog>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {activeDossiers.map((dossier) => (
-                <Card 
-                  key={dossier.id} 
-                  className={`cursor-pointer hover:shadow-md transition-shadow ${
-                    selectedDossier?.id === dossier.id ? 'ring-2 ring-slate-800' : ''
-                  }`}
-                  onClick={() => setSelectedDossier(dossier)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-lg font-semibold line-clamp-2">
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+                {activeDossiers.map((dossier) => (
+                  <div
+                    key={dossier.id} 
+                    className={`p-4 rounded-lg border cursor-pointer hover:shadow-md transition-all ${
+                      selectedDossier?.id === dossier.id 
+                        ? 'border-slate-800 bg-slate-50 shadow-md' 
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                    onClick={() => setSelectedDossier(dossier)}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <h4 className="font-semibold text-slate-900 text-sm line-clamp-2">
                         {dossier.name}
-                      </CardTitle>
+                      </h4>
                       <div className="flex gap-1 flex-shrink-0 ml-2">
                         <Badge 
                           variant="outline" 
@@ -173,10 +173,9 @@ export const ActiveDossiers = () => {
                         </Badge>
                       </div>
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
+                    
                     {dossier.description && (
-                      <p className="text-sm text-slate-600 line-clamp-2">
+                      <p className="text-sm text-slate-600 mb-3 line-clamp-2">
                         {dossier.description}
                       </p>
                     )}
@@ -184,41 +183,41 @@ export const ActiveDossiers = () => {
                     <div className="space-y-2">
                       {(dossier.client_name || dossier.client) && (
                         <div className="flex items-center gap-2 text-sm text-slate-600">
-                          <Building2 className="h-4 w-4 text-slate-400" />
-                          <span>{dossier.client_name || dossier.client?.name}</span>
+                          <Building2 className="h-3 w-3 text-slate-400" />
+                          <span className="text-xs">{dossier.client_name || dossier.client?.name}</span>
                         </div>
                       )}
                       
                       <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <Calendar className="h-4 w-4 text-slate-400" />
-                        <span>
+                        <Calendar className="h-3 w-3 text-slate-400" />
+                        <span className="text-xs">
                           {new Date(dossier.created_at).toLocaleDateString('nl-NL')}
                         </span>
                       </div>
                     </div>
                     
                     {dossier.category && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-xs mt-2">
                         {dossier.category}
                       </Badge>
                     )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right side - 2/3 - Status Updates */}
         <div className="w-2/3 space-y-4">
           {selectedDossier ? (
             <>
-              <div className="bg-white rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
+              <div className="bg-white rounded-lg border border-slate-200 p-6">
+                <div className="flex items-center justify-between mb-6">
                   <div>
                     <h2 className="text-xl font-semibold text-slate-900">{selectedDossier.name}</h2>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge className="bg-green-100 text-green-800">Actief</Badge>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge className="bg-green-100 text-green-800 border-green-200">Actief</Badge>
                       <span className="text-sm text-slate-600">
                         3 actieve dossiers • Laatste activiteit: vandaag
                       </span>
@@ -243,7 +242,7 @@ export const ActiveDossiers = () => {
                       >
                         <Icon className="h-4 w-4" />
                         <span>{filterType.label}</span>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs bg-white">
                           {filterType.count}
                         </Badge>
                       </button>
@@ -253,62 +252,60 @@ export const ActiveDossiers = () => {
               </div>
 
               {/* Status Updates List */}
-              <div className="space-y-3 overflow-y-auto">
+              <div className="space-y-3 max-h-[calc(100vh-400px)] overflow-y-auto">
                 {filteredStatusUpdates.map((update) => {
                   const Icon = update.icon;
                   return (
-                    <Card key={update.id} className="hover:shadow-sm transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className={`p-2 rounded-lg bg-slate-100`}>
-                            <Icon className={`h-4 w-4 ${update.color}`} />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <h4 className="font-semibold text-slate-900">{update.title}</h4>
-                              <span className="text-sm text-slate-500">{update.date}</span>
-                            </div>
-                            <p className="text-sm text-slate-600 mt-1">{update.description}</p>
-                            {update.type === 'document' && (
-                              <div className="flex gap-2 mt-3">
-                                <Button size="sm" variant="outline" className="text-xs">
-                                  Downloaden
-                                </Button>
-                                <Button size="sm" variant="outline" className="text-xs">
-                                  Bewerken
-                                </Button>
-                              </div>
-                            )}
-                            {update.type === 'email' && (
-                              <div className="flex gap-2 mt-3">
-                                <Button size="sm" variant="outline" className="text-xs">
-                                  Bekijken
-                                </Button>
-                                <Button size="sm" variant="outline" className="text-xs">
-                                  Beantwoorden
-                                </Button>
-                              </div>
-                            )}
-                            {update.type === 'invoice' && (
-                              <div className="flex gap-2 mt-3">
-                                <Button size="sm" variant="outline" className="text-xs bg-yellow-50 text-yellow-700">
-                                  PDF bekijken
-                                </Button>
-                                <Button size="sm" variant="outline" className="text-xs bg-green-50 text-green-700">
-                                  Betaald
-                                </Button>
-                              </div>
-                            )}
-                          </div>
+                    <div key={update.id} className="bg-white rounded-lg border border-slate-200 p-4 hover:shadow-sm transition-shadow">
+                      <div className="flex items-start gap-3">
+                        <div className={`p-2 rounded-lg bg-slate-100`}>
+                          <Icon className={`h-4 w-4 ${update.color}`} />
                         </div>
-                      </CardContent>
-                    </Card>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-slate-900">{update.title}</h4>
+                            <span className="text-sm text-slate-500">{update.date}</span>
+                          </div>
+                          <p className="text-sm text-slate-600 mt-1">{update.description}</p>
+                          {update.type === 'document' && (
+                            <div className="flex gap-2 mt-3">
+                              <Button size="sm" variant="outline" className="text-xs">
+                                Downloaden
+                              </Button>
+                              <Button size="sm" variant="outline" className="text-xs">
+                                Bewerken
+                              </Button>
+                            </div>
+                          )}
+                          {update.type === 'email' && (
+                            <div className="flex gap-2 mt-3">
+                              <Button size="sm" variant="outline" className="text-xs">
+                                Bekijken
+                              </Button>
+                              <Button size="sm" variant="outline" className="text-xs">
+                                Beantwoorden
+                              </Button>
+                            </div>
+                          )}
+                          {update.type === 'invoice' && (
+                            <div className="flex gap-2 mt-3">
+                              <Button size="sm" variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+                                PDF bekijken
+                              </Button>
+                              <Button size="sm" variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                Betaald
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-center h-full">
+            <div className="bg-white rounded-lg border border-slate-200 h-full flex items-center justify-center">
               <div className="text-center">
                 <Folder className="h-16 w-16 text-slate-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-slate-900 mb-2">Selecteer een dossier</h3>
