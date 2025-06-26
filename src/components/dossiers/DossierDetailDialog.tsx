@@ -4,6 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Scale, Calendar, Building2, FileText, AlertCircle, Clock, Euro, User, Mail, Phone, ExternalLink, Plus, Download, Edit } from 'lucide-react';
+import { AddStatusUpdateDialog } from './AddStatusUpdateDialog';
+import { CreateStatusUpdateData } from '@/types/dossierStatusUpdates';
 
 interface DossierDetailDialogProps {
   dossier: {
@@ -24,6 +26,18 @@ interface DossierDetailDialogProps {
 
 export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogProps) => {
   const [open, setOpen] = useState(false);
+
+  const handleStatusUpdate = async (data: CreateStatusUpdateData) => {
+    console.log('Status update added:', data);
+    // In a real app, this would call an API to save the status update
+    // For now, we'll just log it
+  };
+
+  const handleAddDeadline = () => {
+    console.log('Add deadline clicked for dossier:', dossier.id);
+    // This would open a deadline creation dialog
+    // For now, we'll just log it
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -91,7 +105,7 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
       {
         date: 'Vandaag 14:23',
         type: 'email',
-        description: 'E-mail ontvangen: Vraag over nieuwe leveringscontract',
+        description: 'E-mail ontvangen: Vraag over nieuw leveringscontract',
         user: 'Marie van der Berg'
       },
       {
@@ -199,11 +213,16 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
           <div className="h-full flex flex-col">
             {/* Action Buttons - Above Tab Navigation */}
             <div className="flex justify-end gap-2 mb-4 flex-shrink-0">
-              <Button size="sm" variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
-                Status Update
-              </Button>
-              <Button size="sm" variant="outline">
+              <AddStatusUpdateDialog 
+                dossierId={dossier.id} 
+                onStatusUpdate={handleStatusUpdate}
+              >
+                <Button size="sm" variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Status Update
+                </Button>
+              </AddStatusUpdateDialog>
+              <Button size="sm" variant="outline" onClick={handleAddDeadline}>
                 <Plus className="h-4 w-4 mr-2" />
                 Deadline
               </Button>
