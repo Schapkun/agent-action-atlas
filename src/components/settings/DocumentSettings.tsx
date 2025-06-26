@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Loader2 } from 'lucide-react';
@@ -13,6 +12,7 @@ import { TemplateLibraryNew } from './components/TemplateLibraryNew';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { DocumentTypeSettings } from './DocumentTypeSettings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DocumentUpdatesSettings } from './DocumentUpdatesSettings';
 
 const DocumentSettingsContent = () => {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
@@ -162,15 +162,7 @@ const DocumentSettingsContent = () => {
           </TabsContent>
 
           <TabsContent value="document-updates" className="space-y-6">
-            <div className="bg-white rounded-lg border border-slate-200 p-6">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Document Updates</h3>
-              <p className="text-slate-600 mb-4">
-                Hier kun je de history en updates van documenten bekijken en beheren.
-              </p>
-              <div className="text-sm text-slate-500">
-                Deze functionaliteit wordt binnenkort beschikbaar gesteld.
-              </div>
-            </div>
+            <DocumentUpdatesSettings />
           </TabsContent>
         </Tabs>
 

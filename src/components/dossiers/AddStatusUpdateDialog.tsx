@@ -8,21 +8,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Plus, Clock } from 'lucide-react';
-import { ClientSelector } from './ClientSelector';
 import { UPDATE_TYPE_LABELS, PRIORITY_LABELS, CreateStatusUpdateData } from '@/types/dossierStatusUpdates';
 
 interface AddStatusUpdateDialogProps {
   dossierId: string;
+  clientId?: string;
+  clientName?: string;
   onStatusUpdate: (data: CreateStatusUpdateData) => Promise<void>;
   children?: React.ReactNode;
 }
 
-export const AddStatusUpdateDialog = ({ dossierId, onStatusUpdate, children }: AddStatusUpdateDialogProps) => {
+export const AddStatusUpdateDialog = ({ dossierId, clientId, clientName, onStatusUpdate, children }: AddStatusUpdateDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<CreateStatusUpdateData>({
     dossier_id: dossierId,
-    client_id: '',
+    client_id: clientId || '',
     update_type: 'general',
     status_title: '',
     status_description: '',
@@ -42,13 +43,13 @@ export const AddStatusUpdateDialog = ({ dossierId, onStatusUpdate, children }: A
     try {
       await onStatusUpdate({
         ...formData,
-        client_id: formData.client_id === 'no_client' || !formData.client_id ? undefined : formData.client_id
+        client_id: clientId
       });
       
       // Reset form
       setFormData({
         dossier_id: dossierId,
-        client_id: '',
+        client_id: clientId || '',
         update_type: 'general',
         status_title: '',
         status_description: '',
@@ -88,35 +89,31 @@ export const AddStatusUpdateDialog = ({ dossierId, onStatusUpdate, children }: A
             <Clock className="h-5 w-5" />
             Status Update Toevoegen
           </DialogTitle>
+          {clientName && (
+            <p className="text-sm text-slate-600">
+              Voor client: <span className="font-medium">{clientName}</span>
+            </p>
+          )}
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <ClientSelector
-              value={formData.client_id || 'no_client'}
-              onValueChange={(value) => updateFormData({ client_id: value === 'no_client' ? '' : value })}
-              label="Gekoppelde Client (optioneel)"
-              placeholder="Geen client geselecteerd"
-            />
-
-            <div>
-              <Label htmlFor="update_type" className="text-sm font-medium text-slate-700 mb-2 block">
-                Type Update
-              </Label>
-              <Select 
-                value={formData.update_type} 
-                onValueChange={(value: any) => updateFormData({ update_type: value })}
-              >
-                <SelectTrigger className="text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(UPDATE_TYPE_LABELS).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div>
+            <Label htmlFor="update_type" className="text-sm font-medium text-slate-700 mb-2 block">
+              Type Update
+            </Label>
+            <Select 
+              value={formData.update_type} 
+              onValueChange={(value: any) => updateFormData({ update_type: value })}
+            >
+              <SelectTrigger className="text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(UPDATE_TYPE_LABELS).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>

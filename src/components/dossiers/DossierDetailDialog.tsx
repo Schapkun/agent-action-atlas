@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Scale, Calendar, Building2, FileText, AlertCircle, Clock, Euro, User, Mail, Phone, ExternalLink, Plus, Download, Edit } from 'lucide-react';
 import { AddStatusUpdateDialog } from './AddStatusUpdateDialog';
+import { AddDeadlineDialog } from './AddDeadlineDialog';
 import { CreateStatusUpdateData } from '@/types/dossierStatusUpdates';
 
 interface DossierDetailDialogProps {
@@ -18,6 +19,7 @@ interface DossierDetailDialogProps {
     client_name?: string;
     created_at: string;
     client?: {
+      id?: string;
       name: string;
     };
   };
@@ -33,9 +35,9 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
     // For now, we'll just log it
   };
 
-  const handleAddDeadline = () => {
-    console.log('Add deadline clicked for dossier:', dossier.id);
-    // This would open a deadline creation dialog
+  const handleDeadlineAdd = async (data: any) => {
+    console.log('Deadline added:', data);
+    // In a real app, this would call an API to save the deadline
     // For now, we'll just log it
   };
 
@@ -214,7 +216,9 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
             {/* Action Buttons - Above Tab Navigation */}
             <div className="flex justify-end gap-2 mb-4 flex-shrink-0">
               <AddStatusUpdateDialog 
-                dossierId={dossier.id} 
+                dossierId={dossier.id}
+                clientId={dossier.client?.id}
+                clientName={dossier.client_name || dossier.client?.name}
                 onStatusUpdate={handleStatusUpdate}
               >
                 <Button size="sm" variant="outline">
@@ -222,10 +226,16 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                   Status Update
                 </Button>
               </AddStatusUpdateDialog>
-              <Button size="sm" variant="outline" onClick={handleAddDeadline}>
-                <Plus className="h-4 w-4 mr-2" />
-                Deadline
-              </Button>
+              <AddDeadlineDialog
+                dossierId={dossier.id}
+                clientName={dossier.client_name || dossier.client?.name}
+                onDeadlineAdd={handleDeadlineAdd}
+              >
+                <Button size="sm" variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Deadline
+                </Button>
+              </AddDeadlineDialog>
             </div>
 
             <Tabs defaultValue="overview" className="flex-1 flex flex-col">
