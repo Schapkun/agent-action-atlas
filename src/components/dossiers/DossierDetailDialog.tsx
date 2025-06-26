@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Scale, Calendar, Building2, FileText } from 'lucide-react';
+import { Scale, Calendar, Building2, FileText, AlertCircle } from 'lucide-react';
 
 interface DossierDetailDialogProps {
   dossier: {
@@ -44,6 +44,26 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'active': return 'Actief';
+      case 'pending': return 'In Behandeling';
+      case 'completed': return 'Voltooid';
+      case 'cancelled': return 'Geannuleerd';
+      default: return status;
+    }
+  };
+
+  const getPriorityLabel = (priority: string) => {
+    switch (priority) {
+      case 'low': return 'Laag';
+      case 'medium': return 'Normaal';
+      case 'high': return 'Hoog';
+      case 'urgent': return 'Urgent';
+      default: return priority;
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -59,15 +79,15 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
               <DialogTitle className="text-xl font-semibold text-slate-900">{dossier.name}</DialogTitle>
               <div className="flex items-center gap-2 mt-1">
                 <Badge variant="outline" className={getStatusColor(dossier.status)}>
-                  {dossier.status}
+                  {getStatusLabel(dossier.status)}
                 </Badge>
                 {dossier.priority && (
                   <Badge variant="outline" className={getPriorityColor(dossier.priority)}>
-                    {dossier.priority}
+                    {getPriorityLabel(dossier.priority)}
                   </Badge>
                 )}
                 {dossier.category && (
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs capitalize">
                     {dossier.category}
                   </Badge>
                 )}
@@ -101,9 +121,23 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                     {new Date(dossier.created_at).toLocaleDateString('nl-NL', {
                       day: '2-digit',
                       month: '2-digit',
-                      year: 'numeric'
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
                     })}
                   </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-slate-400 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-slate-700">Status & Prioriteit</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-slate-600">{getStatusLabel(dossier.status)}</span>
+                    <span className="text-slate-400">•</span>
+                    <span className="text-slate-600">{getPriorityLabel(dossier.priority || 'medium')}</span>
+                  </div>
                 </div>
               </div>
             </div>

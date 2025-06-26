@@ -11,6 +11,7 @@ interface DossierFormData {
   client_id: string;
   client_name?: string;
   priority: string;
+  status?: string;
 }
 
 export const useDossierForm = (onSuccess?: () => void) => {
@@ -24,7 +25,8 @@ export const useDossierForm = (onSuccess?: () => void) => {
     category: 'algemeen',
     client_id: 'no_client',
     client_name: '',
-    priority: 'medium'
+    priority: 'medium',
+    status: 'active'
   });
 
   const updateFormData = (updates: Partial<DossierFormData>) => {
@@ -38,7 +40,8 @@ export const useDossierForm = (onSuccess?: () => void) => {
       category: 'algemeen',
       client_id: 'no_client',
       client_name: '',
-      priority: 'medium'
+      priority: 'medium',
+      status: 'active'
     });
   };
 
@@ -76,9 +79,9 @@ export const useDossierForm = (onSuccess?: () => void) => {
         client_id: formData.client_id === 'no_client' ? null : formData.client_id,
         client_name: formData.client_name?.trim() || null,
         priority: formData.priority,
+        status: formData.status || 'active',
         organization_id: selectedOrganization.id,
-        workspace_id: selectedWorkspace?.id || null,
-        status: 'active'
+        workspace_id: selectedWorkspace?.id || null
       };
 
       const { data: dossier, error } = await supabase
