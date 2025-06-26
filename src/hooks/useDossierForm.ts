@@ -1,179 +1,180 @@
 
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { useAuth } from '@/contexts/AuthContext';
 
-export interface DossierFormData {
-  // Basic Info Section
-  title: string;
+interface DossierFormData {
   name: string;
-  reference: string;
+  description: string;
   category: string;
-  priority: 'low' | 'medium' | 'high';
-  responsible_user_id: string;
-  assigned_users: Array<{
-    user_id: string;
-    name: string;
-    email: string;
-    role: string;
-    is_primary?: boolean;
-  }>;
-  
-  // Client Section
   client_id: string;
-  
-  // Legal Details Section
+  reference: string;
+  priority: string;
+  start_date: string;
+  end_date: string;
+  responsible_user_id: string;
+  budget: string;
+  is_billable: boolean;
+  tags: string;
   case_type?: string;
   court_instance?: string;
   legal_status?: string;
   estimated_hours?: string;
   hourly_rate?: string;
   billing_type?: string;
-  
-  // Planning Section
-  start_date: string;
-  end_date: string;
-  budget: string;
   deadline_date?: string;
   deadline_description?: string;
-  
-  // Notes Section
-  description: string;
-  tags: string;
   intake_notes?: string;
-  
-  // Database fields
-  status: 'active' | 'closed' | 'pending';
-  primary_user_id?: string;
-  deadline?: Date;
-  custom_fields?: Record<string, any>;
 }
 
-export const useDossierForm = () => {
-  const [formData, setFormData] = useState<DossierFormData>({
-    title: '',
-    name: '',
-    reference: '',
-    category: '',
-    priority: 'medium',
-    responsible_user_id: '',
-    assigned_users: [],
-    client_id: '',
-    case_type: '',
-    court_instance: '',
-    legal_status: '',
-    estimated_hours: '',
-    hourly_rate: '',
-    billing_type: '',
-    start_date: '',
-    end_date: '',
-    budget: '',
-    deadline_date: '',
-    deadline_description: '',
-    description: '',
-    tags: '',
-    intake_notes: '',
-    status: 'active'
-  });
-  
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export const useDossierForm = (onSuccess?: () => void) => {
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
-  const { user } = useAuth();
+  
+  const [formData, setFormData] = useState<DossierFormData>({
+    name: '',
+    description: '',
+    category: 'algemeen',
+    client_id: 'no_client',
+    reference: '',
+    priority: 'medium',
+    start_date: '',
+    end_date: '',
+    responsible_user_id: 'unassigned',
+    budget: '',
+    is_billable: true,
+    tags: '',
+    case_type: '',
+    court_instance: '',
+    legal_status: 'nieuw',
+    estimated_hours: '',
+    hourly_rate: '',
+    billing_type: 'per_uur',
+    deadline_date: '',
+    deadline_description: '',
+    intake_notes: ''
+  });
 
   const updateFormData = (updates: Partial<DossierFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
   };
 
-  const submitDossier = async (data: DossierFormData) => {
-    if (!selectedOrganization || !user) {
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      category: 'algemeen',
+      client_id: 'no_client',
+      reference: '',
+      priority: 'medium',
+      start_date: '',
+      end_date: '',
+      responsible_user_id: 'unassigned',
+      budget: '',
+      is_billable: true,
+      tags: '',
+      case_type: '',
+      court_instance: '',
+      legal_status: 'nieuw',
+      estimated_hours: '',
+      hourly_rate: '',
+      billing_type: 'per_uur',
+      deadline_date: '',
+      deadline_description: '',
+      intake_notes: ''
+    });
+  };
+
+  const submitForm = async () => {
+    if (!selectedOrganization) {
       toast({
-        title: "Fout",
-        description: "Geen organisatie geselecteerd of gebruiker niet ingelogd",
+        title: "Geen organisatie geselecteerd",
+        description: "Selecteer eerst een organisatie",
         variant: "destructive"
       });
       return false;
     }
 
-    setIsSubmitting(true);
-    
+    if (!formData.name.trim()) {
+      toast({
+        title: "Naam is verplicht",
+        description: "Voer een naam in voor het dossier",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    setLoading(true);
     try {
-      // Create dossier with proper field mapping
       const dossierData = {
-        name: data.title || data.name, // Use title as name for database
-        description: data.description,
-        status: data.status,
-        priority: data.priority,
-        client_id: data.client_id || null,
-        assigned_user_id: data.primary_user_id || data.assigned_users[0]?.user_id || user.id,
-        assigned_users: data.assigned_users.length > 0 ? data.assigned_users.map(u => u.user_id) : [user.id],
-        deadline: data.deadline?.toISOString() || null,
-        budget: data.budget ? parseFloat(data.budget) : null,
-        category: data.category || 'algemeen',
-        tags: data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
-        custom_fields: data.custom_fields || {},
+        name: formData.name.trim(),
+        description: formData.description.trim() || null,
+        category: formData.category,
+        client_id: formData.client_id === 'no_client' ? null : formData.client_id,
+        reference: formData.reference.trim() || null,
+        priority: formData.priority,
+        start_date: formData.start_date || null,
+        end_date: formData.end_date || null,
+        responsible_user_id: formData.responsible_user_id === 'unassigned' ? null : formData.responsible_user_id,
+        budget: formData.budget ? parseFloat(formData.budget) : null,
+        is_billable: formData.is_billable,
+        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : null,
         organization_id: selectedOrganization.id,
         workspace_id: selectedWorkspace?.id || null,
-        created_by: user.id,
-        reference: data.reference,
-        start_date: data.start_date || null,
-        end_date: data.end_date || null
+        status: 'active'
       };
 
-      const { data: dossier, error: dossierError } = await supabase
+      const { data: dossier, error } = await supabase
         .from('dossiers')
         .insert(dossierData)
         .select()
         .single();
 
-      if (dossierError) throw dossierError;
+      if (error) throw error;
 
-      // Create dossier assignments for all assigned users
-      if (data.assigned_users.length > 0) {
-        const assignmentPromises = data.assigned_users.map((userAssignment, index) => 
-          supabase.from('dossier_assignments').insert({
+      // Initialize case progress if case_type is selected
+      if (formData.case_type && dossier) {
+        try {
+          await supabase.rpc('initialize_dossier_progress', {
             dossier_id: dossier.id,
-            user_id: userAssignment.user_id,
-            role: 'assigned',
-            is_primary: index === 0 || userAssignment.is_primary || userAssignment.user_id === data.primary_user_id,
-            assigned_by: user.id
-          })
-        );
-
-        await Promise.all(assignmentPromises);
+            case_type: formData.case_type,
+            org_id: selectedOrganization.id,
+            workspace_id: selectedWorkspace?.id || null
+          });
+        } catch (progressError) {
+          console.error('Error initializing case progress:', progressError);
+          // Don't fail the entire dossier creation for this
+        }
       }
 
       toast({
-        title: "Succes",
-        description: "Dossier succesvol aangemaakt",
+        title: "Dossier aangemaakt",
+        description: `Dossier "${formData.name}" is succesvol aangemaakt`
       });
 
+      resetForm();
+      onSuccess?.();
       return true;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating dossier:', error);
       toast({
-        title: "Fout",
-        description: `Kon dossier niet aanmaken: ${error.message}`,
+        title: "Fout bij aanmaken",
+        description: "Er is een fout opgetreden bij het aanmaken van het dossier",
         variant: "destructive"
       });
       return false;
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
-  };
-
-  const submitForm = async () => {
-    return await submitDossier(formData);
   };
 
   return {
     formData,
     updateFormData,
-    submitDossier,
+    resetForm,
     submitForm,
-    isSubmitting,
-    loading: isSubmitting
+    loading
   };
 };

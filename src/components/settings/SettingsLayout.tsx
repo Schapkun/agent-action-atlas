@@ -1,12 +1,16 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OrganizationSettings } from './OrganizationSettings';
+import { WorkspaceSettings } from './WorkspaceSettings';
 import { UserProfileSettings } from './UserProfileSettings';
 import { DocumentSettings } from './DocumentSettings';
-import { InvoiceSettings } from './InvoiceSettings';
+import { DossierSettings } from './DossierSettings';
 import { EmailSettings } from './EmailSettings';
+import { InvoiceSettings } from './InvoiceSettings';
 import { HistoryLogs } from './HistoryLogs';
+import { useUserRole } from './hooks/useUserRole';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SettingsLayoutProps {
   currentTab: string;
@@ -14,40 +18,67 @@ interface SettingsLayoutProps {
 }
 
 export const SettingsLayout = ({ currentTab, onTabChange }: SettingsLayoutProps) => {
+  const { user } = useAuth();
+  const { userRole } = useUserRole(user?.id, user?.email);
+
   return (
-    <Tabs value={currentTab} onValueChange={onTabChange} className="w-full">
-      <TabsList className="grid w-full grid-cols-6">
-        <TabsTrigger value="organizations">Organisaties & Gebruikers</TabsTrigger>
-        <TabsTrigger value="profile">Mijn Profiel</TabsTrigger>
-        <TabsTrigger value="documenten">Documenten</TabsTrigger>
-        <TabsTrigger value="invoices">Facturen</TabsTrigger>
-        <TabsTrigger value="emails">E-mail</TabsTrigger>
-        <TabsTrigger value="history">Historie</TabsTrigger>
-      </TabsList>
+    <div className="min-h-screen bg-slate-50">
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Instellingen</h1>
+          <p className="text-slate-600">Beheer uw organisatie, werkruimtes, gebruikers en systeem instellingen.</p>
+        </div>
 
-      <TabsContent value="organizations" className="mt-6">
-        <OrganizationSettings />
-      </TabsContent>
+        <Tabs value={currentTab} onValueChange={onTabChange} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9 mb-8">
+            <TabsTrigger value="organizations">Organisaties</TabsTrigger>
+            <TabsTrigger value="workspaces">Werkruimtes</TabsTrigger>
+            <TabsTrigger value="users">Gebruikers</TabsTrigger>
+            <TabsTrigger value="dossiers">Dossiers</TabsTrigger>
+            <TabsTrigger value="documenten">Documenten</TabsTrigger>
+            <TabsTrigger value="emails">E-mails</TabsTrigger>
+            <TabsTrigger value="invoices">Facturatie</TabsTrigger>
+            <TabsTrigger value="geschiedenis">Geschiedenis</TabsTrigger>
+            <TabsTrigger value="profile">Profiel</TabsTrigger>
+          </TabsList>
 
-      <TabsContent value="profile" className="mt-6">
-        <UserProfileSettings />
-      </TabsContent>
+          <TabsContent value="organizations">
+            <OrganizationSettings />
+          </TabsContent>
 
-      <TabsContent value="documenten" className="mt-6">
-        <DocumentSettings />
-      </TabsContent>
+          <TabsContent value="workspaces">
+            <WorkspaceSettings userRole={userRole || 'member'} />
+          </TabsContent>
 
-      <TabsContent value="invoices" className="mt-6">
-        <InvoiceSettings />
-      </TabsContent>
+          <TabsContent value="users">
+            <UserProfileSettings />
+          </TabsContent>
 
-      <TabsContent value="emails" className="mt-6">
-        <EmailSettings />
-      </TabsContent>
+          <TabsContent value="dossiers">
+            <DossierSettings />
+          </TabsContent>
 
-      <TabsContent value="history" className="mt-6">
-        <HistoryLogs />
-      </TabsContent>
-    </Tabs>
+          <TabsContent value="documenten">
+            <DocumentSettings />
+          </TabsContent>
+
+          <TabsContent value="emails">
+            <EmailSettings />
+          </TabsContent>
+
+          <TabsContent value="invoices">
+            <InvoiceSettings />
+          </TabsContent>
+
+          <TabsContent value="geschiedenis">
+            <HistoryLogs />
+          </TabsContent>
+
+          <TabsContent value="profile">
+            <UserProfileSettings />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
   );
 };

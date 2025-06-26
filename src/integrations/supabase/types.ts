@@ -551,47 +551,6 @@ export type Database = {
         }
         Relationships: []
       }
-      dossier_assignments: {
-        Row: {
-          assigned_at: string | null
-          assigned_by: string | null
-          created_at: string | null
-          dossier_id: string
-          id: string
-          is_primary: boolean | null
-          role: string | null
-          user_id: string
-        }
-        Insert: {
-          assigned_at?: string | null
-          assigned_by?: string | null
-          created_at?: string | null
-          dossier_id: string
-          id?: string
-          is_primary?: boolean | null
-          role?: string | null
-          user_id: string
-        }
-        Update: {
-          assigned_at?: string | null
-          assigned_by?: string | null
-          created_at?: string | null
-          dossier_id?: string
-          id?: string
-          is_primary?: boolean | null
-          role?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dossier_assignments_dossier_id_fkey"
-            columns: ["dossier_id"]
-            isOneToOne: false
-            referencedRelation: "dossiers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       dossier_categories: {
         Row: {
           color: string | null
@@ -630,7 +589,6 @@ export type Database = {
       }
       dossier_progress: {
         Row: {
-          assigned_users: Json | null
           completed_at: string | null
           created_at: string
           created_by: string | null
@@ -640,12 +598,9 @@ export type Database = {
           status: string
           step_description: string | null
           step_name: string
-          time_entries: Json | null
           updated_at: string
-          updated_by: string | null
         }
         Insert: {
-          assigned_users?: Json | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
@@ -655,12 +610,9 @@ export type Database = {
           status?: string
           step_description?: string | null
           step_name: string
-          time_entries?: Json | null
           updated_at?: string
-          updated_by?: string | null
         }
         Update: {
-          assigned_users?: Json | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
@@ -670,9 +622,7 @@ export type Database = {
           status?: string
           step_description?: string | null
           step_name?: string
-          time_entries?: Json | null
           updated_at?: string
-          updated_by?: string | null
         }
         Relationships: []
       }
@@ -765,7 +715,6 @@ export type Database = {
       }
       dossiers: {
         Row: {
-          assigned_users: Json | null
           budget: number | null
           category: string | null
           client_id: string | null
@@ -788,7 +737,6 @@ export type Database = {
           workspace_id: string | null
         }
         Insert: {
-          assigned_users?: Json | null
           budget?: number | null
           category?: string | null
           client_id?: string | null
@@ -811,7 +759,6 @@ export type Database = {
           workspace_id?: string | null
         }
         Update: {
-          assigned_users?: Json | null
           budget?: number | null
           category?: string | null
           client_id?: string | null

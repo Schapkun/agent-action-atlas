@@ -2,111 +2,74 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
-
-interface PendingTask {
-  id: string;
-  title: string;
-  description?: string;
-  priority: 'low' | 'medium' | 'high';
-  assigned_user_id?: string;
-  assigned_users?: string[];
-  due_date?: string;
-  status: 'pending' | 'in_progress' | 'completed';
-  created_at: string;
-  updated_at: string;
-  organization_id: string;
-  workspace_id?: string;
-  created_by: string;
-}
+import { subscriptionManager } from '@/utils/subscriptionManager';
 
 export const usePendingTasksRealtime = () => {
-  const [tasks, setTasks] = useState<PendingTask[]>([]);
-  const [loading, setLoading] = useState(false);
-  const { selectedOrganization, selectedWorkspace, selectedMember } = useOrganization();
+  const [pendingTasksCount, setPendingTasksCount] = useState(0);
+  const { selectedOrganization, selectedWorkspace } = useOrganization();
 
-  const fetchTasks = async () => {
+  const fetchPendingTasksCount = async () => {
     if (!selectedOrganization) {
-      setTasks([]);
+      setPendingTasksCount(0);
       return;
     }
 
-    setLoading(true);
-    
     try {
       let query = supabase
         .from('pending_tasks')
-        .select('*')
+        .select('id', { count: 'exact' })
         .eq('organization_id', selectedOrganization.id)
-        .in('status', ['pending', 'in_progress']);
+        .eq('status', 'open'); // Only count open tasks, not completed ones
 
-      // Filter by workspace if selected
       if (selectedWorkspace) {
         query = query.eq('workspace_id', selectedWorkspace.id);
       }
 
-      // Filter by member if selected
-      if (selectedMember) {
-        query = query.eq('assigned_to', selectedMember.user_id);
-      }
-
-      const { data, error } = await query
-        .order('created_at', { ascending: false });
+      const { count, error } = await query;
 
       if (error) throw error;
 
-      // Type-safe conversion with proper casting
-      const typedTasks: PendingTask[] = (data || []).map(task => ({
-        ...task,
-        priority: (task.priority as 'low' | 'medium' | 'high') || 'medium',
-        status: (task.status as 'pending' | 'in_progress' | 'completed') || 'pending',
-        description: task.description || undefined,
-        assigned_user_id: task.assigned_to || undefined,
-        assigned_users: [], // Default empty array since field doesn't exist in pending_tasks table
-        due_date: task.due_date || undefined,
-        workspace_id: task.workspace_id || undefined
-      }));
-
-      setTasks(typedTasks);
+      setPendingTasksCount(count || 0);
     } catch (error) {
-      console.error('Error fetching pending tasks:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error fetching pending tasks count:', error);
+      setPendingTasksCount(0);
     }
   };
 
   useEffect(() => {
-    fetchTasks();
-  }, [selectedOrganization, selectedWorkspace, selectedMember]);
+    fetchPendingTasksCount();
+  }, [selectedOrganization, selectedWorkspace]);
 
-  // Set up real-time subscription
+  // Real-time subscription for pending tasks updates
   useEffect(() => {
     if (!selectedOrganization) return;
 
-    const channel = supabase
-      .channel('pending_tasks_changes')
+    console.log('📡 Setting up real-time pending tasks subscription');
+
+    const channel = subscriptionManager.createChannel('pending-tasks-realtime', selectedOrganization.id);
+    
+    channel
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'pending_tasks',
-          filter: `organization_id=eq.${selectedOrganization.id}`,
+          filter: `organization_id=eq.${selectedOrganization.id}`
         },
-        () => {
-          fetchTasks();
+        (payload: any) => {
+          console.log('📋 Pending tasks changed:', payload);
+          // Immediately refresh count when any task changes
+          fetchPendingTasksCount();
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      console.log('📡 Cleaning up pending tasks real-time subscription');
+      subscriptionManager.cleanupChannel('pending-tasks-realtime');
     };
   }, [selectedOrganization]);
 
-  return {
-    tasks,
-    loading,
-    refetch: fetchTasks,
-    pendingTasksCount: tasks.length
-  };
+  return { pendingTasksCount, refreshCount: fetchPendingTasksCount };
 };

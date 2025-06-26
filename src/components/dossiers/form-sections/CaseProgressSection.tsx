@@ -1,282 +1,296 @@
-
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
-import { Clock, User, Plus, FileText } from 'lucide-react';
-import { TimeEntryInput } from '../TimeEntryInput';
-import { useOrganizationMembers } from '@/hooks/useOrganizationMembers';
-import { useAuth } from '@/contexts/AuthContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { CheckCircle2, Circle, Clock, Plus, X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useOrganization } from '@/contexts/OrganizationContext';
+import { useCaseTypes } from '@/hooks/useCaseTypes';
 
-interface TimeEntry {
-  user_id: string;
-  user_name: string;
-  hours: number;
-  description: string;
+interface CaseStep {
+  id: string;
+  step_name: string;
+  step_description: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'skipped';
+  completed_at?: string;
+  notes?: string;
 }
 
-interface StatusUpdate {
+interface CaseTemplate {
   id: string;
-  status: 'active' | 'closed' | 'pending' | 'on-hold' | 'in-review';
-  description: string;
-  updated_by: string;
-  updated_by_name: string;
-  updated_at: string;
-  time_entries: TimeEntry[];
+  case_type: string;
+  step_name: string;
+  step_description: string;
+  step_order: number;
+  estimated_days: number;
 }
 
 interface CaseProgressSectionProps {
-  currentStatus: 'active' | 'closed' | 'pending' | 'on-hold' | 'in-review';
-  statusUpdates: StatusUpdate[];
-  onStatusChange: (status: string) => void;
-  onAddStatusUpdate: (update: { status: string; description: string; updated_by: string; time_entries: TimeEntry[] }) => void;
+  formData: {
+    case_type?: string;
+  };
+  updateFormData: (updates: any) => void;
 }
 
-export const CaseProgressSection = ({ 
-  currentStatus, 
-  statusUpdates, 
-  onStatusChange, 
-  onAddStatusUpdate 
-}: CaseProgressSectionProps) => {
-  const { members } = useOrganizationMembers();
-  const { user } = useAuth();
-  const [showAddUpdate, setShowAddUpdate] = useState(false);
-  const [newUpdate, setNewUpdate] = useState<{
-    status: 'active' | 'closed' | 'pending' | 'on-hold' | 'in-review';
-    description: string;
-    updated_by: string;
-    time_entries: TimeEntry[];
-  }>({
-    status: currentStatus,
-    description: '',
-    updated_by: user?.id || '',
-    time_entries: []
-  });
+export const CaseProgressSection = ({ formData, updateFormData }: CaseProgressSectionProps) => {
+  const [caseSteps, setCaseSteps] = useState<CaseStep[]>([]);
+  const [templates, setTemplates] = useState<CaseTemplate[]>([]);
+  const [customStep, setCustomStep] = useState({ name: '', description: '' });
+  const [showAddCustom, setShowAddCustom] = useState(false);
+  const { selectedOrganization, selectedWorkspace } = useOrganization();
+  const { caseTypes, loading: caseTypesLoading } = useCaseTypes();
 
-  const statusOptions = [
-    { value: 'active' as const, label: 'Actief', color: 'bg-green-100 text-green-800' },
-    { value: 'pending' as const, label: 'In afwachting', color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'on-hold' as const, label: 'On hold', color: 'bg-orange-100 text-orange-800' },
-    { value: 'in-review' as const, label: 'In review', color: 'bg-blue-100 text-blue-800' },
-    { value: 'closed' as const, label: 'Gesloten', color: 'bg-gray-100 text-gray-800' }
-  ];
+  useEffect(() => {
+    if (formData.case_type && selectedOrganization) {
+      loadCaseTemplates();
+    }
+  }, [formData.case_type, selectedOrganization]);
 
-  const handleAddUpdate = () => {
-    if (!newUpdate.description.trim()) return;
+  const loadCaseTemplates = async () => {
+    if (!selectedOrganization || !formData.case_type) return;
 
-    onAddStatusUpdate({
-      status: newUpdate.status,
-      description: newUpdate.description,
-      updated_by: newUpdate.updated_by,
-      time_entries: newUpdate.time_entries
-    });
+    try {
+      let query = supabase
+        .from('case_step_templates')
+        .select('*')
+        .eq('organization_id', selectedOrganization.id)
+        .eq('case_type', formData.case_type)
+        .order('step_order');
 
-    // Reset form
-    setNewUpdate({
-      status: currentStatus,
-      description: '',
-      updated_by: user?.id || '',
-      time_entries: []
-    });
-    setShowAddUpdate(false);
+      if (selectedWorkspace) {
+        query = query.eq('workspace_id', selectedWorkspace.id);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      const steps: CaseStep[] = (data || []).map(template => ({
+        id: `template-${template.id}`,
+        step_name: template.step_name,
+        step_description: template.step_description,
+        status: 'pending' as const
+      }));
+
+      setCaseSteps(steps);
+      setTemplates(data || []);
+    } catch (error) {
+      console.error('Error loading case templates:', error);
+    }
   };
 
-  const getCurrentStatusOption = () => {
-    return statusOptions.find(option => option.value === currentStatus);
+  const addCustomStep = () => {
+    if (!customStep.name.trim()) return;
+
+    const newStep: CaseStep = {
+      id: `custom-${Date.now()}`,
+      step_name: customStep.name,
+      step_description: customStep.description,
+      status: 'pending'
+    };
+
+    setCaseSteps([...caseSteps, newStep]);
+    setCustomStep({ name: '', description: '' });
+    setShowAddCustom(false);
   };
 
-  const getMemberName = (userId: string) => {
-    const member = members.find(m => m.user_id === userId);
-    return member?.account_name || member?.email || 'Onbekend';
+  const updateStepStatus = (stepId: string, status: CaseStep['status']) => {
+    setCaseSteps(steps =>
+      steps.map(step =>
+        step.id === stepId
+          ? {
+              ...step,
+              status,
+              completed_at: status === 'completed' ? new Date().toISOString() : undefined
+            }
+          : step
+      )
+    );
   };
 
-  const handleStatusSelectChange = (value: string) => {
-    const typedValue = value as 'active' | 'closed' | 'pending' | 'on-hold' | 'in-review';
-    setNewUpdate(prev => ({ ...prev, status: typedValue }));
+  const updateStepNotes = (stepId: string, notes: string) => {
+    setCaseSteps(steps =>
+      steps.map(step =>
+        step.id === stepId ? { ...step, notes } : step
+      )
+    );
+  };
+
+  const removeStep = (stepId: string) => {
+    setCaseSteps(steps => steps.filter(step => step.id !== stepId));
+  };
+
+  const getStatusIcon = (status: CaseStep['status']) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle2 className="h-4 w-4 text-green-600" />;
+      case 'in_progress':
+        return <Clock className="h-4 w-4 text-blue-600" />;
+      default:
+        return <Circle className="h-4 w-4 text-gray-400" />;
+    }
+  };
+
+  const getStatusColor = (status: CaseStep['status']) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-50 border-green-200';
+      case 'in_progress':
+        return 'bg-blue-50 border-blue-200';
+      case 'skipped':
+        return 'bg-gray-50 border-gray-200';
+      default:
+        return 'bg-white border-gray-200';
+    }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          Dossier Voortgang
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Current Status */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Huidige Status</Label>
-          <div className="flex items-center gap-3">
-            <Select value={currentStatus} onValueChange={onStatusChange}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {statusOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    <div className="flex items-center gap-2">
-                      <Badge className={`${option.color} border-0`}>
-                        {option.label}
-                      </Badge>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {getCurrentStatusOption() && (
-              <Badge className={`${getCurrentStatusOption()?.color} border-0`}>
-                {getCurrentStatusOption()?.label}
-              </Badge>
-            )}
-          </div>
+    <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="bg-slate-800 rounded-lg p-2">
+          <CheckCircle2 className="h-4 w-4 text-white" />
+        </div>
+        <h3 className="text-lg font-semibold text-slate-900">Procedure Voortgang</h3>
+      </div>
+      
+      <div className="space-y-4">
+        <div>
+          <Label htmlFor="case_type" className="text-sm font-medium text-slate-700 mb-2 block">
+            Zaaktype voor standaard procedure
+          </Label>
+          <Select 
+            value={formData.case_type || ''} 
+            onValueChange={(value) => updateFormData({ case_type: value })}
+            disabled={caseTypesLoading}
+          >
+            <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
+              <SelectValue placeholder={caseTypesLoading ? "Laden..." : "Selecteer zaaktype"} />
+            </SelectTrigger>
+            <SelectContent>
+              {caseTypes.map((type) => (
+                <SelectItem key={type.id} value={type.name.toLowerCase()}>
+                  {type.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Status Updates History */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">Status Updates</Label>
+        {caseSteps.length > 0 && (
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-slate-700">
+              Procedure stappen ({caseSteps.filter(s => s.status === 'completed').length}/{caseSteps.length} voltooid)
+            </Label>
+            
+            {caseSteps.map((step, index) => (
+              <div key={step.id} className={`p-4 rounded-lg border ${getStatusColor(step.status)}`}>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3 flex-1">
+                    <div className="mt-1">
+                      {getStatusIcon(step.status)}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="font-medium text-slate-900">{step.step_name}</h4>
+                        <Select
+                          value={step.status}
+                          onValueChange={(value) => updateStepStatus(step.id, value as CaseStep['status'])}
+                        >
+                          <SelectTrigger className="w-32 h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Wachtend</SelectItem>
+                            <SelectItem value="in_progress">Bezig</SelectItem>
+                            <SelectItem value="completed">Voltooid</SelectItem>
+                            <SelectItem value="skipped">Overgeslagen</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {step.step_description && (
+                        <p className="text-sm text-slate-600 mb-2">{step.step_description}</p>
+                      )}
+                      
+                      <Textarea
+                        placeholder="Notities voor deze stap..."
+                        value={step.notes || ''}
+                        onChange={(e) => updateStepNotes(step.id, e.target.value)}
+                        rows={2}
+                        className="text-sm border-slate-200 focus:border-slate-400 focus:ring-slate-400"
+                      />
+                      
+                      {step.completed_at && (
+                        <p className="text-xs text-green-600 mt-1">
+                          Voltooid op: {new Date(step.completed_at).toLocaleDateString('nl-NL')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {step.id.startsWith('custom-') && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeStep(step.id)}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="border-t pt-4">
+          {!showAddCustom ? (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowAddUpdate(true)}
-              className="text-xs"
+              onClick={() => setShowAddCustom(true)}
+              className="text-slate-600 hover:text-slate-800"
             >
-              <Plus className="h-3 w-3 mr-1" />
-              Update toevoegen
+              <Plus className="h-4 w-4 mr-2" />
+              Aangepaste stap toevoegen
             </Button>
-          </div>
-
-          {statusUpdates.length > 0 ? (
-            <div className="space-y-3 max-h-60 overflow-y-auto">
-              {statusUpdates.map((update) => (
-                <div key={update.id} className="p-3 bg-slate-50 rounded-lg text-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Badge className={`${statusOptions.find(s => s.value === update.status)?.color} border-0 text-xs`}>
-                        {statusOptions.find(s => s.value === update.status)?.label}
-                      </Badge>
-                      <span className="text-slate-600 text-xs">
-                        door {update.updated_by_name}
-                      </span>
-                    </div>
-                    <span className="text-slate-500 text-xs">
-                      {new Date(update.updated_at).toLocaleString()}
-                    </span>
-                  </div>
-                  <p className="text-slate-700 mb-2">{update.description}</p>
-                  {update.time_entries.length > 0 && (
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1 text-xs text-slate-600">
-                        <Clock className="h-3 w-3" />
-                        <span>Gewerkte uren:</span>
-                      </div>
-                      {update.time_entries.map((entry, idx) => (
-                        <div key={idx} className="text-xs text-slate-600 ml-4">
-                          {entry.user_name}: {entry.hours}h
-                          {entry.description && ` - ${entry.description}`}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
           ) : (
-            <p className="text-sm text-slate-500 italic">Nog geen status updates</p>
+            <div className="space-y-3 p-4 bg-slate-50 rounded-lg">
+              <Input
+                placeholder="Naam van de stap"
+                value={customStep.name}
+                onChange={(e) => setCustomStep(prev => ({ ...prev, name: e.target.value }))}
+                className="text-sm"
+              />
+              <Textarea
+                placeholder="Omschrijving (optioneel)"
+                value={customStep.description}
+                onChange={(e) => setCustomStep(prev => ({ ...prev, description: e.target.value }))}
+                rows={2}
+                className="text-sm"
+              />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={addCustomStep}>
+                  Toevoegen
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    setShowAddCustom(false);
+                    setCustomStep({ name: '', description: '' });
+                  }}
+                >
+                  Annuleren
+                </Button>
+              </div>
+            </div>
           )}
         </div>
-
-        {/* Add New Status Update */}
-        {showAddUpdate && (
-          <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm font-medium">Nieuwe Status</Label>
-                <Select
-                  value={newUpdate.status}
-                  onValueChange={handleStatusSelectChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        <Badge className={`${option.color} border-0`}>
-                          {option.label}
-                        </Badge>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">Update door</Label>
-                <Select
-                  value={newUpdate.updated_by}
-                  onValueChange={(value) => setNewUpdate(prev => ({ ...prev, updated_by: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {members.map((member) => (
-                      <SelectItem key={member.user_id} value={member.user_id}>
-                        <div className="flex items-center gap-2">
-                          <User className="h-3 w-3" />
-                          {member.account_name || member.email}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium">Beschrijving</Label>
-              <Textarea
-                value={newUpdate.description}
-                onChange={(e) => setNewUpdate(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Beschrijf de status wijziging..."
-                className="mt-1"
-                rows={3}
-              />
-            </div>
-
-            <TimeEntryInput
-              timeEntries={newUpdate.time_entries}
-              onTimeEntriesChange={(entries) => setNewUpdate(prev => ({ ...prev, time_entries: entries }))}
-              defaultUserId={newUpdate.updated_by}
-            />
-
-            <div className="flex gap-2">
-              <Button onClick={handleAddUpdate} size="sm">
-                Update toevoegen
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => {
-                  setShowAddUpdate(false);
-                  setNewUpdate({
-                    status: currentStatus,
-                    description: '',
-                    updated_by: user?.id || '',
-                    time_entries: []
-                  });
-                }}
-              >
-                Annuleren
-              </Button>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

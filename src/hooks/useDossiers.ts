@@ -4,131 +4,64 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useToast } from '@/hooks/use-toast';
 
-export interface Dossier {
+interface Dossier {
   id: string;
-  title: string; // Map name to title for frontend consistency
-  name: string; // Keep for database compatibility
-  description: string;
-  status: 'active' | 'closed' | 'pending';
-  priority: 'low' | 'medium' | 'high';
+  name: string;
+  description?: string;
+  status: string;
   client_id?: string;
-  assigned_user_id?: string;
-  assigned_users: string[];
-  deadline?: string;
-  budget?: number;
-  category?: string;
-  tags?: string[];
-  custom_fields?: Record<string, any>;
+  category: string;
   created_at: string;
   updated_at: string;
-  organization_id: string;
-  workspace_id?: string;
-  created_by: string;
   client?: {
-    id: string;
     name: string;
     email?: string;
-  };
-  assigned_user?: {
-    id: string;
-    email: string;
-    account_name?: string;
   };
 }
 
 export const useDossiers = () => {
   const [dossiers, setDossiers] = useState<Dossier[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { selectedOrganization, selectedWorkspace, selectedMember } = useOrganization();
+  const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { toast } = useToast();
 
   const fetchDossiers = async () => {
     if (!selectedOrganization) {
       setDossiers([]);
-      setError(null);
       return;
     }
 
     setLoading(true);
-    setError(null);
-    
     try {
+      console.log('📁 Fetching dossiers for organization:', selectedOrganization.id);
+
       let query = supabase
         .from('dossiers')
         .select(`
           *,
-          client:clients(id, name, email),
-          assigned_user:profiles!dossiers_responsible_user_id_fkey(id, email, full_name)
+          client:clients(name, email)
         `)
-        .eq('organization_id', selectedOrganization.id);
+        .eq('organization_id', selectedOrganization.id)
+        .order('created_at', { ascending: false });
 
-      // Filter by workspace if selected
       if (selectedWorkspace) {
         query = query.eq('workspace_id', selectedWorkspace.id);
       }
 
-      // Filter by member if selected
-      if (selectedMember) {
-        query = query.or(`responsible_user_id.eq.${selectedMember.user_id},assigned_users.cs.["${selectedMember.user_id}"]`);
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('📁 Error fetching dossiers:', error);
+        throw error;
       }
 
-      const { data, error: fetchError } = await query
-        .order('created_at', { ascending: false });
-
-      if (fetchError) {
-        console.error('Fetch error details:', fetchError);
-        throw fetchError;
-      }
-
-      // Map database names to frontend expectations with proper type casting
-      const mappedDossiers: Dossier[] = (data || []).map(dossier => {
-        // Handle assigned_user with proper type narrowing
-        const assignedUserData = dossier.assigned_user;
-        let assignedUser: Dossier['assigned_user'] = undefined;
-
-        // Check if assignedUserData is valid and not null
-        if (assignedUserData !== null && 
-            typeof assignedUserData === 'object' && 
-            !Array.isArray(assignedUserData)) {
-          // Now TypeScript knows assignedUserData is not null
-          assignedUser = {
-            id: (assignedUserData as any).id || '',
-            email: (assignedUserData as any).email || '',
-            account_name: (assignedUserData as any).full_name || undefined
-          };
-        }
-
-        return {
-          ...dossier,
-          title: dossier.name, // Map name to title
-          assigned_users: Array.isArray(dossier.assigned_users) 
-            ? (dossier.assigned_users as any[]).map(user => String(user)).filter(Boolean)
-            : [],
-          status: (dossier.status as 'active' | 'closed' | 'pending') || 'active',
-          priority: (dossier.priority as 'low' | 'medium' | 'high') || 'medium',
-          tags: Array.isArray(dossier.tags) ? dossier.tags : [],
-          budget: dossier.budget || undefined,
-          category: dossier.category || undefined,
-          client_id: dossier.client_id || undefined,
-          assigned_user_id: dossier.responsible_user_id || undefined,
-          workspace_id: dossier.workspace_id || undefined,
-          deadline: dossier.end_date || undefined,
-          custom_fields: {}, // Default empty object since field doesn't exist in database
-          assigned_user: assignedUser
-        };
-      });
-
-      setDossiers(mappedDossiers);
-      
-    } catch (error: any) {
-      const errorMessage = error?.message || 'Unknown error occurred';
+      console.log('📁 Dossiers fetched:', data?.length || 0);
+      setDossiers(data || []);
+    } catch (error) {
       console.error('Error fetching dossiers:', error);
-      setError(errorMessage);
-      
       toast({
-        title: "Database Fout",
-        description: `Kon dossiers niet ophalen: ${errorMessage}`,
+        title: "Fout",
+        description: "Kon dossiers niet ophalen",
         variant: "destructive"
       });
     } finally {
@@ -136,29 +69,113 @@ export const useDossiers = () => {
     }
   };
 
+  const createDossier = async (dossierData: {
+    name: string;
+    description?: string;
+    client_id?: string;
+    category?: string;
+  }) => {
+    if (!selectedOrganization) return null;
+
+    try {
+      console.log('📁 Creating new dossier:', dossierData);
+
+      const { data, error } = await supabase
+        .from('dossiers')
+        .insert({
+          ...dossierData,
+          organization_id: selectedOrganization.id,
+          workspace_id: selectedWorkspace?.id || null,
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      console.log('📁 Dossier created:', data);
+      toast({
+        title: "Succes",
+        description: "Dossier succesvol aangemaakt"
+      });
+
+      fetchDossiers(); // Refresh list
+      return data;
+    } catch (error) {
+      console.error('Error creating dossier:', error);
+      toast({
+        title: "Fout",
+        description: "Kon dossier niet aanmaken",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  const updateDossier = async (id: string, updates: Partial<Dossier>) => {
+    try {
+      const { data, error } = await supabase
+        .from('dossiers')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Succes",
+        description: "Dossier bijgewerkt"
+      });
+
+      fetchDossiers();
+      return data;
+    } catch (error) {
+      console.error('Error updating dossier:', error);
+      toast({
+        title: "Fout",
+        description: "Kon dossier niet bijwerken",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  const deleteDossier = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('dossiers')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succes",
+        description: "Dossier verwijderd"
+      });
+
+      fetchDossiers();
+    } catch (error) {
+      console.error('Error deleting dossier:', error);
+      toast({
+        title: "Fout",
+        description: "Kon dossier niet verwijderen",
+        variant: "destructive"
+      });
+    }
+  };
+
   useEffect(() => {
     fetchDossiers();
-  }, [selectedOrganization, selectedWorkspace, selectedMember]);
-
-  const getActiveDossiers = () => {
-    return dossiers.filter(d => d.status === 'active');
-  };
-
-  const getClosedDossiers = () => {
-    return dossiers.filter(d => d.status === 'closed');
-  };
-
-  const getPendingDossiers = () => {
-    return dossiers.filter(d => d.status === 'pending');
-  };
+  }, [selectedOrganization, selectedWorkspace]);
 
   return {
     dossiers,
-    activeDossiers: getActiveDossiers(),
-    closedDossiers: getClosedDossiers(),
-    pendingDossiers: getPendingDossiers(),
     loading,
-    error,
-    refetchDossiers: fetchDossiers
+    createDossier,
+    updateDossier,
+    deleteDossier,
+    refreshDossiers: fetchDossiers
   };
 };
