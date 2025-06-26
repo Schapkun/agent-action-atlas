@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -15,61 +16,52 @@ interface ManageUpdateTypesDialogProps {
 export const ManageUpdateTypesDialog = ({ open, onOpenChange }: ManageUpdateTypesDialogProps) => {
   const { toast } = useToast();
   const [newTypeName, setNewTypeName] = useState('');
-  const [newTypeLabel, setNewTypeLabel] = useState('');
   
-  // Mock data - in real app this would come from a context or API
-  const [customUpdateTypes, setCustomUpdateTypes] = useState<Array<{ key: string; label: string }>>([
+  // Combine all types into one list - start with standard types converted to the same format
+  const [allUpdateTypes, setAllUpdateTypes] = useState<Array<{ key: string; label: string }>>([
+    ...Object.entries(UPDATE_TYPE_LABELS).map(([key, label]) => ({ key, label })),
     { key: 'custom_type_1', label: 'Aangepast Type 1' },
     { key: 'custom_type_2', label: 'Aangepast Type 2' }
   ]);
 
-  // Standard types that can now be managed
-  const [standardUpdateTypes, setStandardUpdateTypes] = useState<Array<{ key: string; label: string; removable: boolean }>>(
-    Object.entries(UPDATE_TYPE_LABELS).map(([key, label]) => ({
-      key,
-      label,
-      removable: true
-    }))
-  );
+  // Auto-generate label from name
+  const generateLabel = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
 
   const handleAddType = () => {
-    if (!newTypeName.trim() || !newTypeLabel.trim()) {
+    if (!newTypeName.trim()) {
       toast({
         title: "Fout",
-        description: "Vul zowel de naam als het label in",
+        description: "Vul de naam in",
         variant: "destructive"
       });
       return;
     }
 
+    const generatedLabel = generateLabel(newTypeName);
     const newType = {
       key: `custom_${newTypeName.toLowerCase().replace(/\s+/g, '_')}`,
-      label: newTypeLabel
+      label: generatedLabel
     };
 
-    setCustomUpdateTypes(prev => [...prev, newType]);
+    setAllUpdateTypes(prev => [...prev, newType]);
     setNewTypeName('');
-    setNewTypeLabel('');
     
     toast({
       title: "Succes",
-      description: `Update type "${newTypeLabel}" toegevoegd`
+      description: `Update type "${generatedLabel}" toegevoegd`
     });
   };
 
-  const handleRemoveCustomType = (keyToRemove: string) => {
-    setCustomUpdateTypes(prev => prev.filter(type => type.key !== keyToRemove));
+  const handleRemoveType = (keyToRemove: string) => {
+    setAllUpdateTypes(prev => prev.filter(type => type.key !== keyToRemove));
     toast({
       title: "Verwijderd",
-      description: "Aangepast update type verwijderd"
-    });
-  };
-
-  const handleRemoveStandardType = (keyToRemove: string) => {
-    setStandardUpdateTypes(prev => prev.filter(type => type.key !== keyToRemove));
-    toast({
-      title: "Verwijderd",
-      description: "Standaard update type verwijderd"
+      description: "Update type verwijderd"
     });
   };
 
@@ -87,7 +79,7 @@ export const ManageUpdateTypesDialog = ({ open, onOpenChange }: ManageUpdateType
           {/* Add new type */}
           <div className="space-y-4">
             <h3 className="font-medium text-slate-900">Nieuw Update Type Toevoegen</h3>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-3">
               <div>
                 <Label htmlFor="type_name" className="text-sm font-medium text-slate-700">
                   Naam
@@ -96,43 +88,40 @@ export const ManageUpdateTypesDialog = ({ open, onOpenChange }: ManageUpdateType
                   id="type_name"
                   value={newTypeName}
                   onChange={(e) => setNewTypeName(e.target.value)}
-                  placeholder="bijv. vergunning"
+                  placeholder="bijv. vergunning aanvraag"
                   className="text-sm"
                 />
-              </div>
-              <div>
-                <Label htmlFor="type_label" className="text-sm font-medium text-slate-700">
-                  Label
-                </Label>
-                <Input
-                  id="type_label"
-                  value={newTypeLabel}
-                  onChange={(e) => setNewTypeLabel(e.target.value)}
-                  placeholder="bijv. Vergunning Aanvraag"
-                  className="text-sm"
-                />
+                {newTypeName && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    Label wordt: "{generateLabel(newTypeName)}"
+                  </p>
+                )}
               </div>
             </div>
             <Button 
               onClick={handleAddType}
               size="sm" 
               className="w-full"
-              disabled={!newTypeName.trim() || !newTypeLabel.trim()}
+              disabled={!newTypeName.trim()}
             >
               <Plus className="h-4 w-4 mr-2" />
               Type Toevoegen
             </Button>
           </div>
 
-          {/* Standard types */}
+          {/* All update types */}
           <div className="space-y-4">
-            <h3 className="font-medium text-slate-900">Standaard Types</h3>
-            {standardUpdateTypes.length === 0 ? (
-              <p className="text-sm text-slate-600">Alle standaard types zijn verwijderd</p>
+            <h3 className="font-medium text-slate-900">Alle Update Types</h3>
+            {allUpdateTypes.length === 0 ? (
+              <p className="text-sm text-slate-600">Geen update types gevonden</p>
             ) : (
               <div className="space-y-2">
-                {standardUpdateTypes.map((type) => (
-                  <div key={type.key} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                {allUpdateTypes.map((type, index) => (
+                  <div key={type.key} className={`flex items-center justify-between p-3 rounded-lg border ${
+                    Object.keys(UPDATE_TYPE_LABELS).includes(type.key) 
+                      ? 'bg-blue-50 border-blue-200' 
+                      : 'bg-slate-50 border-slate-200'
+                  }`}>
                     <div>
                       <p className="font-medium text-slate-900">{type.label}</p>
                       <p className="text-xs text-slate-600">{type.key}</p>
@@ -140,35 +129,8 @@ export const ManageUpdateTypesDialog = ({ open, onOpenChange }: ManageUpdateType
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleRemoveStandardType(type.key)}
+                      onClick={() => handleRemoveType(type.key)}
                       className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Existing custom types */}
-          <div className="space-y-4">
-            <h3 className="font-medium text-slate-900">Bestaande Aangepaste Types</h3>
-            {customUpdateTypes.length === 0 ? (
-              <p className="text-sm text-slate-600">Geen aangepaste types gevonden</p>
-            ) : (
-              <div className="space-y-2">
-                {customUpdateTypes.map((type) => (
-                  <div key={type.key} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-slate-900">{type.label}</p>
-                      <p className="text-xs text-slate-600">{type.key}</p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRemoveCustomType(type.key)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
