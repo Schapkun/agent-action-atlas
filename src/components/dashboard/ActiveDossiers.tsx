@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +6,7 @@ import { Folder, Plus, Building2, Calendar, Mail, FileText, Phone, AlertCircle, 
 import { useDossiers } from '@/hooks/useDossiers';
 import { EnhancedCreateDossierDialog } from '@/components/dossiers/EnhancedCreateDossierDialog';
 import { DossierDetailDialog } from '@/components/dossiers/DossierDetailDialog';
+import { DossierUpdatesSection } from '@/components/dashboard/DossierUpdatesSection';
 
 export const ActiveDossiers = () => {
   const { dossiers, loading, refreshDossiers } = useDossiers();
@@ -38,80 +38,11 @@ export const ActiveDossiers = () => {
     }
   };
 
-  // Mock dossier details - in real app this would come from API
-  const getDossierDetails = (dossierId: string) => ({
-    hoursSpent: 14.5,
-    hoursAvailable: 5.5,
-    totalHours: 20,
-    hourlyRate: 175,
-    totalValue: 3500,
-    totalInvoiced: 3500,
-    paid: 2250,
-    outstanding: 1250,
-    lastEmail: 'Vandaag 14:23 - Vraag over nieuw contract',
-    documentCount: 5,
-    lastDocument: 'Leveringscontract biologisch meel (01-06-2025)',
-    lastCall: '15 min gesprek - intake nieuwe leveringscontract',
-    assignedUser: 'Marie van der Berg',
-    nextDeadline: '28 juni 2025 - Conceptovereenkomst opstellen',
-    internalNotes: 'Cliënt wacht nog op aangepaste conceptovereenkomst'
-  });
-
-  // Mock status updates data - in real app this would come from API
-  const getStatusUpdates = (dossierId: string) => [
-    {
-      id: '1',
-      type: 'email',
-      title: 'E-mail ontvangen',
-      description: 'Van: marie@dekorenbloem.nl - Onderwerp: Vraag over nieuwe leveringscontract',
-      date: 'Vandaag 14:23',
-      icon: Mail,
-      color: 'text-blue-500'
-    },
-    {
-      id: '2',
-      type: 'document',
-      title: 'Contract opstellen',
-      description: 'Leveringscontract Biologisch Meel Q1-Q2 2025',
-      date: 'Gisteren 16:45',
-      icon: FileText,
-      color: 'text-green-500'
-    },
-    {
-      id: '3',
-      type: 'phone',
-      title: 'Telefoongesprek',
-      description: 'Intake gesprek nieuwe leveringscontract (15 min)',
-      date: '1 week geleden',
-      icon: Phone,
-      color: 'text-purple-500'
-    },
-    {
-      id: '4',
-      type: 'invoice',
-      title: 'Factuur verzonden',
-      description: 'Factuur #2025-001 - Juridisch advies december € 1.250,00 (excl. BTW)',
-      date: '3 dagen geleden',
-      icon: AlertCircle,
-      color: 'text-yellow-500'
-    }
-  ];
-
   const statusUpdateTypes = [
-    { type: 'all', label: 'Alle items', icon: Folder, count: 4 },
-    { type: 'email', label: 'E-mails', icon: Mail, count: 1 },
-    { type: 'document', label: 'Documenten', icon: FileText, count: 1 },
-    { type: 'phone', label: 'Gesprekken', icon: Phone, count: 1 },
-    { type: 'invoice', label: 'Facturen', icon: AlertCircle, count: 1 }
+    { type: 'all', label: 'Alle items', icon: Folder, count: 0 },
+    { type: 'status_update', label: 'Status Updates', icon: Clock, count: 0 },
+    { type: 'deadline', label: 'Deadlines', icon: Calendar, count: 0 }
   ];
-
-  const filteredStatusUpdates = selectedDossier 
-    ? getStatusUpdates(selectedDossier.id).filter(update => 
-        statusFilter === 'all' || update.type === statusFilter
-      )
-    : [];
-
-  const dossierDetails = selectedDossier ? getDossierDetails(selectedDossier.id) : null;
 
   if (loading) {
     return (
@@ -238,164 +169,44 @@ export const ActiveDossiers = () => {
         <div className="w-2/3 space-y-4">
           {selectedDossier ? (
             <>
-              {/* Dossier Header with Key Info */}
+              {/* Dossier Header */}
               <div className="bg-white rounded-lg border border-slate-200 p-6">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-4">
                   <div>
                     <h2 className="text-xl font-semibold text-slate-900">{selectedDossier.name}</h2>
                     <div className="flex items-center gap-2 mt-2">
                       <Badge className="bg-green-100 text-green-800 border-green-200">Actief</Badge>
                       <span className="text-sm text-slate-600">
-                        Laatste activiteit: vandaag
+                        Aangemaakt: {new Date(selectedDossier.created_at).toLocaleDateString('nl-NL')}
                       </span>
                     </div>
                   </div>
-                  <DossierDetailDialog dossier={selectedDossier}>
-                    <Button variant="outline">
-                      <Eye className="h-4 w-4 mr-2" />
-                      Details
-                    </Button>
-                  </DossierDetailDialog>
+                  <div className="flex gap-2">
+                    <DossierDetailDialog dossier={selectedDossier}>
+                      <Button variant="outline">
+                        <Eye className="h-4 w-4 mr-2" />
+                        Details
+                      </Button>
+                    </DossierDetailDialog>
+                  </div>
                 </div>
 
-                {/* Key Metrics Grid */}
-                {dossierDetails && (
-                  <div className="grid grid-cols-4 gap-4 mb-6">
-                    {/* Hours & Budget */}
-                    <div className="bg-slate-50 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Clock className="h-4 w-4 text-slate-600" />
-                        <span className="text-sm font-medium text-slate-700">Uren</span>
-                      </div>
-                      <div className="text-lg font-semibold text-slate-900">
-                        {dossierDetails.hoursSpent}h
-                      </div>
-                      <div className="text-xs text-slate-600">
-                        Nog {dossierDetails.hoursAvailable}h beschikbaar
-                      </div>
-                    </div>
-
-                    {/* Financial Status */}
-                    <div className="bg-slate-50 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Euro className="h-4 w-4 text-slate-600" />
-                        <span className="text-sm font-medium text-slate-700">Betaald</span>
-                      </div>
-                      <div className="text-lg font-semibold text-green-600">
-                        €{dossierDetails.paid.toLocaleString()}
-                      </div>
-                      <div className="text-xs text-slate-600">
-                        €{dossierDetails.outstanding.toLocaleString()} openstaand
-                      </div>
-                    </div>
-
-                    {/* Assigned User */}
-                    <div className="bg-slate-50 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <User className="h-4 w-4 text-slate-600" />
-                        <span className="text-sm font-medium text-slate-700">Toegewezen</span>
-                      </div>
-                      <div className="text-sm font-semibold text-slate-900">
-                        {dossierDetails.assignedUser}
-                      </div>
-                      <div className="text-xs text-slate-600">
-                        Verantwoordelijk
-                      </div>
-                    </div>
-
-                    {/* Next Deadline */}
-                    <div className="bg-orange-50 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <AlertCircle className="h-4 w-4 text-orange-600" />
-                        <span className="text-sm font-medium text-orange-700">Deadline</span>
-                      </div>
-                      <div className="text-sm font-semibold text-orange-900">
-                        28 juni
-                      </div>
-                      <div className="text-xs text-orange-600">
-                        Conceptovereenkomst
-                      </div>
-                    </div>
-                  </div>
+                {selectedDossier.description && (
+                  <p className="text-sm text-slate-600 mb-4">{selectedDossier.description}</p>
                 )}
 
-                {/* Status Filter Icons */}
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-sm font-medium text-slate-700 mr-2">Filter:</span>
-                  {statusUpdateTypes.map((filterType) => {
-                    const Icon = filterType.icon;
-                    return (
-                      <button
-                        key={filterType.type}
-                        onClick={() => setStatusFilter(filterType.type)}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          statusFilter === filterType.type
-                            ? 'bg-slate-800 text-white'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                        }`}
-                      >
-                        <Icon className="h-4 w-4" />
-                        <span>{filterType.label}</span>
-                        <Badge variant="outline" className="text-xs bg-white">
-                          {filterType.count}
-                        </Badge>
-                      </button>
-                    );
-                  })}
-                </div>
+                {selectedDossier.client_name && (
+                  <div className="flex items-center gap-2 text-sm text-slate-600">
+                    <Building2 className="h-4 w-4 text-slate-400" />
+                    <span>Client: {selectedDossier.client_name}</span>
+                  </div>
+                )}
               </div>
 
-              {/* Status Updates List */}
-              <div className="space-y-3 max-h-[calc(100vh-450px)] overflow-y-auto">
-                {filteredStatusUpdates.map((update) => {
-                  const Icon = update.icon;
-                  return (
-                    <div key={update.id} className="bg-white rounded-lg border border-slate-200 p-4 hover:shadow-sm transition-shadow">
-                      <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded-lg bg-slate-100`}>
-                          <Icon className={`h-4 w-4 ${update.color}`} />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-semibold text-slate-900">{update.title}</h4>
-                            <span className="text-sm text-slate-500">{update.date}</span>
-                          </div>
-                          <p className="text-sm text-slate-600 mt-1">{update.description}</p>
-                          {update.type === 'document' && (
-                            <div className="flex gap-2 mt-3">
-                              <Button size="sm" variant="outline" className="text-xs">
-                                Downloaden
-                              </Button>
-                              <Button size="sm" variant="outline" className="text-xs">
-                                Bewerken
-                              </Button>
-                            </div>
-                          )}
-                          {update.type === 'email' && (
-                            <div className="flex gap-2 mt-3">
-                              <Button size="sm" variant="outline" className="text-xs">
-                                Bekijken
-                              </Button>
-                              <Button size="sm" variant="outline" className="text-xs">
-                                Beantwoorden
-                              </Button>
-                            </div>
-                          )}
-                          {update.type === 'invoice' && (
-                            <div className="flex gap-2 mt-3">
-                              <Button size="sm" variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
-                                PDF bekijken
-                              </Button>
-                              <Button size="sm" variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                                Betaald
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+              {/* Updates Section */}
+              <div className="bg-white rounded-lg border border-slate-200 p-6">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">Recente Updates</h3>
+                <DossierUpdatesSection dossierId={selectedDossier.id} />
               </div>
             </>
           ) : (

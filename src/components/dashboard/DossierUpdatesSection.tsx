@@ -1,14 +1,20 @@
 
 import React from 'react';
-import { Clock, Calendar, AlertCircle } from 'lucide-react';
+import { Clock, Calendar, AlertCircle, Edit } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useDossierStatusUpdates } from '@/hooks/useDossierStatusUpdates';
 import { useDossierDeadlines } from '@/hooks/useDossierDeadlines';
+import { EditDeadlineDialog } from '@/components/dossiers/EditDeadlineDialog';
 import { UPDATE_TYPE_LABELS } from '@/types/dossierStatusUpdates';
 
-export const DossierUpdatesSection = () => {
-  const { statusUpdates, isLoading: statusLoading } = useDossierStatusUpdates();
-  const { deadlines, isLoading: deadlinesLoading } = useDossierDeadlines();
+interface DossierUpdatesSectionProps {
+  dossierId?: string;
+}
+
+export const DossierUpdatesSection = ({ dossierId }: DossierUpdatesSectionProps) => {
+  const { statusUpdates, isLoading: statusLoading } = useDossierStatusUpdates(dossierId);
+  const { deadlines, isLoading: deadlinesLoading } = useDossierDeadlines(dossierId);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -20,6 +26,15 @@ export const DossierUpdatesSection = () => {
     }
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'completed': return 'bg-green-100 text-green-800 border-green-200';
+      case 'overdue': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
   const getPriorityLabel = (priority: string) => {
     switch (priority) {
       case 'low': return 'Laag';
@@ -27,6 +42,15 @@ export const DossierUpdatesSection = () => {
       case 'high': return 'Hoog';
       case 'urgent': return 'Urgent';
       default: return priority;
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'pending': return 'In behandeling';
+      case 'completed': return 'Voltooid';
+      case 'overdue': return 'Verlopen';
+      default: return status;
     }
   };
 
@@ -69,7 +93,8 @@ export const DossierUpdatesSection = () => {
       date: deadline.due_date,
       priority: deadline.priority,
       status: deadline.status,
-      dossier_id: deadline.dossier_id
+      dossier_id: deadline.dossier_id,
+      deadline: deadline
     }))
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -116,6 +141,11 @@ export const DossierUpdatesSection = () => {
                   <Badge variant="outline" className={getPriorityColor(update.priority)}>
                     {getPriorityLabel(update.priority)}
                   </Badge>
+                  {update.type === 'deadline' && (
+                    <Badge variant="outline" className={getStatusColor(update.status!)}>
+                      {getStatusLabel(update.status!)}
+                    </Badge>
+                  )}
                 </div>
                 
                 {update.type === 'status_update' && (
@@ -134,20 +164,29 @@ export const DossierUpdatesSection = () => {
                 {update.type === 'deadline' && (
                   <div className="text-sm text-slate-600 mb-1">
                     <span className="font-medium">Deadline</span>
-                    {update.status && (
-                      <span className="ml-2 capitalize">• Status: {update.status}</span>
-                    )}
+                    <span className="ml-2">• Vervaldatum: {formatDeadlineDate(update.date)}</span>
                   </div>
                 )}
                 
                 {update.description && (
-                  <p className="text-sm text-slate-700">{update.description}</p>
+                  <p className="text-sm text-slate-700 mb-2">{update.description}</p>
+                )}
+
+                {update.type === 'deadline' && (
+                  <div className="mt-2">
+                    <EditDeadlineDialog deadline={update.deadline!}>
+                      <Button size="sm" variant="outline">
+                        <Edit className="h-3 w-3 mr-1" />
+                        Bewerken
+                      </Button>
+                    </EditDeadlineDialog>
+                  </div>
                 )}
               </div>
             </div>
             
             <div className="text-right text-sm text-slate-500">
-              {update.type === 'status_update' ? formatDate(update.date) : formatDeadlineDate(update.date)}
+              {update.type === 'status_update' ? formatDate(update.date) : `Vervalt ${formatDeadlineDate(update.date)}`}
             </div>
           </div>
         </div>
