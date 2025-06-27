@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -9,18 +10,21 @@ import { Switch } from '@/components/ui/switch';
 import { Plus, Clock, Settings } from 'lucide-react';
 import { UPDATE_TYPE_LABELS, PRIORITY_LABELS, CreateStatusUpdateData } from '@/types/dossierStatusUpdates';
 import { ManageUpdateTypesDialog } from './ManageUpdateTypesDialog';
+import { useCreateStatusUpdate } from '@/hooks/useDossierStatusUpdates';
+import { useToast } from '@/hooks/use-toast';
 
 interface AddStatusUpdateDialogProps {
   dossierId: string;
   clientName?: string;
-  onStatusUpdate: (data: CreateStatusUpdateData) => Promise<void>;
   children?: React.ReactNode;
 }
 
-export const AddStatusUpdateDialog = ({ dossierId, clientName, onStatusUpdate, children }: AddStatusUpdateDialogProps) => {
+export const AddStatusUpdateDialog = ({ dossierId, clientName, children }: AddStatusUpdateDialogProps) => {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [manageTypesOpen, setManageTypesOpen] = useState(false);
+  const { toast } = useToast();
+  const createStatusUpdate = useCreateStatusUpdate();
+
   const [formData, setFormData] = useState<CreateStatusUpdateData>({
     dossier_id: dossierId,
     update_type: 'general',
@@ -38,9 +42,8 @@ export const AddStatusUpdateDialog = ({ dossierId, clientName, onStatusUpdate, c
     e.preventDefault();
     if (!formData.status_title.trim()) return;
 
-    setLoading(true);
     try {
-      await onStatusUpdate(formData);
+      await createStatusUpdate.mutateAsync(formData);
       
       // Reset form
       setFormData({
@@ -57,10 +60,17 @@ export const AddStatusUpdateDialog = ({ dossierId, clientName, onStatusUpdate, c
       });
       
       setOpen(false);
+      toast({
+        title: "Status update toegevoegd",
+        description: "De status update is succesvol opgeslagen."
+      });
     } catch (error) {
       console.error('Error adding status update:', error);
-    } finally {
-      setLoading(false);
+      toast({
+        title: "Fout",
+        description: "Er is een fout opgetreden bij het opslaan van de status update.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -226,16 +236,16 @@ export const AddStatusUpdateDialog = ({ dossierId, clientName, onStatusUpdate, c
                 type="button" 
                 variant="outline" 
                 onClick={() => setOpen(false)}
-                disabled={loading}
+                disabled={createStatusUpdate.isPending}
               >
                 Annuleren
               </Button>
               <Button 
                 type="submit" 
-                disabled={loading || !formData.status_title.trim()}
+                disabled={createStatusUpdate.isPending || !formData.status_title.trim()}
                 className="bg-slate-800 hover:bg-slate-700"
               >
-                {loading ? 'Toevoegen...' : 'Status Update Toevoegen'}
+                {createStatusUpdate.isPending ? 'Toevoegen...' : 'Status Update Toevoegen'}
               </Button>
             </div>
           </form>

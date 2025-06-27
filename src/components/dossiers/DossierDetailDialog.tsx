@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Scale, Calendar, Building2, FileText, AlertCircle, Clock, Euro, User, Mail, Phone, ExternalLink, Plus, Download, Edit } from 'lucide-react';
 import { AddStatusUpdateDialog } from './AddStatusUpdateDialog';
 import { AddDeadlineDialog } from './AddDeadlineDialog';
-import { CreateStatusUpdateData } from '@/types/dossierStatusUpdates';
+import { useDossierStatusUpdates } from '@/hooks/useDossierStatusUpdates';
+import { useDossierDeadlines } from '@/hooks/useDossierDeadlines';
+import { UPDATE_TYPE_LABELS } from '@/types/dossierStatusUpdates';
 
 interface DossierDetailDialogProps {
   dossier: {
@@ -28,18 +31,8 @@ interface DossierDetailDialogProps {
 
 export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogProps) => {
   const [open, setOpen] = useState(false);
-
-  const handleStatusUpdate = async (data: CreateStatusUpdateData) => {
-    console.log('Status update added:', data);
-    // In a real app, this would call an API to save the status update
-    // For now, we'll just log it
-  };
-
-  const handleDeadlineAdd = async (data: any) => {
-    console.log('Deadline added:', data);
-    // In a real app, this would call an API to save the deadline
-    // For now, we'll just log it
-  };
+  const { statusUpdates, isLoading: statusLoading } = useDossierStatusUpdates(dossier.id);
+  const { deadlines, isLoading: deadlinesLoading } = useDossierDeadlines(dossier.id);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -81,6 +74,24 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
     }
   };
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('nl-NL', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('nl-NL', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   // Mock data - in real app this would come from API
   const mockDossierDetails = {
     hoursSpent: 14.5,
@@ -96,45 +107,12 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
     lastDocument: 'Leveringscontract biologisch meel (01-06-2025)',
     lastCall: '15 min gesprek - intake nieuwe leveringscontract',
     assignedUser: 'Marie van der Berg',
-    nextDeadline: '28 juni 2025 - Conceptovereenkomst opstellen',
     internalNotes: 'Cliënt wacht nog op aangepaste conceptovereenkomst',
     clientContact: {
       email: 'marie@dekorenbloem.nl',
       phone: '+31 6 12345678',
       address: 'Hoofdstraat 123, 1234 AB Amsterdam'
     },
-    recentActivities: [
-      {
-        date: 'Vandaag 14:23',
-        type: 'email',
-        description: 'E-mail ontvangen: Vraag over nieuw leveringscontract',
-        user: 'Marie van der Berg'
-      },
-      {
-        date: 'Gisteren 16:45',
-        type: 'document',
-        description: 'Contract opgesteld: Leveringscontract Biologisch Meel Q1-Q2 2025',
-        user: 'Marie van der Berg'
-      },
-      {
-        date: '1 week geleden',
-        type: 'phone',
-        description: 'Telefoongesprek: Intake gesprek nieuwe leveringscontract (15 min)',
-        user: 'Marie van der Berg'
-      }
-    ],
-    upcomingDeadlines: [
-      {
-        date: '28 juni 2025',
-        description: 'Conceptovereenkomst opstellen',
-        priority: 'high'
-      },
-      {
-        date: '5 juli 2025',
-        description: 'Definitieve overeenkomst verzenden',
-        priority: 'medium'
-      }
-    ],
     documents: [
       {
         id: '1',
@@ -179,6 +157,9 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
     ]
   };
 
+  const upcomingDeadlines = deadlines.filter(d => d.status === 'pending').slice(0, 3);
+  const nextDeadline = upcomingDeadlines[0];
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -218,7 +199,6 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
               <AddStatusUpdateDialog 
                 dossierId={dossier.id}
                 clientName={dossier.client_name || dossier.client?.name}
-                onStatusUpdate={handleStatusUpdate}
               >
                 <Button size="sm" variant="outline">
                   <Plus className="h-4 w-4 mr-2" />
@@ -228,7 +208,6 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
               <AddDeadlineDialog
                 dossierId={dossier.id}
                 clientName={dossier.client_name || dossier.client?.name}
-                onDeadlineAdd={handleDeadlineAdd}
               >
                 <Button size="sm" variant="outline">
                   <Plus className="h-4 w-4 mr-2" />
@@ -291,17 +270,25 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                       </div>
                     </div>
 
-                    <div className="bg-orange-50 rounded-lg p-4">
+                    <div className={`rounded-lg p-4 ${nextDeadline ? 'bg-orange-50' : 'bg-slate-50'}`}>
                       <div className="flex items-center gap-2 mb-2">
-                        <AlertCircle className="h-4 w-4 text-orange-600" />
-                        <span className="text-sm font-medium text-orange-700">Deadline</span>
+                        <AlertCircle className={`h-4 w-4 ${nextDeadline ? 'text-orange-600' : 'text-slate-600'}`} />
+                        <span className={`text-sm font-medium ${nextDeadline ? 'text-orange-700' : 'text-slate-700'}`}>Deadline</span>
                       </div>
-                      <div className="text-sm font-semibold text-orange-900">
-                        28 juni
-                      </div>
-                      <div className="text-xs text-orange-600">
-                        Conceptovereenkomst
-                      </div>
+                      {nextDeadline ? (
+                        <>
+                          <div className="text-sm font-semibold text-orange-900">
+                            {formatDate(nextDeadline.due_date)}
+                          </div>
+                          <div className="text-xs text-orange-600">
+                            {nextDeadline.title}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-sm text-slate-600">
+                          Geen deadlines
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -337,19 +324,25 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                       <Calendar className="h-5 w-5" />
                       Komende Deadlines
                     </h3>
-                    <div className="space-y-3">
-                      {mockDossierDetails.upcomingDeadlines.map((deadline, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                          <div>
-                            <p className="font-medium text-slate-900">{deadline.description}</p>
-                            <p className="text-sm text-slate-600">{deadline.date}</p>
+                    {deadlinesLoading ? (
+                      <div className="text-sm text-slate-600">Deadlines laden...</div>
+                    ) : upcomingDeadlines.length > 0 ? (
+                      <div className="space-y-3">
+                        {upcomingDeadlines.map((deadline) => (
+                          <div key={deadline.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                            <div>
+                              <p className="font-medium text-slate-900">{deadline.title}</p>
+                              <p className="text-sm text-slate-600">{formatDate(deadline.due_date)}</p>
+                            </div>
+                            <Badge variant="outline" className={getPriorityColor(deadline.priority)}>
+                              {getPriorityLabel(deadline.priority)}
+                            </Badge>
                           </div>
-                          <Badge variant="outline" className={getPriorityColor(deadline.priority)}>
-                            {getPriorityLabel(deadline.priority)}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-slate-600">Geen komende deadlines</div>
+                    )}
                   </div>
 
                   {/* Description */}
@@ -496,26 +489,45 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                 <TabsContent value="timeline" className="space-y-6 mt-0">
                   <div className="bg-slate-50 rounded-lg p-6">
                     <h3 className="text-lg font-semibold text-slate-900 mb-4">Recente Activiteiten</h3>
-                    <div className="space-y-4">
-                      {mockDossierDetails.recentActivities.map((activity, index) => (
-                        <div key={index} className="flex items-start gap-4 p-4 bg-white rounded-lg">
-                          <div className="bg-slate-100 p-2 rounded-lg">
-                            {activity.type === 'email' && <Mail className="h-4 w-4 text-blue-600" />}
-                            {activity.type === 'document' && <FileText className="h-4 w-4 text-green-600" />}
-                            {activity.type === 'phone' && <Phone className="h-4 w-4 text-purple-600" />}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="font-medium text-slate-900">{activity.description}</p>
-                                <p className="text-sm text-slate-600">Door: {activity.user}</p>
+                    {statusLoading ? (
+                      <div className="text-sm text-slate-600">Activiteiten laden...</div>
+                    ) : statusUpdates.length > 0 ? (
+                      <div className="space-y-4">
+                        {statusUpdates.map((update) => (
+                          <div key={update.id} className="flex items-start gap-4 p-4 bg-white rounded-lg">
+                            <div className="bg-slate-100 p-2 rounded-lg">
+                              <Clock className="h-4 w-4 text-blue-600" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-medium text-slate-900">{update.status_title}</p>
+                                  <p className="text-sm text-slate-600 mb-1">
+                                    Type: {UPDATE_TYPE_LABELS[update.update_type] || update.update_type}
+                                  </p>
+                                  {update.status_description && (
+                                    <p className="text-sm text-slate-700">{update.status_description}</p>
+                                  )}
+                                  {update.hours_spent > 0 && (
+                                    <p className="text-xs text-slate-500 mt-1">
+                                      {update.hours_spent}h besteed {update.is_billable ? '(factureerbaar)' : '(niet factureerbaar)'}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="text-right">
+                                  <span className="text-sm text-slate-500">{formatDateTime(update.created_at)}</span>
+                                  <Badge variant="outline" className={`ml-2 ${getPriorityColor(update.priority)}`}>
+                                    {getPriorityLabel(update.priority)}
+                                  </Badge>
+                                </div>
                               </div>
-                              <span className="text-sm text-slate-500">{activity.date}</span>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-slate-600">Geen activiteiten gevonden</div>
+                    )}
                   </div>
                 </TabsContent>
               </div>

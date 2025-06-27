@@ -476,6 +476,137 @@ export type Database = {
         }
         Relationships: []
       }
+      dossier_deadlines: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          dossier_id: string
+          due_date: string
+          id: string
+          organization_id: string
+          priority: string | null
+          status: string | null
+          title: string
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          dossier_id: string
+          due_date: string
+          id?: string
+          organization_id: string
+          priority?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          dossier_id?: string
+          due_date?: string
+          id?: string
+          organization_id?: string
+          priority?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dossier_deadlines_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dossier_status_updates: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          dossier_id: string
+          hours_spent: number | null
+          id: string
+          is_ai_generated: boolean | null
+          is_billable: boolean | null
+          notes: string | null
+          organization_id: string
+          priority: string | null
+          source_reference: string | null
+          source_type: string | null
+          status_description: string | null
+          status_title: string
+          update_type: string
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dossier_id: string
+          hours_spent?: number | null
+          id?: string
+          is_ai_generated?: boolean | null
+          is_billable?: boolean | null
+          notes?: string | null
+          organization_id: string
+          priority?: string | null
+          source_reference?: string | null
+          source_type?: string | null
+          status_description?: string | null
+          status_title: string
+          update_type?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dossier_id?: string
+          hours_spent?: number | null
+          id?: string
+          is_ai_generated?: boolean | null
+          is_billable?: boolean | null
+          notes?: string | null
+          organization_id?: string
+          priority?: string | null
+          source_reference?: string | null
+          source_type?: string | null
+          status_description?: string | null
+          status_title?: string
+          update_type?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dossier_status_updates_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dossier_status_updates_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dossiers: {
         Row: {
           category: string | null

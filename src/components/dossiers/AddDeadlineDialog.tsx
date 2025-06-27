@@ -7,18 +7,21 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar, Plus } from 'lucide-react';
+import { useCreateDeadline, CreateDeadlineData } from '@/hooks/useDossierDeadlines';
+import { useToast } from '@/hooks/use-toast';
 
 interface AddDeadlineDialogProps {
   dossierId: string;
   clientName?: string;
-  onDeadlineAdd: (data: any) => Promise<void>;
   children?: React.ReactNode;
 }
 
-export const AddDeadlineDialog = ({ dossierId, clientName, onDeadlineAdd, children }: AddDeadlineDialogProps) => {
+export const AddDeadlineDialog = ({ dossierId, clientName, children }: AddDeadlineDialogProps) => {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const { toast } = useToast();
+  const createDeadline = useCreateDeadline();
+
+  const [formData, setFormData] = useState<CreateDeadlineData>({
     dossier_id: dossierId,
     title: '',
     description: '',
@@ -30,9 +33,8 @@ export const AddDeadlineDialog = ({ dossierId, clientName, onDeadlineAdd, childr
     e.preventDefault();
     if (!formData.title.trim() || !formData.due_date) return;
 
-    setLoading(true);
     try {
-      await onDeadlineAdd(formData);
+      await createDeadline.mutateAsync(formData);
       
       // Reset form
       setFormData({
@@ -44,14 +46,21 @@ export const AddDeadlineDialog = ({ dossierId, clientName, onDeadlineAdd, childr
       });
       
       setOpen(false);
+      toast({
+        title: "Deadline toegevoegd",
+        description: "De deadline is succesvol opgeslagen."
+      });
     } catch (error) {
       console.error('Error adding deadline:', error);
-    } finally {
-      setLoading(false);
+      toast({
+        title: "Fout",
+        description: "Er is een fout opgetreden bij het opslaan van de deadline.",
+        variant: "destructive"
+      });
     }
   };
 
-  const updateFormData = (updates: any) => {
+  const updateFormData = (updates: Partial<CreateDeadlineData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
   };
 
@@ -113,7 +122,7 @@ export const AddDeadlineDialog = ({ dossierId, clientName, onDeadlineAdd, childr
             </Label>
             <Select 
               value={formData.priority} 
-              onValueChange={(value) => updateFormData({ priority: value })}
+              onValueChange={(value: any) => updateFormData({ priority: value })}
             >
               <SelectTrigger className="text-sm">
                 <SelectValue />
@@ -166,16 +175,16 @@ export const AddDeadlineDialog = ({ dossierId, clientName, onDeadlineAdd, childr
               type="button" 
               variant="outline" 
               onClick={() => setOpen(false)}
-              disabled={loading}
+              disabled={createDeadline.isPending}
             >
               Annuleren
             </Button>
             <Button 
               type="submit" 
-              disabled={loading || !formData.title.trim() || !formData.due_date}
+              disabled={createDeadline.isPending || !formData.title.trim() || !formData.due_date}
               className="bg-slate-800 hover:bg-slate-700"
             >
-              {loading ? 'Toevoegen...' : 'Deadline Toevoegen'}
+              {createDeadline.isPending ? 'Toevoegen...' : 'Deadline Toevoegen'}
             </Button>
           </div>
         </form>
