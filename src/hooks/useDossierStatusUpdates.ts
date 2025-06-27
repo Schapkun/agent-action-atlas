@@ -5,12 +5,12 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { CreateStatusUpdateData, DossierStatusUpdate } from '@/types/dossierStatusUpdates';
 
 export const useDossierStatusUpdates = (dossierId?: string) => {
-  const { currentOrganization } = useOrganization();
+  const { selectedOrganization } = useOrganization();
 
   const { data: statusUpdates = [], isLoading } = useQuery({
-    queryKey: ['dossier-status-updates', dossierId, currentOrganization?.id],
+    queryKey: ['dossier-status-updates', dossierId, selectedOrganization?.id],
     queryFn: async () => {
-      if (!currentOrganization?.id) return [];
+      if (!selectedOrganization?.id) return [];
       
       let query = supabase
         .from('dossier_status_updates')
@@ -18,7 +18,7 @@ export const useDossierStatusUpdates = (dossierId?: string) => {
           *,
           client:clients(name, contact_number)
         `)
-        .eq('organization_id', currentOrganization.id)
+        .eq('organization_id', selectedOrganization.id)
         .order('created_at', { ascending: false });
 
       if (dossierId) {
@@ -29,7 +29,7 @@ export const useDossierStatusUpdates = (dossierId?: string) => {
       if (error) throw error;
       return data as DossierStatusUpdate[];
     },
-    enabled: !!currentOrganization?.id,
+    enabled: !!selectedOrganization?.id,
   });
 
   return {
@@ -39,18 +39,18 @@ export const useDossierStatusUpdates = (dossierId?: string) => {
 };
 
 export const useCreateStatusUpdate = () => {
-  const { currentOrganization } = useOrganization();
+  const { selectedOrganization } = useOrganization();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: CreateStatusUpdateData) => {
-      if (!currentOrganization?.id) throw new Error('No organization selected');
+      if (!selectedOrganization?.id) throw new Error('No organization selected');
 
       const { data: result, error } = await supabase
         .from('dossier_status_updates')
         .insert([{
           ...data,
-          organization_id: currentOrganization.id,
+          organization_id: selectedOrganization.id,
         }])
         .select()
         .single();

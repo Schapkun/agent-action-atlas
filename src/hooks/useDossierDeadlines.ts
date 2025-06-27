@@ -27,17 +27,17 @@ export interface CreateDeadlineData {
 }
 
 export const useDossierDeadlines = (dossierId?: string) => {
-  const { currentOrganization } = useOrganization();
+  const { selectedOrganization } = useOrganization();
 
   const { data: deadlines = [], isLoading } = useQuery({
-    queryKey: ['dossier-deadlines', dossierId, currentOrganization?.id],
+    queryKey: ['dossier-deadlines', dossierId, selectedOrganization?.id],
     queryFn: async () => {
-      if (!currentOrganization?.id) return [];
+      if (!selectedOrganization?.id) return [];
       
       let query = supabase
         .from('dossier_deadlines')
         .select('*')
-        .eq('organization_id', currentOrganization.id)
+        .eq('organization_id', selectedOrganization.id)
         .order('due_date', { ascending: true });
 
       if (dossierId) {
@@ -48,7 +48,7 @@ export const useDossierDeadlines = (dossierId?: string) => {
       if (error) throw error;
       return data as DossierDeadline[];
     },
-    enabled: !!currentOrganization?.id,
+    enabled: !!selectedOrganization?.id,
   });
 
   return {
@@ -58,18 +58,18 @@ export const useDossierDeadlines = (dossierId?: string) => {
 };
 
 export const useCreateDeadline = () => {
-  const { currentOrganization } = useOrganization();
+  const { selectedOrganization } = useOrganization();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: CreateDeadlineData) => {
-      if (!currentOrganization?.id) throw new Error('No organization selected');
+      if (!selectedOrganization?.id) throw new Error('No organization selected');
 
       const { data: result, error } = await supabase
         .from('dossier_deadlines')
         .insert([{
           ...data,
-          organization_id: currentOrganization.id,
+          organization_id: selectedOrganization.id,
         }])
         .select()
         .single();
