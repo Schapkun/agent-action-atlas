@@ -26,15 +26,6 @@ export interface CreateDeadlineData {
   priority: 'low' | 'medium' | 'high' | 'urgent';
 }
 
-export interface UpdateDeadlineData {
-  id: string;
-  title: string;
-  description?: string;
-  due_date: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  status: 'pending' | 'completed' | 'overdue';
-}
-
 export const useDossierDeadlines = (dossierId?: string) => {
   const { selectedOrganization } = useOrganization();
 
@@ -85,47 +76,6 @@ export const useCreateDeadline = () => {
 
       if (error) throw error;
       return result;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dossier-deadlines'] });
-    },
-  });
-};
-
-export const useUpdateDeadline = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: UpdateDeadlineData) => {
-      const { id, ...updateData } = data;
-      
-      const { data: result, error } = await supabase
-        .from('dossier_deadlines')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return result;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dossier-deadlines'] });
-    },
-  });
-};
-
-export const useDeleteDeadline = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('dossier_deadlines')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dossier-deadlines'] });

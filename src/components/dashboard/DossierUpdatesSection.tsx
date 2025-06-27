@@ -1,12 +1,10 @@
 
 import React from 'react';
-import { Clock, Calendar, AlertCircle, Edit2, Trash2 } from 'lucide-react';
+import { Clock, Calendar, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { useDossierStatusUpdates } from '@/hooks/useDossierStatusUpdates';
 import { useDossierDeadlines } from '@/hooks/useDossierDeadlines';
 import { UPDATE_TYPE_LABELS } from '@/types/dossierStatusUpdates';
-import { EditDeadlineDialog } from '@/components/dossiers/EditDeadlineDialog';
 
 export const DossierUpdatesSection = () => {
   const { statusUpdates, isLoading: statusLoading } = useDossierStatusUpdates();
@@ -71,8 +69,7 @@ export const DossierUpdatesSection = () => {
       date: deadline.due_date,
       priority: deadline.priority,
       status: deadline.status,
-      dossier_id: deadline.dossier_id,
-      deadline: deadline // Pass full deadline object for editing
+      dossier_id: deadline.dossier_id
     }))
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -149,20 +146,8 @@ export const DossierUpdatesSection = () => {
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
-              <div className="text-right text-sm text-slate-500">
-                {update.type === 'status_update' ? formatDate(update.date) : formatDeadlineDate(update.date)}
-              </div>
-              
-              {update.type === 'deadline' && update.deadline && (
-                <div className="flex gap-1">
-                  <EditDeadlineDialog deadline={update.deadline}>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                  </EditDeadlineDialog>
-                </div>
-              )}
+            <div className="text-right text-sm text-slate-500">
+              {update.type === 'status_update' ? formatDate(update.date) : formatDeadlineDate(update.date)}
             </div>
           </div>
         </div>
