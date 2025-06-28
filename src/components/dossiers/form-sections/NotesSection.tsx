@@ -1,8 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { FileText, Edit } from 'lucide-react';
+import { SectionEditorDialog } from './SectionEditorDialog';
 
 interface NotesSectionProps {
   formData: {
@@ -12,13 +14,33 @@ interface NotesSectionProps {
 }
 
 export const NotesSection = ({ formData, updateFormData }: NotesSectionProps) => {
+  const [customFields, setCustomFields] = useState([
+    { id: 'intake_notes', name: 'Intake Notities', type: 'textarea' as const }
+  ]);
+
+  const handleFieldsUpdate = (fields: any[]) => {
+    setCustomFields(fields);
+  };
+
   return (
     <div className="bg-slate-50 rounded-lg p-6 border border-slate-200 shadow-sm">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-slate-800 rounded-lg p-2">
-          <FileText className="h-4 w-4 text-white" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="bg-slate-800 rounded-lg p-2">
+            <FileText className="h-4 w-4 text-white" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900">Notities</h3>
         </div>
-        <h3 className="text-lg font-semibold text-slate-900">Notities</h3>
+        
+        <SectionEditorDialog
+          sectionName="Notities"
+          fields={customFields}
+          onFieldsUpdate={handleFieldsUpdate}
+        >
+          <Button variant="outline" size="sm">
+            <Edit className="h-4 w-4" />
+          </Button>
+        </SectionEditorDialog>
       </div>
       
       <div>

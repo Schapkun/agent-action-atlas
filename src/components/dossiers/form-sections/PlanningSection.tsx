@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Calendar, Plus, Edit } from 'lucide-react';
 import { MultipleDeadlinesDialog } from './MultipleDeadlinesDialog';
+import { SectionEditorDialog } from './SectionEditorDialog';
 
 interface PlanningSectionProps {
   formData: {
@@ -18,10 +19,15 @@ interface PlanningSectionProps {
 }
 
 export const PlanningSection = ({ formData, updateFormData }: PlanningSectionProps) => {
+  const [customFields, setCustomFields] = useState([
+    { id: 'start_date', name: 'Startdatum', type: 'date' as const },
+    { id: 'end_date', name: 'Einddatum', type: 'date' as const },
+    { id: 'deadline_date', name: 'Deadline Datum', type: 'date' as const },
+    { id: 'deadline_description', name: 'Deadline Beschrijving', type: 'textarea' as const }
+  ]);
+
   const handleDeadlinesAdd = (deadlines: any[]) => {
     console.log('📅 Multiple deadlines added:', deadlines);
-    // For now, we'll just take the first deadline and use it in the form
-    // In a full implementation, these would be saved separately
     if (deadlines.length > 0) {
       const firstDeadline = deadlines[0];
       updateFormData({ 
@@ -31,13 +37,29 @@ export const PlanningSection = ({ formData, updateFormData }: PlanningSectionPro
     }
   };
 
+  const handleFieldsUpdate = (fields: any[]) => {
+    setCustomFields(fields);
+  };
+
   return (
     <div className="bg-slate-50 rounded-lg p-6 border border-slate-200 shadow-sm">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-slate-800 rounded-lg p-2">
-          <Calendar className="h-4 w-4 text-white" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="bg-slate-800 rounded-lg p-2">
+            <Calendar className="h-4 w-4 text-white" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900">Planning & Termijnen</h3>
         </div>
-        <h3 className="text-lg font-semibold text-slate-900">Planning & Termijnen</h3>
+        
+        <SectionEditorDialog
+          sectionName="Planning & Termijnen"
+          fields={customFields}
+          onFieldsUpdate={handleFieldsUpdate}
+        >
+          <Button variant="outline" size="sm">
+            <Edit className="h-4 w-4" />
+          </Button>
+        </SectionEditorDialog>
       </div>
       
       <div className="space-y-4">

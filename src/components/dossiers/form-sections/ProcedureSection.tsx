@@ -1,8 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Settings } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Settings, Edit } from 'lucide-react';
+import { SectionEditorDialog } from './SectionEditorDialog';
 
 interface ProcedureSectionProps {
   formData: {
@@ -12,13 +14,33 @@ interface ProcedureSectionProps {
 }
 
 export const ProcedureSection = ({ formData, updateFormData }: ProcedureSectionProps) => {
+  const [customFields, setCustomFields] = useState([
+    { id: 'procedure_type', name: 'Type Procedure', type: 'select' as const, options: ['dagvaarding', 'kort_geding', 'arbitrage', 'mediation', 'onderhandeling', 'advies', 'hoger_beroep', 'cassatie'] }
+  ]);
+
+  const handleFieldsUpdate = (fields: any[]) => {
+    setCustomFields(fields);
+  };
+
   return (
     <div className="bg-slate-50 rounded-lg p-6 border border-slate-200 shadow-sm">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-slate-800 rounded-lg p-2">
-          <Settings className="h-4 w-4 text-white" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="bg-slate-800 rounded-lg p-2">
+            <Settings className="h-4 w-4 text-white" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900">Procedure</h3>
         </div>
-        <h3 className="text-lg font-semibold text-slate-900">Procedure</h3>
+        
+        <SectionEditorDialog
+          sectionName="Procedure"
+          fields={customFields}
+          onFieldsUpdate={handleFieldsUpdate}
+        >
+          <Button variant="outline" size="sm">
+            <Edit className="h-4 w-4" />
+          </Button>
+        </SectionEditorDialog>
       </div>
       
       <div>

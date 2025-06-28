@@ -1,9 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Scale } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Scale, Edit } from 'lucide-react';
+import { SectionEditorDialog } from './SectionEditorDialog';
 
 interface LegalDetailsSectionProps {
   formData: {
@@ -17,13 +19,37 @@ interface LegalDetailsSectionProps {
 }
 
 export const LegalDetailsSection = ({ formData, updateFormData }: LegalDetailsSectionProps) => {
+  const [customFields, setCustomFields] = useState([
+    { id: 'case_type', name: 'Zaaktype', type: 'select' as const, options: ['civiel', 'straf', 'bestuurs', 'arbeids', 'familie', 'ondernemings', 'fiscaal', 'intellectueel'] },
+    { id: 'court_instance', name: 'Rechtbank/Instantie', type: 'text' as const },
+    { id: 'legal_status', name: 'Juridische Status', type: 'select' as const, options: ['intake', 'onderzoek', 'dagvaarding', 'verweer', 'comparitie', 'vonnis', 'hoger_beroep', 'executie', 'afgerond'] },
+    { id: 'estimated_hours', name: 'Geschatte Uren', type: 'number' as const },
+    { id: 'hourly_rate', name: 'Uurtarief', type: 'currency' as const }
+  ]);
+
+  const handleFieldsUpdate = (fields: any[]) => {
+    setCustomFields(fields);
+  };
+
   return (
     <div className="bg-slate-50 rounded-lg p-6 border border-slate-200 shadow-sm">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-slate-800 rounded-lg p-2">
-          <Scale className="h-4 w-4 text-white" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="bg-slate-800 rounded-lg p-2">
+            <Scale className="h-4 w-4 text-white" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900">Details</h3>
         </div>
-        <h3 className="text-lg font-semibold text-slate-900">Details</h3>
+        
+        <SectionEditorDialog
+          sectionName="Details"
+          fields={customFields}
+          onFieldsUpdate={handleFieldsUpdate}
+        >
+          <Button variant="outline" size="sm">
+            <Edit className="h-4 w-4" />
+          </Button>
+        </SectionEditorDialog>
       </div>
       
       <div className="space-y-4">

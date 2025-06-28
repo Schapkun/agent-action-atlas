@@ -1,10 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { FileText, Hash } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { FileText, Edit } from 'lucide-react';
+import { SectionEditorDialog } from './SectionEditorDialog';
 
 interface BasicInfoSectionProps {
   formData: {
@@ -17,13 +19,36 @@ interface BasicInfoSectionProps {
 }
 
 export const BasicInfoSection = ({ formData, updateFormData }: BasicInfoSectionProps) => {
+  const [customFields, setCustomFields] = useState([
+    { id: 'name', name: 'Dossiernaam', type: 'text' as const, required: true },
+    { id: 'description', name: 'Beschrijving', type: 'textarea' as const },
+    { id: 'category', name: 'Categorie', type: 'select' as const, options: ['algemeen', 'familierecht', 'arbeidsrecht', 'strafrecht', 'ondernemingsrecht'] },
+    { id: 'priority', name: 'Prioriteit', type: 'select' as const, options: ['low', 'medium', 'high', 'urgent'] }
+  ]);
+
+  const handleFieldsUpdate = (fields: any[]) => {
+    setCustomFields(fields);
+  };
+
   return (
     <div className="bg-slate-50 rounded-lg p-6 border border-slate-200 shadow-sm">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-slate-800 rounded-lg p-2">
-          <FileText className="h-4 w-4 text-white" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="bg-slate-800 rounded-lg p-2">
+            <FileText className="h-4 w-4 text-white" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900">Basisinformatie</h3>
         </div>
-        <h3 className="text-lg font-semibold text-slate-900">Basisinformatie</h3>
+        
+        <SectionEditorDialog
+          sectionName="Basisinformatie"
+          fields={customFields}
+          onFieldsUpdate={handleFieldsUpdate}
+        >
+          <Button variant="outline" size="sm">
+            <Edit className="h-4 w-4" />
+          </Button>
+        </SectionEditorDialog>
       </div>
       
       <div className="space-y-4">
