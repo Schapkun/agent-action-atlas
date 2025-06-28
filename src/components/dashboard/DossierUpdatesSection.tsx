@@ -142,7 +142,8 @@ export const DossierUpdatesSection = ({ dossierId }: DossierUpdatesSectionProps)
       title: doc.name,
       description: `${doc.type} • ${doc.size}`,
       date: doc.uploadDate,
-      uploadedBy: doc.uploadedBy
+      uploadedBy: doc.uploadedBy,
+      priority: 'medium' as const // Add default priority for documents
     }))
   ].sort((a, b) => {
     const dateA = a.type === 'deadline' ? new Date(a.createdDate || a.date) : new Date(a.date);
@@ -191,21 +192,21 @@ export const DossierUpdatesSection = ({ dossierId }: DossierUpdatesSectionProps)
                   <Badge variant="outline" className={getPriorityColor(update.priority)}>
                     {getPriorityLabel(update.priority)}
                   </Badge>
-                  {update.type === 'deadline' && (
+                  {update.type === 'deadline' && 'status' in update && (
                     <Badge variant="outline" className={getStatusColor(update.status!)}>
                       {getStatusLabel(update.status!)}
                     </Badge>
                   )}
                 </div>
                 
-                {update.type === 'status_update' && (
+                {update.type === 'status_update' && 'update_type' in update && (
                   <div className="text-sm text-slate-600 mb-1">
                     <span className="font-medium">
                       {UPDATE_TYPE_LABELS[update.update_type as keyof typeof UPDATE_TYPE_LABELS] || update.update_type}
                     </span>
-                    {update.hours_spent > 0 && (
+                    {'hours_spent' in update && update.hours_spent > 0 && (
                       <span className="ml-2">
-                        • {update.hours_spent}h {update.is_billable ? '(factureerbaar)' : '(niet factureerbaar)'}
+                        • {update.hours_spent}h {'is_billable' in update && update.is_billable ? '(factureerbaar)' : '(niet factureerbaar)'}
                       </span>
                     )}
                   </div>
@@ -217,7 +218,7 @@ export const DossierUpdatesSection = ({ dossierId }: DossierUpdatesSectionProps)
                   </div>
                 )}
 
-                {update.type === 'document' && update.uploadedBy && (
+                {update.type === 'document' && 'uploadedBy' in update && update.uploadedBy && (
                   <div className="text-sm text-slate-600 mb-1">
                     <span className="font-medium">Document geüpload door {update.uploadedBy}</span>
                   </div>
@@ -234,7 +235,7 @@ export const DossierUpdatesSection = ({ dossierId }: DossierUpdatesSectionProps)
                     </Button>
                   )}
                   
-                  {update.type === 'deadline' && (
+                  {update.type === 'deadline' && 'deadline' in update && (
                     <EditDeadlineDialog deadline={update.deadline!} />
                   )}
 
@@ -249,7 +250,7 @@ export const DossierUpdatesSection = ({ dossierId }: DossierUpdatesSectionProps)
             
             <div className="text-right text-sm">
               <div className="text-slate-500">
-                {update.type === 'deadline' ? formatDate(update.createdDate || update.date) : (
+                {update.type === 'deadline' && 'createdDate' in update ? formatDate(update.createdDate || update.date) : (
                   update.type === 'document' ? update.date : formatDate(update.date)
                 )}
               </div>
