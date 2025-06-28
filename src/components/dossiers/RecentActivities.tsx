@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -92,65 +93,65 @@ export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesP
 
   if (isLoading) {
     return (
-      <div className="bg-slate-50 rounded-lg p-2">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="text-sm font-semibold text-slate-900">Recente activiteiten</h3>
+      <div className="bg-slate-50 rounded-lg p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-slate-900">Recente activiteiten</h3>
         </div>
-        <div className="text-sm text-slate-600">Activiteiten laden...</div>
+        <div className="text-slate-600">Activiteiten laden...</div>
       </div>
     );
   }
 
   if (sortedActivities.length === 0) {
     return (
-      <div className="bg-slate-50 rounded-lg p-2">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="text-sm font-semibold text-slate-900">Recente activiteiten</h3>
+      <div className="bg-slate-50 rounded-lg p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-slate-900">Recente activiteiten</h3>
         </div>
-        <div className="text-sm text-slate-600">Geen activiteiten gevonden</div>
+        <div className="text-slate-600">Geen activiteiten gevonden</div>
       </div>
     );
   }
 
   return (
-    <div className="bg-slate-50 rounded-lg p-2">
-      <div className="flex items-center justify-between mb-1">
-        <h3 className="text-sm font-semibold text-slate-900">Recente activiteiten</h3>
+    <div className="bg-slate-50 rounded-lg p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-semibold text-slate-900">Recente activiteiten</h3>
       </div>
-      <div className="space-y-1">
+      <div className="space-y-2">
         {sortedActivities.slice(0, 10).map((activity) => (
-          <div key={`activity-${activity.id}`} className="flex items-start justify-between p-1.5 bg-white rounded-lg">
-            <div className="flex items-start gap-2 flex-1 min-w-0">
-              <div className="bg-slate-100 p-1 rounded-lg flex-shrink-0">
-                <Clock className="h-3 w-3 text-blue-600" />
+          <div key={`activity-${activity.id}`} className="flex items-start justify-between p-3 bg-white rounded-lg">
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              <div className="bg-slate-100 p-2 rounded-lg flex-shrink-0">
+                <Clock className="h-4 w-4 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
                 {editingActivity === activity.id ? (
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <Input
                       value={editData.title}
                       onChange={(e) => setEditData({...editData, title: e.target.value})}
-                      className="text-sm h-6 font-medium"
+                      className="h-8 font-medium"
                       placeholder="Titel"
                     />
                     <Textarea
                       value={editData.description}
                       onChange={(e) => setEditData({...editData, description: e.target.value})}
-                      className="text-sm min-h-[40px] resize-none"
+                      className="min-h-[60px] resize-none"
                       placeholder="Beschrijving"
                     />
                   </div>
                 ) : (
                   <>
-                    <p className="text-sm font-medium text-slate-900 truncate">{activity.status_title}</p>
-                    <p className="text-sm text-slate-600 mb-0.5">
+                    <p className="font-medium text-slate-900 truncate">{activity.status_title}</p>
+                    <p className="text-slate-600 mb-1">
                       Type: {UPDATE_TYPE_LABELS[activity.update_type] || activity.update_type}
                     </p>
                     {activity.status_description && (
-                      <p className="text-sm text-slate-700 line-clamp-2">{activity.status_description}</p>
+                      <p className="text-slate-700 line-clamp-2">{activity.status_description}</p>
                     )}
                     {activity.hours_spent > 0 && (
-                      <p className="text-sm text-slate-500 mt-0.5">
+                      <p className="text-slate-500 mt-1">
                         {activity.hours_spent}h besteed {activity.is_billable ? '(factureerbaar)' : '(niet factureerbaar)'}
                       </p>
                     )}
@@ -160,30 +161,30 @@ export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesP
             </div>
             <div className="flex items-start gap-6 flex-shrink-0 ml-4">
               <div className="text-right">
-                <span className="text-sm text-slate-500 block">
+                <span className="text-slate-500 block">
                   {formatDateTime(activity.created_at)}
                 </span>
-                <Badge variant="outline" className={`text-sm mt-0.5 ${getPriorityColor(activity.priority)}`}>
+                <Badge variant="outline" className={`mt-1 ${getPriorityColor(activity.priority)}`}>
                   {getPriorityLabel(activity.priority)}
                 </Badge>
               </div>
               <div className="flex gap-1">
                 {editingActivity === activity.id ? (
                   <>
-                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-green-600 hover:text-green-700" onClick={() => handleSaveActivity(activity.id)}>
-                      <Save className="h-3 w-3" />
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-green-600 hover:text-green-700" onClick={() => handleSaveActivity(activity.id)}>
+                      <Save className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-red-600" onClick={handleCancelEdit}>
-                      <X className="h-3 w-3" />
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-600 hover:text-red-600" onClick={handleCancelEdit}>
+                      <X className="h-4 w-4" />
                     </Button>
                   </>
                 ) : (
                   <>
-                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-blue-600" onClick={() => handleEditActivity(activity)}>
-                      <Edit className="h-3 w-3" />
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-600 hover:text-blue-600" onClick={() => handleEditActivity(activity)}>
+                      <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-red-600" onClick={() => handleDeleteActivity(activity.id)}>
-                      <Trash2 className="h-3 w-3" />
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-600 hover:text-red-600" onClick={() => handleDeleteActivity(activity.id)}>
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </>
                 )}
