@@ -1,10 +1,10 @@
 
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OrganizationSettings } from './OrganizationSettings';
 import { EmailSettings } from './EmailSettings';
 import { WorkspaceSettings } from './WorkspaceSettings';
-import { InvoiceSettings } from './InvoiceSettings';
 import { DocumentSettings } from './DocumentSettings';
 import { HistoryLogs } from './HistoryLogs';
 import { AIInstructionsSettings } from './AIInstructionsSettings';
@@ -84,20 +84,7 @@ export const SettingsLayout = () => {
         </TabsContent>
         
         <TabsContent value="documents">
-          <Tabs defaultValue="documents" className="w-full space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="documents">Documenten</TabsTrigger>
-              <TabsTrigger value="invoicing">Facturatie</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="documents">
-              <DocumentSettings />
-            </TabsContent>
-            
-            <TabsContent value="invoicing">
-              <InvoiceSettings />
-            </TabsContent>
-          </Tabs>
+          <DocumentSettings />
         </TabsContent>
         
         <TabsContent value="ai">
@@ -111,3 +98,4 @@ export const SettingsLayout = () => {
     </div>
   );
 };
+

@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Loader2 } from 'lucide-react';
@@ -12,6 +11,7 @@ import { DocumentTemplateWithTags } from '@/types/documentTags';
 import { TemplateLibraryNew } from './components/TemplateLibraryNew';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { DocumentTypeSettings } from './DocumentTypeSettings';
+import { InvoiceSettings } from './InvoiceSettings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const DocumentSettingsContent = () => {
@@ -128,9 +128,10 @@ const DocumentSettingsContent = () => {
     <DocumentProvider>
       <div className="space-y-6">
         <Tabs defaultValue="document-templates" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="document-templates">Document Templates</TabsTrigger>
             <TabsTrigger value="document-types">Document Types</TabsTrigger>
+            <TabsTrigger value="facturatie">Facturatie</TabsTrigger>
           </TabsList>
 
           <TabsContent value="document-templates" className="space-y-6">
@@ -158,6 +159,10 @@ const DocumentSettingsContent = () => {
 
           <TabsContent value="document-types" className="space-y-6">
             <DocumentTypeSettings />
+          </TabsContent>
+
+          <TabsContent value="facturatie" className="space-y-6">
+            <InvoiceSettings />
           </TabsContent>
         </Tabs>
 
