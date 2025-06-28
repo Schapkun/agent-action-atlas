@@ -20,15 +20,17 @@ interface UserProfile {
 
 interface UserListProps {
   users: UserProfile[];
-  currentUserEmail: string | undefined;
-  onEdit: (userProfile: UserProfile) => void;
-  onDelete: (userId: string, userEmail: string) => void;
-  onShowMyAccount: (userProfile: UserProfile) => void;
-  onResendInvitation: (userProfile: UserProfile) => void;
+  userRole?: string;
+  currentUserEmail?: string;
+  onEdit?: (userProfile: UserProfile) => void;
+  onDelete?: (userId: string, userEmail: string) => void;
+  onShowMyAccount?: (userProfile: UserProfile) => void;
+  onResendInvitation?: (userProfile: UserProfile) => void;
 }
 
 export const UserList = ({
   users,
+  userRole,
   currentUserEmail,
   onEdit,
   onDelete,

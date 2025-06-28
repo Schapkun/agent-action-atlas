@@ -48,7 +48,7 @@ export const SettingsLayout = () => {
       </div>
       
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-9">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="general">Algemeen</TabsTrigger>
           <TabsTrigger value="organization">Organisatie & Werkruimtes</TabsTrigger>
           <TabsTrigger value="users">Gebruikers</TabsTrigger>
@@ -74,7 +74,7 @@ export const SettingsLayout = () => {
               onUsersUpdate={handleUsersUpdate}
               onUserRoleUpdate={handleUserRoleUpdate}
             />
-            <UserList users={users} userRole={userRole} />
+            <UserList users={users} />
           </div>
         </TabsContent>
         
