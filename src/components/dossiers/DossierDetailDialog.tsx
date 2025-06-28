@@ -11,6 +11,7 @@ import { useDossierStatusUpdates } from '@/hooks/useDossierStatusUpdates';
 import { useDossierDeadlines } from '@/hooks/useDossierDeadlines';
 import { useOrganizationSettings } from '@/hooks/useOrganizationSettings';
 import { UPDATE_TYPE_LABELS } from '@/types/dossierStatusUpdates';
+import { useToast } from '@/hooks/use-toast';
 
 interface DossierDetailDialogProps {
   dossier: {
@@ -35,6 +36,36 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
   const { statusUpdates, isLoading: statusLoading } = useDossierStatusUpdates(dossier.id);
   const { deadlines, isLoading: deadlinesLoading } = useDossierDeadlines(dossier.id);
   const { settings } = useOrganizationSettings();
+  const { toast } = useToast();
+
+  const handleEditClient = () => {
+    toast({
+      title: "Client bewerken",
+      description: "Client bewerk functionaliteit wordt binnenkort toegevoegd.",
+    });
+  };
+
+  const handleEditNotes = () => {
+    toast({
+      title: "Notities bewerken",
+      description: "Notities bewerk functionaliteit wordt binnenkort toegevoegd.",
+    });
+  };
+
+  const handleEditActivity = (activityId: string) => {
+    toast({
+      title: "Activiteit bewerken",
+      description: "Activiteit bewerk functionaliteit wordt binnenkort toegevoegd.",
+    });
+  };
+
+  const handleDeleteActivity = (activityId: string) => {
+    toast({
+      title: "Activiteit verwijderen",
+      description: "Activiteit verwijder functionaliteit wordt binnenkort toegevoegd.",
+      variant: "destructive"
+    });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -188,45 +219,32 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
   const upcomingDeadlines = deadlines.filter(d => d.status === 'pending').slice(0, 3);
   const nextDeadline = upcomingDeadlines[0];
 
-  // Combine all activities for "Recente activiteiten" section
-  const allActivities = [
-    ...statusUpdates.map(update => ({
-      id: update.id,
-      type: 'status_update' as const,
-      title: update.status_title,
-      description: update.status_description,
-      date: update.created_at,
-      priority: update.priority,
-      update_type: update.update_type,
-      hours_spent: update.hours_spent,
-      is_billable: update.is_billable,
-      dossier_id: update.dossier_id
-    })),
-    ...deadlines.map(deadline => ({
-      id: deadline.id,
-      type: 'deadline' as const,
-      title: deadline.title,
-      description: deadline.description,
-      date: deadline.due_date,
-      createdDate: deadline.created_at,
-      priority: deadline.priority,
-      status: deadline.status,
-      dossier_id: deadline.dossier_id,
-      deadline: deadline
-    })),
-    ...mockDossierDetails.documents.map(doc => ({
-      id: doc.id,
-      type: 'document' as const,
-      title: doc.name,
-      description: `${doc.type} • ${doc.size}`,
-      date: doc.uploadDate,
-      uploadedBy: doc.uploadedBy
-    }))
-  ].sort((a, b) => {
-    const dateA = a.type === 'deadline' ? new Date(a.createdDate || a.date) : new Date(a.date);
-    const dateB = b.type === 'deadline' ? new Date(b.createdDate || b.date) : new Date(b.date);
-    return dateB.getTime() - dateA.getTime();
-  });
+  // Separate activities by type
+  const recentActivities = statusUpdates.map(update => ({
+    id: update.id,
+    type: 'status_update' as const,
+    title: update.status_title,
+    description: update.status_description,
+    date: update.created_at,
+    priority: update.priority,
+    update_type: update.update_type,
+    hours_spent: update.hours_spent,
+    is_billable: update.is_billable,
+    dossier_id: update.dossier_id
+  })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const recentDeadlines = deadlines.map(deadline => ({
+    id: deadline.id,
+    type: 'deadline' as const,
+    title: deadline.title,
+    description: deadline.description,
+    date: deadline.due_date,
+    createdDate: deadline.created_at,
+    priority: deadline.priority,
+    status: deadline.status,
+    dossier_id: deadline.dossier_id,
+    deadline: deadline
+  })).sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -343,7 +361,7 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                   {nextDeadline ? (
                     <>
                       <div className={`text-xs font-semibold ${getDeadlineColor(nextDeadline.due_date)}`}>
-                        {formatDate(nextDeadline.due_date)}
+                        {formatDeadlineDateTime(nextDeadline.due_date)}
                       </div>
                       <div className="text-xs text-orange-600">
                         {nextDeadline.title}
@@ -364,7 +382,7 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                     <Building2 className="h-4 w-4" />
                     Client Informatie
                   </h3>
-                  <Button variant="ghost" size="sm" className="text-slate-600 hover:text-blue-600 h-6 w-6 p-0">
+                  <Button variant="ghost" size="sm" className="text-slate-600 hover:text-blue-600 h-6 w-6 p-0" onClick={handleEditClient}>
                     <Edit className="h-3 w-3" />
                   </Button>
                 </div>
@@ -392,14 +410,9 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
               <div className="bg-slate-50 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-semibold text-slate-900">Interne Notities</h3>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-blue-600">
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-red-600">
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
+                  <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-blue-600" onClick={handleEditNotes}>
+                    <Edit className="h-3 w-3" />
+                  </Button>
                 </div>
                 <p className="text-xs text-slate-700">{mockDossierDetails.internalNotes}</p>
               </div>
@@ -411,14 +424,6 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                     <Calendar className="h-4 w-4" />
                     Komende Deadlines
                   </h3>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-blue-600">
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-red-600">
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
                 </div>
                 {deadlinesLoading ? (
                   <div className="text-xs text-slate-600">Deadlines laden...</div>
@@ -427,10 +432,10 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                     {upcomingDeadlines.map((deadline) => (
                       <div key={deadline.id} className="flex items-center justify-between p-2 bg-white rounded-lg border">
                         <div>
-                          <p className="text-xs font-medium text-slate-900">{deadline.title}</p>
                           <p className={`text-xs font-medium ${getDeadlineColor(deadline.due_date)}`}>
                             {formatDeadlineDateTime(deadline.due_date)}
                           </p>
+                          <p className="text-xs font-medium text-slate-900">{deadline.title}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className={`text-xs ${getPriorityColor(deadline.priority)}`}>
@@ -446,40 +451,79 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                 )}
               </div>
 
+              {/* Deadlines Section */}
+              <div className="bg-slate-50 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Deadlines
+                  </h3>
+                </div>
+                {deadlinesLoading ? (
+                  <div className="text-xs text-slate-600">Deadlines laden...</div>
+                ) : recentDeadlines.length > 0 ? (
+                  <div className="space-y-2">
+                    {recentDeadlines.slice(0, 5).map((deadline) => (
+                      <div key={`deadline-${deadline.id}`} className="flex items-start justify-between p-2 bg-white rounded-lg">
+                        <div className="flex items-start gap-2 flex-1">
+                          <div className="bg-slate-100 p-1 rounded-lg flex-shrink-0">
+                            <Calendar className="h-3 w-3 text-green-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-xs font-medium ${getDeadlineColor(deadline.date)}`}>
+                              {formatDeadlineDateTime(deadline.date)}
+                            </p>
+                            <p className="text-xs font-medium text-slate-900 truncate">{deadline.title}</p>
+                            {deadline.description && (
+                              <p className="text-xs text-slate-700 line-clamp-2">{deadline.description}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2 flex-shrink-0 ml-2">
+                          <div className="text-right">
+                            <span className="text-xs text-slate-500 block">
+                              {formatDateTime(deadline.createdDate)}
+                            </span>
+                            <Badge variant="outline" className={`text-xs mt-1 ${getPriorityColor(deadline.priority)}`}>
+                              {getPriorityLabel(deadline.priority)}
+                            </Badge>
+                          </div>
+                          <div className="flex gap-1">
+                            <EditDeadlineDialog deadline={deadline.deadline} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-600">Geen deadlines gevonden</div>
+                )}
+              </div>
+
               {/* Recente activiteiten */}
               <div className="bg-slate-50 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-semibold text-slate-900">Recente activiteiten</h3>
                 </div>
-                {statusLoading || deadlinesLoading ? (
+                {statusLoading ? (
                   <div className="text-xs text-slate-600">Activiteiten laden...</div>
-                ) : allActivities.length > 0 ? (
+                ) : recentActivities.length > 0 ? (
                   <div className="space-y-2">
-                    {allActivities.slice(0, 10).map((activity) => (
-                      <div key={`${activity.type}-${activity.id}`} className="flex items-start justify-between p-2 bg-white rounded-lg">
+                    {recentActivities.slice(0, 10).map((activity) => (
+                      <div key={`activity-${activity.id}`} className="flex items-start justify-between p-2 bg-white rounded-lg">
                         <div className="flex items-start gap-2 flex-1">
                           <div className="bg-slate-100 p-1 rounded-lg flex-shrink-0">
-                            {activity.type === 'status_update' && <Clock className="h-3 w-3 text-blue-600" />}
-                            {activity.type === 'deadline' && <Calendar className="h-3 w-3 text-green-600" />}
-                            {activity.type === 'document' && <FileText className="h-3 w-3 text-purple-600" />}
+                            <Clock className="h-3 w-3 text-blue-600" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-medium text-slate-900 truncate">{activity.title}</p>
-                            {activity.type === 'status_update' && (
-                              <p className="text-xs text-slate-600 mb-1">
-                                Type: {UPDATE_TYPE_LABELS[activity.update_type] || activity.update_type}
-                              </p>
-                            )}
-                            {activity.type === 'deadline' && (
-                              <p className="text-xs text-slate-600 mb-1">Deadline</p>
-                            )}
-                            {activity.type === 'document' && activity.uploadedBy && (
-                              <p className="text-xs text-slate-600 mb-1">Geüpload door {activity.uploadedBy}</p>
-                            )}
+                            <p className="text-xs text-slate-600 mb-1">
+                              Type: {UPDATE_TYPE_LABELS[activity.update_type] || activity.update_type}
+                            </p>
                             {activity.description && (
                               <p className="text-xs text-slate-700 line-clamp-2">{activity.description}</p>
                             )}
-                            {activity.type === 'status_update' && activity.hours_spent > 0 && (
+                            {activity.hours_spent > 0 && (
                               <p className="text-xs text-slate-500 mt-1">
                                 {activity.hours_spent}h besteed {activity.is_billable ? '(factureerbaar)' : '(niet factureerbaar)'}
                               </p>
@@ -489,27 +533,17 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                         <div className="flex items-start gap-2 flex-shrink-0 ml-2">
                           <div className="text-right">
                             <span className="text-xs text-slate-500 block">
-                              {activity.type === 'deadline' ? 
-                                formatDateTime(activity.createdDate || activity.date) : 
-                                (activity.type === 'document' ? activity.date : formatDateTime(activity.date))
-                              }
+                              {formatDateTime(activity.date)}
                             </span>
-                            {activity.type === 'deadline' && (
-                              <div className={`text-xs font-medium ${getDeadlineColor(activity.date)}`}>
-                                Vervalt: {formatDeadlineDateTime(activity.date)}
-                              </div>
-                            )}
-                            {(activity.type === 'status_update' || activity.type === 'deadline') && (
-                              <Badge variant="outline" className={`text-xs mt-1 ${getPriorityColor(activity.priority)}`}>
-                                {getPriorityLabel(activity.priority)}
-                              </Badge>
-                            )}
+                            <Badge variant="outline" className={`text-xs mt-1 ${getPriorityColor(activity.priority)}`}>
+                              {getPriorityLabel(activity.priority)}
+                            </Badge>
                           </div>
                           <div className="flex gap-1">
-                            <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-blue-600">
+                            <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-blue-600" onClick={() => handleEditActivity(activity.id)}>
                               <Edit className="h-3 w-3" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-red-600">
+                            <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-red-600" onClick={() => handleDeleteActivity(activity.id)}>
                               <Trash2 className="h-3 w-3" />
                             </Button>
                           </div>
