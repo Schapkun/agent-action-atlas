@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -285,380 +284,377 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
           </div>
         </DialogHeader>
         
-        <div className="flex-1 overflow-hidden mt-3">
-          <div className="h-full flex flex-col">
-            <Tabs defaultValue="overview" className="flex-1 flex flex-col">
-              {/* Tab Navigation */}
-              <TabsList className="grid w-full grid-cols-3 mb-3 flex-shrink-0">
-                <TabsTrigger value="overview" className="text-xs">Overzicht</TabsTrigger>
-                <TabsTrigger value="financial" className="text-xs">Financieel & Documenten</TabsTrigger>
-                <TabsTrigger value="communication" className="text-xs">Communicatie</TabsTrigger>
-              </TabsList>
+        <Tabs defaultValue="overview" className="flex-1 flex flex-col overflow-hidden">
+          {/* Tab Navigation */}
+          <TabsList className="grid w-full grid-cols-3 mb-3 flex-shrink-0">
+            <TabsTrigger value="overview" className="text-xs">Overzicht</TabsTrigger>
+            <TabsTrigger value="financial" className="text-xs">Financieel & Documenten</TabsTrigger>
+            <TabsTrigger value="communication" className="text-xs">Communicatie</TabsTrigger>
+          </TabsList>
 
-              <div className="flex-1 overflow-y-auto">
-                
-                <TabsContent value="overview" className="space-y-4 mt-0">
-                  {/* Key Metrics Grid */}
-                  <div className="grid grid-cols-4 gap-3">
-                    <div className="bg-slate-50 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Clock className="h-3 w-3 text-slate-600" />
-                        <span className="text-xs font-medium text-slate-700">Uren</span>
-                      </div>
-                      <div className="text-sm font-semibold text-slate-900">
-                        {mockDossierDetails.hoursSpent}h
-                      </div>
-                      <div className="text-xs text-slate-600">
-                        Nog {mockDossierDetails.hoursAvailable}h beschikbaar
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-50 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Euro className="h-3 w-3 text-slate-600" />
-                        <span className="text-xs font-medium text-slate-700">Waarde</span>
-                      </div>
-                      <div className="text-sm font-semibold text-slate-900">
-                        €{mockDossierDetails.totalValue.toLocaleString()}
-                      </div>
-                      <div className="text-xs text-slate-600">
-                        €{mockDossierDetails.hourlyRate}/uur
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-50 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <User className="h-3 w-3 text-slate-600" />
-                        <span className="text-xs font-medium text-slate-700">Toegewezen</span>
-                      </div>
-                      <div className="text-xs font-semibold text-slate-900">
-                        {mockDossierDetails.assignedUser}
-                      </div>
-                      <div className="text-xs text-slate-600">
-                        Verantwoordelijk
-                      </div>
-                    </div>
-
-                    <div className={`rounded-lg p-3 ${nextDeadline ? 'bg-orange-50' : 'bg-slate-50'}`}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <AlertCircle className={`h-3 w-3 ${nextDeadline ? 'text-orange-600' : 'text-slate-600'}`} />
-                        <span className={`text-xs font-medium ${nextDeadline ? 'text-orange-700' : 'text-slate-700'}`}>Deadline</span>
-                      </div>
-                      {nextDeadline ? (
-                        <>
-                          <div className={`text-xs font-semibold ${getDeadlineColor(nextDeadline.due_date)}`}>
-                            {formatDate(nextDeadline.due_date)}
-                          </div>
-                          <div className="text-xs text-orange-600">
-                            {nextDeadline.title}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-xs text-slate-600">
-                          Geen deadlines
-                        </div>
-                      )}
-                    </div>
+          <div className="flex-1 overflow-y-auto">
+            <TabsContent value="overview" className="space-y-3 mt-0 h-full">
+              {/* Key Metrics Grid */}
+              <div className="grid grid-cols-4 gap-3">
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock className="h-3 w-3 text-slate-600" />
+                    <span className="text-xs font-medium text-slate-700">Uren</span>
                   </div>
-
-                  {/* Client Information */}
-                  <div className="bg-slate-50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                        <Building2 className="h-4 w-4" />
-                        Client Informatie
-                      </h3>
-                      <Button variant="ghost" size="sm" className="text-slate-600 hover:text-blue-600 h-6 w-6 p-0">
-                        <Edit className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs font-medium text-slate-700 mb-1">Naam</p>
-                        <p className="text-xs text-slate-900">{mockDossierDetails.clientContact.name}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-slate-700 mb-1">Telefoon</p>
-                        <p className="text-xs text-slate-900">{mockDossierDetails.clientContact.phone}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-slate-700 mb-1">Adres</p>
-                        <p className="text-xs text-slate-900">{mockDossierDetails.clientContact.address}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-slate-700 mb-1">E-mail</p>
-                        <p className="text-xs text-slate-900">{mockDossierDetails.clientContact.email}</p>
-                      </div>
-                    </div>
+                  <div className="text-sm font-semibold text-slate-900">
+                    {mockDossierDetails.hoursSpent}h
                   </div>
-
-                  {/* Internal Notes */}
-                  <div className="bg-slate-50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-semibold text-slate-900">Interne Notities</h3>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-blue-600">
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-red-600">
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    <p className="text-xs text-slate-700">{mockDossierDetails.internalNotes}</p>
+                  <div className="text-xs text-slate-600">
+                    Nog {mockDossierDetails.hoursAvailable}h beschikbaar
                   </div>
+                </div>
 
-                  {/* Upcoming Deadlines */}
-                  <div className="bg-slate-50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        Komende Deadlines
-                      </h3>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-blue-600">
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-red-600">
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    {deadlinesLoading ? (
-                      <div className="text-xs text-slate-600">Deadlines laden...</div>
-                    ) : upcomingDeadlines.length > 0 ? (
-                      <div className="space-y-2">
-                        {upcomingDeadlines.map((deadline) => (
-                          <div key={deadline.id} className="flex items-center justify-between p-2 bg-white rounded-lg border">
-                            <div>
-                              <p className="text-xs font-medium text-slate-900">{deadline.title}</p>
-                              <p className={`text-xs font-medium ${getDeadlineColor(deadline.due_date)}`}>
-                                {formatDeadlineDateTime(deadline.due_date)}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className={`text-xs ${getPriorityColor(deadline.priority)}`}>
-                                {getPriorityLabel(deadline.priority)}
-                              </Badge>
-                              <EditDeadlineDialog deadline={deadline} />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-slate-600">Geen komende deadlines</div>
-                    )}
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Euro className="h-3 w-3 text-slate-600" />
+                    <span className="text-xs font-medium text-slate-700">Waarde</span>
                   </div>
-
-                  {/* Recente activiteiten */}
-                  <div className="bg-slate-50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-semibold text-slate-900">Recente activiteiten</h3>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-blue-600">
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-red-600">
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    {statusLoading || deadlinesLoading ? (
-                      <div className="text-xs text-slate-600">Activiteiten laden...</div>
-                    ) : allActivities.length > 0 ? (
-                      <div className="space-y-3">
-                        {allActivities.slice(0, 10).map((activity) => (
-                          <div key={`${activity.type}-${activity.id}`} className="flex items-start justify-between p-3 bg-white rounded-lg">
-                            <div className="flex items-start gap-3 flex-1">
-                              <div className="bg-slate-100 p-1.5 rounded-lg flex-shrink-0">
-                                {activity.type === 'status_update' && <Clock className="h-3 w-3 text-blue-600" />}
-                                {activity.type === 'deadline' && <Calendar className="h-3 w-3 text-green-600" />}
-                                {activity.type === 'document' && <FileText className="h-3 w-3 text-purple-600" />}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium text-slate-900 truncate">{activity.title}</p>
-                                {activity.type === 'status_update' && (
-                                  <p className="text-xs text-slate-600 mb-1">
-                                    Type: {UPDATE_TYPE_LABELS[activity.update_type] || activity.update_type}
-                                  </p>
-                                )}
-                                {activity.type === 'deadline' && (
-                                  <p className="text-xs text-slate-600 mb-1">Deadline</p>
-                                )}
-                                {activity.type === 'document' && activity.uploadedBy && (
-                                  <p className="text-xs text-slate-600 mb-1">Geüpload door {activity.uploadedBy}</p>
-                                )}
-                                {activity.description && (
-                                  <p className="text-xs text-slate-700 line-clamp-2">{activity.description}</p>
-                                )}
-                                {activity.type === 'status_update' && activity.hours_spent > 0 && (
-                                  <p className="text-xs text-slate-500 mt-1">
-                                    {activity.hours_spent}h besteed {activity.is_billable ? '(factureerbaar)' : '(niet factureerbaar)'}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                            <div className="text-right flex-shrink-0 ml-3">
-                              <span className="text-xs text-slate-500 block">
-                                {activity.type === 'deadline' ? 
-                                  formatDateTime(activity.createdDate || activity.date) : 
-                                  (activity.type === 'document' ? activity.date : formatDateTime(activity.date))
-                                }
-                              </span>
-                              {activity.type === 'deadline' && (
-                                <div className={`text-xs font-medium ${getDeadlineColor(activity.date)}`}>
-                                  Vervalt: {formatDeadlineDateTime(activity.date)}
-                                </div>
-                              )}
-                              {(activity.type === 'status_update' || activity.type === 'deadline') && (
-                                <Badge variant="outline" className={`text-xs mt-1 ${getPriorityColor(activity.priority)}`}>
-                                  {getPriorityLabel(activity.priority)}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-slate-600">Geen activiteiten gevonden</div>
-                    )}
+                  <div className="text-sm font-semibold text-slate-900">
+                    €{mockDossierDetails.totalValue.toLocaleString()}
                   </div>
+                  <div className="text-xs text-slate-600">
+                    €{mockDossierDetails.hourlyRate}/uur
+                  </div>
+                </div>
 
-                  {/* Description */}
-                  {dossier.description && (
-                    <div className="bg-slate-50 rounded-lg p-4">
-                      <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        Beschrijving
-                      </h3>
-                      <p className="text-xs text-slate-700 leading-relaxed">{dossier.description}</p>
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <User className="h-3 w-3 text-slate-600" />
+                    <span className="text-xs font-medium text-slate-700">Toegewezen</span>
+                  </div>
+                  <div className="text-xs font-semibold text-slate-900">
+                    {mockDossierDetails.assignedUser}
+                  </div>
+                  <div className="text-xs text-slate-600">
+                    Verantwoordelijk
+                  </div>
+                </div>
+
+                <div className={`rounded-lg p-3 ${nextDeadline ? 'bg-orange-50' : 'bg-slate-50'}`}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <AlertCircle className={`h-3 w-3 ${nextDeadline ? 'text-orange-600' : 'text-slate-600'}`} />
+                    <span className={`text-xs font-medium ${nextDeadline ? 'text-orange-700' : 'text-slate-700'}`}>Deadline</span>
+                  </div>
+                  {nextDeadline ? (
+                    <>
+                      <div className={`text-xs font-semibold ${getDeadlineColor(nextDeadline.due_date)}`}>
+                        {formatDate(nextDeadline.due_date)}
+                      </div>
+                      <div className="text-xs text-orange-600">
+                        {nextDeadline.title}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-xs text-slate-600">
+                      Geen deadlines
                     </div>
                   )}
-                </TabsContent>
+                </div>
+              </div>
 
-                <TabsContent value="financial" className="space-y-4 mt-0">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-3">
-                      <h3 className="text-sm font-semibold text-slate-900">Uren & Tarieven</h3>
-                      <div className="bg-slate-50 rounded-lg p-3 space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-xs text-slate-600">Bestede uren:</span>
-                          <span className="text-xs font-medium">{mockDossierDetails.hoursSpent}h</span>
+              {/* Client Information */}
+              <div className="bg-slate-50 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    Client Informatie
+                  </h3>
+                  <Button variant="ghost" size="sm" className="text-slate-600 hover:text-blue-600 h-6 w-6 p-0">
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs font-medium text-slate-700 mb-1">Naam</p>
+                    <p className="text-xs text-slate-900">{mockDossierDetails.clientContact.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-700 mb-1">Telefoon</p>
+                    <p className="text-xs text-slate-900">{mockDossierDetails.clientContact.phone}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-700 mb-1">Adres</p>
+                    <p className="text-xs text-slate-900">{mockDossierDetails.clientContact.address}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-700 mb-1">E-mail</p>
+                    <p className="text-xs text-slate-900">{mockDossierDetails.clientContact.email}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Internal Notes */}
+              <div className="bg-slate-50 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-slate-900">Interne Notities</h3>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-blue-600">
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-red-600">
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-700">{mockDossierDetails.internalNotes}</p>
+              </div>
+
+              {/* Upcoming Deadlines */}
+              <div className="bg-slate-50 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Komende Deadlines
+                  </h3>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-blue-600">
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-red-600">
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+                {deadlinesLoading ? (
+                  <div className="text-xs text-slate-600">Deadlines laden...</div>
+                ) : upcomingDeadlines.length > 0 ? (
+                  <div className="space-y-2">
+                    {upcomingDeadlines.map((deadline) => (
+                      <div key={deadline.id} className="flex items-center justify-between p-2 bg-white rounded-lg border">
+                        <div>
+                          <p className="text-xs font-medium text-slate-900">{deadline.title}</p>
+                          <p className={`text-xs font-medium ${getDeadlineColor(deadline.due_date)}`}>
+                            {formatDeadlineDateTime(deadline.due_date)}
+                          </p>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-xs text-slate-600">Beschikbare uren:</span>
-                          <span className="text-xs font-medium">{mockDossierDetails.hoursAvailable}h</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-xs text-slate-600">Totaal uren:</span>
-                          <span className="text-xs font-medium">{mockDossierDetails.totalHours}h</span>
-                        </div>
-                        <div className="flex justify-between border-t pt-2">
-                          <span className="text-xs text-slate-600">Uurtarief:</span>
-                          <span className="text-xs font-medium">€{mockDossierDetails.hourlyRate}/uur</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-xs text-slate-600">Totale waarde:</span>
-                          <span className="text-sm font-semibold">€{mockDossierDetails.totalValue.toLocaleString()}</span>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className={`text-xs ${getPriorityColor(deadline.priority)}`}>
+                            {getPriorityLabel(deadline.priority)}
+                          </Badge>
+                          <EditDeadlineDialog deadline={deadline} />
                         </div>
                       </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-600">Geen komende deadlines</div>
+                )}
+              </div>
 
-                      <h3 className="text-sm font-semibold text-slate-900">Facturatie & Betalingen</h3>
-                      <div className="bg-slate-50 rounded-lg p-3 space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-xs text-slate-600">Totaal gefactureerd:</span>
-                          <span className="text-xs font-medium">€{mockDossierDetails.totalInvoiced.toLocaleString()}</span>
+              {/* Recente activiteiten */}
+              <div className="bg-slate-50 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-slate-900">Recente activiteiten</h3>
+                </div>
+                {statusLoading || deadlinesLoading ? (
+                  <div className="text-xs text-slate-600">Activiteiten laden...</div>
+                ) : allActivities.length > 0 ? (
+                  <div className="space-y-2">
+                    {allActivities.slice(0, 10).map((activity) => (
+                      <div key={`${activity.type}-${activity.id}`} className="flex items-start justify-between p-2 bg-white rounded-lg">
+                        <div className="flex items-start gap-2 flex-1">
+                          <div className="bg-slate-100 p-1 rounded-lg flex-shrink-0">
+                            {activity.type === 'status_update' && <Clock className="h-3 w-3 text-blue-600" />}
+                            {activity.type === 'deadline' && <Calendar className="h-3 w-3 text-green-600" />}
+                            {activity.type === 'document' && <FileText className="h-3 w-3 text-purple-600" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-slate-900 truncate">{activity.title}</p>
+                            {activity.type === 'status_update' && (
+                              <p className="text-xs text-slate-600 mb-1">
+                                Type: {UPDATE_TYPE_LABELS[activity.update_type] || activity.update_type}
+                              </p>
+                            )}
+                            {activity.type === 'deadline' && (
+                              <p className="text-xs text-slate-600 mb-1">Deadline</p>
+                            )}
+                            {activity.type === 'document' && activity.uploadedBy && (
+                              <p className="text-xs text-slate-600 mb-1">Geüpload door {activity.uploadedBy}</p>
+                            )}
+                            {activity.description && (
+                              <p className="text-xs text-slate-700 line-clamp-2">{activity.description}</p>
+                            )}
+                            {activity.type === 'status_update' && activity.hours_spent > 0 && (
+                              <p className="text-xs text-slate-500 mt-1">
+                                {activity.hours_spent}h besteed {activity.is_billable ? '(factureerbaar)' : '(niet factureerbaar)'}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-xs text-slate-600">Betaald:</span>
-                          <span className="text-xs font-medium text-green-600">€{mockDossierDetails.paid.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between border-t pt-2">
-                          <span className="text-xs text-slate-600">Openstaand:</span>
-                          <span className="text-sm font-semibold text-orange-600">€{mockDossierDetails.outstanding.toLocaleString()}</span>
+                        <div className="flex items-start gap-2 flex-shrink-0 ml-2">
+                          <div className="text-right">
+                            <span className="text-xs text-slate-500 block">
+                              {activity.type === 'deadline' ? 
+                                formatDateTime(activity.createdDate || activity.date) : 
+                                (activity.type === 'document' ? activity.date : formatDateTime(activity.date))
+                              }
+                            </span>
+                            {activity.type === 'deadline' && (
+                              <div className={`text-xs font-medium ${getDeadlineColor(activity.date)}`}>
+                                Vervalt: {formatDeadlineDateTime(activity.date)}
+                              </div>
+                            )}
+                            {(activity.type === 'status_update' || activity.type === 'deadline') && (
+                              <Badge variant="outline" className={`text-xs mt-1 ${getPriorityColor(activity.priority)}`}>
+                                {getPriorityLabel(activity.priority)}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-blue-600">
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-red-600">
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-600">Geen activiteiten gevonden</div>
+                )}
+              </div>
+
+              {/* Description */}
+              {dossier.description && (
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <h3 className="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Beschrijving
+                  </h3>
+                  <p className="text-xs text-slate-700 leading-relaxed">{dossier.description}</p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="financial" className="space-y-4 mt-0">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-slate-900">Uren & Tarieven</h3>
+                  <div className="bg-slate-50 rounded-lg p-3 space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-xs text-slate-600">Bestede uren:</span>
+                      <span className="text-xs font-medium">{mockDossierDetails.hoursSpent}h</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="text-xs text-slate-600">Beschikbare uren:</span>
+                      <span className="text-xs font-medium">{mockDossierDetails.hoursAvailable}h</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-xs text-slate-600">Totaal uren:</span>
+                      <span className="text-xs font-medium">{mockDossierDetails.totalHours}h</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2">
+                      <span className="text-xs text-slate-600">Uurtarief:</span>
+                      <span className="text-xs font-medium">€{mockDossierDetails.hourlyRate}/uur</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-xs text-slate-600">Totale waarde:</span>
+                      <span className="text-sm font-semibold">€{mockDossierDetails.totalValue.toLocaleString()}</span>
+                    </div>
+                  </div>
 
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                          <FileText className="h-4 w-4" />
-                          Documenten ({mockDossierDetails.documents.length})
-                        </h3>
-                        <Button size="sm" className="bg-slate-800 hover:bg-slate-700 text-xs px-2 py-1">
-                          <Plus className="h-3 w-3 mr-1" />
-                          Document Toevoegen
-                        </Button>
-                      </div>
-                      <div className="bg-slate-50 rounded-lg p-3 space-y-2 max-h-80 overflow-y-auto">
-                        {mockDossierDetails.documents.map((doc) => (
-                          <div key={doc.id} className="flex items-center justify-between p-2 bg-white rounded-lg border">
-                            <div className="flex items-center gap-2">
-                              <div className="bg-slate-100 p-1.5 rounded-lg">
-                                <FileText className="h-3 w-3 text-slate-600" />
-                              </div>
-                              <div>
-                                <p className="text-xs font-medium text-slate-900">{doc.name}</p>
-                                <div className="flex items-center gap-2 text-xs text-slate-600">
-                                  <span>{doc.type}</span>
-                                  <span>•</span>
-                                  <span>{doc.size}</span>
-                                  <span>•</span>
-                                  <span>{doc.uploadDate}</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex gap-1">
-                              <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-blue-600">
-                                <Download className="h-3 w-3" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-blue-600">
-                                <Edit className="h-3 w-3" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-red-600">
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
+                  <h3 className="text-sm font-semibold text-slate-900">Facturatie & Betalingen</h3>
+                  <div className="bg-slate-50 rounded-lg p-3 space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-xs text-slate-600">Totaal gefactureerd:</span>
+                      <span className="text-xs font-medium">€{mockDossierDetails.totalInvoiced.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-xs text-slate-600">Betaald:</span>
+                      <span className="text-xs font-medium text-green-600">€{mockDossierDetails.paid.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2">
+                      <span className="text-xs text-slate-600">Openstaand:</span>
+                      <span className="text-sm font-semibold text-orange-600">€{mockDossierDetails.outstanding.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Documenten ({mockDossierDetails.documents.length})
+                    </h3>
+                    <Button size="sm" className="bg-slate-800 hover:bg-slate-700 text-xs px-2 py-1">
+                      <Plus className="h-3 w-3 mr-1" />
+                      Document Toevoegen
+                    </Button>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-3 space-y-2 max-h-80 overflow-y-auto">
+                    {mockDossierDetails.documents.map((doc) => (
+                      <div key={doc.id} className="flex items-center justify-between p-2 bg-white rounded-lg border">
+                        <div className="flex items-center gap-2">
+                          <div className="bg-slate-100 p-1.5 rounded-lg">
+                            <FileText className="h-3 w-3 text-slate-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-slate-900">{doc.name}</p>
+                            <div className="flex items-center gap-2 text-xs text-slate-600">
+                              <span>{doc.type}</span>
+                              <span>•</span>
+                              <span>{doc.size}</span>
+                              <span>•</span>
+                              <span>{doc.uploadDate}</span>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="communication" className="space-y-4 mt-0">
-                  <div className="bg-slate-50 rounded-lg p-4">
-                    <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      Laatste Communicatie
-                    </h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center p-2 bg-white rounded-lg">
-                        <div>
-                          <p className="text-xs font-medium text-slate-900">Laatste e-mail</p>
-                          <p className="text-xs text-slate-600">{mockDossierDetails.lastEmail}</p>
                         </div>
-                        <Button variant="outline" size="sm" className="text-xs px-2 py-1">
-                          <ExternalLink className="h-3 w-3" />
-                        </Button>
-                      </div>
-                      <div className="flex justify-between items-center p-2 bg-white rounded-lg">
-                        <div>
-                          <p className="text-xs font-medium text-slate-900">Laatste gesprek</p>
-                          <p className="text-xs text-slate-600">{mockDossierDetails.lastCall}</p>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-blue-600">
+                            <Download className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-blue-600">
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-slate-600 hover:text-red-600">
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
                         </div>
-                        <Button variant="outline" size="sm" className="text-xs px-2 py-1">
-                          <Phone className="h-3 w-3" />
-                        </Button>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                </TabsContent>
+                </div>
               </div>
-            </Tabs>
+            </TabsContent>
+
+            <TabsContent value="communication" className="space-y-4 mt-0">
+              <div className="bg-slate-50 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Laatste Communicatie
+                </h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center p-2 bg-white rounded-lg">
+                    <div>
+                      <p className="text-xs font-medium text-slate-900">Laatste e-mail</p>
+                      <p className="text-xs text-slate-600">{mockDossierDetails.lastEmail}</p>
+                    </div>
+                    <Button variant="outline" size="sm" className="text-xs px-2 py-1">
+                      <ExternalLink className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-white rounded-lg">
+                    <div>
+                      <p className="text-xs font-medium text-slate-900">Laatste gesprek</p>
+                      <p className="text-xs text-slate-600">{mockDossierDetails.lastCall}</p>
+                    </div>
+                    <Button variant="outline" size="sm" className="text-xs px-2 py-1">
+                      <Phone className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
           </div>
-        </div>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
