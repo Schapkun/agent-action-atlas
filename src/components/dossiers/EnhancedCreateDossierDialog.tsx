@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Plus, Scale, X } from 'lucide-react';
@@ -30,9 +30,10 @@ export const EnhancedCreateDossierDialog = ({
     onDossierCreated?.();
   }, editMode, editDossier);
 
-  // Set initial form data when in edit mode and dialog opens
-  React.useEffect(() => {
+  // Initialize form data when dialog opens in edit mode
+  useEffect(() => {
     if (editMode && editDossier && open) {
+      console.log('📝 Dialog opened in edit mode, initializing with:', editDossier);
       initializeFormData(editDossier);
     }
   }, [editMode, editDossier, open, initializeFormData]);
@@ -60,66 +61,72 @@ export const EnhancedCreateDossierDialog = ({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-slate-800 rounded-lg p-2">
-                <Scale className="h-5 w-5 text-white" />
+      <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-10 bg-white border-b border-slate-200 pb-4">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-slate-800 rounded-lg p-2">
+                  <Scale className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <DialogTitle className="text-xl font-semibold text-slate-900">{dialogTitle}</DialogTitle>
+                  <p className="text-slate-600 text-sm mt-1">
+                    {editMode ? 'Bewerk het geselecteerde dossier' : 'Maak een nieuw juridisch dossier aan'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <DialogTitle className="text-xl font-semibold text-slate-900">{dialogTitle}</DialogTitle>
-                <p className="text-slate-600 text-sm mt-1">
-                  {editMode ? 'Bewerk het geselecteerde dossier' : 'Maak een nieuw juridisch dossier aan'}
-                </p>
+              <div className="flex gap-3">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleClose}
+                  disabled={loading}
+                  className="px-6 py-2 text-sm border-slate-300 text-slate-700 hover:bg-slate-50"
+                >
+                  Annuleren
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={loading}
+                  onClick={handleSubmit}
+                  className="px-6 py-2 text-sm bg-slate-800 hover:bg-slate-700 text-white shadow-sm"
+                >
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>{loadingText}</span>
+                    </div>
+                  ) : (
+                    buttonText
+                  )}
+                </Button>
               </div>
             </div>
-            <div className="flex gap-3">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handleClose}
-                disabled={loading}
-                className="px-6 py-2 text-sm border-slate-300 text-slate-700 hover:bg-slate-50"
-              >
-                Annuleren
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={loading}
-                onClick={handleSubmit}
-                className="px-6 py-2 text-sm bg-slate-800 hover:bg-slate-700 text-white shadow-sm"
-              >
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>{loadingText}</span>
-                  </div>
-                ) : (
-                  buttonText
-                )}
-              </Button>
-            </div>
-          </div>
-        </DialogHeader>
+          </DialogHeader>
+        </div>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Column */}
-            <div className="space-y-6">
-              <ClientSection formData={formData} updateFormData={updateFormData} />
-              <BasicInfoSection formData={formData} updateFormData={updateFormData} />
-              <LegalDetailsSection formData={formData} updateFormData={updateFormData} />
-            </div>
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="space-y-6 p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column */}
+              <div className="space-y-6">
+                <ClientSection formData={formData} updateFormData={updateFormData} />
+                <BasicInfoSection formData={formData} updateFormData={updateFormData} />
+                <LegalDetailsSection formData={formData} updateFormData={updateFormData} />
+              </div>
 
-            {/* Right Column */}
-            <div className="space-y-6">
-              <PlanningSection formData={formData} updateFormData={updateFormData} />
-              <ProcedureSection formData={formData} updateFormData={updateFormData} />
-              <NotesSection formData={formData} updateFormData={updateFormData} />
+              {/* Right Column */}
+              <div className="space-y-6">
+                <PlanningSection formData={formData} updateFormData={updateFormData} />
+                <ProcedureSection formData={formData} updateFormData={updateFormData} />
+                <NotesSection formData={formData} updateFormData={updateFormData} />
+              </div>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

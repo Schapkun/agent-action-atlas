@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Building2, Search, ChevronDown, Check, X, Plus } from 'lucide-react';
@@ -37,7 +37,8 @@ export const ClientSelector = ({
     client.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleInputChange = (inputValue: string) => {
+  const handleInputChange = useCallback((inputValue: string) => {
+    console.log('📋 Input change:', inputValue);
     setSearchTerm(inputValue);
     setIsOpen(true);
     
@@ -51,9 +52,10 @@ export const ClientSelector = ({
     if (allowCustomName && onClientNameChange) {
       onClientNameChange(inputValue);
     }
-  };
+  }, [selectedClient, allowCustomName, onClientNameChange, onValueChange]);
 
-  const handleClientSelect = (client: any) => {
+  const handleClientSelect = useCallback((client: any) => {
+    console.log('📋 Client selected:', client);
     setSelectedClient(client);
     setSearchTerm(client.name);
     onValueChange(client.id);
@@ -62,14 +64,15 @@ export const ClientSelector = ({
     if (allowCustomName && onClientNameChange) {
       onClientNameChange(client.name);
     }
-  };
+  }, [onValueChange, allowCustomName, onClientNameChange]);
 
   const handleNewClientSelect = () => {
     setIsOpen(false);
     setCreateContactOpen(true);
   };
 
-  const handleClearSelection = () => {
+  const handleClearSelection = useCallback(() => {
+    console.log('📋 Clearing selection');
     setSelectedClient(null);
     setSearchTerm('');
     onValueChange('');
@@ -77,17 +80,17 @@ export const ClientSelector = ({
     if (allowCustomName && onClientNameChange) {
       onClientNameChange('');
     }
-  };
+  }, [onValueChange, allowCustomName, onClientNameChange]);
 
   const handleInputFocus = () => {
     setIsOpen(true);
   };
 
-  const handleClickOutside = (event: MouseEvent) => {
+  const handleClickOutside = useCallback((event: MouseEvent) => {
     if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
       setIsOpen(false);
     }
-  };
+  }, []);
 
   const handleContactCreated = (newContact: any) => {
     // Refresh clients list
@@ -111,20 +114,26 @@ export const ClientSelector = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [handleClickOutside]);
 
+  // Initialize client selection based on value prop
   useEffect(() => {
-    if (value && value !== 'no_client') {
+    console.log('📋 Value prop changed:', value);
+    if (value && value !== '' && value !== 'no_client') {
       const client = clients.find(c => c.id === value);
-      if (client && !selectedClient) {
+      if (client && (!selectedClient || selectedClient.id !== client.id)) {
+        console.log('📋 Setting client from value prop:', client);
         setSelectedClient(client);
         setSearchTerm(client.name);
       }
-    } else if (value === 'no_client') {
-      setSelectedClient(null);
-      setSearchTerm('');
+    } else if (value === '' || value === 'no_client') {
+      if (selectedClient) {
+        console.log('📋 Clearing client due to empty value');
+        setSelectedClient(null);
+        setSearchTerm('');
+      }
     }
-  }, [value, clients]);
+  }, [value, clients, selectedClient]);
 
   const showNewClientOption = searchTerm && 
     !filteredClients.some(c => c.name.toLowerCase() === searchTerm.toLowerCase()) &&
@@ -202,7 +211,7 @@ export const ClientSelector = ({
                             <div className="text-slate-400 text-xs">#{client.contact_number}</div>
                           )}
                         </div>
-                        {value === client.id && <Check className="h-4 w-4 text-slate-600" />}
+                        {selectedClient?.id === client.id && <Check className="h-4 w-4 text-slate-600" />}
                       </button>
                     ))}
                   </>

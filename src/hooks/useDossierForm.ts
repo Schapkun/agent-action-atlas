@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -33,6 +33,7 @@ interface DossierFormData {
 
 export const useDossierForm = (onSuccess?: () => void, editMode = false, editDossier?: any) => {
   const [loading, setLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   const { toast } = useToast();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   
@@ -63,9 +64,10 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
     case_phase: ''
   });
 
-  const updateFormData = (updates: Partial<DossierFormData>) => {
+  const updateFormData = useCallback((updates: Partial<DossierFormData>) => {
+    console.log('📝 Updating form data:', updates);
     setFormData(prev => ({ ...prev, ...updates }));
-  };
+  }, []);
 
   const resetForm = () => {
     setFormData({
@@ -94,10 +96,12 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
       procedure_type: '',
       case_phase: ''
     });
+    setInitialized(false);
   };
 
-  const initializeFormData = (dossier: any) => {
-    if (dossier) {
+  const initializeFormData = useCallback((dossier: any) => {
+    if (dossier && !initialized) {
+      console.log('📝 Initializing form data with dossier:', dossier);
       setFormData({
         name: dossier.name || '',
         description: dossier.description || '',
@@ -106,26 +110,27 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         client_name: dossier.client_name || '',
         priority: dossier.priority || 'medium',
         status: dossier.status || 'active',
-        reference: '',
-        responsible_user_id: '',
-        start_date: '',
-        end_date: '',
-        deadline_date: '',
-        deadline_description: '',
-        budget: '',
-        case_type: '',
-        court_instance: '',
-        legal_status: '',
-        estimated_hours: '',
-        hourly_rate: '',
-        billing_type: 'hourly',
-        tags: '',
-        intake_notes: '',
-        procedure_type: '',
-        case_phase: ''
+        reference: dossier.reference || '',
+        responsible_user_id: dossier.responsible_user_id || '',
+        start_date: dossier.start_date || '',
+        end_date: dossier.end_date || '',
+        deadline_date: dossier.deadline_date || '',
+        deadline_description: dossier.deadline_description || '',
+        budget: dossier.budget || '',
+        case_type: dossier.case_type || '',
+        court_instance: dossier.court_instance || '',
+        legal_status: dossier.legal_status || '',
+        estimated_hours: dossier.estimated_hours || '',
+        hourly_rate: dossier.hourly_rate || '',
+        billing_type: dossier.billing_type || 'hourly',
+        tags: dossier.tags || '',
+        intake_notes: dossier.intake_notes || '',
+        procedure_type: dossier.procedure_type || '',
+        case_phase: dossier.case_phase || ''
       });
+      setInitialized(true);
     }
-  };
+  }, [initialized]);
 
   const submitForm = async () => {
     if (!selectedOrganization) {
@@ -156,6 +161,7 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         client_name: formData.client_name?.trim() || null,
         priority: formData.priority,
         status: formData.status || 'active',
+        reference: formData.reference?.trim() || null,
         organization_id: selectedOrganization.id,
         workspace_id: selectedWorkspace?.id || null
       };
