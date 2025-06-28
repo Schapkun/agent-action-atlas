@@ -14,19 +14,44 @@ import { ProcedureSection } from './form-sections/ProcedureSection';
 interface EnhancedCreateDossierDialogProps {
   children?: React.ReactNode;
   onDossierCreated?: () => void;
+  editMode?: boolean;
+  editDossier?: any;
 }
 
-export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: EnhancedCreateDossierDialogProps) => {
+export const EnhancedCreateDossierDialog = ({ 
+  children, 
+  onDossierCreated, 
+  editMode = false,
+  editDossier 
+}: EnhancedCreateDossierDialogProps) => {
   const [open, setOpen] = useState(false);
   const { formData, updateFormData, submitForm, loading } = useDossierForm(() => {
     setOpen(false);
     onDossierCreated?.();
   });
 
+  // Set initial form data when in edit mode
+  React.useEffect(() => {
+    if (editMode && editDossier && open) {
+      updateFormData({
+        name: editDossier.name || '',
+        description: editDossier.description || '',
+        client_name: editDossier.client_name || '',
+        priority: editDossier.priority || 'medium',
+        category: editDossier.category || 'algemeen',
+        // Add other fields as needed
+      });
+    }
+  }, [editMode, editDossier, open, updateFormData]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await submitForm();
   };
+
+  const dialogTitle = editMode ? 'Dossier Bewerken' : 'Nieuw Dossier Aanmaken';
+  const buttonText = editMode ? 'Dossier Bijwerken' : 'Dossier Aanmaken';
+  const loadingText = editMode ? 'Bijwerken...' : 'Aanmaken...';
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -45,8 +70,10 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
               <Scale className="h-5 w-5 text-white" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-semibold text-slate-900">Nieuw Dossier Aanmaken</DialogTitle>
-              <p className="text-slate-600 text-sm mt-1">Maak een nieuw juridisch dossier aan</p>
+              <DialogTitle className="text-xl font-semibold text-slate-900">{dialogTitle}</DialogTitle>
+              <p className="text-slate-600 text-sm mt-1">
+                {editMode ? 'Bewerk het geselecteerde dossier' : 'Maak een nieuw juridisch dossier aan'}
+              </p>
             </div>
           </div>
         </DialogHeader>
@@ -85,10 +112,10 @@ export const EnhancedCreateDossierDialog = ({ children, onDossierCreated }: Enha
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Aanmaken...</span>
+                  <span>{loadingText}</span>
                 </div>
               ) : (
-                'Dossier Aanmaken'
+                buttonText
               )}
             </Button>
           </div>
