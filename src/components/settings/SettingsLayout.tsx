@@ -7,7 +7,6 @@ import { WorkspaceSettings } from './WorkspaceSettings';
 import { InvoiceSettings } from './InvoiceSettings';
 import { DocumentSettings } from './DocumentSettings';
 import { HistoryLogs } from './HistoryLogs';
-import { UserProfileSettings } from './UserProfileSettings';
 import { AIInstructionsSettings } from './AIInstructionsSettings';
 import { GeneralSettings } from './GeneralSettings';
 import { UserList } from './UserList';
@@ -41,21 +40,14 @@ export const SettingsLayout = () => {
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Instellingen</h1>
-        <p className="text-slate-600">Beheer uw organisatie-instellingen en voorkeuren</p>
-      </div>
-      
-      <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-8">
+    <div className="w-full p-6">
+      <Tabs defaultValue="general" className="w-full space-y-6">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="general">Algemeen</TabsTrigger>
-          <TabsTrigger value="organization">Organisatie & Werkruimtes</TabsTrigger>
-          <TabsTrigger value="users">Gebruikers</TabsTrigger>
+          <TabsTrigger value="organization">Organisaties</TabsTrigger>
           <TabsTrigger value="email">E-mail</TabsTrigger>
-          <TabsTrigger value="documents">Documenten & Facturatie</TabsTrigger>
+          <TabsTrigger value="documents">Documenten</TabsTrigger>
           <TabsTrigger value="ai">AI Instructies</TabsTrigger>
-          <TabsTrigger value="profile">Profiel</TabsTrigger>
           <TabsTrigger value="history">Geschiedenis</TabsTrigger>
         </TabsList>
         
@@ -64,17 +56,16 @@ export const SettingsLayout = () => {
         </TabsContent>
         
         <TabsContent value="organization">
-          <OrganizationSettings />
-        </TabsContent>
-        
-        <TabsContent value="users">
           <div className="space-y-6">
-            <UserFilters 
-              users={users}
-              onUsersUpdate={handleUsersUpdate}
-              onUserRoleUpdate={handleUserRoleUpdate}
-            />
-            <UserList users={users} />
+            <OrganizationSettings />
+            <div className="space-y-6">
+              <UserFilters 
+                users={users}
+                onUsersUpdate={handleUsersUpdate}
+                onUserRoleUpdate={handleUserRoleUpdate}
+              />
+              <UserList users={users} userRole={userRole || 'member'} />
+            </div>
           </div>
         </TabsContent>
         
@@ -91,10 +82,6 @@ export const SettingsLayout = () => {
         
         <TabsContent value="ai">
           <AIInstructionsSettings />
-        </TabsContent>
-        
-        <TabsContent value="profile">
-          <UserProfileSettings />
         </TabsContent>
         
         <TabsContent value="history">
