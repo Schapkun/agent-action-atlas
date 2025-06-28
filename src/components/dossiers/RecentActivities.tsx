@@ -102,7 +102,7 @@ export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesP
       <div className="space-y-1">
         {recentActivities.slice(0, 10).map((activity) => (
           <div key={`activity-${activity.id}`} className="flex items-start justify-between p-1.5 bg-white rounded-lg">
-            <div className="flex items-start gap-2 flex-1">
+            <div className="flex items-start gap-2 flex-1 min-w-0">
               <div className="bg-slate-100 p-1 rounded-lg flex-shrink-0">
                 <Clock className="h-3 w-3 text-blue-600" />
               </div>
@@ -121,7 +121,7 @@ export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesP
                 )}
               </div>
             </div>
-            <div className="flex items-start gap-2 flex-shrink-0 ml-2">
+            <div className="flex items-start gap-4 flex-shrink-0 ml-4">
               <div className="text-right">
                 <span className="text-xs text-slate-500 block">
                   {formatDateTime(activity.date)}

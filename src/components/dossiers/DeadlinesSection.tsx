@@ -121,7 +121,7 @@ export const DeadlinesSection = ({
       <div className="space-y-1">
         {displayDeadlines.map((deadline) => (
           <div key={deadline.id} className="flex items-center justify-between p-1.5 bg-white rounded-lg border">
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className={`text-xs font-medium ${getDeadlineColor(deadline.due_date)}`}>
                 {formatDeadlineDateTime(deadline.due_date)}
               </p>
@@ -130,7 +130,7 @@ export const DeadlinesSection = ({
                 <p className="text-xs text-slate-700 line-clamp-1">{deadline.description}</p>
               )}
             </div>
-            <div className="flex items-center gap-2 ml-2">
+            <div className="flex items-center gap-4 ml-4 flex-shrink-0">
               {!showUpcoming && (
                 <span className="text-xs text-slate-500">
                   {formatDateTime(deadline.created_at)}

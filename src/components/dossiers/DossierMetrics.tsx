@@ -46,62 +46,62 @@ export const DossierMetrics = ({ nextDeadline }: DossierMetricsProps) => {
   };
 
   return (
-    <div className="grid grid-cols-4 gap-2">
-      <div className="bg-slate-50 rounded-lg p-2">
-        <div className="flex items-center gap-2 mb-1">
-          <Clock className="h-3 w-3 text-slate-600" />
-          <span className="text-xs font-medium text-slate-700">Uren</span>
+    <div className="grid grid-cols-4 gap-3 mb-4">
+      <div className="bg-slate-50 rounded-lg p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Clock className="h-4 w-4 text-slate-600" />
+          <span className="text-sm font-medium text-slate-700">Uren</span>
         </div>
-        <div className="text-sm font-semibold text-slate-900">
+        <div className="text-base font-semibold text-slate-900">
           {mockData.hoursSpent}h
         </div>
-        <div className="text-xs text-slate-600">
+        <div className="text-sm text-slate-600">
           Nog {mockData.hoursAvailable}h beschikbaar
         </div>
       </div>
 
-      <div className="bg-slate-50 rounded-lg p-2">
-        <div className="flex items-center gap-2 mb-1">
-          <Euro className="h-3 w-3 text-slate-600" />
-          <span className="text-xs font-medium text-slate-700">Waarde</span>
+      <div className="bg-slate-50 rounded-lg p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Euro className="h-4 w-4 text-slate-600" />
+          <span className="text-sm font-medium text-slate-700">Waarde</span>
         </div>
-        <div className="text-sm font-semibold text-slate-900">
+        <div className="text-base font-semibold text-slate-900">
           €{mockData.totalValue.toLocaleString()}
         </div>
-        <div className="text-xs text-slate-600">
+        <div className="text-sm text-slate-600">
           €{mockData.hourlyRate}/uur
         </div>
       </div>
 
-      <div className="bg-slate-50 rounded-lg p-2">
-        <div className="flex items-center gap-2 mb-1">
-          <User className="h-3 w-3 text-slate-600" />
-          <span className="text-xs font-medium text-slate-700">Toegewezen</span>
+      <div className="bg-slate-50 rounded-lg p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <User className="h-4 w-4 text-slate-600" />
+          <span className="text-sm font-medium text-slate-700">Toegewezen</span>
         </div>
-        <div className="text-xs font-semibold text-slate-900">
+        <div className="text-sm font-semibold text-slate-900">
           {mockData.assignedUser}
         </div>
-        <div className="text-xs text-slate-600">
+        <div className="text-sm text-slate-600">
           Verantwoordelijk
         </div>
       </div>
 
-      <div className={`rounded-lg p-2 ${nextDeadline ? 'bg-orange-50' : 'bg-slate-50'}`}>
-        <div className="flex items-center gap-2 mb-1">
-          <AlertCircle className={`h-3 w-3 ${nextDeadline ? 'text-orange-600' : 'text-slate-600'}`} />
-          <span className={`text-xs font-medium ${nextDeadline ? 'text-orange-700' : 'text-slate-700'}`}>Deadline</span>
+      <div className={`rounded-lg p-3 ${nextDeadline ? 'bg-orange-50' : 'bg-slate-50'}`}>
+        <div className="flex items-center gap-2 mb-2">
+          <AlertCircle className={`h-4 w-4 ${nextDeadline ? 'text-orange-600' : 'text-slate-600'}`} />
+          <span className={`text-sm font-medium ${nextDeadline ? 'text-orange-700' : 'text-slate-700'}`}>Deadline</span>
         </div>
         {nextDeadline ? (
           <>
-            <div className={`text-xs font-semibold ${getDeadlineColor(nextDeadline.due_date)}`}>
+            <div className={`text-sm font-semibold ${getDeadlineColor(nextDeadline.due_date)}`}>
               {formatDeadlineDateTime(nextDeadline.due_date)}
             </div>
-            <div className="text-xs text-orange-600">
+            <div className="text-sm text-orange-600">
               {nextDeadline.title}
             </div>
           </>
         ) : (
-          <div className="text-xs text-slate-600">
+          <div className="text-sm text-slate-600">
             Geen deadlines
           </div>
         )}

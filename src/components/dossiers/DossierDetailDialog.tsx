@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTrigger } from '@/components/ui/dialog';
-import { FileText } from 'lucide-react';
 import { useDossierStatusUpdates } from '@/hooks/useDossierStatusUpdates';
 import { useDossierDeadlines } from '@/hooks/useDossierDeadlines';
 import { DossierDetailHeader } from './DossierDetailHeader';
@@ -43,7 +42,7 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
+      <DialogContent className="max-w-7xl h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <DossierDetailHeader dossier={dossier} />
         </DialogHeader>
@@ -58,15 +57,7 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
           {/* Internal Notes */}
           <InternalNotes />
 
-          {/* Upcoming Deadlines */}
-          <DeadlinesSection 
-            deadlines={deadlines}
-            isLoading={deadlinesLoading}
-            showUpcoming={true}
-            title="Komende Deadlines"
-          />
-
-          {/* All Deadlines */}
+          {/* Deadlines */}
           <DeadlinesSection 
             deadlines={deadlines}
             isLoading={deadlinesLoading}
