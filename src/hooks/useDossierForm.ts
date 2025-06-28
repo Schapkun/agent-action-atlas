@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +11,7 @@ interface DossierFormData {
   client_name?: string;
   priority: string;
   status?: string;
+  // Deze velden worden NIET naar database verstuurd, alleen voor UI
   start_date?: string;
   end_date?: string;
   deadline_date?: string;
@@ -135,7 +135,7 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
 
     setLoading(true);
     try {
-      // Create the complete dossier data - only include fields that exist in database
+      // ALLEEN de velden versturen die in de database bestaan
       const dossierData = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
@@ -145,21 +145,10 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         priority: formData.priority,
         status: formData.status || 'active',
         organization_id: selectedOrganization.id,
-        workspace_id: selectedWorkspace?.id || null,
-        start_date: formData.start_date || null,
-        end_date: formData.end_date || null,
-        deadline_date: formData.deadline_date || null,
-        deadline_description: formData.deadline_description?.trim() || null,
-        case_type: formData.case_type || null,
-        court_instance: formData.court_instance?.trim() || null,
-        legal_status: formData.legal_status || null,
-        estimated_hours: formData.estimated_hours || null,
-        hourly_rate: formData.hourly_rate || null,
-        intake_notes: formData.intake_notes?.trim() || null,
-        procedure_type: formData.procedure_type || null
+        workspace_id: selectedWorkspace?.id || null
       };
 
-      console.log('📝 Submitting dossier data:', dossierData);
+      console.log('📝 Submitting dossier data (only existing DB fields):', dossierData);
 
       if (editMode && editDossier) {
         // Update existing dossier
