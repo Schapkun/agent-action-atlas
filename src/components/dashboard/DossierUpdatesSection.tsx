@@ -1,20 +1,20 @@
 
-import React from 'react';
-import { Clock, Calendar, AlertCircle, Edit, Trash2, FileText } from 'lucide-react';
+import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Clock, Edit, Trash2, Calendar } from 'lucide-react';
 import { useDossierStatusUpdates } from '@/hooks/useDossierStatusUpdates';
 import { useDossierDeadlines } from '@/hooks/useDossierDeadlines';
-import { useOrganizationSettings } from '@/hooks/useOrganizationSettings';
-import { EditDeadlineDialog } from '@/components/dossiers/EditDeadlineDialog';
 import { UPDATE_TYPE_LABELS } from '@/types/dossierStatusUpdates';
+import { EditDeadlineDialog } from '@/components/dossiers/EditDeadlineDialog';
+import { useOrganizationSettings } from '@/hooks/useOrganizationSettings';
 
 interface DossierUpdatesSectionProps {
-  dossierId?: string;
+  dossierId: string;
 }
 
 export const DossierUpdatesSection = ({ dossierId }: DossierUpdatesSectionProps) => {
-  const { statusUpdates, isLoading: statusLoading } = useDossierStatusUpdates(dossierId);
+  const { statusUpdates, isLoading: updatesLoading } = useDossierStatusUpdates(dossierId);
   const { deadlines, isLoading: deadlinesLoading } = useDossierDeadlines(dossierId);
   const { settings } = useOrganizationSettings();
 
@@ -28,15 +28,6 @@ export const DossierUpdatesSection = ({ dossierId }: DossierUpdatesSectionProps)
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'completed': return 'bg-green-100 text-green-800 border-green-200';
-      case 'overdue': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
   const getPriorityLabel = (priority: string) => {
     switch (priority) {
       case 'low': return 'Laag';
@@ -44,15 +35,6 @@ export const DossierUpdatesSection = ({ dossierId }: DossierUpdatesSectionProps)
       case 'high': return 'Hoog';
       case 'urgent': return 'Urgent';
       default: return priority;
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'pending': return 'In behandeling';
-      case 'completed': return 'Voltooid';
-      case 'overdue': return 'Verlopen';
-      default: return status;
     }
   };
 
@@ -71,16 +53,7 @@ export const DossierUpdatesSection = ({ dossierId }: DossierUpdatesSectionProps)
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('nl-NL', {
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const formatDeadlineDate = (dateString: string) => {
+  const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('nl-NL', {
       day: 'numeric',
       month: 'short',
@@ -90,174 +63,100 @@ export const DossierUpdatesSection = ({ dossierId }: DossierUpdatesSectionProps)
     });
   };
 
-  // Mock documents data (would normally come from API)
-  const mockDocuments = [
-    {
-      id: '1',
-      name: 'Leveringscontract Biologisch Meel Q1-Q2 2025',
-      type: 'Contract',
-      size: '245 KB',
-      uploadDate: 'Gisteren 16:45',
-      uploadedBy: 'Marie van der Berg'
-    },
-    {
-      id: '2',
-      name: 'Intake Notities - Eerste Gesprek',
-      type: 'Notitie',
-      size: '89 KB',
-      uploadDate: '1 week geleden',
-      uploadedBy: 'Marie van der Berg'
-    }
-  ];
+  const formatDeadlineDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('nl-NL', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
-  // Combine and sort all updates
-  const allUpdates = [
+  // Combine and sort all items by date
+  const allItems = [
     ...statusUpdates.map(update => ({
-      id: update.id,
+      ...update,
       type: 'status_update' as const,
-      title: update.status_title,
-      description: update.status_description,
-      date: update.created_at,
-      priority: update.priority,
-      update_type: update.update_type,
-      hours_spent: update.hours_spent,
-      is_billable: update.is_billable,
-      dossier_id: update.dossier_id
+      date: update.created_at
     })),
     ...deadlines.map(deadline => ({
-      id: deadline.id,
+      ...deadline,
       type: 'deadline' as const,
-      title: deadline.title,
-      description: deadline.description,
-      date: deadline.due_date,
-      createdDate: deadline.created_at,
-      priority: deadline.priority,
-      status: deadline.status,
-      dossier_id: deadline.dossier_id,
-      deadline: deadline
-    })),
-    ...mockDocuments.map(doc => ({
-      id: doc.id,
-      type: 'document' as const,
-      title: doc.name,
-      description: `${doc.type} • ${doc.size}`,
-      date: doc.uploadDate,
-      uploadedBy: doc.uploadedBy,
-      priority: 'medium' as const // Add default priority for documents
+      date: deadline.created_at
     }))
-  ].sort((a, b) => {
-    const dateA = a.type === 'deadline' ? new Date(a.createdDate || a.date) : new Date(a.date);
-    const dateB = b.type === 'deadline' ? new Date(b.createdDate || b.date) : new Date(b.date);
-    return dateB.getTime() - dateA.getTime();
-  });
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  if (statusLoading || deadlinesLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="animate-pulse space-y-3">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="bg-white rounded-lg p-4 border">
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-              <div className="h-3 bg-gray-100 rounded w-1/2"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+  if (updatesLoading || deadlinesLoading) {
+    return <div className="text-slate-600">Laden...</div>;
   }
 
-  if (allUpdates.length === 0) {
-    return (
-      <div className="text-center py-8 text-slate-500">
-        <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
-        <p>Geen recente activiteiten gevonden</p>
-      </div>
-    );
+  if (allItems.length === 0) {
+    return <div className="text-slate-600">Geen activiteiten gevonden</div>;
   }
 
   return (
     <div className="space-y-3">
-      {allUpdates.slice(0, 10).map((update) => (
-        <div key={`${update.type}-${update.id}`} className="bg-white rounded-lg p-4 border border-gray-200 hover:border-gray-300 transition-colors">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3 flex-1">
-              <div className="bg-slate-100 p-2 rounded-lg">
-                {update.type === 'status_update' && <Clock className="h-4 w-4 text-blue-600" />}
-                {update.type === 'deadline' && <Calendar className="h-4 w-4 text-green-600" />}
-                {update.type === 'document' && <FileText className="h-4 w-4 text-purple-600" />}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-medium text-slate-900">{update.title}</h4>
-                  <Badge variant="outline" className={getPriorityColor(update.priority)}>
-                    {getPriorityLabel(update.priority)}
-                  </Badge>
-                  {update.type === 'deadline' && 'status' in update && (
-                    <Badge variant="outline" className={getStatusColor(update.status!)}>
-                      {getStatusLabel(update.status!)}
-                    </Badge>
-                  )}
-                </div>
-                
-                {update.type === 'status_update' && 'update_type' in update && (
-                  <div className="text-sm text-slate-600 mb-1">
-                    <span className="font-medium">
-                      {UPDATE_TYPE_LABELS[update.update_type as keyof typeof UPDATE_TYPE_LABELS] || update.update_type}
-                    </span>
-                    {'hours_spent' in update && update.hours_spent > 0 && (
-                      <span className="ml-2">
-                        • {update.hours_spent}h {'is_billable' in update && update.is_billable ? '(factureerbaar)' : '(niet factureerbaar)'}
-                      </span>
-                    )}
-                  </div>
-                )}
-                
-                {update.type === 'deadline' && (
-                  <div className="text-sm text-slate-600 mb-1">
-                    <span className="font-medium">Deadline</span>
-                  </div>
-                )}
-
-                {update.type === 'document' && 'uploadedBy' in update && update.uploadedBy && (
-                  <div className="text-sm text-slate-600 mb-1">
-                    <span className="font-medium">Document geüpload door {update.uploadedBy}</span>
-                  </div>
-                )}
-                
-                {update.description && (
-                  <p className="text-sm text-slate-700 mb-2">{update.description}</p>
-                )}
-
-                <div className="flex items-center gap-2">
-                  {(update.type === 'status_update' || update.type === 'document') && (
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-600 hover:text-blue-600">
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                  )}
-                  
-                  {update.type === 'deadline' && 'deadline' in update && (
-                    <EditDeadlineDialog deadline={update.deadline!} />
-                  )}
-
-                  {update.type !== 'deadline' && (
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-600 hover:text-red-600">
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-              </div>
+      {allItems.slice(0, 10).map((item, index) => (
+        <div key={`${item.type}-${item.id}-${index}`} className="flex items-start justify-between p-3 bg-slate-50 rounded-lg">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <div className="bg-white p-2 rounded-lg flex-shrink-0">
+              {item.type === 'status_update' ? (
+                <Clock className="h-4 w-4 text-blue-600" />
+              ) : (
+                <Calendar className="h-4 w-4 text-orange-600" />
+              )}
             </div>
-            
-            <div className="text-right text-sm">
-              <div className="text-slate-500">
-                {update.type === 'deadline' && 'createdDate' in update ? formatDate(update.createdDate || update.date) : (
-                  update.type === 'document' ? update.date : formatDate(update.date)
-                )}
-              </div>
-              {update.type === 'deadline' && (
-                <div className={`font-medium ${getDeadlineColor(update.date)}`}>
-                  Vervalt: {formatDeadlineDate(update.date)}
-                </div>
+            <div className="flex-1 min-w-0">
+              {item.type === 'status_update' ? (
+                <>
+                  <p className="font-medium text-slate-900 truncate">{item.status_title}</p>
+                  <p className="text-slate-600 mb-1">
+                    Type: {UPDATE_TYPE_LABELS[item.update_type] || item.update_type}
+                  </p>
+                  {item.status_description && (
+                    <p className="text-slate-700 line-clamp-2">{item.status_description}</p>
+                  )}
+                  {item.hours_spent > 0 && (
+                    <p className="text-slate-500 mt-1">
+                      {item.hours_spent}h besteed {item.is_billable ? '(factureerbaar)' : '(niet factureerbaar)'}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className={`font-medium ${getDeadlineColor(item.due_date)}`}>
+                    {formatDeadlineDateTime(item.due_date)}
+                  </p>
+                  <p className="font-medium text-slate-900">{item.title}</p>
+                  {item.description && (
+                    <p className="text-slate-700 line-clamp-1">{item.description}</p>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-4 ml-4 flex-shrink-0">
+            <div className="text-right">
+              <span className="text-slate-500 block">
+                {formatDateTime(item.date)}
+              </span>
+              <Badge variant="outline" className={`mt-1 ${getPriorityColor(item.priority)}`}>
+                {getPriorityLabel(item.priority)}
+              </Badge>
+            </div>
+            <div className="flex gap-1">
+              {item.type === 'deadline' ? (
+                <EditDeadlineDialog deadline={item} />
+              ) : (
+                <>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-600 hover:text-blue-600">
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-600 hover:text-red-600">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
               )}
             </div>
           </div>

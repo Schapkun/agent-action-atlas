@@ -94,8 +94,8 @@ export const DossierDetailHeader = ({ dossier }: DossierDetailHeaderProps) => {
           dossierId={dossier.id}
           clientName={dossier.client_name || dossier.client?.name}
         >
-          <Button size="sm" variant="outline" className="px-2 py-1 h-8">
-            <Plus className="h-4 w-4 mr-1" />
+          <Button variant="outline">
+            <Plus className="h-4 w-4 mr-2" />
             Status Update
           </Button>
         </AddStatusUpdateDialog>
@@ -103,8 +103,8 @@ export const DossierDetailHeader = ({ dossier }: DossierDetailHeaderProps) => {
           dossierId={dossier.id}
           clientName={dossier.client_name || dossier.client?.name}
         >
-          <Button size="sm" variant="outline" className="px-2 py-1 h-8">
-            <Plus className="h-4 w-4 mr-1" />
+          <Button variant="outline">
+            <Plus className="h-4 w-4 mr-2" />
             Deadline
           </Button>
         </AddDeadlineDialog>

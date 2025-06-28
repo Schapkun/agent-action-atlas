@@ -231,9 +231,13 @@ export const ActiveDossiers = () => {
               </div>
 
               {/* Updates Section */}
-              <div className="bg-white rounded-lg border border-slate-200 p-6">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">Recente activiteiten</h3>
-                <DossierUpdatesSection dossierId={selectedDossier.id} />
+              <div className="bg-white rounded-lg border border-slate-200">
+                <div className="p-6 border-b">
+                  <h3 className="text-lg font-semibold text-slate-900">Recente activiteiten</h3>
+                </div>
+                <div className="p-6">
+                  <DossierUpdatesSection dossierId={selectedDossier.id} />
+                </div>
               </div>
             </>
           ) : (
