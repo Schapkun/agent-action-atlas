@@ -3,7 +3,7 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Scale, Euro } from 'lucide-react';
+import { Scale } from 'lucide-react';
 
 interface LegalDetailsSectionProps {
   formData: {
@@ -12,7 +12,6 @@ interface LegalDetailsSectionProps {
     legal_status?: string;
     estimated_hours?: string;
     hourly_rate?: string;
-    budget?: string;
   };
   updateFormData: (updates: any) => void;
 }
@@ -88,24 +87,6 @@ export const LegalDetailsSection = ({ formData, updateFormData }: LegalDetailsSe
               <SelectItem value="afgerond">Afgerond</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-
-        <div>
-          <Label htmlFor="budget" className="text-sm font-medium text-slate-700 mb-2 block">
-            Budget (€)
-          </Label>
-          <div className="relative">
-            <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              id="budget"
-              type="number"
-              step="0.01"
-              value={formData.budget || ''}
-              onChange={(e) => updateFormData({ budget: e.target.value })}
-              placeholder="0.00"
-              className="pl-10 text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
-            />
-          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">

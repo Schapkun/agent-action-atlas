@@ -17,7 +17,6 @@ interface DossierFormData {
   end_date?: string;
   deadline_date?: string;
   deadline_description?: string;
-  budget?: string;
   case_type?: string;
   court_instance?: string;
   legal_status?: string;
@@ -48,7 +47,6 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
     end_date: '',
     deadline_date: '',
     deadline_description: '',
-    budget: '',
     case_type: '',
     court_instance: '',
     legal_status: '',
@@ -83,7 +81,6 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
       end_date: '',
       deadline_date: '',
       deadline_description: '',
-      budget: '',
       case_type: '',
       court_instance: '',
       legal_status: '',
@@ -113,7 +110,6 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         end_date: dossier.end_date || '',
         deadline_date: dossier.deadline_date || '',
         deadline_description: dossier.deadline_description || '',
-        budget: dossier.budget || '',
         case_type: dossier.case_type || '',
         court_instance: dossier.court_instance || '',
         legal_status: dossier.legal_status || '',
@@ -151,7 +147,7 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
 
     setLoading(true);
     try {
-      // Create the complete dossier data without billing_type field
+      // Create the complete dossier data - removed budget field completely
       const dossierData = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
@@ -162,13 +158,11 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         status: formData.status || 'active',
         organization_id: selectedOrganization.id,
         workspace_id: selectedWorkspace?.id || null,
-        // Additional fields that need to be saved (removed billing_type)
         responsible_user_id: formData.responsible_user_id || null,
         start_date: formData.start_date || null,
         end_date: formData.end_date || null,
         deadline_date: formData.deadline_date || null,
         deadline_description: formData.deadline_description?.trim() || null,
-        budget: formData.budget || null,
         case_type: formData.case_type || null,
         court_instance: formData.court_instance?.trim() || null,
         legal_status: formData.legal_status || null,

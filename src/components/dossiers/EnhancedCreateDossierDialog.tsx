@@ -62,8 +62,8 @@ export const EnhancedCreateDossierDialog = ({
         )}
       </DialogTrigger>
       <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col bg-white">
-        {/* Sticky Header - Reduced padding */}
-        <div className="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 py-4">
+        {/* Sticky Header - Minimal padding */}
+        <div className="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 py-2">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -107,25 +107,27 @@ export const EnhancedCreateDossierDialog = ({
           </DialogHeader>
         </div>
         
-        {/* Scrollable Content - White background with grey sections */}
+        {/* Scrollable Content - White background */}
         <div className="flex-1 overflow-y-auto bg-white">
-          <form onSubmit={handleSubmit} className="space-y-6 p-6 bg-slate-50">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Left Column */}
-              <div className="space-y-6">
-                <ClientSection formData={formData} updateFormData={updateFormData} />
-                <BasicInfoSection formData={formData} updateFormData={updateFormData} />
-                <LegalDetailsSection formData={formData} updateFormData={updateFormData} />
-              </div>
+          <div className="p-6 bg-slate-50">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Left Column */}
+                <div className="space-y-6">
+                  <ClientSection formData={formData} updateFormData={updateFormData} />
+                  <BasicInfoSection formData={formData} updateFormData={updateFormData} />
+                  <LegalDetailsSection formData={formData} updateFormData={updateFormData} />
+                </div>
 
-              {/* Right Column */}
-              <div className="space-y-6">
-                <PlanningSection formData={formData} updateFormData={updateFormData} />
-                <ProcedureSection formData={formData} updateFormData={updateFormData} />
-                <NotesSection formData={formData} updateFormData={updateFormData} />
+                {/* Right Column */}
+                <div className="space-y-6">
+                  <PlanningSection formData={formData} updateFormData={updateFormData} />
+                  <ProcedureSection formData={formData} updateFormData={updateFormData} />
+                  <NotesSection formData={formData} updateFormData={updateFormData} />
+                </div>
               </div>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
