@@ -62,55 +62,55 @@ export const ClientInformation = ({ clientName }: ClientInformationProps) => {
       {isEditing ? (
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <Label className="text-xs font-medium text-slate-700 mb-0.5">Naam</Label>
+            <Label className="text-sm font-medium text-slate-700 mb-0.5">Naam</Label>
             <Input 
               value={editData.name} 
               onChange={(e) => setEditData({...editData, name: e.target.value})}
-              className="h-6 text-xs"
+              className="h-6 text-sm"
             />
           </div>
           <div>
-            <Label className="text-xs font-medium text-slate-700 mb-0.5">Telefoon</Label>
+            <Label className="text-sm font-medium text-slate-700 mb-0.5">Telefoon</Label>
             <Input 
               value={editData.phone} 
               onChange={(e) => setEditData({...editData, phone: e.target.value})}
-              className="h-6 text-xs"
+              className="h-6 text-sm"
             />
           </div>
           <div>
-            <Label className="text-xs font-medium text-slate-700 mb-0.5">Adres</Label>
+            <Label className="text-sm font-medium text-slate-700 mb-0.5">Adres</Label>
             <Input 
               value={editData.address} 
               onChange={(e) => setEditData({...editData, address: e.target.value})}
-              className="h-6 text-xs"
+              className="h-6 text-sm"
             />
           </div>
           <div>
-            <Label className="text-xs font-medium text-slate-700 mb-0.5">E-mail</Label>
+            <Label className="text-sm font-medium text-slate-700 mb-0.5">E-mail</Label>
             <Input 
               value={editData.email} 
               onChange={(e) => setEditData({...editData, email: e.target.value})}
-              className="h-6 text-xs"
+              className="h-6 text-sm"
             />
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <p className="text-xs font-medium text-slate-700 mb-0.5">Naam</p>
-            <p className="text-xs text-slate-900">{editData.name}</p>
+            <p className="text-sm font-medium text-slate-700 mb-0.5">Naam</p>
+            <p className="text-sm text-slate-900">{editData.name}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-700 mb-0.5">Telefoon</p>
-            <p className="text-xs text-slate-900">{editData.phone}</p>
+            <p className="text-sm font-medium text-slate-700 mb-0.5">Telefoon</p>
+            <p className="text-sm text-slate-900">{editData.phone}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-700 mb-0.5">Adres</p>
-            <p className="text-xs text-slate-900">{editData.address}</p>
+            <p className="text-sm font-medium text-slate-700 mb-0.5">Adres</p>
+            <p className="text-sm text-slate-900">{editData.address}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-700 mb-0.5">E-mail</p>
-            <p className="text-xs text-slate-900">{editData.email}</p>
+            <p className="text-sm font-medium text-slate-700 mb-0.5">E-mail</p>
+            <p className="text-sm text-slate-900">{editData.email}</p>
           </div>
         </div>
       )}

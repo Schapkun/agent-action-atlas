@@ -52,7 +52,7 @@ export const DossierMetrics = ({ nextDeadline }: DossierMetricsProps) => {
           <Clock className="h-4 w-4 text-slate-600" />
           <span className="text-sm font-medium text-slate-700">Uren</span>
         </div>
-        <div className="text-base font-semibold text-slate-900">
+        <div className="text-sm font-semibold text-slate-900">
           {mockData.hoursSpent}h
         </div>
         <div className="text-sm text-slate-600">
@@ -65,7 +65,7 @@ export const DossierMetrics = ({ nextDeadline }: DossierMetricsProps) => {
           <Euro className="h-4 w-4 text-slate-600" />
           <span className="text-sm font-medium text-slate-700">Waarde</span>
         </div>
-        <div className="text-base font-semibold text-slate-900">
+        <div className="text-sm font-semibold text-slate-900">
           €{mockData.totalValue.toLocaleString()}
         </div>
         <div className="text-sm text-slate-600">

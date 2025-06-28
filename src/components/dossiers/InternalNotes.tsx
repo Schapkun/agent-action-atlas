@@ -51,11 +51,11 @@ export const InternalNotes = () => {
         <Textarea
           value={tempNotes}
           onChange={(e) => setTempNotes(e.target.value)}
-          className="text-xs min-h-[60px] resize-none"
+          className="text-sm min-h-[60px] resize-none"
           placeholder="Voeg interne notities toe..."
         />
       ) : (
-        <p className="text-xs text-slate-700">{notes}</p>
+        <p className="text-sm text-slate-700">{notes}</p>
       )}
     </div>
   );

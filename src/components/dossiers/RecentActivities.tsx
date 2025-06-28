@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -55,8 +54,7 @@ export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesP
     setActivities(prev => prev.filter(activity => activity.id !== activityId));
     toast({
       title: "Activiteit verwijderd",
-      description: "De activiteit is succesvol verwijderd.",
-      variant: "destructive"
+      description: "De activiteit is succesvol verwijderd."
     });
   };
 
@@ -98,7 +96,7 @@ export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesP
         <div className="flex items-center justify-between mb-1">
           <h3 className="text-sm font-semibold text-slate-900">Recente activiteiten</h3>
         </div>
-        <div className="text-xs text-slate-600">Activiteiten laden...</div>
+        <div className="text-sm text-slate-600">Activiteiten laden...</div>
       </div>
     );
   }
@@ -109,7 +107,7 @@ export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesP
         <div className="flex items-center justify-between mb-1">
           <h3 className="text-sm font-semibold text-slate-900">Recente activiteiten</h3>
         </div>
-        <div className="text-xs text-slate-600">Geen activiteiten gevonden</div>
+        <div className="text-sm text-slate-600">Geen activiteiten gevonden</div>
       </div>
     );
   }
@@ -132,27 +130,27 @@ export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesP
                     <Input
                       value={editData.title}
                       onChange={(e) => setEditData({...editData, title: e.target.value})}
-                      className="text-xs h-6 font-medium"
+                      className="text-sm h-6 font-medium"
                       placeholder="Titel"
                     />
                     <Textarea
                       value={editData.description}
                       onChange={(e) => setEditData({...editData, description: e.target.value})}
-                      className="text-xs min-h-[40px] resize-none"
+                      className="text-sm min-h-[40px] resize-none"
                       placeholder="Beschrijving"
                     />
                   </div>
                 ) : (
                   <>
-                    <p className="text-xs font-medium text-slate-900 truncate">{activity.status_title}</p>
-                    <p className="text-xs text-slate-600 mb-0.5">
+                    <p className="text-sm font-medium text-slate-900 truncate">{activity.status_title}</p>
+                    <p className="text-sm text-slate-600 mb-0.5">
                       Type: {UPDATE_TYPE_LABELS[activity.update_type] || activity.update_type}
                     </p>
                     {activity.status_description && (
-                      <p className="text-xs text-slate-700 line-clamp-2">{activity.status_description}</p>
+                      <p className="text-sm text-slate-700 line-clamp-2">{activity.status_description}</p>
                     )}
                     {activity.hours_spent > 0 && (
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-sm text-slate-500 mt-0.5">
                         {activity.hours_spent}h besteed {activity.is_billable ? '(factureerbaar)' : '(niet factureerbaar)'}
                       </p>
                     )}
@@ -162,10 +160,10 @@ export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesP
             </div>
             <div className="flex items-start gap-6 flex-shrink-0 ml-4">
               <div className="text-right">
-                <span className="text-xs text-slate-500 block">
+                <span className="text-sm text-slate-500 block">
                   {formatDateTime(activity.created_at)}
                 </span>
-                <Badge variant="outline" className={`text-xs mt-0.5 ${getPriorityColor(activity.priority)}`}>
+                <Badge variant="outline" className={`text-sm mt-0.5 ${getPriorityColor(activity.priority)}`}>
                   {getPriorityLabel(activity.priority)}
                 </Badge>
               </div>

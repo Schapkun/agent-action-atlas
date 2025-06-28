@@ -89,7 +89,7 @@ export const DeadlinesSection = ({
             {title}
           </h3>
         </div>
-        <div className="text-xs text-slate-600">Deadlines laden...</div>
+        <div className="text-sm text-slate-600">Deadlines laden...</div>
       </div>
     );
   }
@@ -103,7 +103,7 @@ export const DeadlinesSection = ({
             {title}
           </h3>
         </div>
-        <div className="text-xs text-slate-600">
+        <div className="text-sm text-slate-600">
           {showUpcoming ? "Geen komende deadlines" : "Geen deadlines gevonden"}
         </div>
       </div>
@@ -122,21 +122,21 @@ export const DeadlinesSection = ({
         {displayDeadlines.map((deadline) => (
           <div key={deadline.id} className="flex items-center justify-between p-1.5 bg-white rounded-lg border">
             <div className="flex-1 min-w-0">
-              <p className={`text-xs font-medium ${getDeadlineColor(deadline.due_date)}`}>
+              <p className={`text-sm font-medium ${getDeadlineColor(deadline.due_date)}`}>
                 {formatDeadlineDateTime(deadline.due_date)}
               </p>
-              <p className="text-xs font-medium text-slate-900">{deadline.title}</p>
+              <p className="text-sm font-medium text-slate-900">{deadline.title}</p>
               {deadline.description && (
-                <p className="text-xs text-slate-700 line-clamp-1">{deadline.description}</p>
+                <p className="text-sm text-slate-700 line-clamp-1">{deadline.description}</p>
               )}
             </div>
             <div className="flex items-center gap-4 ml-4 flex-shrink-0">
               {!showUpcoming && (
-                <span className="text-xs text-slate-500">
+                <span className="text-sm text-slate-500">
                   {formatDateTime(deadline.created_at)}
                 </span>
               )}
-              <Badge variant="outline" className={`text-xs ${getPriorityColor(deadline.priority)}`}>
+              <Badge variant="outline" className={`text-sm ${getPriorityColor(deadline.priority)}`}>
                 {getPriorityLabel(deadline.priority)}
               </Badge>
               <EditDeadlineDialog deadline={deadline} />
