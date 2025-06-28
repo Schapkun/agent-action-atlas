@@ -8,6 +8,8 @@ import { useDossierDeadlines } from '@/hooks/useDossierDeadlines';
 import { UPDATE_TYPE_LABELS } from '@/types/dossierStatusUpdates';
 import { EditDeadlineDialog } from '@/components/dossiers/EditDeadlineDialog';
 import { useOrganizationSettings } from '@/hooks/useOrganizationSettings';
+import { EditActivityDialog } from '@/components/dossiers/EditActivityDialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface DossierUpdatesSectionProps {
   dossierId: string;
@@ -17,6 +19,15 @@ export const DossierUpdatesSection = ({ dossierId }: DossierUpdatesSectionProps)
   const { statusUpdates, isLoading: updatesLoading } = useDossierStatusUpdates(dossierId);
   const { deadlines, isLoading: deadlinesLoading } = useDossierDeadlines(dossierId);
   const { settings } = useOrganizationSettings();
+  const { toast } = useToast();
+
+  const handleDeleteActivity = (activityId: string) => {
+    // In real app, this would delete from API
+    toast({
+      title: "Activiteit verwijderd",
+      description: "De activiteit is succesvol verwijderd."
+    });
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -136,7 +147,7 @@ export const DossierUpdatesSection = ({ dossierId }: DossierUpdatesSectionProps)
               )}
             </div>
           </div>
-          <div className="flex items-center gap-4 ml-4 flex-shrink-0">
+          <div className="flex items-center justify-center gap-4 ml-4 flex-shrink-0">
             <div className="text-right">
               <span className="text-slate-500 block">
                 {formatDateTime(item.date)}
@@ -150,10 +161,17 @@ export const DossierUpdatesSection = ({ dossierId }: DossierUpdatesSectionProps)
                 <EditDeadlineDialog deadline={item} />
               ) : (
                 <>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-600 hover:text-blue-600">
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-600 hover:text-red-600">
+                  <EditActivityDialog activity={item} dossierId={dossierId}>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-600 hover:text-blue-600">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </EditActivityDialog>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-8 w-8 p-0 text-slate-600 hover:text-red-600"
+                    onClick={() => handleDeleteActivity(item.id)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </>

@@ -12,9 +12,10 @@ export const DossierTabs = ({ children }: DossierTabsProps) => {
   return (
     <div className="flex-1 overflow-hidden">
       <Tabs defaultValue="overzicht" className="h-full flex flex-col">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overzicht">Overzicht</TabsTrigger>
           <TabsTrigger value="financieel">Financieel</TabsTrigger>
+          <TabsTrigger value="documenten">Documenten</TabsTrigger>
         </TabsList>
         
         <div className="flex-1 overflow-y-auto">
@@ -47,6 +48,15 @@ export const DossierTabs = ({ children }: DossierTabsProps) => {
                     <p className="text-slate-900">14.5h</p>
                   </div>
                 </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="documenten" className="mt-0 h-full">
+            <div className="p-4 space-y-4">
+              <div className="bg-slate-50 rounded-lg p-4">
+                <h3 className="font-semibold text-slate-900 mb-4">Documenten</h3>
+                <div className="text-slate-600">Geen documenten gevonden voor dit dossier.</div>
               </div>
             </div>
           </TabsContent>

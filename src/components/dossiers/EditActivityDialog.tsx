@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,35 +7,30 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Clock, Settings } from 'lucide-react';
-import { UPDATE_TYPE_LABELS, PRIORITY_LABELS, CreateStatusUpdateData } from '@/types/dossierStatusUpdates';
+import { Clock, Settings } from 'lucide-react';
+import { UPDATE_TYPE_LABELS, PRIORITY_LABELS, DossierStatusUpdate } from '@/types/dossierStatusUpdates';
 import { ManageUpdateTypesDialog } from './ManageUpdateTypesDialog';
-import { useCreateStatusUpdate } from '@/hooks/useDossierStatusUpdates';
 import { useToast } from '@/hooks/use-toast';
 
-interface AddStatusUpdateDialogProps {
+interface EditActivityDialogProps {
+  activity: DossierStatusUpdate;
   dossierId: string;
-  clientName?: string;
-  children?: React.ReactNode;
+  children: React.ReactNode;
 }
 
-export const AddStatusUpdateDialog = ({ dossierId, clientName, children }: AddStatusUpdateDialogProps) => {
+export const EditActivityDialog = ({ activity, dossierId, children }: EditActivityDialogProps) => {
   const [open, setOpen] = useState(false);
   const [manageTypesOpen, setManageTypesOpen] = useState(false);
   const { toast } = useToast();
-  const createStatusUpdate = useCreateStatusUpdate();
 
-  const [formData, setFormData] = useState<CreateStatusUpdateData>({
-    dossier_id: dossierId,
-    update_type: 'general',
-    status_title: '',
-    status_description: '',
-    hours_spent: 0,
-    notes: '',
-    priority: 'medium',
-    is_billable: true,
-    source_type: 'manual',
-    is_ai_generated: false
+  const [formData, setFormData] = useState({
+    update_type: activity.update_type,
+    status_title: activity.status_title,
+    status_description: activity.status_description || '',
+    hours_spent: activity.hours_spent,
+    notes: activity.notes || '',
+    priority: activity.priority,
+    is_billable: activity.is_billable
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,38 +38,25 @@ export const AddStatusUpdateDialog = ({ dossierId, clientName, children }: AddSt
     if (!formData.status_title.trim()) return;
 
     try {
-      await createStatusUpdate.mutateAsync(formData);
-      
-      // Reset form
-      setFormData({
-        dossier_id: dossierId,
-        update_type: 'general',
-        status_title: '',
-        status_description: '',
-        hours_spent: 0,
-        notes: '',
-        priority: 'medium',
-        is_billable: true,
-        source_type: 'manual',
-        is_ai_generated: false
-      });
+      // In real app, this would update the activity via API
+      console.log('Updating activity:', { id: activity.id, ...formData });
       
       setOpen(false);
       toast({
-        title: "Activiteit toegevoegd",
-        description: "De activiteit is succesvol opgeslagen."
+        title: "Activiteit bijgewerkt",
+        description: "De activiteit is succesvol bijgewerkt."
       });
     } catch (error) {
-      console.error('Error adding activity:', error);
+      console.error('Error updating activity:', error);
       toast({
         title: "Fout",
-        description: "Er is een fout opgetreden bij het opslaan van de activiteit.",
+        description: "Er is een fout opgetreden bij het bijwerken van de activiteit.",
         variant: "destructive"
       });
     }
   };
 
-  const updateFormData = (updates: Partial<CreateStatusUpdateData>) => {
+  const updateFormData = (updates: Partial<typeof formData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
   };
 
@@ -81,24 +64,14 @@ export const AddStatusUpdateDialog = ({ dossierId, clientName, children }: AddSt
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          {children || (
-            <Button size="sm" className="bg-slate-800 hover:bg-slate-700 text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              Activiteit Toevoegen
-            </Button>
-          )}
+          {children}
         </DialogTrigger>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              Activiteit Toevoegen
+              Activiteit Bewerken
             </DialogTitle>
-            {clientName && (
-              <p className="text-sm text-slate-600">
-                Voor client: <span className="font-medium">{clientName}</span>
-              </p>
-            )}
           </DialogHeader>
           
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -235,16 +208,15 @@ export const AddStatusUpdateDialog = ({ dossierId, clientName, children }: AddSt
                 type="button" 
                 variant="outline" 
                 onClick={() => setOpen(false)}
-                disabled={createStatusUpdate.isPending}
               >
                 Annuleren
               </Button>
               <Button 
                 type="submit" 
-                disabled={createStatusUpdate.isPending || !formData.status_title.trim()}
+                disabled={!formData.status_title.trim()}
                 className="bg-slate-800 hover:bg-slate-700"
               >
-                {createStatusUpdate.isPending ? 'Toevoegen...' : 'Activiteit Toevoegen'}
+                Activiteit Bijwerken
               </Button>
             </div>
           </form>

@@ -43,7 +43,7 @@ export const ActiveDossiers = () => {
 
   const statusUpdateTypes = [
     { type: 'all', label: 'Alle items', icon: Folder, count: 0 },
-    { type: 'status_update', label: 'Status Updates', icon: Clock, count: 0 },
+    { type: 'status_update', label: 'Activiteiten', icon: Clock, count: 0 },
     { type: 'deadline', label: 'Deadlines', icon: Calendar, count: 0 }
   ];
 
@@ -195,22 +195,22 @@ export const ActiveDossiers = () => {
                       dossierId={selectedDossier.id}
                       clientName={selectedDossier.client_name || selectedDossier.client?.name}
                     >
-                      <Button variant="outline">
+                      <Button variant="outline" size="sm">
                         <Plus className="h-4 w-4 mr-2" />
-                        Status Update
+                        Activiteit
                       </Button>
                     </AddStatusUpdateDialog>
                     <AddDeadlineDialog
                       dossierId={selectedDossier.id}
                       clientName={selectedDossier.client_name || selectedDossier.client?.name}
                     >
-                      <Button variant="outline">
+                      <Button variant="outline" size="sm">
                         <Plus className="h-4 w-4 mr-2" />
                         Deadline
                       </Button>
                     </AddDeadlineDialog>
                     <DossierDetailDialog dossier={selectedDossier}>
-                      <Button variant="outline">
+                      <Button variant="outline" size="sm">
                         <Eye className="h-4 w-4 mr-2" />
                         Details
                       </Button>

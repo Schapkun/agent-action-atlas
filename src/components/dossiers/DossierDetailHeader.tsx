@@ -94,16 +94,16 @@ export const DossierDetailHeader = ({ dossier }: DossierDetailHeaderProps) => {
           dossierId={dossier.id}
           clientName={dossier.client_name || dossier.client?.name}
         >
-          <Button variant="outline">
+          <Button variant="outline" size="sm">
             <Plus className="h-4 w-4 mr-2" />
-            Status Update
+            Activiteit
           </Button>
         </AddStatusUpdateDialog>
         <AddDeadlineDialog
           dossierId={dossier.id}
           clientName={dossier.client_name || dossier.client?.name}
         >
-          <Button variant="outline">
+          <Button variant="outline" size="sm">
             <Plus className="h-4 w-4 mr-2" />
             Deadline
           </Button>
