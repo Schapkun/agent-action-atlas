@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +8,8 @@ import { useDossiers } from '@/hooks/useDossiers';
 import { EnhancedCreateDossierDialog } from '@/components/dossiers/EnhancedCreateDossierDialog';
 import { DossierDetailDialog } from '@/components/dossiers/DossierDetailDialog';
 import { DossierUpdatesSection } from '@/components/dashboard/DossierUpdatesSection';
+import { AddStatusUpdateDialog } from '@/components/dossiers/AddStatusUpdateDialog';
+import { AddDeadlineDialog } from '@/components/dossiers/AddDeadlineDialog';
 
 export const ActiveDossiers = () => {
   const { dossiers, loading, refreshDossiers } = useDossiers();
@@ -182,6 +185,24 @@ export const ActiveDossiers = () => {
                     </div>
                   </div>
                   <div className="flex gap-2">
+                    <AddStatusUpdateDialog 
+                      dossierId={selectedDossier.id}
+                      clientName={selectedDossier.client_name || selectedDossier.client?.name}
+                    >
+                      <Button variant="outline">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Status Update
+                      </Button>
+                    </AddStatusUpdateDialog>
+                    <AddDeadlineDialog
+                      dossierId={selectedDossier.id}
+                      clientName={selectedDossier.client_name || selectedDossier.client?.name}
+                    >
+                      <Button variant="outline">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Deadline
+                      </Button>
+                    </AddDeadlineDialog>
                     <DossierDetailDialog dossier={selectedDossier}>
                       <Button variant="outline">
                         <Eye className="h-4 w-4 mr-2" />

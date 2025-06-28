@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -160,6 +159,40 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
   const upcomingDeadlines = deadlines.filter(d => d.status === 'pending').slice(0, 3);
   const nextDeadline = upcomingDeadlines[0];
 
+  // Combine all activities for "Recente activiteiten" section
+  const allActivities = [
+    ...statusUpdates.map(update => ({
+      id: update.id,
+      type: 'status_update' as const,
+      title: update.status_title,
+      description: update.status_description,
+      date: update.created_at,
+      priority: update.priority,
+      update_type: update.update_type,
+      hours_spent: update.hours_spent,
+      is_billable: update.is_billable,
+      dossier_id: update.dossier_id
+    })),
+    ...deadlines.map(deadline => ({
+      id: deadline.id,
+      type: 'deadline' as const,
+      title: deadline.title,
+      description: deadline.description,
+      date: deadline.due_date,
+      priority: deadline.priority,
+      status: deadline.status,
+      dossier_id: deadline.dossier_id
+    })),
+    ...mockDossierDetails.documents.map(doc => ({
+      id: doc.id,
+      type: 'document' as const,
+      title: doc.name,
+      description: `${doc.type} • ${doc.size}`,
+      date: doc.uploadDate,
+      uploadedBy: doc.uploadedBy
+    }))
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -218,12 +251,11 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
 
             <Tabs defaultValue="overview" className="flex-1 flex flex-col">
               {/* Tab Navigation - Full Width */}
-              <TabsList className="grid w-full grid-cols-5 mb-4 flex-shrink-0">
+              <TabsList className="grid w-full grid-cols-4 mb-4 flex-shrink-0">
                 <TabsTrigger value="overview">Overzicht</TabsTrigger>
                 <TabsTrigger value="financial">Financieel</TabsTrigger>
                 <TabsTrigger value="communication">Communicatie</TabsTrigger>
                 <TabsTrigger value="documents">Documenten</TabsTrigger>
-                <TabsTrigger value="timeline">Tijdlijn</TabsTrigger>
               </TabsList>
 
               <div className="flex-1 overflow-y-auto">
@@ -318,6 +350,12 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                     </div>
                   </div>
 
+                  {/* Internal Notes - moved above Deadlines */}
+                  <div className="bg-slate-50 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Interne Notities</h3>
+                    <p className="text-slate-700">{mockDossierDetails.internalNotes}</p>
+                  </div>
+
                   {/* Upcoming Deadlines */}
                   <div className="bg-slate-50 rounded-lg p-6">
                     <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
@@ -345,6 +383,64 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                     )}
                   </div>
 
+                  {/* Recente Activiteiten - moved from Timeline tab */}
+                  <div className="bg-slate-50 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Recente Activiteiten</h3>
+                    {statusLoading || deadlinesLoading ? (
+                      <div className="text-sm text-slate-600">Activiteiten laden...</div>
+                    ) : allActivities.length > 0 ? (
+                      <div className="space-y-4">
+                        {allActivities.slice(0, 10).map((activity) => (
+                          <div key={`${activity.type}-${activity.id}`} className="flex items-start gap-4 p-4 bg-white rounded-lg">
+                            <div className="bg-slate-100 p-2 rounded-lg">
+                              {activity.type === 'status_update' && <Clock className="h-4 w-4 text-blue-600" />}
+                              {activity.type === 'deadline' && <Calendar className="h-4 w-4 text-green-600" />}
+                              {activity.type === 'document' && <FileText className="h-4 w-4 text-purple-600" />}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-medium text-slate-900">{activity.title}</p>
+                                  {activity.type === 'status_update' && (
+                                    <p className="text-sm text-slate-600 mb-1">
+                                      Type: {UPDATE_TYPE_LABELS[activity.update_type] || activity.update_type}
+                                    </p>
+                                  )}
+                                  {activity.type === 'deadline' && (
+                                    <p className="text-sm text-slate-600 mb-1">Deadline</p>
+                                  )}
+                                  {activity.type === 'document' && activity.uploadedBy && (
+                                    <p className="text-sm text-slate-600 mb-1">Geüpload door {activity.uploadedBy}</p>
+                                  )}
+                                  {activity.description && (
+                                    <p className="text-sm text-slate-700">{activity.description}</p>
+                                  )}
+                                  {activity.type === 'status_update' && activity.hours_spent > 0 && (
+                                    <p className="text-xs text-slate-500 mt-1">
+                                      {activity.hours_spent}h besteed {activity.is_billable ? '(factureerbaar)' : '(niet factureerbaar)'}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="text-right">
+                                  <span className="text-sm text-slate-500">
+                                    {activity.type === 'document' ? activity.date : formatDateTime(activity.date)}
+                                  </span>
+                                  {(activity.type === 'status_update' || activity.type === 'deadline') && (
+                                    <Badge variant="outline" className={`ml-2 ${getPriorityColor(activity.priority)}`}>
+                                      {getPriorityLabel(activity.priority)}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-slate-600">Geen activiteiten gevonden</div>
+                    )}
+                  </div>
+
                   {/* Description */}
                   {dossier.description && (
                     <div className="bg-slate-50 rounded-lg p-6">
@@ -355,12 +451,6 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                       <p className="text-slate-700 leading-relaxed">{dossier.description}</p>
                     </div>
                   )}
-
-                  {/* Internal Notes */}
-                  <div className="bg-slate-50 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Interne Notities</h3>
-                    <p className="text-slate-700">{mockDossierDetails.internalNotes}</p>
-                  </div>
                 </TabsContent>
 
                 <TabsContent value="financial" className="space-y-6 mt-0">
@@ -483,51 +573,6 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                         </div>
                       ))}
                     </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="timeline" className="space-y-6 mt-0">
-                  <div className="bg-slate-50 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Recente Activiteiten</h3>
-                    {statusLoading ? (
-                      <div className="text-sm text-slate-600">Activiteiten laden...</div>
-                    ) : statusUpdates.length > 0 ? (
-                      <div className="space-y-4">
-                        {statusUpdates.map((update) => (
-                          <div key={update.id} className="flex items-start gap-4 p-4 bg-white rounded-lg">
-                            <div className="bg-slate-100 p-2 rounded-lg">
-                              <Clock className="h-4 w-4 text-blue-600" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <p className="font-medium text-slate-900">{update.status_title}</p>
-                                  <p className="text-sm text-slate-600 mb-1">
-                                    Type: {UPDATE_TYPE_LABELS[update.update_type] || update.update_type}
-                                  </p>
-                                  {update.status_description && (
-                                    <p className="text-sm text-slate-700">{update.status_description}</p>
-                                  )}
-                                  {update.hours_spent > 0 && (
-                                    <p className="text-xs text-slate-500 mt-1">
-                                      {update.hours_spent}h besteed {update.is_billable ? '(factureerbaar)' : '(niet factureerbaar)'}
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="text-right">
-                                  <span className="text-sm text-slate-500">{formatDateTime(update.created_at)}</span>
-                                  <Badge variant="outline" className={`ml-2 ${getPriorityColor(update.priority)}`}>
-                                    {getPriorityLabel(update.priority)}
-                                  </Badge>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-sm text-slate-600">Geen activiteiten gevonden</div>
-                    )}
                   </div>
                 </TabsContent>
               </div>
