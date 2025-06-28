@@ -23,7 +23,6 @@ interface DossierFormData {
   legal_status?: string;
   estimated_hours?: string;
   hourly_rate?: string;
-  billing_type?: string;
   tags?: string;
   intake_notes?: string;
   procedure_type?: string;
@@ -55,7 +54,6 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
     legal_status: '',
     estimated_hours: '',
     hourly_rate: '',
-    billing_type: 'hourly',
     tags: '',
     intake_notes: '',
     procedure_type: '',
@@ -91,7 +89,6 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
       legal_status: '',
       estimated_hours: '',
       hourly_rate: '',
-      billing_type: 'hourly',
       tags: '',
       intake_notes: '',
       procedure_type: '',
@@ -122,7 +119,6 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         legal_status: dossier.legal_status || '',
         estimated_hours: dossier.estimated_hours || '',
         hourly_rate: dossier.hourly_rate || '',
-        billing_type: dossier.billing_type || 'hourly',
         tags: dossier.tags || '',
         intake_notes: dossier.intake_notes || '',
         procedure_type: dossier.procedure_type || '',
@@ -155,7 +151,7 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
 
     setLoading(true);
     try {
-      // Create the complete dossier data with all fields
+      // Create the complete dossier data without billing_type field
       const dossierData = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
@@ -166,7 +162,7 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         status: formData.status || 'active',
         organization_id: selectedOrganization.id,
         workspace_id: selectedWorkspace?.id || null,
-        // Additional fields that need to be saved
+        // Additional fields that need to be saved (removed billing_type)
         responsible_user_id: formData.responsible_user_id || null,
         start_date: formData.start_date || null,
         end_date: formData.end_date || null,
@@ -178,7 +174,6 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         legal_status: formData.legal_status || null,
         estimated_hours: formData.estimated_hours || null,
         hourly_rate: formData.hourly_rate || null,
-        billing_type: formData.billing_type || 'hourly',
         tags: formData.tags?.trim() || null,
         intake_notes: formData.intake_notes?.trim() || null,
         procedure_type: formData.procedure_type || null,

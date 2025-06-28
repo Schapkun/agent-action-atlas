@@ -12,7 +12,6 @@ interface LegalDetailsSectionProps {
     legal_status?: string;
     estimated_hours?: string;
     hourly_rate?: string;
-    billing_type?: string;
     budget?: string;
   };
   updateFormData: (updates: any) => void;
@@ -139,26 +138,6 @@ export const LegalDetailsSection = ({ formData, updateFormData }: LegalDetailsSe
               className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
             />
           </div>
-        </div>
-
-        <div>
-          <Label htmlFor="billing_type" className="text-sm font-medium text-slate-700 mb-2 block">
-            Facturatie Type
-          </Label>
-          <Select 
-            value={formData.billing_type || 'hourly'} 
-            onValueChange={(value) => updateFormData({ billing_type: value })}
-          >
-            <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
-              <SelectValue placeholder="Selecteer facturatie type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="hourly">Per Uur</SelectItem>
-              <SelectItem value="fixed">Vast Bedrag</SelectItem>
-              <SelectItem value="success">Succesfee</SelectItem>
-              <SelectItem value="combination">Combinatie</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
     </div>
