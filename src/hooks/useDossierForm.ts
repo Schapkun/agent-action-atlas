@@ -31,7 +31,7 @@ interface DossierFormData {
   case_phase?: string;
 }
 
-export const useDossierForm = (onSuccess?: () => void) => {
+export const useDossierForm = (onSuccess?: () => void, editMode = false, editDossier?: any) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
@@ -96,6 +96,37 @@ export const useDossierForm = (onSuccess?: () => void) => {
     });
   };
 
+  const initializeFormData = (dossier: any) => {
+    if (dossier) {
+      setFormData({
+        name: dossier.name || '',
+        description: dossier.description || '',
+        category: dossier.category || 'algemeen',
+        client_id: dossier.client_id || 'no_client',
+        client_name: dossier.client_name || '',
+        priority: dossier.priority || 'medium',
+        status: dossier.status || 'active',
+        reference: '',
+        responsible_user_id: '',
+        start_date: '',
+        end_date: '',
+        deadline_date: '',
+        deadline_description: '',
+        budget: '',
+        case_type: '',
+        court_instance: '',
+        legal_status: '',
+        estimated_hours: '',
+        hourly_rate: '',
+        billing_type: 'hourly',
+        tags: '',
+        intake_notes: '',
+        procedure_type: '',
+        case_phase: ''
+      });
+    }
+  };
+
   const submitForm = async () => {
     if (!selectedOrganization) {
       toast({
@@ -117,12 +148,6 @@ export const useDossierForm = (onSuccess?: () => void) => {
 
     setLoading(true);
     try {
-      console.log('📝 Creating dossier with data:', {
-        name: formData.name,
-        organization_id: selectedOrganization.id,
-        workspace_id: selectedWorkspace?.id
-      });
-
       const dossierData = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
@@ -135,29 +160,57 @@ export const useDossierForm = (onSuccess?: () => void) => {
         workspace_id: selectedWorkspace?.id || null
       };
 
-      const { data: dossier, error } = await supabase
-        .from('dossiers')
-        .insert(dossierData)
-        .select()
-        .single();
+      if (editMode && editDossier) {
+        // Update existing dossier
+        const { data: dossier, error } = await supabase
+          .from('dossiers')
+          .update(dossierData)
+          .eq('id', editDossier.id)
+          .select()
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
 
-      console.log('📝 Dossier created successfully:', dossier);
+        console.log('📝 Dossier updated successfully:', dossier);
 
-      toast({
-        title: "Dossier aangemaakt",
-        description: `Dossier "${formData.name}" is succesvol aangemaakt`
-      });
+        toast({
+          title: "Dossier bijgewerkt",
+          description: `Dossier "${formData.name}" is succesvol bijgewerkt`
+        });
+      } else {
+        // Create new dossier
+        console.log('📝 Creating dossier with data:', {
+          name: formData.name,
+          organization_id: selectedOrganization.id,
+          workspace_id: selectedWorkspace?.id
+        });
 
-      resetForm();
+        const { data: dossier, error } = await supabase
+          .from('dossiers')
+          .insert(dossierData)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        console.log('📝 Dossier created successfully:', dossier);
+
+        toast({
+          title: "Dossier aangemaakt",
+          description: `Dossier "${formData.name}" is succesvol aangemaakt`
+        });
+      }
+
+      if (!editMode) {
+        resetForm();
+      }
       onSuccess?.();
       return true;
     } catch (error) {
-      console.error('❌ Error creating dossier:', error);
+      console.error('❌ Error saving dossier:', error);
       toast({
-        title: "Fout bij aanmaken",
-        description: "Er is een fout opgetreden bij het aanmaken van het dossier",
+        title: editMode ? "Fout bij bijwerken" : "Fout bij aanmaken",
+        description: `Er is een fout opgetreden bij het ${editMode ? 'bijwerken' : 'aanmaken'} van het dossier`,
         variant: "destructive"
       });
       return false;
@@ -170,6 +223,7 @@ export const useDossierForm = (onSuccess?: () => void) => {
     formData,
     updateFormData,
     resetForm,
+    initializeFormData,
     submitForm,
     loading
   };
