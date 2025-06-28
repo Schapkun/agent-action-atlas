@@ -56,17 +56,27 @@ export const SettingsLayout = () => {
         </TabsContent>
         
         <TabsContent value="organization">
-          <div className="space-y-6">
-            <OrganizationSettings />
-            <div className="space-y-6">
-              <UserFilters 
-                users={users}
-                onUsersUpdate={handleUsersUpdate}
-                onUserRoleUpdate={handleUserRoleUpdate}
-              />
-              <UserList users={users} userRole={userRole || 'member'} />
-            </div>
-          </div>
+          <Tabs defaultValue="org-workspaces" className="w-full space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="org-workspaces">Organisaties & Werkruimtes</TabsTrigger>
+              <TabsTrigger value="users">Gebruikers</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="org-workspaces">
+              <OrganizationSettings />
+            </TabsContent>
+            
+            <TabsContent value="users">
+              <div className="space-y-6">
+                <UserFilters 
+                  users={users}
+                  onUsersUpdate={handleUsersUpdate}
+                  onUserRoleUpdate={handleUserRoleUpdate}
+                />
+                <UserList users={users} userRole={userRole || 'member'} />
+              </div>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
         
         <TabsContent value="email">
@@ -74,10 +84,20 @@ export const SettingsLayout = () => {
         </TabsContent>
         
         <TabsContent value="documents">
-          <div className="space-y-6">
-            <InvoiceSettings />
-            <DocumentSettings />
-          </div>
+          <Tabs defaultValue="documents" className="w-full space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="documents">Documenten</TabsTrigger>
+              <TabsTrigger value="invoicing">Facturatie</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="documents">
+              <DocumentSettings />
+            </TabsContent>
+            
+            <TabsContent value="invoicing">
+              <InvoiceSettings />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
         
         <TabsContent value="ai">
