@@ -6,13 +6,17 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 interface OrganizationSettings {
   default_footer_text: string;
   default_quote_footer_text: string;
+  deadline_red_hours: number;
+  deadline_orange_days: number;
 }
 
 export const useOrganizationSettings = () => {
   const { selectedOrganization } = useOrganization();
   const [settings, setSettings] = useState<OrganizationSettings>({
     default_footer_text: 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %INVOICE_NUMBER%',
-    default_quote_footer_text: 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %QUOTE_NUMBER%'
+    default_quote_footer_text: 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %QUOTE_NUMBER%',
+    deadline_red_hours: 48,
+    deadline_orange_days: 7
   });
   const [loading, setLoading] = useState(true);
 
@@ -25,7 +29,7 @@ export const useOrganizationSettings = () => {
     try {
       const { data, error } = await supabase
         .from('organization_settings')
-        .select('default_footer_text, default_quote_footer_text')
+        .select('default_footer_text, default_quote_footer_text, deadline_red_hours, deadline_orange_days')
         .eq('organization_id', selectedOrganization.id)
         .single();
 
@@ -36,7 +40,9 @@ export const useOrganizationSettings = () => {
       if (data) {
         setSettings({
           default_footer_text: data.default_footer_text || 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %INVOICE_NUMBER%',
-          default_quote_footer_text: data.default_quote_footer_text || 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %QUOTE_NUMBER%'
+          default_quote_footer_text: data.default_quote_footer_text || 'Betaling op rekening NL77 ABNA 0885 5296 34 op naam van debuitendoor.nl met omschrijving: %QUOTE_NUMBER%',
+          deadline_red_hours: data.deadline_red_hours || 48,
+          deadline_orange_days: data.deadline_orange_days || 7
         });
       }
     } catch (error) {

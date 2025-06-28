@@ -4,246 +4,228 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, Edit, Trash2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CalendarIcon, Edit, Trash2 } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { nl } from 'date-fns/locale';
+import { toast } from 'sonner';
 import { useUpdateDeadline, useDeleteDeadline, DossierDeadline } from '@/hooks/useDossierDeadlines';
-import { useToast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface EditDeadlineDialogProps {
   deadline: DossierDeadline;
   children?: React.ReactNode;
+  showEditButton?: boolean;
+  showDeleteButton?: boolean;
 }
 
-export const EditDeadlineDialog = ({ deadline, children }: EditDeadlineDialogProps) => {
+export const EditDeadlineDialog = ({ 
+  deadline, 
+  children, 
+  showEditButton = true, 
+  showDeleteButton = true 
+}: EditDeadlineDialogProps) => {
   const [open, setOpen] = useState(false);
-  const { toast } = useToast();
+  const [title, setTitle] = useState(deadline.title);
+  const [description, setDescription] = useState(deadline.description || '');
+  const [dueDate, setDueDate] = useState<Date>(new Date(deadline.due_date));
+  const [dueTime, setDueTime] = useState(() => {
+    const date = new Date(deadline.due_date);
+    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+  });
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>(deadline.priority);
+  const [status, setStatus] = useState<'pending' | 'completed' | 'overdue'>(deadline.status);
+
   const updateDeadline = useUpdateDeadline();
   const deleteDeadline = useDeleteDeadline();
 
-  const [formData, setFormData] = useState({
-    title: deadline.title,
-    description: deadline.description || '',
-    due_date: deadline.due_date,
-    priority: deadline.priority,
-    status: deadline.status
-  });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title.trim() || !formData.due_date) return;
+    
+    if (!title.trim()) {
+      toast.error('Titel is verplicht');
+      return;
+    }
 
     try {
+      // Combine date and time
+      const [hours, minutes] = dueTime.split(':');
+      const dueDateWithTime = new Date(dueDate);
+      dueDateWithTime.setHours(parseInt(hours), parseInt(minutes));
+
       await updateDeadline.mutateAsync({
         id: deadline.id,
-        ...formData
+        title: title.trim(),
+        description: description.trim() || undefined,
+        due_date: dueDateWithTime.toISOString(),
+        priority,
+        status,
       });
-      
+
+      toast.success('Deadline succesvol bijgewerkt');
       setOpen(false);
-      toast({
-        title: "Deadline bijgewerkt",
-        description: "De deadline is succesvol bijgewerkt."
-      });
     } catch (error) {
       console.error('Error updating deadline:', error);
-      toast({
-        title: "Fout",
-        description: "Er is een fout opgetreden bij het bijwerken van de deadline.",
-        variant: "destructive"
-      });
+      toast.error('Er is een fout opgetreden bij het bijwerken van de deadline');
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm('Weet je zeker dat je deze deadline wilt verwijderen?')) return;
-
     try {
       await deleteDeadline.mutateAsync(deadline.id);
-      setOpen(false);
-      toast({
-        title: "Deadline verwijderd",
-        description: "De deadline is succesvol verwijderd."
-      });
+      toast.success('Deadline succesvol verwijderd');
     } catch (error) {
       console.error('Error deleting deadline:', error);
-      toast({
-        title: "Fout",
-        description: "Er is een fout opgetreden bij het verwijderen van de deadline.",
-        variant: "destructive"
-      });
+      toast.error('Er is een fout opgetreden bij het verwijderen van de deadline');
     }
   };
 
-  const updateFormData = (updates: Partial<typeof formData>) => {
-    setFormData(prev => ({ ...prev, ...updates }));
-  };
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {children || (
-          <Button size="sm" variant="outline">
-            <Edit className="h-4 w-4 mr-2" />
-            Bewerken
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Deadline Bewerken
-          </DialogTitle>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="title" className="text-sm font-medium text-slate-700 mb-2 block">
-              Deadline Titel *
-            </Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => updateFormData({ title: e.target.value })}
-              placeholder="Wat moet er gedaan worden?"
-              required
-              className="text-sm"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="due_date" className="text-sm font-medium text-slate-700 mb-2 block">
-              Datum *
-            </Label>
-            <Input
-              id="due_date"
-              type="date"
-              value={formData.due_date}
-              onChange={(e) => updateFormData({ due_date: e.target.value })}
-              required
-              className="text-sm"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="status" className="text-sm font-medium text-slate-700 mb-2 block">
-              Status
-            </Label>
-            <Select 
-              value={formData.status} 
-              onValueChange={(value: any) => updateFormData({ status: value })}
-            >
-              <SelectTrigger className="text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                    <span>In behandeling</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="completed">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span>Voltooid</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="overdue">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                    <span>Verlopen</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="priority" className="text-sm font-medium text-slate-700 mb-2 block">
-              Prioriteit
-            </Label>
-            <Select 
-              value={formData.priority} 
-              onValueChange={(value: any) => updateFormData({ priority: value })}
-            >
-              <SelectTrigger className="text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="low">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span>Laag</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="medium">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                    <span>Normaal</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="high">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                    <span>Hoog</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="urgent">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                    <span>Urgent</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="description" className="text-sm font-medium text-slate-700 mb-2 block">
-              Beschrijving
-            </Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => updateFormData({ description: e.target.value })}
-              placeholder="Aanvullende details..."
-              rows={3}
-              className="text-sm"
-            />
-          </div>
-
-          <div className="flex justify-between pt-4">
-            <Button 
-              type="button" 
-              variant="destructive" 
-              onClick={handleDelete}
-              disabled={deleteDeadline.isPending}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              {deleteDeadline.isPending ? 'Verwijderen...' : 'Verwijderen'}
-            </Button>
+    <div className="flex gap-1">
+      {showEditButton && (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            {children || (
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-600 hover:text-blue-600">
+                <Edit className="h-3 w-3" />
+              </Button>
+            )}
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Deadline Bewerken</DialogTitle>
+            </DialogHeader>
             
-            <div className="flex gap-3">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setOpen(false)}
-                disabled={updateDeadline.isPending}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="title">Titel *</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="description">Beschrijving</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={3}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Vervaldatum *</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {format(dueDate, 'PPP', { locale: nl })}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={dueDate}
+                        onSelect={(date) => date && setDueDate(date)}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div>
+                  <Label htmlFor="dueTime">Tijd</Label>
+                  <Input
+                    id="dueTime"
+                    type="time"
+                    value={dueTime}
+                    onChange={(e) => setDueTime(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Prioriteit</Label>
+                  <Select value={priority} onValueChange={(value: 'low' | 'medium' | 'high' | 'urgent') => setPriority(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Laag</SelectItem>
+                      <SelectItem value="medium">Normaal</SelectItem>
+                      <SelectItem value="high">Hoog</SelectItem>
+                      <SelectItem value="urgent">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Status</Label>
+                  <Select value={status} onValueChange={(value: 'pending' | 'completed' | 'overdue') => setStatus(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">In behandeling</SelectItem>
+                      <SelectItem value="completed">Voltooid</SelectItem>
+                      <SelectItem value="overdue">Verlopen</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button type="submit" disabled={updateDeadline.isPending} className="flex-1">
+                  {updateDeadline.isPending ? 'Bijwerken...' : 'Bijwerken'}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                  Annuleren
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {showDeleteButton && (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-600 hover:text-red-600">
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Deadline verwijderen</AlertDialogTitle>
+              <AlertDialogDescription>
+                Weet je zeker dat je deze deadline wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuleren</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-red-600 hover:bg-red-700"
+                disabled={deleteDeadline.isPending}
               >
-                Annuleren
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={updateDeadline.isPending || !formData.title.trim() || !formData.due_date}
-                className="bg-slate-800 hover:bg-slate-700"
-              >
-                {updateDeadline.isPending ? 'Opslaan...' : 'Opslaan'}
-              </Button>
-            </div>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+                {deleteDeadline.isPending ? 'Verwijderen...' : 'Verwijderen'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </div>
   );
 };

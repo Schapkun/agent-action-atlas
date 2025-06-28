@@ -1,13 +1,16 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Scale, Calendar, Building2, FileText, AlertCircle, Clock, Euro, User, Mail, Phone, ExternalLink, Plus, Download, Edit } from 'lucide-react';
+import { Scale, Calendar, Building2, FileText, AlertCircle, Clock, Euro, User, Mail, Phone, ExternalLink, Plus, Download, Edit, Trash2 } from 'lucide-react';
 import { AddStatusUpdateDialog } from './AddStatusUpdateDialog';
 import { AddDeadlineDialog } from './AddDeadlineDialog';
+import { EditDeadlineDialog } from './EditDeadlineDialog';
 import { useDossierStatusUpdates } from '@/hooks/useDossierStatusUpdates';
 import { useDossierDeadlines } from '@/hooks/useDossierDeadlines';
+import { useOrganizationSettings } from '@/hooks/useOrganizationSettings';
 import { UPDATE_TYPE_LABELS } from '@/types/dossierStatusUpdates';
 
 interface DossierDetailDialogProps {
@@ -32,6 +35,7 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
   const [open, setOpen] = useState(false);
   const { statusUpdates, isLoading: statusLoading } = useDossierStatusUpdates(dossier.id);
   const { deadlines, isLoading: deadlinesLoading } = useDossierDeadlines(dossier.id);
+  const { settings } = useOrganizationSettings();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -73,6 +77,21 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
     }
   };
 
+  const getDeadlineColor = (dueDate: string) => {
+    const now = new Date();
+    const deadline = new Date(dueDate);
+    const diffInHours = (deadline.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const diffInDays = diffInHours / 24;
+
+    if (diffInHours <= settings.deadline_red_hours) {
+      return 'text-red-600';
+    } else if (diffInDays <= settings.deadline_orange_days) {
+      return 'text-orange-600';
+    } else {
+      return 'text-green-600';
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('nl-NL', {
       day: 'numeric',
@@ -82,6 +101,16 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
   };
 
   const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('nl-NL', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatDeadlineDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('nl-NL', {
       day: 'numeric',
       month: 'short',
@@ -108,8 +137,9 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
     assignedUser: 'Marie van der Berg',
     internalNotes: 'Cliënt wacht nog op aangepaste conceptovereenkomst',
     clientContact: {
-      email: 'marie@dekorenbloem.nl',
+      name: dossier.client_name || 'Onbekende Client',
       phone: '+31 6 12345678',
+      email: 'marie@dekorenbloem.nl',
       address: 'Hoofdstraat 123, 1234 AB Amsterdam'
     },
     documents: [
@@ -179,9 +209,11 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
       title: deadline.title,
       description: deadline.description,
       date: deadline.due_date,
+      createdDate: deadline.created_at,
       priority: deadline.priority,
       status: deadline.status,
-      dossier_id: deadline.dossier_id
+      dossier_id: deadline.dossier_id,
+      deadline: deadline
     })),
     ...mockDossierDetails.documents.map(doc => ({
       id: doc.id,
@@ -191,7 +223,11 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
       date: doc.uploadDate,
       uploadedBy: doc.uploadedBy
     }))
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  ].sort((a, b) => {
+    const dateA = a.type === 'deadline' ? new Date(a.createdDate || a.date) : new Date(a.date);
+    const dateB = b.type === 'deadline' ? new Date(b.createdDate || b.date) : new Date(b.date);
+    return dateB.getTime() - dateA.getTime();
+  });
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -200,35 +236,33 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
       </DialogTrigger>
       <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="bg-slate-800 rounded-lg p-2">
-              <Scale className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <DialogTitle className="text-xl font-semibold text-slate-900">{dossier.name}</DialogTitle>
-              <div className="flex items-center gap-2 mt-1">
-                <Badge variant="outline" className={getStatusColor(dossier.status)}>
-                  {getStatusLabel(dossier.status)}
-                </Badge>
-                {dossier.priority && (
-                  <Badge variant="outline" className={getPriorityColor(dossier.priority)}>
-                    {getPriorityLabel(dossier.priority)}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-slate-800 rounded-lg p-2">
+                <Scale className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-semibold text-slate-900">{dossier.name}</DialogTitle>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="outline" className={getStatusColor(dossier.status)}>
+                    {getStatusLabel(dossier.status)}
                   </Badge>
-                )}
-                {dossier.category && (
-                  <Badge variant="outline" className="text-xs capitalize">
-                    {dossier.category}
-                  </Badge>
-                )}
+                  {dossier.priority && (
+                    <Badge variant="outline" className={getPriorityColor(dossier.priority)}>
+                      {getPriorityLabel(dossier.priority)}
+                    </Badge>
+                  )}
+                  {dossier.category && (
+                    <Badge variant="outline" className="text-xs capitalize">
+                      {dossier.category}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </DialogHeader>
-        
-        <div className="flex-1 overflow-hidden">
-          <div className="h-full flex flex-col">
-            {/* Action Buttons - Above Tab Navigation */}
-            <div className="flex justify-end gap-2 mb-4 flex-shrink-0">
+            
+            {/* Action Buttons - Same line as title */}
+            <div className="flex gap-2">
               <AddStatusUpdateDialog 
                 dossierId={dossier.id}
                 clientName={dossier.client_name || dossier.client?.name}
@@ -248,14 +282,17 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                 </Button>
               </AddDeadlineDialog>
             </div>
-
+          </div>
+        </DialogHeader>
+        
+        <div className="flex-1 overflow-hidden mt-4">
+          <div className="h-full flex flex-col">
             <Tabs defaultValue="overview" className="flex-1 flex flex-col">
-              {/* Tab Navigation - Full Width */}
-              <TabsList className="grid w-full grid-cols-4 mb-4 flex-shrink-0">
+              {/* Tab Navigation */}
+              <TabsList className="grid w-full grid-cols-3 mb-4 flex-shrink-0">
                 <TabsTrigger value="overview">Overzicht</TabsTrigger>
-                <TabsTrigger value="financial">Financieel</TabsTrigger>
+                <TabsTrigger value="financial">Financieel & Documenten</TabsTrigger>
                 <TabsTrigger value="communication">Communicatie</TabsTrigger>
-                <TabsTrigger value="documents">Documenten</TabsTrigger>
               </TabsList>
 
               <div className="flex-1 overflow-y-auto">
@@ -309,7 +346,7 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                       </div>
                       {nextDeadline ? (
                         <>
-                          <div className="text-sm font-semibold text-orange-900">
+                          <div className={`text-sm font-semibold ${getDeadlineColor(nextDeadline.due_date)}`}>
                             {formatDate(nextDeadline.due_date)}
                           </div>
                           <div className="text-xs text-orange-600">
@@ -326,18 +363,19 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
 
                   {/* Client Information */}
                   <div className="bg-slate-50 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                      <Building2 className="h-5 w-5" />
-                      Client Informatie
-                    </h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                        <Building2 className="h-5 w-5" />
+                        Client Informatie
+                      </h3>
+                      <Button variant="ghost" size="sm" className="text-slate-600 hover:text-blue-600">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </div>
                     <div className="grid grid-cols-2 gap-6">
                       <div>
                         <p className="text-sm font-medium text-slate-700 mb-1">Naam</p>
-                        <p className="text-slate-900">{dossier.client_name || dossier.client?.name}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-slate-700 mb-1">E-mail</p>
-                        <p className="text-slate-900">{mockDossierDetails.clientContact.email}</p>
+                        <p className="text-slate-900">{mockDossierDetails.clientContact.name}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-slate-700 mb-1">Telefoon</p>
@@ -347,21 +385,45 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                         <p className="text-sm font-medium text-slate-700 mb-1">Adres</p>
                         <p className="text-slate-900">{mockDossierDetails.clientContact.address}</p>
                       </div>
+                      <div>
+                        <p className="text-sm font-medium text-slate-700 mb-1">E-mail</p>
+                        <p className="text-slate-900">{mockDossierDetails.clientContact.email}</p>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Internal Notes - moved above Deadlines */}
+                  {/* Internal Notes */}
                   <div className="bg-slate-50 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Interne Notities</h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-slate-900">Interne Notities</h3>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-600 hover:text-blue-600">
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-600 hover:text-red-600">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
                     <p className="text-slate-700">{mockDossierDetails.internalNotes}</p>
                   </div>
 
                   {/* Upcoming Deadlines */}
                   <div className="bg-slate-50 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                      <Calendar className="h-5 w-5" />
-                      Komende Deadlines
-                    </h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                        <Calendar className="h-5 w-5" />
+                        Komende Deadlines
+                      </h3>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-600 hover:text-blue-600">
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-600 hover:text-red-600">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
                     {deadlinesLoading ? (
                       <div className="text-sm text-slate-600">Deadlines laden...</div>
                     ) : upcomingDeadlines.length > 0 ? (
@@ -370,11 +432,16 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                           <div key={deadline.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
                             <div>
                               <p className="font-medium text-slate-900">{deadline.title}</p>
-                              <p className="text-sm text-slate-600">{formatDate(deadline.due_date)}</p>
+                              <p className={`text-sm font-medium ${getDeadlineColor(deadline.due_date)}`}>
+                                {formatDeadlineDateTime(deadline.due_date)}
+                              </p>
                             </div>
-                            <Badge variant="outline" className={getPriorityColor(deadline.priority)}>
-                              {getPriorityLabel(deadline.priority)}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className={getPriorityColor(deadline.priority)}>
+                                {getPriorityLabel(deadline.priority)}
+                              </Badge>
+                              <EditDeadlineDialog deadline={deadline} />
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -383,9 +450,19 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                     )}
                   </div>
 
-                  {/* Recente Activiteiten - moved from Timeline tab */}
-                  <div className="bg-slate-50 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Recente Activiteiten</h3>
+                  {/* Recente activiteiten - moved from Timeline tab and made scrollable */}
+                  <div className="bg-slate-50 rounded-lg p-6 max-h-96 overflow-y-auto">
+                    <div className="flex items-center justify-between mb-4 sticky top-0 bg-slate-50 pb-2">
+                      <h3 className="text-lg font-semibold text-slate-900">Recente activiteiten</h3>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-600 hover:text-blue-600">
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-600 hover:text-red-600">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
                     {statusLoading || deadlinesLoading ? (
                       <div className="text-sm text-slate-600">Activiteiten laden...</div>
                     ) : allActivities.length > 0 ? (
@@ -423,8 +500,16 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                                 </div>
                                 <div className="text-right">
                                   <span className="text-sm text-slate-500">
-                                    {activity.type === 'document' ? activity.date : formatDateTime(activity.date)}
+                                    {activity.type === 'deadline' ? 
+                                      formatDateTime(activity.createdDate || activity.date) : 
+                                      (activity.type === 'document' ? activity.date : formatDateTime(activity.date))
+                                    }
                                   </span>
+                                  {activity.type === 'deadline' && (
+                                    <div className={`text-sm font-medium ${getDeadlineColor(activity.date)}`}>
+                                      Vervalt: {formatDeadlineDateTime(activity.date)}
+                                    </div>
+                                  )}
                                   {(activity.type === 'status_update' || activity.type === 'deadline') && (
                                     <Badge variant="outline" className={`ml-2 ${getPriorityColor(activity.priority)}`}>
                                       {getPriorityLabel(activity.priority)}
@@ -479,9 +564,7 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                           <span className="font-semibold text-lg">€{mockDossierDetails.totalValue.toLocaleString()}</span>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="space-y-4">
                       <h3 className="text-lg font-semibold text-slate-900">Facturatie & Betalingen</h3>
                       <div className="bg-slate-50 rounded-lg p-4 space-y-3">
                         <div className="flex justify-between">
@@ -496,6 +579,51 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                           <span className="text-slate-600">Openstaand:</span>
                           <span className="font-semibold text-lg text-orange-600">€{mockDossierDetails.outstanding.toLocaleString()}</span>
                         </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                          <FileText className="h-5 w-5" />
+                          Documenten ({mockDossierDetails.documents.length})
+                        </h3>
+                        <Button size="sm" className="bg-slate-800 hover:bg-slate-700">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Document Toevoegen
+                        </Button>
+                      </div>
+                      <div className="bg-slate-50 rounded-lg p-4 space-y-3 max-h-96 overflow-y-auto">
+                        {mockDossierDetails.documents.map((doc) => (
+                          <div key={doc.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                            <div className="flex items-center gap-3">
+                              <div className="bg-slate-100 p-2 rounded-lg">
+                                <FileText className="h-4 w-4 text-slate-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-slate-900 text-sm">{doc.name}</p>
+                                <div className="flex items-center gap-2 text-xs text-slate-600">
+                                  <span>{doc.type}</span>
+                                  <span>•</span>
+                                  <span>{doc.size}</span>
+                                  <span>•</span>
+                                  <span>{doc.uploadDate}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-600 hover:text-blue-600">
+                                <Download className="h-3 w-3" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-600 hover:text-blue-600">
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-600 hover:text-red-600">
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -526,52 +654,6 @@ export const DossierDetailDialog = ({ dossier, children }: DossierDetailDialogPr
                           <Phone className="h-4 w-4" />
                         </Button>
                       </div>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="documents" className="space-y-6 mt-0">
-                  <div className="bg-slate-50 rounded-lg p-6">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                        <FileText className="h-5 w-5" />
-                        Documenten ({mockDossierDetails.documents.length})
-                      </h3>
-                      <Button size="sm" className="bg-slate-800 hover:bg-slate-700">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Document Toevoegen
-                      </Button>
-                    </div>
-                    <div className="space-y-3">
-                      {mockDossierDetails.documents.map((doc) => (
-                        <div key={doc.id} className="flex items-center justify-between p-4 bg-white rounded-lg border">
-                          <div className="flex items-center gap-3">
-                            <div className="bg-slate-100 p-2 rounded-lg">
-                              <FileText className="h-4 w-4 text-slate-600" />
-                            </div>
-                            <div>
-                              <p className="font-medium text-slate-900">{doc.name}</p>
-                              <div className="flex items-center gap-2 text-sm text-slate-600">
-                                <span>{doc.type}</span>
-                                <span>•</span>
-                                <span>{doc.size}</span>
-                                <span>•</span>
-                                <span>{doc.uploadDate}</span>
-                                <span>•</span>
-                                <span>door {doc.uploadedBy}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              <Download className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
                     </div>
                   </div>
                 </TabsContent>

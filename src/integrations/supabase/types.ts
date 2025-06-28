@@ -1163,6 +1163,8 @@ export type Database = {
           created_at: string
           customer_prefix: string | null
           customer_start_number: number | null
+          deadline_orange_days: number | null
+          deadline_red_hours: number | null
           default_footer_text: string | null
           default_payment_terms: number | null
           default_quote_footer_text: string | null
@@ -1193,6 +1195,8 @@ export type Database = {
           created_at?: string
           customer_prefix?: string | null
           customer_start_number?: number | null
+          deadline_orange_days?: number | null
+          deadline_red_hours?: number | null
           default_footer_text?: string | null
           default_payment_terms?: number | null
           default_quote_footer_text?: string | null
@@ -1223,6 +1227,8 @@ export type Database = {
           created_at?: string
           customer_prefix?: string | null
           customer_start_number?: number | null
+          deadline_orange_days?: number | null
+          deadline_red_hours?: number | null
           default_footer_text?: string | null
           default_payment_terms?: number | null
           default_quote_footer_text?: string | null

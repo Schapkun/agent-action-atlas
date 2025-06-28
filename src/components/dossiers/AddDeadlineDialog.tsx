@@ -4,187 +4,169 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, Plus } from 'lucide-react';
-import { useCreateDeadline, CreateDeadlineData } from '@/hooks/useDossierDeadlines';
-import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CalendarIcon, Plus } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { nl } from 'date-fns/locale';
+import { toast } from 'sonner';
+import { useCreateDeadline } from '@/hooks/useDossierDeadlines';
 
 interface AddDeadlineDialogProps {
   dossierId: string;
   clientName?: string;
-  children?: React.ReactNode;
+  children: React.ReactNode;
 }
 
 export const AddDeadlineDialog = ({ dossierId, clientName, children }: AddDeadlineDialogProps) => {
   const [open, setOpen] = useState(false);
-  const { toast } = useToast();
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [dueDate, setDueDate] = useState<Date>();
+  const [dueTime, setDueTime] = useState('12:00');
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
+
   const createDeadline = useCreateDeadline();
 
-  const [formData, setFormData] = useState<CreateDeadlineData>({
-    dossier_id: dossierId,
-    title: '',
-    description: '',
-    due_date: '',
-    priority: 'medium'
-  });
+  const resetForm = () => {
+    setTitle('');
+    setDescription('');
+    setDueDate(undefined);
+    setDueTime('12:00');
+    setPriority('medium');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title.trim() || !formData.due_date) return;
+    
+    if (!title.trim()) {
+      toast.error('Titel is verplicht');
+      return;
+    }
+    
+    if (!dueDate) {
+      toast.error('Vervaldatum is verplicht');
+      return;
+    }
 
     try {
-      await createDeadline.mutateAsync(formData);
-      
-      // Reset form
-      setFormData({
-        dossier_id: dossierId,
-        title: '',
-        description: '',
-        due_date: '',
-        priority: 'medium'
-      });
-      
-      setOpen(false);
-      toast({
-        title: "Deadline toegevoegd",
-        description: "De deadline is succesvol opgeslagen."
-      });
-    } catch (error) {
-      console.error('Error adding deadline:', error);
-      toast({
-        title: "Fout",
-        description: "Er is een fout opgetreden bij het opslaan van de deadline.",
-        variant: "destructive"
-      });
-    }
-  };
+      // Combine date and time
+      const [hours, minutes] = dueTime.split(':');
+      const dueDateWithTime = new Date(dueDate);
+      dueDateWithTime.setHours(parseInt(hours), parseInt(minutes));
 
-  const updateFormData = (updates: Partial<CreateDeadlineData>) => {
-    setFormData(prev => ({ ...prev, ...updates }));
+      await createDeadline.mutateAsync({
+        dossier_id: dossierId,
+        title: title.trim(),
+        description: description.trim() || undefined,
+        due_date: dueDateWithTime.toISOString(),
+        priority,
+      });
+
+      toast.success('Deadline succesvol toegevoegd');
+      resetForm();
+      setOpen(false);
+    } catch (error) {
+      console.error('Error creating deadline:', error);
+      toast.error('Er is een fout opgetreden bij het toevoegen van de deadline');
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {children || (
-          <Button size="sm" variant="outline">
-            <Plus className="h-4 w-4 mr-2" />
-            Deadline
-          </Button>
-        )}
+        {children}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Deadline Toevoegen
-          </DialogTitle>
+          <DialogTitle>Deadline Toevoegen</DialogTitle>
           {clientName && (
-            <p className="text-sm text-slate-600">
-              Voor client: <span className="font-medium">{clientName}</span>
-            </p>
+            <p className="text-sm text-slate-600">Voor: {clientName}</p>
           )}
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="title" className="text-sm font-medium text-slate-700 mb-2 block">
-              Deadline Titel *
-            </Label>
+            <Label htmlFor="title">Titel *</Label>
             <Input
               id="title"
-              value={formData.title}
-              onChange={(e) => updateFormData({ title: e.target.value })}
-              placeholder="Wat moet er gedaan worden?"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Geef de deadline een titel..."
               required
-              className="text-sm"
             />
           </div>
 
           <div>
-            <Label htmlFor="due_date" className="text-sm font-medium text-slate-700 mb-2 block">
-              Datum *
-            </Label>
-            <Input
-              id="due_date"
-              type="date"
-              value={formData.due_date}
-              onChange={(e) => updateFormData({ due_date: e.target.value })}
-              required
-              className="text-sm"
+            <Label htmlFor="description">Beschrijving</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Optionele beschrijving..."
+              rows={3}
             />
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Vervaldatum *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dueDate ? format(dueDate, 'PPP', { locale: nl }) : 'Selecteer datum'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={setDueDate}
+                    disabled={(date) => date < new Date()}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div>
+              <Label htmlFor="dueTime">Tijd</Label>
+              <Input
+                id="dueTime"
+                type="time"
+                value={dueTime}
+                onChange={(e) => setDueTime(e.target.value)}
+              />
+            </div>
+          </div>
+
           <div>
-            <Label htmlFor="priority" className="text-sm font-medium text-slate-700 mb-2 block">
-              Prioriteit
-            </Label>
-            <Select 
-              value={formData.priority} 
-              onValueChange={(value: any) => updateFormData({ priority: value })}
-            >
-              <SelectTrigger className="text-sm">
+            <Label>Prioriteit</Label>
+            <Select value={priority} onValueChange={(value: 'low' | 'medium' | 'high' | 'urgent') => setPriority(value)}>
+              <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="low">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span>Laag</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="medium">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                    <span>Normaal</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="high">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                    <span>Hoog</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="urgent">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                    <span>Urgent</span>
-                  </div>
-                </SelectItem>
+                <SelectItem value="low">Laag</SelectItem>
+                <SelectItem value="medium">Normaal</SelectItem>
+                <SelectItem value="high">Hoog</SelectItem>
+                <SelectItem value="urgent">Urgent</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div>
-            <Label htmlFor="description" className="text-sm font-medium text-slate-700 mb-2 block">
-              Beschrijving
-            </Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => updateFormData({ description: e.target.value })}
-              placeholder="Aanvullende details..."
-              rows={3}
-              className="text-sm"
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setOpen(false)}
-              disabled={createDeadline.isPending}
-            >
-              Annuleren
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={createDeadline.isPending || !formData.title.trim() || !formData.due_date}
-              className="bg-slate-800 hover:bg-slate-700"
-            >
+          <div className="flex gap-2 pt-4">
+            <Button type="submit" disabled={createDeadline.isPending} className="flex-1">
               {createDeadline.isPending ? 'Toevoegen...' : 'Deadline Toevoegen'}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Annuleren
             </Button>
           </div>
         </form>

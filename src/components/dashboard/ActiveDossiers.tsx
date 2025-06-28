@@ -226,7 +226,7 @@ export const ActiveDossiers = () => {
 
               {/* Updates Section */}
               <div className="bg-white rounded-lg border border-slate-200 p-6">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">Recente Updates</h3>
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">Recente activiteiten</h3>
                 <DossierUpdatesSection dossierId={selectedDossier.id} />
               </div>
             </>
