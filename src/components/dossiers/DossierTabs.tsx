@@ -22,8 +22,8 @@ export const DossierTabs = ({ children }: DossierTabsProps) => {
         <div className="flex-1 overflow-y-auto">
           <TabsContent value="overzicht" className="mt-0 h-full">
             <div className="p-4 space-y-4">
-              {/* Key Metrics, Client Info, Internal Notes, Upcoming Deadlines */}
-              {childrenArray.slice(0, 4)}
+              {/* Key Metrics, Client Info, Internal Notes, Upcoming Deadlines, Recent Activities, Description */}
+              {childrenArray}
             </div>
           </TabsContent>
           
@@ -64,8 +64,10 @@ export const DossierTabs = ({ children }: DossierTabsProps) => {
           
           <TabsContent value="activiteiten" className="mt-0 h-full">
             <div className="p-4 space-y-4">
-              {/* Recent Activities and Description */}
-              {childrenArray.slice(4)}
+              <div className="bg-slate-50 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-slate-900 mb-4">Activiteiten Overzicht</h3>
+                <div className="text-sm text-slate-600">Uitgebreide activiteiten weergave</div>
+              </div>
             </div>
           </TabsContent>
         </div>
