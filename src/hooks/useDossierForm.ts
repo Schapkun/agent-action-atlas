@@ -64,7 +64,11 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
 
   const updateFormData = useCallback((updates: Partial<DossierFormData>) => {
     console.log('📝 Updating form data:', updates);
-    setFormData(prev => ({ ...prev, ...updates }));
+    setFormData(prev => {
+      const newData = { ...prev, ...updates };
+      console.log('📝 New form data:', newData);
+      return newData;
+    });
   }, []);
 
   const resetForm = () => {
@@ -97,9 +101,9 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
   };
 
   const initializeFormData = useCallback((dossier: any) => {
-    if (dossier && !initialized) {
+    if (dossier) {
       console.log('📝 Initializing form data with dossier:', dossier);
-      setFormData({
+      const initialData = {
         name: dossier.name || '',
         description: dossier.description || '',
         category: dossier.category || 'algemeen',
@@ -123,10 +127,12 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         intake_notes: dossier.intake_notes || '',
         procedure_type: dossier.procedure_type || '',
         case_phase: dossier.case_phase || ''
-      });
+      };
+      console.log('📝 Setting initial form data:', initialData);
+      setFormData(initialData);
       setInitialized(true);
     }
-  }, [initialized]);
+  }, []);
 
   const submitForm = async () => {
     if (!selectedOrganization) {
@@ -161,6 +167,8 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         workspace_id: selectedWorkspace?.id || null
       };
 
+      console.log('📝 Submitting dossier data:', dossierData);
+
       if (editMode && editDossier) {
         // Update existing dossier
         const { data: dossier, error } = await supabase
@@ -180,8 +188,6 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         });
       } else {
         // Create new dossier
-        console.log('📝 Creating dossier with data:', dossierData);
-
         const { data: dossier, error } = await supabase
           .from('dossiers')
           .insert(dossierData)
@@ -222,6 +228,7 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
     resetForm,
     initializeFormData,
     submitForm,
-    loading
+    loading,
+    initialized
   };
 };

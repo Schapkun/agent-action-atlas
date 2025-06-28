@@ -25,18 +25,18 @@ export const EnhancedCreateDossierDialog = ({
   editDossier 
 }: EnhancedCreateDossierDialogProps) => {
   const [open, setOpen] = useState(false);
-  const { formData, updateFormData, submitForm, loading, initializeFormData } = useDossierForm(() => {
+  const { formData, updateFormData, submitForm, loading, initializeFormData, initialized } = useDossierForm(() => {
     setOpen(false);
     onDossierCreated?.();
   }, editMode, editDossier);
 
   // Initialize form data when dialog opens in edit mode
   useEffect(() => {
-    if (editMode && editDossier && open) {
+    if (editMode && editDossier && open && !initialized) {
       console.log('📝 Dialog opened in edit mode, initializing with:', editDossier);
       initializeFormData(editDossier);
     }
-  }, [editMode, editDossier, open, initializeFormData]);
+  }, [editMode, editDossier, open, initializeFormData, initialized]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,9 +61,9 @@ export const EnhancedCreateDossierDialog = ({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Sticky Header with improved spacing */}
-        <div className="sticky top-0 z-10 bg-white border-b border-slate-200 px-6 py-6">
+      <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col bg-white">
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-10 bg-white border-b border-slate-200 px-6 py-4">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -107,7 +107,7 @@ export const EnhancedCreateDossierDialog = ({
           </DialogHeader>
         </div>
         
-        {/* Scrollable Content with light gray background */}
+        {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto bg-slate-50">
           <form onSubmit={handleSubmit} className="space-y-6 p-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
