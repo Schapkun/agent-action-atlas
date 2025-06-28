@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Loader2 } from 'lucide-react';
@@ -12,7 +13,6 @@ import { TemplateLibraryNew } from './components/TemplateLibraryNew';
 import { useDocumentTemplates } from '@/hooks/useDocumentTemplates';
 import { DocumentTypeSettings } from './DocumentTypeSettings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DocumentUpdatesSettings } from './DocumentUpdatesSettings';
 
 const DocumentSettingsContent = () => {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
@@ -128,10 +128,9 @@ const DocumentSettingsContent = () => {
     <DocumentProvider>
       <div className="space-y-6">
         <Tabs defaultValue="document-templates" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="document-templates">Document Templates</TabsTrigger>
             <TabsTrigger value="document-types">Document Types</TabsTrigger>
-            <TabsTrigger value="document-updates">Document Updates</TabsTrigger>
           </TabsList>
 
           <TabsContent value="document-templates" className="space-y-6">
@@ -159,10 +158,6 @@ const DocumentSettingsContent = () => {
 
           <TabsContent value="document-types" className="space-y-6">
             <DocumentTypeSettings />
-          </TabsContent>
-
-          <TabsContent value="document-updates" className="space-y-6">
-            <DocumentUpdatesSettings />
           </TabsContent>
         </Tabs>
 
