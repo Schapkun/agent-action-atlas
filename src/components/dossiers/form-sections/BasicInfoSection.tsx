@@ -21,10 +21,10 @@ interface BasicInfoSectionProps {
 
 export const BasicInfoSection = ({ formData, updateFormData }: BasicInfoSectionProps) => {
   const [customFields, setCustomFields] = useState([
-    { id: 'name', name: 'Dossiernaam', type: 'text' as const, required: true, order: 0 },
-    { id: 'description', name: 'Beschrijving', type: 'textarea' as const, order: 1 },
-    { id: 'category', name: 'Categorie', type: 'select' as const, options: ['algemeen', 'familierecht', 'arbeidsrecht', 'strafrecht', 'ondernemingsrecht'], order: 2 },
-    { id: 'priority', name: 'Prioriteit', type: 'select' as const, options: ['low', 'medium', 'high', 'urgent'], order: 3 }
+    { id: 'name', name: 'Dossiernaam', type: 'text' as const, required: true, order: 0, placeholder: "Geef het dossier een duidelijke naam" },
+    { id: 'description', name: 'Beschrijving', type: 'textarea' as const, order: 1, placeholder: "Korte beschrijving van het dossier..." },
+    { id: 'category', name: 'Categorie', type: 'select' as const, options: ['algemeen', 'familierecht', 'arbeidsrecht', 'strafrecht', 'ondernemingsrecht'], order: 2, placeholder: "Selecteer categorie" },
+    { id: 'priority', name: 'Prioriteit', type: 'select' as const, options: ['low', 'medium', 'high', 'urgent'], order: 3, placeholder: "Selecteer prioriteit" }
   ]);
 
   const handleFieldsUpdate = (fields: any[]) => {
@@ -82,7 +82,7 @@ export const BasicInfoSection = ({ formData, updateFormData }: BasicInfoSectionP
             ) : field.id === 'category' ? (
               <Select value={formData[field.id] || ''} onValueChange={(value) => updateFormData({ [field.id]: value })}>
                 <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
-                  <SelectValue placeholder={field.placeholder} />
+                  <SelectValue placeholder={field.placeholder || "Selecteer categorie"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="algemeen">Algemeen</SelectItem>
@@ -95,7 +95,7 @@ export const BasicInfoSection = ({ formData, updateFormData }: BasicInfoSectionP
             ) : field.id === 'priority' ? (
               <Select value={formData[field.id] || ''} onValueChange={(value) => updateFormData({ [field.id]: value })}>
                 <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
-                  <SelectValue placeholder={field.placeholder} />
+                  <SelectValue placeholder={field.placeholder || "Selecteer prioriteit"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="low">Laag</SelectItem>
