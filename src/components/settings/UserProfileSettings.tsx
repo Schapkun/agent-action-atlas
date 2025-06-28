@@ -43,10 +43,16 @@ export const UserProfileSettings = () => {
 
   const userManagement = UserManagement({
     onUsersUpdate: (newUsers) => {
+      console.log('🔍 UserProfileSettings: Received users update:', newUsers);
+      console.log('🔍 UserProfileSettings: Number of users:', newUsers.length);
+      console.log('🔍 UserProfileSettings: User details:', newUsers.map(u => ({ email: u.email, role: u.role, isPending: u.isPending })));
       setUsers(newUsers);
       setLoading(false);
     },
-    onUserRoleUpdate: setUserRole
+    onUserRoleUpdate: (role) => {
+      console.log('🔍 UserProfileSettings: User role updated to:', role);
+      setUserRole(role);
+    }
   });
 
   const handleShowMyAccount = (userProfile: UserProfile) => {
@@ -160,6 +166,14 @@ export const UserProfileSettings = () => {
       (filterRole === 'gebruiker' && userRoleForFilter === 'member');
     
     return matchesSearch && matchesFilter;
+  });
+
+  console.log('🔍 UserProfileSettings: Current state:', {
+    usersCount: users.length,
+    filteredUsersCount: filteredUsers.length,
+    userRole,
+    currentUserEmail: user?.email,
+    loading
   });
 
   if (loading) {
