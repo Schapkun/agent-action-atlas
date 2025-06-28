@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserDataFetcher } from './hooks/useUserDataFetcher';
@@ -31,6 +31,8 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
   const { toast } = useToast();
   const { fetchUsersForAccountOwner, fetchPendingInvitations, fetchUsersForRegularUser } = useUserDataFetcher();
   const { userRole } = useUserRole(user?.id, user?.email);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const fetchingRef = useRef(false);
 
   // Update parent component when user role changes
   useEffect(() => {
@@ -38,17 +40,22 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
   }, [userRole, onUserRoleUpdate]);
 
   const fetchUsers = async () => {
-    if (!user?.id) {
-      console.log('No user ID available');
+    if (!user?.id || fetchingRef.current) {
+      console.log('🔍 UserManagement: Skipping fetch - no user ID or already fetching');
+      return;
+    }
+
+    if (userRole === null) {
+      console.log('🔍 UserManagement: Skipping fetch - user role not loaded yet');
       return;
     }
 
     try {
-      console.log('🔍 Fetching users for user:', user.id);
+      fetchingRef.current = true;
+      console.log('🔍 UserManagement: Starting fetch for user:', user.id);
       console.log('👤 User email:', user.email);
       console.log('🏷️ User role:', userRole);
       
-      // Check based on actual role from database, not hardcoded email
       if (userRole === 'owner') {
         // If user has owner role, show ALL users in the entire system
         console.log('🔓 Owner access: fetching all users and invitations');
@@ -76,16 +83,21 @@ export const UserManagement = ({ onUsersUpdate, onUserRoleUpdate }: UserManageme
         variant: "destructive",
       });
       onUsersUpdate([]);
+    } finally {
+      fetchingRef.current = false;
+      setIsInitialized(true);
     }
   };
 
   const userOperations = useUserOperations(user?.id, fetchUsers);
 
+  // Only fetch once when both user and userRole are available
   useEffect(() => {
-    if (user && userRole !== null) {
+    if (user && userRole !== null && !isInitialized) {
+      console.log('🔍 UserManagement: Initial fetch triggered');
       fetchUsers();
     }
-  }, [user, userRole]); // Add userRole as dependency
+  }, [user, userRole, isInitialized]);
 
   return {
     fetchUsers,

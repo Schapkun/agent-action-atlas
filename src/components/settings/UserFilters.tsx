@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserPlus, Search } from 'lucide-react';
-import { UserManagement } from './UserManagement';
 
 interface UserProfile {
   id: string;
@@ -43,12 +42,6 @@ export const UserFilters = ({
   onInviteUser,
   userRole = 'member'
 }: UserFiltersProps) => {
-  const userManagement = UserManagement({ onUsersUpdate, onUserRoleUpdate });
-
-  useEffect(() => {
-    userManagement.fetchUsers();
-  }, []);
-
   // If search and filter props are provided, render the filter UI
   if (setSearchTerm && setFilterRole && onInviteUser) {
     return (
