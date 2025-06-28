@@ -12,7 +12,6 @@ interface DossierFormData {
   client_name?: string;
   priority: string;
   status?: string;
-  reference?: string;
   responsible_user_id?: string;
   start_date?: string;
   end_date?: string;
@@ -41,11 +40,10 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
     name: '',
     description: '',
     category: 'algemeen',
-    client_id: 'no_client',
+    client_id: '',
     client_name: '',
     priority: 'medium',
     status: 'active',
-    reference: '',
     responsible_user_id: '',
     start_date: '',
     end_date: '',
@@ -74,11 +72,10 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
       name: '',
       description: '',
       category: 'algemeen',
-      client_id: 'no_client',
+      client_id: '',
       client_name: '',
       priority: 'medium',
       status: 'active',
-      reference: '',
       responsible_user_id: '',
       start_date: '',
       end_date: '',
@@ -106,11 +103,10 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         name: dossier.name || '',
         description: dossier.description || '',
         category: dossier.category || 'algemeen',
-        client_id: dossier.client_id || 'no_client',
+        client_id: dossier.client_id || '',
         client_name: dossier.client_name || '',
         priority: dossier.priority || 'medium',
         status: dossier.status || 'active',
-        reference: dossier.reference || '',
         responsible_user_id: dossier.responsible_user_id || '',
         start_date: dossier.start_date || '',
         end_date: dossier.end_date || '',
@@ -157,11 +153,10 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         name: formData.name.trim(),
         description: formData.description.trim() || null,
         category: formData.category,
-        client_id: formData.client_id === 'no_client' ? null : formData.client_id,
+        client_id: formData.client_id || null,
         client_name: formData.client_name?.trim() || null,
         priority: formData.priority,
         status: formData.status || 'active',
-        reference: formData.reference?.trim() || null,
         organization_id: selectedOrganization.id,
         workspace_id: selectedWorkspace?.id || null
       };
@@ -185,11 +180,7 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         });
       } else {
         // Create new dossier
-        console.log('📝 Creating dossier with data:', {
-          name: formData.name,
-          organization_id: selectedOrganization.id,
-          workspace_id: selectedWorkspace?.id
-        });
+        console.log('📝 Creating dossier with data:', dossierData);
 
         const { data: dossier, error } = await supabase
           .from('dossiers')

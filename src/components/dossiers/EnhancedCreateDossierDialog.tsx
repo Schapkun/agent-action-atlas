@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Plus, Scale, X } from 'lucide-react';
+import { Plus, Scale } from 'lucide-react';
 import { useDossierForm } from '@/hooks/useDossierForm';
 import { BasicInfoSection } from './form-sections/BasicInfoSection';
 import { ClientSection } from './form-sections/ClientSection';
@@ -62,8 +62,8 @@ export const EnhancedCreateDossierDialog = ({
         )}
       </DialogTrigger>
       <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Sticky Header */}
-        <div className="sticky top-0 z-10 bg-white border-b border-slate-200 pb-4">
+        {/* Sticky Header with improved spacing */}
+        <div className="sticky top-0 z-10 bg-white border-b border-slate-200 px-6 py-6">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -88,7 +88,7 @@ export const EnhancedCreateDossierDialog = ({
                   Annuleren
                 </Button>
                 <Button 
-                  type="submit" 
+                  type="button" 
                   disabled={loading}
                   onClick={handleSubmit}
                   className="px-6 py-2 text-sm bg-slate-800 hover:bg-slate-700 text-white shadow-sm"
@@ -107,8 +107,8 @@ export const EnhancedCreateDossierDialog = ({
           </DialogHeader>
         </div>
         
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Scrollable Content with light gray background */}
+        <div className="flex-1 overflow-y-auto bg-slate-50">
           <form onSubmit={handleSubmit} className="space-y-6 p-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left Column */}
