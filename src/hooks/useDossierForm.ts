@@ -12,7 +12,7 @@ interface DossierFormData {
   client_name?: string;
   priority: string;
   status?: string;
-  // Deze velden worden NIET naar database verstuurd, alleen voor UI
+  // Deze velden worden NU WEL naar database verstuurd
   start_date?: string;
   end_date?: string;
   deadline_date?: string;
@@ -90,7 +90,7 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
     if (dossier) {
       console.log('📝 Initializing form data with dossier:', dossier);
       const initialData = {
-        // Database velden - deze komen uit de database
+        // Database velden - alle velden kunnen nu uit de database komen
         name: dossier.name || '',
         description: dossier.description || '',
         category: dossier.category || 'algemeen',
@@ -98,19 +98,18 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         client_name: dossier.client_name || '',
         priority: dossier.priority || 'medium',
         status: dossier.status || 'active',
-        // UI-only velden - deze resetten we altijd naar leeg in edit mode
-        // omdat ze niet in de database bestaan
-        start_date: '',
-        end_date: '',
-        deadline_date: '',
-        deadline_description: '',
-        case_type: '',
-        court_instance: '',
-        legal_status: '',
-        estimated_hours: '',
-        hourly_rate: '',
-        intake_notes: '',
-        procedure_type: ''
+        // Voormalige UI-only velden - nu ook opgeslagen in database
+        start_date: dossier.start_date || '',
+        end_date: dossier.end_date || '',
+        deadline_date: dossier.deadline_date || '',
+        deadline_description: dossier.deadline_description || '',
+        case_type: dossier.case_type || '',
+        court_instance: dossier.court_instance || '',
+        legal_status: dossier.legal_status || '',
+        estimated_hours: dossier.estimated_hours?.toString() || '',
+        hourly_rate: dossier.hourly_rate?.toString() || '',
+        intake_notes: dossier.intake_notes || '',
+        procedure_type: dossier.procedure_type || ''
       };
       console.log('📝 Setting initial form data:', initialData);
       setFormData(initialData);
@@ -139,7 +138,7 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
 
     setLoading(true);
     try {
-      // ALLEEN de velden versturen die in de database bestaan
+      // ALLE velden versturen naar de database
       const dossierData = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
@@ -149,10 +148,22 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         priority: formData.priority,
         status: formData.status || 'active',
         organization_id: selectedOrganization.id,
-        workspace_id: selectedWorkspace?.id || null
+        workspace_id: selectedWorkspace?.id || null,
+        // Voormalige UI-only velden - nu ook opslaan in database
+        start_date: formData.start_date || null,
+        end_date: formData.end_date || null,
+        deadline_date: formData.deadline_date || null,
+        deadline_description: formData.deadline_description?.trim() || null,
+        case_type: formData.case_type || null,
+        court_instance: formData.court_instance?.trim() || null,
+        legal_status: formData.legal_status || null,
+        estimated_hours: formData.estimated_hours ? parseFloat(formData.estimated_hours) : null,
+        hourly_rate: formData.hourly_rate ? parseFloat(formData.hourly_rate) : null,
+        intake_notes: formData.intake_notes?.trim() || null,
+        procedure_type: formData.procedure_type || null
       };
 
-      console.log('📝 Submitting dossier data (only existing DB fields):', dossierData);
+      console.log('📝 Submitting complete dossier data:', dossierData);
 
       if (editMode && editDossier) {
         // Update existing dossier

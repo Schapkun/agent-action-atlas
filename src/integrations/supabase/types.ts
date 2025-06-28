@@ -609,46 +609,79 @@ export type Database = {
       }
       dossiers: {
         Row: {
+          case_type: string | null
           category: string | null
           client_id: string | null
           client_name: string | null
+          court_instance: string | null
           created_at: string
           created_by: string | null
+          deadline_date: string | null
+          deadline_description: string | null
           description: string | null
+          end_date: string | null
+          estimated_hours: number | null
+          hourly_rate: number | null
           id: string
+          intake_notes: string | null
+          legal_status: string | null
           name: string
           organization_id: string
           priority: string | null
+          procedure_type: string | null
+          start_date: string | null
           status: string
           updated_at: string
           workspace_id: string | null
         }
         Insert: {
+          case_type?: string | null
           category?: string | null
           client_id?: string | null
           client_name?: string | null
+          court_instance?: string | null
           created_at?: string
           created_by?: string | null
+          deadline_date?: string | null
+          deadline_description?: string | null
           description?: string | null
+          end_date?: string | null
+          estimated_hours?: number | null
+          hourly_rate?: number | null
           id?: string
+          intake_notes?: string | null
+          legal_status?: string | null
           name: string
           organization_id: string
           priority?: string | null
+          procedure_type?: string | null
+          start_date?: string | null
           status?: string
           updated_at?: string
           workspace_id?: string | null
         }
         Update: {
+          case_type?: string | null
           category?: string | null
           client_id?: string | null
           client_name?: string | null
+          court_instance?: string | null
           created_at?: string
           created_by?: string | null
+          deadline_date?: string | null
+          deadline_description?: string | null
           description?: string | null
+          end_date?: string | null
+          estimated_hours?: number | null
+          hourly_rate?: number | null
           id?: string
+          intake_notes?: string | null
+          legal_status?: string | null
           name?: string
           organization_id?: string
           priority?: string | null
+          procedure_type?: string | null
+          start_date?: string | null
           status?: string
           updated_at?: string
           workspace_id?: string | null
