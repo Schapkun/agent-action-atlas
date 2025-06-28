@@ -84,12 +84,12 @@ export const DeadlinesSection = ({
     return (
       <div className="bg-slate-50 rounded-lg p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             {title}
           </h3>
         </div>
-        <div className="text-slate-600">Deadlines laden...</div>
+        <div className="text-sm text-slate-600">Deadlines laden...</div>
       </div>
     );
   }
@@ -98,12 +98,12 @@ export const DeadlinesSection = ({
     return (
       <div className="bg-slate-50 rounded-lg p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             {title}
           </h3>
         </div>
-        <div className="text-slate-600">
+        <div className="text-sm text-slate-600">
           {showUpcoming ? "Geen komende deadlines" : "Geen deadlines gevonden"}
         </div>
       </div>
@@ -113,7 +113,7 @@ export const DeadlinesSection = ({
   return (
     <div className="bg-slate-50 rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
           <Calendar className="h-4 w-4" />
           {title}
         </h3>
@@ -122,21 +122,21 @@ export const DeadlinesSection = ({
         {displayDeadlines.map((deadline) => (
           <div key={deadline.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
             <div className="flex-1 min-w-0">
-              <p className={`font-medium ${getDeadlineColor(deadline.due_date)}`}>
+              <p className={`text-sm font-medium ${getDeadlineColor(deadline.due_date)}`}>
                 {formatDeadlineDateTime(deadline.due_date)}
               </p>
-              <p className="font-medium text-slate-900">{deadline.title}</p>
+              <p className="text-sm font-medium text-slate-900">{deadline.title}</p>
               {deadline.description && (
-                <p className="text-slate-700 line-clamp-1">{deadline.description}</p>
+                <p className="text-sm text-slate-700 line-clamp-1">{deadline.description}</p>
               )}
             </div>
             <div className="flex items-center gap-4 ml-4 flex-shrink-0">
               {!showUpcoming && (
-                <span className="text-slate-500">
+                <span className="text-sm text-slate-500">
                   {formatDateTime(deadline.created_at)}
                 </span>
               )}
-              <Badge variant="outline" className={getPriorityColor(deadline.priority)}>
+              <Badge variant="outline" className={`text-xs ${getPriorityColor(deadline.priority)}`}>
                 {getPriorityLabel(deadline.priority)}
               </Badge>
               <EditDeadlineDialog deadline={deadline} />

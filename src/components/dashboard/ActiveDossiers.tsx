@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Folder, Plus, Building2, Calendar, Mail, FileText, Phone, AlertCircle, Clock, Euro, User, ExternalLink, Eye } from 'lucide-react';
+import { Folder, Plus, Building2, Calendar, Mail, FileText, Phone, AlertCircle, Clock, Euro, User, ExternalLink, Eye, Edit, Trash2 } from 'lucide-react';
 import { useDossiers } from '@/hooks/useDossiers';
 import { EnhancedCreateDossierDialog } from '@/components/dossiers/EnhancedCreateDossierDialog';
 import { DossierDetailDialog } from '@/components/dossiers/DossierDetailDialog';
@@ -51,7 +51,12 @@ export const ActiveDossiers = () => {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-slate-900">Actieve Dossiers</h1>
+          <div className="flex items-center gap-3">
+            <div className="bg-slate-800 rounded-lg p-2">
+              <Folder className="h-5 w-5 text-white" />
+            </div>
+            <EnhancedCreateDossierDialog onDossierCreated={handleDossierCreated} />
+          </div>
         </div>
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800 mx-auto"></div>
@@ -68,20 +73,20 @@ export const ActiveDossiers = () => {
           <div className="bg-slate-800 rounded-lg p-2">
             <Folder className="h-5 w-5 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">Actieve Dossiers</h1>
-          <Badge variant="outline" className="text-sm">
-            {activeDossiers.length} actief
-          </Badge>
+          <EnhancedCreateDossierDialog onDossierCreated={handleDossierCreated} />
         </div>
-        
-        <EnhancedCreateDossierDialog onDossierCreated={handleDossierCreated} />
       </div>
 
       <div className="flex gap-6 h-[calc(100vh-200px)]">
         {/* Left side - 1/3 - Dossiers List */}
         <div className="w-1/3 space-y-4">
           <div className="bg-white rounded-lg border border-slate-200 p-4">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">Bekijk en beheer dossiers per client</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+              Bekijk en beheer dossiers per client
+              <Badge variant="outline" className="text-sm">
+                {activeDossiers.length} actief
+              </Badge>
+            </h3>
             
             {activeDossiers.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">

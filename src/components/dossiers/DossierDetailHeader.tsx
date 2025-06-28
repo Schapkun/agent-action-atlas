@@ -70,7 +70,7 @@ export const DossierDetailHeader = ({ dossier }: DossierDetailHeaderProps) => {
           <Scale className="h-4 w-4 text-white" />
         </div>
         <div>
-          <DialogTitle className="text-lg font-semibold text-slate-900">{dossier.name}</DialogTitle>
+          <DialogTitle className="text-sm font-semibold text-slate-900">{dossier.name}</DialogTitle>
           <div className="flex items-center gap-2 mt-1">
             <Badge variant="outline" className={`text-xs ${getStatusColor(dossier.status)}`}>
               {getStatusLabel(dossier.status)}
@@ -94,7 +94,7 @@ export const DossierDetailHeader = ({ dossier }: DossierDetailHeaderProps) => {
           dossierId={dossier.id}
           clientName={dossier.client_name || dossier.client?.name}
         >
-          <Button size="sm" variant="outline" className="text-xs px-2 py-1">
+          <Button size="sm" variant="outline" className="text-xs px-2 py-1 h-6">
             <Plus className="h-3 w-3 mr-1" />
             Status Update
           </Button>
@@ -103,7 +103,7 @@ export const DossierDetailHeader = ({ dossier }: DossierDetailHeaderProps) => {
           dossierId={dossier.id}
           clientName={dossier.client_name || dossier.client?.name}
         >
-          <Button size="sm" variant="outline" className="text-xs px-2 py-1">
+          <Button size="sm" variant="outline" className="text-xs px-2 py-1 h-6">
             <Plus className="h-3 w-3 mr-1" />
             Deadline
           </Button>
