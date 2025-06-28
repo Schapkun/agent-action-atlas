@@ -1,3 +1,4 @@
+
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +15,7 @@ import {
   FolderX,
   CreditCard,
   Phone,
+  MessageSquare,
   Mail,
   Users,
   ChevronDown,
@@ -26,7 +28,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 
-export type ViewType = 'overview' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'dossiers' | 'invoices' | 'quotes' | 'phone-calls' | 'emails' | 'contacts' | 'settings' | 'support';
+export type ViewType = 'overview' | 'actions' | 'documents' | 'active-dossiers' | 'closed-dossiers' | 'dossiers' | 'invoices' | 'quotes' | 'phone-calls' | 'whatsapp' | 'emails' | 'contacts' | 'settings' | 'support';
 
 interface SidebarProps {
   currentView: ViewType;
@@ -187,6 +189,7 @@ export const Sidebar = ({
       ]
     },
     { id: 'phone-calls' as ViewType, label: 'Telefoongesprekken', icon: Phone, path: '/telefoongesprekken' },
+    { id: 'whatsapp' as ViewType, label: 'WhatsApp', icon: MessageSquare, path: '/whatsapp' },
     { id: 'emails' as ViewType, label: 'E-mails', icon: Mail, path: '/e-mails' },
     { id: 'settings' as ViewType, label: 'Instellingen', icon: Settings, path: '/instellingen' },
   ];

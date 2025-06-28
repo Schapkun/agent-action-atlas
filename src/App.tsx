@@ -23,6 +23,7 @@ import FactuurSturen from "./pages/FactuurSturen";
 import Quotes from "./pages/Quotes";
 import CreateQuote from "./pages/CreateQuote";
 import PhoneCalls from "./pages/PhoneCalls";
+import WhatsApp from "./pages/WhatsApp";
 import Emails from "./pages/Emails";
 import Contacts from "./pages/Contacts";
 import Settings from "./pages/Settings";
@@ -65,6 +66,7 @@ const App = () => (
               <Route path="/offertes/nieuw" element={<Index><CreateQuote /></Index>} />
               <Route path="/offertes/opstellen" element={<Navigate to="/offertes/nieuw" replace />} />
               <Route path="/telefoongesprekken" element={<Index><PhoneCalls /></Index>} />
+              <Route path="/whatsapp" element={<Index><WhatsApp /></Index>} />
               <Route path="/e-mails" element={<Index><Emails /></Index>} />
               <Route path="/instellingen/*" element={<Index><Settings /></Index>} />
               <Route path="/support" element={<Index><Support /></Index>} />

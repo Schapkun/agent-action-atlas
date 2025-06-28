@@ -25,8 +25,9 @@ const Index = ({ children }: IndexProps) => {
     if (path === '/facturen' || path.startsWith('/facturen/')) return 'invoices';
     if (path === '/offertes' || path.startsWith('/offertes/')) return 'quotes';
     if (path === '/telefoongesprekken') return 'phone-calls';
+    if (path === '/whatsapp') return 'whatsapp';
     if (path === '/e-mails') return 'emails';
-    if (path === '/contacten') return 'contacts';
+    if (path === '/contacten' || path === '/clienten') return 'contacts';
     if (path === '/instellingen') return 'settings';
     return 'overview';
   };
