@@ -12,7 +12,6 @@ interface DossierFormData {
   client_name?: string;
   priority: string;
   status?: string;
-  responsible_user_id?: string;
   start_date?: string;
   end_date?: string;
   deadline_date?: string;
@@ -22,7 +21,6 @@ interface DossierFormData {
   legal_status?: string;
   estimated_hours?: string;
   hourly_rate?: string;
-  tags?: string;
   intake_notes?: string;
   procedure_type?: string;
 }
@@ -41,7 +39,6 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
     client_name: '',
     priority: 'medium',
     status: 'active',
-    responsible_user_id: '',
     start_date: '',
     end_date: '',
     deadline_date: '',
@@ -51,7 +48,6 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
     legal_status: '',
     estimated_hours: '',
     hourly_rate: '',
-    tags: '',
     intake_notes: '',
     procedure_type: ''
   });
@@ -74,7 +70,6 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
       client_name: '',
       priority: 'medium',
       status: 'active',
-      responsible_user_id: '',
       start_date: '',
       end_date: '',
       deadline_date: '',
@@ -84,7 +79,6 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
       legal_status: '',
       estimated_hours: '',
       hourly_rate: '',
-      tags: '',
       intake_notes: '',
       procedure_type: ''
     });
@@ -102,7 +96,6 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         client_name: dossier.client_name || '',
         priority: dossier.priority || 'medium',
         status: dossier.status || 'active',
-        responsible_user_id: dossier.responsible_user_id || '',
         start_date: dossier.start_date || '',
         end_date: dossier.end_date || '',
         deadline_date: dossier.deadline_date || '',
@@ -112,7 +105,6 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         legal_status: dossier.legal_status || '',
         estimated_hours: dossier.estimated_hours || '',
         hourly_rate: dossier.hourly_rate || '',
-        tags: dossier.tags || '',
         intake_notes: dossier.intake_notes || '',
         procedure_type: dossier.procedure_type || ''
       };
@@ -143,7 +135,7 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
 
     setLoading(true);
     try {
-      // Create the complete dossier data - removed case_phase field
+      // Create the complete dossier data - only include fields that exist in database
       const dossierData = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
@@ -154,7 +146,6 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         status: formData.status || 'active',
         organization_id: selectedOrganization.id,
         workspace_id: selectedWorkspace?.id || null,
-        responsible_user_id: formData.responsible_user_id || null,
         start_date: formData.start_date || null,
         end_date: formData.end_date || null,
         deadline_date: formData.deadline_date || null,
@@ -164,7 +155,6 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         legal_status: formData.legal_status || null,
         estimated_hours: formData.estimated_hours || null,
         hourly_rate: formData.hourly_rate || null,
-        tags: formData.tags?.trim() || null,
         intake_notes: formData.intake_notes?.trim() || null,
         procedure_type: formData.procedure_type || null
       };

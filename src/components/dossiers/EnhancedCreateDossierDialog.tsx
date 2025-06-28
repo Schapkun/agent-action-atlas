@@ -62,8 +62,8 @@ export const EnhancedCreateDossierDialog = ({
         )}
       </DialogTrigger>
       <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col bg-white">
-        {/* Sticky Header - Reduced padding */}
-        <div className="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 py-3">
+        {/* Sticky Header - Minimal padding */}
+        <div className="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 py-1">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
