@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -89,6 +90,7 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
     if (dossier) {
       console.log('📝 Initializing form data with dossier:', dossier);
       const initialData = {
+        // Database velden
         name: dossier.name || '',
         description: dossier.description || '',
         category: dossier.category || 'algemeen',
@@ -96,6 +98,7 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         client_name: dossier.client_name || '',
         priority: dossier.priority || 'medium',
         status: dossier.status || 'active',
+        // UI-only velden - probeer ze uit dossier te halen als ze er zijn
         start_date: dossier.start_date || '',
         end_date: dossier.end_date || '',
         deadline_date: dossier.deadline_date || '',
@@ -103,8 +106,8 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         case_type: dossier.case_type || '',
         court_instance: dossier.court_instance || '',
         legal_status: dossier.legal_status || '',
-        estimated_hours: dossier.estimated_hours || '',
-        hourly_rate: dossier.hourly_rate || '',
+        estimated_hours: dossier.estimated_hours?.toString() || '',
+        hourly_rate: dossier.hourly_rate?.toString() || '',
         intake_notes: dossier.intake_notes || '',
         procedure_type: dossier.procedure_type || ''
       };
