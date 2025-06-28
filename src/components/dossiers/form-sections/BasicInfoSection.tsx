@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { FileText, Edit } from 'lucide-react';
 import { SectionEditorDialog, renderDynamicField } from './SectionEditorDialog';
+import { useSectionConfig } from '@/hooks/useSectionConfig';
 
 interface BasicInfoSectionProps {
   formData: {
@@ -20,19 +21,19 @@ interface BasicInfoSectionProps {
 }
 
 export const BasicInfoSection = ({ formData, updateFormData }: BasicInfoSectionProps) => {
-  const [customFields, setCustomFields] = useState([
-    { id: 'name', name: 'Dossiernaam', type: 'text' as const, required: true, order: 0, placeholder: "Geef het dossier een duidelijke naam" },
-    { id: 'description', name: 'Beschrijving', type: 'textarea' as const, order: 1, placeholder: "Korte beschrijving van het dossier..." },
-    { id: 'category', name: 'Categorie', type: 'select' as const, options: ['algemeen', 'familierecht', 'arbeidsrecht', 'strafrecht', 'ondernemingsrecht'], order: 2, placeholder: "Selecteer categorie" },
-    { id: 'priority', name: 'Prioriteit', type: 'select' as const, options: ['low', 'medium', 'high', 'urgent'], order: 3, placeholder: "Selecteer prioriteit" }
-  ]);
+  const { getSectionConfig, updateSectionFields, updateSectionName } = useSectionConfig();
+  const sectionConfig = getSectionConfig('basic');
 
   const handleFieldsUpdate = (fields: any[]) => {
-    setCustomFields(fields);
+    updateSectionFields('basic', fields);
+  };
+
+  const handleSectionNameUpdate = (name: string) => {
+    updateSectionName('basic', name);
   };
 
   // Sorteer velden op order
-  const sortedFields = [...customFields].sort((a, b) => (a.order || 0) - (b.order || 0));
+  const sortedFields = [...sectionConfig.fields].sort((a, b) => (a.order || 0) - (b.order || 0));
 
   return (
     <div className="bg-slate-50 rounded-lg p-6 border border-slate-200 shadow-sm">
@@ -41,13 +42,14 @@ export const BasicInfoSection = ({ formData, updateFormData }: BasicInfoSectionP
           <div className="bg-slate-800 rounded-lg p-2">
             <FileText className="h-4 w-4 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-900">Basisinformatie</h3>
+          <h3 className="text-lg font-semibold text-slate-900">{sectionConfig.name}</h3>
         </div>
         
         <SectionEditorDialog
-          sectionName="Basisinformatie"
-          fields={customFields}
+          sectionName={sectionConfig.name}
+          fields={sectionConfig.fields}
           onFieldsUpdate={handleFieldsUpdate}
+          onSectionNameUpdate={handleSectionNameUpdate}
         >
           <Button variant="outline" size="sm">
             <Edit className="h-4 w-4" />

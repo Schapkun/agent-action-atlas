@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Settings, Edit } from 'lucide-react';
 import { SectionEditorDialog, renderDynamicField } from './SectionEditorDialog';
+import { useSectionConfig } from '@/hooks/useSectionConfig';
 
 interface ProcedureSectionProps {
   formData: {
@@ -15,16 +16,19 @@ interface ProcedureSectionProps {
 }
 
 export const ProcedureSection = ({ formData, updateFormData }: ProcedureSectionProps) => {
-  const [customFields, setCustomFields] = useState([
-    { id: 'procedure_type', name: 'Type Procedure', type: 'select' as const, options: ['dagvaarding', 'kort_geding', 'arbitrage', 'mediation', 'onderhandeling', 'advies', 'hoger_beroep', 'cassatie'], order: 0 }
-  ]);
+  const { getSectionConfig, updateSectionFields, updateSectionName } = useSectionConfig();
+  const sectionConfig = getSectionConfig('procedure');
 
   const handleFieldsUpdate = (fields: any[]) => {
-    setCustomFields(fields);
+    updateSectionFields('procedure', fields);
+  };
+
+  const handleSectionNameUpdate = (name: string) => {
+    updateSectionName('procedure', name);
   };
 
   // Sorteer velden op order
-  const sortedFields = [...customFields].sort((a, b) => (a.order || 0) - (b.order || 0));
+  const sortedFields = [...sectionConfig.fields].sort((a, b) => (a.order || 0) - (b.order || 0));
 
   return (
     <div className="bg-slate-50 rounded-lg p-6 border border-slate-200 shadow-sm">
@@ -33,13 +37,14 @@ export const ProcedureSection = ({ formData, updateFormData }: ProcedureSectionP
           <div className="bg-slate-800 rounded-lg p-2">
             <Settings className="h-4 w-4 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-900">Procedure</h3>
+          <h3 className="text-lg font-semibold text-slate-900">{sectionConfig.name}</h3>
         </div>
         
         <SectionEditorDialog
-          sectionName="Procedure"
-          fields={customFields}
+          sectionName={sectionConfig.name}
+          fields={sectionConfig.fields}
           onFieldsUpdate={handleFieldsUpdate}
+          onSectionNameUpdate={handleSectionNameUpdate}
         >
           <Button variant="outline" size="sm">
             <Edit className="h-4 w-4" />

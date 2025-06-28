@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Scale, Edit } from 'lucide-react';
 import { SectionEditorDialog, renderDynamicField } from './SectionEditorDialog';
+import { useSectionConfig } from '@/hooks/useSectionConfig';
 
 interface LegalDetailsSectionProps {
   formData: {
@@ -20,20 +21,19 @@ interface LegalDetailsSectionProps {
 }
 
 export const LegalDetailsSection = ({ formData, updateFormData }: LegalDetailsSectionProps) => {
-  const [customFields, setCustomFields] = useState([
-    { id: 'case_type', name: 'Zaaktype', type: 'select' as const, options: ['civiel', 'straf', 'bestuurs', 'arbeids', 'familie', 'ondernemings', 'fiscaal', 'intellectueel'], order: 0 },
-    { id: 'court_instance', name: 'Rechtbank/Instantie', type: 'text' as const, order: 1 },
-    { id: 'legal_status', name: 'Juridische Status', type: 'select' as const, options: ['intake', 'onderzoek', 'dagvaarding', 'verweer', 'comparitie', 'vonnis', 'hoger_beroep', 'executie', 'afgerond'], order: 2 },
-    { id: 'estimated_hours', name: 'Geschatte Uren', type: 'number' as const, order: 3 },
-    { id: 'hourly_rate', name: 'Uurtarief', type: 'currency' as const, order: 4 }
-  ]);
+  const { getSectionConfig, updateSectionFields, updateSectionName } = useSectionConfig();
+  const sectionConfig = getSectionConfig('legal');
 
   const handleFieldsUpdate = (fields: any[]) => {
-    setCustomFields(fields);
+    updateSectionFields('legal', fields);
+  };
+
+  const handleSectionNameUpdate = (name: string) => {
+    updateSectionName('legal', name);
   };
 
   // Sorteer velden op order
-  const sortedFields = [...customFields].sort((a, b) => (a.order || 0) - (b.order || 0));
+  const sortedFields = [...sectionConfig.fields].sort((a, b) => (a.order || 0) - (b.order || 0));
 
   return (
     <div className="bg-slate-50 rounded-lg p-6 border border-slate-200 shadow-sm">
@@ -42,13 +42,14 @@ export const LegalDetailsSection = ({ formData, updateFormData }: LegalDetailsSe
           <div className="bg-slate-800 rounded-lg p-2">
             <Scale className="h-4 w-4 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-900">Details</h3>
+          <h3 className="text-lg font-semibold text-slate-900">{sectionConfig.name}</h3>
         </div>
         
         <SectionEditorDialog
-          sectionName="Details"
-          fields={customFields}
+          sectionName={sectionConfig.name}
+          fields={sectionConfig.fields}
           onFieldsUpdate={handleFieldsUpdate}
+          onSectionNameUpdate={handleSectionNameUpdate}
         >
           <Button variant="outline" size="sm">
             <Edit className="h-4 w-4" />

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -24,16 +23,19 @@ interface SectionEditorDialogProps {
   sectionName: string;
   fields: FieldDefinition[];
   onFieldsUpdate: (fields: FieldDefinition[]) => void;
+  onSectionNameUpdate?: (name: string) => void;
 }
 
 export const SectionEditorDialog = ({ 
   children, 
   sectionName, 
   fields, 
-  onFieldsUpdate 
+  onFieldsUpdate,
+  onSectionNameUpdate
 }: SectionEditorDialogProps) => {
   const [open, setOpen] = useState(false);
   const [editingFields, setEditingFields] = useState<FieldDefinition[]>([]);
+  const [editingSectionName, setEditingSectionName] = useState(sectionName);
   const [newField, setNewField] = useState<Partial<FieldDefinition>>({
     type: 'text',
     required: false
@@ -48,8 +50,9 @@ export const SectionEditorDialog = ({
         order: field.order ?? index
       })).sort((a, b) => (a.order || 0) - (b.order || 0));
       setEditingFields(sortedFields);
+      setEditingSectionName(sectionName);
     }
-  }, [open, fields]);
+  }, [open, fields, sectionName]);
 
   const handleAddField = () => {
     if (!newField.name) {
@@ -112,10 +115,13 @@ export const SectionEditorDialog = ({
 
   const handleSave = () => {
     onFieldsUpdate(editingFields);
+    if (onSectionNameUpdate && editingSectionName !== sectionName) {
+      onSectionNameUpdate(editingSectionName);
+    }
     setOpen(false);
     toast({
       title: "Sectie bijgewerkt",
-      description: `De ${sectionName} sectie is succesvol bijgewerkt`
+      description: `De ${editingSectionName} sectie is succesvol bijgewerkt`
     });
   };
 
@@ -203,10 +209,23 @@ export const SectionEditorDialog = ({
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Bewerk {sectionName} Sectie</DialogTitle>
+          <DialogTitle>Bewerk Sectie</DialogTitle>
         </DialogHeader>
         
         <div className="flex-1 overflow-y-auto space-y-6 p-1">
+          {/* Section Name Editor */}
+          {onSectionNameUpdate && (
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">Sectie Naam</Label>
+              <Input
+                value={editingSectionName}
+                onChange={(e) => setEditingSectionName(e.target.value)}
+                placeholder="Sectie naam"
+                className="text-sm"
+              />
+            </div>
+          )}
+
           {/* Existing Fields */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-slate-900">Bestaande Velden</h3>

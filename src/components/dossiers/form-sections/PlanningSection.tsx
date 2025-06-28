@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Calendar, Plus, Edit } from 'lucide-react';
 import { MultipleDeadlinesDialog } from './MultipleDeadlinesDialog';
 import { SectionEditorDialog, renderDynamicField } from './SectionEditorDialog';
+import { useSectionConfig } from '@/hooks/useSectionConfig';
 
 interface PlanningSectionProps {
   formData: {
@@ -19,12 +20,8 @@ interface PlanningSectionProps {
 }
 
 export const PlanningSection = ({ formData, updateFormData }: PlanningSectionProps) => {
-  const [customFields, setCustomFields] = useState([
-    { id: 'start_date', name: 'Startdatum', type: 'date' as const, order: 0 },
-    { id: 'end_date', name: 'Einddatum', type: 'date' as const, order: 1 },
-    { id: 'deadline_date', name: 'Deadline Datum', type: 'date' as const, order: 2 },
-    { id: 'deadline_description', name: 'Deadline Beschrijving', type: 'textarea' as const, order: 3 }
-  ]);
+  const { getSectionConfig, updateSectionFields, updateSectionName } = useSectionConfig();
+  const sectionConfig = getSectionConfig('planning');
 
   const handleDeadlinesAdd = (deadlines: any[]) => {
     console.log('📅 Multiple deadlines added:', deadlines);
@@ -38,11 +35,15 @@ export const PlanningSection = ({ formData, updateFormData }: PlanningSectionPro
   };
 
   const handleFieldsUpdate = (fields: any[]) => {
-    setCustomFields(fields);
+    updateSectionFields('planning', fields);
+  };
+
+  const handleSectionNameUpdate = (name: string) => {
+    updateSectionName('planning', name);
   };
 
   // Sorteer velden op order
-  const sortedFields = [...customFields].sort((a, b) => (a.order || 0) - (b.order || 0));
+  const sortedFields = [...sectionConfig.fields].sort((a, b) => (a.order || 0) - (b.order || 0));
 
   return (
     <div className="bg-slate-50 rounded-lg p-6 border border-slate-200 shadow-sm">
@@ -51,13 +52,14 @@ export const PlanningSection = ({ formData, updateFormData }: PlanningSectionPro
           <div className="bg-slate-800 rounded-lg p-2">
             <Calendar className="h-4 w-4 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-900">Planning & Termijnen</h3>
+          <h3 className="text-lg font-semibold text-slate-900">{sectionConfig.name}</h3>
         </div>
         
         <SectionEditorDialog
-          sectionName="Planning & Termijnen"
-          fields={customFields}
+          sectionName={sectionConfig.name}
+          fields={sectionConfig.fields}
           onFieldsUpdate={handleFieldsUpdate}
+          onSectionNameUpdate={handleSectionNameUpdate}
         >
           <Button variant="outline" size="sm">
             <Edit className="h-4 w-4" />
