@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTrigger } from '@/components/ui/dialog';
+import { FileText } from 'lucide-react';
 import { useDossierStatusUpdates } from '@/hooks/useDossierStatusUpdates';
 import { useDossierDeadlines } from '@/hooks/useDossierDeadlines';
 import { DossierDetailHeader } from './DossierDetailHeader';
