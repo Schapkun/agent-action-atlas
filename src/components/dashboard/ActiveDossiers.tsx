@@ -77,6 +77,16 @@ export const ActiveDossiers = () => {
     { type: 'deadline', label: 'Deadlines', icon: Calendar, count: 0 }
   ];
 
+  const formatDateTimeWithLabel = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('nl-NL', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -98,11 +108,11 @@ export const ActiveDossiers = () => {
         <div className="w-1/3 space-y-4">
           <div className="bg-white rounded-lg border border-slate-200 p-4">
             <div className="flex items-center justify-between mb-4">
-              <Badge variant="outline">
+              <Badge variant="outline" className="text-sm">
                 {activeDossiers.length} actief
               </Badge>
               <EnhancedCreateDossierDialog onDossierCreated={handleDossierCreated}>
-                <Button size="sm">
+                <Button size="sm" className="text-sm">
                   <Plus className="h-4 w-4 mr-2" />
                   Nieuw Dossier
                 </Button>
@@ -136,18 +146,24 @@ export const ActiveDossiers = () => {
                     onClick={() => setSelectedDossier(dossier)}
                   >
                     <div className="flex items-start justify-between mb-3">
-                      <h4 className="font-medium text-slate-900 line-clamp-2 flex-1">
+                      <h4 className="font-medium text-slate-900 line-clamp-2 flex-1 text-sm">
                         {dossier.name}
                       </h4>
                       <div className="flex gap-1 flex-shrink-0 ml-2">
                         <DossierDetailDialog dossier={dossier}>
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <ExternalLink className="h-4 w-4" />
+                            <Eye className="h-4 w-4" />
                           </Button>
                         </DossierDetailDialog>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <EnhancedCreateDossierDialog 
+                          editMode={true}
+                          editDossier={dossier}
+                          onDossierCreated={handleDossierCreated}
+                        >
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </EnhancedCreateDossierDialog>
                       </div>
                     </div>
                     
@@ -168,18 +184,12 @@ export const ActiveDossiers = () => {
                       <div className="flex items-center gap-2 text-slate-600">
                         <Calendar className="h-3 w-3 text-slate-400" />
                         <span className="text-sm">
-                          {new Date(dossier.created_at).toLocaleDateString('nl-NL')}
+                          Aangemaakt: {formatDateTimeWithLabel(dossier.created_at)}
                         </span>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-2 mt-3">
-                      <Badge 
-                        variant="outline" 
-                        className={`text-xs ${getStatusColor(dossier.status)}`}
-                      >
-                        {getStatusLabel(dossier.status)}
-                      </Badge>
                       <Badge 
                         variant="outline" 
                         className={`text-xs ${getPriorityColor(dossier.priority)}`}
@@ -209,9 +219,8 @@ export const ActiveDossiers = () => {
                   <div>
                     <h2 className="text-xl font-semibold text-slate-900">{selectedDossier.name}</h2>
                     <div className="flex items-center gap-2 mt-2">
-                      <Badge className="bg-green-100 text-green-800 border-green-200">Actief</Badge>
-                      <span className="text-slate-600">
-                        Aangemaakt: {new Date(selectedDossier.created_at).toLocaleDateString('nl-NL')}
+                      <span className="text-slate-600 text-sm">
+                        Aangemaakt: {formatDateTimeWithLabel(selectedDossier.created_at)}
                       </span>
                     </div>
                   </div>
@@ -271,7 +280,7 @@ export const ActiveDossiers = () => {
                 <Folder className="h-16 w-16 text-slate-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-slate-900 mb-2">Selecteer een dossier</h3>
                 <p className="text-slate-600">
-                  Klik op een dossier links om de details en status updates te bekijken
+                  Klik op een dossier links om de details en activiteiten te bekijken
                 </p>
               </div>
             </div>
