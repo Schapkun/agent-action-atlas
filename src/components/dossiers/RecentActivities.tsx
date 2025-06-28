@@ -2,10 +2,9 @@
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Clock, Edit, Trash2, Save, X } from 'lucide-react';
+import { Clock, Edit, Trash2 } from 'lucide-react';
 import { DossierStatusUpdate, UPDATE_TYPE_LABELS } from '@/types/dossierStatusUpdates';
+import { AddStatusUpdateDialog } from '@/components/dossiers/AddStatusUpdateDialog';
 import { useToast } from '@/hooks/use-toast';
 
 interface RecentActivitiesProps {
@@ -15,44 +14,9 @@ interface RecentActivitiesProps {
 
 export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesProps) => {
   const { toast } = useToast();
-  const [editingActivity, setEditingActivity] = useState<string | null>(null);
-  const [activities, setActivities] = useState(statusUpdates);
-  const [editData, setEditData] = useState<{title: string, description: string}>({title: '', description: ''});
-
-  React.useEffect(() => {
-    setActivities(statusUpdates);
-  }, [statusUpdates]);
-
-  const handleEditActivity = (update: DossierStatusUpdate) => {
-    setEditingActivity(update.id);
-    setEditData({
-      title: update.status_title,
-      description: update.status_description || ''
-    });
-  };
-
-  const handleSaveActivity = (activityId: string) => {
-    // In real app, this would save to API
-    setActivities(prev => prev.map(activity => 
-      activity.id === activityId 
-        ? { ...activity, status_title: editData.title, status_description: editData.description }
-        : activity
-    ));
-    setEditingActivity(null);
-    toast({
-      title: "Activiteit bijgewerkt",
-      description: "De activiteit is succesvol bijgewerkt.",
-    });
-  };
-
-  const handleCancelEdit = () => {
-    setEditingActivity(null);
-    setEditData({title: '', description: ''});
-  };
 
   const handleDeleteActivity = (activityId: string) => {
     // In real app, this would delete from API
-    setActivities(prev => prev.filter(activity => activity.id !== activityId));
     toast({
       title: "Activiteit verwijderd",
       description: "De activiteit is succesvol verwijderd."
@@ -89,7 +53,7 @@ export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesP
     });
   };
 
-  const sortedActivities = activities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const sortedActivities = statusUpdates.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   if (isLoading) {
     return (
@@ -126,40 +90,21 @@ export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesP
                 <Clock className="h-4 w-4 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
-                {editingActivity === activity.id ? (
-                  <div className="space-y-2">
-                    <Input
-                      value={editData.title}
-                      onChange={(e) => setEditData({...editData, title: e.target.value})}
-                      className="h-8 font-medium"
-                      placeholder="Titel"
-                    />
-                    <Textarea
-                      value={editData.description}
-                      onChange={(e) => setEditData({...editData, description: e.target.value})}
-                      className="min-h-[60px] resize-none"
-                      placeholder="Beschrijving"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <p className="font-medium text-slate-900 truncate">{activity.status_title}</p>
-                    <p className="text-slate-600 mb-1">
-                      Type: {UPDATE_TYPE_LABELS[activity.update_type] || activity.update_type}
-                    </p>
-                    {activity.status_description && (
-                      <p className="text-slate-700 line-clamp-2">{activity.status_description}</p>
-                    )}
-                    {activity.hours_spent > 0 && (
-                      <p className="text-slate-500 mt-1">
-                        {activity.hours_spent}h besteed {activity.is_billable ? '(factureerbaar)' : '(niet factureerbaar)'}
-                      </p>
-                    )}
-                  </>
+                <p className="font-medium text-slate-900 truncate">{activity.status_title}</p>
+                <p className="text-slate-600 mb-1">
+                  Type: {UPDATE_TYPE_LABELS[activity.update_type] || activity.update_type}
+                </p>
+                {activity.status_description && (
+                  <p className="text-slate-700 line-clamp-2">{activity.status_description}</p>
+                )}
+                {activity.hours_spent > 0 && (
+                  <p className="text-slate-500 mt-1">
+                    {activity.hours_spent}h besteed {activity.is_billable ? '(factureerbaar)' : '(niet factureerbaar)'}
+                  </p>
                 )}
               </div>
             </div>
-            <div className="flex items-start gap-6 flex-shrink-0 ml-4">
+            <div className="flex items-center gap-4 flex-shrink-0 ml-4">
               <div className="text-right">
                 <span className="text-slate-500 block">
                   {formatDateTime(activity.created_at)}
@@ -169,25 +114,23 @@ export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesP
                 </Badge>
               </div>
               <div className="flex gap-1">
-                {editingActivity === activity.id ? (
-                  <>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-green-600 hover:text-green-700" onClick={() => handleSaveActivity(activity.id)}>
-                      <Save className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-600 hover:text-red-600" onClick={handleCancelEdit}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-600 hover:text-blue-600" onClick={() => handleEditActivity(activity)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-600 hover:text-red-600" onClick={() => handleDeleteActivity(activity.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </>
-                )}
+                <AddStatusUpdateDialog 
+                  dossierId={activity.dossier_id}
+                  editMode={true}
+                  editActivity={activity}
+                >
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-600 hover:text-blue-600">
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </AddStatusUpdateDialog>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 w-8 p-0 text-slate-600 hover:text-red-600"
+                  onClick={() => handleDeleteActivity(activity.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           </div>

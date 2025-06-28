@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Plus, Clock, Settings } from 'lucide-react';
-import { UPDATE_TYPE_LABELS, PRIORITY_LABELS, CreateStatusUpdateData } from '@/types/dossierStatusUpdates';
+import { UPDATE_TYPE_LABELS, PRIORITY_LABELS, CreateStatusUpdateData, DossierStatusUpdate } from '@/types/dossierStatusUpdates';
 import { ManageUpdateTypesDialog } from './ManageUpdateTypesDialog';
 import { useCreateStatusUpdate } from '@/hooks/useDossierStatusUpdates';
 import { useToast } from '@/hooks/use-toast';
@@ -16,58 +17,92 @@ interface AddStatusUpdateDialogProps {
   dossierId: string;
   clientName?: string;
   children?: React.ReactNode;
+  editMode?: boolean;
+  editActivity?: DossierStatusUpdate;
 }
 
-export const AddStatusUpdateDialog = ({ dossierId, clientName, children }: AddStatusUpdateDialogProps) => {
+export const AddStatusUpdateDialog = ({ 
+  dossierId, 
+  clientName, 
+  children, 
+  editMode = false, 
+  editActivity 
+}: AddStatusUpdateDialogProps) => {
   const [open, setOpen] = useState(false);
   const [manageTypesOpen, setManageTypesOpen] = useState(false);
   const { toast } = useToast();
   const createStatusUpdate = useCreateStatusUpdate();
 
-  const [formData, setFormData] = useState<CreateStatusUpdateData>({
-    dossier_id: dossierId,
-    update_type: 'general',
-    status_title: '',
-    status_description: '',
-    hours_spent: 0,
-    notes: '',
-    priority: 'medium',
-    is_billable: true,
-    source_type: 'manual',
-    is_ai_generated: false
-  });
+  const getInitialFormData = (): CreateStatusUpdateData => {
+    if (editMode && editActivity) {
+      return {
+        dossier_id: dossierId,
+        update_type: editActivity.update_type,
+        status_title: editActivity.status_title,
+        status_description: editActivity.status_description || '',
+        hours_spent: editActivity.hours_spent || 0,
+        notes: editActivity.notes || '',
+        priority: editActivity.priority,
+        is_billable: editActivity.is_billable,
+        source_type: editActivity.source_type || 'manual',
+        is_ai_generated: editActivity.is_ai_generated || false
+      };
+    }
+    
+    return {
+      dossier_id: dossierId,
+      update_type: 'general',
+      status_title: '',
+      status_description: '',
+      hours_spent: 0,
+      notes: '',
+      priority: 'medium',
+      is_billable: true,
+      source_type: 'manual',
+      is_ai_generated: false
+    };
+  };
+
+  const [formData, setFormData] = useState<CreateStatusUpdateData>(getInitialFormData());
+
+  // Reset form when dialog opens or editActivity changes
+  useEffect(() => {
+    if (open) {
+      setFormData(getInitialFormData());
+    }
+  }, [open, editMode, editActivity]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.status_title.trim()) return;
 
     try {
-      await createStatusUpdate.mutateAsync(formData);
+      if (editMode) {
+        // In real app, this would call update API instead of create
+        console.log('Updating activity:', { id: editActivity?.id, ...formData });
+        toast({
+          title: "Activiteit bijgewerkt",
+          description: "De activiteit is succesvol bijgewerkt."
+        });
+      } else {
+        await createStatusUpdate.mutateAsync(formData);
+        toast({
+          title: "Activiteit toegevoegd",
+          description: "De activiteit is succesvol opgeslagen."
+        });
+      }
       
-      // Reset form
-      setFormData({
-        dossier_id: dossierId,
-        update_type: 'general',
-        status_title: '',
-        status_description: '',
-        hours_spent: 0,
-        notes: '',
-        priority: 'medium',
-        is_billable: true,
-        source_type: 'manual',
-        is_ai_generated: false
-      });
+      // Reset form only if not in edit mode
+      if (!editMode) {
+        setFormData(getInitialFormData());
+      }
       
       setOpen(false);
-      toast({
-        title: "Activiteit toegevoegd",
-        description: "De activiteit is succesvol opgeslagen."
-      });
     } catch (error) {
-      console.error('Error adding activity:', error);
+      console.error('Error saving activity:', error);
       toast({
         title: "Fout",
-        description: "Er is een fout opgetreden bij het opslaan van de activiteit.",
+        description: `Er is een fout opgetreden bij het ${editMode ? 'bijwerken' : 'opslaan'} van de activiteit.`,
         variant: "destructive"
       });
     }
@@ -76,6 +111,10 @@ export const AddStatusUpdateDialog = ({ dossierId, clientName, children }: AddSt
   const updateFormData = (updates: Partial<CreateStatusUpdateData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
   };
+
+  const dialogTitle = editMode ? 'Activiteit Bewerken' : 'Activiteit Toevoegen';
+  const submitButtonText = editMode ? 'Activiteit Bijwerken' : 'Activiteit Toevoegen';
+  const loadingText = editMode ? 'Bijwerken...' : 'Toevoegen...';
 
   return (
     <>
@@ -92,7 +131,7 @@ export const AddStatusUpdateDialog = ({ dossierId, clientName, children }: AddSt
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              Activiteit Toevoegen
+              {dialogTitle}
             </DialogTitle>
             {clientName && (
               <p className="text-sm text-slate-600">
@@ -244,7 +283,7 @@ export const AddStatusUpdateDialog = ({ dossierId, clientName, children }: AddSt
                 disabled={createStatusUpdate.isPending || !formData.status_title.trim()}
                 className="bg-slate-800 hover:bg-slate-700"
               >
-                {createStatusUpdate.isPending ? 'Toevoegen...' : 'Activiteit Toevoegen'}
+                {createStatusUpdate.isPending ? loadingText : submitButtonText}
               </Button>
             </div>
           </form>

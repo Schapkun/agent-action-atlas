@@ -8,7 +8,7 @@ import { useDossierDeadlines } from '@/hooks/useDossierDeadlines';
 import { UPDATE_TYPE_LABELS } from '@/types/dossierStatusUpdates';
 import { EditDeadlineDialog } from '@/components/dossiers/EditDeadlineDialog';
 import { useOrganizationSettings } from '@/hooks/useOrganizationSettings';
-import { EditActivityDialog } from '@/components/dossiers/EditActivityDialog';
+import { AddStatusUpdateDialog } from '@/components/dossiers/AddStatusUpdateDialog';
 import { useToast } from '@/hooks/use-toast';
 
 interface DossierUpdatesSectionProps {
@@ -147,7 +147,7 @@ export const DossierUpdatesSection = ({ dossierId }: DossierUpdatesSectionProps)
               )}
             </div>
           </div>
-          <div className="flex items-center justify-center gap-4 ml-4 flex-shrink-0">
+          <div className="flex items-center gap-4 ml-4 flex-shrink-0">
             <div className="text-right">
               <span className="text-slate-500 block">
                 {formatDateTime(item.date)}
@@ -161,11 +161,15 @@ export const DossierUpdatesSection = ({ dossierId }: DossierUpdatesSectionProps)
                 <EditDeadlineDialog deadline={item} />
               ) : (
                 <>
-                  <EditActivityDialog activity={item} dossierId={dossierId}>
+                  <AddStatusUpdateDialog 
+                    dossierId={dossierId}
+                    editMode={true}
+                    editActivity={item}
+                  >
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-600 hover:text-blue-600">
                       <Edit className="h-4 w-4" />
                     </Button>
-                  </EditActivityDialog>
+                  </AddStatusUpdateDialog>
                   <Button 
                     variant="ghost" 
                     size="sm" 
