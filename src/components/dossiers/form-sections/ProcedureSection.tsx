@@ -4,23 +4,27 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Settings, Edit } from 'lucide-react';
-import { SectionEditorDialog } from './SectionEditorDialog';
+import { SectionEditorDialog, renderDynamicField } from './SectionEditorDialog';
 
 interface ProcedureSectionProps {
   formData: {
     procedure_type?: string;
+    [key: string]: any; // Voor dynamische velden
   };
   updateFormData: (updates: any) => void;
 }
 
 export const ProcedureSection = ({ formData, updateFormData }: ProcedureSectionProps) => {
   const [customFields, setCustomFields] = useState([
-    { id: 'procedure_type', name: 'Type Procedure', type: 'select' as const, options: ['dagvaarding', 'kort_geding', 'arbitrage', 'mediation', 'onderhandeling', 'advies', 'hoger_beroep', 'cassatie'] }
+    { id: 'procedure_type', name: 'Type Procedure', type: 'select' as const, options: ['dagvaarding', 'kort_geding', 'arbitrage', 'mediation', 'onderhandeling', 'advies', 'hoger_beroep', 'cassatie'], order: 0 }
   ]);
 
   const handleFieldsUpdate = (fields: any[]) => {
     setCustomFields(fields);
   };
+
+  // Sorteer velden op order
+  const sortedFields = [...customFields].sort((a, b) => (a.order || 0) - (b.order || 0));
 
   return (
     <div className="bg-slate-50 rounded-lg p-6 border border-slate-200 shadow-sm">
@@ -43,28 +47,40 @@ export const ProcedureSection = ({ formData, updateFormData }: ProcedureSectionP
         </SectionEditorDialog>
       </div>
       
-      <div>
-        <Label htmlFor="procedure_type" className="text-sm font-medium text-slate-700 mb-2 block">
-          Type Procedure
-        </Label>
-        <Select 
-          value={formData.procedure_type || ''} 
-          onValueChange={(value) => updateFormData({ procedure_type: value })}
-        >
-          <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
-            <SelectValue placeholder="Selecteer procedure type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="dagvaarding">Dagvaarding</SelectItem>
-            <SelectItem value="kort_geding">Kort Geding</SelectItem>
-            <SelectItem value="arbitrage">Arbitrage</SelectItem>
-            <SelectItem value="mediation">Mediation</SelectItem>
-            <SelectItem value="onderhandeling">Onderhandeling</SelectItem>
-            <SelectItem value="advies">Juridisch Advies</SelectItem>
-            <SelectItem value="hoger_beroep">Hoger Beroep</SelectItem>
-            <SelectItem value="cassatie">Cassatie</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="space-y-4">
+        {sortedFields.map((field) => (
+          <div key={field.id}>
+            <Label htmlFor={field.id} className="text-sm font-medium text-slate-700 mb-2 block">
+              {field.name}
+            </Label>
+            {field.id === 'procedure_type' ? (
+              <Select 
+                value={formData[field.id] || ''} 
+                onValueChange={(value) => updateFormData({ [field.id]: value })}
+              >
+                <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
+                  <SelectValue placeholder="Selecteer procedure type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="dagvaarding">Dagvaarding</SelectItem>
+                  <SelectItem value="kort_geding">Kort Geding</SelectItem>
+                  <SelectItem value="arbitrage">Arbitrage</SelectItem>
+                  <SelectItem value="mediation">Mediation</SelectItem>
+                  <SelectItem value="onderhandeling">Onderhandeling</SelectItem>
+                  <SelectItem value="advies">Juridisch Advies</SelectItem>
+                  <SelectItem value="hoger_beroep">Hoger Beroep</SelectItem>
+                  <SelectItem value="cassatie">Cassatie</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              renderDynamicField(
+                field,
+                formData[field.id],
+                (value) => updateFormData({ [field.id]: value })
+              )
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

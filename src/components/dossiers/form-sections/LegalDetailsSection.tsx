@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Scale, Edit } from 'lucide-react';
-import { SectionEditorDialog } from './SectionEditorDialog';
+import { SectionEditorDialog, renderDynamicField } from './SectionEditorDialog';
 
 interface LegalDetailsSectionProps {
   formData: {
@@ -14,22 +14,26 @@ interface LegalDetailsSectionProps {
     legal_status?: string;
     estimated_hours?: string;
     hourly_rate?: string;
+    [key: string]: any; // Voor dynamische velden
   };
   updateFormData: (updates: any) => void;
 }
 
 export const LegalDetailsSection = ({ formData, updateFormData }: LegalDetailsSectionProps) => {
   const [customFields, setCustomFields] = useState([
-    { id: 'case_type', name: 'Zaaktype', type: 'select' as const, options: ['civiel', 'straf', 'bestuurs', 'arbeids', 'familie', 'ondernemings', 'fiscaal', 'intellectueel'] },
-    { id: 'court_instance', name: 'Rechtbank/Instantie', type: 'text' as const },
-    { id: 'legal_status', name: 'Juridische Status', type: 'select' as const, options: ['intake', 'onderzoek', 'dagvaarding', 'verweer', 'comparitie', 'vonnis', 'hoger_beroep', 'executie', 'afgerond'] },
-    { id: 'estimated_hours', name: 'Geschatte Uren', type: 'number' as const },
-    { id: 'hourly_rate', name: 'Uurtarief', type: 'currency' as const }
+    { id: 'case_type', name: 'Zaaktype', type: 'select' as const, options: ['civiel', 'straf', 'bestuurs', 'arbeids', 'familie', 'ondernemings', 'fiscaal', 'intellectueel'], order: 0 },
+    { id: 'court_instance', name: 'Rechtbank/Instantie', type: 'text' as const, order: 1 },
+    { id: 'legal_status', name: 'Juridische Status', type: 'select' as const, options: ['intake', 'onderzoek', 'dagvaarding', 'verweer', 'comparitie', 'vonnis', 'hoger_beroep', 'executie', 'afgerond'], order: 2 },
+    { id: 'estimated_hours', name: 'Geschatte Uren', type: 'number' as const, order: 3 },
+    { id: 'hourly_rate', name: 'Uurtarief', type: 'currency' as const, order: 4 }
   ]);
 
   const handleFieldsUpdate = (fields: any[]) => {
     setCustomFields(fields);
   };
+
+  // Sorteer velden op order
+  const sortedFields = [...customFields].sort((a, b) => (a.order || 0) - (b.order || 0));
 
   return (
     <div className="bg-slate-50 rounded-lg p-6 border border-slate-200 shadow-sm">
@@ -53,99 +57,87 @@ export const LegalDetailsSection = ({ formData, updateFormData }: LegalDetailsSe
       </div>
       
       <div className="space-y-4">
-        <div>
-          <Label htmlFor="case_type" className="text-sm font-medium text-slate-700 mb-2 block">
-            Zaaktype
-          </Label>
-          <Select 
-            value={formData.case_type || ''} 
-            onValueChange={(value) => updateFormData({ case_type: value })}
-          >
-            <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
-              <SelectValue placeholder="Selecteer zaaktype" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="civiel">Civiele Zaak</SelectItem>
-              <SelectItem value="straf">Strafzaak</SelectItem>
-              <SelectItem value="bestuurs">Bestuurszaak</SelectItem>
-              <SelectItem value="arbeids">Arbeidszaak</SelectItem>
-              <SelectItem value="familie">Familiezaak</SelectItem>
-              <SelectItem value="ondernemings">Ondernemingszaak</SelectItem>
-              <SelectItem value="fiscaal">Fiscale Zaak</SelectItem>
-              <SelectItem value="intellectueel">Intellectueel Eigendom</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <Label htmlFor="court_instance" className="text-sm font-medium text-slate-700 mb-2 block">
-            Rechtbank/Instantie
-          </Label>
-          <Input
-            id="court_instance"
-            value={formData.court_instance || ''}
-            onChange={(e) => updateFormData({ court_instance: e.target.value })}
-            placeholder="bijv. Rechtbank Amsterdam"
-            className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="legal_status" className="text-sm font-medium text-slate-700 mb-2 block">
-            Juridische Status
-          </Label>
-          <Select 
-            value={formData.legal_status || ''} 
-            onValueChange={(value) => updateFormData({ legal_status: value })}
-          >
-            <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
-              <SelectValue placeholder="Selecteer status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="intake">Intake</SelectItem>
-              <SelectItem value="onderzoek">Onderzoek</SelectItem>
-              <SelectItem value="dagvaarding">Dagvaarding Ingediend</SelectItem>
-              <SelectItem value="verweer">Verweer Ingediend</SelectItem>
-              <SelectItem value="comparitie">Comparitie</SelectItem>
-              <SelectItem value="vonnis">Vonnis</SelectItem>
-              <SelectItem value="hoger_beroep">Hoger Beroep</SelectItem>
-              <SelectItem value="executie">Executie</SelectItem>
-              <SelectItem value="afgerond">Afgerond</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="estimated_hours" className="text-sm font-medium text-slate-700 mb-2 block">
-              Geschatte Uren
+        {sortedFields.map((field) => (
+          <div key={field.id}>
+            <Label htmlFor={field.id} className="text-sm font-medium text-slate-700 mb-2 block">
+              {field.name}
             </Label>
-            <Input
-              id="estimated_hours"
-              type="number"
-              step="0.5"
-              value={formData.estimated_hours || ''}
-              onChange={(e) => updateFormData({ estimated_hours: e.target.value })}
-              placeholder="0"
-              className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
-            />
+            {field.id === 'case_type' ? (
+              <Select 
+                value={formData[field.id] || ''} 
+                onValueChange={(value) => updateFormData({ [field.id]: value })}
+              >
+                <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
+                  <SelectValue placeholder="Selecteer zaaktype" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="civiel">Civiele Zaak</SelectItem>
+                  <SelectItem value="straf">Strafzaak</SelectItem>
+                  <SelectItem value="bestuurs">Bestuurszaak</SelectItem>
+                  <SelectItem value="arbeids">Arbeidszaak</SelectItem>
+                  <SelectItem value="familie">Familiezaak</SelectItem>
+                  <SelectItem value="ondernemings">Ondernemingszaak</SelectItem>
+                  <SelectItem value="fiscaal">Fiscale Zaak</SelectItem>
+                  <SelectItem value="intellectueel">Intellectueel Eigendom</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : field.id === 'court_instance' ? (
+              <Input
+                id={field.id}
+                value={formData[field.id] || ''}
+                onChange={(e) => updateFormData({ [field.id]: e.target.value })}
+                placeholder="bijv. Rechtbank Amsterdam"
+                className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
+              />
+            ) : field.id === 'legal_status' ? (
+              <Select 
+                value={formData[field.id] || ''} 
+                onValueChange={(value) => updateFormData({ [field.id]: value })}
+              >
+                <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
+                  <SelectValue placeholder="Selecteer status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="intake">Intake</SelectItem>
+                  <SelectItem value="onderzoek">Onderzoek</SelectItem>
+                  <SelectItem value="dagvaarding">Dagvaarding Ingediend</SelectItem>
+                  <SelectItem value="verweer">Verweer Ingediend</SelectItem>
+                  <SelectItem value="comparitie">Comparitie</SelectItem>
+                  <SelectItem value="vonnis">Vonnis</SelectItem>
+                  <SelectItem value="hoger_beroep">Hoger Beroep</SelectItem>
+                  <SelectItem value="executie">Executie</SelectItem>
+                  <SelectItem value="afgerond">Afgerond</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : field.id === 'estimated_hours' ? (
+              <Input
+                id={field.id}
+                type="number"
+                step="0.5"
+                value={formData[field.id] || ''}
+                onChange={(e) => updateFormData({ [field.id]: e.target.value })}
+                placeholder="0"
+                className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
+              />
+            ) : field.id === 'hourly_rate' ? (
+              <Input
+                id={field.id}
+                type="number"
+                step="0.01"
+                value={formData[field.id] || ''}
+                onChange={(e) => updateFormData({ [field.id]: e.target.value })}
+                placeholder="0.00"
+                className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
+              />
+            ) : (
+              renderDynamicField(
+                field,
+                formData[field.id],
+                (value) => updateFormData({ [field.id]: value })
+              )
+            )}
           </div>
-          
-          <div>
-            <Label htmlFor="hourly_rate" className="text-sm font-medium text-slate-700 mb-2 block">
-              Uurtarief (€)
-            </Label>
-            <Input
-              id="hourly_rate"
-              type="number"
-              step="0.01"
-              value={formData.hourly_rate || ''}
-              onChange={(e) => updateFormData({ hourly_rate: e.target.value })}
-              placeholder="0.00"
-              className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
-            />
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );

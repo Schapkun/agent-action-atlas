@@ -2,11 +2,10 @@
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Calendar, Plus, Edit } from 'lucide-react';
 import { MultipleDeadlinesDialog } from './MultipleDeadlinesDialog';
-import { SectionEditorDialog } from './SectionEditorDialog';
+import { SectionEditorDialog, renderDynamicField } from './SectionEditorDialog';
 
 interface PlanningSectionProps {
   formData: {
@@ -14,16 +13,17 @@ interface PlanningSectionProps {
     end_date?: string;
     deadline_date?: string;
     deadline_description?: string;
+    [key: string]: any; // Voor dynamische velden
   };
   updateFormData: (updates: any) => void;
 }
 
 export const PlanningSection = ({ formData, updateFormData }: PlanningSectionProps) => {
   const [customFields, setCustomFields] = useState([
-    { id: 'start_date', name: 'Startdatum', type: 'date' as const },
-    { id: 'end_date', name: 'Einddatum', type: 'date' as const },
-    { id: 'deadline_date', name: 'Deadline Datum', type: 'date' as const },
-    { id: 'deadline_description', name: 'Deadline Beschrijving', type: 'textarea' as const }
+    { id: 'start_date', name: 'Startdatum', type: 'date' as const, order: 0 },
+    { id: 'end_date', name: 'Einddatum', type: 'date' as const, order: 1 },
+    { id: 'deadline_date', name: 'Deadline Datum', type: 'date' as const, order: 2 },
+    { id: 'deadline_description', name: 'Deadline Beschrijving', type: 'textarea' as const, order: 3 }
   ]);
 
   const handleDeadlinesAdd = (deadlines: any[]) => {
@@ -40,6 +40,9 @@ export const PlanningSection = ({ formData, updateFormData }: PlanningSectionPro
   const handleFieldsUpdate = (fields: any[]) => {
     setCustomFields(fields);
   };
+
+  // Sorteer velden op order
+  const sortedFields = [...customFields].sort((a, b) => (a.order || 0) - (b.order || 0));
 
   return (
     <div className="bg-slate-50 rounded-lg p-6 border border-slate-200 shadow-sm">
@@ -63,33 +66,28 @@ export const PlanningSection = ({ formData, updateFormData }: PlanningSectionPro
       </div>
       
       <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="start_date" className="text-sm font-medium text-slate-700 mb-2 block">
-              Startdatum
+        {sortedFields.map((field) => (
+          <div key={field.id}>
+            <Label htmlFor={field.id} className="text-sm font-medium text-slate-700 mb-2 block">
+              {field.name}
             </Label>
-            <Input
-              id="start_date"
-              type="date"
-              value={formData.start_date || ''}
-              onChange={(e) => updateFormData({ start_date: e.target.value })}
-              className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
-            />
+            {field.id === 'start_date' || field.id === 'end_date' || field.id === 'deadline_date' ? (
+              <Input
+                id={field.id}
+                type="date"
+                value={formData[field.id] || ''}
+                onChange={(e) => updateFormData({ [field.id]: e.target.value })}
+                className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
+              />
+            ) : (
+              renderDynamicField(
+                field,
+                formData[field.id],
+                (value) => updateFormData({ [field.id]: value })
+              )
+            )}
           </div>
-          
-          <div>
-            <Label htmlFor="end_date" className="text-sm font-medium text-slate-700 mb-2 block">
-              Einddatum
-            </Label>
-            <Input
-              id="end_date"
-              type="date"
-              value={formData.end_date || ''}
-              onChange={(e) => updateFormData({ end_date: e.target.value })}
-              className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
-            />
-          </div>
-        </div>
+        ))}
 
         <div className="border-t pt-4">
           <div className="flex items-center justify-between mb-4">
@@ -105,35 +103,6 @@ export const PlanningSection = ({ formData, updateFormData }: PlanningSectionPro
                 Meerdere Deadlines
               </Button>
             </MultipleDeadlinesDialog>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="deadline_date" className="text-sm font-medium text-slate-700 mb-2 block">
-                Deadline Datum
-              </Label>
-              <Input
-                id="deadline_date"
-                type="date"
-                value={formData.deadline_date || ''}
-                onChange={(e) => updateFormData({ deadline_date: e.target.value })}
-                className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="deadline_description" className="text-sm font-medium text-slate-700 mb-2 block">
-                Deadline Beschrijving
-              </Label>
-              <Textarea
-                id="deadline_description"
-                value={formData.deadline_description || ''}
-                onChange={(e) => updateFormData({ deadline_description: e.target.value })}
-                placeholder="Beschrijving van de deadline..."
-                className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500 min-h-[80px]"
-                rows={2}
-              />
-            </div>
           </div>
         </div>
       </div>

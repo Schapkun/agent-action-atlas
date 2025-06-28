@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { FileText, Edit } from 'lucide-react';
-import { SectionEditorDialog } from './SectionEditorDialog';
+import { SectionEditorDialog, renderDynamicField } from './SectionEditorDialog';
 
 interface BasicInfoSectionProps {
   formData: {
@@ -14,21 +14,25 @@ interface BasicInfoSectionProps {
     description: string;
     category: string;
     priority: string;
+    [key: string]: any; // Voor dynamische velden
   };
   updateFormData: (updates: any) => void;
 }
 
 export const BasicInfoSection = ({ formData, updateFormData }: BasicInfoSectionProps) => {
   const [customFields, setCustomFields] = useState([
-    { id: 'name', name: 'Dossiernaam', type: 'text' as const, required: true },
-    { id: 'description', name: 'Beschrijving', type: 'textarea' as const },
-    { id: 'category', name: 'Categorie', type: 'select' as const, options: ['algemeen', 'familierecht', 'arbeidsrecht', 'strafrecht', 'ondernemingsrecht'] },
-    { id: 'priority', name: 'Prioriteit', type: 'select' as const, options: ['low', 'medium', 'high', 'urgent'] }
+    { id: 'name', name: 'Dossiernaam', type: 'text' as const, required: true, order: 0 },
+    { id: 'description', name: 'Beschrijving', type: 'textarea' as const, order: 1 },
+    { id: 'category', name: 'Categorie', type: 'select' as const, options: ['algemeen', 'familierecht', 'arbeidsrecht', 'strafrecht', 'ondernemingsrecht'], order: 2 },
+    { id: 'priority', name: 'Prioriteit', type: 'select' as const, options: ['low', 'medium', 'high', 'urgent'], order: 3 }
   ]);
 
   const handleFieldsUpdate = (fields: any[]) => {
     setCustomFields(fields);
   };
+
+  // Sorteer velden op order
+  const sortedFields = [...customFields].sort((a, b) => (a.order || 0) - (b.order || 0));
 
   return (
     <div className="bg-slate-50 rounded-lg p-6 border border-slate-200 shadow-sm">
@@ -52,70 +56,63 @@ export const BasicInfoSection = ({ formData, updateFormData }: BasicInfoSectionP
       </div>
       
       <div className="space-y-4">
-        <div>
-          <Label htmlFor="name" className="text-sm font-medium text-slate-700 mb-2 block">
-            Dossiernaam *
-          </Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => updateFormData({ name: e.target.value })}
-            placeholder="Geef het dossier een duidelijke naam"
-            className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
-            required
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="description" className="text-sm font-medium text-slate-700 mb-2 block">
-            Beschrijving
-          </Label>
-          <Textarea
-            id="description"
-            value={formData.description}
-            onChange={(e) => updateFormData({ description: e.target.value })}
-            placeholder="Korte beschrijving van het dossier..."
-            className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500 min-h-[80px]"
-            rows={3}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="category" className="text-sm font-medium text-slate-700 mb-2 block">
-              Categorie
+        {sortedFields.map((field) => (
+          <div key={field.id}>
+            <Label htmlFor={field.id} className="text-sm font-medium text-slate-700 mb-2 block">
+              {field.name} {field.required ? '*' : ''}
             </Label>
-            <Select value={formData.category} onValueChange={(value) => updateFormData({ category: value })}>
-              <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="algemeen">Algemeen</SelectItem>
-                <SelectItem value="familierecht">Familierecht</SelectItem>
-                <SelectItem value="arbeidsrecht">Arbeidsrecht</SelectItem>
-                <SelectItem value="strafrecht">Strafrecht</SelectItem>
-                <SelectItem value="ondernemingsrecht">Ondernemingsrecht</SelectItem>
-              </SelectContent>
-            </Select>
+            {field.id === 'name' ? (
+              <Input
+                id={field.id}
+                value={formData[field.id] || ''}
+                onChange={(e) => updateFormData({ [field.id]: e.target.value })}
+                placeholder={field.placeholder || "Geef het dossier een duidelijke naam"}
+                className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500"
+                required={field.required}
+              />
+            ) : field.id === 'description' ? (
+              <Textarea
+                id={field.id}
+                value={formData[field.id] || ''}
+                onChange={(e) => updateFormData({ [field.id]: e.target.value })}
+                placeholder={field.placeholder || "Korte beschrijving van het dossier..."}
+                className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500 min-h-[80px]"
+                rows={3}
+              />
+            ) : field.id === 'category' ? (
+              <Select value={formData[field.id] || ''} onValueChange={(value) => updateFormData({ [field.id]: value })}>
+                <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
+                  <SelectValue placeholder={field.placeholder} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="algemeen">Algemeen</SelectItem>
+                  <SelectItem value="familierecht">Familierecht</SelectItem>
+                  <SelectItem value="arbeidsrecht">Arbeidsrecht</SelectItem>
+                  <SelectItem value="strafrecht">Strafrecht</SelectItem>
+                  <SelectItem value="ondernemingsrecht">Ondernemingsrecht</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : field.id === 'priority' ? (
+              <Select value={formData[field.id] || ''} onValueChange={(value) => updateFormData({ [field.id]: value })}>
+                <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
+                  <SelectValue placeholder={field.placeholder} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Laag</SelectItem>
+                  <SelectItem value="medium">Normaal</SelectItem>
+                  <SelectItem value="high">Hoog</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              renderDynamicField(
+                field,
+                formData[field.id],
+                (value) => updateFormData({ [field.id]: value })
+              )
+            )}
           </div>
-
-          <div>
-            <Label htmlFor="priority" className="text-sm font-medium text-slate-700 mb-2 block">
-              Prioriteit
-            </Label>
-            <Select value={formData.priority} onValueChange={(value) => updateFormData({ priority: value })}>
-              <SelectTrigger className="text-sm border-slate-300 focus:border-slate-500 focus:ring-slate-500">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="low">Laag</SelectItem>
-                <SelectItem value="medium">Normaal</SelectItem>
-                <SelectItem value="high">Hoog</SelectItem>
-                <SelectItem value="urgent">Urgent</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );
