@@ -155,6 +155,7 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
 
     setLoading(true);
     try {
+      // Create the complete dossier data with all fields
       const dossierData = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
@@ -164,7 +165,24 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         priority: formData.priority,
         status: formData.status || 'active',
         organization_id: selectedOrganization.id,
-        workspace_id: selectedWorkspace?.id || null
+        workspace_id: selectedWorkspace?.id || null,
+        // Additional fields that need to be saved
+        responsible_user_id: formData.responsible_user_id || null,
+        start_date: formData.start_date || null,
+        end_date: formData.end_date || null,
+        deadline_date: formData.deadline_date || null,
+        deadline_description: formData.deadline_description?.trim() || null,
+        budget: formData.budget || null,
+        case_type: formData.case_type || null,
+        court_instance: formData.court_instance?.trim() || null,
+        legal_status: formData.legal_status || null,
+        estimated_hours: formData.estimated_hours || null,
+        hourly_rate: formData.hourly_rate || null,
+        billing_type: formData.billing_type || 'hourly',
+        tags: formData.tags?.trim() || null,
+        intake_notes: formData.intake_notes?.trim() || null,
+        procedure_type: formData.procedure_type || null,
+        case_phase: formData.case_phase || null
       };
 
       console.log('📝 Submitting dossier data:', dossierData);
