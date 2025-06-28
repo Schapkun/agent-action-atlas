@@ -25,7 +25,6 @@ interface DossierFormData {
   tags?: string;
   intake_notes?: string;
   procedure_type?: string;
-  case_phase?: string;
 }
 
 export const useDossierForm = (onSuccess?: () => void, editMode = false, editDossier?: any) => {
@@ -54,8 +53,7 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
     hourly_rate: '',
     tags: '',
     intake_notes: '',
-    procedure_type: '',
-    case_phase: ''
+    procedure_type: ''
   });
 
   const updateFormData = useCallback((updates: Partial<DossierFormData>) => {
@@ -88,8 +86,7 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
       hourly_rate: '',
       tags: '',
       intake_notes: '',
-      procedure_type: '',
-      case_phase: ''
+      procedure_type: ''
     });
     setInitialized(false);
   };
@@ -117,8 +114,7 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         hourly_rate: dossier.hourly_rate || '',
         tags: dossier.tags || '',
         intake_notes: dossier.intake_notes || '',
-        procedure_type: dossier.procedure_type || '',
-        case_phase: dossier.case_phase || ''
+        procedure_type: dossier.procedure_type || ''
       };
       console.log('📝 Setting initial form data:', initialData);
       setFormData(initialData);
@@ -147,7 +143,7 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
 
     setLoading(true);
     try {
-      // Create the complete dossier data - removed budget field completely
+      // Create the complete dossier data - removed case_phase field
       const dossierData = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
@@ -170,8 +166,7 @@ export const useDossierForm = (onSuccess?: () => void, editMode = false, editDos
         hourly_rate: formData.hourly_rate || null,
         tags: formData.tags?.trim() || null,
         intake_notes: formData.intake_notes?.trim() || null,
-        procedure_type: formData.procedure_type || null,
-        case_phase: formData.case_phase || null
+        procedure_type: formData.procedure_type || null
       };
 
       console.log('📝 Submitting dossier data:', dossierData);

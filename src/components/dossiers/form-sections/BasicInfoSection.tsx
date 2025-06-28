@@ -18,7 +18,7 @@ interface BasicInfoSectionProps {
 
 export const BasicInfoSection = ({ formData, updateFormData }: BasicInfoSectionProps) => {
   return (
-    <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
+    <div className="bg-slate-50 rounded-lg p-6 border border-slate-200 shadow-sm">
       <div className="flex items-center gap-3 mb-6">
         <div className="bg-slate-800 rounded-lg p-2">
           <FileText className="h-4 w-4 text-white" />
