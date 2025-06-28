@@ -23,11 +23,11 @@ export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesP
     setActivities(statusUpdates);
   }, [statusUpdates]);
 
-  const handleEditActivity = (activity: DossierStatusUpdate) => {
-    setEditingActivity(activity.id);
+  const handleEditActivity = (update: DossierStatusUpdate) => {
+    setEditingActivity(update.id);
     setEditData({
-      title: activity.status_title,
-      description: activity.status_description || ''
+      title: update.status_title,
+      description: update.status_description || ''
     });
   };
 
@@ -90,18 +90,7 @@ export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesP
     });
   };
 
-  const recentActivities = activities.map(update => ({
-    id: update.id,
-    type: 'status_update' as const,
-    title: update.status_title,
-    description: update.status_description,
-    date: update.created_at,
-    priority: update.priority,
-    update_type: update.update_type,
-    hours_spent: update.hours_spent,
-    is_billable: update.is_billable,
-    dossier_id: update.dossier_id
-  })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const sortedActivities = activities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   if (isLoading) {
     return (
@@ -114,7 +103,7 @@ export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesP
     );
   }
 
-  if (recentActivities.length === 0) {
+  if (sortedActivities.length === 0) {
     return (
       <div className="bg-slate-50 rounded-lg p-2">
         <div className="flex items-center justify-between mb-1">
@@ -131,7 +120,7 @@ export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesP
         <h3 className="text-sm font-semibold text-slate-900">Recente activiteiten</h3>
       </div>
       <div className="space-y-1">
-        {recentActivities.slice(0, 10).map((activity) => (
+        {sortedActivities.slice(0, 10).map((activity) => (
           <div key={`activity-${activity.id}`} className="flex items-start justify-between p-1.5 bg-white rounded-lg">
             <div className="flex items-start gap-2 flex-1 min-w-0">
               <div className="bg-slate-100 p-1 rounded-lg flex-shrink-0">
@@ -155,12 +144,12 @@ export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesP
                   </div>
                 ) : (
                   <>
-                    <p className="text-xs font-medium text-slate-900 truncate">{activity.title}</p>
+                    <p className="text-xs font-medium text-slate-900 truncate">{activity.status_title}</p>
                     <p className="text-xs text-slate-600 mb-0.5">
                       Type: {UPDATE_TYPE_LABELS[activity.update_type] || activity.update_type}
                     </p>
-                    {activity.description && (
-                      <p className="text-xs text-slate-700 line-clamp-2">{activity.description}</p>
+                    {activity.status_description && (
+                      <p className="text-xs text-slate-700 line-clamp-2">{activity.status_description}</p>
                     )}
                     {activity.hours_spent > 0 && (
                       <p className="text-xs text-slate-500 mt-0.5">
@@ -174,7 +163,7 @@ export const RecentActivities = ({ statusUpdates, isLoading }: RecentActivitiesP
             <div className="flex items-start gap-6 flex-shrink-0 ml-4">
               <div className="text-right">
                 <span className="text-xs text-slate-500 block">
-                  {formatDateTime(activity.date)}
+                  {formatDateTime(activity.created_at)}
                 </span>
                 <Badge variant="outline" className={`text-xs mt-0.5 ${getPriorityColor(activity.priority)}`}>
                   {getPriorityLabel(activity.priority)}
