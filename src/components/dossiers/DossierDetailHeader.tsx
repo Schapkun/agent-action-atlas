@@ -70,18 +70,18 @@ export const DossierDetailHeader = ({ dossier }: DossierDetailHeaderProps) => {
           <Scale className="h-4 w-4 text-white" />
         </div>
         <div>
-          <DialogTitle className="text-sm font-semibold text-slate-900">{dossier.name}</DialogTitle>
+          <DialogTitle className="font-semibold text-slate-900">{dossier.name}</DialogTitle>
           <div className="flex items-center gap-2 mt-1">
-            <Badge variant="outline" className={`text-xs ${getStatusColor(dossier.status)}`}>
+            <Badge variant="outline" className={getStatusColor(dossier.status)}>
               {getStatusLabel(dossier.status)}
             </Badge>
             {dossier.priority && (
-              <Badge variant="outline" className={`text-xs ${getPriorityColor(dossier.priority)}`}>
+              <Badge variant="outline" className={getPriorityColor(dossier.priority)}>
                 {getPriorityLabel(dossier.priority)}
               </Badge>
             )}
             {dossier.category && (
-              <Badge variant="outline" className="text-xs capitalize">
+              <Badge variant="outline" className="capitalize">
                 {dossier.category}
               </Badge>
             )}
@@ -94,8 +94,8 @@ export const DossierDetailHeader = ({ dossier }: DossierDetailHeaderProps) => {
           dossierId={dossier.id}
           clientName={dossier.client_name || dossier.client?.name}
         >
-          <Button size="sm" variant="outline" className="text-xs px-2 py-1 h-6">
-            <Plus className="h-3 w-3 mr-1" />
+          <Button size="sm" variant="outline" className="px-2 py-1 h-8">
+            <Plus className="h-4 w-4 mr-1" />
             Status Update
           </Button>
         </AddStatusUpdateDialog>
@@ -103,8 +103,8 @@ export const DossierDetailHeader = ({ dossier }: DossierDetailHeaderProps) => {
           dossierId={dossier.id}
           clientName={dossier.client_name || dossier.client?.name}
         >
-          <Button size="sm" variant="outline" className="text-xs px-2 py-1 h-6">
-            <Plus className="h-3 w-3 mr-1" />
+          <Button size="sm" variant="outline" className="px-2 py-1 h-8">
+            <Plus className="h-4 w-4 mr-1" />
             Deadline
           </Button>
         </AddDeadlineDialog>

@@ -51,12 +51,7 @@ export const ActiveDossiers = () => {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-slate-800 rounded-lg p-2">
-              <Folder className="h-5 w-5 text-white" />
-            </div>
-            <EnhancedCreateDossierDialog onDossierCreated={handleDossierCreated} />
-          </div>
+          <EnhancedCreateDossierDialog onDossierCreated={handleDossierCreated} />
         </div>
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800 mx-auto"></div>
@@ -69,12 +64,7 @@ export const ActiveDossiers = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="bg-slate-800 rounded-lg p-2">
-            <Folder className="h-5 w-5 text-white" />
-          </div>
-          <EnhancedCreateDossierDialog onDossierCreated={handleDossierCreated} />
-        </div>
+        <EnhancedCreateDossierDialog onDossierCreated={handleDossierCreated} />
       </div>
 
       <div className="flex gap-6 h-[calc(100vh-200px)]">
@@ -83,7 +73,7 @@ export const ActiveDossiers = () => {
           <div className="bg-white rounded-lg border border-slate-200 p-4">
             <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
               Bekijk en beheer dossiers per client
-              <Badge variant="outline" className="text-sm">
+              <Badge variant="outline">
                 {activeDossiers.length} actief
               </Badge>
             </h3>
@@ -115,45 +105,56 @@ export const ActiveDossiers = () => {
                     onClick={() => setSelectedDossier(dossier)}
                   >
                     <div className="flex items-start justify-between mb-3">
-                      <h4 className="font-semibold text-slate-900 text-sm line-clamp-2">
+                      <h4 className="font-semibold text-slate-900 line-clamp-2 flex-1">
                         {dossier.name}
                       </h4>
                       <div className="flex gap-1 flex-shrink-0 ml-2">
                         <DossierDetailDialog dossier={dossier}>
-                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                            <ExternalLink className="h-3 w-3" />
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <ExternalLink className="h-4 w-4" />
                           </Button>
                         </DossierDetailDialog>
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs ${getStatusColor(dossier.status)}`}
+                        <AddStatusUpdateDialog 
+                          dossierId={dossier.id}
+                          clientName={dossier.client_name || dossier.client?.name}
                         >
-                          {dossier.status}
-                        </Badge>
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs ${getPriorityColor(dossier.priority)}`}
-                        >
-                          {dossier.priority}
-                        </Badge>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </AddStatusUpdateDialog>
                       </div>
                     </div>
                     
+                    <div className="flex items-center gap-2 mb-3">
+                      <Badge 
+                        variant="outline" 
+                        className={getStatusColor(dossier.status)}
+                      >
+                        {dossier.status}
+                      </Badge>
+                      <Badge 
+                        variant="outline" 
+                        className={getPriorityColor(dossier.priority)}
+                      >
+                        {dossier.priority}
+                      </Badge>
+                    </div>
+                    
                     {dossier.description && (
-                      <p className="text-sm text-slate-600 mb-3 line-clamp-2">
+                      <p className="text-slate-600 mb-3 line-clamp-2">
                         {dossier.description}
                       </p>
                     )}
                     
                     <div className="space-y-2">
                       {(dossier.client_name || dossier.client) && (
-                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <div className="flex items-center gap-2 text-slate-600">
                           <Building2 className="h-3 w-3 text-slate-400" />
                           <span className="text-xs">{dossier.client_name || dossier.client?.name}</span>
                         </div>
                       )}
                       
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <div className="flex items-center gap-2 text-slate-600">
                         <Calendar className="h-3 w-3 text-slate-400" />
                         <span className="text-xs">
                           {new Date(dossier.created_at).toLocaleDateString('nl-NL')}
@@ -184,7 +185,7 @@ export const ActiveDossiers = () => {
                     <h2 className="text-xl font-semibold text-slate-900">{selectedDossier.name}</h2>
                     <div className="flex items-center gap-2 mt-2">
                       <Badge className="bg-green-100 text-green-800 border-green-200">Actief</Badge>
-                      <span className="text-sm text-slate-600">
+                      <span className="text-slate-600">
                         Aangemaakt: {new Date(selectedDossier.created_at).toLocaleDateString('nl-NL')}
                       </span>
                     </div>
@@ -218,11 +219,11 @@ export const ActiveDossiers = () => {
                 </div>
 
                 {selectedDossier.description && (
-                  <p className="text-sm text-slate-600 mb-4">{selectedDossier.description}</p>
+                  <p className="text-slate-600 mb-4">{selectedDossier.description}</p>
                 )}
 
                 {selectedDossier.client_name && (
-                  <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <div className="flex items-center gap-2 text-slate-600">
                     <Building2 className="h-4 w-4 text-slate-400" />
                     <span>Client: {selectedDossier.client_name}</span>
                   </div>
