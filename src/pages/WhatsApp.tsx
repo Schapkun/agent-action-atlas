@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { useWhatsAppContacts } from '@/hooks/useWhatsAppContacts';
 import { ContactsList } from '@/components/whatsapp/ContactsList';
 import { ChatWindow } from '@/components/whatsapp/ChatWindow';
 import { useWhatsAppConnection } from '@/hooks/useWhatsAppConnection';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Contact {
   phoneNumber: string;
@@ -35,6 +37,46 @@ const WhatsApp = () => {
   );
   const { contacts, addSentMessage, startNewChat } = useWhatsAppContacts();
   const { isConnected } = useWhatsAppConnection();
+
+  // Laad opgeslagen webhook instellingen bij component mount
+  useEffect(() => {
+    if (selectedWorkspace?.id) {
+      loadWebhookSettings();
+    }
+  }, [selectedWorkspace?.id]);
+
+  const loadWebhookSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('make_webhooks')
+        .select('*')
+        .eq('workspace_id', selectedWorkspace?.id)
+        .eq('webhook_type', 'whatsapp_outgoing')
+        .single();
+
+      if (data) {
+        setOutgoingWebhookUrl(data.webhook_url || '');
+        // Bearer token wordt veilig opgeslagen, maar we tonen alleen placeholder
+        if (data.webhook_url) {
+          setOutgoingBearerToken('••••••••••••••••');
+        }
+      }
+
+      // Laad incoming webhook settings
+      const { data: incomingData } = await supabase
+        .from('make_webhooks')
+        .select('*')
+        .eq('workspace_id', selectedWorkspace?.id)
+        .eq('webhook_type', 'whatsapp_incoming')
+        .single();
+
+      if (incomingData && incomingData.webhook_url) {
+        setGeneratedBearerToken(incomingData.webhook_url);
+      }
+    } catch (error) {
+      console.log('Geen bestaande webhook instellingen gevonden');
+    }
+  };
 
   // Generate unique webhook URL for this workspace
   const generateWebhookUrl = () => {
@@ -68,6 +110,44 @@ const WhatsApp = () => {
     }
   };
 
+  const saveOutgoingWebhookSettings = async () => {
+    if (!selectedWorkspace?.id || !outgoingWebhookUrl.trim()) return;
+
+    try {
+      // Check if outgoing webhook already exists
+      const { data: existingData } = await supabase
+        .from('make_webhooks')
+        .select('id')
+        .eq('workspace_id', selectedWorkspace.id)
+        .eq('webhook_type', 'whatsapp_outgoing')
+        .single();
+
+      const webhookData = {
+        organization_id: selectedOrganization?.id,
+        workspace_id: selectedWorkspace.id,
+        webhook_type: 'whatsapp_outgoing',
+        webhook_url: outgoingWebhookUrl,
+        bearer_token: outgoingBearerToken !== '••••••••••••••••' ? outgoingBearerToken : undefined,
+        is_active: true
+      };
+
+      if (existingData) {
+        // Update existing
+        await supabase
+          .from('make_webhooks')
+          .update(webhookData)
+          .eq('id', existingData.id);
+      } else {
+        // Create new
+        await supabase
+          .from('make_webhooks')
+          .insert(webhookData);
+      }
+    } catch (error) {
+      console.error('Error saving outgoing webhook:', error);
+    }
+  };
+
   const handleSaveWebhookSettings = async () => {
     if (!generatedBearerToken.trim()) {
       toast({
@@ -79,8 +159,12 @@ const WhatsApp = () => {
     }
 
     try {
-      // Sla de webhook instellingen op
+      // Sla de incoming webhook instellingen op
       await createWhatsAppIncomingWebhook(generatedBearerToken);
+      
+      // Sla de outgoing webhook instellingen op
+      await saveOutgoingWebhookSettings();
+      
       setShowWebhookDialog(false);
       toast({
         title: "WhatsApp Instellingen Opgeslagen",
