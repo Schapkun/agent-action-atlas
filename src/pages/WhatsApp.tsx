@@ -29,6 +29,7 @@ const WhatsApp = () => {
   const [outgoingBearerToken, setOutgoingBearerToken] = useState('');
   const [showWebhookDialog, setShowWebhookDialog] = useState(false);
   const [activeContact, setActiveContact] = useState<Contact | null>(null);
+  const [webhookConfigured, setWebhookConfigured] = useState(false);
   const { toast } = useToast();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { createWhatsAppIncomingWebhook, loading: webhookLoading } = useMakeWebhooks(
@@ -36,7 +37,7 @@ const WhatsApp = () => {
     selectedWorkspace?.id
   );
   const { contacts, addSentMessage, startNewChat } = useWhatsAppContacts();
-  const { isConnected } = useWhatsAppConnection();
+  const { isConnected, checkConnection } = useWhatsAppConnection();
 
   // Laad opgeslagen webhook instellingen bij component mount
   useEffect(() => {
@@ -47,6 +48,8 @@ const WhatsApp = () => {
 
   const loadWebhookSettings = async () => {
     try {
+      console.log('Loading webhook settings for workspace:', selectedWorkspace?.id);
+      
       // Laad outgoing webhook settings
       const { data: outgoingData, error: outgoingError } = await supabase
         .from('make_webhooks')
@@ -56,6 +59,7 @@ const WhatsApp = () => {
         .single();
 
       if (outgoingData && !outgoingError) {
+        console.log('Found outgoing webhook data:', outgoingData);
         setOutgoingWebhookUrl(outgoingData.webhook_url || '');
         // Toon placeholder voor bestaande bearer token
         if (outgoingData.bearer_token) {
@@ -72,10 +76,16 @@ const WhatsApp = () => {
         .single();
 
       if (incomingData && !incomingError) {
-        setGeneratedBearerToken(incomingData.bearer_token || '');
+        console.log('Found incoming webhook data:', incomingData);
+        // Alleen de token instellen als deze bestaat in de database
+        if (incomingData.bearer_token) {
+          setGeneratedBearerToken(incomingData.bearer_token);
+          setWebhookConfigured(true);
+        }
       }
     } catch (error) {
-      console.log('Geen bestaande webhook instellingen gevonden');
+      console.log('Geen bestaande webhook instellingen gevonden:', error);
+      setWebhookConfigured(false);
     }
   };
 
@@ -93,6 +103,7 @@ const WhatsApp = () => {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
     setGeneratedBearerToken(token);
+    console.log('Generated new bearer token');
   };
 
   const copyToClipboard = async (text: string, label: string) => {
@@ -141,6 +152,7 @@ const WhatsApp = () => {
           .eq('id', existingData.id);
         
         if (error) throw error;
+        console.log('Updated outgoing webhook settings');
       } else {
         // Create new
         const { error } = await supabase
@@ -148,6 +160,7 @@ const WhatsApp = () => {
           .insert(webhookData);
         
         if (error) throw error;
+        console.log('Created new outgoing webhook settings');
       }
     } catch (error) {
       console.error('Error saving outgoing webhook:', error);
@@ -166,6 +179,8 @@ const WhatsApp = () => {
     }
 
     try {
+      console.log('Saving webhook settings...');
+      
       // Sla de incoming webhook instellingen op met bearer token
       const incomingWebhookData = {
         organization_id: selectedOrganization?.id,
@@ -185,20 +200,29 @@ const WhatsApp = () => {
         .single();
 
       if (existingIncoming) {
-        await supabase
+        const { error } = await supabase
           .from('make_webhooks')
           .update(incomingWebhookData)
           .eq('id', existingIncoming.id);
+        if (error) throw error;
+        console.log('Updated incoming webhook settings');
       } else {
-        await supabase
+        const { error } = await supabase
           .from('make_webhooks')
           .insert(incomingWebhookData);
+        if (error) throw error;
+        console.log('Created new incoming webhook settings');
       }
       
       // Sla de outgoing webhook instellingen op
       await saveOutgoingWebhookSettings();
       
+      setWebhookConfigured(true);
       setShowWebhookDialog(false);
+      
+      // Controleer de verbinding opnieuw na het opslaan
+      checkConnection();
+      
       toast({
         title: "WhatsApp Instellingen Opgeslagen",
         description: "De webhook en authenticatie zijn succesvol geconfigureerd"
@@ -226,6 +250,9 @@ const WhatsApp = () => {
     setActiveContact(newContact);
   };
 
+  // Controleer of WhatsApp volledig geconfigureerd is
+  const isWhatsAppConfigured = webhookConfigured && generatedBearerToken && outgoingWebhookUrl;
+
   return (
     <div className="h-full flex flex-col bg-gray-50">
       {/* Header */}
@@ -236,6 +263,19 @@ const WhatsApp = () => {
             {selectedWorkspace && (
               <span className="text-sm text-gray-500">Werkruimte: {selectedWorkspace.name}</span>
             )}
+            <div className="flex items-center gap-2">
+              {isWhatsAppConfigured && isConnected ? (
+                <div className="flex items-center gap-1 text-green-600">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm">Verbonden</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 text-red-600">
+                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  <span className="text-sm">Niet verbonden</span>
+                </div>
+              )}
+            </div>
           </div>
           <Dialog open={showWebhookDialog} onOpenChange={setShowWebhookDialog}>
             <DialogTrigger asChild>
@@ -277,7 +317,7 @@ const WhatsApp = () => {
                     </div>
                     
                     <div>
-                      <Label htmlFor="bearer-token">Bearer Token (automatisch gegenereerd)</Label>
+                      <Label htmlFor="bearer-token">Bearer Token</Label>
                       <div className="flex gap-2 mt-1">
                         <Input
                           id="bearer-token"
