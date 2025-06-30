@@ -61,12 +61,12 @@ export const NewChatDialog = ({ onStartNewChat }: NewChatDialogProps) => {
           Nieuw Gesprek
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="min-w-[600px] min-h-[500px] max-w-[800px] max-h-[80vh]">
         <DialogHeader>
           <DialogTitle>Nieuw WhatsApp Gesprek</DialogTitle>
         </DialogHeader>
         
-        <Tabs defaultValue="clients" className="w-full">
+        <Tabs defaultValue="clients" className="w-full h-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="clients" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -78,56 +78,58 @@ export const NewChatDialog = ({ onStartNewChat }: NewChatDialogProps) => {
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="clients" className="space-y-4">
-            <div>
-              <Label>Selecteer een contact uit je clientenlijst</Label>
-              <div className="mt-2">
-                <ClientContactSelector onContactSelect={handleClientContactSelect} />
+          <div className="min-h-[400px] mt-4">
+            <TabsContent value="clients" className="space-y-4 h-full">
+              <div>
+                <Label>Selecteer een contact uit je clientenlijst</Label>
+                <div className="mt-2">
+                  <ClientContactSelector onContactSelect={handleClientContactSelect} />
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Let op: alleen contacten met een telefoonnummer kunnen geselecteerd worden
+                </p>
               </div>
-              <p className="text-xs text-gray-500 mt-2">
-                Let op: alleen contacten met een telefoonnummer kunnen geselecteerd worden
-              </p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="manual" className="space-y-4">
-            <div>
-              <Label htmlFor="phone-number">Telefoonnummer (inclusief landcode)</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            </TabsContent>
+            
+            <TabsContent value="manual" className="space-y-4 h-full">
+              <div>
+                <Label htmlFor="phone-number">Telefoonnummer (inclusief landcode)</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="phone-number"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="31612345678"
+                    className="pl-10"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Bijvoorbeeld: 31612345678 (Nederland), 32123456789 (België)
+                </p>
+              </div>
+              
+              <div>
+                <Label htmlFor="contact-name">Contactnaam (optioneel)</Label>
                 <Input
-                  id="phone-number"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="31612345678"
-                  className="pl-10"
+                  id="contact-name"
+                  value={contactName}
+                  onChange={(e) => setContactName(e.target.value)}
+                  placeholder="Naam van de persoon"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Als je geen naam invult, wordt het telefoonnummer gebruikt
+                </p>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Bijvoorbeeld: 31612345678 (Nederland), 32123456789 (België)
-              </p>
-            </div>
-            
-            <div>
-              <Label htmlFor="contact-name">Contactnaam (optioneel)</Label>
-              <Input
-                id="contact-name"
-                value={contactName}
-                onChange={(e) => setContactName(e.target.value)}
-                placeholder="Naam van de persoon"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Als je geen naam invult, wordt het telefoonnummer gebruikt
-              </p>
-            </div>
-            
-            <Button 
-              onClick={handleStartChat}
-              className="w-full bg-green-500 hover:bg-green-600"
-            >
-              Gesprek Starten
-            </Button>
-          </TabsContent>
+              
+              <Button 
+                onClick={handleStartChat}
+                className="w-full bg-green-500 hover:bg-green-600"
+              >
+                Gesprek Starten
+              </Button>
+            </TabsContent>
+          </div>
         </Tabs>
       </DialogContent>
     </Dialog>

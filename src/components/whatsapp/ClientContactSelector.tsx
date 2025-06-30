@@ -13,7 +13,7 @@ export const ClientContactSelector = ({ onContactSelect }: ClientContactSelector
   const handleContactSelect = (contact: Contact | null) => {
     setSelectedContact(contact);
     if (contact) {
-      // Gebruik het telefoonnummer van de contact, of fallback naar contact_number
+      // Gebruik eerst phone (mobiel nummer), dan contact_number als fallback
       const phoneNumber = contact.phone || contact.contact_number || '';
       if (phoneNumber) {
         onContactSelect(phoneNumber, contact.name);
