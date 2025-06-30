@@ -18,7 +18,8 @@ interface WebhookSettingsDialogProps {
   setOutgoingBearerToken: (token: string) => void;
   generateWebhookUrl: () => string;
   generateBearerToken: () => void;
-  saveWebhookSettings: () => void;
+  saveWebhookSettings: () => Promise<boolean>;
+  isSaving: boolean;
 }
 
 export const WebhookSettingsDialog = ({
@@ -31,7 +32,8 @@ export const WebhookSettingsDialog = ({
   setOutgoingBearerToken,
   generateWebhookUrl,
   generateBearerToken,
-  saveWebhookSettings
+  saveWebhookSettings,
+  isSaving
 }: WebhookSettingsDialogProps) => {
   const { toast } = useToast();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
@@ -53,6 +55,17 @@ export const WebhookSettingsDialog = ({
         description: "Kon niet kopiëren naar klembord",
         variant: "destructive"
       });
+    }
+  };
+
+  const handleSaveAndClose = async () => {
+    console.log('Save and close button clicked');
+    const success = await saveWebhookSettings();
+    if (success) {
+      console.log('Settings saved successfully, closing dialog');
+      setShowWebhookDialog(false);
+    } else {
+      console.log('Failed to save settings, keeping dialog open');
     }
   };
 
@@ -170,11 +183,11 @@ export const WebhookSettingsDialog = ({
           </div>
           
           <Button 
-            onClick={saveWebhookSettings}
-            disabled={webhookLoading || !generatedBearerToken.trim() || !selectedWorkspace}
+            onClick={handleSaveAndClose}
+            disabled={isSaving || !generatedBearerToken.trim() || !selectedWorkspace}
             className="w-full"
           >
-            {webhookLoading ? 'Opslaan...' : 'Instellingen Opslaan'}
+            {isSaving ? 'Opslaan...' : 'Instellingen Opslaan'}
           </Button>
         </div>
       </DialogContent>

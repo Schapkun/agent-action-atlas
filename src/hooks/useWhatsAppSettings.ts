@@ -11,6 +11,7 @@ export const useWhatsAppSettings = () => {
   const [outgoingBearerToken, setOutgoingBearerToken] = useState('');
   const [webhookConfigured, setWebhookConfigured] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { checkConnection } = useWhatsAppConnection();
@@ -32,10 +33,9 @@ export const useWhatsAppSettings = () => {
 
     try {
       setIsLoading(true);
-      console.log('Starting webhook settings load for workspace:', selectedWorkspace.id);
+      console.log('Loading webhook settings for workspace:', selectedWorkspace.id);
       
-      // Laad incoming webhook settings
-      console.log('Loading incoming webhook...');
+      // Load incoming webhook settings
       const { data: incomingData, error: incomingError } = await supabase
         .from('make_webhooks')
         .select('*')
@@ -46,15 +46,12 @@ export const useWhatsAppSettings = () => {
       console.log('Incoming webhook query result:', { incomingData, incomingError });
 
       if (incomingData && !incomingError) {
-        console.log('Found incoming webhook data:', {
-          hasToken: !!incomingData.bearer_token,
-          tokenPreview: incomingData.bearer_token ? incomingData.bearer_token.substring(0, 10) + '...' : 'none'
-        });
+        console.log('Found incoming webhook data with token:', !!incomingData.bearer_token);
         
         if (incomingData.bearer_token) {
           setGeneratedBearerToken(incomingData.bearer_token);
           setWebhookConfigured(true);
-          console.log('Bearer token loaded successfully');
+          console.log('Bearer token loaded and set:', incomingData.bearer_token.substring(0, 10) + '...');
         } else {
           console.log('No bearer token found in webhook data');
           setWebhookConfigured(false);
@@ -64,8 +61,7 @@ export const useWhatsAppSettings = () => {
         setWebhookConfigured(false);
       }
 
-      // Laad outgoing webhook settings
-      console.log('Loading outgoing webhook...');
+      // Load outgoing webhook settings
       const { data: outgoingData, error: outgoingError } = await supabase
         .from('make_webhooks')
         .select('*')
@@ -95,9 +91,11 @@ export const useWhatsAppSettings = () => {
     const token = 'whatsapp_' + Array.from(crypto.getRandomValues(new Uint8Array(32)))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
+    
     console.log('Generated new bearer token:', token.substring(0, 10) + '...');
     setGeneratedBearerToken(token);
     
+    // Automatically save the generated token
     if (selectedOrganization?.id && selectedWorkspace?.id) {
       try {
         await saveIncomingWebhookWithToken(token);
@@ -117,7 +115,11 @@ export const useWhatsAppSettings = () => {
   };
 
   const saveIncomingWebhookWithToken = async (token: string) => {
-    if (!selectedWorkspace?.id || !selectedOrganization?.id) return;
+    if (!selectedWorkspace?.id || !selectedOrganization?.id) {
+      throw new Error('No workspace or organization selected');
+    }
+
+    console.log('Saving incoming webhook with token for workspace:', selectedWorkspace.id);
 
     const incomingWebhookData = {
       organization_id: selectedOrganization.id,
@@ -140,12 +142,14 @@ export const useWhatsAppSettings = () => {
         .from('make_webhooks')
         .update(incomingWebhookData)
         .eq('id', existingIncoming.id);
+      
       if (error) throw error;
       console.log('Updated incoming webhook with new token');
     } else {
       const { error } = await supabase
         .from('make_webhooks')
         .insert(incomingWebhookData);
+      
       if (error) throw error;
       console.log('Created new incoming webhook with token');
     }
@@ -155,7 +159,11 @@ export const useWhatsAppSettings = () => {
   };
 
   const saveOutgoingWebhookSettings = async () => {
-    if (!selectedWorkspace?.id || !outgoingWebhookUrl.trim()) return;
+    if (!selectedWorkspace?.id || !outgoingWebhookUrl.trim()) {
+      return;
+    }
+
+    console.log('Saving outgoing webhook settings for workspace:', selectedWorkspace.id);
 
     try {
       const { data: existingData } = await supabase
@@ -203,11 +211,12 @@ export const useWhatsAppSettings = () => {
         description: "Genereer eerst een Bearer token voor inkomende berichten",
         variant: "destructive"
       });
-      return;
+      return false;
     }
 
     try {
-      console.log('Saving webhook settings with token:', generatedBearerToken.substring(0, 10) + '...');
+      setIsSaving(true);
+      console.log('Starting webhook settings save process...');
       
       await saveIncomingWebhookWithToken(generatedBearerToken);
       await saveOutgoingWebhookSettings();
@@ -216,6 +225,9 @@ export const useWhatsAppSettings = () => {
         title: "WhatsApp Instellingen Opgeslagen",
         description: "De webhook en authenticatie zijn succesvol geconfigureerd"
       });
+      
+      console.log('Webhook settings saved successfully');
+      return true;
     } catch (error) {
       console.error('Error saving WhatsApp settings:', error);
       toast({
@@ -223,12 +235,15 @@ export const useWhatsAppSettings = () => {
         description: "Er is een fout opgetreden bij het opslaan van de instellingen",
         variant: "destructive"
       });
+      return false;
+    } finally {
+      setIsSaving(false);
     }
   };
 
   useEffect(() => {
     if (selectedWorkspace?.id) {
-      console.log('Loading webhook settings for workspace:', selectedWorkspace.id);
+      console.log('Workspace changed, loading webhook settings for:', selectedWorkspace.id);
       loadWebhookSettings();
     }
   }, [selectedWorkspace?.id]);
@@ -242,6 +257,7 @@ export const useWhatsAppSettings = () => {
     setOutgoingBearerToken,
     webhookConfigured,
     isLoading,
+    isSaving,
     generateWebhookUrl,
     generateBearerToken,
     saveWebhookSettings,

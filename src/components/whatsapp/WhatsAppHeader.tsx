@@ -13,8 +13,9 @@ interface WhatsAppHeaderProps {
   setShowWebhookDialog: (show: boolean) => void;
   generateWebhookUrl: () => string;
   generateBearerToken: () => void;
-  saveWebhookSettings: () => void;
+  saveWebhookSettings: () => Promise<boolean>;
   webhookConfigured: boolean;
+  isSaving: boolean;
 }
 
 export const WhatsAppHeader = ({
@@ -28,7 +29,8 @@ export const WhatsAppHeader = ({
   generateWebhookUrl,
   generateBearerToken,
   saveWebhookSettings,
-  webhookConfigured
+  webhookConfigured,
+  isSaving
 }: WhatsAppHeaderProps) => {
   const { selectedWorkspace } = useOrganization();
   const { isConnected } = useWhatsAppConnection();
@@ -72,6 +74,7 @@ export const WhatsAppHeader = ({
           generateWebhookUrl={generateWebhookUrl}
           generateBearerToken={generateBearerToken}
           saveWebhookSettings={saveWebhookSettings}
+          isSaving={isSaving}
         />
       </div>
     </div>

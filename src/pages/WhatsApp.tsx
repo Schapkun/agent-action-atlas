@@ -28,6 +28,7 @@ const WhatsApp = () => {
     setOutgoingBearerToken,
     webhookConfigured,
     isLoading,
+    isSaving,
     generateWebhookUrl,
     generateBearerToken,
     saveWebhookSettings
@@ -46,7 +47,7 @@ const WhatsApp = () => {
     setActiveContact(newContact);
   };
 
-  // Toon loading state tijdens het laden van instellingen
+  // Show loading state while loading settings
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -73,6 +74,7 @@ const WhatsApp = () => {
         generateBearerToken={generateBearerToken}
         saveWebhookSettings={saveWebhookSettings}
         webhookConfigured={webhookConfigured}
+        isSaving={isSaving}
       />
 
       {/* Main Content */}
