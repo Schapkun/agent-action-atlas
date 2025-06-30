@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Settings } from 'lucide-react';
+import { Settings, Copy, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useMakeWebhooks } from '@/hooks/useMakeWebhooks';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -23,7 +23,9 @@ interface Contact {
 }
 
 const WhatsApp = () => {
-  const [bearerToken, setBearerToken] = useState('');
+  const [generatedBearerToken, setGeneratedBearerToken] = useState('');
+  const [outgoingWebhookUrl, setOutgoingWebhookUrl] = useState('');
+  const [outgoingBearerToken, setOutgoingBearerToken] = useState('');
   const [showWebhookDialog, setShowWebhookDialog] = useState(false);
   const [activeContact, setActiveContact] = useState<Contact | null>(null);
   const { toast } = useToast();
@@ -35,11 +37,35 @@ const WhatsApp = () => {
   const { contacts, addSentMessage, startNewChat } = useWhatsAppContacts();
   const { isConnected } = useWhatsAppConnection();
 
-  const handleSaveWebhookSettings = async () => {
-    if (!bearerToken.trim()) {
+  const generateBearerToken = () => {
+    // Genereer een sterke random token
+    const token = 'whatsapp_' + Array.from(crypto.getRandomValues(new Uint8Array(32)))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    setGeneratedBearerToken(token);
+  };
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "Gekopieerd",
+        description: `${label} is naar het klembord gekopieerd`
+      });
+    } catch (error) {
       toast({
         title: "Fout",
-        description: "Voer een Bearer token in voor authenticatie",
+        description: "Kon niet kopiëren naar klembord",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSaveWebhookSettings = async () => {
+    if (!generatedBearerToken.trim()) {
+      toast({
+        title: "Fout",
+        description: "Genereer eerst een Bearer token voor inkomende berichten",
         variant: "destructive"
       });
       return;
@@ -47,8 +73,7 @@ const WhatsApp = () => {
 
     try {
       // Sla de webhook instellingen op
-      await createWhatsAppIncomingWebhook(bearerToken);
-      setBearerToken('');
+      await createWhatsAppIncomingWebhook(generatedBearerToken);
       setShowWebhookDialog(false);
       toast({
         title: "WhatsApp Instellingen Opgeslagen",
@@ -87,42 +112,114 @@ const WhatsApp = () => {
                 Webhook Instellen
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>WhatsApp API Instellingen</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="webhook-url">Webhook URL voor inkomende berichten</Label>
-                  <Input
-                    id="webhook-url"
-                    value="https://rybezhoovslkutsugzvv.supabase.co/functions/v1/whatsapp-webhook-receive"
-                    readOnly
-                    className="mt-1 font-mono text-sm"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Gebruik deze URL in je WhatsApp Business API configuratie
-                  </p>
+              <div className="space-y-6">
+                {/* Inkomende berichten sectie */}
+                <div className="border rounded-lg p-4 bg-gray-50">
+                  <h3 className="font-medium text-gray-900 mb-4">Inkomende Berichten</h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="webhook-url">Webhook URL</Label>
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          id="webhook-url"
+                          value="https://rybezhoovslkutsugzvv.supabase.co/functions/v1/whatsapp-webhook-receive"
+                          readOnly
+                          className="font-mono text-sm"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => copyToClipboard("https://rybezhoovslkutsugzvv.supabase.co/functions/v1/whatsapp-webhook-receive", "Webhook URL")}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Gebruik deze URL in je WhatsApp Business API configuratie
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="bearer-token">Bearer Token (automatisch gegenereerd)</Label>
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          id="bearer-token"
+                          type="text"
+                          value={generatedBearerToken}
+                          readOnly
+                          placeholder="Klik op 'Genereren' om een token te maken"
+                          className="font-mono text-sm"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={generateBearerToken}
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                          Genereren
+                        </Button>
+                        {generatedBearerToken && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => copyToClipboard(generatedBearerToken, "Bearer Token")}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Gebruik deze token voor authenticatie in je WhatsApp API configuratie
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                
-                <div>
-                  <Label htmlFor="bearer-token">Bearer Token (vereist voor authenticatie)</Label>
-                  <Input
-                    id="bearer-token"
-                    type="password"
-                    value={bearerToken}
-                    onChange={(e) => setBearerToken(e.target.value)}
-                    placeholder="Bearer your-token-here"
-                    className="mt-1"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    De Bearer token voor authenticatie met de WhatsApp API
-                  </p>
+
+                {/* Uitgaande berichten sectie */}
+                <div className="border rounded-lg p-4 bg-blue-50">
+                  <h3 className="font-medium text-gray-900 mb-4">Uitgaande Berichten</h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="outgoing-webhook-url">Webhook URL voor uitgaande berichten</Label>
+                      <Input
+                        id="outgoing-webhook-url"
+                        type="url"
+                        value={outgoingWebhookUrl}
+                        onChange={(e) => setOutgoingWebhookUrl(e.target.value)}
+                        placeholder="https://jouw-whatsapp-api.com/send"
+                        className="mt-1"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        URL van je WhatsApp API voor het versturen van berichten
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="outgoing-bearer-token">Bearer Token voor uitgaande berichten</Label>
+                      <Input
+                        id="outgoing-bearer-token"
+                        type="password"
+                        value={outgoingBearerToken}
+                        onChange={(e) => setOutgoingBearerToken(e.target.value)}
+                        placeholder="Bearer token van je WhatsApp API"
+                        className="mt-1"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Bearer token voor authenticatie bij je WhatsApp API
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 
                 <Button 
                   onClick={handleSaveWebhookSettings}
-                  disabled={webhookLoading || !bearerToken.trim()}
+                  disabled={webhookLoading || !generatedBearerToken.trim()}
                   className="w-full"
                 >
                   {webhookLoading ? 'Opslaan...' : 'Instellingen Opslaan'}
