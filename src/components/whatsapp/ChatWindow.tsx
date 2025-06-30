@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Phone, MessageSquare } from 'lucide-react';
+import { Send, Phone, MessageSquare, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
@@ -46,6 +46,9 @@ export const ChatWindow = ({ contact, onMessageSent }: ChatWindowProps) => {
     setIsLoading(true);
     
     try {
+      console.log('Verzenden WhatsApp bericht naar:', contact.phoneNumber);
+      console.log('Bericht:', newMessage.trim());
+      
       const response = await fetch('https://whatsapp-backend-rney.onrender.com/send', {
         method: 'POST',
         headers: {
@@ -57,7 +60,12 @@ export const ChatWindow = ({ contact, onMessageSent }: ChatWindowProps) => {
         })
       });
 
+      console.log('Response status:', response.status);
+      
       if (response.ok) {
+        const result = await response.json();
+        console.log('WhatsApp bericht succesvol verzonden:', result);
+        
         toast({
           title: "Bericht verzonden",
           description: `WhatsApp bericht succesvol verzonden naar ${contact.name}`,
@@ -66,14 +74,26 @@ export const ChatWindow = ({ contact, onMessageSent }: ChatWindowProps) => {
         onMessageSent(contact.phoneNumber, newMessage.trim());
         setNewMessage('');
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('WhatsApp API error response:', errorText);
+        
+        let errorMessage = 'Onbekende fout opgetreden';
+        
+        if (errorText.includes('WhatsApp is niet verbonden')) {
+          errorMessage = 'WhatsApp service is niet verbonden. Controleer de WhatsApp API configuratie.';
+        } else if (response.status === 400) {
+          errorMessage = 'Ongeldige gegevens verzonden. Controleer het telefoonnummer.';
+        } else if (response.status === 500) {
+          errorMessage = 'Server fout. Probeer het later opnieuw.';
+        }
+        
+        throw new Error(errorMessage);
       }
     } catch (error: any) {
       console.error('Fout bij verzenden WhatsApp bericht:', error);
       toast({
         title: "Fout bij verzenden",
-        description: `Het WhatsApp bericht kon niet worden verzonden: ${error.message}`,
+        description: error.message || "Het WhatsApp bericht kon niet worden verzonden",
         variant: "destructive",
       });
     } finally {
@@ -94,7 +114,7 @@ export const ChatWindow = ({ contact, onMessageSent }: ChatWindowProps) => {
         <div className="text-center">
           <MessageSquare className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-medium text-gray-900 mb-2">Selecteer een contact</h3>
-          <p className="text-gray-500">Kies een contact uit de lijst om een gesprek te starten.</p>
+          <p className="text-gray-500">Kies een contact uit de lijst of start een nieuw gesprek.</p>
         </div>
       </div>
     );
@@ -114,6 +134,20 @@ export const ChatWindow = ({ contact, onMessageSent }: ChatWindowProps) => {
               <Phone className="h-3 w-3 text-gray-400" />
               <span className="text-sm text-gray-500">{contact.phoneNumber}</span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* WhatsApp Status Warning */}
+      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <AlertTriangle className="h-5 w-5 text-yellow-400" />
+          </div>
+          <div className="ml-3">
+            <p className="text-sm text-yellow-700">
+              <strong>Let op:</strong> Als berichten niet verzonden kunnen worden, controleer dan of de WhatsApp API correct is geconfigureerd.
+            </p>
           </div>
         </div>
       </div>
@@ -173,9 +207,16 @@ export const ChatWindow = ({ contact, onMessageSent }: ChatWindowProps) => {
               disabled={!newMessage.trim() || isLoading}
               className="bg-green-500 hover:bg-green-600"
             >
-              <Send className="h-4 w-4" />
+              {isLoading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
           </div>
+          {isLoading && (
+            <p className="text-xs text-gray-500 mt-2">Bericht wordt verzonden...</p>
+          )}
         </CardContent>
       </Card>
     </div>
