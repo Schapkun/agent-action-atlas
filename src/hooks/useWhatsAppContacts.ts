@@ -47,6 +47,25 @@ export const useWhatsAppContacts = () => {
     setSentMessages(prev => [...prev, newMessage]);
   };
 
+  // Functie om een nieuw gesprek te starten
+  const startNewChat = (phoneNumber: string, name: string) => {
+    const existingContact = contacts.find(c => c.phoneNumber === phoneNumber);
+    
+    if (!existingContact) {
+      const newContact: Contact = {
+        phoneNumber,
+        name,
+        messages: [],
+        unreadCount: 0
+      };
+      
+      setContacts(prev => [newContact, ...prev]);
+      return newContact;
+    }
+    
+    return existingContact;
+  };
+
   useEffect(() => {
     // Combineer inkomende en uitgaande berichten
     const allMessages = [...messages, ...sentMessages];
@@ -104,6 +123,7 @@ export const useWhatsAppContacts = () => {
 
   return {
     contacts,
-    addSentMessage
+    addSentMessage,
+    startNewChat
   };
 };

@@ -1,9 +1,9 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Phone } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
+import { NewChatDialog } from './NewChatDialog';
 
 interface WhatsAppMessage {
   id: string;
@@ -31,9 +31,10 @@ interface ContactsListProps {
   contacts: Contact[];
   activeContact: Contact | null;
   onContactSelect: (contact: Contact) => void;
+  onStartNewChat: (phoneNumber: string, name: string) => void;
 }
 
-export const ContactsList = ({ contacts, activeContact, onContactSelect }: ContactsListProps) => {
+export const ContactsList = ({ contacts, activeContact, onContactSelect, onStartNewChat }: ContactsListProps) => {
   return (
     <Card className="h-full">
       <CardHeader>
@@ -42,7 +43,9 @@ export const ContactsList = ({ contacts, activeContact, onContactSelect }: Conta
           Contacten ({contacts.length})
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="p-4">
+        <NewChatDialog onStartNewChat={onStartNewChat} />
+        
         <div className="space-y-0 max-h-96 overflow-y-auto">
           {contacts.length === 0 ? (
             <p className="text-gray-500 p-4">Nog geen contacten</p>

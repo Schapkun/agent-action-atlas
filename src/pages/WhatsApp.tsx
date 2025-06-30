@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -31,7 +30,7 @@ const WhatsApp = () => {
     selectedOrganization?.id,
     selectedWorkspace?.id
   );
-  const { contacts, addSentMessage } = useWhatsAppContacts();
+  const { contacts, addSentMessage, startNewChat } = useWhatsAppContacts();
 
   const handleAddWebhook = async () => {
     if (!webhookUrl.trim()) {
@@ -62,6 +61,11 @@ const WhatsApp = () => {
 
   const handleMessageSent = (phoneNumber: string, message: string) => {
     addSentMessage(phoneNumber, message);
+  };
+
+  const handleStartNewChat = (phoneNumber: string, name: string) => {
+    const newContact = startNewChat(phoneNumber, name);
+    setActiveContact(newContact);
   };
 
   return (
@@ -130,6 +134,7 @@ const WhatsApp = () => {
             contacts={contacts}
             activeContact={activeContact}
             onContactSelect={handleContactSelect}
+            onStartNewChat={handleStartNewChat}
           />
         </div>
 
