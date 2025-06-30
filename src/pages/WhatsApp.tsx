@@ -29,6 +29,7 @@ const WhatsApp = () => {
   const [showWebhookDialog, setShowWebhookDialog] = useState(false);
   const [activeContact, setActiveContact] = useState<Contact | null>(null);
   const [webhookConfigured, setWebhookConfigured] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const { selectedOrganization, selectedWorkspace } = useOrganization();
   const { createWhatsAppIncomingWebhook, loading: webhookLoading } = useMakeWebhooks(
@@ -41,56 +42,71 @@ const WhatsApp = () => {
   // Laad opgeslagen webhook instellingen bij component mount
   useEffect(() => {
     if (selectedWorkspace?.id) {
+      console.log('Loading webhook settings for workspace:', selectedWorkspace.id);
       loadWebhookSettings();
     }
   }, [selectedWorkspace?.id]);
 
   const loadWebhookSettings = async () => {
+    if (!selectedWorkspace?.id) {
+      console.log('No workspace selected, skipping webhook loading');
+      return;
+    }
+
     try {
-      console.log('Loading webhook settings for workspace:', selectedWorkspace?.id);
+      setIsLoading(true);
+      console.log('Starting webhook settings load for workspace:', selectedWorkspace.id);
       
+      // Reset alle states voordat we beginnen met laden
+      setGeneratedBearerToken('');
+      setOutgoingWebhookUrl('');
+      setOutgoingBearerToken('');
+      setWebhookConfigured(false);
+      
+      // Laad incoming webhook settings EERST
+      console.log('Loading incoming webhook...');
+      const { data: incomingData, error: incomingError } = await supabase
+        .from('make_webhooks')
+        .select('*')
+        .eq('workspace_id', selectedWorkspace.id)
+        .eq('webhook_type', 'whatsapp_incoming')
+        .maybeSingle();
+
+      console.log('Incoming webhook query result:', { incomingData, incomingError });
+
+      if (incomingData && !incomingError && incomingData.bearer_token) {
+        console.log('Setting incoming bearer token:', incomingData.bearer_token.substring(0, 10) + '...');
+        setGeneratedBearerToken(incomingData.bearer_token);
+        setWebhookConfigured(true);
+      } else {
+        console.log('No incoming webhook or bearer token found');
+        setWebhookConfigured(false);
+      }
+
       // Laad outgoing webhook settings
+      console.log('Loading outgoing webhook...');
       const { data: outgoingData, error: outgoingError } = await supabase
         .from('make_webhooks')
         .select('*')
-        .eq('workspace_id', selectedWorkspace?.id)
+        .eq('workspace_id', selectedWorkspace.id)
         .eq('webhook_type', 'whatsapp_outgoing')
         .maybeSingle();
 
+      console.log('Outgoing webhook query result:', { outgoingData, outgoingError });
+
       if (outgoingData && !outgoingError) {
-        console.log('Found outgoing webhook data:', outgoingData);
+        console.log('Setting outgoing webhook data');
         setOutgoingWebhookUrl(outgoingData.webhook_url || '');
-        // Alleen een placeholder tonen als er een bearer token is, anders leeg laten
         if (outgoingData.bearer_token) {
           setOutgoingBearerToken('••••••••••••••••');
         }
       }
 
-      // Laad incoming webhook settings
-      const { data: incomingData, error: incomingError } = await supabase
-        .from('make_webhooks')
-        .select('*')
-        .eq('workspace_id', selectedWorkspace?.id)
-        .eq('webhook_type', 'whatsapp_incoming')
-        .maybeSingle();
-
-      if (incomingData && !incomingError) {
-        console.log('Found incoming webhook data:', incomingData);
-        // Hier was het probleem: we zetten alleen de token als deze bestaat
-        if (incomingData.bearer_token) {
-          setGeneratedBearerToken(incomingData.bearer_token);
-          setWebhookConfigured(true);
-        } else {
-          setWebhookConfigured(false);
-        }
-      } else {
-        console.log('No incoming webhook found, resetting state');
-        setGeneratedBearerToken('');
-        setWebhookConfigured(false);
-      }
     } catch (error) {
       console.error('Error loading webhook settings:', error);
       setWebhookConfigured(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -107,8 +123,8 @@ const WhatsApp = () => {
     const token = 'whatsapp_' + Array.from(crypto.getRandomValues(new Uint8Array(32)))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
+    console.log('Generated new bearer token:', token.substring(0, 10) + '...');
     setGeneratedBearerToken(token);
-    console.log('Generated new bearer token');
   };
 
   const copyToClipboard = async (text: string, label: string) => {
@@ -184,7 +200,7 @@ const WhatsApp = () => {
     }
 
     try {
-      console.log('Saving webhook settings...');
+      console.log('Saving webhook settings with token:', generatedBearerToken.substring(0, 10) + '...');
       
       // Sla de incoming webhook instellingen op met bearer token
       const incomingWebhookData = {
@@ -258,6 +274,18 @@ const WhatsApp = () => {
   // Controleer of WhatsApp volledig geconfigureerd is
   const isWhatsAppConfigured = webhookConfigured && generatedBearerToken && outgoingWebhookUrl;
 
+  // Toon loading state tijdens het laden van instellingen
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Webhook instellingen laden...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full flex flex-col bg-gray-50">
       {/* Header */}
@@ -280,6 +308,10 @@ const WhatsApp = () => {
                   <span className="text-sm">Niet verbonden</span>
                 </div>
               )}
+            </div>
+            {/* Debug info - tijdelijk */}
+            <div className="text-xs text-gray-400">
+              Token: {generatedBearerToken ? 'Geladen' : 'Niet geladen'}
             </div>
           </div>
           <Dialog open={showWebhookDialog} onOpenChange={setShowWebhookDialog}>
