@@ -1801,6 +1801,54 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_messages: {
+        Row: {
+          created_at: string
+          from_number: string
+          id: string
+          message_body: string | null
+          message_id: string
+          organization_id: string | null
+          profile_name: string | null
+          raw_webhook_data: Json | null
+          status: string
+          timestamp: string
+          to_number: string | null
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          from_number: string
+          id?: string
+          message_body?: string | null
+          message_id: string
+          organization_id?: string | null
+          profile_name?: string | null
+          raw_webhook_data?: Json | null
+          status?: string
+          timestamp?: string
+          to_number?: string | null
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          from_number?: string
+          id?: string
+          message_body?: string | null
+          message_id?: string
+          organization_id?: string | null
+          profile_name?: string | null
+          raw_webhook_data?: Json | null
+          status?: string
+          timestamp?: string
+          to_number?: string | null
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: []
+      }
       workspace_members: {
         Row: {
           account_name: string | null

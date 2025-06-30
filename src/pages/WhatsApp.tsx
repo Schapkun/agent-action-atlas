@@ -8,6 +8,7 @@ import { Send, MessageSquare, Phone, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useMakeWebhooks } from '@/hooks/useMakeWebhooks';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { IncomingMessages } from '@/components/whatsapp/IncomingMessages';
 
 interface Message {
   id: string;
@@ -160,141 +161,172 @@ const WhatsApp = () => {
   };
 
   return (
-    <div className="h-full flex bg-gray-50">
-      {/* Gesprekkenlijst - Links */}
-      <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-green-600" />
-              WhatsApp Gesprekken
-            </h2>
-            
-            <Dialog open={showWebhookDialog} onOpenChange={setShowWebhookDialog}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Webhook
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>WhatsApp Webhook Instellen</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="webhook-url">Make.com Webhook URL</Label>
-                    <Input
-                      id="webhook-url"
-                      value={webhookUrl}
-                      onChange={(e) => setWebhookUrl(e.target.value)}
-                      placeholder="https://hook.eu1.make.com/..."
-                      className="mt-1"
-                    />
-                  </div>
-                  <Button 
-                    onClick={handleAddWebhook}
-                    disabled={webhookLoading || !webhookUrl.trim()}
-                    className="w-full"
-                  >
-                    {webhookLoading ? 'Toevoegen...' : 'Webhook Toevoegen'}
-                  </Button>
+    <div className="h-full flex flex-col bg-gray-50">
+      {/* Webhook configuratie sectie */}
+      <div className="p-4 bg-white border-b border-gray-200">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold text-gray-900">WhatsApp Berichten</h1>
+          <Dialog open={showWebhookDialog} onOpenChange={setShowWebhookDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Settings className="h-4 w-4 mr-2" />
+                Webhook Instellen
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>WhatsApp Webhook URL</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="webhook-url">Webhook URL voor inkomende berichten</Label>
+                  <Input
+                    id="webhook-url"
+                    value="https://rybezhoovslkutsugzvv.supabase.co/functions/v1/whatsapp-webhook-receive"
+                    readOnly
+                    className="mt-1 font-mono text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Gebruik deze URL in je WhatsApp Business API configuratie
+                  </p>
                 </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto">
-          {conversations.map((conversation) => (
-            <div
-              key={conversation.id}
-              onClick={() => setActiveConversation(conversation)}
-              className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-                activeConversation?.id === conversation.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-              }`}
-            >
-              <div className="flex justify-between items-start mb-1">
-                <h3 className="font-medium text-gray-900">{conversation.contactName}</h3>
-                <span className="text-xs text-gray-500">{conversation.lastMessageTime}</span>
+                
+                <div>
+                  <Label htmlFor="notification-webhook">Notificatie Webhook URL (optioneel)</Label>
+                  <Input
+                    id="notification-webhook"
+                    value={webhookUrl}
+                    onChange={(e) => setWebhookUrl(e.target.value)}
+                    placeholder="https://hook.eu1.make.com/..."
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    URL om notificaties te ontvangen bij nieuwe berichten
+                  </p>
+                </div>
+                
+                <Button 
+                  onClick={handleAddWebhook}
+                  disabled={webhookLoading}
+                  className="w-full"
+                >
+                  {webhookLoading ? 'Opslaan...' : 'Webhook Opslaan'}
+                </Button>
               </div>
-              <div className="flex items-center gap-1 mb-1">
-                <Phone className="h-3 w-3 text-gray-400" />
-                <span className="text-xs text-gray-500">{conversation.phoneNumber}</span>
-              </div>
-              <p className="text-sm text-gray-600 truncate">{conversation.lastMessage}</p>
-            </div>
-          ))}
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
-      {/* Chatvenster - Rechts */}
-      <div className="flex-1 flex flex-col">
-        {activeConversation ? (
-          <>
-            {/* Chat header */}
-            <div className="p-4 bg-white border-b border-gray-200 shadow-sm">
-              <h3 className="font-semibold text-gray-900">{activeConversation.contactName}</h3>
-              <p className="text-sm text-gray-500">{activeConversation.phoneNumber}</p>
-            </div>
+      <div className="flex-1 flex">
+        {/* Inkomende berichten - Links */}
+        <div className="w-1/2 p-4">
+          <IncomingMessages />
+        </div>
 
-            {/* Berichten */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {activeConversation.messages.map((message) => (
+        {/* Bestaande chat interface - Rechts */}
+        <div className="w-1/2 flex flex-col">
+          {/* Gesprekkenlijst */}
+          <div className="h-1/3 bg-white border-b border-gray-200 flex flex-col">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-green-600" />
+                Uitgaande Gesprekken
+              </h2>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto">
+              {conversations.map((conversation) => (
                 <div
-                  key={message.id}
-                  className={`flex ${message.isOutgoing ? 'justify-end' : 'justify-start'}`}
+                  key={conversation.id}
+                  onClick={() => setActiveConversation(conversation)}
+                  className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
+                    activeConversation?.id === conversation.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                  }`}
                 >
-                  <div
-                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                      message.isOutgoing
-                        ? 'bg-green-500 text-white'
-                        : 'bg-white text-gray-900 shadow-sm border border-gray-200'
-                    }`}
-                  >
-                    <p className="text-sm">{message.text}</p>
-                    <p className={`text-xs mt-1 ${
-                      message.isOutgoing ? 'text-green-100' : 'text-gray-500'
-                    }`}>
-                      {message.timestamp}
-                    </p>
+                  <div className="flex justify-between items-start mb-1">
+                    <h3 className="font-medium text-gray-900">{conversation.contactName}</h3>
+                    <span className="text-xs text-gray-500">{conversation.lastMessageTime}</span>
                   </div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <Phone className="h-3 w-3 text-gray-400" />
+                    <span className="text-xs text-gray-500">{conversation.phoneNumber}</span>
+                  </div>
+                  <p className="text-sm text-gray-600 truncate">{conversation.lastMessage}</p>
                 </div>
               ))}
             </div>
-
-            {/* Bericht invoer */}
-            <Card className="m-4 shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex gap-2">
-                  <Input
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Type je bericht..."
-                    className="flex-1"
-                    disabled={isLoading}
-                  />
-                  <Button 
-                    onClick={sendMessage}
-                    disabled={!newMessage.trim() || isLoading}
-                    className="bg-green-500 hover:bg-green-600"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center bg-gray-50">
-            <div className="text-center">
-              <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Selecteer een gesprek</h3>
-              <p className="text-gray-500">Kies een gesprek uit de lijst om berichten te bekijken en te versturen.</p>
-            </div>
           </div>
-        )}
+
+          {/* Chatvenster */}
+          <div className="flex-1 flex flex-col">
+            {activeConversation ? (
+              <>
+                {/* Chat header */}
+                <div className="p-4 bg-white border-b border-gray-200 shadow-sm">
+                  <h3 className="font-semibold text-gray-900">{activeConversation.contactName}</h3>
+                  <p className="text-sm text-gray-500">{activeConversation.phoneNumber}</p>
+                </div>
+
+                {/* Berichten */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {activeConversation.messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.isOutgoing ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                          message.isOutgoing
+                            ? 'bg-green-500 text-white'
+                            : 'bg-white text-gray-900 shadow-sm border border-gray-200'
+                        }`}
+                      >
+                        <p className="text-sm">{message.text}</p>
+                        <p className={`text-xs mt-1 ${
+                          message.isOutgoing ? 'text-green-100' : 'text-gray-500'
+                        }`}>
+                          {message.timestamp}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Bericht invoer */}
+                <Card className="m-4 shadow-sm">
+                  <CardContent className="p-4">
+                    <div className="flex gap-2">
+                      <Input
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Type je bericht..."
+                        className="flex-1"
+                        disabled={isLoading}
+                      />
+                      <Button 
+                        onClick={sendMessage}
+                        disabled={!newMessage.trim() || isLoading}
+                        className="bg-green-500 hover:bg-green-600"
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center bg-gray-50">
+                <div className="text-center">
+                  <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Selecteer een gesprek</h3>
+                  <p className="text-gray-500">Kies een gesprek uit de lijst om berichten te bekijken en te versturen.</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
