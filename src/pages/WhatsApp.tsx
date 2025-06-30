@@ -23,7 +23,7 @@ interface Contact {
 }
 
 const WhatsApp = () => {
-  const [webhookUrl, setWebhookUrl] = useState('');
+  const [bearerToken, setBearerToken] = useState('');
   const [showWebhookDialog, setShowWebhookDialog] = useState(false);
   const [activeContact, setActiveContact] = useState<Contact | null>(null);
   const { toast } = useToast();
@@ -35,26 +35,27 @@ const WhatsApp = () => {
   const { contacts, addSentMessage, startNewChat } = useWhatsAppContacts();
   const { isConnected } = useWhatsAppConnection();
 
-  const handleAddWebhook = async () => {
-    if (!webhookUrl.trim()) {
+  const handleSaveWebhookSettings = async () => {
+    if (!bearerToken.trim()) {
       toast({
         title: "Fout",
-        description: "Voer een geldige webhook URL in",
+        description: "Voer een Bearer token in voor authenticatie",
         variant: "destructive"
       });
       return;
     }
 
     try {
-      await createWhatsAppIncomingWebhook(webhookUrl);
-      setWebhookUrl('');
+      // Sla de webhook instellingen op
+      await createWhatsAppIncomingWebhook(bearerToken);
+      setBearerToken('');
       setShowWebhookDialog(false);
       toast({
-        title: "WhatsApp Webhook Toegevoegd",
-        description: "De webhook voor inkomende WhatsApp berichten is succesvol toegevoegd"
+        title: "WhatsApp Instellingen Opgeslagen",
+        description: "De webhook en authenticatie zijn succesvol geconfigureerd"
       });
     } catch (error) {
-      console.error('Error adding WhatsApp webhook:', error);
+      console.error('Error saving WhatsApp settings:', error);
     }
   };
 
@@ -88,7 +89,7 @@ const WhatsApp = () => {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>WhatsApp Webhook URL</DialogTitle>
+                <DialogTitle>WhatsApp API Instellingen</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
@@ -105,25 +106,26 @@ const WhatsApp = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="notification-webhook">Notificatie Webhook URL (optioneel)</Label>
+                  <Label htmlFor="bearer-token">Bearer Token (vereist voor authenticatie)</Label>
                   <Input
-                    id="notification-webhook"
-                    value={webhookUrl}
-                    onChange={(e) => setWebhookUrl(e.target.value)}
-                    placeholder="https://hook.eu1.make.com/..."
+                    id="bearer-token"
+                    type="password"
+                    value={bearerToken}
+                    onChange={(e) => setBearerToken(e.target.value)}
+                    placeholder="Bearer your-token-here"
                     className="mt-1"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    URL om notificaties te ontvangen bij nieuwe berichten
+                    De Bearer token voor authenticatie met de WhatsApp API
                   </p>
                 </div>
                 
                 <Button 
-                  onClick={handleAddWebhook}
-                  disabled={webhookLoading}
+                  onClick={handleSaveWebhookSettings}
+                  disabled={webhookLoading || !bearerToken.trim()}
                   className="w-full"
                 >
-                  {webhookLoading ? 'Opslaan...' : 'Webhook Opslaan'}
+                  {webhookLoading ? 'Opslaan...' : 'Instellingen Opslaan'}
                 </Button>
               </div>
             </DialogContent>
