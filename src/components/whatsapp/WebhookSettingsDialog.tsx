@@ -6,41 +6,36 @@ import { Label } from '@/components/ui/label';
 import { Settings, Copy, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { useMakeWebhooks } from '@/hooks/useMakeWebhooks';
 
 interface WebhookSettingsDialogProps {
-  showWebhookDialog: boolean;
-  setShowWebhookDialog: (show: boolean) => void;
-  generatedBearerToken: string;
+  showDialog: boolean;
+  setShowDialog: (show: boolean) => void;
+  incomingBearerToken: string;
   outgoingWebhookUrl: string;
   setOutgoingWebhookUrl: (url: string) => void;
   outgoingBearerToken: string;
   setOutgoingBearerToken: (token: string) => void;
-  generateWebhookUrl: () => string;
-  generateBearerToken: () => void;
-  saveWebhookSettings: () => Promise<boolean>;
+  generateIncomingWebhookUrl: () => string;
+  generateNewBearerToken: () => string;
+  saveSettings: () => Promise<boolean>;
   isSaving: boolean;
 }
 
 export const WebhookSettingsDialog = ({
-  showWebhookDialog,
-  setShowWebhookDialog,
-  generatedBearerToken,
+  showDialog,
+  setShowDialog,
+  incomingBearerToken,
   outgoingWebhookUrl,
   setOutgoingWebhookUrl,
   outgoingBearerToken,
   setOutgoingBearerToken,
-  generateWebhookUrl,
-  generateBearerToken,
-  saveWebhookSettings,
+  generateIncomingWebhookUrl,
+  generateNewBearerToken,
+  saveSettings,
   isSaving
 }: WebhookSettingsDialogProps) => {
   const { toast } = useToast();
-  const { selectedOrganization, selectedWorkspace } = useOrganization();
-  const { loading: webhookLoading } = useMakeWebhooks(
-    selectedOrganization?.id,
-    selectedWorkspace?.id
-  );
+  const { selectedWorkspace } = useOrganization();
 
   const copyToClipboard = async (text: string, label: string) => {
     try {
@@ -58,19 +53,27 @@ export const WebhookSettingsDialog = ({
     }
   };
 
+  const handleGenerateToken = () => {
+    generateNewBearerToken();
+    toast({
+      title: "Token Gegenereerd",
+      description: "Nieuwe bearer token is gegenereerd"
+    });
+  };
+
   const handleSaveAndClose = async () => {
     console.log('Save and close button clicked');
-    const success = await saveWebhookSettings();
+    const success = await saveSettings();
     if (success) {
       console.log('Settings saved successfully, closing dialog');
-      setShowWebhookDialog(false);
+      setShowDialog(false);
     } else {
       console.log('Failed to save settings, keeping dialog open');
     }
   };
 
   return (
-    <Dialog open={showWebhookDialog} onOpenChange={setShowWebhookDialog}>
+    <Dialog open={showDialog} onOpenChange={setShowDialog}>
       <DialogTrigger asChild>
         <Button variant="outline">
           <Settings className="h-4 w-4 mr-2" />
@@ -92,14 +95,14 @@ export const WebhookSettingsDialog = ({
                 <div className="flex gap-2 mt-1">
                   <Input
                     id="webhook-url"
-                    value={generateWebhookUrl()}
+                    value={generateIncomingWebhookUrl()}
                     readOnly
                     className="font-mono text-sm"
                   />
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => copyToClipboard(generateWebhookUrl(), "Webhook URL")}
+                    onClick={() => copyToClipboard(generateIncomingWebhookUrl(), "Webhook URL")}
                   >
                     <Copy className="h-4 w-4" />
                   </Button>
@@ -115,7 +118,7 @@ export const WebhookSettingsDialog = ({
                   <Input
                     id="bearer-token"
                     type="text"
-                    value={generatedBearerToken}
+                    value={incomingBearerToken}
                     readOnly
                     placeholder="Klik op 'Genereren' om een token te maken"
                     className="font-mono text-sm"
@@ -123,16 +126,16 @@ export const WebhookSettingsDialog = ({
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={generateBearerToken}
+                    onClick={handleGenerateToken}
                   >
                     <RefreshCw className="h-4 w-4" />
                     Genereren
                   </Button>
-                  {generatedBearerToken && (
+                  {incomingBearerToken && (
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => copyToClipboard(generatedBearerToken, "Bearer Token")}
+                      onClick={() => copyToClipboard(incomingBearerToken, "Bearer Token")}
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
@@ -184,7 +187,7 @@ export const WebhookSettingsDialog = ({
           
           <Button 
             onClick={handleSaveAndClose}
-            disabled={isSaving || !generatedBearerToken.trim() || !selectedWorkspace}
+            disabled={isSaving || !incomingBearerToken.trim() || !selectedWorkspace}
             className="w-full"
           >
             {isSaving ? 'Opslaan...' : 'Instellingen Opslaan'}

@@ -4,38 +4,38 @@ import { useWhatsAppConnection } from '@/hooks/useWhatsAppConnection';
 import { WebhookSettingsDialog } from './WebhookSettingsDialog';
 
 interface WhatsAppHeaderProps {
-  generatedBearerToken: string;
+  incomingBearerToken: string;
   outgoingWebhookUrl: string;
   setOutgoingWebhookUrl: (url: string) => void;
   outgoingBearerToken: string;
   setOutgoingBearerToken: (token: string) => void;
   showWebhookDialog: boolean;
   setShowWebhookDialog: (show: boolean) => void;
-  generateWebhookUrl: () => string;
-  generateBearerToken: () => void;
-  saveWebhookSettings: () => Promise<boolean>;
+  generateIncomingWebhookUrl: () => string;
+  generateNewBearerToken: () => string;
+  saveSettings: () => Promise<boolean>;
   webhookConfigured: boolean;
   isSaving: boolean;
 }
 
 export const WhatsAppHeader = ({
-  generatedBearerToken,
+  incomingBearerToken,
   outgoingWebhookUrl,
   setOutgoingWebhookUrl,
   outgoingBearerToken,
   setOutgoingBearerToken,
   showWebhookDialog,
   setShowWebhookDialog,
-  generateWebhookUrl,
-  generateBearerToken,
-  saveWebhookSettings,
+  generateIncomingWebhookUrl,
+  generateNewBearerToken,
+  saveSettings,
   webhookConfigured,
   isSaving
 }: WhatsAppHeaderProps) => {
   const { selectedWorkspace } = useOrganization();
   const { isConnected } = useWhatsAppConnection();
 
-  const isWhatsAppConfigured = webhookConfigured && generatedBearerToken && outgoingWebhookUrl;
+  const isWhatsAppConfigured = webhookConfigured && incomingBearerToken && outgoingWebhookUrl;
 
   return (
     <div className="p-4 bg-white border-b border-gray-200">
@@ -60,20 +60,20 @@ export const WhatsAppHeader = ({
           </div>
           {/* Debug info */}
           <div className="text-xs text-gray-400">
-            Token: {generatedBearerToken ? `${generatedBearerToken.substring(0, 10)}...` : 'Niet geladen'}
+            Token: {incomingBearerToken ? `${incomingBearerToken.substring(0, 10)}...` : 'Niet geladen'}
           </div>
         </div>
         <WebhookSettingsDialog
-          showWebhookDialog={showWebhookDialog}
-          setShowWebhookDialog={setShowWebhookDialog}
-          generatedBearerToken={generatedBearerToken}
+          showDialog={showWebhookDialog}
+          setShowDialog={setShowWebhookDialog}
+          incomingBearerToken={incomingBearerToken}
           outgoingWebhookUrl={outgoingWebhookUrl}
           setOutgoingWebhookUrl={setOutgoingWebhookUrl}
           outgoingBearerToken={outgoingBearerToken}
           setOutgoingBearerToken={setOutgoingBearerToken}
-          generateWebhookUrl={generateWebhookUrl}
-          generateBearerToken={generateBearerToken}
-          saveWebhookSettings={saveWebhookSettings}
+          generateIncomingWebhookUrl={generateIncomingWebhookUrl}
+          generateNewBearerToken={generateNewBearerToken}
+          saveSettings={saveSettings}
           isSaving={isSaving}
         />
       </div>

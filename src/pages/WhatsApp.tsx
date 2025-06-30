@@ -21,7 +21,7 @@ const WhatsApp = () => {
   const { contacts, addSentMessage, startNewChat } = useWhatsAppContacts();
   
   const {
-    generatedBearerToken,
+    incomingBearerToken,
     outgoingWebhookUrl,
     setOutgoingWebhookUrl,
     outgoingBearerToken,
@@ -29,9 +29,9 @@ const WhatsApp = () => {
     webhookConfigured,
     isLoading,
     isSaving,
-    generateWebhookUrl,
-    generateBearerToken,
-    saveWebhookSettings
+    generateIncomingWebhookUrl,
+    generateNewBearerToken,
+    saveSettings
   } = useWhatsAppSettings();
 
   const handleContactSelect = (contact: Contact) => {
@@ -63,16 +63,16 @@ const WhatsApp = () => {
     <div className="h-full flex flex-col bg-gray-50">
       {/* Header */}
       <WhatsAppHeader
-        generatedBearerToken={generatedBearerToken}
+        incomingBearerToken={incomingBearerToken}
         outgoingWebhookUrl={outgoingWebhookUrl}
         setOutgoingWebhookUrl={setOutgoingWebhookUrl}
         outgoingBearerToken={outgoingBearerToken}
         setOutgoingBearerToken={setOutgoingBearerToken}
         showWebhookDialog={showWebhookDialog}
         setShowWebhookDialog={setShowWebhookDialog}
-        generateWebhookUrl={generateWebhookUrl}
-        generateBearerToken={generateBearerToken}
-        saveWebhookSettings={saveWebhookSettings}
+        generateIncomingWebhookUrl={generateIncomingWebhookUrl}
+        generateNewBearerToken={generateNewBearerToken}
+        saveSettings={saveSettings}
         webhookConfigured={webhookConfigured}
         isSaving={isSaving}
       />
