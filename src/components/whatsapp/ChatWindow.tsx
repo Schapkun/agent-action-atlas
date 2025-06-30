@@ -1,12 +1,12 @@
-
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Phone, MessageSquare, AlertTriangle } from 'lucide-react';
+import { Send, Phone, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
+import { useWhatsAppConnection } from '@/hooks/useWhatsAppConnection';
 
 interface WhatsAppMessage {
   id: string;
@@ -39,9 +39,19 @@ export const ChatWindow = ({ contact, onMessageSent }: ChatWindowProps) => {
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { isConnected } = useWhatsAppConnection();
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !contact || isLoading) return;
+
+    if (!isConnected) {
+      toast({
+        title: "Geen verbinding",
+        description: "WhatsApp is niet verbonden. Controleer de verbinding en probeer opnieuw.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsLoading(true);
     
@@ -123,7 +133,7 @@ export const ChatWindow = ({ contact, onMessageSent }: ChatWindowProps) => {
   return (
     <div className="h-full flex flex-col">
       {/* Chat header */}
-      <div className="p-4 bg-white border-b border-gray-200 shadow-sm">
+      <div className="p-4 bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-semibold">
             {contact.name.charAt(0).toUpperCase()}
@@ -138,22 +148,8 @@ export const ChatWindow = ({ contact, onMessageSent }: ChatWindowProps) => {
         </div>
       </div>
 
-      {/* WhatsApp Status Warning */}
-      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <AlertTriangle className="h-5 w-5 text-yellow-400" />
-          </div>
-          <div className="ml-3">
-            <p className="text-sm text-yellow-700">
-              <strong>Let op:</strong> Als berichten niet verzonden kunnen worden, controleer dan of de WhatsApp API correct is geconfigureerd.
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 min-h-0">
         {contact.messages.length === 0 ? (
           <div className="text-center text-gray-500 mt-8">
             <MessageSquare className="h-12 w-12 mx-auto mb-2 text-gray-400" />
@@ -191,7 +187,7 @@ export const ChatWindow = ({ contact, onMessageSent }: ChatWindowProps) => {
       </div>
 
       {/* Message input */}
-      <Card className="m-4 shadow-sm">
+      <Card className="m-4 shadow-sm flex-shrink-0">
         <CardContent className="p-4">
           <div className="flex gap-2">
             <Input
@@ -200,11 +196,11 @@ export const ChatWindow = ({ contact, onMessageSent }: ChatWindowProps) => {
               onKeyPress={handleKeyPress}
               placeholder="Type je bericht..."
               className="flex-1"
-              disabled={isLoading}
+              disabled={isLoading || !isConnected}
             />
             <Button 
               onClick={handleSendMessage}
-              disabled={!newMessage.trim() || isLoading}
+              disabled={!newMessage.trim() || isLoading || !isConnected}
               className="bg-green-500 hover:bg-green-600"
             >
               {isLoading ? (
@@ -216,6 +212,9 @@ export const ChatWindow = ({ contact, onMessageSent }: ChatWindowProps) => {
           </div>
           {isLoading && (
             <p className="text-xs text-gray-500 mt-2">Bericht wordt verzonden...</p>
+          )}
+          {!isConnected && (
+            <p className="text-xs text-red-500 mt-2">Geen verbinding met WhatsApp</p>
           )}
         </CardContent>
       </Card>

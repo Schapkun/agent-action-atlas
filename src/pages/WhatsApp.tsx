@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -10,6 +11,8 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { useWhatsAppContacts } from '@/hooks/useWhatsAppContacts';
 import { ContactsList } from '@/components/whatsapp/ContactsList';
 import { ChatWindow } from '@/components/whatsapp/ChatWindow';
+import { ConnectionStatus } from '@/components/whatsapp/ConnectionStatus';
+import { useWhatsAppConnection } from '@/hooks/useWhatsAppConnection';
 
 interface Contact {
   phoneNumber: string;
@@ -31,6 +34,7 @@ const WhatsApp = () => {
     selectedWorkspace?.id
   );
   const { contacts, addSentMessage, startNewChat } = useWhatsAppContacts();
+  const { isConnected } = useWhatsAppConnection();
 
   const handleAddWebhook = async () => {
     if (!webhookUrl.trim()) {
@@ -73,7 +77,9 @@ const WhatsApp = () => {
       {/* Header */}
       <div className="p-4 bg-white border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">WhatsApp Berichten</h1>
+          <div className="flex items-center gap-4">
+            <ConnectionStatus />
+          </div>
           <Dialog open={showWebhookDialog} onOpenChange={setShowWebhookDialog}>
             <DialogTrigger asChild>
               <Button variant="outline">
@@ -126,10 +132,26 @@ const WhatsApp = () => {
         </div>
       </div>
 
+      {/* Connection Warning - Only show when not connected */}
+      {!isConnected && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <Settings className="h-5 w-5 text-yellow-400" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                <strong>Let op:</strong> Als berichten niet verzonden kunnen worden, controleer dan of de WhatsApp API correct is geconfigureerd.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex min-h-0">
         {/* Contactenlijst */}
-        <div className="w-1/3 p-4">
+        <div className="w-1/3 p-4 flex flex-col min-h-0">
           <ContactsList 
             contacts={contacts}
             activeContact={activeContact}
@@ -139,8 +161,8 @@ const WhatsApp = () => {
         </div>
 
         {/* Chat Window */}
-        <div className="flex-1 p-4 pl-0">
-          <div className="h-full bg-white rounded-lg shadow-sm">
+        <div className="flex-1 p-4 pl-0 flex flex-col min-h-0">
+          <div className="flex-1 bg-white rounded-lg shadow-sm">
             <ChatWindow 
               contact={activeContact}
               onMessageSent={handleMessageSent}
