@@ -1,9 +1,11 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Phone } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { NewChatDialog } from './NewChatDialog';
+import { ConnectionStatus } from './ConnectionStatus';
 
 interface WhatsAppMessage {
   id: string;
@@ -38,9 +40,12 @@ export const ContactsList = ({ contacts, activeContact, onContactSelect, onStart
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-green-600" />
-          Contacten ({contacts.length})
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-green-600" />
+            Gesprekken ({contacts.length})
+          </div>
+          <ConnectionStatus />
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4">

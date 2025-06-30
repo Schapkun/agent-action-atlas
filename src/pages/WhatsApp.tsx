@@ -11,7 +11,6 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { useWhatsAppContacts } from '@/hooks/useWhatsAppContacts';
 import { ContactsList } from '@/components/whatsapp/ContactsList';
 import { ChatWindow } from '@/components/whatsapp/ChatWindow';
-import { ConnectionStatus } from '@/components/whatsapp/ConnectionStatus';
 import { useWhatsAppConnection } from '@/hooks/useWhatsAppConnection';
 
 interface Contact {
@@ -78,7 +77,7 @@ const WhatsApp = () => {
       <div className="p-4 bg-white border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <ConnectionStatus />
+            <h1 className="text-xl font-semibold">WhatsApp</h1>
           </div>
           <Dialog open={showWebhookDialog} onOpenChange={setShowWebhookDialog}>
             <DialogTrigger asChild>
@@ -131,22 +130,6 @@ const WhatsApp = () => {
           </Dialog>
         </div>
       </div>
-
-      {/* Connection Warning - Only show when not connected */}
-      {!isConnected && (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <Settings className="h-5 w-5 text-yellow-400" />
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-yellow-700">
-                <strong>Let op:</strong> Als berichten niet verzonden kunnen worden, controleer dan of de WhatsApp API correct is geconfigureerd.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Main Content */}
       <div className="flex-1 flex min-h-0">
