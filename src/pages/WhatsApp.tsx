@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -56,12 +55,12 @@ const WhatsApp = () => {
         .select('*')
         .eq('workspace_id', selectedWorkspace?.id)
         .eq('webhook_type', 'whatsapp_outgoing')
-        .single();
+        .maybeSingle();
 
       if (outgoingData && !outgoingError) {
         console.log('Found outgoing webhook data:', outgoingData);
         setOutgoingWebhookUrl(outgoingData.webhook_url || '');
-        // Toon placeholder voor bestaande bearer token
+        // Alleen een placeholder tonen als er een bearer token is, anders leeg laten
         if (outgoingData.bearer_token) {
           setOutgoingBearerToken('••••••••••••••••');
         }
@@ -73,18 +72,24 @@ const WhatsApp = () => {
         .select('*')
         .eq('workspace_id', selectedWorkspace?.id)
         .eq('webhook_type', 'whatsapp_incoming')
-        .single();
+        .maybeSingle();
 
       if (incomingData && !incomingError) {
         console.log('Found incoming webhook data:', incomingData);
-        // Alleen de token instellen als deze bestaat in de database
+        // Hier was het probleem: we zetten alleen de token als deze bestaat
         if (incomingData.bearer_token) {
           setGeneratedBearerToken(incomingData.bearer_token);
           setWebhookConfigured(true);
+        } else {
+          setWebhookConfigured(false);
         }
+      } else {
+        console.log('No incoming webhook found, resetting state');
+        setGeneratedBearerToken('');
+        setWebhookConfigured(false);
       }
     } catch (error) {
-      console.log('Geen bestaande webhook instellingen gevonden:', error);
+      console.error('Error loading webhook settings:', error);
       setWebhookConfigured(false);
     }
   };
@@ -132,7 +137,7 @@ const WhatsApp = () => {
         .select('id, bearer_token')
         .eq('workspace_id', selectedWorkspace.id)
         .eq('webhook_type', 'whatsapp_outgoing')
-        .single();
+        .maybeSingle();
 
       const webhookData = {
         organization_id: selectedOrganization?.id,
@@ -197,7 +202,7 @@ const WhatsApp = () => {
         .select('id')
         .eq('workspace_id', selectedWorkspace?.id)
         .eq('webhook_type', 'whatsapp_incoming')
-        .single();
+        .maybeSingle();
 
       if (existingIncoming) {
         const { error } = await supabase
