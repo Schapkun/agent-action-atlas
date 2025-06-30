@@ -47,31 +47,32 @@ const WhatsApp = () => {
 
   const loadWebhookSettings = async () => {
     try {
-      const { data, error } = await supabase
+      // Laad outgoing webhook settings
+      const { data: outgoingData, error: outgoingError } = await supabase
         .from('make_webhooks')
         .select('*')
         .eq('workspace_id', selectedWorkspace?.id)
         .eq('webhook_type', 'whatsapp_outgoing')
         .single();
 
-      if (data) {
-        setOutgoingWebhookUrl(data.webhook_url || '');
-        // Bearer token wordt veilig opgeslagen, maar we tonen alleen placeholder
-        if (data.webhook_url) {
+      if (outgoingData && !outgoingError) {
+        setOutgoingWebhookUrl(outgoingData.webhook_url || '');
+        // Toon placeholder voor bestaande bearer token
+        if (outgoingData.bearer_token) {
           setOutgoingBearerToken('••••••••••••••••');
         }
       }
 
       // Laad incoming webhook settings
-      const { data: incomingData } = await supabase
+      const { data: incomingData, error: incomingError } = await supabase
         .from('make_webhooks')
         .select('*')
         .eq('workspace_id', selectedWorkspace?.id)
         .eq('webhook_type', 'whatsapp_incoming')
         .single();
 
-      if (incomingData && incomingData.webhook_url) {
-        setGeneratedBearerToken(incomingData.webhook_url);
+      if (incomingData && !incomingError) {
+        setGeneratedBearerToken(incomingData.bearer_token || '');
       }
     } catch (error) {
       console.log('Geen bestaande webhook instellingen gevonden');
@@ -117,7 +118,7 @@ const WhatsApp = () => {
       // Check if outgoing webhook already exists
       const { data: existingData } = await supabase
         .from('make_webhooks')
-        .select('id')
+        .select('id, bearer_token')
         .eq('workspace_id', selectedWorkspace.id)
         .eq('webhook_type', 'whatsapp_outgoing')
         .single();
@@ -127,24 +128,30 @@ const WhatsApp = () => {
         workspace_id: selectedWorkspace.id,
         webhook_type: 'whatsapp_outgoing',
         webhook_url: outgoingWebhookUrl,
-        bearer_token: outgoingBearerToken !== '••••••••••••••••' ? outgoingBearerToken : undefined,
+        // Alleen bearer token opslaan als het geen placeholder is
+        bearer_token: outgoingBearerToken !== '••••••••••••••••' ? outgoingBearerToken : (existingData?.bearer_token || null),
         is_active: true
       };
 
       if (existingData) {
         // Update existing
-        await supabase
+        const { error } = await supabase
           .from('make_webhooks')
           .update(webhookData)
           .eq('id', existingData.id);
+        
+        if (error) throw error;
       } else {
         // Create new
-        await supabase
+        const { error } = await supabase
           .from('make_webhooks')
           .insert(webhookData);
+        
+        if (error) throw error;
       }
     } catch (error) {
       console.error('Error saving outgoing webhook:', error);
+      throw error;
     }
   };
 
@@ -159,8 +166,34 @@ const WhatsApp = () => {
     }
 
     try {
-      // Sla de incoming webhook instellingen op
-      await createWhatsAppIncomingWebhook(generatedBearerToken);
+      // Sla de incoming webhook instellingen op met bearer token
+      const incomingWebhookData = {
+        organization_id: selectedOrganization?.id,
+        workspace_id: selectedWorkspace?.id,
+        webhook_type: 'whatsapp_incoming',
+        webhook_url: generateWebhookUrl(),
+        bearer_token: generatedBearerToken,
+        is_active: true
+      };
+
+      // Check if incoming webhook already exists
+      const { data: existingIncoming } = await supabase
+        .from('make_webhooks')
+        .select('id')
+        .eq('workspace_id', selectedWorkspace?.id)
+        .eq('webhook_type', 'whatsapp_incoming')
+        .single();
+
+      if (existingIncoming) {
+        await supabase
+          .from('make_webhooks')
+          .update(incomingWebhookData)
+          .eq('id', existingIncoming.id);
+      } else {
+        await supabase
+          .from('make_webhooks')
+          .insert(incomingWebhookData);
+      }
       
       // Sla de outgoing webhook instellingen op
       await saveOutgoingWebhookSettings();
@@ -172,6 +205,11 @@ const WhatsApp = () => {
       });
     } catch (error) {
       console.error('Error saving WhatsApp settings:', error);
+      toast({
+        title: "Fout",
+        description: "Er is een fout opgetreden bij het opslaan van de instellingen",
+        variant: "destructive"
+      });
     }
   };
 

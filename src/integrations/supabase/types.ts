@@ -1099,6 +1099,7 @@ export type Database = {
       }
       make_webhooks: {
         Row: {
+          bearer_token: string | null
           created_at: string
           id: string
           is_active: boolean
@@ -1109,6 +1110,7 @@ export type Database = {
           workspace_id: string | null
         }
         Insert: {
+          bearer_token?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -1119,6 +1121,7 @@ export type Database = {
           workspace_id?: string | null
         }
         Update: {
+          bearer_token?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
