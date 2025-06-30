@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -79,6 +78,22 @@ export const useMakeWebhooks = (organizationId?: string, workspaceId?: string) =
     }
   };
 
+  const createWhatsAppIncomingWebhook = async (webhookUrl: string) => {
+    if (!organizationId) {
+      throw new Error('Organization ID is required');
+    }
+
+    const webhookData = {
+      organization_id: organizationId,
+      workspace_id: workspaceId,
+      webhook_type: 'whatsapp_incoming',
+      webhook_url: webhookUrl,
+      is_active: true
+    };
+
+    return await createWebhook(webhookData);
+  };
+
   const updateWebhook = async (id: string, updates: Partial<MakeWebhook>) => {
     try {
       const { error } = await supabase
@@ -140,6 +155,7 @@ export const useMakeWebhooks = (organizationId?: string, workspaceId?: string) =
     loading,
     fetchWebhooks,
     createWebhook,
+    createWhatsAppIncomingWebhook,
     updateWebhook,
     deleteWebhook
   };

@@ -1,10 +1,13 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Send, MessageSquare, Phone } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Send, MessageSquare, Phone, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useMakeWebhooks } from '@/hooks/useMakeWebhooks';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 interface Message {
   id: string;
@@ -69,7 +72,37 @@ const WhatsApp = () => {
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(conversations[0]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [webhookUrl, setWebhookUrl] = useState('');
+  const [showWebhookDialog, setShowWebhookDialog] = useState(false);
   const { toast } = useToast();
+  const { selectedOrganization, selectedWorkspace } = useOrganization();
+  const { createWhatsAppIncomingWebhook, loading: webhookLoading } = useMakeWebhooks(
+    selectedOrganization?.id,
+    selectedWorkspace?.id
+  );
+
+  const handleAddWebhook = async () => {
+    if (!webhookUrl.trim()) {
+      toast({
+        title: "Fout",
+        description: "Voer een geldige webhook URL in",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      await createWhatsAppIncomingWebhook(webhookUrl);
+      setWebhookUrl('');
+      setShowWebhookDialog(false);
+      toast({
+        title: "WhatsApp Webhook Toegevoegd",
+        description: "De webhook voor inkomende WhatsApp berichten is succesvol toegevoegd"
+      });
+    } catch (error) {
+      console.error('Error adding WhatsApp webhook:', error);
+    }
+  };
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !activeConversation || isLoading) return;
@@ -131,10 +164,45 @@ const WhatsApp = () => {
       {/* Gesprekkenlijst - Links */}
       <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-green-600" />
-            WhatsApp Gesprekken
-          </h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-green-600" />
+              WhatsApp Gesprekken
+            </h2>
+            
+            <Dialog open={showWebhookDialog} onOpenChange={setShowWebhookDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Webhook
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>WhatsApp Webhook Instellen</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="webhook-url">Make.com Webhook URL</Label>
+                    <Input
+                      id="webhook-url"
+                      value={webhookUrl}
+                      onChange={(e) => setWebhookUrl(e.target.value)}
+                      placeholder="https://hook.eu1.make.com/..."
+                      className="mt-1"
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleAddWebhook}
+                    disabled={webhookLoading || !webhookUrl.trim()}
+                    className="w-full"
+                  >
+                    {webhookLoading ? 'Toevoegen...' : 'Webhook Toevoegen'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
         
         <div className="flex-1 overflow-y-auto">
