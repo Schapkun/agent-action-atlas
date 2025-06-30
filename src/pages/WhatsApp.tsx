@@ -118,15 +118,73 @@ const WhatsApp = () => {
     return `https://rybezhoovslkutsugzvv.supabase.co/functions/v1/whatsapp-webhook-receive?workspace_id=${selectedWorkspace.id}`;
   };
 
-  const generateBearerToken = () => {
+  const generateBearerToken = async () => {
     // Genereer een sterke random token
     const token = 'whatsapp_' + Array.from(crypto.getRandomValues(new Uint8Array(32)))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
     console.log('Generated new bearer token:', token.substring(0, 10) + '...');
     setGeneratedBearerToken(token);
+    
+    // Sla het token direct op in de database
+    if (selectedOrganization?.id && selectedWorkspace?.id) {
+      try {
+        await saveIncomingWebhookWithToken(token);
+        toast({
+          title: "Bearer Token Gegenereerd",
+          description: "Token is automatisch opgeslagen"
+        });
+      } catch (error) {
+        console.error('Error saving generated token:', error);
+        toast({
+          title: "Fout",
+          description: "Token gegenereerd maar niet opgeslagen",
+          variant: "destructive"
+        });
+      }
+    }
   };
 
+  const saveIncomingWebhookWithToken = async (token: string) => {
+    if (!selectedWorkspace?.id || !selectedOrganization?.id) return;
+
+    const incomingWebhookData = {
+      organization_id: selectedOrganization.id,
+      workspace_id: selectedWorkspace.id,
+      webhook_type: 'whatsapp_incoming',
+      webhook_url: generateWebhookUrl(),
+      bearer_token: token,
+      is_active: true
+    };
+
+    // Check if incoming webhook already exists
+    const { data: existingIncoming } = await supabase
+      .from('make_webhooks')
+      .select('id')
+      .eq('workspace_id', selectedWorkspace.id)
+      .eq('webhook_type', 'whatsapp_incoming')
+      .maybeSingle();
+
+    if (existingIncoming) {
+      const { error } = await supabase
+        .from('make_webhooks')
+        .update(incomingWebhookData)
+        .eq('id', existingIncoming.id);
+      if (error) throw error;
+      console.log('Updated incoming webhook with new token');
+    } else {
+      const { error } = await supabase
+        .from('make_webhooks')
+        .insert(incomingWebhookData);
+      if (error) throw error;
+      console.log('Created new incoming webhook with token');
+    }
+    
+    setWebhookConfigured(true);
+    checkConnection();
+  };
+
+  // Copy text to clipboard
   const copyToClipboard = async (text: string, label: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -143,6 +201,7 @@ const WhatsApp = () => {
     }
   };
 
+  // Save outgoing webhook settings
   const saveOutgoingWebhookSettings = async () => {
     if (!selectedWorkspace?.id || !outgoingWebhookUrl.trim()) return;
 
@@ -202,47 +261,13 @@ const WhatsApp = () => {
     try {
       console.log('Saving webhook settings with token:', generatedBearerToken.substring(0, 10) + '...');
       
-      // Sla de incoming webhook instellingen op met bearer token
-      const incomingWebhookData = {
-        organization_id: selectedOrganization?.id,
-        workspace_id: selectedWorkspace?.id,
-        webhook_type: 'whatsapp_incoming',
-        webhook_url: generateWebhookUrl(),
-        bearer_token: generatedBearerToken,
-        is_active: true
-      };
-
-      // Check if incoming webhook already exists
-      const { data: existingIncoming } = await supabase
-        .from('make_webhooks')
-        .select('id')
-        .eq('workspace_id', selectedWorkspace?.id)
-        .eq('webhook_type', 'whatsapp_incoming')
-        .maybeSingle();
-
-      if (existingIncoming) {
-        const { error } = await supabase
-          .from('make_webhooks')
-          .update(incomingWebhookData)
-          .eq('id', existingIncoming.id);
-        if (error) throw error;
-        console.log('Updated incoming webhook settings');
-      } else {
-        const { error } = await supabase
-          .from('make_webhooks')
-          .insert(incomingWebhookData);
-        if (error) throw error;
-        console.log('Created new incoming webhook settings');
-      }
+      // Als we al een token hebben, sla deze opnieuw op (voor het geval dat er wijzigingen zijn)
+      await saveIncomingWebhookWithToken(generatedBearerToken);
       
       // Sla de outgoing webhook instellingen op
       await saveOutgoingWebhookSettings();
       
-      setWebhookConfigured(true);
       setShowWebhookDialog(false);
-      
-      // Controleer de verbinding opnieuw na het opslaan
-      checkConnection();
       
       toast({
         title: "WhatsApp Instellingen Opgeslagen",
