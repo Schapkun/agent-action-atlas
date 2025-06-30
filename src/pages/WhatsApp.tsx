@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -36,6 +35,14 @@ const WhatsApp = () => {
   );
   const { contacts, addSentMessage, startNewChat } = useWhatsAppContacts();
   const { isConnected } = useWhatsAppConnection();
+
+  // Generate unique webhook URL for this workspace
+  const generateWebhookUrl = () => {
+    if (!selectedWorkspace?.id) {
+      return 'https://rybezhoovslkutsugzvv.supabase.co/functions/v1/whatsapp-webhook-receive';
+    }
+    return `https://rybezhoovslkutsugzvv.supabase.co/functions/v1/whatsapp-webhook-receive?workspace_id=${selectedWorkspace.id}`;
+  };
 
   const generateBearerToken = () => {
     // Genereer een sterke random token
@@ -104,6 +111,9 @@ const WhatsApp = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-semibold">WhatsApp</h1>
+            {selectedWorkspace && (
+              <span className="text-sm text-gray-500">Werkruimte: {selectedWorkspace.name}</span>
+            )}
           </div>
           <Dialog open={showWebhookDialog} onOpenChange={setShowWebhookDialog}>
             <DialogTrigger asChild>
@@ -127,20 +137,20 @@ const WhatsApp = () => {
                       <div className="flex gap-2 mt-1">
                         <Input
                           id="webhook-url"
-                          value="https://rybezhoovslkutsugzvv.supabase.co/functions/v1/whatsapp-webhook-receive"
+                          value={generateWebhookUrl()}
                           readOnly
                           className="font-mono text-sm"
                         />
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => copyToClipboard("https://rybezhoovslkutsugzvv.supabase.co/functions/v1/whatsapp-webhook-receive", "Webhook URL")}
+                          onClick={() => copyToClipboard(generateWebhookUrl(), "Webhook URL")}
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
-                        Gebruik deze URL in je WhatsApp Business API configuratie
+                        Gebruik deze URL in je WhatsApp Business API configuratie. Deze URL is uniek voor werkruimte: {selectedWorkspace?.name || 'Geen werkruimte geselecteerd'}
                       </p>
                     </div>
                     
@@ -219,7 +229,7 @@ const WhatsApp = () => {
                 
                 <Button 
                   onClick={handleSaveWebhookSettings}
-                  disabled={webhookLoading || !generatedBearerToken.trim()}
+                  disabled={webhookLoading || !generatedBearerToken.trim() || !selectedWorkspace}
                   className="w-full"
                 >
                   {webhookLoading ? 'Opslaan...' : 'Instellingen Opslaan'}
