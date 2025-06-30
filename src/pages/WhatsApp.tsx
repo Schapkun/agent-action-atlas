@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -50,6 +51,7 @@ const WhatsApp = () => {
   const loadWebhookSettings = async () => {
     if (!selectedWorkspace?.id) {
       console.log('No workspace selected, skipping webhook loading');
+      setIsLoading(false);
       return;
     }
 
@@ -57,13 +59,7 @@ const WhatsApp = () => {
       setIsLoading(true);
       console.log('Starting webhook settings load for workspace:', selectedWorkspace.id);
       
-      // Reset alle states voordat we beginnen met laden
-      setGeneratedBearerToken('');
-      setOutgoingWebhookUrl('');
-      setOutgoingBearerToken('');
-      setWebhookConfigured(false);
-      
-      // Laad incoming webhook settings EERST
+      // Laad incoming webhook settings
       console.log('Loading incoming webhook...');
       const { data: incomingData, error: incomingError } = await supabase
         .from('make_webhooks')
@@ -74,12 +70,22 @@ const WhatsApp = () => {
 
       console.log('Incoming webhook query result:', { incomingData, incomingError });
 
-      if (incomingData && !incomingError && incomingData.bearer_token) {
-        console.log('Setting incoming bearer token:', incomingData.bearer_token.substring(0, 10) + '...');
-        setGeneratedBearerToken(incomingData.bearer_token);
-        setWebhookConfigured(true);
+      if (incomingData && !incomingError) {
+        console.log('Found incoming webhook data:', {
+          hasToken: !!incomingData.bearer_token,
+          tokenPreview: incomingData.bearer_token ? incomingData.bearer_token.substring(0, 10) + '...' : 'none'
+        });
+        
+        if (incomingData.bearer_token) {
+          setGeneratedBearerToken(incomingData.bearer_token);
+          setWebhookConfigured(true);
+          console.log('Bearer token loaded successfully');
+        } else {
+          console.log('No bearer token found in webhook data');
+          setWebhookConfigured(false);
+        }
       } else {
-        console.log('No incoming webhook or bearer token found');
+        console.log('No incoming webhook found or error occurred:', incomingError);
         setWebhookConfigured(false);
       }
 
@@ -334,9 +340,9 @@ const WhatsApp = () => {
                 </div>
               )}
             </div>
-            {/* Debug info - tijdelijk */}
+            {/* Debug info */}
             <div className="text-xs text-gray-400">
-              Token: {generatedBearerToken ? 'Geladen' : 'Niet geladen'}
+              Token: {generatedBearerToken ? `${generatedBearerToken.substring(0, 10)}...` : 'Niet geladen'}
             </div>
           </div>
           <Dialog open={showWebhookDialog} onOpenChange={setShowWebhookDialog}>
