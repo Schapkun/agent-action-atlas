@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useMakeWebhooks } from '@/hooks/useMakeWebhooks';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { IncomingMessages } from '@/components/whatsapp/IncomingMessages';
+import { SendWhatsAppMessage } from '@/components/whatsapp/SendWhatsAppMessage';
 
 interface Message {
   id: string;
@@ -219,12 +220,13 @@ const WhatsApp = () => {
       </div>
 
       <div className="flex-1 flex">
-        {/* Inkomende berichten - Links */}
-        <div className="w-1/2 p-4">
+        {/* Links - Inkomende berichten en WhatsApp verzenden */}
+        <div className="w-1/2 p-4 space-y-4">
           <IncomingMessages />
+          <SendWhatsAppMessage />
         </div>
 
-        {/* Bestaande chat interface - Rechts */}
+        {/* Rechts - Bestaande chat interface */}
         <div className="w-1/2 flex flex-col">
           {/* Gesprekkenlijst */}
           <div className="h-1/3 bg-white border-b border-gray-200 flex flex-col">
