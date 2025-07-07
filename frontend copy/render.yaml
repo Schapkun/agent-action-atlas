@@ -1,0 +1,9 @@
+services:
+  - type: static
+    name: frontend-copy
+    env: node
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    buildFilter:
+      paths:
+        - frontend\ copy/**
