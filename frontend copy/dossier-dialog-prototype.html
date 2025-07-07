@@ -1,0 +1,404 @@
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nieuw Dossier - Volledig Scherm</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .dialog-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+            color: white;
+            padding: 12px 20px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .header-icon {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            padding: 6px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .header h1 {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .header p {
+            color: #bfdbfe;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+        
+        .content {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+        
+        .form-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            height: 100%;
+        }
+        
+        .section {
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid;
+            flex-shrink: 0;
+        }
+        
+        .section-basic {
+            background: linear-gradient(135deg, #dbeafe, #e0e7ff);
+            border-color: #93c5fd;
+        }
+        
+        .section-client {
+            background: linear-gradient(135deg, #dcfce7, #d1fae5);
+            border-color: #86efac;
+        }
+        
+        .section-planning {
+            background: linear-gradient(135deg, #fce7f3, #fdf2f8);
+            border-color: #f9a8d4;
+        }
+        
+        .section-description {
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            border-color: #cbd5e1;
+            flex: 1;
+        }
+        
+        .section-tags {
+            background: linear-gradient(135deg, #fed7aa, #fecaca);
+            border-color: #fdba74;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .section-icon {
+            border-radius: 6px;
+            padding: 4px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+        }
+        
+        .icon-basic { background: #2563eb; }
+        .icon-client { background: #059669; }
+        .icon-planning { background: #7c3aed; }
+        .icon-description { background: #475569; }
+        .icon-tags { background: #ea580c; }
+        
+        .section h3 {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .form-grid {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .form-grid-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        input, select, textarea {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 12px;
+            background: white;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .priority-option {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        
+        .priority-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .priority-low { background: #10b981; }
+        .priority-medium { background: #f59e0b; }
+        .priority-high { background: #f97316; }
+        .priority-urgent { background: #ef4444; }
+        
+        .footer {
+            padding: 16px 20px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        
+        .btn-cancel {
+            background: white;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+        
+        .btn-cancel:hover {
+            background: #f9fafb;
+        }
+        
+        .btn-save {
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+            color: white;
+        }
+        
+        .btn-save:hover {
+            background: linear-gradient(90deg, #1d4ed8, #6d28d9);
+        }
+        
+        .note {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dialog-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-icon">
+                📁
+            </div>
+            <div>
+                <h1>Nieuw Dossier</h1>
+                <p>Maak een nieuw dossier aan</p>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <form class="form-container">
+                <!-- Basisinformatie -->
+                <div class="section section-basic">
+                    <div class="section-header">
+                        <div class="section-icon icon-basic">👤</div>
+                        <h3>Basisinformatie</h3>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="name">Naam *</label>
+                            <input type="text" id="name" placeholder="Dossiernaam" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="reference">Referentie</label>
+                            <input type="text" id="reference" placeholder="Referentienummer">
+                        </div>
+                        
+                        <div class="form-grid form-grid-2">
+                            <div class="form-group">
+                                <label for="category">Categorie</label>
+                                <select id="category">
+                                    <option value="algemeen">Algemeen</option>
+                                    <option value="juridisch">Juridisch</option>
+                                    <option value="financieel">Financieel</option>
+                                    <option value="hr">HR</option>
+                                    <option value="project">Project</option>
+                                    <option value="klacht">Klacht</option>
+                                    <option value="onderzoek">Onderzoek</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="priority">Prioriteit</label>
+                                <select id="priority">
+                                    <option value="low">🟢 Laag</option>
+                                    <option value="medium" selected>🟡 Normaal</option>
+                                    <option value="high">🟠 Hoog</option>
+                                    <option value="urgent">🔴 Urgent</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Client -->
+                <div class="section section-client">
+                    <div class="section-header">
+                        <div class="section-icon icon-client">🏢</div>
+                        <h3>Client</h3>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="client_id">Gekoppelde Client</label>
+                        <select id="client_id">
+                            <option value="no_client">Geen client</option>
+                            <option value="client1">ABC Bedrijf B.V. - #1001</option>
+                            <option value="client2">XYZ Consultancy - #1002</option>
+                            <option value="client3">Gemeente Amsterdam - #1003</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Planning & Budget -->
+                <div class="section section-planning">
+                    <div class="section-header">
+                        <div class="section-icon icon-planning">📅</div>
+                        <h3>Planning & Budget</h3>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-grid form-grid-2">
+                            <div class="form-group">
+                                <label for="start_date">Start</label>
+                                <input type="date" id="start_date">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="end_date">Eind</label>
+                                <input type="date" id="end_date">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="budget">Budget (€)</label>
+                            <input type="number" id="budget" step="0.01" placeholder="0.00">
+                        </div>
+                        
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="is_billable" checked>
+                            <label for="is_billable">Factuurbaar</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Beschrijving -->
+                <div class="section section-description">
+                    <div class="section-header">
+                        <div class="section-icon icon-description">📄</div>
+                        <h3>Beschrijving</h3>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">Omschrijving</label>
+                        <textarea id="description" placeholder="Beschrijving van het dossier" rows="6"></textarea>
+                    </div>
+                </div>
+                
+                <!-- Tags -->
+                <div class="section section-tags">
+                    <div class="section-header">
+                        <div class="section-icon icon-tags">🏷️</div>
+                        <h3>Tags</h3>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tags">Labels</label>
+                        <input type="text" id="tags" placeholder="urgent, project, review">
+                        <div class="note">Gescheiden door komma's</div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <button type="button" class="btn btn-cancel">Annuleren</button>
+            <button type="submit" class="btn btn-save">Aanmaken</button>
+        </div>
+    </div>
+</body>
+</html>
