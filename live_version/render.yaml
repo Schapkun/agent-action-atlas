@@ -1,0 +1,9 @@
+services:
+  - type: static
+    name: live_version
+    env: node
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    buildFilter:
+      paths:
+        - live_version/**
