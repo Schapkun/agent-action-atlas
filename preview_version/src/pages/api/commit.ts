@@ -4,7 +4,7 @@ import { NextApiRequest, NextApiResponse } from "next"
 import { Octokit } from "@octokit/rest"
 
 const octokit = new Octokit({
-  auth: process.env.GITHUB_TOKEN
+  auth: process.env.GH_PAT
 })
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -40,8 +40,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const getResp = await octokit.repos.getContent({
       owner: "Schapkun",
-      repo: "agent-action-atlas",
-      path: filePath,
+      repo:  "agent-action-atlas",
+      path:  filePath,
     })
     sha = Array.isArray(getResp.data)
       ? (getResp.data[0] as any).sha
