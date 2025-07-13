@@ -8,20 +8,23 @@ const octokit = new Octokit({
 })
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Debug: is de token geladen?
+  console.log("▶︎ GH_PAT is", process.env.GH_PAT ? "[FOUND]" : "[MISSING]")
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" })
   }
 
   const { html, prompt } = req.body as { html: string; prompt: string }
 
-  // 1) Bepaal een herkenbare zoekterm uit de <h1> of gebruik de prompt
+  // 1) Zoekterm bepalen: tekst binnen de eerste <h1> of fallback op prompt
   const match = html.match(/<h1[^>]*>([^<]+)<\/h1>/)
   const searchTerm = match ? match[1] : prompt
 
   let filePath: string
 
   try {
-    // 2) Zoek in de hele repo naar de oude titel
+    // 2) Code Search in de hele repo
     const searchRes = await octokit.search.code({
       q: `repo:Schapkun/agent-action-atlas "${searchTerm}"`
     })
@@ -35,7 +38,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: `Bestand zoeken mislukt: ${err.message}` })
   }
 
-  // 3) Haal de huidige file-SHA op (voor update)
+  // 3) SHA ophalen (voor update)
   let sha: string | undefined
   try {
     const getResp = await octokit.repos.getContent({
@@ -47,10 +50,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ? (getResp.data[0] as any).sha
       : (getResp.data as any).sha
   } catch {
-    // 404 → nieuw bestand, laat sha undefined
+    // 404 → nieuw bestand, sha blijft undefined
   }
 
-  // 4) Commit de nieuwe HTML naar het gevonden bestand
+  // 4) Commit de nieuwe HTML naar GitHub
   try {
     await octokit.repos.createOrUpdateFileContents({
       owner:   "Schapkun",
