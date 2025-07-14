@@ -1,4 +1,5 @@
-// NEW: pages/api/commit.ts
+// File: pages/api/commit.ts
+
 import { NextApiRequest, NextApiResponse } from "next";
 import { Octokit } from "@octokit/rest";
 
@@ -23,9 +24,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let filePath: string;
 
   try {
-    // 2) Vind het bestand in je GitHub-repo
+    // 2) Zoek alleen in je front-end-pagina’s map (preview_version/src/pages/)
     const searchRes = await octokit.search.code({
-      q: `repo:Schapkun/agent-action-atlas "${searchTerm}"`
+      q: 
+        // repo én pad beperken
+        `repo:Schapkun/agent-action-atlas path:preview_version/src/pages/ in:file "${searchTerm}"`
     });
 
     if (searchRes.data.items.length === 0) {
