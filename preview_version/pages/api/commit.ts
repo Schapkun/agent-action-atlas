@@ -8,7 +8,7 @@ const octokit = new Octokit({
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // 0) Debug: staat de token er wel in?
+  // Debug: is de token geladen?
   console.log("▶︎ GH_PAT is", process.env.GH_PAT ? "[FOUND]" : "[MISSING]");
 
   if (req.method !== "POST") {
@@ -17,18 +17,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { html, prompt } = req.body as { html: string; prompt: string };
 
-  // 1) Bepaal zoekterm: eerste <h1> of fallback op prompt
+  // Zoekterm bepalen: eerste <h1> of fallback op prompt
   const match = html.match(/<h1[^>]*>([^<]+)<\/h1>/);
   const searchTerm = match ? match[1] : prompt;
 
   let filePath: string;
 
   try {
-    // 2) Zoek alleen in je front-end-pagina’s map (preview_version/src/pages/)
+    // Pas hier de 'path:' aan zodat GitHub Search alleen in jouw preview_version/pages zoekt
     const searchRes = await octokit.search.code({
-      q: 
-        // repo én pad beperken
-        `repo:Schapkun/agent-action-atlas path:preview_version/src/pages/ in:file "${searchTerm}"`
+      q: `repo:Schapkun/agent-action-atlas path:preview_version/src/pages/ in:file "${searchTerm}"`
     });
 
     if (searchRes.data.items.length === 0) {
@@ -40,7 +38,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: `Bestand zoeken mislukt: ${err.message}` });
   }
 
-  // 3) Haal de huidige SHA op (voor update)
+  // SHA ophalen (voor update)
   let sha: string | undefined;
   try {
     const getResp = await octokit.repos.getContent({
@@ -52,10 +50,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ? (getResp.data[0] as any).sha
       : (getResp.data as any).sha;
   } catch {
-    // 404 → nieuw bestand, sha blijft undefined
+    // nieuw bestand → sha blijft undefined
   }
 
-  // 4) Commit de nieuwe HTML
+  // Nieuwe HTML committen
   try {
     await octokit.repos.createOrUpdateFileContents({
       owner:   "Schapkun",
