@@ -5,7 +5,7 @@ const nextConfig = {
   reactStrictMode: true,
   webpack: (config, { isServer }) => {
     if (!isServer) {
-      config.resolve.alias['/preview_version'] = path.join(__dirname, 'preview_version');
+      config.resolve.alias['@'] = path.join(__dirname, 'preview_version');
     }
     return config;
   },
