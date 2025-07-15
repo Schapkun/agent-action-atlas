@@ -1,9 +1,9 @@
 services:
-  - type: static
+  - type: web
     name: frontend-copy
     env: node
     buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    startCommand: npm run start
     buildFilter:
       paths:
         - frontend\ copy/**
