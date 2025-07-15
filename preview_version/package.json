@@ -4,12 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "build:dev": "vite build --mode development",
+    "dev": "next dev",  // Aangepast naar Next.js dev server
+    "build": "next build",  // Aangepast naar Next.js build
+    "start": "next start",  // Aangepast naar Next.js start
     "lint": "eslint .",
-    "preview": "vite preview",
-    "start": "bunx serve dist -l $PORT"
+    "preview": "next preview"  // Aangepast naar Next.js preview
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -66,7 +65,8 @@
     "vaul": "^0.9.3",
     "zod": "^3.23.8",
     "vite": "^5.4.1",
-    "serve": "^14.2.0"
+    "serve": "^14.2.0",
+    "next": "^13.0.0"  // Toevoegen van Next.js als dependency
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
