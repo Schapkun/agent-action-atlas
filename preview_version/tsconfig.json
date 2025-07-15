@@ -16,6 +16,7 @@
     "noUnusedLocals": false,
     "strictNullChecks": false,
     "target": "es2015",
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "allowImportingTsExtensions": true      // Voeg deze optie toe
   }
 }
