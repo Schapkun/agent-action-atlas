@@ -1,34 +1,29 @@
-import fs from 'fs'
-import path from 'path'
-import { NextResponse } from 'next/server'
+export async function getServerSideProps({ params, res }) {
+  const fs = require('fs');
+  const path = require('path');
+  const parts = params.all || [];
+  let filePath = path.join(process.cwd(), 'preview_version', ...parts);
 
-export async function GET(request, { params }) {
-  const parts = params.all || []
-  let filePath = path.join(process.cwd(), 'preview_version', ...parts)
-
-  // Als het een map is, serve index.html binnen die map
   if (fs.existsSync(filePath) && fs.lstatSync(filePath).isDirectory()) {
-    filePath = path.join(filePath, 'index.html')
+    filePath = path.join(filePath, 'index.html');
   }
 
   if (!fs.existsSync(filePath)) {
-    return NextResponse.notFound()
+    res.statusCode = 404;
+    return { props: { html: '404 - Not found' } };
   }
 
-  const buffer = fs.readFileSync(filePath)
-  const ext = path.extname(filePath).slice(1)
-  const contentType = {
-    js:  'application/javascript',
-    css: 'text/css',
-    png: 'image/png',
-    jpg: 'image/jpeg',
-    svg: 'image/svg+xml',
-    ico: 'image/x-icon',
-    html:'text/html'
-  }[ext] || 'application/octet-stream'
+  const buffer = fs.readFileSync(filePath);
+  const ext = path.extname(filePath).slice(1);
 
-  return new NextResponse(buffer, {
-    status: 200,
-    headers: { 'Content-Type': contentType }
-  })
+  if (ext === 'html') {
+    return { props: { html: buffer.toString() } };
+  }
+
+  // Voor andere assets tonen we alleen een placeholder
+  return { props: { html: `<pre>${filePath}</pre>` } };
+}
+
+export default function CatchAll({ html }) {
+  return <div dangerouslySetInnerHTML={{ __html: html }} />;
 }
