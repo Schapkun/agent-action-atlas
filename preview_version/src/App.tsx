@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -31,17 +30,6 @@ import Settings from "./pages/Settings";
 import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
 
-// ✅ Nieuw: deze component stuurt de URL naar parent iframe
-const UrlMessenger = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    window.parent.postMessage("url:" + window.location.href, "*");
-  }, [location]);
-
-  return null;
-};
-
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -52,20 +40,19 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <UrlMessenger />
             <Routes>
               {/* Auth routes */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/register" element={<Register />} />
-
+              
               {/* Main app routes - all wrapped in Index for layout */}
               <Route path="/" element={<Index><Dashboard /></Index>} />
               <Route path="/ai-acties" element={<Index><Actions /></Index>} />
-
+              
               {/* Client routes - new primary route + redirect from old */}
               <Route path="/clienten" element={<Index><Contacts /></Index>} />
               <Route path="/contacten" element={<Navigate to="/clienten" replace />} />
-
+              
               <Route path="/documenten" element={<Index><Documents /></Index>} />
               <Route path="/documenten/nieuw" element={<Index><CreateDocument /></Index>} />
               <Route path="/documenten/opstellen" element={<Navigate to="/documenten/nieuw" replace />} />
@@ -83,7 +70,7 @@ const App = () => (
               <Route path="/e-mails" element={<Index><Emails /></Index>} />
               <Route path="/instellingen/*" element={<Index><Settings /></Index>} />
               <Route path="/support" element={<Index><Support /></Index>} />
-
+              
               {/* 404 route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
